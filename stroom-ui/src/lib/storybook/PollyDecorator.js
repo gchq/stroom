@@ -16,11 +16,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { Polly } from '@pollyjs/core';
+import * as JsSearch from 'js-search';
 
-import { guid, findItem, copyItemsInTree, moveItemsInTree } from 'lib/treeUtils';
+import { guid, findItem, addItemsToTree, findByUuids, deleteItemsFromTree, iterateNodes } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
+import withConfigAndGlobalData from 'startup/withConfigAndGlobalData';
 
 const { resetAllUrls } = fetchActionCreators;
 
@@ -70,6 +72,42 @@ server.get('/config.json').intercept((req, res) => {
 server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
+// Search
+server.post(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
+  const { searchTerm } = JSON.parse(req.body);
+  let searchResults = [];
+
+  const allDocuments = [];
+  iterateNodes(testCache.data.documentTree, (lineage, node) => {
+    allDocuments.push({
+      name: node.name,
+      type: node.type,
+      uuid: node.uuid,
+      lineage,
+      lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+    });
+  });
+
+  const search = new JsSearch.Search('uuid');
+  search.addIndex('name');
+  search.addIndex('lineageNames');
+  search.addDocuments(allDocuments);
+
+  console.log('Searching', {searchTerm, tree: testCache.data.documentTree});
+
+  if (searchTerm && searchTerm.length > 1) {
+    searchResults = search.search(searchTerm).map(s => ({
+      node: {
+        name: s.name,
+        type: s.type,
+        uuid: s.uuid,
+        lineage: s.lineage,
+      },
+    }));
+  }
+
+  res.json(searchResults);
+});
 // // Get Info
 server
   .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
@@ -92,11 +130,16 @@ server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) 
 // // Create Document
 server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
   const { docRefType, docRefName, destinationFolderRef, permissionInheritance } = JSON.parse(req.body);
-  res.json({
+
+  let newDocRef = {
     uuid: guid(),
     type: docRefType,
-    name: docRefName
-  });
+    name: docRefName,
+    children: (docRefType === 'Folder') ? [] : undefined
+  }
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, [newDocRef]);
+
+  res.json(testCache.data.documentTree);
 });
 
 // Copies need to be deep
@@ -112,24 +155,20 @@ server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
   const copies = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node).map(copyDocRef);
-  testCache.data.documentTree = copyItemsInTree(testCache.data.documentTree, copies, destinationFolderRef);
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, copies);
 
-  res.json({
-    docRefs: copies,
-    message: '',
-  });
+  res.json(testCache.data.documentTree);
 });
 // Move Document
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-  testCache.data.documentTree = moveItemsInTree(testCache.data.documentTree, docRefs, destinationFolderRef);
-  let movedDocRefs = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node);
+  let docRefUuidsToDelete = docRefs.map(d => d.uuid);
+  let itemsToMove = findByUuids(testCache.data.documentTree, docRefUuidsToDelete);
+  testCache.data.documentTree = deleteItemsFromTree(testCache.data.documentTree, docRefUuidsToDelete);
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, itemsToMove);
 
-  res.json({
-    docRefs: movedDocRefs,
-    message: '',
-  });
+  res.json(testCache.data.documentTree);
 });
 // Rename Document
 server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
@@ -139,10 +178,7 @@ server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
 // Delete Document
 server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
   const docRefs = JSON.parse(req.body);
-  res.json({
-    docRefs,
-    message: '',
-  });
+  res.json(testCache.data.documentTree);
 });
 
 // Elements Resource
@@ -196,7 +232,7 @@ server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
   }));
 
 const enhanceLocal = compose(
-  connect(state => ({}), {
+  connect(({config}) => ({config}), {
     resetAllUrls,
   }),
   lifecycle({
@@ -215,20 +251,35 @@ const enhanceLocal = compose(
         pipelines: {...this.props.pipelines},
         elements: [...this.props.elements],
         elementProperties: {...this.props.elementProperties},
+        xslt: {...this.props.xslt},
+        trackers: [...this.props.trackers]
       };
     },
   }),
+  withConfigAndGlobalData
 );
 
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
 
 PollyComponent.propTypes = {
-  documentTree: PropTypes.object,
-  docRefTypes: PropTypes.array,
-  pipelines: PropTypes.object,
-  elements: PropTypes.array,
-  elementProperties: PropTypes.object,
+  documentTree: PropTypes.object.isRequired,
+  docRefTypes: PropTypes.array.isRequired,
+  pipelines: PropTypes.object.isRequired,
+  elements: PropTypes.array.isRequired,
+  elementProperties: PropTypes.object.isRequired,
+  xslt: PropTypes.object.isRequired,
+  trackers: PropTypes.array.isRequired
 };
+
+PollyComponent.defaultProps = {
+  documentTree: {},
+  docRefTypes: [],
+  pipelines: {},
+  elements: [],
+  elementProperties: {},
+  xslt: {},
+  trackers: []
+}
 
 export const PollyDecorator = props => storyFn => (
   <PollyComponent {...props}>{storyFn()}</PollyComponent>

@@ -11,6 +11,17 @@
   border-top: solid thin $very-light-grey;
 }
 
+.doc-ref-listing__item.dnd-over {
+  text-decoration: italic;
+}
+
+.doc-ref-listing__item.can-drop {
+  color: green;
+}
+.doc-ref-listing__item.cannot-drop {
+  color: red;
+}
+
 .doc-ref-listing__item--selected {
   background-color: $selected-item-colour;
 }

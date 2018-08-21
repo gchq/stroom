@@ -4,11 +4,8 @@ import {
   Container,
   Input,
   Button,
-  Checkbox,
   Popup,
   Grid,
-  TextArea,
-  Form,
   Message,
 } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
@@ -109,7 +106,7 @@ const SearchBar = ({
 
                 const searchStringValidationMessages = [];
                 if (invalidFields.length > 0) {
-                  invalidFields.map((invalidField) => {
+                  invalidFields.forEach((invalidField) => {
                     searchStringValidationMessages.push(`'${invalidField.original}' is not a valid search term`);
                   });
                 }

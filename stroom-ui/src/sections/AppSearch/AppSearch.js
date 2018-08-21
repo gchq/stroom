@@ -41,7 +41,6 @@ const enhance = connect(({ folderExplorer: { documentTree } }, props) => {
 const AppSearch = ({ allDocuments }) => (
   <DocRefListingWithRouter
     listingId="app-search"
-    maxResults={5}
     icon="search"
     title="Search"
     allDocRefs={allDocuments}

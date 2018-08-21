@@ -21,6 +21,7 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
+import { reducer as appSearch } from 'components/AppSearchBar/redux';
 import { reducer as docRefListing } from 'components/DocRefListing';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as docRefTypes } from 'components/DocRefTypes';
@@ -59,7 +60,7 @@ export default combineReducers({
   docRefTypes,
   appChrome,
   docRefListing,
-  folderExplorer,
   userSettings,
   docRefInfo,
+  appSearch,
 });

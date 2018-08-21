@@ -16,29 +16,27 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Header, Icon } from 'semantic-ui-react';
-
-import WithHeader from 'components/WithHeader';
+import { Grid, Header, Icon } from 'semantic-ui-react';
 
 import './PathNotFound.css';
 
 const PathNotFound = ({ message }) => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="exclamation triangle" />
-        <Header.Content>Not Found</Header.Content>
-      </Header>
-    }
-    content={
-      <div className="content-floating-without-appbar">
-        <div className="PathNotFound-card">
-          <h3>Page not found!</h3>
-          <p>{message}</p>
-        </div>
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}>
+        <Header as="h3">
+          <Icon name="exclamation triangle" />
+          <Header.Content>Not Found</Header.Content>
+        </Header>
+      </Grid.Column>
+    </Grid>
+    <div className="content-floating-without-appbar">
+      <div className="PathNotFound-card">
+        <h3>Page not found!</h3>
+        <p>{message}</p>
       </div>
-    }
-  />
+    </div>
+  </React.Fragment>
 );
 
 PathNotFound.propTypes = {

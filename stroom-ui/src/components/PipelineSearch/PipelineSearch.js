@@ -21,10 +21,8 @@ import { compose, lifecycle } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
-import WithHeader from 'components/WithHeader';
-import { Header, Card, Input, Pagination, Dropdown, Icon } from 'semantic-ui-react';
+import { Header, Card, Input, Pagination, Dropdown, Icon, Grid } from 'semantic-ui-react';
 
-import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
 
 import { searchPipelines, actionCreators } from 'components/PipelineEditor';
@@ -34,7 +32,6 @@ const contextTypes = {
 };
 
 const enhance = compose(
-  withConfig,
   connect(
     (state, props) => ({
       totalPipelines: state.pipelineEditor.search.total,
@@ -66,7 +63,7 @@ const enhance = compose(
   }),
 );
 
-const RawPipelineSearch = ({
+const PipelineSearch = ({
   searchResults,
   totalPipelines,
   onPipelineSelected,
@@ -115,74 +112,69 @@ const RawPipelineSearch = ({
   ];
 
   return (
-    <div className="PipelineSearch__container">
-      <div className="PipelineSearch">
-        <Input
-          value={filter}
-          icon="search"
-          placeholder="Search..."
-          onChange={(_, data) => {
-            updateCriteria({ pageSize, pageOffset, filter: data.value });
-            searchPipelines();
-          }}
-        />
-        <Dropdown
-          selection
-          options={dropdownOptions}
-          value={dropdownPageSize}
-          onChange={(_, data) => {
-            console.log({ data });
-            if (data.value === 'all') {
-              updateCriteria({ pageSize: undefined, pageOffset, filter });
+    <React.Fragment>
+      <Grid className="content-tabs__grid">
+        <Grid.Column width={12}>
+          <Header as="h3">
+            <Icon name="tasks" />
+            Pipelines
+          </Header>
+        </Grid.Column>
+      </Grid>
+      <div className="PipelineSearch__container">
+        <div className="PipelineSearch">
+          <Input
+            value={filter}
+            icon="search"
+            placeholder="Search..."
+            onChange={(_, data) => {
+              updateCriteria({ pageSize, pageOffset, filter: data.value });
               searchPipelines();
-            } else {
-              updateCriteria({ pageSize: data.value, pageOffset, filter });
+            }}
+          />
+          <Dropdown
+            selection
+            options={dropdownOptions}
+            value={dropdownPageSize}
+            onChange={(_, data) => {
+              console.log({ data });
+              if (data.value === 'all') {
+                updateCriteria({ pageSize: undefined, pageOffset, filter });
+                searchPipelines();
+              } else {
+                updateCriteria({ pageSize: data.value, pageOffset, filter });
+                searchPipelines();
+              }
+            }}
+          />
+          <Pagination
+            defaultActivePage={1}
+            totalPages={totalPages}
+            ellipsisItem={null}
+            onPageChange={(_, pagination) => {
+              updateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
               searchPipelines();
-            }
-          }}
-        />
-        <Pagination
-          defaultActivePage={1}
-          totalPages={totalPages}
-          ellipsisItem={null}
-          onPageChange={(_, pagination) => {
-            updateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
-            searchPipelines();
-          }}
-        />
-        <Card.Group>
-          {searchResults.map(pipelineSummary => (
-            <Card
-              key={pipelineSummary.uuid}
-              onDoubleClick={() => clickCounter.onDoubleClick({ uuid: pipelineSummary.uuid })}
-              onClick={() => clickCounter.onSingleClick({ uuid: pipelineSummary.uuid })}
-              className="PipelineSearch__result"
-              header={pipelineSummary.name}
-              meta={pipelineSummary.uuid}
-              description="todo"
-            />
-          ))}
-        </Card.Group>
+            }}
+          />
+          <Card.Group>
+            {searchResults.map(pipelineSummary => (
+              <Card
+                key={pipelineSummary.uuid}
+                onDoubleClick={() => clickCounter.onDoubleClick({ uuid: pipelineSummary.uuid })}
+                onClick={() => clickCounter.onSingleClick({ uuid: pipelineSummary.uuid })}
+                className="PipelineSearch__result"
+                header={pipelineSummary.name}
+                meta={pipelineSummary.uuid}
+                description="todo"
+              />
+            ))}
+          </Card.Group>
+        </div>
       </div>
-    </div>
+    </React.Fragment>
   );
 };
 
-const RawWithHeader = props => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="tasks" />
-        Pipelines
-      </Header>
-    }
-    actionBarItems={<React.Fragment />}
-    content={<RawPipelineSearch {...props} />}
-  />
-);
-
-const PipelineSearch = enhance(RawWithHeader);
-
 PipelineSearch.contextTypes = contextTypes;
 
-export default PipelineSearch;
+export default enhance(PipelineSearch);

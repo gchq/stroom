@@ -2,10 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
+import { Header, Icon, Grid, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
-import { DocTypeFilters } from 'components/DocRefTypes';
 import DocRefPropType from 'lib/DocRefPropType';
 import DocRefListingEntry from './DocRefListingEntry';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
@@ -19,8 +18,6 @@ const openKeys = ['enter'];
 const {
   docRefListingMounted,
   docRefListingUnmounted,
-  filterTermUpdated,
-  docRefTypeFilterUpdated,
   docRefSelectionUp,
   docRefSelectionDown,
 } = actionCreators;
@@ -34,15 +31,15 @@ const {
 // we'd rather not break outside React to do this. The other alternative
 // is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
 
-// Up
-const upKeycode = 38;
-const kKeycode = 75;
+// // Up
+// const upKeycode = 38;
+// const kKeycode = 75;
 
-// Down
-const downKeycode = 40;
-const jKeycode = 74;
+// // Down
+// const downKeycode = 40;
+// const jKeycode = 74;
 
-const enterKeycode = 13;
+// const enterKeycode = 13;
 
 const enhance = compose(
   connect(
@@ -53,8 +50,6 @@ const enhance = compose(
     {
       docRefListingMounted,
       docRefListingUnmounted,
-      filterTermUpdated,
-      docRefTypeFilterUpdated,
       docRefSelectionUp,
       docRefSelectionDown,
     },
@@ -63,17 +58,16 @@ const enhance = compose(
     listingId,
     docRefListing,
     openDocRef,
-    docRefTypes,
     docRefSelectionUp,
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
-    const { selectedDocRef, checkedDocRefs, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
+    const { selectedDocRef, allDocRefs } = docRefListing || {};
     const onOpenKey = () => {
       if (selectedDocRef !== undefined) {
         openDocRef(selectedDocRef);
-      } else if (filteredDocRefs.length > 0) {
-        openDocRef(filteredDocRefs[0]);
+      } else if (allDocRefs.length > 0) {
+        openDocRef(allDocRefs[0]);
       }
     };
     const onUpKey = () => {
@@ -82,38 +76,23 @@ const enhance = compose(
     const onDownKey = () => {
       docRefSelectionDown(listingId);
     };
-    const onSearchInputKeyDown = (e) => {
-      if (e.keyCode === upKeycode || (e.ctrlKey && e.keyCode === kKeycode)) {
-        onUpKey();
-        e.preventDefault();
-      } else if (e.keyCode === downKeycode || (e.ctrlKey && e.keyCode === jKeycode)) {
-        onDownKey();
-        e.preventDefault();
-      } else if (e.keyCode === enterKeycode) {
-        onOpenKey();
-        e.preventDefault();
-      }
-    };
 
-    const hasTypesFilteredOut = docRefTypes.length !== docRefTypeFilters.length;
     return {
       onOpenKey,
       onUpKey,
       onDownKey,
-      onSearchInputKeyDown,
-      hasTypesFilteredOut,
     };
   }),
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
-        parentFolder, listingId, allDocRefs, docRefListingMounted, maxResults, allowMultiSelect, fixedDocRefTypeFilters
+        listingId, allDocRefs, docRefListingMounted, allowMultiSelect
       } = this.props;
 
       const docRefsChanged = JSON.stringify(allDocRefs) !== JSON.stringify(prevProps.allDocRefs);
 
       if (docRefsChanged) {
-        docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect, fixedDocRefTypeFilters);
+        docRefListingMounted(listingId, allDocRefs, allowMultiSelect);
       }
     },
     componentDidMount() {
@@ -124,12 +103,10 @@ const enhance = compose(
         listingId,
         allDocRefs,
         onOpenKey,
-        maxResults,
         allowMultiSelect,
-        fixedDocRefTypeFilters,
       } = this.props;
       
-      docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect, fixedDocRefTypeFilters);
+      docRefListingMounted(listingId, allDocRefs, allowMultiSelect);
 
       Mousetrap.bind(upKeys, onUpKey);
       Mousetrap.bind(downKeys, onDownKey);
@@ -154,20 +131,17 @@ const DocRefListing = ({
   icon,
   title,
   docRefListing: {
-    filterTerm, filteredDocRefs, docRefTypeFilters, fixedDocRefTypeFilters
+    filterTerm, allDocRefs, docRefTypeFilters
   },
   openDocRef,
   includeBreadcrumbOnEntries,
   actionBarItems,
-  filterTermUpdated,
-  docRefTypeFilterUpdated,
   parentFolder,
-  onSearchInputKeyDown,
   hasTypesFilteredOut,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={(actionBarItems.length > 0) ? 6 : 8}>
+      <Grid.Column width={(actionBarItems.length > 0) ? 11 : 16}>
         <Header as="h3">
           <Icon name={icon} />
           <Header.Content>{title}</Header.Content>
@@ -177,32 +151,6 @@ const DocRefListing = ({
             </Header.Subheader>
           )}
         </Header>
-      </Grid.Column>
-
-      <Grid.Column width={(actionBarItems.length > 0) ? 5 : 8}>
-        <div className='doc-ref-listing-entry__search-bar'>
-          <Input
-            id="AppSearch__search-input"
-            icon="search"
-            placeholder="Search..."
-            value={filterTerm}
-            onChange={e => filterTermUpdated(listingId, e.target.value)}
-            autoFocus
-            onKeyDown={onSearchInputKeyDown}
-          />
-          {fixedDocRefTypeFilters.length === 0 &&
-          <Popup
-            trigger={<Button icon="filter" color={hasTypesFilteredOut ? 'blue' : 'grey'} />}
-            flowing
-            hoverable
-          >
-            <DocTypeFilters
-              value={docRefTypeFilters}
-              onChange={v => docRefTypeFilterUpdated(listingId, v)}
-            />
-          </Popup>
-          }
-        </div>
       </Grid.Column>
       {(actionBarItems.length > 0) && <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
@@ -218,7 +166,7 @@ const DocRefListing = ({
       }
     </Grid>
     <div className="doc-ref-listing">
-      {filteredDocRefs.map(docRef => (
+      {allDocRefs.map(docRef => (
         <DocRefListingEntry
           key={docRef.uuid}
           listingId={listingId}
@@ -240,19 +188,16 @@ EnhancedDocRefListing.propTypes = {
   parentFolder: DocRefPropType,
   includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
   allDocRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
-  maxResults: PropTypes.number.isRequired,
   allowMultiSelect: PropTypes.bool.isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   openDocRef: PropTypes.func.isRequired,
-  fixedDocRefTypeFilters: PropTypes.arrayOf(PropTypes.string).isRequired
 };
 
 EnhancedDocRefListing.defaultProps = {
-  maxResults: 0,
   actionBarItems: [],
+  allDocRefs: [],
   includeBreadcrumbOnEntries: true,
   allowMultiSelect: false,
-  fixedDocRefTypeFilters: []
 };
 
 export default EnhancedDocRefListing;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { guid, findMatch, canMove, findItem } from '../treeUtils';
+import { guid, itemIsInSubtree, canMove, findItem } from '../treeUtils';
 
 // Denormalised so I can refer to individual elements in the tree.
 const oneOne = {
@@ -106,21 +106,21 @@ describe('Tree Utils', () => {
       expect(set1.size).toBe(numberValues);
     });
   });
-  describe('#findMatch()', () => {
+  describe('#itemIsInSubtree()', () => {
     test('should find a match when is root', () => {
-      const found = findMatch(testTree, testTree);
+      const found = itemIsInSubtree(testTree, testTree);
       expect(found).toBe(true);
     });
     test('should find a match when present within children', () => {
-      const found = findMatch(testTree, oneTwo);
+      const found = itemIsInSubtree(testTree, oneTwo);
       expect(found).toBe(true);
     });
     test('should find a match when present within grand-children', () => {
-      const found = findMatch(testTree, oneThreeOne);
+      const found = itemIsInSubtree(testTree, oneThreeOne);
       expect(found).toBe(true);
     });
     test('should not find a match when missing', () => {
-      const found = findMatch(testTree, { uuid: 'fifty' });
+      const found = itemIsInSubtree(testTree, { uuid: 'fifty' });
       expect(found).toBe(false);
     });
   });
@@ -164,8 +164,8 @@ describe('Tree Utils', () => {
       expect(found).toBe(oneThreeOne);
     });
     test('should not find a match when missing', () => {
-      const { node: found } = findItem(testTree, { uuid: 'fifty' });
-      expect(found).toBe(undefined);
+      const result = findItem(testTree, { uuid: 'fifty' });
+      expect(result).toBe(undefined);
     });
   });
 });

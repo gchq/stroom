@@ -8,7 +8,6 @@ import { InputField } from 'react-semantic-redux-form';
 
 import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
-import DocPickerModal from 'components/DocPickerModal';
 import { DocRefTypePicker } from 'components/DocRefTypes';
 import explorerClient from 'components/FolderExplorer/explorerClient';
 
@@ -27,10 +26,8 @@ const enhance = compose(
       form,
     }) => ({
       isOpen,
+      destination,
       newDocRefForm: form.newDocRef,
-      initialValues: {
-        destination,
-      },
     }),
     { completeDocRefCreation, createDocument },
   ),
@@ -42,7 +39,12 @@ const enhance = compose(
 );
 
 const NewDocDialog = ({
-  isOpen, stage, completeDocRefCreation, createDocument, newDocRefForm,
+  isOpen,
+  stage,
+  completeDocRefCreation,
+  createDocument,
+  newDocRefForm,
+  destination,
 }) => (
   <Modal
     open={isOpen}
@@ -51,7 +53,7 @@ const NewDocDialog = ({
     dimmer="inverted"
     closeOnDimmerClick={false}
   >
-    <Header icon="plus" content="Create a New Doc Ref" />
+    <Header icon="plus" content={`Create a New Doc Ref in ${destination && destination.name}`} />
     <Modal.Content>
       <Form>
         <Form.Field>
@@ -71,20 +73,6 @@ const NewDocDialog = ({
             type="text"
             placeholder="Name"
             validate={[required, minLength2]}
-          />
-        </Form.Field>
-        <Form.Field>
-          <label>Destination</label>
-          <Field
-            name="destination"
-            component={({ input: { onChange, value } }) => (
-              <DocPickerModal
-                pickerId="new-doc-ref-destination"
-                typeFilters={['Folder']}
-                onChange={onChange}
-                value={value}
-              />
-            )}
           />
         </Form.Field>
         <Form.Field>
@@ -108,7 +96,7 @@ const NewDocDialog = ({
           createDocument(
             newDocRefForm.values.docRefType,
             newDocRefForm.values.docRefName,
-            newDocRefForm.values.destination,
+            destination,
             newDocRefForm.values.permissionInheritance,
           )
         }

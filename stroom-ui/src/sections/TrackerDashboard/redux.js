@@ -16,8 +16,6 @@
 
 import { createActions, handleActions } from 'redux-actions';
 
-import { actionCreators as expressionBuilderActionCreators } from 'components/ExpressionBuilder';
-
 const initialState = {
   trackers: [],
   isLoading: false,

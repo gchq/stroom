@@ -36,25 +36,26 @@ const enhance = compose(
     },
   ),
   withProps(({
+    folder,
     prepareDocRefCreation,
     prepareDocRefDelete,
     prepareDocRefCopy,
     prepareDocRefRename,
     prepareDocRefMove,
     fetchDocInfo,
-    docRefListing: { selectedDocRefUuids = [], filteredDocRefs },
+    docRefListing: { selectedDocRefUuids = [], allDocRefs },
   }) => {
     const actionBarItems = [
       {
         icon: 'file',
-        onClick: d => prepareDocRefCreation(d),
+        onClick: () => prepareDocRefCreation(folder.node),
         tooltip: 'Create a Document',
       },
     ];
 
     const singleSelectedDocRef =
         selectedDocRefUuids.length === 1
-          ? filteredDocRefs.find(f => f.uuid === selectedDocRefUuids[0])
+          ? allDocRefs.find(f => f.uuid === selectedDocRefUuids[0])
           : undefined;
 
     if (selectedDocRefUuids.length > 0) {

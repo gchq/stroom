@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
-import { fetchDocRefTypes } from 'components/FolderExplorer/explorerClient';
+import React, { Component } from 'react';
 
-/**
- * Higher Order Component that kicks off the fetch of the doc ref types, and waits by rendering a Loader until
- * they are returned.
- */
-export default compose(
-  connect(
-    ({ docRefTypes }) => ({
-      docRefTypes,
-    }),
-    {
-      fetchDocRefTypes,
-    },
-  ),
-  lifecycle({
-    componentDidMount() {
-      this.props.fetchDocRefTypes();
-    },
-  }),
-);
+import { storiesOf, addDecorator } from '@storybook/react';
+import StoryRouter from 'storybook-react-router';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+
+import AppSearchBar from './AppSearchBar';
+
+storiesOf('App Search Bar', module)
+  .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ReduxDecorator)
+  .addDecorator(StoryRouter())
+  .add('Search Bar', () => <AppSearchBar />);

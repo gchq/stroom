@@ -1,14 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
 import { Button, Popup } from 'semantic-ui-react';
-
-import { actionCreators } from './redux';
-
-const { startInheritedPipeline } = actionCreators;
-
-const enhance = compose(connect((state, props) => ({}), { startInheritedPipeline }));
 
 const CreateChildPipeline = ({ pipelineId, startInheritedPipeline }) => (
   <Popup
@@ -26,6 +18,7 @@ const CreateChildPipeline = ({ pipelineId, startInheritedPipeline }) => (
 
 CreateChildPipeline.propTypes = {
   pipelineId: PropTypes.string.isRequired,
+  startInheritedPipeline: PropTypes.func.isRequired
 };
 
-export default enhance(CreateChildPipeline);
+export default CreateChildPipeline;

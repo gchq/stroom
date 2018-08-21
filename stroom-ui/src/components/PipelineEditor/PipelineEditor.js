@@ -17,8 +17,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
+import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Header, Loader } from 'semantic-ui-react';
+import { Grid, Header, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -31,7 +32,6 @@ import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
-import WithHeader from 'components/WithHeader';
 import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
@@ -41,9 +41,15 @@ import Bin from './Bin';
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
 
+import { openDocRef } from 'sections/RecentItems';
 import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
-import { withConfig } from 'startup/config';
+import { actionCreators } from './redux';
+
+const {
+  startInheritedPipeline,
+  pipelineSettingsOpened
+} = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -56,13 +62,10 @@ const COMMON_ELEMENT_STYLE = {
 const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDetailsOpen', false);
 
 const enhance = compose(
-  withConfig,
+  withRouter,
   connect(
     (
-      {
-        folderExplorer: { documentTree },
-        pipelineEditor: { pipelines, elements },
-      },
+      { folderExplorer: { documentTree }, pipelineEditor: { pipelines, elements } },
       { pipelineId },
     ) => ({
       pipeline: pipelines[pipelineId],
@@ -74,6 +77,9 @@ const enhance = compose(
       savePipeline,
       fetchElements,
       fetchElementProperties,
+      openDocRef,
+      startInheritedPipeline,
+      pipelineSettingsOpened
     },
   ),
   lifecycle({
@@ -122,7 +128,35 @@ const RawPipelineEditor = ({
   setElementDetailsOpen,
   editorClassName,
   elementStyles,
+  history,
+  openDocRef,
+  savePipeline,
+  startInheritedPipeline,
+  pipelineSettingsOpened
 }) => (
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}><Header as="h3">
+        <img
+          className="stroom-icon--large"
+          alt="X"
+          src={require(`../../images/docRefTypes/${pipeline.docRef.type}.svg`)}
+        />
+        <Header.Content>{pipeline.docRef.name}</Header.Content>
+        <Header.Subheader>
+          <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={l => openDocRef(history, l)} />
+        </Header.Subheader>
+      </Header></Grid.Column>
+      <Grid.Column width={4}><SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
+        <CreateChildPipeline
+          pipelineId={pipelineId}
+          startInheritedPipeline={startInheritedPipeline}
+        />
+        <OpenPipelineSettings
+          pipelineId={pipelineId}
+          pipelineSettingsOpened={pipelineSettingsOpened}
+        /></Grid.Column>
+    </Grid>
     <div className="Pipeline-editor">
       <DeletePipelineElement pipelineId={pipelineId} />
       <PipelineSettings pipelineId={pipelineId} />
@@ -186,50 +220,15 @@ const RawPipelineEditor = ({
             onClose={() => setElementDetailsOpen(false)}
           />
         ) : (
-            <div />
-          )}
+          <div />
+        )}
       </PanelGroup>
     </div>
-  );
+  </React.Fragment>
 
-const RawWithHeader = (props) => {
-  const {
-    pipelineId,
-    pipeline: {
-      pipeline: {
-        docRef: { type, name },
-      },
-    }
-  } = props;
+);
 
-  return (
-    <WithHeader
-      header={
-        <Header as="h3">
-          <img
-            className="stroom-icon--large"
-            alt="X"
-            src={require(`../../images/docRefTypes/${type}.svg`)}
-          />
-          <Header.Content>
-            {name}
-          </Header.Content>
-          <Header.Subheader><DocRefBreadcrumb docRefUuid={pipelineId} /></Header.Subheader>
-        </Header>
-      }
-      actionBarItems={
-        <React.Fragment>
-          <SavePipeline {...props} />
-          <CreateChildPipeline {...props} />
-          <OpenPipelineSettings {...props} />
-        </React.Fragment>
-      }
-      content={<RawPipelineEditor {...props} />}
-    />
-  );
-};
-
-const PipelineEditor = enhance(RawWithHeader);
+const PipelineEditor = enhance(RawPipelineEditor);
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,

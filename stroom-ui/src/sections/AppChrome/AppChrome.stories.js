@@ -23,34 +23,17 @@ import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import AppChrome, { appChromeRoutes } from '.';
 
-import { fromSetupSampleData } from 'components/FolderExplorer/test';
-
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-
-import { testPipelines, elements, elementProperties } from 'components/PipelineEditor/test';
-import { testDocRefsTypes } from 'components/DocRefTypes/test';
-import { testXslt } from 'components/XsltEditor/test';
-import { generateGenericTracker } from 'sections/TrackerDashboard/tracker.testData';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 const { docTreeReceived, docRefPicked } = folderExplorerActionCreators;
-
-const PollyDecoratorWithTestData = PollyDecorator({
-  documentTree: fromSetupSampleData,
-  docRefTypes: testDocRefsTypes,
-  elements,
-  elementProperties,
-  pipelines: testPipelines,
-  xslt: testXslt,
-  trackers: [...Array(10).keys()].map(i => generateGenericTracker(i)),
-});
 
 // This basically replicates the 'Routes' implementation, but for test
 const AppChromeWithRouter = () => (

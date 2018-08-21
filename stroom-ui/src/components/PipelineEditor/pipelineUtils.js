@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { findItem, findMatch, iterateNodes } from 'lib/treeUtils';
+import { findItem, itemIsInSubtree, iterateNodes } from 'lib/treeUtils';
 
 export function getBinItems(pipeline, elementsByType) {
   const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
@@ -554,7 +554,7 @@ export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, des
   }
 
   // If the item being dropped is a folder, and is being dropped into itself
-  if (findMatch(itemToMoveNode, destinationNode)) {
+  if (itemIsInSubtree(itemToMoveNode, destinationNode)) {
     return false;
   }
   if (!!itemToMoveNode.children && itemToMoveNode.uuid === destinationNode.uuid) {

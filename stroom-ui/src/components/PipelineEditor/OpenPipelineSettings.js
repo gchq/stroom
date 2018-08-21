@@ -1,14 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
 import { Button, Popup } from 'semantic-ui-react';
-
-import { actionCreators } from './redux';
-
-const { pipelineSettingsOpened } = actionCreators;
-
-const enhance = compose(connect((state, props) => ({}), { pipelineSettingsOpened }));
 
 const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
   <Popup
@@ -26,6 +18,7 @@ const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
 
 OpenPipelineSettings.propTypes = {
   pipelineId: PropTypes.string.isRequired,
+  pipelineSettingsOpened: PropTypes.func.isRequired
 };
 
-export default enhance(OpenPipelineSettings);
+export default OpenPipelineSettings;

@@ -16,55 +16,45 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState, withProps } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Dropdown, Popup } from 'semantic-ui-react';
+import { Button, Modal, Input, Popup } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
-import { withExplorerTree } from 'components/FolderExplorer';
-import { findItem, iterateNodes } from 'lib/treeUtils';
+import { findItem, filterTree } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
+const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
 
 const enhance = compose(
-  withExplorerTree,
   withModal,
+  withFolderUuid,
   connect(
     (
       { folderExplorer: { documentTree }, docRefListing },
       {
-        pickerId, typeFilters, onChange, setModalIsOpen,
+        pickerId, onChange, setModalIsOpen, folderUuid, typeFilters
       },
     ) => {
-      let allDocuments = [];
+      let documentTreeToUse = typeFilters.length > 0 ? filterTree(documentTree, d => typeFilters.includes(d.type)) : documentTree;
+      let folderUuidToUse = folderUuid || documentTree.uuid;
+
       let thisDocRefListing = docRefListing[pickerId];
+      let currentFolderWithLineage = findItem(documentTreeToUse, folderUuidToUse);
 
-      iterateNodes(documentTree, (lineage, node) => {
-        allDocuments.push({
-          name: node.name,
-          type: node.type,
-          uuid: node.uuid,
-          lineage,
-          lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
-        });
-      });
-
-      if (typeFilters.length > 0) {
-        allDocuments = allDocuments.filter(n => typeFilters.includes(n.type));
-      }
 
       const onDocRefPickConfirmed = () => {
-        const result = findItem(documentTree, thisDocRefListing.selectedDocRefUuids[0]);
+        const result = findItem(documentTreeToUse, thisDocRefListing.selectedDocRefUuids[0]);
         onChange(result.node);
         setModalIsOpen(false);
       };
 
       return {
-        allDocuments,
+        currentFolderWithLineage,
         docRefListing: thisDocRefListing,
-        documentTree,
+        documentTree: documentTreeToUse,
         onDocRefPickConfirmed,
         selectionNotYetMade: thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
       };
@@ -76,17 +66,18 @@ const enhance = compose(
 const DocPickerModal = ({
   modalIsOpen,
   setModalIsOpen,
+  setFolderUuid,
 
+  currentFolderWithLineage,
   documentTree,
   onDocRefPickConfirmed,
   selectionNotYetMade,
-  allDocuments,
   pickerId,
-  typeFilters,
   value,
 }) => {
   let trigger;
-  if (value) {
+  
+  if (value && value.uuid) {
     const { lineage, node } = findItem(documentTree, value.uuid);
     const triggerValue = `${lineage.map(d => d.name).join(' > ')}${
       lineage.length > 0 ? ' > ' : ''
@@ -125,12 +116,17 @@ const DocPickerModal = ({
       <Modal.Content scrolling>
         <DocRefListing
           listingId={pickerId}
-          maxResults={5}
           icon="search"
           title="Search"
-          allDocRefs={allDocuments}
-          fixedDocRefTypeFilters={typeFilters}
-          openDocRef={d => console.log('Open Doc Ref?', d)}
+          includeBreadcrumbOnEntries={false}
+          parentFolder={currentFolderWithLineage.node}
+          allDocRefs={currentFolderWithLineage.node.children}
+          openDocRef={d => {
+            // This will open a folder even if children are hidden by filtering...
+            if (d.children && d.children.length > 0) {
+              setFolderUuid(d.uuid);
+            }
+          }}
         />
       </Modal.Content>
       <Modal.Actions>
@@ -156,10 +152,7 @@ EnhancedDocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.shape({
-    node: PropTypes.shape(DocRefPropType),
-    lineage: PropTypes.arrayOf(PropTypes.shape(DocRefPropType)),
-  }),
+  value: DocRefPropType,
 };
 
 EnhancedDocPickerModal.defaultProps = {

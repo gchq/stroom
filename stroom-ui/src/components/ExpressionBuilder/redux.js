@@ -16,11 +16,11 @@
 import { createActions, handleActions } from 'redux-actions';
 
 import {
-  moveItemInTree,
   assignRandomUuids,
   updateItemInTree,
-  addItemToTree,
+  addItemsToTree,
   deleteItemFromTree,
+  moveItemsInTree
 } from 'lib/treeUtils';
 
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
@@ -130,20 +130,20 @@ const reducer = handleActions(
     // Expression Term Added
     EXPRESSION_TERM_ADDED: (state, action) => ({
       ...state,
-      [action.payload.expressionId]: addItemToTree(
+      [action.payload.expressionId]: addItemsToTree(
         state[action.payload.expressionId],
         action.payload.operatorId,
-        NEW_TERM,
+        [NEW_TERM],
       ),
     }),
 
     // Expression Operator Added
     EXPRESSION_OPERATOR_ADDED: (state, action) => ({
       ...state,
-      [action.payload.expressionId]: addItemToTree(
+      [action.payload.expressionId]: addItemsToTree(
         state[action.payload.expressionId],
         action.payload.operatorId,
-        NEW_OPERATOR,
+        [NEW_OPERATOR],
       ),
     }),
 
@@ -169,10 +169,10 @@ const reducer = handleActions(
     // Expression Item Moved
     EXPRESSION_ITEM_MOVED: (state, action) => ({
       ...state,
-      [action.payload.expressionId]: moveItemInTree(
+      [action.payload.expressionId]: moveItemsInTree(
         state[action.payload.expressionId],
-        action.payload.itemToMove,
         action.payload.destination,
+        [action.payload.itemToMove],
       ),
     }),
 

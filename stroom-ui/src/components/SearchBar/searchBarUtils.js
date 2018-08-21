@@ -27,7 +27,7 @@ export const processSearchString = (dataSource, criteria) => {
 
       // Value validation
       const value = criterionObj.splitCriterion[2];
-      const valueIsValid = value != undefined && value != '';
+      const valueIsValid = value !== undefined && value !== '';
 
       validationResult = {
         original: criterionObj.criterion,
@@ -72,7 +72,7 @@ export const processSearchString = (dataSource, criteria) => {
  */
 const parse = (criterion) => {
   let split;
-  Object.keys(operatorMap).map((key) => {
+  Object.keys(operatorMap).forEach((key) => {
     if (criterion.includes(key)) {
       split = criterion.split(key);
       split.splice(1, 0, operatorMap[key]);
