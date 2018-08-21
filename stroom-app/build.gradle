@@ -88,6 +88,11 @@ dependencies {
     compile libs.guice3
     compile libs.jackson_annotations
     compile libs.javax_inject
+    compile libs.javax_activation
+    compile libs.javax_activation_impl
+    compile libs.jaxb_api
+    compile libs.jaxb_core
+    compile libs.jaxb_impl
     compile libs.jcommander
     compile libs.jetty_servlet
 
