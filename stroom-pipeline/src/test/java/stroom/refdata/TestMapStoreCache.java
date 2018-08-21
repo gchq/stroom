@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.security.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.Security;
 import stroom.util.cache.CacheManager;
@@ -39,7 +40,7 @@ public class TestMapStoreCache extends StroomUnitTest {
             final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager,
                     referenceDataLoader,
                     new MapStoreInternPool(),
-                    new Security(new MockSecurityContext()));
+                    new SecurityImpl(new MockSecurityContext()));
 
             String eventString = null;
 
