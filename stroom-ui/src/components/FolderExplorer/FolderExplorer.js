@@ -9,6 +9,7 @@ import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
+import withDocumentTree from './withDocumentTree';
 
 const {
   prepareDocRefCreation,
@@ -21,6 +22,7 @@ const {
 const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
+  withDocumentTree,
   connect(
     ({ folderExplorer: { documentTree }, docRefListing }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),

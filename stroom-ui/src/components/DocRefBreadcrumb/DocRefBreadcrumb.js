@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, branch, renderNothing } from 'recompose';
 import { Breadcrumb } from 'semantic-ui-react/dist/commonjs';
+import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
 import { findItem } from 'lib/treeUtils';
 
 const enhance = compose(
+  withDocumentTree,
   connect(({ folderExplorer: { documentTree } }, { docRefUuid }) => {
     const docRefWithLineage = findItem(documentTree, docRefUuid);
     return {

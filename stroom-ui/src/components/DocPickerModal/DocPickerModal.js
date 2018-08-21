@@ -24,6 +24,7 @@ import { Button, Modal, Input, Popup } from 'semantic-ui-react';
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
+import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
 const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
@@ -31,6 +32,7 @@ const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
 const enhance = compose(
   withModal,
   withFolderUuid,
+  withDocumentTree,
   connect(
     (
       { folderExplorer: { documentTree }, docRefListing },

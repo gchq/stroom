@@ -15,28 +15,34 @@
  */
 
 import React from 'react';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { iterateNodes } from 'lib/treeUtils';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
+import { withDocumentTree } from 'components/FolderExplorer';
 
-const enhance = connect(({ folderExplorer: { documentTree } }, props) => {
-  const allDocuments = [];
+const enhance = compose(
+  withDocumentTree,
+  connect(({ folderExplorer: { documentTree } }, props) => {
+    const allDocuments = [];
 
-  iterateNodes(documentTree, (lineage, node) => {
-    allDocuments.push({
-      name: node.name,
-      type: node.type,
-      uuid: node.uuid,
-      lineage,
-      lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+    iterateNodes(documentTree, (lineage, node) => {
+      allDocuments.push({
+        name: node.name,
+        type: node.type,
+        uuid: node.uuid,
+        lineage,
+        lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+      });
     });
-  });
 
-  return {
-    allDocuments,
-  };
-}, {});
+    return {
+      allDocuments,
+    };
+  }, {}
+  )
+);
 
 const AppSearch = ({ allDocuments }) => (
   <DocRefListingWithRouter
