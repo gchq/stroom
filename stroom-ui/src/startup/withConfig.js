@@ -3,7 +3,6 @@ import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react';
 
-import { fetchDocTree, fetchDocRefTypes } from 'components/FolderExplorer/explorerClient';
 import { fetchConfig } from './config';
 
 /**
@@ -17,9 +16,7 @@ export default compose(
       config,
     }),
     {
-      fetchConfig,
-      fetchDocTree,
-      fetchDocRefTypes,
+      fetchConfig
     },
   ),
   lifecycle({
@@ -31,10 +28,4 @@ export default compose(
     ({ config: { isReady } }) => !isReady,
     renderComponent(() => <Loader active>Awaiting Config</Loader>),
   ),
-  lifecycle({
-    componentDidMount() {
-      this.props.fetchDocTree();
-      this.props.fetchDocRefTypes();
-    },
-  }),
 );

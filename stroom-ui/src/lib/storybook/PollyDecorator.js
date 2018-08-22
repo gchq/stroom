@@ -20,7 +20,14 @@ import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { Polly } from '@pollyjs/core';
 import * as JsSearch from 'js-search';
 
-import { guid, findItem, addItemsToTree, findByUuids, deleteItemsFromTree, iterateNodes } from 'lib/treeUtils';
+import {
+  guid,
+  findItem,
+  addItemsToTree,
+  findByUuids,
+  deleteItemsFromTree,
+  iterateNodes,
+} from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 import withConfig from 'startup/withConfig';
 
@@ -73,40 +80,47 @@ server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
 // Search
-server.post(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
-  const { searchTerm } = JSON.parse(req.body);
+server.get(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
+  const {
+    searchTerm, docRefType, pageOffset, pageSize,
+  } = req.query;
+
   let searchResults = [];
+  const searchTermValid = searchTerm && searchTerm.length > 1;
+  const docRefTypeValid = docRefType && docRefType.length > 1;
 
-  const allDocuments = [];
-  iterateNodes(testCache.data.documentTree, (lineage, node) => {
-    allDocuments.push({
-      name: node.name,
-      type: node.type,
-      uuid: node.uuid,
-      lineage,
-      lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+  if (searchTermValid || docRefTypeValid) {
+    iterateNodes(testCache.data.documentTree, (lineage, node) => {
+      searchResults.push({
+        name: node.name,
+        type: node.type,
+        uuid: node.uuid,
+        lineage,
+        lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+      });
     });
-  });
 
-  const search = new JsSearch.Search('uuid');
-  search.addIndex('name');
-  search.addIndex('lineageNames');
-  search.addDocuments(allDocuments);
+    if (searchTermValid) {
+      const search = new JsSearch.Search('uuid');
+      search.addIndex('name');
+      search.addIndex('lineageNames');
+      search.addDocuments(searchResults);
 
-  console.log('Searching', {searchTerm, tree: testCache.data.documentTree});
-
-  if (searchTerm && searchTerm.length > 1) {
-    searchResults = search.search(searchTerm).map(s => ({
-      node: {
-        name: s.name,
-        type: s.type,
-        uuid: s.uuid,
-        lineage: s.lineage,
-      },
-    }));
+      searchResults = search.search(searchTerm);
+    }
+    
+    if (docRefTypeValid) {
+      searchResults = searchResults.filter(d => d.type === docRefType);
+    }
   }
 
-  res.json(searchResults);
+  res.json(searchResults
+    .map(s => ({
+      name: s.name,
+      type: s.type,
+      uuid: s.uuid,
+    }))
+    .splice(pageOffset, pageSize));
 });
 // // Get Info
 server
@@ -129,15 +143,21 @@ server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) 
 });
 // // Create Document
 server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
-  const { docRefType, docRefName, destinationFolderRef, permissionInheritance } = JSON.parse(req.body);
+  const {
+    docRefType, docRefName, destinationFolderRef, permissionInheritance,
+  } = JSON.parse(req.body);
 
-  let newDocRef = {
+  const newDocRef = {
     uuid: guid(),
     type: docRefType,
     name: docRefName,
-    children: (docRefType === 'Folder') ? [] : undefined
-  }
-  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, [newDocRef]);
+    children: docRefType === 'Folder' ? [] : undefined,
+  };
+  testCache.data.documentTree = addItemsToTree(
+    testCache.data.documentTree,
+    destinationFolderRef.uuid,
+    [newDocRef],
+  );
 
   res.json(testCache.data.documentTree);
 });
@@ -147,15 +167,22 @@ const copyDocRef = docRef => ({
   uuid: guid(),
   type: docRef.type,
   name: `${docRef.name}-copy-${guid()}`,
-  children: docRef.children ? docRef.children.map(copyDocRef) : undefined
-})
+  children: docRef.children ? docRef.children.map(copyDocRef) : undefined,
+});
 
 // Copy Document
 server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-  const copies = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node).map(copyDocRef);
-  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, copies);
+  const copies = docRefs
+    .map(d => findItem(testCache.data.documentTree, d.uuid))
+    .map(d => d.node)
+    .map(copyDocRef);
+  testCache.data.documentTree = addItemsToTree(
+    testCache.data.documentTree,
+    destinationFolderRef.uuid,
+    copies,
+  );
 
   res.json(testCache.data.documentTree);
 });
@@ -163,10 +190,17 @@ server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-  let docRefUuidsToDelete = docRefs.map(d => d.uuid);
-  let itemsToMove = findByUuids(testCache.data.documentTree, docRefUuidsToDelete);
-  testCache.data.documentTree = deleteItemsFromTree(testCache.data.documentTree, docRefUuidsToDelete);
-  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, itemsToMove);
+  const docRefUuidsToDelete = docRefs.map(d => d.uuid);
+  const itemsToMove = findByUuids(testCache.data.documentTree, docRefUuidsToDelete);
+  testCache.data.documentTree = deleteItemsFromTree(
+    testCache.data.documentTree,
+    docRefUuidsToDelete,
+  );
+  testCache.data.documentTree = addItemsToTree(
+    testCache.data.documentTree,
+    destinationFolderRef.uuid,
+    itemsToMove,
+  );
 
   res.json(testCache.data.documentTree);
 });
@@ -232,7 +266,7 @@ server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
   }));
 
 const enhanceLocal = compose(
-  connect(({config}) => ({config}), {
+  connect(({ config }) => ({ config }), {
     resetAllUrls,
   }),
   lifecycle({
@@ -246,17 +280,17 @@ const enhanceLocal = compose(
     componentDidMount() {
       // Replace all the 'server side data' with the properties passed in
       testCache.data = {
-        documentTree: {...this.props.documentTree},
+        documentTree: { ...this.props.documentTree },
         docRefTypes: [...this.props.docRefTypes],
-        pipelines: {...this.props.pipelines},
+        pipelines: { ...this.props.pipelines },
         elements: [...this.props.elements],
-        elementProperties: {...this.props.elementProperties},
-        xslt: {...this.props.xslt},
-        trackers: [...this.props.trackers]
+        elementProperties: { ...this.props.elementProperties },
+        xslt: { ...this.props.xslt },
+        trackers: [...this.props.trackers],
       };
     },
   }),
-  withConfig
+  withConfig,
 );
 
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
@@ -268,7 +302,7 @@ PollyComponent.propTypes = {
   elements: PropTypes.array.isRequired,
   elementProperties: PropTypes.object.isRequired,
   xslt: PropTypes.object.isRequired,
-  trackers: PropTypes.array.isRequired
+  trackers: PropTypes.array.isRequired,
 };
 
 PollyComponent.defaultProps = {
@@ -278,8 +312,8 @@ PollyComponent.defaultProps = {
   elements: [],
   elementProperties: {},
   xslt: {},
-  trackers: []
-}
+  trackers: [],
+};
 
 export const PollyDecorator = props => storyFn => (
   <PollyComponent {...props}>{storyFn()}</PollyComponent>

@@ -10,6 +10,7 @@ import DocRefListingEntry from './DocRefListingEntry';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { actionCreators } from './redux';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
+import AppSearchBar from 'components/AppSearchBar';
 
 const upKeys = ['k', 'ctrl+k', 'up'];
 const downKeys = ['j', 'ctrl+j', 'down'];
@@ -21,25 +22,6 @@ const {
   docRefSelectionUp,
   docRefSelectionDown,
 } = actionCreators;
-
-// We need to prevent up and down keys from moving the cursor around in the input
-
-// I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap
-// hasn't handled keypresses that occured inside inputs or textareas.
-// There were some changes to fix this, like binding specifically
-// to a field. But that requires getting the element from the DOM and
-// we'd rather not break outside React to do this. The other alternative
-// is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
-
-// // Up
-// const upKeycode = 38;
-// const kKeycode = 75;
-
-// // Down
-// const downKeycode = 40;
-// const jKeycode = 74;
-
-// const enterKeycode = 13;
 
 const enhance = compose(
   connect(
@@ -62,12 +44,17 @@ const enhance = compose(
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
-    const { selectedDocRef, allDocRefs } = docRefListing || {};
+    console.log('Doc Ref Listing WITH PROPS', docRefListing)
     const onOpenKey = () => {
-      if (selectedDocRef !== undefined) {
-        openDocRef(selectedDocRef);
-      } else if (allDocRefs.length > 0) {
-        openDocRef(allDocRefs[0]);
+
+      // SOME JAVASCRIPT SCOPING NONSENSE IS BREAKING THIS
+      // TIME TO STOP
+      console.log('Doc Ref Listing ON OPEN', docRefListing)
+      const { selectedItem, allDocRefs } = docRefListing || {};
+      console.log('Sup',  {selectedItem, allDocRefs, openDocRef})
+      if (selectedItem !== -1) {
+        console.log('Seriously?')
+        openDocRef(allDocRefs[selectedItem]);
       }
     };
     const onUpKey = () => {
@@ -86,7 +73,7 @@ const enhance = compose(
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
-        listingId, allDocRefs, docRefListingMounted, allowMultiSelect
+        listingId, allDocRefs, docRefListingMounted, allowMultiSelect,
       } = this.props;
 
       const docRefsChanged = JSON.stringify(allDocRefs) !== JSON.stringify(prevProps.allDocRefs);
@@ -105,7 +92,7 @@ const enhance = compose(
         onOpenKey,
         allowMultiSelect,
       } = this.props;
-      
+
       docRefListingMounted(listingId, allDocRefs, allowMultiSelect);
 
       Mousetrap.bind(upKeys, onUpKey);
@@ -130,9 +117,7 @@ const DocRefListing = ({
   listingId,
   icon,
   title,
-  docRefListing: {
-    filterTerm, allDocRefs, docRefTypeFilters
-  },
+  docRefListing: { filterTerm, allDocRefs, docRefTypeFilters },
   openDocRef,
   includeBreadcrumbOnEntries,
   actionBarItems,
@@ -141,7 +126,10 @@ const DocRefListing = ({
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={(actionBarItems.length > 0) ? 11 : 16}>
+      <Grid.Column width={16}>
+        <AppSearchBar />
+      </Grid.Column>
+      <Grid.Column width={actionBarItems.length > 0 ? 11 : 16}>
         <Header as="h3">
           <Icon name={icon} />
           <Header.Content>{title}</Header.Content>
@@ -152,18 +140,29 @@ const DocRefListing = ({
           )}
         </Header>
       </Grid.Column>
-      {(actionBarItems.length > 0) && <Grid.Column width={5}>
-        <span className="doc-ref-listing-entry__action-bar">
-          {actionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
-            <Popup
-              key={i}
-              trigger={<Button className='action-bar__button' circular onClick={onClick} icon={icon} disabled={disabled} />}
-              content={tooltip}
-            />
-          ))}
-        </span>
-      </Grid.Column>
-      }
+      {actionBarItems.length > 0 && (
+        <Grid.Column width={5}>
+          <span className="doc-ref-listing-entry__action-bar">
+            {actionBarItems.map(({
+ onClick, icon, tooltip, disabled,
+}, i) => (
+  <Popup
+    key={i}
+    trigger={
+      <Button
+        className="action-bar__button"
+        circular
+        onClick={onClick}
+        icon={icon}
+        disabled={disabled}
+      />
+                }
+    content={tooltip}
+  />
+            ))}
+          </span>
+        </Grid.Column>
+      )}
     </Grid>
     <div className="doc-ref-listing">
       {allDocRefs.map(docRef => (

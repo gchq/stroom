@@ -203,11 +203,11 @@ class ExplorerServiceImpl implements ExplorerService {
         return true;
     }
 
-    private boolean checkType(final ExplorerNode explorerNode, final Set<String> types) {
+    static boolean checkType(final ExplorerNode explorerNode, final Set<String> types) {
         return types == null || types.contains(explorerNode.getType());
     }
 
-    private boolean checkTags(final ExplorerNode explorerNode, final Set<String> tags) {
+    static boolean checkTags(final ExplorerNode explorerNode, final Set<String> tags) {
         if (tags == null) {
             return true;
         } else if (explorerNode.getTags() != null && explorerNode.getTags().length() > 0 && tags.size() > 0) {
@@ -221,7 +221,7 @@ class ExplorerServiceImpl implements ExplorerService {
         return false;
     }
 
-    private boolean checkName(final ExplorerNode explorerNode, final String nameFilter) {
+    static boolean checkName(final ExplorerNode explorerNode, final String nameFilter) {
         return nameFilter == null || explorerNode.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
     }
 

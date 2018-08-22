@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps } from 'recompose';
+import { compose, withProps, branch, renderComponent } from 'recompose';
+import { Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
@@ -37,6 +38,7 @@ const enhance = compose(
       fetchDocInfo,
     },
   ),
+  branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
   withProps(({
     folder,
     prepareDocRefCreation,

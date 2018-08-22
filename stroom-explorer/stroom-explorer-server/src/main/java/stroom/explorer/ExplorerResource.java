@@ -3,19 +3,18 @@ package stroom.explorer;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.*;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.HasNodeState;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Api(
@@ -39,6 +38,34 @@ public class ExplorerResource {
     }
 
     @GET
+    @Path("/search")
+    public Response search(
+            final @NotNull @QueryParam("searchTerm") String searchTerm,
+            final @QueryParam("pageOffset") Long pageOffset,
+            final @QueryParam("pageSize") Long pageSize) {
+        // For now, just do this every time the whole tree is fetched
+        explorerTreeModel.rebuild();
+
+        final TreeModel treeModel = explorerTreeModel.getModel();
+        final TreeModel filteredModel = new TreeModelImpl();
+
+        final ExplorerTreeFilter filter = new ExplorerTreeFilter(
+                null,
+                null,
+                Collections.singleton(DocumentPermissionNames.READ),
+                searchTerm,
+                true);
+
+        filterDescendants(null, treeModel, filteredModel, 0, filter);
+
+        // Flatten this tree out
+        final List<DocRef> results = new ArrayList<>();
+        getFlatResults(filteredModel, results);
+
+        return Response.ok(results).build();
+    }
+
+    @GET
     @Path("/all")
     public Response getExplorerTree() {
         // For now, just do this every time the whole tree is fetched
@@ -47,7 +74,14 @@ public class ExplorerResource {
         final TreeModel treeModel = explorerTreeModel.getModel();
         final TreeModel filteredModel = new TreeModelImpl();
 
-        filterDescendants(null, treeModel, filteredModel, 0, DocumentPermissionNames.READ);
+        final ExplorerTreeFilter filter = new ExplorerTreeFilter(
+                null,
+                null,
+                Collections.singleton(DocumentPermissionNames.READ),
+                null,
+                true);
+
+        filterDescendants(null, treeModel, filteredModel, 0, filter);
         final SimpleDocRefTreeDTO result = getRoot(filteredModel);
 
         return Response.ok(result).build();
@@ -254,10 +288,10 @@ public class ExplorerResource {
     }
 
     private boolean filterDescendants(final ExplorerNode parent,
-                                   final TreeModel treeModelIn,
-                                   final TreeModel treeModelOut,
-                                   final int currentDepth,
-                                   final String...documentPermissionNames) {
+                                      final TreeModel treeModelIn,
+                                      final TreeModel treeModelOut,
+                                      final int currentDepth,
+                                      final ExplorerTreeFilter filter) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildMap().get(parent);
@@ -265,12 +299,15 @@ public class ExplorerResource {
 
             for (final ExplorerNode child : children) {
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, documentPermissionNames);
+                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, filter);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
 
-                } else if (checkSecurity(child, documentPermissionNames)) {
+                } else if (ExplorerServiceImpl.checkType(child, filter.getIncludedTypes())
+                        && ExplorerServiceImpl.checkTags(child, filter.getTags())
+                        && (ExplorerServiceImpl.checkName(child, filter.getNameFilter()))
+                        && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added++;
                 }
@@ -280,8 +317,8 @@ public class ExplorerResource {
         return (added > 0);
     }
 
-    private boolean checkSecurity(final ExplorerNode explorerNode, final String... requiredPermissions) {
-        if (requiredPermissions == null || requiredPermissions.length == 0) {
+    private boolean checkSecurity(final ExplorerNode explorerNode, final Set<String> requiredPermissions) {
+        if (requiredPermissions == null || requiredPermissions.size() == 0) {
             return false;
         }
 
@@ -294,6 +331,32 @@ public class ExplorerResource {
         }
 
         return true;
+    }
+
+    private void getFlatResults(final TreeModel filteredModel, final List<DocRef> results) {
+        final List<ExplorerNode> children = filteredModel.getChildMap().get(null);
+        if (children != null) {
+            final ExplorerNode systemNode = children.stream()
+                    .filter(c -> c.getName().equals("System"))
+                    .findFirst()
+                    .orElse(children.get(0));
+
+            results.add(new DocRef.Builder()
+                    .uuid(systemNode.getUuid())
+                    .name(systemNode.getName())
+                    .type(systemNode.getType())
+                    .build());
+
+            getChildren(systemNode, filteredModel)
+                    .stream()
+                    .map(c ->
+                            new DocRef.Builder()
+                                    .uuid(c.getUuid())
+                                    .name(c.getName())
+                                    .type(c.getType())
+                                    .build())
+                    .forEach(results::add);
+        }
     }
 
     private SimpleDocRefTreeDTO getRoot(final TreeModel filteredModel) {
