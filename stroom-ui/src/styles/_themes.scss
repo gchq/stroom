@@ -65,6 +65,12 @@ $themes: (
     action-bar__button-border:none,
     action-bar__button-background-color:#282829,
     action-bar__button-color: #adadad,
-    action-bar__button-color--hover: #ffffff
+    action-bar__button-color--hover: #ffffff,
+
+    AppSearch__search-input-background-color: #282829,
+    AppSearch__search-input-icon-color: #ddd,
+    AppSearch__dropdown-item-color: #ddd,
+    AppSearch__menu-border: 1px solid #4d5250,
+    AppSearch__menu-background-color: #282829,
   ),
 );

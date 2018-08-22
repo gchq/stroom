@@ -229,3 +229,31 @@ table {
     color: themed('action-bar__button-color--hover') !important;
   }
 }
+
+
+
+
+.AppSearch__search-input input {
+  @include themify($themes) {
+    background-color: themed('AppSearch__search-input-background-color') !important;
+  }
+}
+
+.AppSearch__search-input i {
+  @include themify($themes) {
+    color: themed('AppSearch__search-input-icon-color') !important;
+  }
+}
+
+.AppSearch__dropdown-item {
+  @include themify($themes) {
+    color: themed('AppSearch__dropdown-item-color') !important;
+  }
+}
+
+.AppSearch__menu {
+  @include themify($themes) {
+    background-color: themed('AppSearch__menu-background-color') !important;
+    border: themed('AppSearch__menu-border') !important;
+  }
+}
