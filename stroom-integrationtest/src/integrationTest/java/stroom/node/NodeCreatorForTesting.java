@@ -26,6 +26,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
+import stroom.pipeline.writer.PathCreator;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -96,7 +97,7 @@ public class NodeCreatorForTesting implements NodeCreator {
 
     private VolumeEntity createVolume(final String path, final Node node) {
         final VolumeEntity vol = new VolumeEntity();
-        final String p = path;//StroomProperties.replaceProperties(path);
+        final String p = PathCreator.replaceSystemProperties(path);
         vol.setPath(p);
         vol.setNode(node);
         return vol;

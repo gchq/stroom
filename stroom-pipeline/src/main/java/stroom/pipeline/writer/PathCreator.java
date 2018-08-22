@@ -96,7 +96,7 @@ public class PathCreator {
         return path;
     }
 
-    public String replaceSystemProperties(String path) {
+    public static String replaceSystemProperties(String path) {
         // Replace stroom.temp
         path = replace(
                 path,
