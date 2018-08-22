@@ -124,9 +124,6 @@ const DocRefListingEntry = ({
   canDrop,
 }) => {
   let className = '';
-  if (selectedDocRefUuids.includes(node.uuid)) {
-    className += ' doc-ref-listing__item--selected';
-  }
   if (isOver) {
     className += ' dnd-over';
   }
@@ -141,6 +138,7 @@ const DocRefListingEntry = ({
   return connectDragSource(connectDropTarget(<div>
     <RawDocRefListingEntry
       className={className}
+      isSelected={selectedDocRefUuids.includes(node.uuid)}
       onRowClick={() => {
             docRefSelectionToggled(listingId, node.uuid, keyIsDown);
           }}

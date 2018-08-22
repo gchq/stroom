@@ -26,13 +26,12 @@ const stripDocRef = docRef => ({
   name: docRef.name,
 });
 
-export const searchApp = (searchTerm) => (dispatch, getState) => {
+export const searchApp = ({term='', docRefType='', pageOffset=0, pageSize=10}) => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/search`;
-  wrappedPost(dispatch, state, url, response =>
-    response.json().then(searchResults => dispatch(searchResultsReturned(searchResults))), {
-      body: JSON.stringify({searchTerm})
-    });
+  const params = `searchTerm=${term}&docRefType=${docRefType}&pageOffset=${pageOffset}&pageSize=${pageSize}`;
+  const url = `${state.config.explorerServiceUrl}/search?${params}`;
+  wrappedGet(dispatch, state, url, response =>
+    response.json().then(searchResults => dispatch(searchResultsReturned(searchResults))));
 }
 
 export const fetchDocTree = () => (dispatch, getState) => {

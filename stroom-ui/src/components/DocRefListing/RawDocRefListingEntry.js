@@ -10,11 +10,14 @@ const RawDocRefListingEntry = ({
   openDocRef,
   onRowClick,
   onNameClick,
+  isSelected,
   includeBreadcrumb,
 }) => (
   <div
     key={node.uuid}
-    className={`doc-ref-listing__item ${className}`}
+    className={`doc-ref-listing__item ${className} ${
+      isSelected ? 'doc-ref-listing__item--selected' : ''
+    }`}
     onClick={(e) => {
       onRowClick();
       e.preventDefault();
@@ -45,6 +48,7 @@ const RawDocRefListingEntry = ({
 RawDocRefListingEntry.propTypes = {
   className: PropTypes.string,
   node: DocRefPropType,
+  isSelected: PropTypes.bool.isRequired,
   openDocRef: PropTypes.func.isRequired,
   onRowClick: PropTypes.func.isRequired,
   onNameClick: PropTypes.func.isRequired,
@@ -52,6 +56,7 @@ RawDocRefListingEntry.propTypes = {
 
 RawDocRefListingEntry.defaultProps = {
   includeBreadcrumb: true,
+  isSelected: false,
 };
 
 export default RawDocRefListingEntry;

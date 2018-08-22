@@ -153,13 +153,6 @@ const enhance = compose(
         icon: 'file outline',
         style: 'nav',
       },
-      {
-        key: 'search',
-        title: 'Search',
-        onClick: () => history.push(`${pathPrefix}/search`),
-        icon: 'search',
-        style: 'nav',
-      },
     ],
   })),
 );
