@@ -22,7 +22,6 @@ import {
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
 import { reducer as appSearch } from 'components/AppSearchBar/redux';
-import { reducer as docRefListing } from 'components/DocRefListing';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as docRefTypes } from 'components/DocRefTypes';
 import { reducer as lineContainer } from 'components/LineTo';
@@ -39,6 +38,7 @@ import { reducer as fetch } from 'lib/fetchTracker.redux';
 import { reducer as dataViewers } from 'components/DataViewer';
 import { reducer as keyIsDown } from 'lib/KeyIsDown';
 import { reducer as userSettings } from 'sections/UserSettings';
+import { reducer as selectableItemListings } from 'lib/withSelectableItemListing';
 
 export default combineReducers({
   routing: routerReducer,
@@ -59,8 +59,8 @@ export default combineReducers({
   keyIsDown,
   docRefTypes,
   appChrome,
-  docRefListing,
   userSettings,
   docRefInfo,
   appSearch,
+  selectableItemListings
 });

@@ -1,106 +1,29 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { connect } from 'react-redux';
 import { Header, Icon, Grid, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
-import Mousetrap from 'mousetrap';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import DocRefListingEntry from './DocRefListingEntry';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
-import { actionCreators } from './redux';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
 import AppSearchBar from 'components/AppSearchBar';
+import withSelectableItemListing from 'lib/withSelectableItemListing';
 
-const upKeys = ['k', 'ctrl+k', 'up'];
-const downKeys = ['j', 'ctrl+j', 'down'];
-const openKeys = ['enter'];
-
-const {
-  docRefListingMounted,
-  docRefListingUnmounted,
-  docRefSelectionUp,
-  docRefSelectionDown,
-} = actionCreators;
-
-const enhance = compose(
-  connect(
-    ({ docRefListing, docRefTypes }, { listingId }) => ({
-      docRefListing: docRefListing[listingId],
-      docRefTypes,
-    }),
-    {
-      docRefListingMounted,
-      docRefListingUnmounted,
-      docRefSelectionUp,
-      docRefSelectionDown,
-    },
-  ),
-  lifecycle({
-    componentDidUpdate(prevProps, prevState, snapshot) {
-      const {
-        listingId, allDocRefs, docRefListingMounted, allowMultiSelect,
-      } = this.props;
-
-      const docRefsChanged = JSON.stringify(allDocRefs) !== JSON.stringify(prevProps.allDocRefs);
-
-      if (docRefsChanged) {
-        docRefListingMounted(listingId, allDocRefs, allowMultiSelect);
-      }
-    },
-    componentDidMount() {
-      const {
-        docRefListingMounted,
-        listingId,
-        allDocRefs,
-        allowMultiSelect,
-        docRefListing,
-        openDocRef,
-        docRefSelectionUp,
-        docRefSelectionDown,
-      } = this.props;
-
-      docRefListingMounted(listingId, allDocRefs, allowMultiSelect);
-
-      if (docRefListing) {
-        Mousetrap.bind(upKeys, () => {
-          docRefSelectionUp(listingId);
-        });
-        Mousetrap.bind(downKeys, () => {
-          docRefSelectionDown(listingId);
-        });
-        Mousetrap.bind(openKeys, () => {
-          const { selectedItem, allDocRefs } = docRefListing;
-          if (selectedItem !== -1) {
-            openDocRef(allDocRefs[selectedItem]);
-          }
-        });
-      }
-    },
-    componentWillUnmount() {
-      const { listingId, docRefListingUnmounted } = this.props;
-      Mousetrap.unbind(upKeys);
-      Mousetrap.unbind(downKeys);
-      Mousetrap.unbind(openKeys);
-      docRefListingUnmounted(listingId);
-    },
-  }),
-  branch(
-    ({ docRefListing }) => !docRefListing,
-    renderComponent(() => <Loader active>Creating Doc Ref Listing</Loader>),
-  ),
-);
+const enhance = withSelectableItemListing(({ listingId, openDocRef }) => ({
+  listingId,
+  openItem: openDocRef,
+}));
 
 const DocRefListing = ({
   listingId,
   icon,
   title,
-  docRefListing: { filterTerm, allDocRefs, docRefTypeFilters },
   openDocRef,
   includeBreadcrumbOnEntries,
   actionBarItems,
   parentFolder,
   hasTypesFilteredOut,
+  items,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
@@ -143,9 +66,10 @@ const DocRefListing = ({
       )}
     </Grid>
     <div className="doc-ref-listing">
-      {allDocRefs.map(docRef => (
+      {items.map((docRef, index) => (
         <DocRefListingEntry
           key={docRef.uuid}
+          index={index}
           listingId={listingId}
           docRefUuid={docRef.uuid}
           includeBreadcrumb={includeBreadcrumbOnEntries}
@@ -164,14 +88,14 @@ EnhancedDocRefListing.propTypes = {
   listingId: PropTypes.string.isRequired,
   parentFolder: DocRefPropType,
   includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
-  allDocRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
+  items: PropTypes.arrayOf(DocRefPropType).isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };
 
 EnhancedDocRefListing.defaultProps = {
   actionBarItems: [],
-  allDocRefs: [],
+  items: [],
   includeBreadcrumbOnEntries: true,
   allowMultiSelect: false,
 };

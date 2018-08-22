@@ -8,11 +8,9 @@ import { DropTarget } from 'react-dnd';
 import { findItem, canMove } from 'lib/treeUtils';
 import RawDocRefListingEntry from './RawDocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
-import { actionCreators as docRefListingActionCreators } from './redux';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
 
-const { docRefSelectionToggled } = docRefListingActionCreators;
 const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 
 const dropTarget = {
@@ -62,19 +60,20 @@ const dragSource = {
     return true;
   },
   beginDrag({
-    docRefUuid,
-    docRefListing: { selectedDocRefUuids, filteredDocRefs },
+    docRefWithLineage: {node: docRef},
+    selectableItemListing: { selectedItems },
     keyIsDown: { Control, Meta },
   }) {
-    let docRefUuids = [docRefUuid];
+    let docRefs = [docRef];
 
     // If we are dragging one of the items in a selection, bring across the entire selection
+    let selectedDocRefUuids = selectedItems.map(d => d.uuid);
     if (selectedDocRefUuids.includes(docRefUuid)) {
-      docRefUuids = selectedDocRefUuids;
+      docRefs = selectedItems;
     }
 
     return {
-      docRefs: filteredDocRefs.filter(d => docRefUuids.includes(d.uuid)),
+      docRefs,
       isCopy: !!(Control || Meta),
     };
   },
@@ -91,15 +90,14 @@ const enhance = compose(
   withDocumentTree,
   connect(
     (
-      { folderExplorer: { documentTree }, docRefListing, keyIsDown },
+      { folderExplorer: { documentTree }, selectableItemListings, keyIsDown },
       { listingId, docRefUuid },
     ) => ({
-      docRefListing: docRefListing[listingId],
+      selectableItemListing: selectableItemListings[listingId],
       docRefWithLineage: findItem(documentTree, docRefUuid),
       keyIsDown,
     }),
     {
-      docRefSelectionToggled,
       prepareDocRefCopy,
       prepareDocRefMove,
     },
@@ -111,13 +109,12 @@ const enhance = compose(
 
 const DocRefListingEntry = ({
   docRefWithLineage: { node },
+  index,
   listingId,
-  docRefListing: { selectedDocRefUuids, inMultiSelectMode },
+  selectableItemListing: { selectedItems },
   onNameClick,
   includeBreadcrumb,
-  docRefSelectionToggled,
   openDocRef,
-  keyIsDown,
   connectDropTarget,
   connectDragSource,
   isOver,
@@ -138,14 +135,11 @@ const DocRefListingEntry = ({
   return connectDragSource(connectDropTarget(<div>
     <RawDocRefListingEntry
       className={className}
-      isSelected={selectedDocRefUuids.includes(node.uuid)}
-      onRowClick={() => {
-            docRefSelectionToggled(listingId, node.uuid, keyIsDown);
-          }}
-      onNameClick={() => onNameClick(node)}
+      index={index}
       includeBreadcrumb={includeBreadcrumb}
       openDocRef={openDocRef}
-      node={node}
+      docRef={node}
+      listingId={listingId}
     />
   </div>));
 };
@@ -153,6 +147,7 @@ const DocRefListingEntry = ({
 const EnhancedDocRefListingEntry = enhance(DocRefListingEntry);
 
 EnhancedDocRefListingEntry.propTypes = {
+  index: PropTypes.number.isRequired,
   listingId: PropTypes.string.isRequired,
   docRefUuid: PropTypes.string.isRequired,
   includeBreadcrumb: PropTypes.bool.isRequired,
