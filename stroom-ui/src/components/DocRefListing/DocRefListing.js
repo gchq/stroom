@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
+import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 import { Header, Icon, Grid, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
@@ -36,40 +36,6 @@ const enhance = compose(
       docRefSelectionDown,
     },
   ),
-  withProps(({
-    listingId,
-    docRefListing,
-    openDocRef,
-    docRefSelectionUp,
-    docRefSelectionDown,
-    docRefListingUnmounted,
-  }) => {
-    console.log('Doc Ref Listing WITH PROPS', docRefListing)
-    const onOpenKey = () => {
-
-      // SOME JAVASCRIPT SCOPING NONSENSE IS BREAKING THIS
-      // TIME TO STOP
-      console.log('Doc Ref Listing ON OPEN', docRefListing)
-      const { selectedItem, allDocRefs } = docRefListing || {};
-      console.log('Sup',  {selectedItem, allDocRefs, openDocRef})
-      if (selectedItem !== -1) {
-        console.log('Seriously?')
-        openDocRef(allDocRefs[selectedItem]);
-      }
-    };
-    const onUpKey = () => {
-      docRefSelectionUp(listingId);
-    };
-    const onDownKey = () => {
-      docRefSelectionDown(listingId);
-    };
-
-    return {
-      onOpenKey,
-      onUpKey,
-      onDownKey,
-    };
-  }),
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
@@ -85,19 +51,31 @@ const enhance = compose(
     componentDidMount() {
       const {
         docRefListingMounted,
-        onUpKey,
-        onDownKey,
         listingId,
         allDocRefs,
-        onOpenKey,
         allowMultiSelect,
+        docRefListing,
+        openDocRef,
+        docRefSelectionUp,
+        docRefSelectionDown,
       } = this.props;
 
       docRefListingMounted(listingId, allDocRefs, allowMultiSelect);
 
-      Mousetrap.bind(upKeys, onUpKey);
-      Mousetrap.bind(downKeys, onDownKey);
-      Mousetrap.bind(openKeys, onOpenKey);
+      if (docRefListing) {
+        Mousetrap.bind(upKeys, () => {
+          docRefSelectionUp(listingId);
+        });
+        Mousetrap.bind(downKeys, () => {
+          docRefSelectionDown(listingId);
+        });
+        Mousetrap.bind(openKeys, () => {
+          const { selectedItem, allDocRefs } = docRefListing;
+          if (selectedItem !== -1) {
+            openDocRef(allDocRefs[selectedItem]);
+          }
+        });
+      }
     },
     componentWillUnmount() {
       const { listingId, docRefListingUnmounted } = this.props;

@@ -93,7 +93,6 @@ const AppSearchBar = ({
           searchTermUpdated(value);
           searchApp({ term: value });
         }}
-        autoFocus
       />
     }
   >
