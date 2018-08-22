@@ -25,6 +25,13 @@ $themes: (
     breadcrumb__divider___color: black,
     breadcrumb__section___color: black,
     breadcrumb__section--active___color: black,
+
+    dock-ref-listing__item-border: darkgrey,
+
+    action-bar__button-border:none,
+    action-bar__button-background-color:#adadad,
+    action-bar__button-color: #4d5250,
+    action-bar__button-color--hover: black
   ),
   dark: (
     background__color: #282829,
@@ -52,5 +59,12 @@ $themes: (
     breadcrumb__divider___color: white,
     breadcrumb__section___color: white,
     breadcrumb__section--active___color: white,
+
+    dock-ref-listing__item-border: darkgrey,
+
+    action-bar__button-border:none,
+    action-bar__button-background-color:#282829,
+    action-bar__button-color: #adadad,
+    action-bar__button-color--hover: #ffffff
   ),
 );

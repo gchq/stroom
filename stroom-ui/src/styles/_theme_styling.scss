@@ -203,3 +203,29 @@ table {
     color: themed('breadcrumb__section--active___color') !important;
   }
 }
+
+
+
+
+.doc-ref-listing__item {
+  @include themify($themes){
+    border-top: solid thin themed('dock-ref-listing__item-border') !important;
+  }
+}
+
+
+
+
+.action-bar__button {
+  @include themify($themes) {
+    border: themed('action-bar__button-border') !important;
+    background-color: themed('action-bar__button-background-color') !important;
+    color: themed('action-bar__button-color')
+  }
+}
+
+.action-bar__button:hover {
+  @include themify($themes) {
+    color: themed('action-bar__button-color--hover') !important;
+  }
+}
