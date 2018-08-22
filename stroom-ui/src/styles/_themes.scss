@@ -1,32 +1,70 @@
 $themes: (
   light: (
-    backgroundColor: #fff,
-    textColor: rgba(0,0,0,.8),
-    buttonTextColor: rgba(0,0,0,.6),
-    buttonTextTransform: none,
-    buttonTextHoverColor: #61b0e7,
-    buttonColor: #dfe0e1,
-    buttonBorder: 0px solid #fff,
-    sidebarBackgroundColor:#2185d0,
-    sidebarColor: rgba(255,255,255,0.9),
-    sidebarHeaderColor: #fff,
-    headerIconColor: #2185d0,
-    tableBackgroundColor:#fff,
-    tableBorderColor: #dfe0e1,
+    background__color: #fff,
+    text__color: rgba(0,0,0,.8),
+
+    button__text-color: rgba(0,0,0,.6),
+    button__text-transform: none,
+    button__text-hover-color: #61b0e7,
+    button__color: #dfe0e1,
+    button__border: 0px solid #fff,
+
+    sidebar__background-color:#2185d0,
+    sidebar__color: rgba(255,255,255,0.9),
+    sidebar__header-color: #fff,
+
+    header__icon-color: #2185d0,
+
+    table__background-color:#fff,
+    table__border-color: #dfe0e1,
+
+    dropdown__background-color: #fff,
+    dropdown__border-color: #dfe0e1,
+    dropdown__hover-color: #dfe0e1,
+
+    breadcrumb__divider___color: black,
+    breadcrumb__section___color: black,
+    breadcrumb__section--active___color: black,
+
+    dock-ref-listing__item-border: darkgrey,
+
+    action-bar__button-border:none,
+    action-bar__button-background-color:#adadad,
+    action-bar__button-color: #4d5250,
+    action-bar__button-color--hover: black
   ),
   dark: (
-    backgroundColor: #282829,
-    textColor: #ddd,
-    buttonTextColor: #aaa,
-    buttonTextTransform: uppercase,
-    buttonTextHoverColor: #ddd,
-    buttonColor: #333,
-    buttonBorder: 1px solid #aaa,
-    sidebarBackgroundColor: #4d5250,
-    sidebarColor: #fff,
-    sidebarHeaderColor: #ff6f00,
-    headerIconColor: #2185d0,
-    tableBackgroundColor:#4d5250,
-    tableBorderColor: #4d5250,
+    background__color: #282829,
+    text__color: #ddd,
+
+    button__text-color: #aaa,
+    button__text-transform: uppercase,
+    button__text-hover-color: #ddd,
+    button__color: #333,
+    button__border: 1px solid #aaa,
+
+    sidebar__background-color: #4d5250,
+    sidebar__color: #fff,
+    sidebar__header-color: #ff6f00,
+
+    header__icon-color: #2185d0,
+
+    table__background-color:#4d5250,
+    table__border-color: #4d5250,
+
+    dropdown__background-color: #282829,
+    dropdown__border-color: #4d5250,
+    dropdown__hover-color: #4d5250,
+
+    breadcrumb__divider___color: white,
+    breadcrumb__section___color: white,
+    breadcrumb__section--active___color: white,
+
+    dock-ref-listing__item-border: darkgrey,
+
+    action-bar__button-border:none,
+    action-bar__button-background-color:#282829,
+    action-bar__button-color: #adadad,
+    action-bar__button-color--hover: #ffffff
   ),
 );

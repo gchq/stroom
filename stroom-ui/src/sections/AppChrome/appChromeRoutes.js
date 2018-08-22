@@ -6,7 +6,6 @@ import { Header, Icon, Grid } from 'semantic-ui-react/dist/commonjs';
 import { AppChrome } from '.';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import DocEditor from 'components/DocEditor';
-import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
 import DataViewer from 'components/DataViewer';
 import UserSettings from 'sections/UserSettings';
@@ -64,11 +63,6 @@ export default [
     render: props => (
       <AppChrome activeMenuItem="Data" content={<DataViewer dataViewerId="system" />} />
     ),
-  },
-  {
-    exact: true,
-    path: '/s/pipelines',
-    render: props => <AppChrome activeMenuItem="Pipelines" content={<PipelineSearch />} />,
   },
   {
     exact: true,

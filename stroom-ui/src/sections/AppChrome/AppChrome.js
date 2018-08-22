@@ -102,13 +102,6 @@ const enhance = compose(
         style: 'nav',
       },
       {
-        key: 'pipelines',
-        title: 'Pipelines',
-        onClick: () => history.push(`${pathPrefix}/pipelines`),
-        icon: 'tasks',
-        style: 'nav',
-      },
-      {
         key: 'processing',
         title: 'Processing',
         onClick: () => history.push(`${pathPrefix}/processing`),
