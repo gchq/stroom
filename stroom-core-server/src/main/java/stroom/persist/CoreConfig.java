@@ -2,14 +2,19 @@ package stroom.persist;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Singleton;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Singleton
 public class CoreConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
-    private HibernateConfig hibernateConfig;
+    private HibernateConfig hibernateConfig = new HibernateConfig();
     private String node;
     private String rack;
     private String temp;
@@ -65,6 +70,11 @@ public class CoreConfig {
 
     public void setTemp(final String temp) {
         this.temp = temp;
+
+        if (temp != null) {
+            final Path tempDir = Paths.get(temp);
+            FileUtil.setTempDir(tempDir);
+        }
     }
 
     @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, e.g. INSERT INTO X VALUES (...), (...), (...)")

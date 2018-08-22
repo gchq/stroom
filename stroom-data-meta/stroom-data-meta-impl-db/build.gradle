@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.data.meta.impl.db'
 
 dependencies {
+    compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-data-meta:stroom-data-meta-impl-db-gen')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-security:stroom-security-api')

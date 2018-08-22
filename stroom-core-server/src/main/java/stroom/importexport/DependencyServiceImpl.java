@@ -30,7 +30,7 @@ public class DependencyServiceImpl implements DependencyService {
     @Override
     public BaseResultList<Dependency> getDependencies(final DependencyCriteria criteria) {
         final Map<DocRef, Set<DocRef>> allDependencies = new ConcurrentHashMap<>();
-        importExportActionHandlers.getAllHandlers()
+        importExportActionHandlers.getHandlers()
                 .values()
                 .parallelStream()
                 .forEach(handler -> {

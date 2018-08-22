@@ -1,8 +1,8 @@
 package stroom.statistics.stroomstats.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.kafka.AbstractKafkaProducerFilter;
-import stroom.kafka.api.StroomKafkaProducerFactory;
+import stroom.kafka.pipeline.AbstractKafkaProducerFilter;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -37,7 +37,7 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
     @Inject
     StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                       final LocationFactoryProxy locationFactory,
-                      final StroomKafkaProducerFactory stroomKafkaProducerFactoryService,
+                      final KafkaProducerFactory stroomKafkaProducerFactoryService,
                       final HBaseStatisticsConfig hBaseStatisticsConfig,
                       final StroomStatsStoreStore stroomStatsStoreStore) {
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);

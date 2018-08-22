@@ -19,6 +19,8 @@ package stroom.persist;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;

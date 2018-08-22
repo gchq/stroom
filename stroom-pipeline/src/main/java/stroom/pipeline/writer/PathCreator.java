@@ -18,11 +18,11 @@ package stroom.pipeline.writer;
 
 import com.google.common.base.Strings;
 import stroom.node.NodeCache;
-import stroom.persist.CoreConfig;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
@@ -67,21 +67,18 @@ public class PathCreator {
     private final StreamHolder streamHolder;
     private final SearchIdHolder searchIdHolder;
     private final NodeCache nodeCache;
-    private final CoreConfig coreConfig;
 
     @Inject
     PathCreator(final FeedHolder feedHolder,
                 final PipelineHolder pipelineHolder,
                 final StreamHolder streamHolder,
                 final SearchIdHolder searchIdHolder,
-                final NodeCache nodeCache,
-                final CoreConfig coreConfig) {
+                final NodeCache nodeCache) {
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.streamHolder = streamHolder;
         this.searchIdHolder = searchIdHolder;
         this.nodeCache = nodeCache;
-        this.coreConfig = coreConfig;
     }
 
     public static String replaceTimeVars(String path) {
@@ -104,7 +101,7 @@ public class PathCreator {
         path = replace(
                 path,
                 STROOM_TEMP,
-                coreConfig::getTemp);
+                () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
 
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }

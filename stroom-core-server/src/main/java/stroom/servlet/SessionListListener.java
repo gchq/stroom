@@ -23,12 +23,12 @@ import stroom.entity.shared.BaseResultList;
 import stroom.feed.StroomHeaderArguments;
 import stroom.security.UserTokenUtil;
 import stroom.task.TaskManager;
+import stroom.task.api.TaskIdFactory;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
-import stroom.guice.StroomBeanStore;
-import stroom.task.api.TaskIdFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
@@ -45,11 +45,11 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     private static final ConcurrentHashMap<String, String> lastRequestUserAgent = new ConcurrentHashMap<>();
     private static transient Logger logger;
 
-    private final StroomBeanStore beanStore;
+    private final Provider<TaskManager> taskManagerProvider;
 
     @Inject
-    SessionListListener(final StroomBeanStore beanStore) {
-        this.beanStore = beanStore;
+    SessionListListener(final Provider<TaskManager> taskManagerProvider) {
+        this.taskManagerProvider = taskManagerProvider;
     }
 
     public static void setLastRequest(final HttpServletRequest lastRequest) {
@@ -148,11 +148,8 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
     }
 
     private TaskManager getTaskManager() {
-        if (beanStore != null) {
-            final StroomBeanStore stroomBeanStore = beanStore.getInstance(StroomBeanStore.class);
-            if (stroomBeanStore != null) {
-                return stroomBeanStore.getInstance(TaskManager.class);
-            }
+        if (taskManagerProvider != null) {
+            return taskManagerProvider.get();
         }
 
         return null;

@@ -24,7 +24,6 @@ import stroom.docstore.fs.FSPersistenceConfig;
 import stroom.entity.util.XMLUtil;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
-import stroom.lifecycle.LifecycleConfig;
 import stroom.persist.CoreConfig;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -76,8 +75,6 @@ public class Cli extends AbstractCommandLineTool {
     @Inject
     private CoreConfig coreConfig;
     @Inject
-    private LifecycleConfig lifecycleConfig;
-    @Inject
     private FSPersistenceConfig fsPersistenceConfig;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
@@ -108,13 +105,6 @@ public class Cli extends AbstractCommandLineTool {
 
     public void setTmp(final String tmp) {
         this.tmp = tmp;
-
-        final Path tempDir = Paths.get(tmp);
-
-        // Redirect the temp dir for headless.
-        coreConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
-
-        FileUtil.forgetTempDir();
     }
 
     @Override
@@ -173,7 +163,16 @@ public class Cli extends AbstractCommandLineTool {
     @Override
     public void run() {
         try {
-            lifecycleConfig.setEnabled(false);
+            // Initialise some variables.
+            init();
+
+            // Create the Guice injector and inject members.
+            createInjector();
+
+            // Setup temp dir.
+            final Path tempDir = Paths.get(tmp);
+            coreConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
+
             process();
         } finally {
             ExternalShutdownController.shutdown();
@@ -182,12 +181,6 @@ public class Cli extends AbstractCommandLineTool {
 
     private void process() {
         final long startTime = System.currentTimeMillis();
-
-        // Initialise some variables.
-        init();
-
-        // Create the Guice injector and inject members.
-        createInjector();
 
         pipelineScopeRunnable.scopeRunnable(this::processInPipelineScope);
 

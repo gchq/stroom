@@ -11,7 +11,7 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-docstore:stroom-docstore-shared')
     compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-properties:stroom-properties-global-api')
+    compile project(':stroom-config:stroom-config-global-api')
     compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef

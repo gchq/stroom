@@ -237,7 +237,7 @@ public abstract class RollingDestination implements Destination {
      *
      * @param exceptionConsumer Exceptions are gathered up and thrown as part of a larger process.
      */
-    void onGetOutputStream(Consumer<Throwable> exceptionConsumer) {
+    protected void onGetOutputStream(Consumer<Throwable> exceptionConsumer) {
     }
 
     /**
@@ -245,7 +245,7 @@ public abstract class RollingDestination implements Destination {
      *
      * @param exceptionConsumer Exceptions are gathered up and thrown as part of a larger process.
      */
-    void beforeRoll(Consumer<Throwable> exceptionConsumer) {
+    protected void beforeRoll(Consumer<Throwable> exceptionConsumer) {
     }
 
     /**
@@ -253,6 +253,6 @@ public abstract class RollingDestination implements Destination {
      *
      * @param exceptionConsumer Exceptions are gathered up and thrown as part of a larger process.
      */
-    void afterRoll(Consumer<Throwable> exceptionConsumer) {
+    protected void afterRoll(Consumer<Throwable> exceptionConsumer) {
     }
 }

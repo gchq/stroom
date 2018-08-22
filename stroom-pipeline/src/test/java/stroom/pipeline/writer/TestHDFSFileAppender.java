@@ -143,7 +143,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
 
     private HDFSFileAppender buildTestObject() {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final PathCreator pathCreator = new PathCreator(null, null, null, null, null, null);
+        final PathCreator pathCreator = new PathCreator(null, null, null, null, null);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
         provider.setOutputPaths(ROOT_TEST_PATH + "/t1" + name + "," + ROOT_TEST_PATH + "/t2" + name + ","

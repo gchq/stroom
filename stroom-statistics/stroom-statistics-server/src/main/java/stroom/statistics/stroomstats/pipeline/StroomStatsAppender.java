@@ -1,8 +1,8 @@
 package stroom.statistics.stroomstats.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.kafka.AbstractKafkaAppender;
-import stroom.kafka.api.StroomKafkaProducerFactory;
+import stroom.kafka.pipeline.AbstractKafkaAppender;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -40,7 +40,7 @@ class StroomStatsAppender extends AbstractKafkaAppender {
     @SuppressWarnings("unused")
     @Inject
     public StroomStatsAppender(final ErrorReceiverProxy errorReceiverProxy,
-                               final StroomKafkaProducerFactory stroomKafkaProducerFactoryService,
+                               final KafkaProducerFactory stroomKafkaProducerFactoryService,
                                final HBaseStatisticsConfig hBaseStatisticsConfig,
                                final StroomStatsStoreStore stroomStatsStoreStore) {
         super(errorReceiverProxy, stroomKafkaProducerFactoryService);

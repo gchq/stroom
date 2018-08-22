@@ -11,9 +11,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafka.api.StroomKafkaProducer;
-import stroom.kafka.api.StroomKafkaProducerFactory;
-import stroom.kafka.api.StroomKafkaProducerRecord;
+import stroom.kafka.pipeline.KafkaProducer;
+import stroom.kafka.pipeline.KafkaProducerFactory;
+import stroom.kafka.pipeline.KafkaProducerRecord;
 import stroom.statistics.internal.InternalStatisticEvent;
 
 import java.util.Arrays;
@@ -36,9 +36,9 @@ public class TestStroomStatsInternalStatisticsService {
     @Captor
     private ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
-    private StroomKafkaProducer mockStroomKafkaProducer;
+    private KafkaProducer mockStroomKafkaProducer;
     @Mock
-    private StroomKafkaProducerFactory mockStroomKafkaProducerFactory;
+    private KafkaProducerFactory mockStroomKafkaProducerFactory;
 
     @Test
     public void putEvents_multipleEvents() {
@@ -66,7 +66,7 @@ public class TestStroomStatsInternalStatisticsService {
 
         //two different doc refs so two calls to producer
         Mockito.verify(mockStroomKafkaProducer, Mockito.times(2))
-                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), Mockito.any());
+                .sendAsync(Mockito.any(KafkaProducerRecord.class), Mockito.any());
     }
 
     @Test
@@ -94,7 +94,7 @@ public class TestStroomStatsInternalStatisticsService {
         //two different doc refs and batch size of 10,
         //so kafka msg count is 10 for A and 2 for B, thus 12
         Mockito.verify(mockStroomKafkaProducer, Mockito.times(12))
-                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), Mockito.any());
+                .sendAsync(Mockito.any(KafkaProducerRecord.class), Mockito.any());
     }
 
     private List<InternalStatisticEvent> createNEvents(final String key, final int count) {
@@ -126,7 +126,7 @@ public class TestStroomStatsInternalStatisticsService {
 
         //ensure sendAsync is called
         Mockito.verify(mockStroomKafkaProducer)
-                .sendAsync(Mockito.any(StroomKafkaProducerRecord.class), exceptionHandlerCaptor.capture());
+                .sendAsync(Mockito.any(KafkaProducerRecord.class), exceptionHandlerCaptor.capture());
 
         //create an exception in the handler
         exceptionHandlerCaptor.getValue()

@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.dashboard.server'
 dependencies {
     compile project(':stroom-dashboard:stroom-dashboard-shared')
     compile project(':stroom-core-server')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')

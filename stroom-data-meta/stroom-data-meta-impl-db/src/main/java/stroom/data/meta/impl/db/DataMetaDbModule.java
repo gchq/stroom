@@ -5,6 +5,8 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;

@@ -22,12 +22,9 @@ import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.HashMap;
-import java.util.Map;
 
 @Singleton
 public class UiConfig implements SharedObject {
-    //    private String loginHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private String welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private String aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private String buildDate = "TBD";

@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import stroom.docref.DocRef;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -41,16 +42,13 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
-import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
-import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.List;
 
 public class TestIndexingFilter extends AbstractProcessIntegrationTest {
@@ -179,11 +177,6 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final IndexDoc index = indexStore.readDocument(indexRef);
             index.setIndexFields(indexFields);
             indexStore.writeDocument(index);
-
-            final Path tempDir = getCurrentTestDir();
-
-            // Make sure the config dir is set.
-            System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
             // Setup the error handler.
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();

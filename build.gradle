@@ -152,6 +152,7 @@ ext.libs = [
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson",
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core:$versions.jackson",
         jackson_databind               : "com.fasterxml.jackson.core:jackson-databind:$versions.jackson", //was 2.8.5, now 2.8.6
+        jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions.jackson", //was 2.8.5, now 2.8.6
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist:3.18.1-GA",
         javax_activation               : "javax.activation:javax.activation-api:1.2.0",
@@ -196,7 +197,6 @@ ext.libs = [
         rxjava                         : "io.reactivex.rxjava2:rxjava:$versions.rxjava",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-18",
         slf4j_api                      : "org.slf4j:slf4j-api:$versions.slf4j",
-        snakeyaml                      : "org.yaml:snakeyaml:1.21",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",

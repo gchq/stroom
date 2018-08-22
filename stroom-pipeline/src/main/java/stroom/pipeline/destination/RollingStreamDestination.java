@@ -54,7 +54,7 @@ public class RollingStreamDestination extends RollingDestination {
     }
 
     @Override
-    void onGetOutputStream(final Consumer<Throwable> exceptionConsumer) {
+    protected void onGetOutputStream(final Consumer<Throwable> exceptionConsumer) {
         // Insert a segment marker before we write the next record regardless of whether the header has actually
         // been written. This is because we always make an allowance for the existence of a header in a segmented
         // stream when viewing data.
@@ -66,7 +66,7 @@ public class RollingStreamDestination extends RollingDestination {
     }
 
     @Override
-    void beforeRoll(final Consumer<Throwable> exceptionConsumer) {
+    protected void beforeRoll(final Consumer<Throwable> exceptionConsumer) {
         // Writing a segment marker here ensures there is always a marker written before the footer regardless or
         // whether a footer is actually written. We do this because we always make an allowance for a footer for data
         // display purposes.
@@ -76,7 +76,7 @@ public class RollingStreamDestination extends RollingDestination {
     }
 
     @Override
-    void afterRoll(final Consumer<Throwable> exceptionConsumer) {
+    protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
 //        // Write meta data to stream target.
 //        final AttributeMap attributeMap = new AttributeMap();
 //        attributeMap.put(StreamDataSource.REC_WRITE, recordCount.toString());

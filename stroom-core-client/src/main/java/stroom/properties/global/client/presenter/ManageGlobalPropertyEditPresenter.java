@@ -23,9 +23,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.properties.global.api.GlobalProperty;
-import stroom.properties.global.api.LoadGlobalPropertyAction;
-import stroom.properties.global.api.SaveGlobalPropertyAction;
+import stroom.properties.global.api.ConfigProperty;
+import stroom.properties.global.api.LoadGlobalConfigAction;
+import stroom.properties.global.api.SaveGlobalConfigAction;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -38,7 +38,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
-    private GlobalProperty globalProperty;
+    private ConfigProperty globalProperty;
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
@@ -56,7 +56,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         return securityContext;
     }
 
-    void showEntity(final GlobalProperty globalProperty, final PopupUiHandlers popupUiHandlers) {
+    void showEntity(final ConfigProperty globalProperty, final PopupUiHandlers popupUiHandlers) {
         final String caption = getEntityDisplayType() + " - " + globalProperty.getName();
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
@@ -81,7 +81,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
 
         if (globalProperty.getId() != null) {
             // Reload it so we always have the latest version
-            final LoadGlobalPropertyAction action = new LoadGlobalPropertyAction(globalProperty);
+            final LoadGlobalConfigAction action = new LoadGlobalConfigAction(globalProperty);
             dispatcher.exec(action).onSuccess(result -> {
                 setEntity(result);
                 read();
@@ -101,11 +101,11 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         HidePopupEvent.fire(ManageGlobalPropertyEditPresenter.this, ManageGlobalPropertyEditPresenter.this);
     }
 
-    private GlobalProperty getEntity() {
+    private ConfigProperty getEntity() {
         return globalProperty;
     }
 
-    private void setEntity(final GlobalProperty entity) {
+    private void setEntity(final ConfigProperty entity) {
         this.globalProperty = entity;
     }
 
@@ -134,7 +134,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         }
 
         // Save.
-        dispatcher.exec(new SaveGlobalPropertyAction(getEntity())).onSuccess(result -> {
+        dispatcher.exec(new SaveGlobalConfigAction(getEntity())).onSuccess(result -> {
             setEntity(result);
             if (hideOnSave) {
                 hide();

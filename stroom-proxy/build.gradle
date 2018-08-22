@@ -7,7 +7,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef

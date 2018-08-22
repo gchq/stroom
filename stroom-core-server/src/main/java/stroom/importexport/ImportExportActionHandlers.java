@@ -16,66 +16,41 @@
 
 package stroom.importexport;
 
-import stroom.guice.StroomBeanStore;
-
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 class ImportExportActionHandlers {
-    private final StroomBeanStore beanStore;
-    private final ImportExportActionHandlerFactory importExportActionHandlerFactory;
-
-    private volatile Handlers handlers;
+    private final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders;
+    private volatile Map<String, ImportExportActionHandler> handlers;
 
     @Inject
-    ImportExportActionHandlers(final StroomBeanStore beanStore, final ImportExportActionHandlerFactory importExportActionHandlerFactory) {
-        this.beanStore = beanStore;
-        this.importExportActionHandlerFactory = importExportActionHandlerFactory;
+    ImportExportActionHandlers(final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders) {
+        this.importExportActionHandlerProviders = importExportActionHandlerProviders;
     }
 
     ImportExportActionHandler getHandler(final String type) {
-        final Map<String, ImportExportActionHandler> handlerMap = getAllHandlers();
-        return handlerMap.get(type);
+        return getHandlers().get(type);
     }
 
-    Map<String, ImportExportActionHandler> getAllHandlers() {
-        return getHandlers().allHandlers;
-    }
-
-    private Handlers getHandlers() {
+    Map<String, ImportExportActionHandler> getHandlers() {
         if (handlers == null) {
-            handlers = new Handlers(beanStore, importExportActionHandlerFactory);
+            final Map<String, ImportExportActionHandler> map = new HashMap<>();
+            for (ImportExportActionHandler handler : importExportActionHandlerProviders.get()) {
+                final String type = handler.getDocumentType().getType();
+
+                final ImportExportActionHandler existingActionHandler = map.putIfAbsent(type, handler);
+                if (existingActionHandler != null) {
+                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                }
+            }
+            handlers = map;
         }
+
         return handlers;
-    }
-
-    private static class Handlers {
-        private final Map<String, ImportExportActionHandler> allHandlers = new ConcurrentHashMap<>();
-
-        Handlers(final StroomBeanStore beanStore,
-                 final ImportExportActionHandlerFactory importExportActionHandlerFactory) {
-            // Add external handlers.
-            final Set<ImportExportActionHandler> importExportActionHandlers = importExportActionHandlerFactory.getImportExportActionHandlers();
-            if (importExportActionHandlers != null) {
-                importExportActionHandlers.forEach(this::addImportExportActionHandler);
-            }
-
-            // Add internal handlers.
-            final Set<ImportExportActionHandler> set = beanStore.getInstancesOfType(ImportExportActionHandler.class);
-            set.forEach(this::addImportExportActionHandler);
-        }
-
-        private void addImportExportActionHandler(final ImportExportActionHandler handler) {
-            final String type = handler.getDocumentType().getType();
-
-            final ImportExportActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
-            if (existingActionHandler != null) {
-                throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
-            }
-        }
     }
 }

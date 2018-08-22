@@ -17,7 +17,7 @@
 
 package stroom.xmlschema;
 
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.docref.DocRef;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;

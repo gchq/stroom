@@ -1,10 +1,11 @@
 ext.moduleName = 'stroom.statistics.server'
 
 dependencies {
+    compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-security:stroom-security-api')
@@ -14,6 +15,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-kafka:stroom-kafka-pipeline')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi

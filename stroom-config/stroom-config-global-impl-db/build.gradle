@@ -1,0 +1,27 @@
+ext.moduleName = 'stroom.config.global.impl.db'
+
+dependencies {
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-config:stroom-config-app')
+    compile project(':stroom-config:stroom-config-global-api')
+    compile project(':stroom-config:stroom-config-global-impl-db-gen')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.flyway_core
+    compile libs.guice4
+    compile libs.hikari
+    compile libs.jooq
+    compile libs.javax_inject
+    compile libs.slf4j_api
+
+    compile libs.jackson_annotations
+    compile libs.jackson_core
+    compile libs.jackson_databind
+    compile libs.jackson_dataformat_yaml
+
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
+}

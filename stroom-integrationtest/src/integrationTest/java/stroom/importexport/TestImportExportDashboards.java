@@ -29,7 +29,7 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.shared.Doc;
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;

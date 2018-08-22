@@ -57,8 +57,8 @@ public final class FileUtil {
         return System.getProperty("java.io.tmpdir");
     }
 
-    public static Path getInitialTempDir() {
-        final String pathString = getTempPath();//StroomProperties.getProperty(StroomProperties.STROOM_TEMP);
+    private static Path getInitialTempDir() {
+        final String pathString = getTempPath();
         if (pathString == null) {
             throw new RuntimeException("No temp path is specified");
         }

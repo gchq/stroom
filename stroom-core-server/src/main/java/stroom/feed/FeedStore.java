@@ -18,7 +18,7 @@
 package stroom.feed;
 
 import stroom.docref.DocRef;
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.feed.shared.FeedDoc;
 
 import java.util.List;

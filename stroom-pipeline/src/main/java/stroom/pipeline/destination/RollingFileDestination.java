@@ -84,7 +84,7 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     @Override
-    void afterRoll(Consumer<Throwable> exceptionConsumer) {
+    protected void afterRoll(Consumer<Throwable> exceptionConsumer) {
         boolean success = false;
 
         String destFileName = rolledFileName;

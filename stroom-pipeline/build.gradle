@@ -6,14 +6,13 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-shared')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-kafka:stroom-kafka-api')
     compile project(':stroom-task:stroom-task-api')
 
     compile libs.commons_lang

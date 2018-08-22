@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.integrationtest'
 dependencies {
     integrationTestCompile project(':stroom-app')
     // Use default DB config.
-    integrationTestCompile project(':stroom-config')
+    integrationTestCompile project(':stroom-config:stroom-config-app')
     integrationTestCompile project(':stroom-core-server')
     integrationTestCompile project(':stroom-dashboard:stroom-dashboard-server')
     integrationTestCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')

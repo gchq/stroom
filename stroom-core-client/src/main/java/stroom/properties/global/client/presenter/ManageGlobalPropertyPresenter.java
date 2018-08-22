@@ -25,7 +25,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.properties.global.api.GlobalProperty;
+import stroom.properties.global.api.ConfigProperty;
 import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -79,12 +79,12 @@ public class ManageGlobalPropertyPresenter extends
     }
 
     private void onOpen() {
-        final GlobalProperty e = listPresenter.getSelectedItem();
+        final ConfigProperty e = listPresenter.getSelectedItem();
         onEdit(e);
     }
 
     @SuppressWarnings("unchecked")
-    public void onEdit(final GlobalProperty e) {
+    public void onEdit(final ConfigProperty e) {
         if (e != null) {
             final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
                 @Override

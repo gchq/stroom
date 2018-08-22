@@ -1,0 +1,47 @@
+apply plugin: "com.github.johnrengelman.shadow"
+
+ext.moduleName = 'stroom.kafka.client.impl'
+
+dependencies {
+    compile project(':stroom-docstore:stroom-docstore-impl')
+    compile project(':stroom-kafka:stroom-kafka-shared')
+    compile project(':stroom-kafka:stroom-kafka-pipeline')
+    compile project(':stroom-util')
+
+    compile group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
+
+    compile libs.guice4
+    compile libs.slf4j_api
+    compile libs.javax_inject;
+    compile libs.jackson_annotations
+
+    testCompile libs.mockito_core
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
+}
+//
+//def fatJarName = "stroom-kafka-client-impl_0_10_0_1-all.jar"
+//
+//shadowJar {
+//    // Allows us to build fat jars with lots of files
+//    zip64 true
+//    archiveName fatJarName
+//}
+//
+//task copyPluginJar(type: Copy) {
+//    dependsOn shadowJar
+//
+//    def jarName =  "${project.buildDir}/libs/${fatJarName}"
+//    doFirst {
+//        new File(stroomPluginsDir).mkdirs()
+//        //logger.info "Copying $jarName to $stroomPluginsDir"
+//        println "Copying plugin jar $jarName to $stroomPluginsDir"
+//    }
+//
+//    from jarName
+//    into stroomPluginsDir
+//}
+//
+////if we are running the app in an IDE we want this jar in place for stroom to pick up
+//tasks.build.dependsOn copyPluginJar
+

@@ -17,7 +17,7 @@
 
 package stroom.statistics.sql.entity;
 
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 

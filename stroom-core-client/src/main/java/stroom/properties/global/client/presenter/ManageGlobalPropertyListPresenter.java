@@ -26,37 +26,37 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.properties.global.api.FetchGlobalPropertiesAction;
-import stroom.properties.global.api.FindGlobalPropertyCriteria;
-import stroom.properties.global.api.GlobalProperty;
+import stroom.properties.global.api.FetchGlobalConfigAction;
+import stroom.properties.global.api.FindGlobalConfigCriteria;
+import stroom.properties.global.api.ConfigProperty;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
 public class ManageGlobalPropertyListPresenter
-        extends MyPresenterWidget<DataGridView<GlobalProperty>> implements Refreshable {
+        extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
     private final ClientDispatchAsync dispatcher;
-    private FindGlobalPropertyCriteria criteria;
+    private FindGlobalConfigCriteria criteria;
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true));
 
-        criteria = new FindGlobalPropertyCriteria();
+        criteria = new FindGlobalConfigCriteria();
         this.dispatcher = dispatcher;
 
         // Name.
-        getView().addResizableColumn(new Column<GlobalProperty, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
-            public String getValue(final GlobalProperty row) {
+            public String getValue(final ConfigProperty row) {
                 if (row == null) {
                     return null;
                 }
                 return row.getName();
             }
         }, "Name", 200);
-        getView().addResizableColumn(new Column<GlobalProperty, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
-            public String getValue(final GlobalProperty row) {
+            public String getValue(final ConfigProperty row) {
                 if (row == null) {
                     return null;
                 }
@@ -64,9 +64,9 @@ public class ManageGlobalPropertyListPresenter
             }
         }, "Value", 150);
 
-        getView().addResizableColumn(new Column<GlobalProperty, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
-            public String getValue(final GlobalProperty row) {
+            public String getValue(final ConfigProperty row) {
                 if (row == null) {
                     return null;
                 }
@@ -74,9 +74,9 @@ public class ManageGlobalPropertyListPresenter
             }
         }, "Source", 150);
 
-        getView().addResizableColumn(new Column<GlobalProperty, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
-            public String getValue(final GlobalProperty row) {
+            public String getValue(final ConfigProperty row) {
                 if (row == null) {
                     return null;
                 }
@@ -110,26 +110,26 @@ public class ManageGlobalPropertyListPresenter
 
     @Override
     public void refresh() {
-        dispatcher.exec(new FetchGlobalPropertiesAction(criteria)).onSuccess(result -> {
+        dispatcher.exec(new FetchGlobalConfigAction(criteria)).onSuccess(result -> {
             getView().setRowData(0, result);
             getView().setRowCount(result.size(), true);
         });
     }
 
-    public GlobalProperty getSelectedItem() {
+    public ConfigProperty getSelectedItem() {
         return getView().getSelectionModel().getSelected();
     }
 
-    public void setSelectedItem(final GlobalProperty row) {
+    public void setSelectedItem(final ConfigProperty row) {
         getView().getSelectionModel().setSelected(row);
     }
 
-    public void setCriteria(final FindGlobalPropertyCriteria criteria) {
+    public void setCriteria(final FindGlobalConfigCriteria criteria) {
         this.criteria = criteria;
         refresh();
     }
 
-    FindGlobalPropertyCriteria getFindGlobalPropertyCriteria() {
+    FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
         return criteria;
     }
 }

@@ -4,9 +4,9 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafka.api.StroomKafkaProducer;
-import stroom.kafka.api.StroomKafkaProducerFactory;
-import stroom.kafka.api.StroomKafkaProducerRecord;
+import stroom.kafka.pipeline.KafkaProducer;
+import stroom.kafka.pipeline.KafkaProducerFactory;
+import stroom.kafka.pipeline.KafkaProducerRecord;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
@@ -40,14 +40,14 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final StroomKafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory stroomKafkaProducerFactory;
     private final HBaseStatisticsConfig internalStatisticsConfig;
     private final String docRefType;
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
     @Inject
-    StroomStatsInternalStatisticsService(final StroomKafkaProducerFactory stroomKafkaProducerFactory,
+    StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,
                                          final HBaseStatisticsConfig internalStatisticsConfig) {
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.internalStatisticsConfig = internalStatisticsConfig;
@@ -73,7 +73,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
             throw new RuntimeException("No Kafka config UUID has been defined, unable to send any events");
         }
         final DocRef kafkaConfigDocRef = new DocRef(KafkaConfigDoc.DOCUMENT_TYPE, internalStatisticsConfig.getKafkaConfigUuid());
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
+        KafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
         if (stroomKafkaProducer == null) {
             throw new RuntimeException("The Kafka producer isn't initialised, unable to send any events");
         }
@@ -101,21 +101,21 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 });
     }
 
-    private void sendMessage(final StroomKafkaProducer stroomKafkaProducer,
+    private void sendMessage(final KafkaProducer stroomKafkaProducer,
                              final String topic,
                              final String key,
                              final List<InternalStatisticEvent> events) {
 
         final byte[] message = buildMessage(events);
 
-        final StroomKafkaProducerRecord<String, byte[]> producerRecord =
-                new StroomKafkaProducerRecord.Builder<String, byte[]>()
+        final KafkaProducerRecord<String, byte[]> producerRecord =
+                new KafkaProducerRecord.Builder<String, byte[]>()
                         .topic(topic)
                         .key(key)
                         .value(message)
                         .build();
 
-        final Consumer<Throwable> exceptionHandler = StroomKafkaProducer
+        final Consumer<Throwable> exceptionHandler = KafkaProducer
                 .createLogOnlyExceptionHandler(LOGGER, topic, key);
 
         //These are only internal stats so just send them async for performance

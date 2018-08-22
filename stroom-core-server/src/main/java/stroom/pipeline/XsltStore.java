@@ -17,7 +17,7 @@
 
 package stroom.pipeline;
 
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.docref.DocRef;
 

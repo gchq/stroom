@@ -17,7 +17,7 @@
 
 package stroom.visualisation;
 
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.docref.DocRef;
 import stroom.visualisation.shared.VisualisationDoc;
 
