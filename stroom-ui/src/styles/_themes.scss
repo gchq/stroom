@@ -19,7 +19,7 @@ $themes: (
     table__border-color: #dfe0e1,
 
     dropdown__background-color: #fff,
-    dropdown__border-color: #dfe0e1,
+    dropdown__border: 1px solid #dfe0e1,
     dropdown__hover-color: #dfe0e1,
 
     breadcrumb__divider___color: black,
@@ -28,14 +28,18 @@ $themes: (
 
     dock-ref-listing__item-border: darkgrey,
 
-    action-bar__button-border:none,
-    action-bar__button-background-color:#adadad,
-    action-bar__button-color: #4d5250,
-    action-bar__button-color--hover: black
+    icon-button__border:none,
+    icon-button__background-color:#adadad,
+    icon-button__color: #4d5250,
+    icon-button__color--hover: black,
+    
   ),
   dark: (
     background__color: #282829,
     text__color: #ddd,
+
+    icon__color: #ddd,
+    icon__color--hover: white,
 
     button__text-color: #aaa,
     button__text-transform: uppercase,
@@ -53,7 +57,7 @@ $themes: (
     table__border-color: #4d5250,
 
     dropdown__background-color: #282829,
-    dropdown__border-color: #4d5250,
+    dropdown__border: 1px solid #4d5250,
     dropdown__hover-color: #4d5250,
 
     breadcrumb__divider___color: white,
@@ -62,15 +66,9 @@ $themes: (
 
     dock-ref-listing__item-border: darkgrey,
 
-    action-bar__button-border:none,
-    action-bar__button-background-color:#282829,
-    action-bar__button-color: #adadad,
-    action-bar__button-color--hover: #ffffff,
-
-    AppSearch__search-input-background-color: #282829,
-    AppSearch__search-input-icon-color: #ddd,
-    AppSearch__dropdown-item-color: #ddd,
-    AppSearch__menu-border: 1px solid #4d5250,
-    AppSearch__menu-background-color: #282829,
+    icon-button__border:none,
+    icon-button__background-color:#282829,
+    icon-button__color: #adadad,
+    icon-button__color--hover: #ffffff,
   ),
 );
