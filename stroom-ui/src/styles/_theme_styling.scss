@@ -24,8 +24,8 @@
 
 .app-chrome {
   @include themify($themes) {
-    color: themed("textColor");
-    background-color: themed("backgroundColor");
+    color: themed("text__color");
+    background-color: themed("background__color");
   }
   .title {
     font-family: sans-serif;
@@ -38,14 +38,14 @@
     display: inline-block;
     transition: color 0.1s, border-color 0.1s, background-color 0.1s;
     @include themify($themes) {
-      border: themed("buttonBorder");
-      color: themed("buttonTextColor");
-      border-color: themed("buttonTextColor");
-      background-color: themed("buttonColor");
-      text-transform: themed("buttonTextTransform");
+      border: themed("button__border");
+      color: themed("button__text-color");
+      border-color: themed("button__text-color");
+      background-color: themed("button__color");
+      text-transform: themed("button__text-transform");
       &:hover {
-        color: themed("buttonTextHoverColor");
-        border-color: themed("buttonTextHoverColor");
+        color: themed("button__text-hover-color");
+        border-color: themed("button__text-hover-color");
         background-color: themed("buttonHoverColor");
       }
     }
@@ -54,18 +54,18 @@
 
 .app-chrome__sidebar-menu {
   @include themify($themes) {
-    background-color: themed('sidebarBackgroundColor');
+    background-color: themed('sidebar__background-color');
   }
 }
 .app-chrome__sidebar {
   @include themify($themes) {
-    background-color: themed('sidebarBackgroundColor');
+    background-color: themed('sidebar__background-color');
   }
 }
 .app-chrome__sidebar__toggle {
   @include themify($themes) {
-    background-color: themed('sidebarBackgroundColor') !important;
-    color: themed('sidebarHeaderColor') !important;
+    background-color: themed('sidebar__background-color') !important;
+    color: themed('sidebar__header-color') !important;
     // Override the default button look so it blends in with the rest of the sidebar.
     border: 0 !important;
   }
@@ -73,33 +73,33 @@
 
 .app-chrome__sidebar__buttons .button {
   @include themify($themes) {
-    background-color: themed('sidebarBackgroundColor');
-    color: themed('sidebarHeaderColor');
+    background-color: themed('sidebar__background-color');
+    color: themed('sidebar__header-color');
   }
 }
 
 .sidebar__logo svg path {
   @include themify($themes) {
-    fill: themed('sidebarHeaderColor');
+    fill: themed('sidebar__header-color');
   }
 }
 
 .sidebar__menu-item--doc {
   @include themify($themes) {
-    background-color: themed('sidebarBackgroundColor');
-    color: themed('sidebarColor');
+    background-color: themed('sidebar__background-color');
+    color: themed('sidebar__color');
   }
 }
 
 .ui.header {
   @include themify($themes) {
-    color: themed('textColor');
+    color: themed('text__color');
   }
 }
 
 .ui.header>.icon {
   @include themify($themes) {
-    color: themed('headerIconColor');
+    color: themed('header__icon-color');
   }
 }
 
@@ -107,23 +107,23 @@
 table {
   @include themify($themes) {
     // '!important because it overrides SUI
-    background-color: themed('tableBackgroundColor') !important ;
-    color: themed('textColor') !important;
-    border: themed('tableBorderColor') !important;
+    background-color: themed('table__background-color') !important ;
+    color: themed('text__color') !important;
+    border: themed('able__border-color') !important;
   }
 
   td {
     @include themify($themes) {
       // '!important because it overrides SUI
-      color: themed('textColor') !important;
+      color: themed('text__color') !important;
     }
   }
 
   th {
     @include themify($themes) {
       // '!important because it overrides SUI
-      background-color: themed('tableBackgroundColor') !important ;
-      color: themed('textColor') !important;
+      background-color: themed('table__background-color') !important ;
+      color: themed('text__color') !important;
     }
   }
 }
@@ -135,24 +135,24 @@ table {
 
   // This styles the main drop-down box
   @include themify($themes) {
-    background-color: themed('backgroundColor') !important;
-    color: themed('textColor') !important;
-    border:1px solid themed('tableBackgroundColor') !important;
+    background-color: themed('dropdown__background-color') !important;
+    color: themed('text__color') !important;
+    border:1px solid themed('dropdown__border-color') !important;
   }
 
   // This styles the actual drop-down bit.
   .menu {
     @include themify($themes) {
-      background-color: themed('backgroundColor') !important;
-      color: themed('textColor') !important;
-      border:1px solid themed('tableBackgroundColor') !important;
+      background-color: themed('dropdown__background-color') !important;
+      color: themed('text__color') !important;
+      border:1px solid themed('dropdown__border-color') !important;
     }
   }
 
   // This makes sure the text is the right colour
   .text {
     @include themify($themes) {
-      color: themed('textColor') !important;
+      color: themed('text__color') !important;
     }
   }
 
@@ -165,7 +165,7 @@ table {
   // We need a hover colour for the drop-down.
   .item:hover, .text:hover {
     @include themify($themes) {
-      background-color:  themed('tableBackgroundColor')  !important;
+      background-color:  themed('dropdown__hover-color')  !important;
     }
   }
 }
