@@ -9,12 +9,15 @@ import { findItem } from 'lib/treeUtils';
 
 const enhance = compose(
   withDocumentTree,
-  connect(({ folderExplorer: { documentTree } }, { docRefUuid }) => {
-    const docRefWithLineage = findItem(documentTree, docRefUuid);
-    return {
-      docRefWithLineage,
-    };
-  }, {}),
+  connect(
+    ({ folderExplorer: { documentTree } }, { docRefUuid }) => {
+      const docRefWithLineage = findItem(documentTree, docRefUuid);
+      return {
+        docRefWithLineage,
+      };
+    },
+    {},
+  ),
   branch(({ docRefWithLineage }) => !docRefWithLineage || !docRefWithLineage.node, renderNothing),
 );
 
@@ -25,18 +28,20 @@ const DocRefBreadcrumb = ({
   },
   openDocRef,
 }) => (
-  <Breadcrumb>
+  <Breadcrumb className="breadcrumb">
     {lineage.map(l => (
       <React.Fragment key={l.uuid}>
-        <Breadcrumb.Divider />
-        <Breadcrumb.Section link onClick={() => openDocRef(l)}>
+        <Breadcrumb.Divider className="breadcrumb__divider" />
+        <Breadcrumb.Section link onClick={() => openDocRef(l)} className="breadcrumb__section">
           {l.name}
         </Breadcrumb.Section>
       </React.Fragment>
     ))}
 
-    <Breadcrumb.Divider />
-    <Breadcrumb.Section active>{name}</Breadcrumb.Section>
+    <Breadcrumb.Divider className="breadcrumb__divider" />
+    <Breadcrumb.Section className="breadcrumb__section--active" active>
+      {name}
+    </Breadcrumb.Section>
   </Breadcrumb>
 );
 

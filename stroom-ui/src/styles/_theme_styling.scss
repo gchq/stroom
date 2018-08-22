@@ -52,16 +52,21 @@
   }
 }
 
+
+
+
 .app-chrome__sidebar-menu {
   @include themify($themes) {
     background-color: themed('sidebar__background-color');
   }
 }
+
 .app-chrome__sidebar {
   @include themify($themes) {
     background-color: themed('sidebar__background-color');
   }
 }
+
 .app-chrome__sidebar__toggle {
   @include themify($themes) {
     background-color: themed('sidebar__background-color') !important;
@@ -91,6 +96,10 @@
   }
 }
 
+
+
+
+
 .ui.header {
   @include themify($themes) {
     color: themed('text__color');
@@ -102,6 +111,10 @@
     color: themed('header__icon-color');
   }
 }
+
+
+
+
 
 // This is mostly about overriding SUI styles
 table {
@@ -130,6 +143,8 @@ table {
 
 
 
+
+
 // This is mostly about override SUI styles
 .dropdown {
 
@@ -139,7 +154,6 @@ table {
     color: themed('text__color') !important;
     border:1px solid themed('dropdown__border-color') !important;
   }
-
   // This styles the actual drop-down bit.
   .menu {
     @include themify($themes) {
@@ -161,11 +175,31 @@ table {
     border:0 !important;
   }
 
-
   // We need a hover colour for the drop-down.
   .item:hover, .text:hover {
     @include themify($themes) {
       background-color:  themed('dropdown__hover-color')  !important;
     }
+  }
+}
+
+
+
+
+.breadcrumb__divider {
+  @include themify($themes) {
+    color: themed('breadcrumb__divider___color') !important;
+  }
+}
+
+.breadcrumb__section {
+  @include themify($themes) {
+    color: themed('breadcrumb__section___color') !important;
+  }
+}
+
+.breadcrumb__section--active {
+  @include themify($themes) {
+    color: themed('breadcrumb__section--active___color') !important;
   }
 }
