@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps } from 'recompose';
+import { compose, withProps, branch, renderComponent } from 'recompose';
+import { Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
@@ -9,6 +10,7 @@ import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
+import withDocumentTree from './withDocumentTree';
 
 const {
   prepareDocRefCreation,
@@ -21,6 +23,7 @@ const {
 const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
+  withDocumentTree,
   connect(
     ({ folderExplorer: { documentTree }, docRefListing }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
@@ -35,6 +38,7 @@ const enhance = compose(
       fetchDocInfo,
     },
   ),
+  branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
   withProps(({
     folder,
     prepareDocRefCreation,

@@ -25,12 +25,12 @@ import { appChromeRoutes } from 'sections/AppChrome';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 
-import withConfigAndGlobalData from './withConfigAndGlobalData';
+import withConfig from './withConfig';
 
 import { PrivateRoute } from './Authentication';
 
 const enhance = compose(
-  withConfigAndGlobalData,
+  withConfig,
   withRouter,
   connect(
     state => ({

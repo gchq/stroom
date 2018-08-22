@@ -31,6 +31,7 @@ import {
   RenameDocRefDialog,
   CopyDocRefDialog,
   DeleteDocRefDialog,
+  withDocumentTree,
 } from 'components/FolderExplorer';
 
 import { actionCreators as userSettingsActionCreators } from 'sections/UserSettings';
@@ -59,6 +60,7 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
 });
 
 const enhance = compose(
+  withDocumentTree,
   connect(
     (
       { userSettings: { theme }, folderExplorer: { documentTree }, appChrome: { menuItemsOpen } },
@@ -82,9 +84,7 @@ const enhance = compose(
       Mousetrap.bind('ctrl+shift+f', () => this.props.history.push('/s/search'));
     },
   }),
-  withProps(({
-    history, openDocRef, actionBarItems, documentTree,
-  }) => ({
+  withProps(({ history, openDocRef, documentTree }) => ({
     menuItems: [
       {
         key: 'welcome',
@@ -153,13 +153,6 @@ const enhance = compose(
         icon: 'file outline',
         style: 'nav',
       },
-      {
-        key: 'search',
-        title: 'Search',
-        onClick: () => history.push(`${pathPrefix}/search`),
-        icon: 'search',
-        style: 'nav',
-      },
     ],
   })),
 );
@@ -168,6 +161,7 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
+        key={menuItem.key}
         menuItem={menuItem}
         menuItemsOpen={menuItemsOpen}
         menuItemOpened={menuItemOpened}
@@ -195,7 +189,6 @@ const AppChrome = ({
   content,
   isExpanded,
   menuItems,
-  actionBarItems,
   menuItemsOpen,
   menuItemOpened,
   setIsExpanded,

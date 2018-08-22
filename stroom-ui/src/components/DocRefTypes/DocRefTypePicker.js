@@ -1,27 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown } from 'semantic-ui-react';
+import { Dropdown, Input } from 'semantic-ui-react';
 
 import withDocRefTypes from './withDocRefTypes';
 
 const DocRefTypePicker = ({ onChange, value, docRefTypes }) => (
   <Dropdown
-    // it moans about mixing trigger and selection, but it's the only way to make it look right..?
-    selection
-    trigger={
-      <span>
-        {value && value.length > 0 ? (
-          <img
-            className="stroom-icon--small"
-            alt="X"
-            src={require(`../../images/docRefTypes/${value}.svg`)}
-          />
-        ) : (
-          undefined
-        )}
-        {value}
-      </span>
-    }
+    icon={null}
+    trigger={<Input placeholder="Select a type" value={value || ''} onChange={() => {}} />}
   >
     <Dropdown.Menu>
       {docRefTypes.map(docRefType => (
@@ -43,6 +29,11 @@ const EnhancedDocRefTypePicker = withDocRefTypes(DocRefTypePicker);
 EnhancedDocRefTypePicker.propTypes = {
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string.isRequired,
+};
+
+EnhancedDocRefTypePicker.defaultProps = {
+  value: [],
+  onChange: v => console.log('Not implemented onChange, value ignored', v),
 };
 
 export default EnhancedDocRefTypePicker;
