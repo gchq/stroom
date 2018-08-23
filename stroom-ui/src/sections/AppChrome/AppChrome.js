@@ -189,7 +189,7 @@ const AppChrome = ({
   themeChanged,
 }) => {
   if (theme === undefined) {
-    theme = 'theme-light';
+    theme = 'theme-dark';
     themeChanged(theme);
   }
   return (

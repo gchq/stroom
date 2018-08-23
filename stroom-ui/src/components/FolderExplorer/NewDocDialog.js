@@ -6,6 +6,7 @@ import { reduxForm, Field } from 'redux-form';
 import { Modal, Header, Button, Icon, Form } from 'semantic-ui-react';
 import { InputField } from 'react-semantic-redux-form';
 
+import ThemedModal from 'components/ThemedModal';
 import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
 import { DocRefTypePicker } from 'components/DocRefTypes';
@@ -20,11 +21,13 @@ const { completeDocRefCreation } = actionCreators;
 const enhance = compose(
   connect(
     ({
+      userSettings: { theme },
       folderExplorer: {
         newDoc: { isOpen, destination },
       },
       form,
     }) => ({
+      theme,
       isOpen,
       destination,
       newDocRefForm: form.newDocRef,
@@ -45,16 +48,19 @@ const NewDocDialog = ({
   createDocument,
   newDocRefForm,
   destination,
+  // We need to include the theme because modals are mounted outside the root
+  // div, i.e. outside the div which contains the theme class.
+  theme,
 }) => (
-  <Modal
+  <ThemedModal
     open={isOpen}
     onClose={completeDocRefCreation}
     size="small"
-    dimmer="inverted"
     closeOnDimmerClick={false}
-  >
-    <Header icon="plus" content={`Create a New Doc Ref in ${destination && destination.name}`} />
-    <Modal.Content>
+    header={
+      <Header icon="plus" content={`Create a New Doc Ref in ${destination && destination.name}`} />
+    }
+    content={
       <Form>
         <Form.Field>
           <label>Doc Ref Type</label>
@@ -85,27 +91,29 @@ const NewDocDialog = ({
           />
         </Form.Field>
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button negative onClick={completeDocRefCreation} inverted>
-        <Icon name="checkmark" /> Cancel
-      </Button>
-      <Button
-        positive
-        onClick={() =>
-          createDocument(
-            newDocRefForm.values.docRefType,
-            newDocRefForm.values.docRefName,
-            destination,
-            newDocRefForm.values.permissionInheritance,
-          )
-        }
-        labelPosition="right"
-        icon="checkmark"
-        content="Choose"
-      />
-    </Modal.Actions>
-  </Modal>
+    }
+    actions={
+      <React.Fragment>
+        <Button negative onClick={completeDocRefCreation} inverted>
+          <Icon name="checkmark" /> Cancel
+        </Button>
+        <Button
+          positive
+          onClick={() =>
+            createDocument(
+              newDocRefForm.values.docRefType,
+              newDocRefForm.values.docRefName,
+              destination,
+              newDocRefForm.values.permissionInheritance,
+            )
+          }
+          labelPosition="right"
+          icon="checkmark"
+          content="Choose"
+        />
+      </React.Fragment>
+    }
+  />
 );
 
 export default enhance(NewDocDialog);

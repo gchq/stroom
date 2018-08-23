@@ -257,3 +257,27 @@ table {
     border: themed('dropdown__border') !important;
   }
 }
+
+
+
+
+.themed-modal__content {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.header {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.themed-modal__actions {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
