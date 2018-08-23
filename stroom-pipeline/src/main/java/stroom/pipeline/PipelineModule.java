@@ -24,16 +24,12 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.refdata.ReferenceDataModule;
 
 import javax.xml.transform.URIResolver;
 
 public class PipelineModule extends AbstractModule {
     @Override
     protected void configure() {
-        // install sub-modules
-        install(new ReferenceDataModule());
-
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
         bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
         bind(XsltStore.class).to(XsltStoreImpl.class);

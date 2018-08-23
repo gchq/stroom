@@ -38,7 +38,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineStoreImpl;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.refdata.store.AbstractRefDataOffHeapStoreTest;
@@ -336,7 +335,7 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
             feedDoc.setReference(true);
             feedStore.writeDocument(feedDoc);
 
-            final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
+            final DocRef pipelineRef = pipelineStore.createDocument("12345");
             final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed1Ref, StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
 
@@ -409,7 +408,7 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
             feedDoc.setReference(true);
             feedStore.writeDocument(feedDoc);
 
-            final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
+            final DocRef pipelineRef = pipelineStore.createDocument("12345");
             final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed1Ref, StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
 

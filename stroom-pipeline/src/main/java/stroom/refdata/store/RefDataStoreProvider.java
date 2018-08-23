@@ -24,9 +24,11 @@ import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.store.onheapstore.RefDataOnHeapStore;
 import stroom.util.ByteSizeUnit;
 import stroom.util.config.StroomProperties;
+import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,7 +51,7 @@ public class RefDataStoreProvider {
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
 
     private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1_000;
-    private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
+//    private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
 
@@ -64,8 +66,8 @@ public class RefDataStoreProvider {
 
         final Path storeDir = getStoreDir();
 
-        long maxStoreSizeBytes = stroomPropertyService.getLongProperty(
-                MAX_STORE_SIZE_BYTES_PROP_KEY, MAX_STORE_SIZE_BYTES_DEFAULT);
+        long maxStoreSizeBytes = ModelStringUtil.parseIECByteSizeString(stroomPropertyService.getProperty(
+                MAX_STORE_SIZE_BYTES_PROP_KEY, "10G"));
 
         int maxReaders = stroomPropertyService.getIntProperty(MAX_READERS_PROP_KEY, MAX_READERS_DEFAULT);
 
@@ -107,10 +109,9 @@ public class RefDataStoreProvider {
         LOGGER.info("Property {} is not set, falling back to {}", OFF_HEAP_STORE_DIR_PROP_KEY, StroomProperties.STROOM_TEMP);
         Path storeDir;
         if (storeDirStr == null) {
-            String stroomTempDirStr = stroomPropertyService.getProperty(StroomProperties.STROOM_TEMP);
-            Objects.requireNonNull(stroomTempDirStr, () ->
-                    LambdaLogger.buildMessage("Property {} is not set", StroomProperties.STROOM_TEMP));
-            storeDir = Paths.get(stroomTempDirStr).resolve(DEFAULT_STORE_SUB_DIR_NAME);
+            storeDir = FileUtil.getTempDir();
+            Objects.requireNonNull(storeDir, "Temp dir is not set");
+            storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
             storeDir = Paths.get(storeDirStr);
         }

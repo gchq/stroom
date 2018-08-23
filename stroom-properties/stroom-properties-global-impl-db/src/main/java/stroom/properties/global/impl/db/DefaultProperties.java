@@ -1348,7 +1348,7 @@ class DefaultProperties {
 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.refloader.offheapstore.maxStoreSize")
-                .value("50GB")
+                .value("50G")
                 .description("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
                 .editable(false)
                 .build());
