@@ -49,7 +49,7 @@ const AppSearch = ({ allDocuments }) => (
     listingId="app-search"
     icon="search"
     title="Search"
-    allDocRefs={allDocuments}
+    items={allDocuments}
   />
 );
 

@@ -8,6 +8,7 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
+// import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
@@ -24,10 +25,11 @@ const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
   withDocumentTree,
+  // withOpenDocRef,
   connect(
-    ({ folderExplorer: { documentTree }, docRefListing }, { folderUuid }) => ({
+    ({ folderExplorer: { documentTree }, selectableItemListings }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
-      docRefListing: docRefListing[LISTING_ID] || {},
+      selectableItemListing: selectableItemListings[LISTING_ID] || {},
     }),
     {
       prepareDocRefCreation,
@@ -47,7 +49,7 @@ const enhance = compose(
     prepareDocRefRename,
     prepareDocRefMove,
     fetchDocInfo,
-    docRefListing: { selectedDocRefUuids = [], allDocRefs },
+    selectableItemListing: { selectedItems = [], items },
   }) => {
     const actionBarItems = [
       {
@@ -57,12 +59,10 @@ const enhance = compose(
       },
     ];
 
-    const singleSelectedDocRef =
-        selectedDocRefUuids.length === 1
-          ? allDocRefs.find(f => f.uuid === selectedDocRefUuids[0])
-          : undefined;
+    const singleSelectedDocRef = selectedItems.length === 1 ? selectedItems[0] : undefined;
+    const selectedDocRefUuids = selectedItems.map(d => d.uuid);
 
-    if (selectedDocRefUuids.length > 0) {
+    if (selectedItems.length > 0) {
       if (singleSelectedDocRef) {
         actionBarItems.push({
           icon: 'info',
@@ -103,7 +103,7 @@ const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems }) => (
       icon="folder"
       title={node.name}
       parentFolder={node}
-      allDocRefs={node.children}
+      items={node.children}
       includeBreadcrumbOnEntries={false}
       allowMultiSelect
       actionBarItems={actionBarItems}

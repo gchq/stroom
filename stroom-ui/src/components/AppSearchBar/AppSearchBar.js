@@ -3,7 +3,6 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Dropdown } from 'semantic-ui-react';
-import { withRouter } from 'react-router-dom';
 
 import { actionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
@@ -22,7 +21,6 @@ const {
 
 const enhance = compose(
   withOpenDocRef,
-  withRouter,
   withDocRefTypes,
   connect(
     ({
@@ -93,7 +91,6 @@ const AppSearchBar = ({
           searchTermUpdated(value);
           searchApp({ term: value });
         }}
-        autoFocus
       />
     }
   >
@@ -119,6 +116,7 @@ const AppSearchBar = ({
       {searchResults.length > 0 &&
         searchResults.map((searchResult, index) => (
           <RawDocRefListingEntry
+            index={index}
             key={searchResult.uuid}
             onRowClick={() => searchSelectionSet(index)}
             onNameClick={() => openDocRef(searchResult)}

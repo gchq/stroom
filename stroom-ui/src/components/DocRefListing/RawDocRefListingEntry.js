@@ -1,25 +1,40 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { connect } from 'react-redux';
+
 import DocRefPropType from 'lib/DocRefPropType';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
+import { actionCreators as selectableItemActionCreators } from 'lib/withSelectableItemListing';
+
+const { selectionToggled } = selectableItemActionCreators;
+
+const enhance = connect(
+  ({ keyIsDown, selectableItemListings }, { listingId }) => ({
+    selectableItemListing: selectableItemListings[listingId],
+    keyIsDown,
+  }),
+  { selectionToggled },
+);
 
 const RawDocRefListingEntry = ({
   className,
-  node,
+  docRef,
   openDocRef,
-  onRowClick,
-  onNameClick,
-  isSelected,
   includeBreadcrumb,
+  selectableItemListing: { selectedItems },
+  index,
+  keyIsDown,
+  listingId,
+  selectionToggled,
 }) => (
   <div
-    key={node.uuid}
+    key={docRef.uuid}
     className={`doc-ref-listing__item ${className} ${
-      isSelected ? 'doc-ref-listing__item--selected' : ''
+      selectedItems.map(d => d.uuid).includes(docRef.uuid) ? 'doc-ref-listing__item--selected' : ''
     }`}
     onClick={(e) => {
-      onRowClick();
+      selectionToggled(listingId, index, keyIsDown);
       e.preventDefault();
     }}
   >
@@ -27,31 +42,30 @@ const RawDocRefListingEntry = ({
       <img
         className="stroom-icon--large"
         alt="X"
-        src={require(`../../images/docRefTypes/${node.type}.svg`)}
+        src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
       />
       <span
         className="doc-ref-listing__name"
         onClick={(e) => {
-          onNameClick();
+          openDocRef(docRef);
           e.stopPropagation();
           e.preventDefault();
         }}
       >
-        {node.name}
+        {docRef.name}
       </span>
     </div>
 
-    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
+    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={docRef.uuid} openDocRef={openDocRef} />}
   </div>
 );
 
 RawDocRefListingEntry.propTypes = {
+  index: PropTypes.number.isRequired,
   className: PropTypes.string,
-  node: DocRefPropType,
+  docRef: DocRefPropType,
   isSelected: PropTypes.bool.isRequired,
   openDocRef: PropTypes.func.isRequired,
-  onRowClick: PropTypes.func.isRequired,
-  onNameClick: PropTypes.func.isRequired,
 };
 
 RawDocRefListingEntry.defaultProps = {
@@ -59,4 +73,4 @@ RawDocRefListingEntry.defaultProps = {
   isSelected: false,
 };
 
-export default RawDocRefListingEntry;
+export default enhance(RawDocRefListingEntry);

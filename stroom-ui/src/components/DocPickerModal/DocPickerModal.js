@@ -122,7 +122,7 @@ const DocPickerModal = ({
           title="Search"
           includeBreadcrumbOnEntries={false}
           parentFolder={currentFolderWithLineage.node}
-          allDocRefs={currentFolderWithLineage.node.children}
+          items={currentFolderWithLineage.node.children}
           openDocRef={d => {
             // This will open a folder even if children are hidden by filtering...
             if (d.children && d.children.length > 0) {
