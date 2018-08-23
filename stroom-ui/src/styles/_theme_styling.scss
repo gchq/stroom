@@ -317,6 +317,13 @@ table {
 .tooltip-popup {
   @include themify($themes) {
     background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
+    color: themed('sidebar__color') !important;
+    &.place-top {
+      &:after {
+        border-top-color: themed('modal__background-color') !important;
+        border-top-style: solid !important;
+        border-top-width: 6px !important;
+      }
+    }
   }
 }

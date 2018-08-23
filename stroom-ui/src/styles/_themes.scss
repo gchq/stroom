@@ -33,6 +33,8 @@ $themes: (
     icon-button__color: #4d5250,
     icon-button__color--hover: black,
     
+    modal__background-color: #2185d0, // TODO is this 'raised-thing__background-color'?
+    modal__border: 1px solid #fff, // TODO is this 'border'?
   ),
   dark: (
     background__color: #282829,
