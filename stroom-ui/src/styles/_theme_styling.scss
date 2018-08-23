@@ -214,9 +214,21 @@ table {
   }
 }
 
+.doc-ref-listing__item:hover {
+  @include themify($themes){
+    background-color: themed('hover-color') !important;
+  }
+}
+
 .doc-ref-listing__item--selected {
   @include themify($themes) {
-    background-color: themed('hover-color') !important;
+    background-color: themed('selected-color') !important;
+  }
+}
+
+.doc-ref-listing__item--selected:hover {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
   }
 }
 
