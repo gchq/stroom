@@ -57,9 +57,9 @@ public class TestPathCreator extends StroomUnitTest {
         String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";
 
         // Replace pathId variable with path id.
-        path = PathCreator.replace(path, "pathId", "1234");
+        path = PathCreator.replace(path, "pathId", () -> "1234");
         // Replace id variable with file id.
-        path = PathCreator.replace(path, "id", "5678");
+        path = PathCreator.replace(path, "id", () -> "5678");
 
         Assert.assertEquals("${feed}/${year}/${year}-${month}/${year}-${month}-${day}/1234/5678", path);
 

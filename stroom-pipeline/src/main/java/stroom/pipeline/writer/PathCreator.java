@@ -176,7 +176,7 @@ public class PathCreator {
         return replace(path, type, stringReplacementSupplier);
     }
 
-    private static String replace(final String path,
+    public static String replace(final String path,
                                   final String type,
                                   final Supplier<String> replacementSupplier) {
         String newPath = path;
