@@ -3,30 +3,17 @@ import React from 'react';
 import { compose, lifecycle, branch, withProps, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react/dist/commonjs';
-import Mousetrap from 'mousetrap';
 
 import { actionCreators } from './redux';
 
-const upKeys = ['k', 'ctrl+k', 'up'];
-const downKeys = ['j', 'ctrl+j', 'down'];
-const openKeys = ['enter'];
-
-const {
-  selectableListingMounted,
-  selectableListingUnmounted,
-  selectionUp,
-  selectionDown,
-} = actionCreators;
+const { selectableListingMounted } = actionCreators;
 
 const withSelectableItemListing = propsFunc =>
   compose(
     withProps((props) => {
-      const {
-        openItem, listingId, items, allowMultiSelect = false,
-      } = propsFunc(props);
+      const { listingId, items, allowMultiSelect = false } = propsFunc(props);
 
       return {
-        openItem,
         listingId,
         items,
         allowMultiSelect,
@@ -38,9 +25,6 @@ const withSelectableItemListing = propsFunc =>
       }),
       {
         selectableListingMounted,
-        selectableListingUnmounted,
-        selectionUp,
-        selectionDown,
       },
     ),
     lifecycle({
@@ -57,42 +41,10 @@ const withSelectableItemListing = propsFunc =>
       },
       componentDidMount() {
         const {
-          selectableListingMounted,
-          items,
-          allowMultiSelect,
-          selectionUp,
-          selectionDown,
-          listingId,
-          openItem,
+          selectableListingMounted, listingId, items, allowMultiSelect,
         } = this.props;
 
         selectableListingMounted(listingId, items, allowMultiSelect);
-
-        Mousetrap.bind(upKeys, () => {
-          selectionUp(listingId);
-        });
-        Mousetrap.bind(downKeys, () => {
-          selectionDown(listingId);
-        });
-        Mousetrap.bind(openKeys, () => {
-          // Need to re-read this from 'this' within this closure
-          const {
-            props: {
-              openItem,
-              selectableItemListing: { selectedItems },
-            },
-          } = this;
-          if (selectedItems.length === 1) {
-            openItem(selectedItems[0]);
-          }
-        });
-      },
-      componentWillUnmount() {
-        const { selectableListingUnmounted, listingId } = this.props;
-        Mousetrap.unbind(upKeys);
-        Mousetrap.unbind(downKeys);
-        Mousetrap.unbind(openKeys);
-        selectableListingUnmounted(listingId);
       },
     }),
     branch(

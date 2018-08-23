@@ -2,16 +2,20 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent } from 'recompose';
-import { Loader } from 'semantic-ui-react';
+import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 
+import ThemedPopup from 'components/ThemedPopup'
+import AppSearchBar from 'components/AppSearchBar';
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb'
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
-import { DocRefListingWithRouter } from 'components/DocRefListing';
-// import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
+import DndDocRefListingEntry from './DndDocRefListingEntry';
+import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
+import withSelectableItemListing from 'lib/withSelectableItemListing';
 
 const {
   prepareDocRefCreation,
@@ -25,7 +29,7 @@ const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
   withDocumentTree,
-  // withOpenDocRef,
+  withOpenDocRef,
   connect(
     ({ folderExplorer: { documentTree }, selectableItemListings }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
@@ -41,6 +45,11 @@ const enhance = compose(
     },
   ),
   branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
+  withSelectableItemListing(({ folder: { node: { children } } }) => ({
+    listingId: LISTING_ID,
+    items: children,
+    allowMultiSelect: true
+  })),
   withProps(({
     folder,
     prepareDocRefCreation,
@@ -49,7 +58,7 @@ const enhance = compose(
     prepareDocRefRename,
     prepareDocRefMove,
     fetchDocInfo,
-    selectableItemListing: { selectedItems = [], items },
+    selectableItemListing: { selectedItems, items },
   }) => {
     const actionBarItems = [
       {
@@ -96,18 +105,54 @@ const enhance = compose(
   }),
 );
 
-const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems }) => (
+const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems, openDocRef }) => (
   <React.Fragment>
-    <DocRefListingWithRouter
-      listingId={LISTING_ID}
-      icon="folder"
-      title={node.name}
-      parentFolder={node}
-      docRefs={node.children}
-      includeBreadcrumbOnEntries={false}
-      allowMultiSelect
-      actionBarItems={actionBarItems}
-    />
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={16}>
+        <AppSearchBar />
+      </Grid.Column>
+      <Grid.Column width={11}>
+        <Header as="h3">
+          <Icon name="folder" />
+          <Header.Content>{node.name}</Header.Content>
+          <Header.Subheader>
+            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
+          </Header.Subheader>
+        </Header>
+      </Grid.Column>
+      <Grid.Column width={5}>
+        <span className="doc-ref-listing-entry__action-bar">
+          {actionBarItems.map(({onClick, icon, tooltip, disabled,}, i) => (
+            <ThemedPopup
+              key={i}
+              trigger={
+                <Button
+                  className="action-bar__button"
+                  circular
+                  onClick={onClick}
+                  icon={icon}
+                  disabled={disabled}
+                />
+              }
+              content={tooltip}
+            />
+          ))}
+        </span>
+      </Grid.Column>
+    </Grid>
+    <div className="doc-ref-listing">
+      {node.children.map((docRef, index) => (
+        <DndDocRefListingEntry
+          key={docRef.uuid}
+          index={index}
+          listingId={LISTING_ID}
+          docRefUuid={docRef.uuid}
+          onNameClick={node => openDocRef(node)}
+          openDocRef={openDocRef}
+        />
+      ))}
+    </div>
+
     <DocRefInfoModal />
     <NewDocDialog />
   </React.Fragment>

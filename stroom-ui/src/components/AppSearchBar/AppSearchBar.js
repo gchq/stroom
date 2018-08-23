@@ -4,24 +4,30 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Dropdown } from 'semantic-ui-react';
 
-import { actionCreators } from './redux';
+import { actionCreators as appSearchBarActionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
 import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
-import { DocRefListingEntry } from 'components/DocRefListing';
-import { onSearchInputKeyDown } from 'lib/KeyCodes';
+import { DocRefListingEntry } from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
+import withSelectableItemListing, { actionCreators as selectableItemListingActionCreators } from 'lib/withSelectableItemListing';
+import { withInputKeyDown, actionCreators as keyIsDownActionCreators, FOCUSSED_ELEMENTS } from 'lib/KeyIsDown';
 
 const {
   searchTermUpdated,
-  searchDocRefTypeChosen,
-  searchSelectionUp,
-  searchSelectionDown,
-  searchSelectionSet,
-} = actionCreators;
+  searchDocRefTypeChosen
+} = appSearchBarActionCreators;
+
+const {
+  elementFocussed,
+  elementBlurred
+} = keyIsDownActionCreators;
+
+const LISTING_ID = 'app-search-bar';
 
 const enhance = compose(
   withOpenDocRef,
   withDocRefTypes,
+  withInputKeyDown,
   connect(
     ({
       appSearch: {
@@ -37,11 +43,15 @@ const enhance = compose(
       searchApp,
       searchTermUpdated,
       searchDocRefTypeChosen,
-      searchSelectionUp,
-      searchSelectionDown,
-      searchSelectionSet,
+      elementFocussed,
+      elementBlurred
     },
   ),
+  withSelectableItemListing(({searchResults}) => ({
+    listingId: LISTING_ID,
+    items: searchResults,
+    autofocus: false
+  }))
 );
 
 const AppSearchBar = ({
@@ -52,11 +62,11 @@ const AppSearchBar = ({
   searchValue,
   searchTermUpdated,
   searchDocRefTypeChosen,
-  searchSelectionUp,
-  searchSelectionDown,
-  searchSelectionSet,
   history,
   docRefTypes,
+  onInputKeyDown,
+  elementFocussed,
+  elementBlurred                                                                                 
 }) => (
   <Dropdown
     fluid
@@ -68,25 +78,9 @@ const AppSearchBar = ({
         icon="search"
         placeholder="Search..."
         value={searchValue}
-        onKeyDown={onSearchInputKeyDown({
-          onUpKey: () => {
-            searchSelectionUp();
-          },
-          onDownKey: () => {
-            searchSelectionDown();
-          },
-          onOpenKey: () => {
-            const selectedResult = searchResults[selectedIndex];
-            if (selectedResult) {
-              openDocRef(selectedResult);
-            } else {
-              history.push('/s/search');
-            }
-          },
-          onOtherKey: (e) => {
-            console.log('Other key', e);
-          },
-        })}
+        onKeyDown={onInputKeyDown}
+        onFocus={() => elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
+        onBlur={() => elementBlurred(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
         onChange={({ target: { value } }) => {
           searchTermUpdated(value);
           searchApp({ term: value });
@@ -116,13 +110,12 @@ const AppSearchBar = ({
       {searchResults.length > 0 &&
         searchResults.map((searchResult, index) => (
           <DocRefListingEntry
-            index={index}
             key={searchResult.uuid}
-            onRowClick={() => searchSelectionSet(index)}
-            onNameClick={() => openDocRef(searchResult)}
-            node={searchResult}
+            index={index}
+            listingId={LISTING_ID}
+            docRef={searchResult}
             openDocRef={openDocRef}
-            isSelected={index === selectedIndex}
+            includeBreadcrumb
           />
         ))}
     </Dropdown.Menu>

@@ -19,7 +19,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { iterateNodes } from 'lib/treeUtils';
-import { DocRefListingWithRouter } from 'components/DocRefListing';
+import { DocRefListingWithRouter } from 'components/DocRefListingEntry';
 import { withDocumentTree } from 'components/FolderExplorer';
 
 const enhance = compose(

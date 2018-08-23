@@ -10,7 +10,7 @@ import { actionCreators as selectableItemActionCreators } from 'lib/withSelectab
 const { selectionToggled } = selectableItemActionCreators;
 
 const enhance = connect(
-  ({ keyIsDown, selectableItemListings }, { listingId }) => ({
+  ({ keyIsDown: {keyIsDown}, selectableItemListings }, { listingId }) => ({
     selectableItemListing: selectableItemListings[listingId],
     keyIsDown,
   }),

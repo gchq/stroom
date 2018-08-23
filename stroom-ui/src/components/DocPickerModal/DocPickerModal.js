@@ -23,7 +23,7 @@ import { Button, Modal, Input, Popup } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
-import DocRefListing from 'components/DocRefListing';
+// import DocRefListingEntry from 'components/DocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
@@ -37,15 +37,17 @@ const enhance = compose(
     (
       { folderExplorer: { documentTree }, docRefListing },
       {
-        pickerId, onChange, setModalIsOpen, folderUuid, typeFilters
+        pickerId, onChange, setModalIsOpen, folderUuid, typeFilters,
       },
     ) => {
-      let documentTreeToUse = typeFilters.length > 0 ? filterTree(documentTree, d => typeFilters.includes(d.type)) : documentTree;
-      let folderUuidToUse = folderUuid || documentTree.uuid;
+      const documentTreeToUse =
+        typeFilters.length > 0
+          ? filterTree(documentTree, d => typeFilters.includes(d.type))
+          : documentTree;
+      const folderUuidToUse = folderUuid || documentTree.uuid;
 
-      let thisDocRefListing = docRefListing[pickerId];
-      let currentFolderWithLineage = findItem(documentTreeToUse, folderUuidToUse);
-
+      const thisDocRefListing = docRefListing[pickerId];
+      const currentFolderWithLineage = findItem(documentTreeToUse, folderUuidToUse);
 
       const onDocRefPickConfirmed = () => {
         const result = findItem(documentTreeToUse, thisDocRefListing.selectedDocRefUuids[0]);
@@ -58,7 +60,8 @@ const enhance = compose(
         docRefListing: thisDocRefListing,
         documentTree: documentTreeToUse,
         onDocRefPickConfirmed,
-        selectionNotYetMade: thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
+        selectionNotYetMade:
+          thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
       };
     },
     {},
@@ -78,7 +81,7 @@ const DocPickerModal = ({
   value,
 }) => {
   let trigger;
-  
+
   if (value && value.uuid) {
     const { lineage, node } = findItem(documentTree, value.uuid);
     const triggerValue = `${lineage.map(d => d.name).join(' > ')}${
@@ -116,7 +119,36 @@ const DocPickerModal = ({
       dimmer="inverted"
     >
       <Modal.Content scrolling>
-        <DocRefListing
+        <Grid className="content-tabs__grid">
+          <Grid.Column width={16}>
+            <AppSearchBar />
+          </Grid.Column>
+          <Grid.Column width={16}>
+            <Header as="h3">
+              <Icon name={icon} />
+              <Header.Content>{title}</Header.Content>
+              {parentFolder && (
+                <Header.Subheader>
+                  <DocRefBreadcrumb docRefUuid={parentFolder.uuid} openDocRef={openDocRef} />
+                </Header.Subheader>
+              )}
+            </Header>
+          </Grid.Column>
+        </Grid>
+        <div className="doc-ref-listing">
+          {docRefs.map((docRef, index) => (
+            <DndDocRefListingEntry
+              key={docRef.uuid}
+              index={index}
+              listingId={listingId}
+              docRefUuid={docRef.uuid}
+              includeBreadcrumb={includeBreadcrumbOnEntries}
+              onNameClick={node => openDocRef(node)}
+              openDocRef={openDocRef}
+            />
+          ))}
+        </div>
+        {/* <DocRefListingEntry
           listingId={pickerId}
           icon="search"
           title="Search"
@@ -129,7 +161,7 @@ const DocPickerModal = ({
               setFolderUuid(d.uuid);
             }
           }}
-        />
+        /> */}
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={() => setModalIsOpen(false)}>
