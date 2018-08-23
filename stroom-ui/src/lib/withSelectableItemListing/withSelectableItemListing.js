@@ -21,11 +21,15 @@ const {
 const withSelectableItemListing = propsFunc =>
   compose(
     withProps((props) => {
-      const { openItem, listingId } = propsFunc(props);
+      const {
+        openItem, listingId, items, allowMultiSelect = false,
+      } = propsFunc(props);
 
       return {
         openItem,
         listingId,
+        items,
+        allowMultiSelect,
       };
     }),
     connect(
