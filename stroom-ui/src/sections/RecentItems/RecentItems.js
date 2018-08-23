@@ -19,7 +19,8 @@ import { connect } from 'react-redux';
 import { Header, Icon, Grid } from 'semantic-ui-react';
 
 import AppSearchBar from 'components/AppSearchBar';
-import { RawDocRefListingEntry } from 'components/DocRefListing';
+import { DocRefListingEntry } from 'components/DocRefListing';
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import withOpenDocRef from './withOpenDocRef';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
@@ -27,16 +28,17 @@ const LISTING_ID = 'recent-items';
 
 const enhance = compose(
   withOpenDocRef,
-  withSelectableItemListing(({ openDocRef }) => ({
-    listingId: LISTING_ID,
-    openItem: openDocRef,
-  })),
   connect(
     ({ recentItems }, props) => ({
       recentItems,
     }),
     {},
   ),
+  withSelectableItemListing(({ openDocRef, recentItems }) => ({
+    listingId: LISTING_ID,
+    openItem: openDocRef,
+    items: recentItems,
+  })),
 );
 
 const RecentItems = ({ recentItems, openDocRef }) => (
@@ -54,7 +56,7 @@ const RecentItems = ({ recentItems, openDocRef }) => (
     </Grid>
     <div className="doc-ref-listing">
       {recentItems.map((docRef, index) => (
-        <RawDocRefListingEntry
+        <DocRefListingEntry
           key={docRef.uuid}
           index={index}
           listingId={LISTING_ID}

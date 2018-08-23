@@ -7,7 +7,7 @@ import { Input, Dropdown } from 'semantic-ui-react';
 import { actionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
 import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
-import { RawDocRefListingEntry } from 'components/DocRefListing';
+import { DocRefListingEntry } from 'components/DocRefListing';
 import { onSearchInputKeyDown } from 'lib/KeyCodes';
 import { withDocRefTypes } from 'components/DocRefTypes';
 
@@ -114,7 +114,7 @@ const AppSearchBar = ({
         ))}
       {searchResults.length > 0 &&
         searchResults.map((searchResult, index) => (
-          <RawDocRefListingEntry
+          <DocRefListingEntry
             index={index}
             key={searchResult.uuid}
             onRowClick={() => searchSelectionSet(index)}

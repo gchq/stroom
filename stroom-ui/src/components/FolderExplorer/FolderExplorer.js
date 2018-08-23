@@ -103,7 +103,7 @@ const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems }) => (
       icon="folder"
       title={node.name}
       parentFolder={node}
-      items={node.children}
+      docRefs={node.children}
       includeBreadcrumbOnEntries={false}
       allowMultiSelect
       actionBarItems={actionBarItems}
