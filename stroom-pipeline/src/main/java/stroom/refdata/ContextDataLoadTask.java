@@ -20,7 +20,7 @@ import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 import stroom.util.shared.VoidResult;
 
 import java.io.InputStream;

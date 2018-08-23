@@ -95,7 +95,7 @@ public class TestHeapHistogramStatisticsExecutor {
         //Given
         //no regex so should get all classes back
         Mockito.when(heapHistogramConfig.getClassNameMatchRegex()).thenReturn("");
-//        mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
+//        mockPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
 
 //        Mockito.when(statisticsFactory.instance())
 //                .thenReturn(statistics);
@@ -130,7 +130,7 @@ public class TestHeapHistogramStatisticsExecutor {
     public void testExecBadExecutable() {
         //Given
         Mockito.when(heapHistogramConfig.getExecutable()).thenReturn("badNameForJmapExecutable");
-//        mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
+//        mockPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
 
         //When
         boolean thrownException = false;

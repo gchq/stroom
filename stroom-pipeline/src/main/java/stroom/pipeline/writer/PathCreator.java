@@ -58,8 +58,7 @@ public class PathCreator {
             "fileExtension",
             StroomProperties.STROOM_TEMP};
 
-    private static final Set<String> NON_ENV_VARS_SET = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
+    private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
 
     private final FeedHolder feedHolder;
     private final PipelineHolder pipelineHolder;
@@ -176,7 +175,7 @@ public class PathCreator {
         return replace(path, type, stringReplacementSupplier);
     }
 
-    private static String replace(final String path,
+    public static String replace(final String path,
                                   final String type,
                                   final Supplier<String> replacementSupplier) {
         String newPath = path;

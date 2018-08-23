@@ -16,16 +16,16 @@
 
 package stroom.refdata;
 
+import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.streamstore.shared.Stream;
 
 import java.io.InputStream;
 
 public interface ContextDataLoader {
     void load(final InputStream inputStream,
-              final Stream stream,
+              final Data data,
               final String feedName,
               final DocRef contextPipeline,
               final RefStreamDefinition refStreamDefinition,

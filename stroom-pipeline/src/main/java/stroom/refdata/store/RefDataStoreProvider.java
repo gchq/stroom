@@ -19,13 +19,12 @@ package stroom.refdata.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
-import stroom.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.refdata.store.onheapstore.RefDataOnHeapStore;
 import stroom.util.ByteSizeUnit;
 import stroom.util.config.StroomProperties;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 
@@ -39,7 +38,6 @@ import java.util.Objects;
 
 @Singleton
 public class RefDataStoreProvider {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreProvider.class);
 
     static final String OFF_HEAP_STORE_DIR_PROP_KEY = "stroom.refloader.offheapstore.localDir";
@@ -55,16 +53,13 @@ public class RefDataStoreProvider {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final RefDataStore offHeapRefDataStore;
-    private final GenericRefDataValueSerde genericRefDataValueSerde;
 
     @Inject
-    RefDataStoreProvider(final StroomPropertyService stroomPropertyService,
-                         final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory,
-                         final GenericRefDataValueSerde genericRefDataValueSerde) {
+    RefDataStoreProvider(final PropertyService stroomPropertyService,
+                         final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory) {
         this.stroomPropertyService = stroomPropertyService;
-        this.genericRefDataValueSerde = genericRefDataValueSerde;
 
 
         final Path storeDir = getStoreDir();

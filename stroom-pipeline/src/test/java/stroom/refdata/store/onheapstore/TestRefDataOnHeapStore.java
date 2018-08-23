@@ -29,8 +29,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.properties.MockStroomPropertyService;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataLoader;
@@ -85,7 +85,7 @@ public class TestRefDataOnHeapStore {
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+    private final PropertyService mockPropertyService = new MockPropertyService();
 
     @Inject
     private RefDataStoreProvider refDataStoreProvider;
@@ -97,7 +97,7 @@ public class TestRefDataOnHeapStore {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(StroomPropertyService.class).toInstance(mockStroomPropertyService);
+                        bind(PropertyService.class).toInstance(mockPropertyService);
                         install(new RefDataStoreModule());
                     }
                 });

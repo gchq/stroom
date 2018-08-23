@@ -29,7 +29,7 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.refdata.store.AbstractRefDataStore;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
@@ -105,7 +105,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
     // For synchronising access to the data belonging to a MapDefinition
@@ -132,7 +132,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final StroomPropertyService stroomPropertyService) {
+            final PropertyService stroomPropertyService) {
 
         this.dbDir = dbDir;
         this.maxSize = maxSize;

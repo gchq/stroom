@@ -5,7 +5,7 @@ import java.util.Properties;
 /**
  * We need to expose properties to the connector implementations, but without them having to wire in our relatively heavy
  * property service. This interface will be used to hide those details, and we will provide implementations
- * that expect prefixed properties to be available in StroomPropertyService.
+ * that expect prefixed properties to be available in PropertyService.
  */
 public interface ConnectorProperties {
     /**

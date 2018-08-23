@@ -23,26 +23,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
-import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefUtil;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.guice.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.streamstore.shared.StreamTypeNames;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataStoreProvider;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
@@ -206,13 +200,13 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     public void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed = feedStore.createDocument("TEST_FEED_V3");
+            final DocRef feedRef = feedStore.createDocument("TEST_FEED_V3");
 //            feed.setReference(true);
 //            feed = feedService.save(feed);
 
             final DocRef pipelineRef = pipelineStore.createDocument(TEST_PIPELINE_1);
             final PipelineReference pipelineReference = new PipelineReference(
-                    pipelineRef, DocRefUtil.create(feed), StreamType.REFERENCE.getName());
+                    pipelineRef, feedRef, StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 

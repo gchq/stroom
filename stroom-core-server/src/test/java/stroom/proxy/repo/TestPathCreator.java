@@ -45,8 +45,8 @@ public class TestPathCreator {
     @Test
     public void testReplaceTime() {
         final ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 8, 20, 13, 17, 22, 2111444, ZoneOffset.UTC);
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("feed", "TEST");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", "TEST");
 
         String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";
 
@@ -61,7 +61,7 @@ public class TestPathCreator {
 
         Assert.assertEquals("${feed}/2018/2018-08/2018-08-20/1234/5678", path);
 
-        path = PathCreator.replaceAll(path, metaMap);
+        path = PathCreator.replaceAll(path, attributeMap);
 
         Assert.assertEquals("TEST/2018/2018-08/2018-08-20/1234/5678", path);
     }

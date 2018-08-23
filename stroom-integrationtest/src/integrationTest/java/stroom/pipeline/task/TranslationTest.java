@@ -52,6 +52,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -236,17 +237,16 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final String streamTypeName = stream.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
-                    } else if (streamType.isStreamTypeError()) {
+                    } else {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Stream parentStream = streamStore.loadStreamById(stream.getParentStreamId());
-                            StreamType parentStreamType = streamTypeService.load(parentStream.getStreamType());
+                            Data parentStream = streamMetaService.getData(stream.getParentDataId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
                             LOGGER.warn("Stream {} with parent {} of type {} has errors:\n{}",
-                                    stream, parentStream.getId(), parentStreamType.getName(), errorStreamStr);
+                                    stream, parentStream.getId(), parentStream.getTypeName(), errorStreamStr);
 
 //                            // only dump warning if debug enabled
 //                            if (LOGGER.isDebugEnabled()) {

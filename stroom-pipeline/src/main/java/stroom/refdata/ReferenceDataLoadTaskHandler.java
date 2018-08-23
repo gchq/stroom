@@ -19,6 +19,11 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
 import stroom.pipeline.LocationFactoryProxy;
@@ -41,12 +46,7 @@ import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataStoreProvider;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.Data;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
@@ -67,7 +67,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
     private final StreamStore streamStore;
     private final PipelineFactory pipelineFactory;
-    private final MapStoreHolder mapStoreHolder;
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
@@ -87,7 +86,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     @Inject
     ReferenceDataLoadTaskHandler(final StreamStore streamStore,
                                  final PipelineFactory pipelineFactory,
-                                 final MapStoreHolder mapStoreHolder,
                                  final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
@@ -103,7 +101,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final Security security) {
         this.streamStore = streamStore;
         this.pipelineFactory = pipelineFactory;
-        this.mapStoreHolder = mapStoreHolder;
         this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
@@ -161,8 +158,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                 pipeline,
                                 stream,
                                 streamSource,
-                                feed,
-                                stream.getStreamType(),
+                                feedName,
+                                stream.getTypeName(),
                                 task.getRefStreamDefinition());
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
@@ -257,7 +254,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 }
             }
 
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
     }
