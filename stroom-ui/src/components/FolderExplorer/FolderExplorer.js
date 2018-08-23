@@ -4,9 +4,9 @@ import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 
-import ThemedPopup from 'components/ThemedPopup'
+import ThemedPopup from 'components/ThemedPopup';
 import AppSearchBar from 'components/AppSearchBar';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb'
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
@@ -16,6 +16,7 @@ import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
+import { actionCreators as keyIsDownActionCreators, FOCUSSED_ELEMENTS } from 'lib/KeyIsDown';
 
 const {
   prepareDocRefCreation,
@@ -24,6 +25,8 @@ const {
   prepareDocRefRename,
   prepareDocRefMove,
 } = actionCreators;
+
+const { elementFocussed, elementBlurred } = keyIsDownActionCreators;
 
 const LISTING_ID = 'folder-explorer';
 
@@ -42,13 +45,15 @@ const enhance = compose(
       prepareDocRefRename,
       prepareDocRefMove,
       fetchDocInfo,
+      elementFocussed,
+      elementBlurred,
     },
   ),
   branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
   withSelectableItemListing(({ folder: { node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
-    allowMultiSelect: true
+    allowMultiSelect: true,
   })),
   withProps(({
     folder,
@@ -105,7 +110,14 @@ const enhance = compose(
   }),
 );
 
-const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems, openDocRef }) => (
+const FolderExplorer = ({
+  folder: { node },
+  folderUuid,
+  actionBarItems,
+  openDocRef,
+  elementFocussed,
+  elementBlurred,
+}) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={16}>
@@ -122,25 +134,33 @@ const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems, openDocR
       </Grid.Column>
       <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
-          {actionBarItems.map(({onClick, icon, tooltip, disabled,}, i) => (
-            <ThemedPopup
-              key={i}
-              trigger={
-                <Button
-                  className="action-bar__button"
-                  circular
-                  onClick={onClick}
-                  icon={icon}
-                  disabled={disabled}
-                />
+          {actionBarItems.map(({
+ onClick, icon, tooltip, disabled,
+}, i) => (
+  <ThemedPopup
+    key={i}
+    trigger={
+      <Button
+        className="action-bar__button"
+        circular
+        onClick={onClick}
+        icon={icon}
+        disabled={disabled}
+      />
               }
-              content={tooltip}
-            />
+    content={tooltip}
+  />
           ))}
         </span>
       </Grid.Column>
     </Grid>
-    <div className="doc-ref-listing">
+    <div
+      className="doc-ref-listing"
+      tabIndex={1}
+      onFocus={() => elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
+      onClick={() => elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
+      onBlur={() => elementBlurred(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
+    >
       {node.children.map((docRef, index) => (
         <DndDocRefListingEntry
           key={docRef.uuid}

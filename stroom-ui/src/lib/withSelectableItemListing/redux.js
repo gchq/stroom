@@ -1,5 +1,4 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
-import { shortcutUsed, SHORTCUT_NAMES } from 'lib/KeyIsDown';
 
 const actionCreators = createActions({
   SELECTABLE_LISTING_MOUNTED: (listingId, items, allowMultiSelect) => ({
@@ -28,9 +27,7 @@ const reducer = handleActions(
   {
     SELECTABLE_LISTING_MOUNTED: (state, action) => {
       const {
-        payload: {
-          listingId, items, allowMultiSelect,
-        },
+        payload: { listingId, items, allowMultiSelect },
       } = action;
 
       return {

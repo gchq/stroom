@@ -1,9 +1,10 @@
 import { connect } from 'react-redux';
 import { lifecycle, compose, withProps } from 'recompose';
 import Mousetrap from 'mousetrap';
+import { withRouter } from 'react-router-dom';
 
 import { actionCreators } from './redux';
-import { SHORTCUT_NAMES, shortcutUsed } from './shortcutUsed';
+import { SHORTCUT_NAMES, handleShortcutKey } from './handleShortcutKey';
 
 const { keyDown, keyUp } = actionCreators;
 
@@ -31,20 +32,21 @@ const j = 74;
 const enter = 13;
 
 const withInputKeyDown = compose(
+  withRouter,
   connect(({ keyIsDown: { focussedElement } }, props) => ({ focussedElement }), {
-    shortcutUsed,
+    handleShortcutKey,
   }),
-  withProps(({ focussedElement, shortcutUsed }) => ({
+  withProps(({ focussedElement, handleShortcutKey, history }) => ({
     onInputKeyDown: (e) => {
       if (focussedElement) {
         if (e.keyCode === upArrow || (e.ctrlKey && e.keyCode === k)) {
-          shortcutUsed(SHORTCUT_NAMES.UP);
+          handleShortcutKey(history, SHORTCUT_NAMES.UP);
           e.preventDefault();
         } else if (e.keyCode === downArrow || (e.ctrlKey && e.keyCode === j)) {
-          shortcutUsed(SHORTCUT_NAMES.DOWN);
+          handleShortcutKey(history, SHORTCUT_NAMES.DOWN);
           e.preventDefault();
         } else if (e.keyCode === enter) {
-          shortcutUsed(SHORTCUT_NAMES.OPEN);
+          handleShortcutKey(history, SHORTCUT_NAMES.OPEN);
           e.preventDefault();
         }
       }
@@ -54,15 +56,16 @@ const withInputKeyDown = compose(
 
 const KeyIsDown = (filters = ['Control', 'Shift', 'Alt', 'Meta']) =>
   compose(
+    withRouter,
     connect(({ keyIsDown: { focussedElement } }, props) => ({ focussedElement }), {
       keyDown,
       keyUp,
-      shortcutUsed,
+      handleShortcutKey,
     }),
     lifecycle({
       componentDidMount() {
         const {
-          keyDown, keyUp, shortcutUsed, focussedElement,
+          keyDown, keyUp, handleShortcutKey, focussedElement, history,
         } = this.props;
         window.onkeydown = function (e) {
           if (focussedElement && filters.includes(e.key)) {
@@ -78,13 +81,13 @@ const KeyIsDown = (filters = ['Control', 'Shift', 'Alt', 'Meta']) =>
         };
 
         Mousetrap.bind(upKeys, () => {
-          shortcutUsed(SHORTCUT_NAMES.UP);
+          handleShortcutKey(history, SHORTCUT_NAMES.UP);
         });
         Mousetrap.bind(downKeys, () => {
-          shortcutUsed(SHORTCUT_NAMES.DOWN);
+          handleShortcutKey(history, SHORTCUT_NAMES.DOWN);
         });
         Mousetrap.bind(openKeys, () => {
-          shortcutUsed(SHORTCUT_NAMES.OPEN);
+          handleShortcutKey(history, SHORTCUT_NAMES.OPEN);
         });
       },
       componentWillUnmount() {
