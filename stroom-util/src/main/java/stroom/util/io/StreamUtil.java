@@ -16,6 +16,7 @@
 
 package stroom.util.io;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
@@ -24,11 +25,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * Helper class for resources.
@@ -81,6 +84,14 @@ public final class StreamUtil {
 
         final MyByteArrayOutputStream baos = doStreamToBuffer(stream, close);
         return baos.toString(charset);
+    }
+
+    public static Stream<String> streamToLines(final InputStream stream) {
+        return streamToLines(stream, DEFAULT_CHARSET, true);
+    }
+
+    public static Stream<String> streamToLines(final InputStream stream, final Charset charset, final boolean close) {
+        return new BufferedReader(new StringReader(streamToString(stream, charset, close))).lines();
     }
 
     public static byte[] streamToBytes(final InputStream stream) {

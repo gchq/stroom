@@ -28,30 +28,46 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
+import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.store.GenericRefDataValueProxyConsumer;
+import stroom.refdata.store.RefDataValueProxy;
+import stroom.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
-import stroom.xml.event.np.EventListConsumer;
-import stroom.xml.event.np.NPEventList;
 
 import java.util.List;
+
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
 
     private final ReferenceData referenceData;
     private final StreamHolder streamHolder;
+    private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
 
     private long defaultMs = -1;
 
-    AbstractLookup(final ReferenceData referenceData, final StreamHolder streamHolder) {
+    AbstractLookup(final ReferenceData referenceData,
+                   final StreamHolder streamHolder,
+                   final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
         this.referenceData = referenceData;
         this.streamHolder = streamHolder;
+        this.consumerFactoryFactory = consumerFactoryFactory;
     }
+
+    RefDataValueProxyConsumerFactory.Factory getRefDataValueProxyConsumerFactoryFactory() {
+        return consumerFactoryFactory;
+    }
+
+//    OffHeapRefDataValueProxyConsumer.Factory getConsumerFactory() {
+//        return consumerFactory;
+//    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
+        LOGGER.trace("call({}, {}, {}", functionName, context, arguments);
         Sequence result = EmptyAtomicSequence.getInstance();
 
         try {
@@ -111,16 +127,27 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             }
 
             // Create a lookup identifier if we are going to output debug.
-            final LookupIdentifier lookupIdentifier = new LookupIdentifier(map, key, ms);
-
-            // If we have got the date then continue to do the lookup.
+            final LookupIdentifier lookupIdentifier;
             try {
-                result = doLookup(context, map, key, ms, ignoreWarnings, traceLookup, lookupIdentifier);
-            } catch (final RuntimeException e) {
-                if (!ignoreWarnings) {
-                    createLookupFailWarning(context, lookupIdentifier, e);
+                lookupIdentifier = new LookupIdentifier(map, key, ms);
+
+                // If we have got the date then continue to do the lookup.
+                try {
+                    result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                } catch (final RuntimeException e) {
+                    createLookupFailError(context, lookupIdentifier, e);
                 }
+            } catch (RuntimeException e) {
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Identifier must have a map and a key (map = ");
+                sb.append(map);
+                sb.append(", key = ");
+                sb.append(key);
+                sb.append(", eventTime = ");
+                sb.append(ms);
+                log(context, Severity.ERROR, e.getMessage(), e);
             }
+
         } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
@@ -129,35 +156,36 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     abstract Sequence doLookup(final XPathContext context,
-                               final String map,
-                               final String key,
-                               final long eventTime,
                                final boolean ignoreWarnings,
                                final boolean trace,
                                final LookupIdentifier lookupIdentifier)
             throws XPathException;
 
-    ReferenceDataResult getReferenceData(final String map,
-                                         final String key,
-                                         final long eventTime,
-                                         final LookupIdentifier lookupIdentifier) {
+
+    ReferenceDataResult getReferenceData(final LookupIdentifier lookupIdentifier) {
+        LOGGER.trace("getReferenceData({})", lookupIdentifier);
         final ReferenceDataResult result = new ReferenceDataResult();
 
         result.log(Severity.INFO, () -> "Doing lookup " + lookupIdentifier);
-        if (map == null) {
-            result.log(Severity.ERROR, () -> "No map name has been specified");
-        } else if (key == null) {
-            result.log(Severity.ERROR, () -> "No key name has been specified");
+        final List<PipelineReference> pipelineReferences = getPipelineReferences();
+        if (pipelineReferences == null || pipelineReferences.size() == 0) {
+            result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
-            final List<PipelineReference> pipelineReferences = getPipelineReferences();
-            if (pipelineReferences == null || pipelineReferences.size() == 0) {
-                result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
-            } else {
-                referenceData.getValue(pipelineReferences, eventTime, map, key, result);
-            }
+            referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
 
         return result;
+    }
+
+    private void createLookupFailError(final XPathContext context,
+                                       final LookupIdentifier lookupIdentifier,
+                                       final Throwable e) {
+        // Create the message.
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Lookup errored ");
+        lookupIdentifier.append(sb);
+
+        outputError(context, sb, e);
     }
 
     private void createLookupFailWarning(final XPathContext context,
@@ -197,43 +225,57 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     static class SequenceMaker {
         private final XPathContext context;
+        private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
         private Builder builder;
-        private EventListConsumer consumer;
+        private RefDataValueProxyConsumerFactory consumerFactory;
+        private GenericRefDataValueProxyConsumer consumer;
 
-        SequenceMaker(final XPathContext context) {
+        SequenceMaker(final XPathContext context,
+                      final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
             this.context = context;
+            this.consumerFactoryFactory = consumerFactoryFactory;
         }
 
         void open() throws XPathException {
+            LOGGER.trace("open()");
             // Make sure we have made a consumer.
             ensureConsumer();
 
-            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
             consumer.startDocument();
         }
 
         void close() throws XPathException {
+            LOGGER.trace("close()");
             consumer.endDocument();
         }
 
-        void consume(final NPEventList eventList) throws XPathException {
-            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
-            consumer.consume(eventList);
+        boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+            return consumer.consume(refDataValueProxy);
         }
 
         private void ensureConsumer() {
+            LOGGER.trace("ensureConsumer()");
             if (consumer == null) {
                 // We have some reference data so build a tiny tree.
                 final Configuration configuration = context.getConfiguration();
 
-                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+                final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
 
-                builder = new TinyBuilder(pipe);
-                consumer = new EventListConsumer(builder, pipe);
+                builder = new TinyBuilder(pipelineConfiguration);
+
+                // At this point we don't know if we are dealing with heap object values or off-heap bytebuffer values.
+                // We also don't know if the value is a string or a fastinfoset.
+                consumer = new GenericRefDataValueProxyConsumer(
+                        builder,
+                        pipelineConfiguration,
+                        consumerFactoryFactory.create(builder, pipelineConfiguration));
+
+//                consumer = consumerFactory.create(builder, pipelineConfiguration);
             }
         }
 
         Sequence toSequence() {
+            LOGGER.trace("toSequence()");
             if (builder == null) {
                 return EmptyAtomicSequence.getInstance();
             }
@@ -244,35 +286,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             builder.reset();
 
             return sequence;
-        }
-    }
-
-    static class LookupIdentifier {
-        private final String map;
-        private final String key;
-        private final long eventTime;
-
-        LookupIdentifier(final String map, final String key, final long eventTime) {
-            this.map = map;
-            this.key = key;
-            this.eventTime = eventTime;
-        }
-
-        public void append(final StringBuilder sb) {
-            sb.append("(map = ");
-            sb.append(map);
-            sb.append(", key = ");
-            sb.append(key);
-            sb.append(", eventTime = ");
-            sb.append(DateUtil.createNormalDateTimeString(eventTime));
-            sb.append(")");
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            append(sb);
-            return sb.toString();
         }
     }
 }

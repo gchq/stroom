@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.binder.ScopedBindingBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.ExplorerActionHandler;
@@ -24,12 +25,17 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.refdata.ReferenceDataModule;
+import stroom.task.TaskHandler;
 
 import javax.xml.transform.URIResolver;
 
 public class PipelineModule extends AbstractModule {
     @Override
     protected void configure() {
+        // install sub-modules
+        install(new ReferenceDataModule());
+
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
         bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
         bind(XsltStore.class).to(XsltStoreImpl.class);
@@ -47,7 +53,7 @@ public class PipelineModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XsltStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(PipelineDoc.DOCUMENT_TYPE).to(stroom.pipeline.PipelineStoreImpl.class);
+        entityServiceByTypeBinder.addBinding(PipelineDoc.DOCUMENT_TYPE).to(PipelineStoreImpl.class);
         entityServiceByTypeBinder.addBinding(TextConverterDoc.DOCUMENT_TYPE).to(stroom.pipeline.TextConverterStoreImpl.class);
         entityServiceByTypeBinder.addBinding(XsltDoc.DOCUMENT_TYPE).to(stroom.pipeline.XsltStoreImpl.class);
     }
