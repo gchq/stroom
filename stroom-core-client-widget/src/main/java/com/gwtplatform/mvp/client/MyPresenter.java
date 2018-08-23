@@ -23,8 +23,6 @@ import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.widget.tab.client.presenter.Layer;
-import stroom.widget.tab.client.presenter.LayerContainer;
 
 public abstract class MyPresenter<V extends View, Proxy_ extends Proxy<?>> extends Presenter<V, Proxy_>
         implements Layer {

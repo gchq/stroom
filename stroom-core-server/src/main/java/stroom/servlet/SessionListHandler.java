@@ -21,7 +21,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;

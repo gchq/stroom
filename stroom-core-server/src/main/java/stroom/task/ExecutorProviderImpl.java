@@ -16,7 +16,7 @@
 
 package stroom.task;
 
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.shared.Task;
 import stroom.task.shared.ThreadPool;
 

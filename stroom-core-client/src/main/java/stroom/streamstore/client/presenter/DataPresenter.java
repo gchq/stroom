@@ -45,7 +45,7 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;

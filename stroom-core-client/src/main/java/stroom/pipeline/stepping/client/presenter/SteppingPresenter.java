@@ -57,8 +57,8 @@ import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.tab.client.presenter.Layer;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.LayerContainer;
 
 import java.util.ArrayList;
 import java.util.HashMap;

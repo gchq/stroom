@@ -18,7 +18,7 @@
 package stroom.pipeline;
 
 import stroom.feed.FeedProperties;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;

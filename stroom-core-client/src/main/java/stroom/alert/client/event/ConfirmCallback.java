@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.alert.client.presenter;
+package stroom.alert.client.event;
 
-public interface AlertCallback {
-    void onClose();
+public interface ConfirmCallback {
+    void onResult(boolean ok);
 }

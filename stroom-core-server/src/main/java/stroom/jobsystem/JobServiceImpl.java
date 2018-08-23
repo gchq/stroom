@@ -26,7 +26,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.FieldMap;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;

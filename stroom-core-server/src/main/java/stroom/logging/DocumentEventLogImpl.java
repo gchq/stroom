@@ -38,7 +38,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.util.shared.HasId;
 

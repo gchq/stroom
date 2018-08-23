@@ -3,7 +3,7 @@ package stroom.datasource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servicediscovery.ServiceDiscoveryConfig;

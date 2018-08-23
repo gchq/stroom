@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.ClusterConfig;
 import stroom.cluster.api.ClusterCallService;
 import stroom.feed.StroomHessianProxyFactory;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.util.logging.LogExecutionTime;

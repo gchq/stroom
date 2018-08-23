@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.data.store.tools.StoreCreationTool;
+import stroom.test.StoreCreationTool;
 import stroom.node.NodeCache;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTask;

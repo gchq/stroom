@@ -39,7 +39,7 @@ import stroom.query.common.v2.StoreSize;
 import stroom.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
 import java.util.Arrays;

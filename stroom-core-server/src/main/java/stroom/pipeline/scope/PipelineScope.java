@@ -1,4 +1,4 @@
-package stroom.guice;
+package stroom.pipeline.scope;
 
 import com.google.common.collect.Maps;
 import com.google.inject.Key;

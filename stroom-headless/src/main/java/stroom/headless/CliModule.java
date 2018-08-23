@@ -19,7 +19,8 @@ package stroom.headless;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScopeModule;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.LocalNodeProvider;
@@ -51,7 +52,7 @@ public class CliModule extends AbstractModule {
 //        install(new EntityClusterTaskModule());
         install(new stroom.explorer.MockExplorerModule());
         install(new stroom.feed.FeedModule());
-        install(new stroom.guice.PipelineScopeModule());
+        install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
 //        install(new stroom.jobsystem.JobSystemModule());
 //        install(new stroom.lifecycle.LifecycleModule());

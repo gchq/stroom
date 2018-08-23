@@ -6,7 +6,7 @@ import stroom.data.store.impl.fs.MockStreamStoreModule;
 import stroom.dictionary.DictionaryModule;
 import stroom.docstore.memory.MemoryPersistenceModule;
 import stroom.feed.FeedModule;
-import stroom.guice.PipelineScopeModule;
+import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamtask.statistic.MockMetaDataStatisticModule;

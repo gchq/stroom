@@ -18,7 +18,7 @@ package stroom.xml.converter.datasplitter;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.xml.F2XTestUtil;

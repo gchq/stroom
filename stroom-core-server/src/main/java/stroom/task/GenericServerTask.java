@@ -1,6 +1,6 @@
 package stroom.task;
 
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;

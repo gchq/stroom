@@ -18,7 +18,7 @@ package stroom.pipeline.state;
 
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class StreamProcessorHolder implements Holder {

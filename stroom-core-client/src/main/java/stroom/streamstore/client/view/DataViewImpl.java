@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.data.pager.client.Pager;
 import stroom.streamstore.client.presenter.DataPresenter.DataView;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 public class DataViewImpl extends ViewImpl implements DataView {

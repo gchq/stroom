@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.docref.DocRef;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;

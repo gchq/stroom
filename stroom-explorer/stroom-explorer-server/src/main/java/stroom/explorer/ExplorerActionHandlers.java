@@ -18,7 +18,7 @@ package stroom.explorer;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

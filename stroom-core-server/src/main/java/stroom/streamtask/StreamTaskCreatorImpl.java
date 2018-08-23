@@ -36,7 +36,7 @@ import stroom.search.EventRef;
 import stroom.search.EventRefs;
 import stroom.search.EventSearchTask;
 import stroom.security.Security;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.shared.Limits;

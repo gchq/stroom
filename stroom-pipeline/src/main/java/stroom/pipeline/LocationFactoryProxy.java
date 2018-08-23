@@ -17,7 +17,7 @@
 package stroom.pipeline;
 
 import org.xml.sax.Locator;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Location;
 
 import javax.xml.transform.SourceLocator;

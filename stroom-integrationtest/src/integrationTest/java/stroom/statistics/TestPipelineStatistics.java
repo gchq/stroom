@@ -20,7 +20,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.tools.StoreCreationTool;
+import stroom.test.StoreCreationTool;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.task.TaskManager;
 import stroom.test.CommonTestControl;

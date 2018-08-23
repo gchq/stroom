@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.guice;
+package stroom.lifecycle;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;

@@ -19,7 +19,7 @@ package stroom.jobsystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleTask;

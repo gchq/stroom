@@ -10,7 +10,7 @@ import stroom.elastic.api.ElasticIndexWriterFactory;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.security.Security;
 import stroom.security.UserService;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

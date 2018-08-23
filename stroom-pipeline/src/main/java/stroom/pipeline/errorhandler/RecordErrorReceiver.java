@@ -16,7 +16,7 @@
 
 package stroom.pipeline.errorhandler;
 
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;

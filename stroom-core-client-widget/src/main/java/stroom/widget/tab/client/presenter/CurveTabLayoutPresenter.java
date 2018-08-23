@@ -18,6 +18,7 @@ package stroom.widget.tab.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.widget.tab.client.event.MaximiseEvent;

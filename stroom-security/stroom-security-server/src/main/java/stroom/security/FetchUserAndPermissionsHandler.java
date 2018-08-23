@@ -20,6 +20,7 @@ import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.UserRef;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 

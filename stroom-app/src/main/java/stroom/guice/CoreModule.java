@@ -6,6 +6,7 @@ import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
+import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -30,7 +31,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.explorer.ExplorerModule());
         install(new stroom.externaldoc.ExternalDocRefModule());
         install(new stroom.feed.FeedModule());
-        install(new stroom.guice.PipelineScopeModule());
+        install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.importexport.ImportExportHandlerModule());
         install(new stroom.index.IndexModule());

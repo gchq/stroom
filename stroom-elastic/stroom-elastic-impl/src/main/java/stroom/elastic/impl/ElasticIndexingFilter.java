@@ -17,7 +17,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.security.Security;
 import stroom.security.UserService;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

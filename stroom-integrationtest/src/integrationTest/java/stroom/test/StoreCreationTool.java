@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.tools;
+package stroom.test;
 
 import org.junit.Assert;
 import stroom.data.meta.api.DataProperties;

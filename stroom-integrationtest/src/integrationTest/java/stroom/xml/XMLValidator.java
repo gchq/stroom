@@ -16,7 +16,7 @@
 
 package stroom.xml;
 
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

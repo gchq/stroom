@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.Clearable;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;

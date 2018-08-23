@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.docstore.fs.FSPersistenceConfig;
 import stroom.entity.util.XMLUtil;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.filter.SafeXMLFilter;

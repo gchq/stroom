@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;

@@ -26,7 +26,7 @@ import stroom.security.client.event.LogoutEvent;
 import stroom.security.client.event.RequestLogoutEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
-import stroom.widget.tab.client.presenter.Layer;
+import com.gwtplatform.mvp.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.HashMap;

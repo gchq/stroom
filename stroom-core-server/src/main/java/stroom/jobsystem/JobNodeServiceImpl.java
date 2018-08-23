@@ -28,7 +28,7 @@ import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;

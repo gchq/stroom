@@ -19,7 +19,7 @@ package stroom.xml.converter.datasplitter;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 
 import javax.inject.Inject;
 

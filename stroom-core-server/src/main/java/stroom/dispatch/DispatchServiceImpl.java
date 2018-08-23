@@ -28,7 +28,7 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.security.SecurityContext;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.api.TaskHandler;

@@ -29,7 +29,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;

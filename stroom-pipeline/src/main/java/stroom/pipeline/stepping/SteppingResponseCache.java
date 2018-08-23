@@ -17,7 +17,7 @@
 package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.StepLocation;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

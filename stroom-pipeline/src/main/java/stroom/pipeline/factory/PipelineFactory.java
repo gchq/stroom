@@ -19,7 +19,7 @@ package stroom.pipeline.factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.TerminatedException;

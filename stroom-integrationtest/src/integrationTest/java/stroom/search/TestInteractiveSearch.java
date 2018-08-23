@@ -32,7 +32,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.TaskManager;
 import stroom.task.api.TaskCallback;
 

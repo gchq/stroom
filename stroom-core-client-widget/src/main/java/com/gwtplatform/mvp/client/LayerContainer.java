@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.presenter;
+package com.gwtplatform.mvp.client;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 
-public interface Layer extends RequiresResize {
-    double getOpacity();
+public interface LayerContainer extends RequiresResize {
+    void show(Layer layer);
 
-    void setOpacity(double opacity);
+    void clear();
 
-    void addLayer(LayerContainer container);
+    void setFade(boolean fade);
 
-    boolean removeLayer();
+    void add(IsWidget widget);
 }
