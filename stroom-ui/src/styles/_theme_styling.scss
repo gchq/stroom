@@ -145,21 +145,19 @@ table {
 
 
 
-// This is mostly about override SUI styles
 .dropdown {
-
   // This styles the main drop-down box
   @include themify($themes) {
     background-color: themed('dropdown__background-color') !important;
     color: themed('text__color') !important;
-    border:1px solid themed('dropdown__border-color') !important;
+    border: themed('dropdown__border') !important;
   }
   // This styles the actual drop-down bit.
   .menu {
     @include themify($themes) {
       background-color: themed('dropdown__background-color') !important;
       color: themed('text__color') !important;
-      border:1px solid themed('dropdown__border-color') !important;
+      border: themed('dropdown__border') !important;
     }
   }
 
@@ -173,6 +171,9 @@ table {
   // We need to get rid of the border for erverything inside the drop-down.
   .text, .active, .item, .icon {
     border:0 !important;
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
   }
 
   // We need a hover colour for the drop-down.
@@ -209,7 +210,7 @@ table {
 
 .doc-ref-listing__item {
   @include themify($themes){
-    border-top: solid thin themed('dock-ref-listing__item-border') !important;
+    border-top: themed('dock-ref-listing__item-border') !important;
   }
 }
 
@@ -218,14 +219,104 @@ table {
 
 .action-bar__button {
   @include themify($themes) {
-    border: themed('action-bar__button-border') !important;
-    background-color: themed('action-bar__button-background-color') !important;
-    color: themed('action-bar__button-color')
+    border: themed('icon-button__border') !important;
+    background-color: themed('icon-button__background-color') !important;
+    color: themed('icon-button__color')
   }
 }
 
 .action-bar__button:hover {
   @include themify($themes) {
-    color: themed('action-bar__button-color--hover') !important;
+    color: themed('icon-button__color--hover') !important;
+  }
+}
+
+
+
+
+.AppSearch__search-input input {
+  @include themify($themes) {
+    background-color: themed('dropdown__background-color') !important;
+  }
+}
+
+.AppSearch__search-input i {
+  @include themify($themes) {
+    color: themed('icon__color') !important;
+  }
+}
+
+.AppSearch__dropdown-item {
+  @include themify($themes) {
+    color: themed('text__color') !important;
+  }
+}
+
+.AppSearch__menu {
+  @include themify($themes) {
+    background-color: themed('dropdown__background-color') !important;
+    border: themed('dropdown__border') !important;
+  }
+}
+
+
+
+
+.themed-modal__header {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+
+
+
+.themed-modal__content {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.themed-modal__content  .form input {
+  @include themify($themes) {
+    border: themed('modal__border') !important;
+  }
+}
+
+.themed-modal__actions {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+
+
+
+
+.form {
+  label {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
+  }
+
+  input {
+    @include themify($themes) {
+      background-color: themed('modal__background-color') !important;
+      color: themed('text__color') !important;
+    }
+  }
+}
+
+
+
+
+.tooltip-popup {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
   }
 }

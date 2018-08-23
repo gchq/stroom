@@ -7,7 +7,7 @@ import { Input, Dropdown } from 'semantic-ui-react';
 import { actionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
 import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
-import { RawDocRefListingEntry } from 'components/DocRefListing';
+import { DocRefListingEntry } from 'components/DocRefListing';
 import { onSearchInputKeyDown } from 'lib/KeyCodes';
 import { withDocRefTypes } from 'components/DocRefTypes';
 
@@ -64,7 +64,7 @@ const AppSearchBar = ({
     trigger={
       <Input
         fluid
-        id="AppSearch__search-input"
+        className="AppSearch__search-input"
         icon="search"
         placeholder="Search..."
         value={searchValue}
@@ -94,10 +94,11 @@ const AppSearchBar = ({
       />
     }
   >
-    <Dropdown.Menu>
+    <Dropdown.Menu className="AppSearch__menu">
       {searchResults.length === 0 &&
         docRefTypes.map(docRefType => (
           <Dropdown.Item
+            className="AppSearch__dropdown-item"
             key={docRefType}
             onClick={() => {
               searchApp({ docRefType });
@@ -114,7 +115,7 @@ const AppSearchBar = ({
         ))}
       {searchResults.length > 0 &&
         searchResults.map((searchResult, index) => (
-          <RawDocRefListingEntry
+          <DocRefListingEntry
             index={index}
             key={searchResult.uuid}
             onRowClick={() => searchSelectionSet(index)}

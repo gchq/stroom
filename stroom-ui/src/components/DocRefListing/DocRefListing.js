@@ -1,17 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Header, Icon, Grid, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
+import { Header, Icon, Grid, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 
 import DocRefPropType from 'lib/DocRefPropType';
+import ThemedPopup from 'components/ThemedPopup'
 import DocRefListingEntry from './DocRefListingEntry';
+import DndDocRefListingEntry from './DndDocRefListingEntry';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
 import AppSearchBar from 'components/AppSearchBar';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
-const enhance = withSelectableItemListing(({ listingId, openDocRef }) => ({
+const enhance = withSelectableItemListing(({ listingId, openDocRef, docRefs, allowMultiSelect }) => ({
   listingId,
   openItem: openDocRef,
+  items: docRefs,
+  allowMultiSelect
 }));
 
 const DocRefListing = ({
@@ -23,7 +27,7 @@ const DocRefListing = ({
   actionBarItems,
   parentFolder,
   hasTypesFilteredOut,
-  items,
+  docRefs,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
@@ -47,7 +51,7 @@ const DocRefListing = ({
             {actionBarItems.map(({
  onClick, icon, tooltip, disabled,
 }, i) => (
-  <Popup
+  <ThemedPopup
     key={i}
     trigger={
       <Button
@@ -66,8 +70,8 @@ const DocRefListing = ({
       )}
     </Grid>
     <div className="doc-ref-listing">
-      {items.map((docRef, index) => (
-        <DocRefListingEntry
+      {docRefs.map((docRef, index) => (
+        <DndDocRefListingEntry
           key={docRef.uuid}
           index={index}
           listingId={listingId}
@@ -88,14 +92,14 @@ EnhancedDocRefListing.propTypes = {
   listingId: PropTypes.string.isRequired,
   parentFolder: DocRefPropType,
   includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
-  items: PropTypes.arrayOf(DocRefPropType).isRequired,
+  docRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };
 
 EnhancedDocRefListing.defaultProps = {
   actionBarItems: [],
-  items: [],
+  docRefs: [],
   includeBreadcrumbOnEntries: true,
   allowMultiSelect: false,
 };

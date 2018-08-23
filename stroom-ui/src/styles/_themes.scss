@@ -19,31 +19,35 @@ $themes: (
     table__border-color: #dfe0e1,
 
     dropdown__background-color: #fff,
-    dropdown__border-color: #dfe0e1,
+    dropdown__border: 1px solid #dfe0e1,
     dropdown__hover-color: #dfe0e1,
 
     breadcrumb__divider___color: black,
     breadcrumb__section___color: black,
     breadcrumb__section--active___color: black,
 
-    dock-ref-listing__item-border: darkgrey,
+    dock-ref-listing__item-border: dotted thin #dedede,
 
-    action-bar__button-border:none,
-    action-bar__button-background-color:#adadad,
-    action-bar__button-color: #4d5250,
-    action-bar__button-color--hover: black
+    icon-button__border:none,
+    icon-button__background-color:#adadad,
+    icon-button__color: #4d5250,
+    icon-button__color--hover: black,
+    
   ),
   dark: (
     background__color: #282829,
     text__color: #ddd,
 
+    icon__color: #ddd,
+    icon__color--hover: white,
+
     button__text-color: #aaa,
     button__text-transform: uppercase,
     button__text-hover-color: #ddd,
     button__color: #333,
-    button__border: 1px solid #aaa,
+    button__border: 1px solid #aaa, // TODO is this border__color?
 
-    sidebar__background-color: #4d5250,
+    sidebar__background-color: #4d5250, // TODO is this 'raised-thing__background-color'?
     sidebar__color: #fff,
     sidebar__header-color: #ff6f00,
 
@@ -53,18 +57,21 @@ $themes: (
     table__border-color: #4d5250,
 
     dropdown__background-color: #282829,
-    dropdown__border-color: #4d5250,
+    dropdown__border: 1px solid #4d5250,
     dropdown__hover-color: #4d5250,
 
     breadcrumb__divider___color: white,
     breadcrumb__section___color: white,
     breadcrumb__section--active___color: white,
 
-    dock-ref-listing__item-border: darkgrey,
+    dock-ref-listing__item-border: dotted thin #525252,
 
-    action-bar__button-border:none,
-    action-bar__button-background-color:#282829,
-    action-bar__button-color: #adadad,
-    action-bar__button-color--hover: #ffffff
+    icon-button__border:none,
+    icon-button__background-color:#282829,
+    icon-button__color: #adadad,
+    icon-button__color--hover: #ffffff,
+
+    modal__background-color: #4d5250, // TODO is this 'raised-thing__background-color'?
+    modal__border: 1px solid #aaa, // TODO is this 'border'?
   ),
 );
