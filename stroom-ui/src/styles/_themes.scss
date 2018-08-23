@@ -35,6 +35,8 @@ $themes: (
     
     modal__background-color: #2185d0, // TODO is this 'raised-thing__background-color'?
     modal__border: 1px solid #fff, // TODO is this 'border'?
+
+    hover-color: #ddf1ff,
   ),
   dark: (
     background__color: #282829,
@@ -75,5 +77,7 @@ $themes: (
 
     modal__background-color: #4d5250, // TODO is this 'raised-thing__background-color'?
     modal__border: 1px solid #aaa, // TODO is this 'border'?
+
+    hover-color: #4d5250,
   ),
 );
