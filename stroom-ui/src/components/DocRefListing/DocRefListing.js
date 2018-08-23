@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Header, Icon, Grid, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
+import { Header, Icon, Grid, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 
 import DocRefPropType from 'lib/DocRefPropType';
+import ThemedPopup from 'components/ThemedPopup'
 import DocRefListingEntry from './DocRefListingEntry';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
@@ -47,7 +48,7 @@ const DocRefListing = ({
             {actionBarItems.map(({
  onClick, icon, tooltip, disabled,
 }, i) => (
-  <Popup
+  <ThemedPopup
     key={i}
     trigger={
       <Button

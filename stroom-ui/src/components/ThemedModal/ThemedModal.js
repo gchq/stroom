@@ -27,7 +27,7 @@ const enhance = compose(
     {},
   ),
   withProps(({ theme }) => ({
-    dimmer: theme === 'theme-light' ? 'inverted' : 'true',
+    dimmer: theme === 'theme-light' ? 'inverted' : true,
   })),
 );
 

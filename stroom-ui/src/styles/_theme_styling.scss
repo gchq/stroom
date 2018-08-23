@@ -310,3 +310,13 @@ table {
     }
   }
 }
+
+
+
+
+.tooltip-popup {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
