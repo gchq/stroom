@@ -116,6 +116,18 @@ abstract class StroomExtensionFunctionCall {
         log(context, Severity.WARNING, msg.toString(), e);
     }
 
+    void outputError(final XPathContext context, final StringBuilder msg, final Throwable e) {
+        if (e != null) {
+            msg.append(' ');
+            msg.append(e.getMessage());
+        }
+
+        // Tell the logger.
+        LOGGER.debug(msg.toString(), e);
+
+        log(context, Severity.ERROR, msg.toString(), e);
+    }
+
     void log(final XPathContext context, final Severity severity, final String message, final Throwable e) {
         final Location location = getLocation(context);
         errorReceiver.log(severity, location, getClass().getSimpleName(), message, e);

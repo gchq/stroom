@@ -16,35 +16,46 @@
 
 package stroom.refdata;
 
-import stroom.docref.DocRef;
 import stroom.data.meta.api.Data;
+import stroom.docref.DocRef;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefStreamDefinition;
 import stroom.task.api.ServerTask;
+import stroom.util.shared.VoidResult;
 
 import java.io.InputStream;
 
-public class ContextDataLoadTask extends ServerTask<MapStore> {
+public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private InputStream inputStream;
-    private Data stream;
+    private Data data;
     private String feedName;
     private DocRef contextPipeline;
+    private RefStreamDefinition refStreamDefinition;
+    private RefDataStore refDataStore;
 
     public ContextDataLoadTask() {
     }
 
-    public ContextDataLoadTask(final InputStream inputStream, final Data stream, final String feedName,
-                               final DocRef contextPipeline) {
+    public ContextDataLoadTask(final InputStream inputStream,
+                               final Data data,
+                               final String feedName,
+                               final DocRef contextPipeline,
+                               final RefStreamDefinition refStreamDefinition,
+                               final RefDataStore refDataStore) {
         this.inputStream = inputStream;
-        this.stream = stream;
+        this.data = data;
         this.feedName = feedName;
         this.contextPipeline = contextPipeline;
+        this.refStreamDefinition = refStreamDefinition;
+        this.refDataStore = refDataStore;
     }
 
     public InputStream getInputStream() {
         return inputStream;
     }
 
-    public Data getStream() {
-        return stream;
+    public Data getData() {
+        return data;
     }
 
     public String getFeedName() {
@@ -53,5 +64,13 @@ public class ContextDataLoadTask extends ServerTask<MapStore> {
 
     public DocRef getContextPipeline() {
         return contextPipeline;
+    }
+
+    public RefStreamDefinition getRefStreamDefinition() {
+        return refStreamDefinition;
+    }
+
+    public RefDataStore getRefDataStore() {
+        return refDataStore;
     }
 }

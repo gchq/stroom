@@ -20,40 +20,57 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
+import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.store.RefDataValueProxy;
+import stroom.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.util.shared.Severity;
-import stroom.xml.event.np.NPEventList;
 
 import javax.inject.Inject;
 
 class Lookup extends AbstractLookup {
+
     @Inject
     Lookup(final ReferenceData referenceData,
-           final StreamHolder streamHolder) {
-        super(referenceData, streamHolder);
+           final StreamHolder streamHolder,
+           final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
+        super(referenceData, streamHolder, consumerFactoryFactory);
     }
 
     @Override
     protected Sequence doLookup(final XPathContext context,
-                                final String map,
-                                final String key,
-                                final long eventTime,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
-        final SequenceMaker sequenceMaker = new SequenceMaker(context);
-        final ReferenceDataResult result = getReferenceData(map, key, eventTime, lookupIdentifier);
-        final NPEventList eventList = (NPEventList) result.getEventList();
-        if (eventList != null) {
-            sequenceMaker.open();
-            sequenceMaker.consume(eventList);
-            sequenceMaker.close();
+        // TODO rather than putting the proxy in the result we could just put the refStreamDefinition
+        // in there and then do the actual lookup in the sequenceMaker by passing an injected RefDataStore
+        // into it.
+        final ReferenceDataResult result = getReferenceData(lookupIdentifier);
 
-            if (trace) {
-                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+        final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
+
+//        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
+        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
+
+        boolean wasFound = false;
+        try {
+            if (refDataValueProxy != null) {
+                sequenceMaker.open();
+
+                wasFound = sequenceMaker.consume(refDataValueProxy);
+
+                sequenceMaker.close();
+
+                if (wasFound && trace) {
+                    outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+                }
             }
-        } else if (!ignoreWarnings) {
+        } catch (XPathException e) {
+            outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+        }
+
+        if (!wasFound && !ignoreWarnings) {
             outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
         }
 

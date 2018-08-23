@@ -28,7 +28,7 @@ public class ServletModule extends AbstractModule {
     }
     //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)
-//    public DashboardServlet dashboardServlet(final StroomPropertyService propertyService) {
+//    public DashboardServlet dashboardServlet(final PropertyService propertyService) {
 //        return new DashboardServlet(propertyService);
 //    }
 //
@@ -38,7 +38,7 @@ public class ServletModule extends AbstractModule {
 //    }
 //
 //    @Bean
-//    public DynamicCSSServlet dynamicCSSServlet(final StroomPropertyService propertyService) {
+//    public DynamicCSSServlet dynamicCSSServlet(final PropertyService propertyService) {
 //        return new DynamicCSSServlet(propertyService);
 //    }
 //
@@ -50,7 +50,7 @@ public class ServletModule extends AbstractModule {
 //    @Bean
 //    public ExportConfigServlet exportConfigServlet(final ImportExportService importExportService,
 //                                                   @Named("resourceStore") final ResourceStore resourceStore,
-//                                                   final StroomPropertyService propertyService) {
+//                                                   final PropertyService propertyService) {
 //        return new ExportConfigServlet(importExportService, resourceStore, propertyService);
 //    }
 //
@@ -97,7 +97,7 @@ public class ServletModule extends AbstractModule {
 //
 //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)
-//    public StroomServlet stroomServlet(final StroomPropertyService propertyService) {
+//    public StroomServlet stroomServlet(final PropertyService propertyService) {
 //        return new StroomServlet(propertyService);
 //    }
 }

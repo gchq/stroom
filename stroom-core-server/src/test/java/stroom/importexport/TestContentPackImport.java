@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
@@ -149,7 +149,7 @@ public class TestContentPackImport {
 
         Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
                 .when(importExportService)
-                .performImportWithoutConfirmation(Matchers.any());
+                .performImportWithoutConfirmation(ArgumentMatchers.any());
 
         FileUtil.touch(testPack1);
 

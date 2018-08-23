@@ -6,9 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#794** : Automatically suggest a pipeline element name when creating it 
+* Issue **#794** : Automatically suggest a pipeline element name when creating it
 
 * Issue **#792** : Preferred order of properties for Pipeline Elements
+
+* Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
+
+* Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+
+* Issue **819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
+
+* Issue **817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
 
 * Moved Index entities over to the new multi part document store.
 

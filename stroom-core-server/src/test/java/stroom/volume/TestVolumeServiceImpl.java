@@ -99,7 +99,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeList.add(public2b);
 
         Mockito.when(volumeConfig.getResilientReplicationCount()).thenReturn(2);
-//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
+//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
 
         volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), volumeConfig, null);
         volumeServiceImpl.volumeList = volumeList;
@@ -165,7 +165,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     @Test
     public void testStartup_Disabled() {
         Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(false);
-//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
+//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
 
 //        volumeServiceImpl.startup();
 
@@ -177,7 +177,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     @Test
     public void testStartup_EnabledExistingVolumes() {
         Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(true);
-//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
 
 //        volumeServiceImpl.startup();
 
@@ -190,7 +190,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     public void testStartup_EnabledNoExistingVolumes() {
         Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(true);
 
-//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
         volumeServiceImpl.volumeList.clear();
         volumeServiceImpl.getStreamVolumeSet(node1a);
 //        volumeServiceImpl.startup();

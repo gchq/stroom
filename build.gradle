@@ -56,12 +56,12 @@ ext.versions = [
         stroom            : getPropertyOrDefault('version', 'SNAPSHOT'),
 
         //------Stroom-repos---------------
-//    stroomProxyRepo: 'v5.1-beta.8',
+        //    stroomProxyRepo: 'v5.1-beta.8',
         eventLogging      : 'v3.2.4_schema-v3.2.4',
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v0.1-alpha.3',
-        stroomExpression  : 'v1.4.1',
+        stroomExpression  : 'v1.4.3',
         stroomQuery       : 'v4.0-beta.6', //same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
@@ -70,6 +70,7 @@ ext.versions = [
         dropwizard        : '1.3.5', //if you change this version you should check the versions below that need to move in sync with it
         dropwizard_metrics: '4.0.2', //should be kept in step with dropwizard
         guava             : '26.0-jre',
+        guice4            : '4.2.0',
         gwt               : '2.8.2',
         hibernate         : '5.2.13.Final', //dropwiz 1.2.5 uses -validator 5.4.2.Final and -core 5.2.12.Final
         hikari            : '3.2.0',
@@ -93,14 +94,14 @@ ext.libs = [
         eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
         hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
+        stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
+        stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
         stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
         stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
-        stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
-        stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
+        stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
         stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
-        stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
 
         //------3rd Party-libs---------------
         aopalliance                    : "aopalliance:aopalliance:1.0",
@@ -118,6 +119,7 @@ ext.libs = [
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",
         dropwizard_assets              : "io.dropwizard:dropwizard-assets:$versions.dropwizard",
         dropwizard_client              : "io.dropwizard:dropwizard-client:$versions.dropwizard",
+        dropwizard_configuration       : "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
         dropwizard_core                : "io.dropwizard:dropwizard-core:$versions.dropwizard",
         dropwizard_jersey              : "io.dropwizard:dropwizard-jersey:$versions.dropwizard",
         dropwizard_jetty               : "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
@@ -126,14 +128,15 @@ ext.libs = [
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
         dropwizard_testing             : "io.dropwizard:dropwizard-testing:$versions.dropwizard",
-        dropwizard_configuration       : "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
         fast_classpath_scanner         : "io.github.lukehutch:fast-classpath-scanner:2.9.4",
+        fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
         flyway_core                    : "org.flywaydb:flyway-core:5.1.3",
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
-        guice4                         : "com.google.inject:guice:4.2.0",
         guice3                         : "com.google.inject:guice:3.0",
+        guice4                         : "com.google.inject:guice:4.2.0",
+        guice_assistedinject           : "com.google.inject.extensions:guice-assistedinject:$versions.guice4",
         guice_multibindings            : "com.google.inject.extensions:guice-multibindings:4.2.0",
         gwt_dev                        : "com.google.gwt:gwt-dev:$versions.gwt",
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
@@ -181,18 +184,22 @@ ext.libs = [
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
         jose4j                         : "org.bitbucket.b_c:jose4j:0.5.5",
         jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
+        jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j:$versions.slf4j",
         junit                          : "junit:junit:4.12",
         junit_jupiter                  : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
+        kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
+        lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.1",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j:$versions.slf4j",
         logback_classic                : "ch.qos.logback:logback-classic:$versions.logback",
         logback_core                   : "ch.qos.logback:logback-core:$versions.logback",
         lucene_analyzers_common        : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
+        lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
-        lucene_backward_codecs: "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         mockito_core                   : "org.mockito:mockito-core:2.21.0",
         mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
+        objenesis                      : "org.objenesis:objenesis:2.2",
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
         reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
@@ -217,11 +224,11 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
         'core-xml-schemas'                : 'v2.0',
-        'internal-statistics-stroom-stats': 'v2.1',
-        'internal-statistics-sql'         : 'v2.1',
+        'event-logging-xml-schema'        : 'v3.2.3',
         'internal-dashboards'             : 'v1.1',
-        'stroom-101'                      : 'v1.0',
-        'event-logging-xml-schema'        : 'v3.2.3'
+        'internal-statistics-sql'         : 'v2.1',
+        'internal-statistics-stroom-stats': 'v2.1',
+        'stroom-101'                      : 'v1.0'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
@@ -239,10 +246,10 @@ def projectsToBePublished = subprojects.findAll { project ->
 def projectsWithSharedTestJars = subprojects.findAll { project ->
     project.path in [
             ':stroom-core-server',
-            ':stroom-pipeline',
             ':stroom-dashboard:stroom-dashboard-server',
             ':stroom-entity-shared',
             ':stroom-index:stroom-index-server',
+            ':stroom-pipeline',
             ':stroom-security:stroom-security-server',
             ':stroom-util',
             'zzDUMMYzz to ease sorting'
@@ -392,26 +399,6 @@ subprojects {
     // These lines pull the integration test task into our build process.
     tasks.check.dependsOn integrationTest
     tasks.integrationTest.mustRunAfter test
-
-
-
-//    // Add support for JAXB binding in J9 modules.
-//    tasks.withType(AbstractCompile) {
-//        options.compilerArgs += ["--add-modules", "java.xml.bind,java.xml.ws.annotation"]
-//    }
-//
-//    tasks.withType(Test) {
-//        jvmArgs += ["--add-modules", "java.xml.bind,java.xml.ws.annotation"]
-//    }
-//
-
-
-
-
-
-
-
-
 
 //    afterEvaluate {
 //        repositories {

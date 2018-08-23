@@ -8,7 +8,7 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="debug" additivity="false"/>
+    <logger name="stroom" level="debug"/>
 
     <logger name="stroom.statistics" level="debug" />
 
@@ -17,7 +17,8 @@
     <logger name="stroom.xml.converter" level="debug" additivity="false" />
 
     <root>
-        <level value="info" />
+        <!-- stops noisy logging from 3rd party libs, whitelist packages to lower log levels as needed -->
+        <level value="error" />
         <appender-ref ref="STDOUT" />
     </root>
 
