@@ -19,6 +19,11 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
 import stroom.pipeline.LocationFactoryProxy;
@@ -37,16 +42,15 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreProvider;
+import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.Data;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -58,18 +62,19 @@ import java.io.IOException;
  * substitutions when processing events data.
  */
 @TaskHandlerBean(task = ReferenceDataLoadTask.class)
-class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, MapStore> {
+class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final StreamStore streamStore;
     private final PipelineFactory pipelineFactory;
-    private final MapStoreHolder mapStoreHolder;
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
     private final StreamHolder streamHolder;
+    private final RefDataLoaderHolder refDataLoaderHolder;
+    private final RefDataStore refDataStore;
     private final LocationFactoryProxy locationFactory;
     private final StreamCloser streamCloser;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -81,13 +86,14 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     @Inject
     ReferenceDataLoadTaskHandler(final StreamStore streamStore,
                                  final PipelineFactory pipelineFactory,
-                                 final MapStoreHolder mapStoreHolder,
                                  final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
                                  final FeedProperties feedProperties,
                                  final MetaDataHolder metaDataHolder,
                                  final StreamHolder streamHolder,
+                                 final RefDataLoaderHolder refDataLoaderHolder,
+                                 final RefDataStoreProvider refDataStoreProvider,
                                  final LocationFactoryProxy locationFactory,
                                  final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
@@ -95,14 +101,15 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final Security security) {
         this.streamStore = streamStore;
         this.pipelineFactory = pipelineFactory;
-        this.mapStoreHolder = mapStoreHolder;
         this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
+        this.refDataStore = refDataStoreProvider.getOffHeapStore();
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;
+        this.refDataLoaderHolder = refDataLoaderHolder;
         this.streamCloser = streamCloser;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineDataCache = pipelineDataCache;
@@ -114,22 +121,20 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
      * reference data key, value maps.
      */
     @Override
-    public MapStore exec(final ReferenceDataLoadTask task) {
+    public VoidResult exec(final ReferenceDataLoadTask task) {
         return security.secureResult(() -> {
+//            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             try {
-                final MapStoreCacheKey mapStorePoolKey = task.getMapStorePoolKey();
+                final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
 
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Loading reference data: " + mapStorePoolKey.toString());
-                }
+                LOGGER.debug("Loading reference data: {}", refStreamDefinition);
 
                 // Open the stream source.
-                final StreamSource streamSource = streamStore.openStreamSource(mapStorePoolKey.getStreamId());
+                final StreamSource streamSource = streamStore.openStreamSource(refStreamDefinition.getStreamId());
                 if (streamSource != null) {
                     final Data stream = streamSource.getStream();
                     try {
@@ -141,17 +146,23 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                         // Set the pipeline so it can be used by a filter if needed.
-                        final PipelineDoc pipelineDoc = pipelineStore.readDocument(mapStorePoolKey.getPipeline());
-                        pipelineHolder.setPipeline(mapStorePoolKey.getPipeline());
+                        final PipelineDoc pipelineDoc = pipelineStore
+                                .readDocument(refStreamDefinition.getPipelineDocRef());
+                        pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
 
                         // Create the parser.
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                        populateMaps(pipeline, stream, streamSource, feedName, stream.getTypeName(), mapStoreBuilder);
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
-                        }
+                        populateMaps(
+                                pipeline,
+                                stream,
+                                streamSource,
+                                feedName,
+                                stream.getTypeName(),
+                                task.getRefStreamDefinition());
+
+                        LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
                     } finally {
                         try {
                             // Close all open streams.
@@ -166,8 +177,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             }
-
-            return mapStoreBuilder.getMapStore();
+            return VoidResult.INSTANCE;
         });
     }
 
@@ -176,7 +186,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                               final StreamSource streamSource,
                               final String feedName,
                               final String streamTypeName,
-                              final MapStoreBuilder mapStoreBuilder) {
+                              final RefStreamDefinition refStreamDefinition) {
         try {
             // Get the stream providers.
             streamHolder.setStream(stream);
@@ -186,9 +196,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
             // Get the main stream provider.
             final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
-
-            // Set the map store.
-            mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
 
             // Start processing.
             try {
@@ -205,23 +212,38 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
 
-                // Loop over the stream boundaries and process each
-                // sequentially.
-                final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
-                    streamHolder.setStreamNo(streamNo);
-                    streamLocationFactory.setStreamNo(streamNo + 1);
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
+                    // we are now blocking any other thread loading the same refStreamDefinition
 
-                    // Get the stream.
-                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
-
-                    // Process the boundary.
                     try {
-                        pipeline.process(inputStream, encoding);
-                    } catch (final RuntimeException e) {
-                        log(Severity.FATAL_ERROR, e.getMessage(), e);
+                        // Loop over the stream boundaries and process each sequentially.
+                        // Typically ref data will only have a single streamNo so if there are
+                        // multiple then overrideExisting may be needed.
+                        final long streamCount = mainProvider.getStreamCount();
+                        for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
+                            streamHolder.setStreamNo(streamNo);
+                            streamLocationFactory.setStreamNo(streamNo + 1);
+
+                            // Get the stream.
+                            final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+
+                            // set this loader in the holder so it is available to the pipeline filters
+                            refDataLoaderHolder.setRefDataLoader(refDataLoader);
+                            // Process the boundary.
+                            try {
+                                //process the pipeline, ref data will be loaded via the ReferenceDataFilter
+                                pipeline.process(inputStream, encoding);
+                            } catch (final RuntimeException e) {
+                                log(Severity.FATAL_ERROR, e.getMessage(), e);
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                }
+                });
+                // clear the reference to the loader now we have finished with it
+                refDataLoaderHolder.setRefDataLoader(null);
+
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             } finally {
@@ -232,7 +254,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 }
             }
 
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
     }

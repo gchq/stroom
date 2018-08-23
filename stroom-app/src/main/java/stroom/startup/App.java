@@ -54,7 +54,11 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreProvider;
 import stroom.resource.ElementResource;
+import stroom.resource.PipelineResource;
 import stroom.resource.SessionResourceStoreImpl;
 import stroom.resource.XsltResource;
 import stroom.ruleset.RuleSetResource;
@@ -147,10 +151,14 @@ public class App extends Application<Config> {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ByteBufferPool.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
+        GuiceUtil.addHealthCheck(
+                environment.healthChecks(),
+                injector.getInstance(RefDataStoreProvider.class).getOffHeapStore());
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
@@ -202,6 +210,7 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RefDataStore.class);
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");

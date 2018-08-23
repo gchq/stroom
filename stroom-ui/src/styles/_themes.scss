@@ -26,13 +26,18 @@ $themes: (
     breadcrumb__section___color: black,
     breadcrumb__section--active___color: black,
 
-    dock-ref-listing__item-border: darkgrey,
+    dock-ref-listing__item-border: dotted thin #dedede,
 
     icon-button__border:none,
-    icon-button__background-color:#adadad,
+    icon-button__background-color:#e4e4e4,
     icon-button__color: #4d5250,
     icon-button__color--hover: black,
     
+    modal__background-color: #2185d0, // TODO is this 'raised-thing__background-color'?
+    modal__border: 1px solid #fff, // TODO is this 'border'?
+    
+    selected-color:#cae1f1,
+    hover-color: #e8e8e8,
   ),
   dark: (
     background__color: #282829,
@@ -64,7 +69,7 @@ $themes: (
     breadcrumb__section___color: white,
     breadcrumb__section--active___color: white,
 
-    dock-ref-listing__item-border: #aaa, // TODO is this border__color?
+    dock-ref-listing__item-border: dotted thin #525252,
 
     icon-button__border:none,
     icon-button__background-color:#282829,
@@ -73,5 +78,8 @@ $themes: (
 
     modal__background-color: #4d5250, // TODO is this 'raised-thing__background-color'?
     modal__border: 1px solid #aaa, // TODO is this 'border'?
+
+    selected-color:#4d5250,
+    hover-color: #8c8e8d,
   ),
 );

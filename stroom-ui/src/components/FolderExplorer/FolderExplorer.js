@@ -2,8 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent } from 'recompose';
-import { Loader, Grid, Header, Icon, Popup, Button } from 'semantic-ui-react';
+import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 
+import ThemedPopup from 'components/ThemedPopup'
 import AppSearchBar from 'components/AppSearchBar';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb'
 import { findItem } from 'lib/treeUtils';
@@ -122,7 +123,7 @@ const FolderExplorer = ({ folder: { node }, folderUuid, actionBarItems, openDocR
       <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
           {actionBarItems.map(({onClick, icon, tooltip, disabled,}, i) => (
-            <Popup
+            <ThemedPopup
               key={i}
               trigger={
                 <Button

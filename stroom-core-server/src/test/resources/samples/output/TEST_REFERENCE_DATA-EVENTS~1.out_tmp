@@ -1,0 +1,567 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<Events xmlns="event-logging:3"
+        xmlns:stroom="stroom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
+        Version="3.0.0">
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:00:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user1</Id>
+            <UserDetails>
+               <StaffNumber>staff1</StaffNumber>
+               <Surname>Bentley</Surname>
+               <Initials>J W</Initials>
+               <GivenName>Jameson</GivenName>
+               <Location>Kinross-shire</Location>
+               <Phone>04331 444528</Phone>
+               <SupervisorStaffNumber>staff173</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff1"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 1</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user1</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="1"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:01:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user2</Id>
+            <UserDetails>
+               <StaffNumber>staff2</StaffNumber>
+               <Surname>Rose</Surname>
+               <Initials>L B</Initials>
+               <GivenName>Lucy</GivenName>
+               <Location>Angus</Location>
+               <Phone>08504 841372</Phone>
+               <SupervisorStaffNumber>staff402</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff2"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 2</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user2</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="2"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:02:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user3</Id>
+            <UserDetails>
+               <StaffNumber>staff3</StaffNumber>
+               <Surname>Kennedy</Surname>
+               <Initials>X N</Initials>
+               <GivenName>Xavier</GivenName>
+               <Location>Lincolnshire</Location>
+               <Phone>02977 661491</Phone>
+               <SupervisorStaffNumber>staff257</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff3"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 3</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user3</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="3"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:03:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user4</Id>
+            <UserDetails>
+               <StaffNumber>staff4</StaffNumber>
+               <Surname>Cain</Surname>
+               <Initials>R U</Initials>
+               <GivenName>Risa</GivenName>
+               <Location>Gloucestershire</Location>
+               <Phone>03805 449884</Phone>
+               <SupervisorStaffNumber>staff225</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff4"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 4</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user4</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="4"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:04:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user5</Id>
+            <UserDetails>
+               <StaffNumber>staff5</StaffNumber>
+               <Surname>Brown</Surname>
+               <Initials>A W</Initials>
+               <GivenName>August</GivenName>
+               <Location>Lanarkshire</Location>
+               <Phone>00861 334811</Phone>
+               <SupervisorStaffNumber>staff23</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff5"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 5</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user5</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="5"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:05:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user6</Id>
+            <UserDetails>
+               <StaffNumber>staff6</StaffNumber>
+               <Surname>Cooley</Surname>
+               <Initials>C E</Initials>
+               <GivenName>Christen</GivenName>
+               <Location>East Lothian</Location>
+               <Phone>07622 987268</Phone>
+               <SupervisorStaffNumber>staff434</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff6"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 6</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user6</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="6"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:06:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user7</Id>
+            <UserDetails>
+               <StaffNumber>staff7</StaffNumber>
+               <Surname>Walker</Surname>
+               <Initials>S A</Initials>
+               <GivenName>Seth</GivenName>
+               <Location>Essex</Location>
+               <Phone>06775 808280</Phone>
+               <SupervisorStaffNumber>staff46</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff7"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 7</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user7</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="7"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:07:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user8</Id>
+            <UserDetails>
+               <StaffNumber>staff8</StaffNumber>
+               <Surname>Underwood</Surname>
+               <Initials>C A</Initials>
+               <GivenName>Calista</GivenName>
+               <Location>Durham</Location>
+               <Phone>09141 328047</Phone>
+               <SupervisorStaffNumber>staff22</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff8"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 8</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user8</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="8"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:08:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user9</Id>
+            <UserDetails>
+               <StaffNumber>staff9</StaffNumber>
+               <Surname>Oneal</Surname>
+               <Initials>M R</Initials>
+               <GivenName>Molly</GivenName>
+               <Location>Montgomeryshire</Location>
+               <Phone>02326 200074</Phone>
+               <SupervisorStaffNumber>staff408</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff9"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 9</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user9</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="9"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+   <Event>
+      <EventTime>
+         <TimeCreated>2010-01-01T00:09:00.000Z</TimeCreated>
+      </EventTime>
+      <EventSource>
+         <System>
+            <Name>Test</Name>
+            <Environment>Test</Environment>
+         </System>
+         <Generator>CSV</Generator>
+         <Device>
+            <IPAddress>1.1.1.1</IPAddress>
+            <MACAddress>00-00-00-00-00-00</MACAddress>
+            <Location>
+               <Country>UK</Country>
+               <Site>Site 1</Site>
+               <Building>Main</Building>
+               <Floor>1</Floor>
+               <Room>A</Room>
+               <Desk>100</Desk>
+            </Location>
+            <Data Name="Designation" Value="alpha epsilon mu"/>
+            <Data Name="Zone1" Value="Zone1"/>
+            <Data Name="Zone2" Value="Zone2"/>
+            <Data Name="Zone3" Value="Zone3"/>
+            <Data Name="Zone4" Value="Zone4"/>
+            <Data Name="Zone5" Value="Zone5"/>
+         </Device>
+         <User>
+            <Id>user10</Id>
+            <UserDetails>
+               <StaffNumber>staff10</StaffNumber>
+               <Surname>Tran</Surname>
+               <Initials>D F</Initials>
+               <GivenName>Dennis</GivenName>
+               <Location>Caithness</Location>
+               <Phone>06114 175356</Phone>
+               <SupervisorStaffNumber>staff456</SupervisorStaffNumber>
+            </UserDetails>
+            <Data Name="staffNo" Value="staff10"/>
+         </User>
+      </EventSource>
+      <EventDetail>
+         <TypeId>0001</TypeId>
+         <Description>Some message 10</Description>
+         <Authenticate>
+            <Action>Logon</Action>
+            <LogonType>Interactive</LogonType>
+            <User>
+               <Id>user10</Id>
+            </User>
+            <Data Name="FileNo" Value="1"/>
+            <Data Name="LineNo" Value="10"/>
+         </Authenticate>
+      </EventDetail>
+   </Event>
+</Events>

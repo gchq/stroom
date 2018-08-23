@@ -94,7 +94,7 @@ const NewDocDialog = ({
     }
     actions={
       <React.Fragment>
-        <Button negative onClick={completeDocRefCreation} inverted>
+        <Button negative onClick={completeDocRefCreation}>
           <Icon name="checkmark" /> Cancel
         </Button>
         <Button

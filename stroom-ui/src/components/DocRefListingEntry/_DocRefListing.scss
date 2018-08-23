@@ -22,15 +22,12 @@
   color: red;
 }
 
-.doc-ref-listing__item--selected {
-  background-color: $selected-item-colour;
-}
-
 .doc-ref-listing-entry__search-bar {
   padding-top: 0.3rem;
 }
 
 .doc-ref-listing-entry__action-bar {
+  display: flex;
   float: right;
   padding-top: 0.3rem;
 }

@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "309e1ca0-7a5f-4f05-847b-b706805d758c",
+  "name" : "USER-DETAILS-REFERENCE",
+  "version" : "d18eb9e8-2d35-49b7-ac40-b7097e4996ee",
+  "description" : "USER-DETAILS-REFERENCE",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : true,
+  "streamType" : "Raw Reference",
+  "status" : "RECEIVE"
+}

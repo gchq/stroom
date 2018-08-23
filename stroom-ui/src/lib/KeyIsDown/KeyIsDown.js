@@ -54,7 +54,7 @@ const withInputKeyDown = compose(
 
 const KeyIsDown = (filters = ['Control', 'Shift', 'Alt', 'Meta']) =>
   compose(
-    connect(({ keyIsDown: { keyIsDown } }, props) => ({ keyIsDown }), {
+    connect(({ keyIsDown: { focussedElement } }, props) => ({ focussedElement }), {
       keyDown,
       keyUp,
       shortcutUsed,
@@ -62,7 +62,7 @@ const KeyIsDown = (filters = ['Control', 'Shift', 'Alt', 'Meta']) =>
     lifecycle({
       componentDidMount() {
         const {
-          keyIsDown, keyDown, keyUp, shortcutUsed,
+          keyDown, keyUp, shortcutUsed, focussedElement,
         } = this.props;
         window.onkeydown = function (e) {
           if (focussedElement && filters.includes(e.key)) {

@@ -52,6 +52,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -117,6 +118,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private ContentImportService contentImportService;
 
+    /**
+     * NOTE some of the input data for this test is buried in the following zip file so you will need
+     * to crack it open to see what is being loaded.
+     * stroom/stroom-core-server/src/test/resources/samples/input/ZIP_TEST-DATA_SPLITTER-EVENTS~1.zip
+     */
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
 
@@ -231,12 +237,31 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final String streamTypeName = stream.getTypeName();
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
+                    } else {
+                        try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
+                            //got an error stream so dump it to console
+
+                            Data parentStream = streamMetaService.getData(stream.getParentDataId());
+
+                            String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
+                            java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
+                            LOGGER.warn("Stream {} with parent {} of type {} has errors:\n{}",
+                                    stream, parentStream.getId(), parentStream.getTypeName(), errorStreamStr);
+
+//                            // only dump warning if debug enabled
+//                            if (LOGGER.isDebugEnabled()) {
+//                                errorStreamLines.forEach(System.out::println);
+//
+//                            } else {
+//                                errorStreamLines
+//                                        .filter(line -> line.contains("ERROR:"))
+//                                        .forEach(System.out::println);
+//                            }
+                        }
                     }
                 }
 
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
-                // TODO : If we get an error stream would be good to dump it out to make debugging easier
-                // or you can just run the pipeline in stroom
                 Assert.assertTrue(processedStreams.size() > 0);
 
                 // Copy the contents of the latest written stream to the output.

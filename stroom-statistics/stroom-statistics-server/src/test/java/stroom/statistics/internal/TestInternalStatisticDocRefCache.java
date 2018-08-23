@@ -28,12 +28,12 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_singleDocRef() {
 
-        MockPropertyService mockStroomPropertyService = new MockPropertyService();
+        MockPropertyService mockPropertyService = new MockPropertyService();
 
         String propValue = docRefStr1;
-        mockStroomPropertyService.setProperty(propKey, propValue);
+        mockPropertyService.setProperty(propKey, propValue);
 
-        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockStroomPropertyService);
+        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockPropertyService);
 
         List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 
@@ -45,12 +45,12 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_twoDocRefs() {
 
-        MockPropertyService mockStroomPropertyService = new MockPropertyService();
+        MockPropertyService mockPropertyService = new MockPropertyService();
 
         String propValue = docRefStr1 + "," + docRefStr2;
-        mockStroomPropertyService.setProperty(propKey, propValue);
+        mockPropertyService.setProperty(propKey, propValue);
 
-        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockStroomPropertyService);
+        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockPropertyService);
 
         List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 
@@ -62,12 +62,12 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_emptyProvVal() {
 
-        MockPropertyService mockStroomPropertyService = new MockPropertyService();
+        MockPropertyService mockPropertyService = new MockPropertyService();
 
         String propValue = "";
-        mockStroomPropertyService.setProperty(propKey, propValue);
+        mockPropertyService.setProperty(propKey, propValue);
 
-        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockStroomPropertyService);
+        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockPropertyService);
 
         List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 
@@ -77,12 +77,12 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_nullProvVal() {
 
-        MockPropertyService mockStroomPropertyService = new MockPropertyService();
+        MockPropertyService mockPropertyService = new MockPropertyService();
 
         String propValue = null;
-        mockStroomPropertyService.setProperty(propKey, propValue);
+        mockPropertyService.setProperty(propKey, propValue);
 
-        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockStroomPropertyService);
+        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockPropertyService);
 
         List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 
@@ -92,12 +92,12 @@ public class TestInternalStatisticDocRefCache {
     @Test(expected = RuntimeException.class)
     public void getDocRefs_invalidPropVal() {
 
-        MockPropertyService mockStroomPropertyService = new MockPropertyService();
+        MockPropertyService mockPropertyService = new MockPropertyService();
 
         String propValue = docRefStr1 + "xxx";
-        mockStroomPropertyService.setProperty(propKey, propValue);
+        mockPropertyService.setProperty(propKey, propValue);
 
-        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockStroomPropertyService);
+        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(mockPropertyService);
 
         docRefCache.getDocRefs(statKey);
     }

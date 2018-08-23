@@ -145,9 +145,7 @@ table {
 
 
 
-// This is mostly about override SUI styles
 .dropdown {
-
   // This styles the main drop-down box
   @include themify($themes) {
     background-color: themed('dropdown__background-color') !important;
@@ -173,6 +171,9 @@ table {
   // We need to get rid of the border for erverything inside the drop-down.
   .text, .active, .item, .icon {
     border:0 !important;
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
   }
 
   // We need a hover colour for the drop-down.
@@ -209,7 +210,25 @@ table {
 
 .doc-ref-listing__item {
   @include themify($themes){
-    border-top: solid thin themed('dock-ref-listing__item-border') !important;
+    border-top: themed('dock-ref-listing__item-border') !important;
+  }
+}
+
+.doc-ref-listing__item:hover {
+  @include themify($themes){
+    background-color: themed('hover-color') !important;
+  }
+}
+
+.doc-ref-listing__item--selected {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
+  }
+}
+
+.doc-ref-listing__item--selected:hover {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
   }
 }
 
@@ -261,6 +280,16 @@ table {
 
 
 
+.themed-modal__header {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+
+
+
 .themed-modal__content {
   @include themify($themes) {
     background-color: themed('modal__background-color') !important;
@@ -268,10 +297,9 @@ table {
   }
 }
 
-.header {
+.themed-modal__content  .form input {
   @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
+    border: themed('modal__border') !important;
   }
 }
 
@@ -281,3 +309,40 @@ table {
     color: themed('text__color') !important;
   }
 }
+
+
+
+
+
+.form {
+  label {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
+  }
+
+  input {
+    @include themify($themes) {
+      background-color: themed('modal__background-color') !important;
+      color: themed('text__color') !important;
+    }
+  }
+}
+
+
+
+
+.tooltip-popup {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('sidebar__color') !important;
+    &.place-top {
+      &:after {
+        border-top-color: themed('modal__background-color') !important;
+        border-top-style: solid !important;
+        border-top-width: 6px !important;
+      }
+    }
+  }
+}
+

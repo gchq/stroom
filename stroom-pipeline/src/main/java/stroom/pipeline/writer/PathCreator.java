@@ -58,8 +58,7 @@ public class PathCreator {
             "fileExtension",
             StroomProperties.STROOM_TEMP};
 
-    private static final Set<String> NON_ENV_VARS_SET = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
+    private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
 
     private final FeedHolder feedHolder;
     private final PipelineHolder pipelineHolder;
@@ -81,8 +80,13 @@ public class PathCreator {
     }
 
     public static String replaceTimeVars(String path) {
-        // Replace some of the path elements with system variables.
+        // Replace some of the path elements with time variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
+        return replaceTimeVars(path, dateTime);
+    }
+
+    static String replaceTimeVars(String path, final ZonedDateTime dateTime) {
+        // Replace some of the path elements with time variables.
         path = replace(path, "year", dateTime::getYear, 4);
         path = replace(path, "month", dateTime::getMonthValue, 2);
         path = replace(path, "day", dateTime::getDayOfMonth, 2);
@@ -171,7 +175,7 @@ public class PathCreator {
         return replace(path, type, stringReplacementSupplier);
     }
 
-    private static String replace(final String path,
+    public static String replace(final String path,
                                   final String type,
                                   final Supplier<String> replacementSupplier) {
         String newPath = path;
@@ -180,7 +184,7 @@ public class PathCreator {
         while (start != -1) {
             final int end = start + param.length();
             newPath = newPath.substring(0, start) + replacementSupplier.get() + newPath.substring(end);
-            start = newPath.indexOf(param, end);
+            start = newPath.indexOf(param, start);
         }
 
         return newPath;

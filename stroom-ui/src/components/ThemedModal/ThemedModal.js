@@ -27,7 +27,7 @@ const enhance = compose(
     {},
   ),
   withProps(({ theme }) => ({
-    dimmer: theme === 'theme-light' ? 'inverted' : 'true',
+    dimmer: theme === 'theme-light' ? 'inverted' : true,
   })),
 );
 
@@ -42,7 +42,7 @@ const ThemedModal = ({
   dimmer, theme, header, content, actions, ...rest
 }) => (
   <Modal dimmer={dimmer} className={theme} {...rest}>
-    {header}
+    <div className="themed-modal__header">{header}</div>
     <Modal.Content className="themed-modal__content">{content}</Modal.Content>
     <Modal.Actions className="themed-modal__actions">{actions}</Modal.Actions>
   </Modal>

@@ -47,7 +47,7 @@ public class PipelineModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XsltStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(PipelineDoc.DOCUMENT_TYPE).to(stroom.pipeline.PipelineStoreImpl.class);
+        entityServiceByTypeBinder.addBinding(PipelineDoc.DOCUMENT_TYPE).to(PipelineStoreImpl.class);
         entityServiceByTypeBinder.addBinding(TextConverterDoc.DOCUMENT_TYPE).to(stroom.pipeline.TextConverterStoreImpl.class);
         entityServiceByTypeBinder.addBinding(XsltDoc.DOCUMENT_TYPE).to(stroom.pipeline.XsltStoreImpl.class);
     }

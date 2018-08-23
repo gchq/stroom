@@ -22,9 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexDoc;
@@ -32,7 +30,6 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
@@ -169,7 +166,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         private final int testNumber;
 
         IndexThread(final Indexer indexer, final IndexShardKey indexShardKey,
-                           final IndexField indexField, final int testNumber) {
+                    final IndexField indexField, final int testNumber) {
             this.indexer = indexer;
             this.indexShardKey = indexShardKey;
             this.indexField = indexField;

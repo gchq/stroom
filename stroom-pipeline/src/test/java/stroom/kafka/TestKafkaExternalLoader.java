@@ -87,7 +87,8 @@ public class TestKafkaExternalLoader {
         Assertions.assertThat(metaData).isNotNull();
         Assertions.assertThat(future).isCompleted();
 
-        Mockito.verify(exceptionConsumer, Mockito.times(0));
+        Mockito.verify(exceptionConsumer, Mockito.times(0))
+                .accept(Mockito.any());
     }
 
     @Test
