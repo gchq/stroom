@@ -145,9 +145,7 @@ table {
 
 
 
-// This is mostly about override SUI styles
 .dropdown {
-
   // This styles the main drop-down box
   @include themify($themes) {
     background-color: themed('dropdown__background-color') !important;
@@ -173,6 +171,9 @@ table {
   // We need to get rid of the border for erverything inside the drop-down.
   .text, .active, .item, .icon {
     border:0 !important;
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
   }
 
   // We need a hover colour for the drop-down.
@@ -261,13 +262,6 @@ table {
 
 
 
-.themed-modal__content {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
 .header {
   @include themify($themes) {
     background-color: themed('modal__background-color') !important;
@@ -275,9 +269,44 @@ table {
   }
 }
 
+
+
+
+.themed-modal__content {
+  @include themify($themes) {
+    background-color: themed('modal__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.themed-modal__content  .form input {
+  @include themify($themes) {
+    border: themed('modal__border') !important;
+  }
+}
+
 .themed-modal__actions {
   @include themify($themes) {
     background-color: themed('modal__background-color') !important;
     color: themed('text__color') !important;
+  }
+}
+
+
+
+
+
+.form {
+  label {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
+  }
+
+  input {
+    @include themify($themes) {
+      background-color: themed('modal__background-color') !important;
+      color: themed('text__color') !important;
+    }
   }
 }
