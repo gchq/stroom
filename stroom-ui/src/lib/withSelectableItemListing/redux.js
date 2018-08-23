@@ -1,4 +1,5 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
+import { shortcutUsed, SHORTCUT_NAMES } from 'lib/KeyIsDown';
 
 const actionCreators = createActions({
   SELECTABLE_LISTING_MOUNTED: (listingId, items, allowMultiSelect) => ({
@@ -6,22 +7,12 @@ const actionCreators = createActions({
     items,
     allowMultiSelect,
   }),
-  SELECTABLE_LISTING_UNMOUNTED: listingId => ({
-    listingId,
-    items: [],
-  }),
   SELECTION_UP: listingId => ({ listingId, selectionChange: -1 }),
-  SELECTION_DOWN: listingId => ({ listingId, selectionChange: +1 }),
+  SELECTION_DOWN: listingId => ({ listingId, selectionChange: 1 }),
   SELECTION_TOGGLED: (listingId, index, keyIsDown = {}) => ({ listingId, index, keyIsDown }),
 });
 
-const {
-  selectableListingMounted,
-  selectableListingUnmounted,
-  selectionUp,
-  selectionDown,
-  selectionToggled,
-} = actionCreators;
+const { selectableListingBlurred, selectionUp, selectionDown } = actionCreators;
 
 const defaultStatePerListing = {
   items: [],
@@ -35,9 +26,11 @@ const defaultState = {};
 
 const reducer = handleActions(
   {
-    [combineActions(selectableListingMounted, selectableListingUnmounted)]: (state, action) => {
+    SELECTABLE_LISTING_MOUNTED: (state, action) => {
       const {
-        payload: { listingId, items, allowMultiSelect },
+        payload: {
+          listingId, items, allowMultiSelect,
+        },
       } = action;
 
       return {
@@ -53,14 +46,17 @@ const reducer = handleActions(
       const {
         payload: { listingId, selectionChange },
       } = action;
+
       const listingState = state[listingId];
       const { items, singleSelectedItemIndex } = listingState;
 
+      // Calculate the next index based on the selection change
       let nextIndex = 0;
       if (singleSelectedItemIndex !== -1) {
         nextIndex = (items.length + (singleSelectedItemIndex + selectionChange)) % items.length;
       }
 
+      // Calculate single item arrays for the other parts of the state
       const selectedItems = [items[nextIndex]];
       const selectedItemIndexes = [nextIndex];
 

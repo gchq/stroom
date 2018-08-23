@@ -8,7 +8,7 @@ import { Icon } from 'semantic-ui-react/dist/commonjs';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { canMove } from 'lib/treeUtils';
-import ItemTypes from 'components/DocRefListing/dragDropTypes';
+import ItemTypes from 'components/FolderExplorer/dragDropTypes';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
 const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
@@ -71,7 +71,7 @@ function dragCollect(connect, monitor) {
 }
 
 const enhance = compose(
-  connect(({ keyIsDown }) => ({ keyIsDown }), {
+  connect(({ keyIsDown:{keyIsDown} }) => ({ keyIsDown }), {
     prepareDocRefCopy,
     prepareDocRefMove,
   }),
