@@ -28,7 +28,7 @@ include 'stroom-proxy'
 include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
-// Properties
+// Config
 include 'stroom-config:stroom-config-common'
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-global-api'
