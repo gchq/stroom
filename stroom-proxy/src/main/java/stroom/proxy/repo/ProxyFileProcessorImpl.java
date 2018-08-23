@@ -18,11 +18,12 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
+import stroom.datafeed.BufferFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
-import stroom.util.io.StreamProgressMonitor;
+import stroom.data.store.StreamProgressMonitor;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -54,16 +55,18 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
     private final StreamHandlerFactory handlerFactory;
     private final AtomicBoolean finish;
-    private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
+    private final ProxyFileHandler proxyFileHandler;
 
     private volatile String hostName = null;
 
     public ProxyFileProcessorImpl(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
                                   final StreamHandlerFactory handlerFactory,
-                                  final AtomicBoolean finish) {
+                                  final AtomicBoolean finish,
+                                  final BufferFactory bufferFactory) {
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
         this.finish = finish;
+        proxyFileHandler = new ProxyFileHandler(bufferFactory);
     }
 
     /**
@@ -78,12 +81,12 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
                     + fileList.size());
         }
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.FEED, feed);
-        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
-        metaMap.put(StroomHeaderArguments.RECEIVED_PATH, getHostName());
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StroomHeaderArguments.FEED, feed);
+        attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        attributeMap.put(StroomHeaderArguments.RECEIVED_PATH, getHostName());
         if (LOGGER.isDebugEnabled()) {
-            metaMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
+            attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
         }
 
         final List<StreamHandler> handlers = handlerFactory.addSendHandlers(new ArrayList<>());
@@ -91,7 +94,7 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         try {
             // Start the post
             for (final StreamHandler streamHandler : handlers) {
-                streamHandler.setMetaMap(metaMap);
+                streamHandler.setAttributeMap(attributeMap);
                 streamHandler.handleHeader();
             }
 
@@ -127,7 +130,7 @@ public final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
                     // Start the post
                     for (final StreamHandler streamHandler : handlers) {
-                        streamHandler.setMetaMap(metaMap);
+                        streamHandler.setAttributeMap(attributeMap);
                         streamHandler.handleHeader();
                     }
                 }

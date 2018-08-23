@@ -17,7 +17,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.guice.PipelineScoped;
 
 @PipelineScoped
@@ -31,7 +31,7 @@ public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Ho
         return null;
     }
 
-    public MetaMap getMetaData() {
+    public AttributeMap getMetaData() {
         if (metaDataProvider != null) {
             return metaDataProvider.getMetaData();
         }

@@ -17,8 +17,8 @@
 
 package stroom.node;
 
-import stroom.cluster.ClusterNodeManager;
-import stroom.cluster.ClusterState;
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.util.EntityServiceExceptionUtil;
@@ -26,8 +26,8 @@ import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;

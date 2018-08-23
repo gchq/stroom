@@ -36,12 +36,12 @@ class KafkaAppender extends AbstractKafkaAppender {
         this.pathCreator = pathCreator;
     }
 
-    @PipelineProperty(description = "This key to apply to the records, used to select partition.")
+    @PipelineProperty(description = "This key to apply to the records, used to select partition.", displayPriority = 2)
     public void setRecordKey(final String recordKey) {
         this.recordKey = pathCreator.replaceAll(recordKey);
     }
 
-    @PipelineProperty(description = "The topic to send the record to.")
+    @PipelineProperty(description = "The topic to send the record to.", displayPriority = 1)
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
     }

@@ -1,8 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<feed>
-   <name>STAFF-NO-REFERENCE</name>
-   <reference>true</reference>
-   <status>RECEIVE</status>
-   <streamType>Raw Reference</streamType>
-   <uuid>350003fe-2b6c-4c57-95ed-2e6018c5b3d5</uuid>
-</feed>

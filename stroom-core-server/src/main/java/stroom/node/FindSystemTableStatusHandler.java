@@ -22,8 +22,8 @@ import stroom.node.shared.DBTableService;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

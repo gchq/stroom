@@ -16,20 +16,16 @@
 
 package stroom.refdata;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.pipeline.factory.Element;
+import stroom.pipeline.factory.PipelineElementModule;
 import stroom.refdata.store.RefDataStoreModule;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
-public class ReferenceDataModule extends AbstractModule {
-
+public class ReferenceDataModule extends PipelineElementModule {
     @Override
     protected void configure() {
-
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(ReferenceDataFilter.class);
+        super.configure();
 
         bind(ReferenceDataLoader.class).to(ReferenceDataLoaderImpl.class);
         bind(ContextDataLoader.class).to(ContextDataLoaderImpl.class);
@@ -42,5 +38,10 @@ public class ReferenceDataModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.refdata.ReferenceDataLoadTaskHandler.class);
 
         install(new RefDataStoreModule());
+    }
+
+    @Override
+    protected void configureElements() {
+        bindElement(ReferenceDataFilter.class);
     }
 }

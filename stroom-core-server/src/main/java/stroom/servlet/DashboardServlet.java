@@ -16,14 +16,14 @@
 
 package stroom.servlet;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 
 public class DashboardServlet extends AppServlet {
     @Inject
-    DashboardServlet(final StroomPropertyService stroomPropertyService) {
-        super(stroomPropertyService);
+    DashboardServlet(final PropertyService propertyService) {
+        super(propertyService);
     }
 
     String getScript() {

@@ -35,7 +35,6 @@ import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.FeedService;
 import stroom.importexport.shared.ImportState;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;

@@ -20,12 +20,22 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
-import stroom.feed.MetaMap;
+import stroom.feed.FeedDocCache;
+import stroom.feed.FeedStore;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.NodeCache;
@@ -36,31 +46,22 @@ import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
-import stroom.streamstore.StreamTypeService;
-import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
-import stroom.task.SimpleTaskContext;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
@@ -87,6 +88,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
@@ -98,7 +100,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private TaskManager taskManager;
     @Inject
-    private FeedService feedService;
+    private FeedStore feedStore;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -108,7 +110,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamTypeService streamTypeService;
+    private DataMetaService streamMetaService;
+    @Inject
+    private FeedDocCache feedDocCache;
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
@@ -148,10 +152,16 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
-            final Feed feed = feedService.loadByName(pipelineRef.getName());
+            final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
 
-            if (feed != null && feed.isReference() == reference) {
-                StreamProcessor streamProcessor = new StreamProcessor();
+            FeedDoc feed = null;
+            if (feedRefs.size() > 0) {
+                feed = feedStore.readDocument(feedRefs.get(0));
+            }
+            final FeedDoc feedDoc = feed;
+
+            if (feedDoc != null && feedDoc.isReference() == reference) {
+                Processor streamProcessor = new Processor();
                 streamProcessor.setPipelineUuid(pipelineRef.getUuid());
                 streamProcessor.setEnabled(true);
                 streamProcessor = streamProcessorService.save(streamProcessor);
@@ -162,12 +172,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 }
 
                 final String streamType = feed.isReference() ?
-                        StreamType.RAW_REFERENCE.getName() : StreamType.RAW_EVENTS.getName();
+                        StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = new QueryData.Builder()
-                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
-                                .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
-                                .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -185,7 +195,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final String stem = fileName.substring(0, index);
 
                     try {
-                        test(p, feed, outputDir, stem, compareOutput, exceptions);
+                        test(p, feedDoc, outputDir, stem, compareOutput, exceptions);
                     } catch (final IOException | RuntimeException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -202,7 +212,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void test(final Path inputFile, final Feed feed, final Path outputDir, final String stem,
+    private void test(final Path inputFile, final FeedDoc feed, final Path outputDir, final String stem,
                       final boolean compareOutput, final List<Exception> exceptions) throws IOException {
         LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
                 inputFile.getFileName().toString(), feed.getName(), outputDir.getFileName().toString(), stem);
@@ -220,24 +230,23 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final long endStreamId = getLatestStreamId();
 
             if (compareOutput) {
-                final List<Stream> processedStreams = new ArrayList<>();
+                final List<Data> processedStreams = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final Stream stream = streamStore.loadStreamById(streamId);
-                    final StreamType streamType = streamTypeService.load(stream.getStreamType());
-                    if (streamType.isStreamTypeProcessed()) {
+                    final Data stream = streamMetaService.getData(streamId);
+                    final String streamTypeName = stream.getTypeName();
+                    if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
-                    } else if (streamType.isStreamTypeError()) {
+                    } else {
                         try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
                             //got an error stream so dump it to console
 
-                            Stream parentStream = streamStore.loadStreamById(stream.getParentStreamId());
-                            StreamType parentStreamType = streamTypeService.load(parentStream.getStreamType());
+                            Data parentStream = streamMetaService.getData(stream.getParentDataId());
 
                             String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
                             java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
                             LOGGER.warn("Stream {} with parent {} of type {} has errors:\n{}",
-                                    stream, parentStream.getId(), parentStreamType.getName(), errorStreamStr);
+                                    stream, parentStream.getId(), parentStream.getTypeName(), errorStreamStr);
 
 //                            // only dump warning if debug enabled
 //                            if (LOGGER.isDebugEnabled()) {
@@ -257,7 +266,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
-                for (final Stream processedStream : processedStreams) {
+                for (final Data processedStream : processedStreams) {
                     String num = "";
                     // If we are going to output more than one file then number
                     // them.
@@ -284,42 +293,41 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         Assert.assertTrue("There should not be any more tasks here", tasks.size() == 0);
     }
 
-    private void addStream(final Path file, final Feed feed) throws IOException {
+    private void addStream(final Path file, final FeedDoc feed) throws IOException {
         if (file.getFileName().toString().endsWith(".zip")) {
             loadZipData(file, feed);
 
         } else {
             // Add the associated data to the stream store.
-            StreamType streamType;
+            String streamTypeName;
             long millis;
             if (feed.isReference()) {
-                streamType = StreamType.RAW_REFERENCE;
+                streamTypeName = StreamTypeNames.RAW_REFERENCE;
 
                 // We need to ensure the reference data is older then the earliest
                 // event we are going to see. In the case of these component tests
                 // we have some events from 2007.
                 millis = DateUtil.parseNormalDateTimeString("2006-01-01T00:00:00.000Z");
             } else {
-                streamType = StreamType.RAW_EVENTS;
+                streamTypeName = StreamTypeNames.RAW_EVENTS;
                 millis = DateUtil.parseNormalDateTimeString("2006-04-01T00:00:00.000Z");
             }
 
             // Create the stream.
-            final Stream stream = Stream.createStreamForTesting(streamType, feed, millis,
-                    millis);
-            final StreamTarget target = streamStore.openStreamTarget(stream);
+            final DataProperties streamProperties = new DataProperties.Builder()
+                    .feedName(feed.getName())
+                    .typeName(streamTypeName)
+                    .createMs(millis)
+                    .build();
+            final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
             final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
-            final RASegmentOutputStream outputStream = new RASegmentOutputStream(target);
-
-            final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-            writer.write(inputStream, outputStream);
-
+            StreamTargetUtil.write(target, inputStream);
             streamStore.closeStreamTarget(target);
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
+            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
             final byte[] original = Files.readAllBytes(file);
             final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
             streamStore.closeStreamSource(checkSource);
@@ -327,14 +335,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void loadZipData(final Path file, final Feed feed) throws IOException {
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+    private void loadZipData(final Path file, final FeedDoc feed) throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedService, null, feed, feed.getStreamType());
+                .buildSingleHandlerList(streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(Files.newInputStream(file), "test");
@@ -349,10 +357,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<StreamProcessorTask> getTasks() {
         List<StreamProcessorTask> streamProcessorTasks = Collections.emptyList();
 
-        List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
             streamProcessorTasks = new ArrayList<>(streamTasks.size());
-            for (final StreamTask streamTask : streamTasks) {
+            for (final ProcessorFilterTask streamTask : streamTasks) {
                 streamProcessorTasks.add(new StreamProcessorTask(streamTask));
             }
             streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
@@ -364,29 +372,25 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     protected void testSteppingTask(final String feedName, final Path dir) throws IOException {
         final List<Exception> exceptions = new ArrayList<>();
 
-        // We first need to get all of the feeds from the DB.
-        final FindFeedCriteria feedCriteria = new FindFeedCriteria(feedName);
-
         // feedCriteria.setFeedType(FeedType.REFERENCE);
-        final BaseResultList<Feed> feeds = feedService.find(feedCriteria);
-        Assert.assertTrue("No feeds found", feeds != null && feeds.size() > 0);
-        Assert.assertEquals("Expected 1 feed", 1, feeds.size());
+        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
+        Assert.assertTrue("No feeds found", feeds.isPresent());
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
         Assert.assertTrue("No pipelines found", pipelines != null && pipelines.size() > 0);
         Assert.assertEquals("Expected 1 pipeline", 1, pipelines.size());
 
         final DocRef pipelineRef = pipelines.get(0);
-        final Feed feed = feeds.getFirst();
+        final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.RAW_REFERENCE.getDisplayValue())
-                        .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
-        final FindStreamCriteria streamCriteria = new FindStreamCriteria();
+        final FindDataCriteria streamCriteria = new FindDataCriteria();
         streamCriteria.setExpression(expression);
         streamCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
@@ -534,16 +538,16 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<Stream> list = streamStore.find(new FindStreamCriteria());
+        final BaseResultList<Data> list = streamMetaService.find(new FindDataCriteria());
         if (list == null || list.size() == 0) {
             return 0;
         }
-        Collections.sort(list);
-        final Stream latest = list.get(list.size() - 1);
+        list.sort(Comparator.comparing(Data::getId));
+        final Data latest = list.get(list.size() - 1);
         return latest.getId();
     }
 
-    private void copyStream(final Stream stream, final OutputStream outputStream) {
+    private void copyStream(final Data stream, final OutputStream outputStream) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
         StreamUtil.streamToStream(streamSource.getInputStream(), outputStream, false);
         streamStore.closeStreamSource(streamSource);

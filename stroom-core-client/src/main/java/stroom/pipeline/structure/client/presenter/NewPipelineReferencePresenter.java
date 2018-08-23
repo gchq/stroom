@@ -17,44 +17,41 @@
 package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityReferenceFindAction;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.feed.shared.Feed;
-import stroom.item.client.StringListBox;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType.Purpose;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
-    private final ClientDispatchAsync dispatcher;
-    private final StringListBox streamTypesWidget;
+    //    private final ClientDispatchAsync dispatcher;
+    private final TextBox typeWidget;
     private boolean dirty;
-    private boolean initialised;
+//    private boolean initialised;
 
     @Inject
-    public NewPipelineReferencePresenter(final EventBus eventBus, final NewPipelineReferenceView view,
-                                         final EntityDropDownPresenter pipelinePresenter, final EntityDropDownPresenter feedPresenter,
-                                         final ClientDispatchAsync dispatcher) {
+    public NewPipelineReferencePresenter(final EventBus eventBus,
+                                         final NewPipelineReferenceView view,
+                                         final EntityDropDownPresenter pipelinePresenter,
+                                         final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
-        this.dispatcher = dispatcher;
+//        this.dispatcher = dispatcher;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-        feedPresenter.setIncludedTypes(Feed.ENTITY_TYPE);
+        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         pipelinePresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
@@ -63,9 +60,9 @@ public class NewPipelineReferencePresenter
         feedPresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setFeedView(feedPresenter.getView());
 
-        streamTypesWidget = new StringListBox();
-        streamTypesWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
-        getView().setStreamTypeWidget(streamTypesWidget);
+        typeWidget = new TextBox();
+        typeWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
+        getView().setTypeWidget(typeWidget);
     }
 
     public void read(final PipelineReference pipelineReference) {
@@ -73,66 +70,66 @@ public class NewPipelineReferencePresenter
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
         feedPresenter.setSelectedEntityReference(pipelineReference.getFeed());
-        updateStreamTypes(pipelineReference.getStreamType());
+//        updateStreamTypes(pipelineReference.getType());
 
         pipelinePresenter.addDataSelectionHandler(event -> {
-            if (initialised) {
-                final DocRef selection = pipelinePresenter.getSelectedEntityReference();
-                if ((pipelineReference.getPipeline() == null && selection != null)
-                        || (pipelineReference.getPipeline() != null
-                        && !pipelineReference.getPipeline().equals(selection))) {
-                    setDirty(true);
-                }
+//            if (initialised) {
+            final DocRef selection = pipelinePresenter.getSelectedEntityReference();
+            if ((pipelineReference.getPipeline() == null && selection != null)
+                    || (pipelineReference.getPipeline() != null
+                    && !pipelineReference.getPipeline().equals(selection))) {
+                setDirty(true);
             }
+//            }
         });
         feedPresenter.addDataSelectionHandler(event -> {
-            if (initialised) {
-                final DocRef selection = feedPresenter.getSelectedEntityReference();
-                if ((pipelineReference.getFeed() == null && selection != null)
-                        || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
-                    setDirty(true);
-                }
+//            if (initialised) {
+            final DocRef selection = feedPresenter.getSelectedEntityReference();
+            if ((pipelineReference.getFeed() == null && selection != null)
+                    || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
+                setDirty(true);
             }
+//            }
         });
-        streamTypesWidget.addChangeHandler(event -> {
-            if (initialised) {
-                final String selection = streamTypesWidget.getSelected();
-                if ((pipelineReference.getStreamType() == null && selection != null)
-                        || (pipelineReference.getStreamType() != null
-                        && !pipelineReference.getStreamType().equals(selection))) {
-                    setDirty(true);
-                }
-            }
+        typeWidget.addChangeHandler(event -> {
+//            if (initialised) {
+//                final String selection = typeWidget.getSelected();
+//                if ((pipelineReference.getType() == null && selection != null)
+//                        || (pipelineReference.getType() != null
+//                        && !pipelineReference.getType().equals(selection))) {
+            setDirty(true);
+//                }
+//            }
         });
     }
 
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(streamTypesWidget.getSelected());
+        pipelineReference.setStreamType(typeWidget.getText());
     }
 
-    private void updateStreamTypes(final String selectedStreamType) {
-        streamTypesWidget.clear();
-
-        final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
-        findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
-        findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
-        findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
-        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
-            if (result != null && result.size() > 0) {
-                for (final DocRef docRef : result) {
-                    streamTypesWidget.addItem(docRef.getName());
-                }
-            }
-
-            if (selectedStreamType != null) {
-                streamTypesWidget.setSelected(selectedStreamType);
-            }
-
-            initialised = true;
-        });
-    }
+//    private void updateStreamTypes(final String selectedStreamType) {
+//        typeWidget.clear();
+//
+//        final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
+//        findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
+//        findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
+//        findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
+//        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
+//            if (result != null && result.size() > 0) {
+//                for (final DocRef docRef : result) {
+//                    typeWidget.addItem(docRef.getName());
+//                }
+//            }
+//
+//            if (selectedStreamType != null) {
+//                typeWidget.setSelected(selectedStreamType);
+//            }
+//
+//            initialised = true;
+//        });
+//    }
 
     public boolean isDirty() {
         return dirty;
@@ -149,6 +146,6 @@ public class NewPipelineReferencePresenter
 
         void setFeedView(View view);
 
-        void setStreamTypeWidget(Widget widget);
+        void setTypeWidget(Widget widget);
     }
 }

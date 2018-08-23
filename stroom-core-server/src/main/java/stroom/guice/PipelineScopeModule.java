@@ -13,4 +13,16 @@ public class PipelineScopeModule extends AbstractModule {
         // make our scope instance injectable
         bind(PipelineScope.class).annotatedWith(Names.named("pipelineScope")).toInstance(pipelineScope);
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

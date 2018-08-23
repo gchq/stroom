@@ -20,7 +20,7 @@ package stroom.node;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -33,9 +33,9 @@ public class TestVolumeService extends AbstractCoreIntegrationTest {
     @Test
     public void testFind() {
         final FindVolumeCriteria criteria = new FindVolumeCriteria();
-        final List<Volume> volumeList = volumeService.find(criteria);
+        final List<VolumeEntity> volumeList = volumeService.find(criteria);
 
-        for (final Volume volume : volumeList) {
+        for (final VolumeEntity volume : volumeList) {
             volumeService.save(volume);
         }
 

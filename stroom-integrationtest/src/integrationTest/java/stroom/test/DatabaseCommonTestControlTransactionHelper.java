@@ -69,11 +69,11 @@ public class DatabaseCommonTestControlTransactionHelper {
 //        sql.arg("meta");
 //        return (int) entityManager.executeNativeQueryLongResult(sql);
 //    }
-
-    public void shutdown() {
-        entityManager.shutdown();
-    }
-
+//
+//    public void shutdown() {
+//        entityManager.shutdown();
+//    }
+//
 //    public void truncateTable(final String tableName) {
 //        truncateTables(Collections.singletonList(tableName));
 //    }

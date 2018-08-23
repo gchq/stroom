@@ -27,8 +27,8 @@ import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

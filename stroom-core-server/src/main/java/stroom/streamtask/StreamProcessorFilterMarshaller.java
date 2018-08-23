@@ -18,29 +18,29 @@ package stroom.streamtask;
 
 import stroom.entity.EntityMarshaller;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilter;
 
-class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFilter, QueryData> {
+class StreamProcessorFilterMarshaller extends EntityMarshaller<ProcessorFilter, QueryData> {
     StreamProcessorFilterMarshaller() {
     }
 
     @Override
-    public QueryData getObject(final StreamProcessorFilter entity) {
+    public QueryData getObject(final ProcessorFilter entity) {
         return entity.getQueryData();
     }
 
     @Override
-    public void setObject(final StreamProcessorFilter entity, final QueryData object) {
+    public void setObject(final ProcessorFilter entity, final QueryData object) {
         entity.setQueryData(object);
     }
 
     @Override
-    protected String getData(final StreamProcessorFilter entity) {
+    protected String getData(final ProcessorFilter entity) {
         return entity.getData();
     }
 
     @Override
-    protected void setData(final StreamProcessorFilter entity, final String data) {
+    protected void setData(final ProcessorFilter entity, final String data) {
         entity.setData(data);
     }
 
@@ -51,6 +51,6 @@ class StreamProcessorFilterMarshaller extends EntityMarshaller<StreamProcessorFi
 
     @Override
     public String getEntityType() {
-        return StreamProcessorFilter.ENTITY_TYPE;
+        return ProcessorFilter.ENTITY_TYPE;
     }
 }

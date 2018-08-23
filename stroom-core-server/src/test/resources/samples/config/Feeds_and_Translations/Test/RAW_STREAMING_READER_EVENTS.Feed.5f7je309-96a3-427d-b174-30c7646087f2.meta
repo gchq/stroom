@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "5f7je309-96a3-427d-b174-30c7646087f2",
+  "name" : "RAW_STREAMING_READER-EVENTS",
+  "version" : "133561a7-e162-4f0d-aca0-fd96f22f4c14",
+  "description" : "RAW_STREAMING_READER-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

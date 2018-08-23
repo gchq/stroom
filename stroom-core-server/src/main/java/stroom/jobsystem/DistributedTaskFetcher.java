@@ -35,7 +35,7 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

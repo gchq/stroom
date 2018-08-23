@@ -18,8 +18,6 @@ package stroom.servlet;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.TaskHandler;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -54,8 +52,8 @@ public class MockServletModule extends AbstractModule {
 
     //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)
-//    public DashboardServlet dashboardServlet(final StroomPropertyService stroomPropertyService) {
-//        return new DashboardServlet(stroomPropertyService);
+//    public DashboardServlet dashboardServlet(final PropertyService propertyService) {
+//        return new DashboardServlet(propertyService);
 //    }
 //
 //    @Bean
@@ -64,8 +62,8 @@ public class MockServletModule extends AbstractModule {
 //    }
 //
 //    @Bean
-//    public DynamicCSSServlet dynamicCSSServlet(final StroomPropertyService stroomPropertyService) {
-//        return new DynamicCSSServlet(stroomPropertyService);
+//    public DynamicCSSServlet dynamicCSSServlet(final PropertyService propertyService) {
+//        return new DynamicCSSServlet(propertyService);
 //    }
 //
 //    @Bean
@@ -76,7 +74,7 @@ public class MockServletModule extends AbstractModule {
 //    @Bean
 //    public ExportConfigServlet exportConfigServlet(final ImportExportService importExportService,
 //                                                   @Named("resourceStore") final ResourceStore resourceStore,
-//                                                   final StroomPropertyService propertyService) {
+//                                                   final PropertyService propertyService) {
 //        return new ExportConfigServlet(importExportService, resourceStore, propertyService);
 //    }
 //
@@ -123,7 +121,7 @@ public class MockServletModule extends AbstractModule {
 //
 //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)
-//    public StroomServlet stroomServlet(final StroomPropertyService stroomPropertyService) {
-//        return new StroomServlet(stroomPropertyService);
+//    public StroomServlet stroomServlet(final PropertyService propertyService) {
+//        return new StroomServlet(propertyService);
 //    }
 }

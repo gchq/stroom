@@ -17,7 +17,8 @@
 package stroom.task;
 
 import stroom.entity.cluster.FindServiceClusterTask;
-import stroom.entity.shared.Action;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.shared.Action;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
@@ -31,8 +32,8 @@ import stroom.task.shared.TaskProgress;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
 import stroom.docref.SharedObject;
-import stroom.util.shared.Task;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.Task;
+import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

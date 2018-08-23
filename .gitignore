@@ -1,7 +1,10 @@
 .idea
 .temp
 .DS_Store
-*/target/
+**/target/
+**/out/
+**/build/
+**/bin/
 *.swp
 node_modules
 _book

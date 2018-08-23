@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.docref.DocRef;
 import stroom.util.shared.SharedList;

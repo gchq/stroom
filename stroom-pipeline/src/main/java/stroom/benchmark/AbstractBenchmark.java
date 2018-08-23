@@ -18,26 +18,27 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataStatus;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.XMLUtil;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
-import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
-import stroom.task.TaskContext;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.task.api.TaskContext;
 import stroom.util.io.StreamUtil;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -49,10 +50,17 @@ public abstract class AbstractBenchmark {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
-    @Inject
-    private StreamStore streamStore;
-    @Inject
-    private TaskContext taskContext;
+    private final StreamStore streamStore;
+    private final DataMetaService streamMetaService;
+    private final TaskContext taskContext;
+
+    AbstractBenchmark(final StreamStore streamStore,
+                      final DataMetaService streamMetaService,
+                      final TaskContext taskContext) {
+        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
+        this.taskContext = taskContext;
+    }
 
     public static int getRandomSkewed() {
         return (int) (Math.exp(Math.random() * 10));
@@ -77,19 +85,15 @@ public abstract class AbstractBenchmark {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
-    protected Stream writeData(final Feed feed, final StreamType streamType, final String data) {
+    protected Data writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
-        final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
+        final DataProperties streamProperties = new DataProperties.Builder()
+                .feedName(feedName)
+                .typeName(streamTypeName)
+                .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
-
-        final InputStream dataInputStream = StreamUtil.stringToStream(data);
-
-        final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
-
-        final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
-        dataWriter.write(dataInputStream, dataOutputStream);
-
+        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
+        StreamTargetUtil.write(dataTarget, data);
         streamStore.closeStreamTarget(dataTarget);
 
         return dataTarget.getStream();
@@ -127,18 +131,18 @@ public abstract class AbstractBenchmark {
         return output.toString();
     }
 
-    protected void verifyData(final Feed feed, final String verificationString) {
+    protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
+        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue());
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.EVENTS.getDisplayValue());
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final FindDataCriteria criteria = new FindDataCriteria();
         criteria.setExpression(builder.build());
-        final BaseResultList<Stream> streams = streamStore.find(criteria);
-        final Stream targetStream = streams.getFirst();
+        final BaseResultList<Data> streams = streamMetaService.find(criteria);
+        final Data targetStream = streams.getFirst();
 
         // Get back translated result.
         final StreamSource target = streamStore.openStreamSource(targetStream.getId());
@@ -156,10 +160,10 @@ public abstract class AbstractBenchmark {
         }
     }
 
-    protected void deleteData(final Feed... feeds) {
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+    protected void deleteData(final String... feeds) {
+        final FindDataCriteria criteria = new FindDataCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
-        streamStore.findDelete(criteria);
+        streamMetaService.updateStatus(criteria, DataStatus.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

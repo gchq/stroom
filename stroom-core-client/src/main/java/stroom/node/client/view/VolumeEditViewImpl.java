@@ -26,8 +26,8 @@ import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
 import stroom.node.client.presenter.VolumeEditPresenter.VolumeEditView;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeEntity.VolumeType;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 
 public class VolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     private final Widget widget;

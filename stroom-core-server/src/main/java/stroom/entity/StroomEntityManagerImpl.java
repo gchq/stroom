@@ -34,11 +34,11 @@ import stroom.entity.util.EntityServiceLogUtil;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.SqlUtil;
-import stroom.security.SecurityContext;
+import stroom.guice.StroomBeanStore;
 import stroom.persist.EntityManagerSupport;
+import stroom.security.SecurityContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.EqualsUtil;
-import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -59,18 +59,15 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
 
     private final EntityManagerSupport entityManagerSupport;
     private final StroomBeanStore beanStore;
-    private final Provider<EntityEventBus> eventBusProvider;
-    private final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider;
+    private final Provider<EntityEventBus> entityEventBusProvider;
 
     @Inject
     StroomEntityManagerImpl(final EntityManagerSupport entityManagerSupport,
                             final StroomBeanStore beanStore,
-                            final Provider<EntityEventBus> eventBusProvider,
-                            final Provider<StroomDatabaseInfo> stroomDatabaseInfoProvider) {
+                            final Provider<EntityEventBus> entityEventBusProvider) {
         this.entityManagerSupport = entityManagerSupport;
         this.beanStore = beanStore;
-        this.eventBusProvider = eventBusProvider;
-        this.stroomDatabaseInfoProvider = stroomDatabaseInfoProvider;
+        this.entityEventBusProvider = entityEventBusProvider;
     }
 
     private String getCurrentUser() {
@@ -138,8 +135,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
             }
 
             if (performChecksAndEvents) {
-                final EntityEventBus eventBus = eventBusProvider.get();
-                EntityEvent.fire(eventBus, DocRefUtil.create(updatedEntity), EntityAction.UPDATE);
+                EntityEvent.fire(entityEventBusProvider.get(), DocRefUtil.create(updatedEntity), EntityAction.UPDATE);
             }
 
             return updatedEntity;
@@ -151,8 +147,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
         entityManager.flush();
 
         if (performChecksAndEvents) {
-            final EntityEventBus eventBus = eventBusProvider.get();
-            EntityEvent.fire(eventBus, DocRefUtil.create(entity), EntityAction.CREATE);
+            EntityEvent.fire(entityEventBusProvider.get(), DocRefUtil.create(entity), EntityAction.CREATE);
         }
 
         return entity;
@@ -251,8 +246,7 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
         return entityManagerSupport.transactionResult(entityManager -> {
             final Entity dbEntity = internalSaveEntity(entity, entityManager, false);
             entityManager.remove(dbEntity);
-            final EntityEventBus eventBus = eventBusProvider.get();
-            EntityEvent.fire(eventBus, DocRefUtil.create(dbEntity), EntityAction.DELETE);
+            EntityEvent.fire(entityEventBusProvider.get(), DocRefUtil.create(dbEntity), EntityAction.DELETE);
             return Boolean.TRUE;
         });
     }
@@ -271,15 +265,15 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
         entityManagerSupport.execute(EntityManager::flush);
     }
 
-    @Override
-    public void shutdown() {
-        // Shut down the database if we are using Hypersonic
-        if (!stroomDatabaseInfoProvider.get().isMysql()) {
-            final SqlBuilder sql = new SqlBuilder();
-            sql.append("shutdown");
-            executeNativeUpdate(sql);
-        }
-    }
+//    @Override
+//    public void shutdown() {
+//        // Shut down the database if we are using Hypersonic
+//        if (!stroomDatabaseInfoProvider.get().isMysql()) {
+//            final SqlBuilder sql = new SqlBuilder();
+//            sql.append("shutdown");
+//            executeNativeUpdate(sql);
+//        }
+//    }
 
     @SuppressWarnings("rawtypes")
     @Override

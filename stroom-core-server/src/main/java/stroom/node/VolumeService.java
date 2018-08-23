@@ -23,21 +23,21 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import java.util.Set;
 
 /**
  * API for handling volumes.
  */
-public interface VolumeService extends BaseEntityService<Volume>, FindService<Volume, FindVolumeCriteria>, Flushable, Clearable {
+public interface VolumeService extends BaseEntityService<VolumeEntity>, FindService<VolumeEntity, FindVolumeCriteria>, Flushable, Clearable {
     /**
      * Given a node return back where we need to write to.
      *
      * @param node The local node required if we prefer to use local volumes.
      * @return set of volumes to write to
      */
-    Set<Volume> getStreamVolumeSet(Node node);
+    Set<VolumeEntity> getStreamVolumeSet(Node node);
 
     /**
      * Get a list of volumes that can support indexes. The order will always be the same.
@@ -46,5 +46,5 @@ public interface VolumeService extends BaseEntityService<Volume>, FindService<Vo
      * @param allowedVolumes A set of volumes that can be used to filter the set of possible returned volumes.
      * @return list of matches
      */
-    Set<Volume> getIndexVolumeSet(Node node, Set<Volume> allowedVolumes);
+    Set<VolumeEntity> getIndexVolumeSet(Node node, Set<VolumeEntity> allowedVolumes);
 }

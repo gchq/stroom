@@ -64,9 +64,5 @@ public interface StroomEntityManager extends Flushable {
 
     boolean hasNativeColumn(String nativeTable, String nativeColumn);
 
-    void shutdown();
-
-//    void setFlushMode(FlushModeType mode);
-
     void clearContext();
 }

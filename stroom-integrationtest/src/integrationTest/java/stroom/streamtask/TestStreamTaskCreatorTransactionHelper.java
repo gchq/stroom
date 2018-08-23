@@ -21,18 +21,22 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
-import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamTask;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -53,37 +57,38 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private StreamTaskCreatorTransactionHelper streamTaskCreatorTransactionHelper;
+    private StreamTaskCreatorImpl streamTaskCreator;
     @Inject
     private StreamTaskDeleteExecutor streamTaskDeleteExecutor;
     @Inject
     private StroomEntityManager stroomEntityManager;
+    @Inject
+    private DataMetaService streamMetaService;
 
     @Test
     public void testBasic() {
-        final Feed feed1 = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
-        Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        Assert.assertEquals(0, commonTestControl.countEntity(ProcessorFilterTask.class));
+        final List<Data> streams = streamMetaService.find(new FindDataCriteria());
+        Assert.assertEquals(1, streams.size());
 
-        OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
+        ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
-        findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName).build();
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
-        findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1.getId() + 1);
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "otherFed").build();
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
-        findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainPipelineSet().add(new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234"));
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.PIPELINE_UUID, Condition.EQUALS, "1234").build();
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
     }
 
     @Test

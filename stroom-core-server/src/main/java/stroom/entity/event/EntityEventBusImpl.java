@@ -18,32 +18,34 @@ package stroom.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.EntityAction;
 import stroom.task.TaskManager;
-import stroom.guice.StroomBeanStore;
 import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Singleton
-public class EntityEventBusImpl implements EntityEventBus {
+class EntityEventBusImpl implements EntityEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
-    private final Map<String, Map<EntityAction, List<EntityEvent.Handler>>> handlers = new HashMap<>();
+    private final Map<String, Map<EntityAction, List<Handler>>> handlers = new HashMap<>();
     private volatile boolean initialised;
 
-    private final StroomBeanStore stroomBeanStore;
+    private final Provider<Set<Handler>> entityEventHandlerProvider;
     private final TaskManager taskManager;
 
     private volatile boolean started = false;
 
     @Inject
-    public EntityEventBusImpl(final StroomBeanStore stroomBeanStore, final TaskManager taskManager) {
-        this.stroomBeanStore = stroomBeanStore;
+    EntityEventBusImpl(final Provider<Set<Handler>> entityEventHandlerProvider, final TaskManager taskManager) {
+        this.entityEventHandlerProvider = entityEventHandlerProvider;
         this.taskManager = taskManager;
     }
 
@@ -54,13 +56,15 @@ public class EntityEventBusImpl implements EntityEventBus {
 
     @Override
     public void fire(final EntityEvent event) {
-        fireGlobally(event);
+        if (started) {
+            fireGlobally(event);
+        }
     }
 
     /**
      * Fires the entity change to all nodes in the cluster.
      */
-    public void fireGlobally(final EntityEvent event) {
+    private void fireGlobally(final EntityEvent event) {
         // Make sure there are some handlers that care about this event.
         boolean handlerExists = handlerExists(event, event.getDocRef().getType());
         if (!handlerExists) {
@@ -81,7 +85,7 @@ public class EntityEventBusImpl implements EntityEventBus {
         }
     }
 
-    public void fireLocally(final EntityEvent event) {
+    void fireLocally(final EntityEvent event) {
         // Fire to type specific handlers.
         fireEventByType(event, event.getDocRef().getType());
         // Fire to any (*) type handlers.
@@ -93,10 +97,10 @@ public class EntityEventBusImpl implements EntityEventBus {
      * then there is no point in firing the event.
      */
     private boolean handlerExists(final EntityEvent event, final String type) {
-        List<EntityEvent.Handler> dest = null;
+        List<Handler> dest = null;
 
         // Make sure there are some handlers that care about this event.
-        final Map<EntityAction, List<EntityEvent.Handler>> map = getHandlers().get(type);
+        final Map<EntityAction, List<Handler>> map = getHandlers().get(type);
         if (map != null) {
             // Try and get generic handlers for this type.
             dest = map.get(null);
@@ -112,7 +116,7 @@ public class EntityEventBusImpl implements EntityEventBus {
     }
 
     private void fireEventByType(final EntityEvent event, final String type) {
-        final Map<EntityAction, List<EntityEvent.Handler>> map = getHandlers().get(type);
+        final Map<EntityAction, List<Handler>> map = getHandlers().get(type);
         if (map != null) {
             // Fire to global action handlers.
             fireEventByAction(map, event, null);
@@ -122,11 +126,11 @@ public class EntityEventBusImpl implements EntityEventBus {
         }
     }
 
-    private void fireEventByAction(final Map<EntityAction, List<EntityEvent.Handler>> map, final EntityEvent event,
+    private void fireEventByAction(final Map<EntityAction, List<Handler>> map, final EntityEvent event,
                                    final EntityAction action) {
-        final List<EntityEvent.Handler> list = map.get(action);
+        final List<Handler> list = map.get(action);
         if (list != null) {
-            for (final EntityEvent.Handler handler : list) {
+            for (final Handler handler : list) {
                 try {
                     handler.onChange(event);
                 } catch (final RuntimeException e) {
@@ -137,14 +141,8 @@ public class EntityEventBusImpl implements EntityEventBus {
     }
 
     @Override
-    public void addHandler(final EntityEvent.Handler handler, final String type, final EntityAction... action)
-            {
-        Map<EntityAction, List<EntityEvent.Handler>> map = handlers.get(type);
-        if (map == null) {
-            map = new HashMap<>();
-            handlers.put(type, map);
-        }
-
+    public void addHandler(final Handler handler, final String type, final EntityAction... action) {
+        final Map<EntityAction, List<Handler>> map = handlers.computeIfAbsent(type, k -> new HashMap<>());
         if (action == null || action.length == 0) {
             addHandlerForAction(map, handler, null);
         } else {
@@ -154,17 +152,13 @@ public class EntityEventBusImpl implements EntityEventBus {
         }
     }
 
-    private void addHandlerForAction(final Map<EntityAction, List<EntityEvent.Handler>> map,
-                                     final EntityEvent.Handler handler, final EntityAction action) {
-        List<EntityEvent.Handler> list = map.get(action);
-        if (list == null) {
-            list = new ArrayList<>();
-            map.put(action, list);
-        }
-        list.add(handler);
+    private void addHandlerForAction(final Map<EntityAction, List<Handler>> map,
+                                     final Handler handler,
+                                     final EntityAction action) {
+        map.computeIfAbsent(action, k -> new ArrayList<>()).add(handler);
     }
 
-    private Map<String, Map<EntityAction, List<EntityEvent.Handler>>> getHandlers() {
+    private Map<String, Map<EntityAction, List<Handler>>> getHandlers() {
         if (!initialised) {
             initialise();
         }
@@ -175,7 +169,7 @@ public class EntityEventBusImpl implements EntityEventBus {
     private synchronized void initialise() {
         if (!initialised) {
             try {
-                for (final EntityEvent.Handler handler : stroomBeanStore.getInstancesOfType(EntityEvent.Handler.class)) {
+                for (final Handler handler : entityEventHandlerProvider.get()) {
                     final EntityEventHandler annotation = handler.getClass().getAnnotation(EntityEventHandler.class);
                     if (annotation != null) {
                         final String type = annotation.type();

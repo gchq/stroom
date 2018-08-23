@@ -29,9 +29,9 @@ import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.item.client.ItemListBox;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -44,7 +44,7 @@ import stroom.widget.tab.client.event.CloseEvent;
 public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.VolumeEditView> {
     private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
     private final ClientDispatchAsync clientDispatchAsync;
-    private Volume volume;
+    private VolumeEntity volume;
 
     @Inject
     public VolumeEditPresenter(final EventBus eventBus, final VolumeEditView view,
@@ -53,7 +53,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
         this.clientDispatchAsync = clientDispatchAsync;
     }
 
-    public void addVolume(final Volume volume, final PopupUiHandlers popupUiHandlers) {
+    public void addVolume(final VolumeEntity volume, final PopupUiHandlers popupUiHandlers) {
         this.volume = volume;
         read();
 
@@ -61,7 +61,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
                 new DelegatePopupUiHandlers(popupUiHandlers));
     }
 
-    public void editVolume(final Volume volume, final PopupUiHandlers popupUiHandlers) {
+    public void editVolume(final VolumeEntity volume, final PopupUiHandlers popupUiHandlers) {
         this.volume = volume;
         read();
 

@@ -18,32 +18,31 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
-import stroom.entity.DocumentPermissionCache;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.store.MapDefinition;
+import stroom.refdata.store.MultiRefDataValueProxy;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
-import stroom.refdata.store.MultiRefDataValueProxy;
+import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,9 +83,8 @@ public class ReferenceData {
                   final ReferenceDataLoader referenceDataLoader,
                   final RefDataStoreHolder refDataStoreHolder,
                   final RefDataLoaderHolder refDataLoaderHolder,
-                  final Security security,
-                  @Named("cachedPipelineStore") final PipelineStore pipelineStore) {
-
+                  final PipelineStore pipelineStore,
+                  final Security security) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.feedHolder = feedHolder;
         this.streamHolder = streamHolder;
@@ -169,7 +167,7 @@ public class ReferenceData {
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
-                    && StreamType.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
+                    && StreamTypeNames.CONTEXT.equals(pipelineReference.getStreamType())) {
 
                 getNestedStreamEventList(
                         pipelineReference,
@@ -222,12 +220,11 @@ public class ReferenceData {
                 keyName));
         try {
             // Get nested stream.
-            final String streamTypeString = pipelineReference.getStreamType();
             final long streamNo = streamHolder.getStreamNo();
 
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
                     streamHolder.getStream().getId(),
-                    streamHolder.getStream().getParentStreamId()));
+                    streamHolder.getStream().getParentDataId()));
 
             // the parent stream appears to be null at this point so just use the stream id
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
@@ -242,15 +239,7 @@ public class ReferenceData {
 
             if (!isEffectiveStreamDataLoaded) {
                 // data is not in the store so load it
-
-                StreamType streamType = null;
-                for (final StreamType st : StreamType.initialValues()) {
-                    if (st.getName().equals(streamTypeString)) {
-                        streamType = st;
-                        break;
-                    }
-                }
-                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(streamType);
+                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(pipelineReference.getStreamType());
                 // There may not be a provider for this stream type if we do not
                 // have any context data stream.
                 if (provider != null) {
@@ -305,7 +294,7 @@ public class ReferenceData {
     }
 
     private void loadContextData(
-            final Stream stream,
+            final Data data,
             final StreamSourceInputStream contextStream,
             final DocRef contextPipeline,
             final RefStreamDefinition refStreamDefinition,
@@ -319,8 +308,8 @@ public class ReferenceData {
                 // load the context data into the RefDataStore so it is available for lookups
                 contextDataLoader.load(
                         contextStream,
-                        stream,
-                        feedHolder.getFeed(),
+                        data,
+                        feedHolder.getFeedName(),
                         contextPipeline,
                         refStreamDefinition,
                         refDataStore);
@@ -358,7 +347,7 @@ public class ReferenceData {
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
                         documentPermissionCache.hasDocumentPermission(
-                                Feed.ENTITY_TYPE,
+                                FeedDoc.DOCUMENT_TYPE,
                                 pipelineReference.getFeed().getUuid(),
                                 DocumentPermissionNames.USE));
 
@@ -366,7 +355,7 @@ public class ReferenceData {
         if (hasPermission) {
             // Create a key to find a set of effective times in the pool.
             final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(
-                    pipelineReference.getFeed(),
+                    pipelineReference.getFeed().getName(),
                     pipelineReference.getStreamType(),
                     fromMs,
                     toMs);

@@ -16,7 +16,7 @@
 
 package stroom.persist;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import java.util.Objects;
 
@@ -75,24 +75,24 @@ public class C3P0Config {
     private final int statementCacheNumDeferredCloseThreads;
     private final int numHelperThreads;
 
-    public C3P0Config(final String prefix, final StroomPropertyService stroomPropertyService) {
-        this.maxStatements = stroomPropertyService.getIntProperty(prefix + PROP_MAX_STATEMENTS, MAX_STATEMENTS);
-        this.maxStatementsPerConnection = stroomPropertyService.getIntProperty(prefix + PROP_MAX_STATEMENTS_PER_CONNECTION, MAX_STATEMENTS_PER_CONNECTION);
-        this.initialPoolSize = stroomPropertyService.getIntProperty(prefix + PROP_INITIAL_POOL_SIZE, INITIAL_POOL_SIZE);
-        this.minPoolSize = stroomPropertyService.getIntProperty(prefix + PROP_MIN_POOL_SIZE, MIN_POOL_SIZE);
-        this.maxPoolSize = stroomPropertyService.getIntProperty(prefix + PROP_MAX_POOL_SIZE, MAX_POOL_SIZE);
-        this.idleConnectionTestPeriod = stroomPropertyService.getIntProperty(prefix + PROP_IDLE_CONNECTION_TEST_PERIOD, IDLE_CONNECTION_TEST_PERIOD);
-        this.maxIdleTime = stroomPropertyService.getIntProperty(prefix + PROP_MAX_IDLE_TIME, MAX_IDLE_TIME);
-        this.acquireIncrement = stroomPropertyService.getIntProperty(prefix + PROP_ACQUIRE_INCREMENT, ACQUIRE_INCREMENT);
-        this.acquireRetryAttempts = stroomPropertyService.getIntProperty(prefix + PROP_ACQUIRE_RETRY_ATTEMPTS, ACQUIRE_RETRY_ATTEMPTS);
-        this.acquireRetryDelay = stroomPropertyService.getIntProperty(prefix + PROP_ACQUIRE_RETRY_DELAY, ACQUIRE_RETRY_DELAY);
-        this.checkoutTimeout = stroomPropertyService.getIntProperty(prefix + PROP_CHECKOUT_TIMEOUT, CHECKOUT_TIMEOUT);
-        this.maxAdministrativeTaskTime = stroomPropertyService.getIntProperty(prefix + PROP_MAX_ADMINISTRATIVE_TASK_TIME, MAX_ADMINISTRATIVE_TASK_TIME);
-        this.maxIdleTimeExcessConnections = stroomPropertyService.getIntProperty(prefix + PROP_MAX_IDLE_TIME_EXCESS_CONNECTIONS, MAX_IDLE_TIME_EXCESS_CONNECTIONS);
-        this.maxConnectionAge = stroomPropertyService.getIntProperty(prefix + PROP_MAX_CONNECTION_AGE, MAX_CONNECTION_AGE);
-        this.unreturnedConnectionTimeout = stroomPropertyService.getIntProperty(prefix + PROP_UNRETURNED_CONNECTION_TIMEOUT, UNRETURNED_CONNECTION_TIMEOUT);
-        this.statementCacheNumDeferredCloseThreads = stroomPropertyService.getIntProperty(prefix + PROP_STATEMENT_CACHE_NUM_DEFERRED_CLOSE_THREADS, STATEMENT_CACHE_NUM_DEFERRED_CLOSE_THREADS);
-        this.numHelperThreads = stroomPropertyService.getIntProperty(prefix + PROP_NUM_HELPER_THREADS, NUM_HELPER_THREADS);
+    public C3P0Config(final String prefix, final PropertyService propertyService) {
+        this.maxStatements = propertyService.getIntProperty(prefix + PROP_MAX_STATEMENTS, MAX_STATEMENTS);
+        this.maxStatementsPerConnection = propertyService.getIntProperty(prefix + PROP_MAX_STATEMENTS_PER_CONNECTION, MAX_STATEMENTS_PER_CONNECTION);
+        this.initialPoolSize = propertyService.getIntProperty(prefix + PROP_INITIAL_POOL_SIZE, INITIAL_POOL_SIZE);
+        this.minPoolSize = propertyService.getIntProperty(prefix + PROP_MIN_POOL_SIZE, MIN_POOL_SIZE);
+        this.maxPoolSize = propertyService.getIntProperty(prefix + PROP_MAX_POOL_SIZE, MAX_POOL_SIZE);
+        this.idleConnectionTestPeriod = propertyService.getIntProperty(prefix + PROP_IDLE_CONNECTION_TEST_PERIOD, IDLE_CONNECTION_TEST_PERIOD);
+        this.maxIdleTime = propertyService.getIntProperty(prefix + PROP_MAX_IDLE_TIME, MAX_IDLE_TIME);
+        this.acquireIncrement = propertyService.getIntProperty(prefix + PROP_ACQUIRE_INCREMENT, ACQUIRE_INCREMENT);
+        this.acquireRetryAttempts = propertyService.getIntProperty(prefix + PROP_ACQUIRE_RETRY_ATTEMPTS, ACQUIRE_RETRY_ATTEMPTS);
+        this.acquireRetryDelay = propertyService.getIntProperty(prefix + PROP_ACQUIRE_RETRY_DELAY, ACQUIRE_RETRY_DELAY);
+        this.checkoutTimeout = propertyService.getIntProperty(prefix + PROP_CHECKOUT_TIMEOUT, CHECKOUT_TIMEOUT);
+        this.maxAdministrativeTaskTime = propertyService.getIntProperty(prefix + PROP_MAX_ADMINISTRATIVE_TASK_TIME, MAX_ADMINISTRATIVE_TASK_TIME);
+        this.maxIdleTimeExcessConnections = propertyService.getIntProperty(prefix + PROP_MAX_IDLE_TIME_EXCESS_CONNECTIONS, MAX_IDLE_TIME_EXCESS_CONNECTIONS);
+        this.maxConnectionAge = propertyService.getIntProperty(prefix + PROP_MAX_CONNECTION_AGE, MAX_CONNECTION_AGE);
+        this.unreturnedConnectionTimeout = propertyService.getIntProperty(prefix + PROP_UNRETURNED_CONNECTION_TIMEOUT, UNRETURNED_CONNECTION_TIMEOUT);
+        this.statementCacheNumDeferredCloseThreads = propertyService.getIntProperty(prefix + PROP_STATEMENT_CACHE_NUM_DEFERRED_CLOSE_THREADS, STATEMENT_CACHE_NUM_DEFERRED_CLOSE_THREADS);
+        this.numHelperThreads = propertyService.getIntProperty(prefix + PROP_NUM_HELPER_THREADS, NUM_HELPER_THREADS);
     }
 
     public int getMaxStatements() {

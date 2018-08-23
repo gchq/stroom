@@ -20,13 +20,13 @@ package stroom.statistics.common;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.datasource.api.v2.DataSource;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
@@ -34,7 +34,6 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
-import stroom.streamstore.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
@@ -79,7 +78,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileUtil.deleteDir(testDataDir);
-        FileSystemUtil.mkdirs(null, testDataDir);
+        FileUtil.mkdirs(testDataDir);
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
 

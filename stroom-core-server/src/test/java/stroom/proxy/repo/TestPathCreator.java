@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -13,13 +13,13 @@ import java.time.ZonedDateTime;
 public class TestPathCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPathCreator.class);
 
-    private final MetaMap metaMap = new MetaMap();
+    private final AttributeMap attributeMap = new AttributeMap();
 
     @Before
     public void setup() {
-        metaMap.put("feed", "myFeed");
-        metaMap.put("type1", "mytype1");
-        metaMap.put("type2", "mytype2");
+        attributeMap.put("feed", "myFeed");
+        attributeMap.put("type1", "mytype1");
+        attributeMap.put("type2", "mytype2");
     }
 
     @Test
@@ -36,7 +36,7 @@ public class TestPathCreator {
     public void testReplace() {
         final String template = "someText_${type1}_someText_${feed}_someText_${type2}_someText";
 
-        final String result = PathCreator.replaceAll(template, metaMap);
+        final String result = PathCreator.replaceAll(template, attributeMap);
 
         LOGGER.info("result: %s", result);
         Assert.assertEquals("someText_mytype1_someText_myFeed_someText_mytype2_someText", result);
@@ -45,8 +45,8 @@ public class TestPathCreator {
     @Test
     public void testReplaceTime() {
         final ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 8, 20, 13, 17, 22, 2111444, ZoneOffset.UTC);
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("feed", "TEST");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", "TEST");
 
         String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";
 
@@ -61,7 +61,7 @@ public class TestPathCreator {
 
         Assert.assertEquals("${feed}/2018/2018-08/2018-08-20/1234/5678", path);
 
-        path = PathCreator.replaceAll(path, metaMap);
+        path = PathCreator.replaceAll(path, attributeMap);
 
         Assert.assertEquals("TEST/2018/2018-08/2018-08-20/1234/5678", path);
     }

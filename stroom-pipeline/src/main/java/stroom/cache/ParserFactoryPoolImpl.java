@@ -19,7 +19,7 @@ package stroom.cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
-import stroom.entity.DocumentPermissionCache;
+import stroom.security.DocumentPermissionCache;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;

@@ -18,7 +18,7 @@ package stroom.task.cluster;
 
 import stroom.node.shared.Node;
 import stroom.docref.SharedObject;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 
 public interface ClusterWorker {
     /**

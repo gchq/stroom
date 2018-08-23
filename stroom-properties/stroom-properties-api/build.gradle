@@ -1,0 +1,12 @@
+ext.moduleName = 'stroom.properties.api'
+
+dependencies {
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.stroomDocRef
+//    compile libs.slf4j_api
+//    compile libs.guava
+//    compile libs.stroomQueryApi
+//
+//    compile libs.swagger_annotations
+}

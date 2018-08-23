@@ -23,20 +23,15 @@ import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.streamstore.StreamAttributeMapServiceImpl;
 import stroom.streamtask.StreamProcessorFilterService;
-import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
@@ -64,25 +59,17 @@ import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements HasHealthCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
+    private static final String FIELD_PROGRESS = "progress";
 
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final StreamProcessorService streamProcessorService;
     private final SecurityContext securityContext;
-    private final Security security;
-
-    private final String FIELD_PROGRESS = "progress";
 
     @Inject
     public StreamTaskResource(
             StreamProcessorFilterService streamProcessorFilterService,
-            StreamProcessorService streamProcessorService,
-            SecurityContext securityContext,
-            Security security) {
+            SecurityContext securityContext) {
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.streamProcessorService = streamProcessorService;
         this.securityContext = securityContext;
-        this.security = security;
     }
 
     @PATCH
@@ -92,22 +79,21 @@ public class StreamTaskResource implements HasHealthCheck {
     public Response enable(
             @PathParam("filterId") int filterId,
             StreamTaskPatch patch) {
-        StreamProcessorFilter streamProcessorFilter = streamProcessorFilterService.loadById(filterId);
+        ProcessorFilter streamProcessorFilter = streamProcessorFilterService.loadById(filterId);
         //TODO what if it doesn't exist?
 
         boolean patchApplied = false;
-        if(patch.getOp().equalsIgnoreCase("replace")){
-            if(patch.getPath().equalsIgnoreCase("enabled")){
+        if (patch.getOp().equalsIgnoreCase("replace")) {
+            if (patch.getPath().equalsIgnoreCase("enabled")) {
                 streamProcessorFilter.setEnabled(Boolean.parseBoolean(patch.getValue()));
                 patchApplied = true;
             }
         }
 
-        if(patchApplied) {
+        if (patchApplied) {
             streamProcessorFilterService.save(streamProcessorFilter);
             return Response.ok().build();
-        }
-        else {
+        } else {
             return Response.status(Response.Status.BAD_REQUEST).entity("Unable to apply the requested patch. See server logs for details.").build();
         }
     }
@@ -128,7 +114,7 @@ public class StreamTaskResource implements HasHealthCheck {
 
         // SORTING
         Sort.Direction direction = ASCENDING;
-        if(sortBy != null) {
+        if (sortBy != null) {
             try {
                 direction = Sort.Direction.valueOf(sortDirection.toUpperCase());
             } catch (IllegalArgumentException exception) {
@@ -147,10 +133,10 @@ public class StreamTaskResource implements HasHealthCheck {
         }
 
         // PAGING
-        if(offset < 0) {
+        if (offset < 0) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Page offset must be greater than 0").build();
         }
-        if(pageSize != null && pageSize < 1){
+        if (pageSize != null && pageSize < 1) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Page size, if used, must be greater than 1").build();
         }
 
@@ -160,13 +146,13 @@ public class StreamTaskResource implements HasHealthCheck {
             criteria.setCreateUser(securityContext.getUserId());
         }
 
-        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
         criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
         // We have to load everything because we need to sort by progress, and we can't do that on the database.
         final List<StreamTask> values = find(criteria);
 
-        if(sortBy != null) {
+        if (sortBy != null) {
             // If the user is requesting a sort:next then we don't want to apply any other sorting.
             if (sortBy.equalsIgnoreCase(FIELD_PROGRESS) && !filter.contains(SORT_NEXT)) {
                 if (direction == ASCENDING) {
@@ -179,7 +165,7 @@ public class StreamTaskResource implements HasHealthCheck {
 
         int from = offset * pageSize;
         int to = (offset * pageSize) + pageSize;
-        if(values.size() <= to){
+        if (values.size() <= to) {
             to = values.size();
         }
         // PAGING
@@ -200,33 +186,33 @@ public class StreamTaskResource implements HasHealthCheck {
         throw new NotImplementedException("public HealthCheck getHealthCheck()");
     }
 
-    private List<StreamTask> find(final FindStreamProcessorFilterCriteria criteria){
+    private List<StreamTask> find(final FindStreamProcessorFilterCriteria criteria) {
 
-        final BaseResultList<StreamProcessorFilter> streamProcessorFilters = streamProcessorFilterService
+        final BaseResultList<ProcessorFilter> streamProcessorFilters = streamProcessorFilterService
                 .find(criteria);
 
 
         List<StreamTask> streamTasks = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
-        for (StreamProcessorFilter filter : streamProcessorFilters.getValues()){
+        for (ProcessorFilter filter : streamProcessorFilters.getValues()) {
             StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
 
             // Indented to make the source easier to read
             builder
-                    .withPipelineName(   filter.getStreamProcessor().getPipelineName())
+                    .withPipelineName(filter.getStreamProcessor().getPipelineName())
                     //.withPipelineId(     filter.getStreamProcessor().getPipeline().getId())
-                    .withPriority(       filter.getPriority())
-                    .withEnabled(        filter.isEnabled())
-                    .withFilterId(       filter.getId())
-                    .withCreateUser(     filter.getCreateUser())
-                    .withCreatedOn(      filter.getCreateTime())
-                    .withUpdateUser(     filter.getUpdateUser())
-                    .withUpdatedOn(      filter.getUpdateTime())
-                    .withFilter(         filter.getQueryData());
+                    .withPriority(filter.getPriority())
+                    .withEnabled(filter.isEnabled())
+                    .withFilterId(filter.getId())
+                    .withCreateUser(filter.getCreateUser())
+                    .withCreatedOn(filter.getCreateTime())
+                    .withUpdateUser(filter.getUpdateUser())
+                    .withUpdatedOn(filter.getUpdateTime())
+                    .withFilter(filter.getQueryData());
 
-            if(filter.getStreamProcessorFilterTracker() != null) {
+            if (filter.getStreamProcessorFilterTracker() != null) {
                 Integer trackerPercent = filter.getStreamProcessorFilterTracker().getTrackerStreamCreatePercentage();
-                if(trackerPercent == null) {
+                if (trackerPercent == null) {
                     trackerPercent = 0;
                 }
                 builder.withTrackerMs(filter.getStreamProcessorFilterTracker().getStreamCreateMs())

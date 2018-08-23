@@ -31,7 +31,7 @@ import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.docref.DocRef;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.Processor;
 
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private final Provider<PipelinePresenter> editorProvider;
@@ -51,7 +51,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         super.onBind();
 
         registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
-            final StreamProcessor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
+            final Processor streamProcessor = event.getStreamProcessorFilter().getStreamProcessor();
             final String pipelineUuid = streamProcessor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
             // Open the item in the content pane.

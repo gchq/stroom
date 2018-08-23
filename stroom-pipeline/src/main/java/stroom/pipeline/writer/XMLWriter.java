@@ -86,7 +86,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Inject
     public XMLWriter(final ErrorReceiverProxy errorReceiverProxy,
-              final LocationFactory locationFactory) {
+                     final LocationFactory locationFactory) {
         super(errorReceiverProxy);
         this.locationFactory = locationFactory;
     }
@@ -416,13 +416,19 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         super.skippedEntity(name);
     }
 
-    @PipelineProperty(description = "Should output XML be indented and include new lines (pretty printed)?", defaultValue = "false")
+    @PipelineProperty(
+            description = "Should output XML be indented and include new lines (pretty printed)?",
+            defaultValue = "false",
+            displayPriority = 1)
     public void setIndentOutput(final boolean indentOutput) {
         this.indentOutput = indentOutput;
     }
 
     @Override
-    @PipelineProperty(description = "The output character encoding to use.", defaultValue = "UTF-8")
+    @PipelineProperty(
+            description = "The output character encoding to use.",
+            defaultValue = "UTF-8",
+            displayPriority = 2)
     public void setEncoding(final String encoding) {
         super.setEncoding(encoding);
     }

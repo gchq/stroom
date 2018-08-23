@@ -27,20 +27,21 @@ import stroom.monitoring.client.TaskProgressMonitoringPlugin;
 import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.monitoring.client.presenter.SchedulePresenter.ScheduleView;
 import stroom.monitoring.client.view.ScheduleViewImpl;
-import stroom.node.client.ClientPropertyCache;
 import stroom.node.client.ManageNodeToolsPlugin;
-import stroom.node.client.presenter.ManageGlobalPropertyEditPresenter;
-import stroom.node.client.presenter.ManageGlobalPropertyListPresenter;
-import stroom.node.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.node.client.presenter.ManageVolumesPresenter;
 import stroom.node.client.presenter.ManageVolumesPresenter.ManageVolumesProxy;
 import stroom.node.client.presenter.NodeEditPresenter;
 import stroom.node.client.presenter.VolumeEditPresenter;
-import stroom.node.client.view.GlobalPropertyEditViewImpl;
 import stroom.node.client.view.NodeEditViewImpl;
 import stroom.node.client.view.VolumeEditViewImpl;
 import stroom.node.client.view.WrapperView;
 import stroom.node.client.view.WrapperViewImpl;
+import stroom.properties.global.client.ClientPropertyCache;
+import stroom.properties.global.client.presenter.ManageGlobalPropertyEditPresenter;
+import stroom.properties.global.client.presenter.ManageGlobalPropertyListPresenter;
+import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter;
+import stroom.properties.global.client.view.GlobalPropertyEditViewImpl;
+import stroom.properties.global.client.view.ManageGlobalPropertyViewImpl;
 
 public class MonitoringModule extends PluginModule {
     @Override
@@ -69,10 +70,9 @@ public class MonitoringModule extends PluginModule {
         bindPresenterWidget(JobPresenter.class, JobView.class, JobViewImpl.class);
 
         // Global properties.
-        bind(ManageGlobalPropertyPresenter.class);
         bind(ManageGlobalPropertyListPresenter.class);
-        bindPresenterWidget(ManageGlobalPropertyEditPresenter.class,
-                ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class, GlobalPropertyEditViewImpl.class);
+        bindPresenterWidget(ManageGlobalPropertyPresenter.class, ManageGlobalPropertyPresenter.ManageGlobalPropertyView.class, ManageGlobalPropertyViewImpl.class);
+        bindPresenterWidget(ManageGlobalPropertyEditPresenter.class, ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class, GlobalPropertyEditViewImpl.class);
 
         bindPlugin(TaskProgressMonitoringPlugin.class);
     }

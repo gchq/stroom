@@ -21,8 +21,8 @@ import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
 import stroom.docref.DocRef;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

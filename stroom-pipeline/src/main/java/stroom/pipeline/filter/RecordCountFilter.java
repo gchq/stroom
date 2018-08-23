@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.node.shared.RecordCountService;
-import stroom.node.shared.RecordCounter;
+import stroom.node.RecordCountService;
+import stroom.node.RecordCounter;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
@@ -194,7 +194,10 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * @param countRead Sets whether we are counting records read or records written.
      */
-    @PipelineProperty(description = "Is this filter counting records read or records written?", defaultValue = "true")
+    @PipelineProperty(
+            description = "Is this filter counting records read or records written?",
+            defaultValue = "true",
+            displayPriority = 1)
     public void setCountRead(final boolean countRead) {
         this.countRead = countRead;
     }

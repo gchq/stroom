@@ -19,11 +19,11 @@ package stroom.stats;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState;
-import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.entity.StatisticsDataSourceProvider;
@@ -31,7 +31,6 @@ import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.stats.shared.StroomStatsStoreEntityData;
-import stroom.streamstore.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
@@ -76,7 +75,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
         FileUtil.deleteDir(testDataDir);
-        FileSystemUtil.mkdirs(null, testDataDir);
+        FileUtil.mkdirs(testDataDir);
 
         final DocRefs docRefs = new DocRefs();
         docRefs.add(docRef);

@@ -25,9 +25,8 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.ExpectedProcessException;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.task.GenericServerTask;
-import stroom.task.TaskCallback;
-import stroom.task.TaskManager;
+import stroom.task.ExecutorProvider;
+import stroom.task.api.TaskCallback;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
@@ -39,13 +38,13 @@ import java.util.concurrent.TimeUnit;
 @PipelineScoped
 class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
-    private final TaskManager taskManager;
+    private final ExecutorProvider executorProvider;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     @Inject
-    public ProcessorFactoryImpl(final TaskManager taskManager,
+    public ProcessorFactoryImpl(final ExecutorProvider executorProvider,
                                 final ErrorReceiverProxy errorReceiverProxy) {
-        this.taskManager = taskManager;
+        this.executorProvider = executorProvider;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
@@ -59,19 +58,19 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             return processors.get(0);
         }
 
-        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy);
+        return new MultiWayProcessor(processors, executorProvider, errorReceiverProxy);
     }
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
-        private final TaskManager taskManager;
+        private final ExecutorProvider executorProvider;
         private final ErrorReceiver errorReceiver;
 
         MultiWayProcessor(final List<Processor> processors,
-                          final TaskManager taskManager,
+                          final ExecutorProvider executorProvider,
                           final ErrorReceiver errorReceiver) {
             this.processors = processors;
-            this.taskManager = taskManager;
+            this.executorProvider = executorProvider;
             this.errorReceiver = errorReceiver;
         }
 
@@ -105,12 +104,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                     }
                 };
 
-                // Try and get the parent task context.
-                // TODO : @66 add links to parent task context
-                final GenericServerTask task = GenericServerTask.create(null, "Process",
-                        null);
-                task.setRunnable(processor::process);
-                taskManager.execAsync(task, taskCallback);
+                executorProvider.getExecutor().execute(processor::process);
             }
 
             try {

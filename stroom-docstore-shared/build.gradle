@@ -1,7 +1,0 @@
-ext.moduleName = 'stroom.docstore.shared'
-
-dependencies {
-    compile libs.stroomDocRef
-    compile libs.jackson_annotations
-    compile libs.jaxb_api
-}

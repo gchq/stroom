@@ -20,7 +20,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 public class StreamListPresenter extends AbstractStreamListPresenter {
@@ -41,16 +42,40 @@ public class StreamListPresenter extends AbstractStreamListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", StreamAttributeConstants.REC_FATAL, 40);
-        addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
-        addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
-        addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
-        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Raw", MetaDataSource.STREAM_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", MetaDataSource.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", MetaDataSource.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", MetaDataSource.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", MetaDataSource.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Error", MetaDataSource.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Warn", MetaDataSource.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Info", MetaDataSource.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+
+        // TODO : @66 Add data retention column back into the table.
+//        addAttributeColumn("Retention", StreamDataSource.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }
+
+
+//        try {
+//        if (StreamAttributeFieldUse.COUNT_IN_DURATION_FIELD.equals(use)) {
+//            valueString = ModelStringUtil.formatCsv(Long.valueOf(valueString));
+//
+//        } else if (StreamAttributeFieldUse.SIZE_FIELD.equals(use)) {
+//            valueString = ModelStringUtil.formatIECByteSizeString(Long.valueOf(valueString));
+//
+//        } else if (StreamAttributeFieldUse.NUMERIC_FIELD.equals(use)) {
+//            valueString = ModelStringUtil.formatCsv(Long.valueOf(valueString));
+//
+//        } else if (StreamAttributeFieldUse.DURATION_FIELD.equals(use)) {
+//            final long valueLong = Long.valueOf(valueString);
+//
+//            valueString = ModelStringUtil.formatDurationString(valueLong) + " ("
+//                    + ModelStringUtil.formatCsv(valueLong) + " ms)";
+//        }
+//    } catch (final RuntimeException e) {
+//    }
+//
+//        return valueString;
 }

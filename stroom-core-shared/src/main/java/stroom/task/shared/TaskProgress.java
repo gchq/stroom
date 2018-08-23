@@ -21,7 +21,6 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;
-import stroom.util.shared.TaskId;
 import stroom.util.shared.TreeRow;
 
 public class TaskProgress implements SharedObject, TreeRow {

@@ -24,7 +24,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public class TestPathCreator extends StroomUnitTest {
-
     @Test
     public void testReplaceFileName() {
         Assert.assertEquals("test.txt", PathCreator.replaceFileName("${fileStem}.txt", "test.tmp"));

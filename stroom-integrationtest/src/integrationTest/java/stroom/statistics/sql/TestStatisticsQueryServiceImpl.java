@@ -45,14 +45,12 @@ import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -110,8 +108,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    @Named("statisticsDataSource")
-    private DataSource statisticsDataSource;
+    private ConnectionProvider connectionProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Inject
@@ -481,7 +478,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
     private int getRowCount(final String tableName) throws SQLException {
         int count;
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();

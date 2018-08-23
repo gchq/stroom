@@ -20,7 +20,9 @@ import { connect } from 'react-redux';
 
 import LineContext from './LineContext';
 
-import { lineCreated, lineDestroyed } from './redux';
+import { actionCreators } from './redux';
+
+const { lineCreated, lineDestroyed } = actionCreators;
 
 class LineTo extends Component {
   static propTypes = {

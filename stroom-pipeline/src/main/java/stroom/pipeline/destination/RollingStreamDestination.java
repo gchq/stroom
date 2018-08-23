@@ -16,11 +16,10 @@
 
 package stroom.pipeline.destination;
 
-import stroom.feed.MetaMap;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
-import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,7 +30,8 @@ public class RollingStreamDestination extends RollingDestination {
     private final StreamTarget streamTarget;
     private final String nodeName;
     private final AtomicLong recordCount = new AtomicLong();
-    private final RASegmentOutputStream segmentOutputStream;
+    private final SegmentOutputStream segmentOutputStream;
+    private final boolean segmentOutput;
 
     public RollingStreamDestination(final StreamKey key,
                                     final long frequency,
@@ -39,20 +39,18 @@ public class RollingStreamDestination extends RollingDestination {
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
-                                    final String nodeName) throws IOException {
+                                    final String nodeName) {
         super(key, frequency, maxSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
         this.nodeName = nodeName;
+        this.segmentOutput = key.isSegmentOutput();
 
-        if (key.isSegmentOutput()) {
-            segmentOutputStream = new RASegmentOutputStream(streamTarget);
-            setOutputStream(new ByteCountOutputStream(segmentOutputStream));
-        } else {
-            segmentOutputStream = null;
-            setOutputStream(new ByteCountOutputStream(streamTarget.getOutputStream()));
-        }
+        segmentOutputStream = streamTarget.getOutputStreamProvider().next();
+//        if (segmentOutput) {
+//            segmentOutputStream = streamTarget.getSegmentOutputStream();
+        setOutputStream(new ByteCountOutputStream(segmentOutputStream));
     }
 
     @Override
@@ -79,18 +77,20 @@ public class RollingStreamDestination extends RollingDestination {
 
     @Override
     void afterRoll(final Consumer<Throwable> exceptionConsumer) {
-        // Write meta data to stream target.
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StreamAttributeConstants.REC_WRITE, recordCount.toString());
-        metaMap.put(StreamAttributeConstants.NODE, nodeName);
-        streamTarget.getAttributeMap().putAll(metaMap);
+//        // Write meta data to stream target.
+//        final AttributeMap attributeMap = new AttributeMap();
+//        attributeMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
+
+        // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
+//        attributeMap.put(StreamAttributeConstants.NODE, nodeName);
+        streamTarget.getAttributes().put(MetaDataSource.REC_WRITE, recordCount.toString());
         streamStore.closeStreamTarget(streamTarget);
     }
 
     private void insertSegmentMarker(final Consumer<Throwable> exceptionConsumer) {
         try {
             // Add a segment marker to the output stream if we are segmenting.
-            if (segmentOutputStream != null) {
+            if (segmentOutput) {
                 segmentOutputStream.addSegment();
             }
         } catch (final IOException e) {

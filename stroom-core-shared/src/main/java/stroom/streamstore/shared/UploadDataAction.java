@@ -16,15 +16,14 @@
 
 package stroom.streamstore.shared;
 
-import stroom.entity.shared.Action;
-import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 import stroom.util.shared.ResourceKey;
 
 public class UploadDataAction extends Action<ResourceKey> {
     private static final long serialVersionUID = 1799514675431383541L;
     private ResourceKey key;
-    private DocRef feed;
-    private DocRef streamType;
+    private String feedName;
+    private String streamTypeName;
     private Long effectiveMs;
     private String metaData;
     private String fileName;
@@ -32,11 +31,15 @@ public class UploadDataAction extends Action<ResourceKey> {
     public UploadDataAction() {
     }
 
-    public UploadDataAction(final ResourceKey resourceKey, final DocRef feed, final DocRef streamType,
-                            final Long effectiveMs, final String metaData, final String fileName) {
+    public UploadDataAction(final ResourceKey resourceKey,
+                            final String feedName,
+                            final String streamTypeName,
+                            final Long effectiveMs,
+                            final String metaData,
+                            final String fileName) {
         this.key = resourceKey;
-        this.feed = feed;
-        this.streamType = streamType;
+        this.feedName = feedName;
+        this.streamTypeName = streamTypeName;
         this.effectiveMs = effectiveMs;
         this.metaData = metaData;
         this.fileName = fileName;
@@ -46,12 +49,12 @@ public class UploadDataAction extends Action<ResourceKey> {
         return key;
     }
 
-    public DocRef getFeed() {
-        return feed;
+    public String getFeedName() {
+        return feedName;
     }
 
-    public DocRef getStreamType() {
-        return streamType;
+    public String getStreamTypeName() {
+        return streamTypeName;
     }
 
     public Long getEffectiveMs() {

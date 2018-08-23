@@ -1,0 +1,87 @@
+@import "./ElementPalette/ElementPalette";
+@import "./ElementDetails/ElementDetails";
+@import "./PipelineElement";
+@import "./Bin";
+$palette-width: 12rem;
+.Pipeline-editor {
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  left: 0;
+  width: 100%;
+}
+
+/* The animation code */
+
+@keyframes open-pallete {
+  from {
+    left: -$palette-width;
+  }
+  to {
+    left: 0;
+  }
+}
+
+.Pipeline-editor__element-palette {
+  max-width: $palette-width;
+  position: relative;
+  overflow: scroll;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.Pipeline-editor__palette-toggle {
+  position: relative;
+  height: 100%;
+  float: left;
+  border: 0;
+  background-color: rgb(229, 231, 234);
+  outline: none;
+  padding: 0px;
+}
+
+.Pipeline-editor__palette-toggle:hover {
+  background-color: rgb(220, 222, 227);
+}
+
+.Pipeline-editor__palette-toggle .icon {
+  padding-left: 2px;
+}
+
+.Pipeline-editor__top-bar {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: row;
+}
+
+.Pipeline-editor__graph {
+  height: 100%;
+  background-color: #fafafa;
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: scroll;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.Pipeline-editor__bin {
+  position: absolute;
+  margin-bottom: 12rem;
+  margin-left: 1rem;
+  left: 0;
+  bottom: 0;
+}
+
+.Pipeline-editor__content {
+  //TODO: Hack. I'm not sure why the offset needs to be as much as 190px.
+  width: calc(100% - 190px);
+  display: flex;
+  flex-direction: column;
+}
+
+.Pipeline-editor__topPanel {
+  width: 100%;
+}

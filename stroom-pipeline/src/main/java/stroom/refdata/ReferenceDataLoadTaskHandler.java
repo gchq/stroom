@@ -19,10 +19,13 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.data.meta.api.Data;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.StreamStore;
+import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
-import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -43,20 +46,13 @@ import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataStoreProvider;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.StreamProcessorService;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 
 /**
@@ -70,12 +66,11 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final StreamStore streamStore;
-    private final StreamProcessorService streamProcessorService;
     private final PipelineFactory pipelineFactory;
-    private final FeedService feedService;
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
+    private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
     private final StreamHolder streamHolder;
     private final RefDataLoaderHolder refDataLoaderHolder;
@@ -90,12 +85,11 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
     @Inject
     ReferenceDataLoadTaskHandler(final StreamStore streamStore,
-                                 final StreamProcessorService streamProcessorService,
                                  final PipelineFactory pipelineFactory,
-                                 @Named("cachedFeedService") final FeedService feedService,
-                                 @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                                 final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
+                                 final FeedProperties feedProperties,
                                  final MetaDataHolder metaDataHolder,
                                  final StreamHolder streamHolder,
                                  final RefDataLoaderHolder refDataLoaderHolder,
@@ -106,12 +100,11 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final PipelineDataCache pipelineDataCache,
                                  final Security security) {
         this.streamStore = streamStore;
-        this.streamProcessorService = streamProcessorService;
         this.pipelineFactory = pipelineFactory;
-        this.feedService = feedService;
         this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.feedProperties = feedProperties;
         this.refDataStore = refDataStoreProvider.getOffHeapStore();
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
@@ -143,14 +136,14 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 // Open the stream source.
                 final StreamSource streamSource = streamStore.openStreamSource(refStreamDefinition.getStreamId());
                 if (streamSource != null) {
-                    final Stream stream = streamSource.getStream();
+                    final Data stream = streamSource.getStream();
                     try {
                         // Load the feed.
-                        final Feed feed = feedService.load(stream.getFeed());
-                        feedHolder.setFeed(feed);
+                        final String feedName = stream.getFeedName();
+                        feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.
-                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                         // Set the pipeline so it can be used by a filter if needed.
                         final PipelineDoc pipelineDoc = pipelineStore
@@ -165,8 +158,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                 pipeline,
                                 stream,
                                 streamSource,
-                                feed,
-                                stream.getStreamType(),
+                                feedName,
+                                stream.getTypeName(),
                                 task.getRefStreamDefinition());
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
@@ -189,21 +182,20 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     }
 
     private void populateMaps(final Pipeline pipeline,
-                              final Stream stream,
+                              final Data stream,
                               final StreamSource streamSource,
-                              final Feed feed,
-                              final StreamType streamType,
+                              final String feedName,
+                              final String streamTypeName,
                               final RefStreamDefinition refStreamDefinition) {
-//        final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
         try {
             // Get the stream providers.
             streamHolder.setStream(stream);
             streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getType());
+            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
 
             // Start processing.
             try {
@@ -215,7 +207,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
             try {
                 // Get the appropriate encoding for the stream type.
-                final String encoding = EncodingSelection.select(feed, streamType);
+                final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
@@ -262,7 +254,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 }
             }
 
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
     }

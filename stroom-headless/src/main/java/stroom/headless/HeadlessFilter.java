@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.filter.AbstractXMLFilter;
@@ -58,7 +58,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private static final String COLON = ":";
     private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
     private final List<StoredError> errors = new ArrayList<>();
-    private MetaMap metaData;
+    private AttributeMap metaData;
     private boolean started;
     private int depth;
     private StartElement root;
@@ -101,7 +101,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
         }
     }
 
-    public void changeMetaData(final MetaMap metaData) {
+    public void changeMetaData(final AttributeMap metaData) {
         this.metaData = metaData;
 
         if (depth == 1) {

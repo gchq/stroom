@@ -62,10 +62,12 @@ public class DBTableServiceImpl implements DBTableService {
 
             if (beanStore != null) {
                 final Object dataSource = beanStore.getInstance("dataSource");
-                final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
+                // TODO : @66 Reinstate DB table status for all DBs
+
+//                final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
 
                 addTableStatus(dataSource, rtnList);
-                addTableStatus(statisticsDataSource, rtnList);
+//                addTableStatus(statisticsDataSource, rtnList);
             }
 
             rtnList.sort((o1, o2) -> {

@@ -16,18 +16,17 @@
 
 package stroom.pipeline.state;
 
-import stroom.feed.shared.Feed;
 import stroom.guice.PipelineScoped;
 
 @PipelineScoped
 public class FeedHolder implements Holder {
-    private Feed feed;
+    private String feedName;
 
-    public Feed getFeed() {
-        return feed;
+    public String getFeedName() {
+        return feedName;
     }
 
-    public void setFeed(final Feed feed) {
-        this.feed = feed;
+    public void setFeedName(final String feedName) {
+        this.feedName = feedName;
     }
 }

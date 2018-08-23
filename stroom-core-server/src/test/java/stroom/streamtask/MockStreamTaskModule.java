@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.shared.Clearable;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class MockStreamTaskModule extends AbstractModule {
     @Override
@@ -158,7 +158,7 @@ public class MockStreamTaskModule extends AbstractModule {
 //                                               final NodeCache nodeCache,
 //                                               final StreamTaskService streamTaskService,
 //                                               final StreamTaskHelper streamTaskHelper,
-//                                               final StroomPropertyService propertyService,
+//                                               final PropertyService propertyService,
 //                                               final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
 //                                               final StreamStore streamStore,
 //                                               final SecurityContext securityContext,
@@ -180,7 +180,7 @@ public class MockStreamTaskModule extends AbstractModule {
 //    @Scope(value = StroomScope.TASK)
 //    public StreamTaskDeleteExecutor streamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
 //                                                             final ClusterLockService clusterLockService,
-//                                                             final StroomPropertyService propertyService,
+//                                                             final PropertyService propertyService,
 //                                                             final TaskContext taskContext,
 //                                                             final StreamTaskCreatorImpl streamTaskCreator,
 //                                                             final StreamProcessorFilterService streamProcessorFilterService) {

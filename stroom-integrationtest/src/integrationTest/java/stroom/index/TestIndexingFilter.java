@@ -23,7 +23,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -201,7 +200,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-            feedHolderProvider.get().setFeed(new Feed());
+//            feedHolderProvider.get().setFeed(new Feed());
 
 //            // Setup the meta data holder.
 //            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

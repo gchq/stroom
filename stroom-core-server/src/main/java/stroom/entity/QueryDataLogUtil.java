@@ -38,7 +38,7 @@ public class QueryDataLogUtil {
             return;
         }
 
-        if (item.enabled()) {
+        if (item.getEnabled()) {
             if (item instanceof ExpressionOperator) {
                 appendOperator(items, dictionaryStore, (ExpressionOperator) item);
             } else {

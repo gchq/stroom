@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.refdata.util.ByteBufferUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -49,8 +50,8 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     Supplier<S> getSerdeSupplier() {
         return () -> {
             try {
-                return getSerdeType().newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
+                return getSerdeType().getConstructor().newInstance();
+            } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         };

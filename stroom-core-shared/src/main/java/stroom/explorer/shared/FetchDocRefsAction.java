@@ -16,7 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.SharedDocRef;
 import stroom.docref.DocRef;
 import stroom.util.shared.SharedSet;

@@ -17,7 +17,7 @@
 package stroom.xml;
 
 import org.junit.Assert;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.TextConverterStore;
 import stroom.pipeline.XsltStore;
@@ -34,12 +34,9 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.writer.TestAppender;
 import stroom.docref.DocRef;
-import stroom.streamtask.StreamProcessorService;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -79,7 +76,7 @@ public class F2XTestUtil {
     /**
      * Run a XML and XSLT transform.
      */
-    public String runFullTest(final Feed feed, final TextConverterType textConverterType,
+    public String runFullTest(final FeedDoc feed, final TextConverterType textConverterType,
                               final String textConverterLocation, final String xsltLocation, final String dataLocation,
                               final int expectedWarnings) {
         // Get the input stream.
@@ -91,14 +88,14 @@ public class F2XTestUtil {
     /**
      * Run a XML and XSLT transform.
      */
-    private String runFullTest(final Feed feed, final TextConverterType textConverterType,
+    private String runFullTest(final FeedDoc feed, final TextConverterType textConverterType,
                                final String textConverterLocation, final String xsltLocation, final InputStream dataStream,
                                final int expectedWarnings) {
         // Create an output stream.
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         // Setup the feed.
-        feedHolder.setFeed(feed);
+        feedHolder.setFeedName(feed.getName());
 
 //        // Setup the meta data holder.
 //        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

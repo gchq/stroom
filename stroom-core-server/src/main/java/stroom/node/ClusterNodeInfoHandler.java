@@ -17,15 +17,15 @@
 
 package stroom.node;
 
-import stroom.cluster.ClusterCallService;
-import stroom.cluster.ClusterNodeManager;
+import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Named;

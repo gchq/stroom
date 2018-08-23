@@ -18,11 +18,11 @@ package stroom.task.cluster;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.docref.SharedObject;
-import stroom.util.shared.SimpleThreadPool;
-import stroom.util.shared.Task;
-import stroom.util.shared.TaskId;
-import stroom.util.shared.ThreadPool;
-import stroom.task.TaskIdFactory;
+import stroom.task.shared.SimpleThreadPool;
+import stroom.task.shared.Task;
+import stroom.task.shared.TaskId;
+import stroom.task.shared.ThreadPool;
+import stroom.task.api.TaskIdFactory;
 
 import java.io.Serializable;
 

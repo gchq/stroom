@@ -20,12 +20,18 @@ package stroom.pipeline.stepping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
-import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -52,25 +58,14 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTypeService;
-import stroom.streamstore.fs.serializable.NestedInputStream;
-import stroom.streamstore.fs.serializable.RANestedInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.StreamProcessorService;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandlerBean;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -93,14 +88,13 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private final StreamStore streamStore;
+    private final DataMetaService streamMetaService;
     private final StreamCloser streamCloser;
-    private final FeedService feedService;
-    private final StreamTypeService streamTypeService;
+    private final FeedProperties feedProperties;
     private final TaskContext taskContext;
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final PipelineHolder pipelineHolder;
-    private final StreamProcessorService streamProcessorService;
     private final StreamHolder streamHolder;
     private final LocationFactoryProxy locationFactory;
     private final CurrentUserHolder currentUserHolder;
@@ -119,21 +113,20 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private int curentStreamOffset;
     private StepLocation currentLocation;
     private Long lastStreamId;
-    private Feed lastFeed;
+    private String lastFeedName;
     private Pipeline pipeline;
     private LoggingErrorReceiver loggingErrorReceiver;
     private Set<String> generalErrors;
 
     @Inject
     SteppingTaskHandler(final StreamStore streamStore,
+                        final DataMetaService streamMetaService,
                         final StreamCloser streamCloser,
-                        final FeedService feedService,
-                        @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                        final FeedProperties feedProperties,
                         final TaskContext taskContext,
                         final FeedHolder feedHolder,
                         final MetaDataHolder metaDataHolder,
                         final PipelineHolder pipelineHolder,
-                        final StreamProcessorService streamProcessorService,
                         final StreamHolder streamHolder,
                         final LocationFactoryProxy locationFactory,
                         final CurrentUserHolder currentUserHolder,
@@ -146,14 +139,13 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final PipelineContext pipelineContext,
                         final Security security) {
         this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.streamCloser = streamCloser;
-        this.feedService = feedService;
-        this.streamTypeService = streamTypeService;
+        this.feedProperties = feedProperties;
         this.taskContext = taskContext;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.pipelineHolder = pipelineHolder;
-        this.streamProcessorService = streamProcessorService;
         this.streamHolder = streamHolder;
         this.locationFactory = locationFactory;
         this.currentUserHolder = currentUserHolder;
@@ -175,7 +167,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 // Set the current user so they are visible during translation.
                 currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
-                StepData stepData = null;
+                StepData stepData;
                 generalErrors = new HashSet<>();
 
                 loggingErrorReceiver = new LoggingErrorReceiver();
@@ -200,10 +192,10 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 }
 
                 // Make sure all resources are returned to pools.
-                if (lastFeed != null) {
+                if (lastFeedName != null) {
                     // destroy the last pipeline.
                     pipeline.endProcessing();
-                    lastFeed = null;
+                    lastFeedName = null;
                 }
 
                 // Set the output.
@@ -247,7 +239,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 return;
             }
 
-            final FindStreamCriteria criteria = request.getCriteria();
+            final FindDataCriteria criteria = request.getCriteria();
             final List<Long> streamIdList = getFilteredStreamIdList(criteria);
             currentStreamIndex = -1;
 
@@ -330,18 +322,18 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 final StreamSource streamSource = streamStore.openStreamSource(streamId);
                 if (streamSource != null) {
                     StreamSource stepSource = streamSource;
-                    if (StreamType.CONTEXT.equals(request.getChildStreamType())) {
-                        stepSource = streamSource.getChildStream(StreamType.CONTEXT);
+                    if (StreamTypeNames.CONTEXT.equals(request.getChildStreamType())) {
+                        stepSource = streamSource.getChildStream(StreamTypeNames.CONTEXT);
                     }
 
                     // Load the feed.
-                    final Feed feed = feedService.load(streamSource.getStream().getFeed());
+                    final String feedName = streamSource.getStream().getFeedName();
 
                     // Get the stream type.
-                    final StreamType streamType = streamTypeService.load(stepSource.getType());
+                    final String streamTypeName = stepSource.getStreamTypeName();
 
                     // Now process the data.
-                    processStream(controller, feed, streamType, stepSource);
+                    processStream(controller, feedName, streamTypeName, stepSource);
 
                     try {
                         // Close all open streams.
@@ -351,12 +343,10 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                     } finally {
                         // Close the stream source.
-                        if (streamSource != null) {
-                            try {
-                                streamStore.closeStreamSource(streamSource);
-                            } catch (final RuntimeException e) {
-                                error(e);
-                            }
+                        try {
+                            streamStore.closeStreamSource(streamSource);
+                        } catch (final RuntimeException e) {
+                            error(e);
                         }
                     }
 
@@ -417,8 +407,8 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
             // Return the task at the current index or null if the index is out
             // of bounds.
-            final Long streamId = getStreamIdAtIndex(currentStreamIndex);
-            if (streamId != null) {
+            final long streamId = getStreamIdAtIndex(currentStreamIndex);
+            if (streamId != -1) {
                 return streamId;
             }
         }
@@ -426,7 +416,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         return null;
     }
 
-    private List<Long> getFilteredStreamIdList(final FindStreamCriteria criteria) {
+    private List<Long> getFilteredStreamIdList(final FindDataCriteria criteria) {
         // Query the DB to get a list of tasks and associated streams to get
         // the source data from. Put the results into an array for use
         // during this request.
@@ -440,19 +430,17 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 criteria.obtainPageRequest().setLength(1000);
             }
 
-            criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-
             // Find streams.
-            final List<Stream> allStreamList = streamStore.find(criteria);
+            final List<Data> allStreamList = streamMetaService.find(criteria);
             allStreamIdList = new ArrayList<>(allStreamList.size());
-            for (final Stream stream : allStreamList) {
+            for (final Data stream : allStreamList) {
                 allStreamIdList.add(stream.getId());
             }
 
             if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
-                for (final Stream stream : allStreamList) {
+                for (final Data stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
 
@@ -460,7 +448,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     && criteria.getSelectedIdSet().getSet().size() > 0) {
                 // Otherwise filter the list to just selected tasks.
                 filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
-                for (final Stream stream : allStreamList) {
+                for (final Data stream : allStreamList) {
                     if (criteria.getSelectedIdSet().isMatch(stream.getId())) {
                         filteredList.add(stream.getId());
                     }
@@ -473,22 +461,24 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         return filteredStreamIdList;
     }
 
-    private Long getStreamIdAtIndex(final int index) {
+    private long getStreamIdAtIndex(final int index) {
         if (index < 0) {
-            return null;
+            return -1;
         }
 
         if (index >= filteredStreamIdList.size()) {
-            return null;
+            return -1;
         }
 
         return filteredStreamIdList.get(index);
     }
 
-    private void processStream(final SteppingController controller, final Feed feed, final StreamType streamType,
+    private void processStream(final SteppingController controller,
+                               final String feedName,
+                               final String streamTypeName,
                                final StreamSource source) {
         // If the feed changes then destroy the last pipeline.
-        if (lastFeed != null && !lastFeed.equals(feed)) {
+        if (lastFeedName != null && !lastFeedName.equals(feedName)) {
             // destroy the last pipeline.
             try {
                 pipeline.endProcessing();
@@ -496,16 +486,16 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 // Do nothing as we will have recorded this error in the
                 // logging error receiver.
             }
-            lastFeed = null;
+            lastFeedName = null;
         }
 
         if (!Thread.currentThread().isInterrupted()) {
             // Create a new pipeline for a new feed or if the feed has changed.
-            if (lastFeed == null) {
-                lastFeed = feed;
+            if (lastFeedName == null) {
+                lastFeedName = feedName;
 
                 // Create the pipeline.
-                createPipeline(controller, feed);
+                createPipeline(controller, feedName);
 
                 if (pipeline != null) {
                     try {
@@ -520,27 +510,27 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             // Make sure we have had no errors before we start processing.
             if (pipeline != null && loggingErrorReceiver.isAllOk()) {
                 // Process the stream.
-                process(controller, feed, streamType, source);
+                process(controller, feedName, streamTypeName, source);
             }
         }
     }
 
-    private void process(final SteppingController controller, final Feed feed, final StreamType streamType,
+    private void process(final SteppingController controller, final String feedName, final String streamTypeName,
                          final StreamSource streamSource) {
         try {
-            final Stream stream = streamSource.getStream();
+            final Data stream = streamSource.getStream();
             final SteppingTask request = controller.getRequest();
             final StepType stepType = request.getStepType();
-            controller.setStreamInfo(createStreamInfo(feed, stream));
+            controller.setStreamInfo(createStreamInfo(feedName, stream));
 
             // Get the stream providers.
             streamHolder.setStream(stream);
             streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getType());
+            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
 
             try {
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
@@ -566,7 +556,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 }
 
                 // Get the appropriate encoding for the stream type.
-                final String encoding = EncodingSelection.select(feed, streamType);
+                final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                 // Loop over the stream boundaries and process each
                 // sequentially. Loop over the stream boundaries and process
@@ -628,22 +618,22 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             } catch (final SAXException | IOException | RuntimeException e) {
                 error(e);
             }
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
     }
 
-    private Pipeline createPipeline(final SteppingController controller, final Feed feed) {
+    private Pipeline createPipeline(final SteppingController controller, final String feedName) {
         if (pipeline == null) {
             final DocRef pipelineRef = controller.getRequest().getPipeline();
 
             // Set the pipeline so it can be used by a filter if needed.
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
-            feedHolder.setFeed(feed);
+            feedHolder.setFeedName(feedName);
 
             // Setup the meta data holder.
-            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
             pipelineContext.setStepping(true);
@@ -662,15 +652,14 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         return pipeline;
     }
 
-    private String createStreamInfo(final Feed feed, final Stream stream) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Feed: ");
-        sb.append(feed.getName());
-        sb.append(" Received: ");
-        sb.append(DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-        sb.append(" [");
-        sb.append(stream.getId());
-        return sb.toString();
+    private String createStreamInfo(final String feedName, final Data stream) {
+        return "" +
+                "Feed: " +
+                feedName +
+                " Received: " +
+                DateUtil.createNormalDateTimeString(stream.getCreateMs()) +
+                " [" +
+                stream.getId();
     }
 
     private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
@@ -679,25 +668,25 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             try {
                 final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
                 if (streamSource != null) {
-                    final NestedInputStream inputStream = new RANestedInputStream(streamSource);
+                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
 
                     try {
                         // Skip to the appropriate stream.
                         if (inputStream.getEntry(location.getStreamNo() - 1)) {
                             // Load the feed.
-                            final Feed feed = feedService.load(streamSource.getStream().getFeed());
+                            final String feedName = streamSource.getStream().getFeedName();
 
                             // Get the stream type.
-                            final StreamType streamType = streamTypeService.load(streamSource.getType());
+                            final String streamTypeName = streamSource.getStreamTypeName();
 
                             // Get the appropriate encoding for the stream type.
-                            final String encoding = EncodingSelection.select(feed, streamType);
+                            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                             final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
                             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                             final StringBuilder sb = new StringBuilder();
 
-                            int i = 0;
+                            int i;
                             boolean found = false;
                             int lineNo = 1;
                             int colNo = 0;

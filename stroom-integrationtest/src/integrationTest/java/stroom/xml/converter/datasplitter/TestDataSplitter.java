@@ -19,7 +19,7 @@ package stroom.xml.converter.datasplitter;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.guice.StroomBeanStore;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -72,7 +72,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     public void testNetworkMonitoringSampleWithXSL() {
-        runFullTest(new Feed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
+        runFullTest(new FeedDoc("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/SimpleCSVSplitter.ds", "TestDataSplitter/NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
     }
@@ -85,7 +85,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     public void testDS3NetworkMonitoringSampleWithXSL() {
-        runFullTest(new Feed("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
+        runFullTest(new FeedDoc("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/CSVWithHeading.ds", "TestDataSplitter/DS3NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
     }
@@ -106,7 +106,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     public void testRefDataCSVWithXSL() {
-        final Feed refFeed = new Feed("HostNameToIP-REFERENCE");
+        final FeedDoc refFeed = new FeedDoc("HostNameToIP-REFERENCE");
         refFeed.setReference(true);
         runFullTest(refFeed, TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
                 "TestDataSplitter/SampleRefData-HostNameToIP.xsl", "TestDataSplitter/SampleRefData-HostNameToIP.in", 0);
@@ -121,7 +121,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
         return xml;
     }
 
-    private String runFullTest(final Feed feed, final TextConverterType textConverterType,
+    private String runFullTest(final FeedDoc feed, final TextConverterType textConverterType,
                                final String textConverterLocation, final String xsltLocation, final String dataLocation,
                                final int expectedWarnings) {
         validate(textConverterType, textConverterLocation);

@@ -1,8 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<feed>
-   <name>TEST_REFERENCE_DATA-EVENTS</name>
-   <reference>false</reference>
-   <status>RECEIVE</status>
-   <streamType>Raw Events</streamType>
-   <uuid>083159de-8db5-483a-b7b4-dee6e8c27047</uuid>
-</feed>

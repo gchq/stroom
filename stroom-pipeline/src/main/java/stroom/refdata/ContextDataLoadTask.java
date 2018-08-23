@@ -16,20 +16,19 @@
 
 package stroom.refdata;
 
+import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
-import stroom.feed.shared.Feed;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.streamstore.shared.Stream;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 import stroom.util.shared.VoidResult;
 
 import java.io.InputStream;
 
 public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private InputStream inputStream;
-    private Stream stream;
-    private Feed feed;
+    private Data data;
+    private String feedName;
     private DocRef contextPipeline;
     private RefStreamDefinition refStreamDefinition;
     private RefDataStore refDataStore;
@@ -38,14 +37,14 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
     }
 
     public ContextDataLoadTask(final InputStream inputStream,
-                               final Stream stream,
-                               final Feed feed,
+                               final Data data,
+                               final String feedName,
                                final DocRef contextPipeline,
                                final RefStreamDefinition refStreamDefinition,
                                final RefDataStore refDataStore) {
         this.inputStream = inputStream;
-        this.stream = stream;
-        this.feed = feed;
+        this.data = data;
+        this.feedName = feedName;
         this.contextPipeline = contextPipeline;
         this.refStreamDefinition = refStreamDefinition;
         this.refDataStore = refDataStore;
@@ -55,12 +54,12 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
         return inputStream;
     }
 
-    public Stream getStream() {
-        return stream;
+    public Data getData() {
+        return data;
     }
 
-    public Feed getFeed() {
-        return feed;
+    public String getFeedName() {
+        return feedName;
     }
 
     public DocRef getContextPipeline() {

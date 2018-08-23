@@ -25,13 +25,13 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
-public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>> {
+public class VolumeListPresenter extends MyPresenterWidget<DataGridView<VolumeEntity>> {
 //    private final SelectionModel<Volume> selectionModel;
 
     @Inject
@@ -52,9 +52,9 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
      */
     private void initTableColumns() {
         // Node.
-        final Column<Volume, String> nameColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> nameColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume row) {
+            public String getValue(final VolumeEntity row) {
                 if (row == null) {
                     return null;
                 }
@@ -64,9 +64,9 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         getView().addResizableColumn(nameColumn, "Node", 150);
 
         // Path.
-        final Column<Volume, String> volumeColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> volumeColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume row) {
+            public String getValue(final VolumeEntity row) {
                 if (row == null) {
                     return null;
                 }
@@ -76,9 +76,9 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         getView().addResizableColumn(volumeColumn, "Path", 300);
 
         // Volume Type.
-        final Column<Volume, String> volumeTypeColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> volumeTypeColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume row) {
+            public String getValue(final VolumeEntity row) {
                 if (row == null) {
                     return null;
                 }
@@ -88,9 +88,9 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         getView().addResizableColumn(volumeTypeColumn, "Volume Type", 80);
 
         // Stream Status.
-        final Column<Volume, String> streamStatusColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> streamStatusColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume row) {
+            public String getValue(final VolumeEntity row) {
                 if (row == null) {
                     return null;
                 }
@@ -100,9 +100,9 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         getView().addResizableColumn(streamStatusColumn, "Stream Status", 90);
 
         // Index Status.
-        final Column<Volume, String> indexStatusColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> indexStatusColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume row) {
+            public String getValue(final VolumeEntity row) {
                 if (row == null) {
                     return null;
                 }
@@ -114,7 +114,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
         getView().addEndColumn(new EndColumn<>());
     }
 
-    public void setData(final List<Volume> volumes) {
+    public void setData(final List<VolumeEntity> volumes) {
         getView().setRowData(0, volumes);
         getView().setRowCount(volumes.size());
     }
@@ -123,7 +123,7 @@ public class VolumeListPresenter extends MyPresenterWidget<DataGridView<Volume>>
 //        return getView().addSelectionHandler(handler);
 //    }
 
-    public MultiSelectionModel<Volume> getSelectionModel() {
+    public MultiSelectionModel<VolumeEntity> getSelectionModel() {
         return getView().getSelectionModel();
     }
 //

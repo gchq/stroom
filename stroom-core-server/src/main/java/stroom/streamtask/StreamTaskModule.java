@@ -18,18 +18,13 @@ package stroom.streamtask;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
-import stroom.pipeline.PipelineStore;
 import stroom.security.Security;
-import stroom.streamstore.ExpressionToFindCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 import javax.inject.Named;
 
@@ -53,11 +48,6 @@ public class StreamTaskModule extends AbstractModule {
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
-
-
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(StreamProcessorFilter.ENTITY_TYPE).to(StreamProcessorFilterServiceImpl.class);
-        entityServiceByTypeBinder.addBinding(StreamProcessor.ENTITY_TYPE).to(StreamProcessorServiceImpl.class);
     }
 
     @Provides
@@ -65,10 +55,8 @@ public class StreamTaskModule extends AbstractModule {
     public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
                                                                            final Security security,
                                                                            final EntityManagerSupport entityManagerSupport,
-                                                                           final StreamProcessorService streamProcessorService,
-                                                                           final ExpressionToFindCriteria expressionToFindCriteria,
-                                                                           final PipelineStore pipelineStore) {
-        return new StreamProcessorFilterServiceImpl(entityManager, security, entityManagerSupport, streamProcessorService, expressionToFindCriteria, pipelineStore);
+                                                                           final StreamProcessorService streamProcessorService) {
+        return new StreamProcessorFilterServiceImpl(entityManager, security, entityManagerSupport, streamProcessorService);
     }
 
     @Provides

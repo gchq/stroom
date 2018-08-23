@@ -50,7 +50,7 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;

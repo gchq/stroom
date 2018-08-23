@@ -21,20 +21,20 @@ import stroom.entity.MockEntityService;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import javax.inject.Singleton;
 import java.util.Set;
 
 @Singleton
-public class MockVolumeService extends MockEntityService<Volume, FindVolumeCriteria> implements VolumeService {
+public class MockVolumeService extends MockEntityService<VolumeEntity, FindVolumeCriteria> implements VolumeService {
     @Override
-    public Set<Volume> getStreamVolumeSet(final Node node) {
+    public Set<VolumeEntity> getStreamVolumeSet(final Node node) {
         return null;
     }
 
     @Override
-    public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
+    public Set<VolumeEntity> getIndexVolumeSet(final Node node, final Set<VolumeEntity> allowedVolumes) {
         return null;
     }
 
@@ -47,7 +47,7 @@ public class MockVolumeService extends MockEntityService<Volume, FindVolumeCrite
     }
 
     @Override
-    public Class<Volume> getEntityClass() {
-        return Volume.class;
+    public Class<VolumeEntity> getEntityClass() {
+        return VolumeEntity.class;
     }
 }

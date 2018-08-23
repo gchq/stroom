@@ -255,8 +255,8 @@ public class TestReferenceDataFilter extends StroomUnitTest {
         // so we can copy the buffer that is reused and therefore mutates.
         Mockito.doAnswer(invocation -> {
             loadedRefDataValues.addKeyValue(
-                    invocation.getArgumentAt(1, String.class),
-                    invocation.getArgumentAt(2, RefDataValue.class));
+                    invocation.getArgument(1),
+                    invocation.getArgument(2));
             return true;
         }).when(refDataLoader).put(
                 Mockito.any(),
@@ -265,8 +265,8 @@ public class TestReferenceDataFilter extends StroomUnitTest {
 
         Mockito.doAnswer(invocation -> {
             loadedRefDataValues.addRangeValue(
-                    invocation.getArgumentAt(1, null), // mockito can infer the type
-                    invocation.getArgumentAt(2, RefDataValue.class));
+                    invocation.getArgument(1), // mockito can infer the type
+                    invocation.getArgument(2));
             return true;
         }).when(refDataLoader).put(
                 Mockito.any(),

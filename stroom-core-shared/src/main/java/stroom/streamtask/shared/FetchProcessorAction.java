@@ -17,7 +17,7 @@
 package stroom.streamtask.shared;
 
 import stroom.dispatch.shared.TreeAction;
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
 import stroom.docref.DocRef;

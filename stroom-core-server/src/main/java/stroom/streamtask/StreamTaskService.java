@@ -21,8 +21,8 @@ import stroom.entity.BaseEntityService;
 import stroom.entity.FindService;
 import stroom.entity.FindSummaryService;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 public interface StreamTaskService
-        extends BaseEntityService<StreamTask>, FindService<StreamTask, FindStreamTaskCriteria>, FindSummaryService<FindStreamTaskCriteria> {
+        extends BaseEntityService<ProcessorFilterTask>, FindService<ProcessorFilterTask, FindStreamTaskCriteria>, FindSummaryService<FindStreamTaskCriteria> {
 }

@@ -21,19 +21,19 @@ import stroom.core.client.gin.PluginModule;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
-import stroom.pipeline.client.XSLTPlugin;
+import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
-import stroom.pipeline.client.presenter.XSLTPresenter;
-import stroom.pipeline.client.presenter.XSLTSettingsPresenter;
-import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
+import stroom.pipeline.client.presenter.XsltPresenter;
+import stroom.pipeline.client.presenter.XsltSettingsPresenter;
+import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.pipeline.client.view.PipelineSettingsViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
-import stroom.pipeline.client.view.XSLTSettingsViewImpl;
+import stroom.pipeline.client.view.XsltSettingsViewImpl;
 import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
@@ -84,9 +84,9 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(TextConverterSettingsPresenter.class, TextConverterSettingsView.class,
                 TextConverterSettingsViewImpl.class);
 
-        bindPlugin(XSLTPlugin.class);
-        bind(XSLTPresenter.class);
-        bindPresenterWidget(XSLTSettingsPresenter.class, XSLTSettingsView.class, XSLTSettingsViewImpl.class);
+        bindPlugin(XsltPlugin.class);
+        bind(XsltPresenter.class);
+        bindPresenterWidget(XsltSettingsPresenter.class, XsltSettingsView.class, XsltSettingsViewImpl.class);
 
         bindPlugin(PipelinePlugin.class);
         bindPlugin(PipelineSteppingPlugin.class);

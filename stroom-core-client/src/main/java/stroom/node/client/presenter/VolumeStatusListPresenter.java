@@ -27,7 +27,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.util.client.BorderUtil;
@@ -35,10 +35,10 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Volume>> {
+public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<VolumeEntity>> {
 //    private final SelectionModel<Volume> selectionModel;
 
-    private final ActionDataProvider<Volume> dataProvider;
+    private final ActionDataProvider<VolumeEntity> dataProvider;
 
     @Inject
     public VolumeStatusListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
@@ -52,7 +52,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
 
         initTableColumns();
 
-        final EntityServiceFindAction<FindVolumeCriteria, Volume> action = new EntityServiceFindAction<>(
+        final EntityServiceFindAction<FindVolumeCriteria, VolumeEntity> action = new EntityServiceFindAction<>(
                 new FindVolumeCriteria());
         dataProvider = new ActionDataProvider<>(dispatcher, action);
         dataProvider.addDataDisplay(getView().getDataDisplay());
@@ -65,63 +65,63 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
      */
     private void initTableColumns() {
         // Node.
-        final Column<Volume, String> nameColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> nameColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return volume.getNode().getName();
             }
         };
         getView().addResizableColumn(nameColumn, "Node", 150);
 
         // Path.
-        final Column<Volume, String> volumeColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> volumeColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return volume.getPath();
             }
         };
         getView().addResizableColumn(volumeColumn, "Path", 300);
 
         // Volume Type.
-        final Column<Volume, String> volumeTypeColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> volumeTypeColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return volume.getVolumeType().getDisplayValue();
             }
         };
         getView().addResizableColumn(volumeTypeColumn, "Volume Type", 80);
 
         // Stream Status.
-        final Column<Volume, String> streamStatusColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> streamStatusColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return volume.getStreamStatus().getDisplayValue();
             }
         };
         getView().addResizableColumn(streamStatusColumn, "Stream Status", 90);
 
         // Index Status.
-        final Column<Volume, String> indexStatusColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> indexStatusColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return volume.getIndexStatus().getDisplayValue();
             }
         };
         getView().addResizableColumn(indexStatusColumn, "Index Status", 90);
 
         // Total.
-        final Column<Volume, String> totalColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> totalColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return getSizeString(volume.getVolumeState().getBytesTotal());
             }
         };
         getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
 
         // Limit.
-        final Column<Volume, String> limitColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> limitColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 if (volume.getBytesLimit() == null) {
                     return "";
                 }
@@ -131,36 +131,36 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
         getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
 
         // Used.
-        final Column<Volume, String> usedColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> usedColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return getSizeString(volume.getVolumeState().getBytesUsed());
             }
         };
         getView().addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
 
         // Free.
-        final Column<Volume, String> freeColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> freeColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return getSizeString(volume.getVolumeState().getBytesFree());
             }
         };
         getView().addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
 
         // Use%.
-        final Column<Volume, String> usePercentColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> usePercentColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return getPercentString(volume.getVolumeState().getPercentUsed());
             }
         };
         getView().addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
 
         // Usage Date.
-        final Column<Volume, String> usageDateColumn = new Column<Volume, String>(new TextCell()) {
+        final Column<VolumeEntity, String> usageDateColumn = new Column<VolumeEntity, String>(new TextCell()) {
             @Override
-            public String getValue(final Volume volume) {
+            public String getValue(final VolumeEntity volume) {
                 return ClientDateUtil.toISOString(volume.getVolumeState().getStatusMs());
             }
         };
@@ -189,7 +189,7 @@ public class VolumeStatusListPresenter extends MyPresenterWidget<DataGridView<Vo
 //        return getView().addSelectionHandler(handler);
 //    }
 
-    public MultiSelectionModel<Volume> getSelectionModel() {
+    public MultiSelectionModel<VolumeEntity> getSelectionModel() {
         return getView().getSelectionModel();
     }
 //

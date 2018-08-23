@@ -37,37 +37,35 @@ public class ElementRegistry {
     @SuppressWarnings("unchecked")
     ElementRegistry(final Collection<Class<?>> elementClasses) {
         for (final Class<?> elementClass : elementClasses) {
-            final ConfigurableElement element = elementClass.getAnnotation(ConfigurableElement.class);
-            if (element == null) {
-                throw new PipelineFactoryException(
-                        "Class " + elementClass.getName() + " does not have the expected PipelineElement annotation");
+            final ConfigurableElement configurableElement = elementClass.getAnnotation(ConfigurableElement.class);
+            // Not all elements are configurable so won't necessarily have an annotation.
+            if (configurableElement != null) {
+                if (!Element.class.isAssignableFrom(elementClass)) {
+                    throw new PipelineFactoryException(
+                            "Class " + elementClass.getName() + " is not an instance of PipelineElement");
+                }
+
+                final String elementTypeName = configurableElement.type();
+                final Class<Element> clazz = (Class<Element>) elementClass;
+                final Class<Element> existing = elementMap.put(elementTypeName, clazz);
+
+                // Check that there isn't a factory already associated with the
+                // name.
+                if (existing != null) {
+                    throw new PipelineFactoryException("PipelineElement \"" + existing
+                            + "\" has already been registered for \"" + elementTypeName + "\"");
+                }
+
+                registerProperties(clazz, configurableElement);
             }
-
-            if (!Element.class.isAssignableFrom(elementClass)) {
-                throw new PipelineFactoryException(
-                        "Class " + elementClass.getName() + " is not an instance of PipelineElement");
-            }
-
-            final String elementTypeName = element.type();
-            final Class<Element> clazz = (Class<Element>) elementClass;
-            final Class<Element> existing = elementMap.put(elementTypeName, clazz);
-
-            // Check that there isn't a factory already associated with the
-            // name.
-            if (existing != null) {
-                throw new PipelineFactoryException("PipelineElement \"" + existing
-                        + "\" has already been registered for \"" + elementTypeName + "\"");
-            }
-
-            registerProperties(clazz, element);
         }
     }
 
-    private void registerProperties(final Class<Element> elementClass, final ConfigurableElement element) {
-        final String elementTypeName = element.type();
+    private void registerProperties(final Class<Element> elementClass, final ConfigurableElement configurableElement) {
+        final String elementTypeName = configurableElement.type();
 
         // Remember this element and associated properties for UI purposes.
-        final PipelineElementType elementType = createElementType(element);
+        final PipelineElementType elementType = createElementType(configurableElement);
         final Map<String, PipelinePropertyType> properties = new HashMap<>();
 
         // Register available properties.
@@ -161,6 +159,7 @@ public class ElementRegistry {
                 .type(typeName)
                 .description(property.description())
                 .defaultValue(property.defaultValue())
+                .displayPriority(property.displayPriority())
                 .pipelineReference(paramType.equals(PipelineReference.class))
                 .docRefTypes((docRefProperty != null) ? docRefProperty.types() : null)
                 .build();

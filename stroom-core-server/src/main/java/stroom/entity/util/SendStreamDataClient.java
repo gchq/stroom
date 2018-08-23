@@ -19,20 +19,13 @@ package stroom.entity.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
-import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTypeService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
-import stroom.util.ArgsUtil;
+import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
+import stroom.feed.shared.FeedDoc;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.meta.api.Data;
 import stroom.util.date.DateUtil;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -41,8 +34,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -123,7 +114,7 @@ public final class SendStreamDataClient {
     /**
      * Perform the HTTP Post.
      */
-    private static void sendStream(final URL url, final StreamStore streamStore, final Feed feed, final long streamId)
+    private static void sendStream(final URL url, final StreamStore streamStore, final FeedDoc feed, final long streamId)
             throws IOException {
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         if (connection instanceof HttpsURLConnection) {
@@ -142,8 +133,8 @@ public final class SendStreamDataClient {
         connection.addRequestProperty(FEED, feed.getName());
 
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final StreamSource meta = streamSource.getChildStream(StreamType.META);
-        final Stream stream = streamSource.getStream();
+        final StreamSource meta = streamSource.getChildStream(StreamTypeNames.META);
+        final Data stream = streamSource.getStream();
 
         if (stream.getEffectiveMs() != null) {
             connection.addRequestProperty("effectiveTime",
@@ -151,9 +142,9 @@ public final class SendStreamDataClient {
         }
 
         if (meta != null) {
-            final MetaMap metaMap = new MetaMap();
-            metaMap.read(meta.getInputStream(), true);
-            metaMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
+            final AttributeMap attributeMap = new AttributeMap();
+            AttributeMapUtil.read(meta.getInputStream(), true, attributeMap);
+            attributeMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
                     .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
         }
 

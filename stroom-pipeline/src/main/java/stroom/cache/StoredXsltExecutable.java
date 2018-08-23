@@ -18,14 +18,14 @@ package stroom.cache;
 
 import net.sf.saxon.s9api.XsltExecutable;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.xsltfunctions.StroomXSLTFunctionLibrary;
+import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 
 public class StoredXsltExecutable {
     private final XsltExecutable xsltExecutable;
-    private final StroomXSLTFunctionLibrary functionLibrary;
+    private final StroomXsltFunctionLibrary functionLibrary;
     private final StoredErrorReceiver errorReceiver;
 
-    public StoredXsltExecutable(final XsltExecutable xsltExecutable, final StroomXSLTFunctionLibrary functionLibrary,
+    public StoredXsltExecutable(final XsltExecutable xsltExecutable, final StroomXsltFunctionLibrary functionLibrary,
                                 final StoredErrorReceiver errorReceiver) {
         this.xsltExecutable = xsltExecutable;
         this.functionLibrary = functionLibrary;
@@ -36,7 +36,7 @@ public class StoredXsltExecutable {
         return xsltExecutable;
     }
 
-    public StroomXSLTFunctionLibrary getFunctionLibrary() {
+    public StroomXsltFunctionLibrary getFunctionLibrary() {
         return functionLibrary;
     }
 

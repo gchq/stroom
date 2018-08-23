@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.task.client.presenter.TaskPresenter.TaskView;
 import stroom.task.client.presenter.TaskUiHandlers;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 import stroom.widget.button.client.ImageButton;
 
 public class TaskViewImpl extends ViewWithUiHandlers<TaskUiHandlers> implements TaskView {

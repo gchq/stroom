@@ -16,7 +16,7 @@
 
 package stroom.xml;
 
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
  * </p>
  */
 public class ExternalTransform {
-    private Feed eventFeed;
+    private FeedDoc eventFeed;
     private List<PipelineDoc> otherTranslationList;
     private List<DataProcess> dataProcessList;
     private String basePath;
@@ -40,11 +40,11 @@ public class ExternalTransform {
         this.basePath = outputBasePath;
     }
 
-    public Feed getEventFeed() {
+    public FeedDoc getEventFeed() {
         return eventFeed;
     }
 
-    public void setEventFeed(final Feed eventFeed) {
+    public void setEventFeed(final FeedDoc eventFeed) {
         this.eventFeed = eventFeed;
     }
 

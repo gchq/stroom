@@ -19,8 +19,8 @@ package stroom.node.shared;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeEntity.VolumeType;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 
 public class FindVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3581257401217841946L;

@@ -20,7 +20,8 @@ import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.CloseableUtil;
+import stroom.util.BuildInfoUtil;
+import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -46,6 +47,7 @@ public class StroomProperties {
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
     private static final String TRACE = "TRACE";
     private static final String MAGIC_NULL = "NULL";
+    private static final String upDate = DateUtil.createNormalDateTimeString();
     private static final PropertyMap properties = new PropertyMap();
     private static final PropertyMap override = new PropertyMap();
 
@@ -61,6 +63,11 @@ public class StroomProperties {
         if (!doneInit) {
             doneInit = true;
 
+            // Set some system properties.
+            setProperty("buildDate", BuildInfoUtil.getBuildDate(), Source.SYSTEM);
+            setProperty("buildVersion", BuildInfoUtil.getBuildVersion(), Source.SYSTEM);
+            setProperty("upDate", upDate, Source.SYSTEM);
+
             // Get properties for the current user if there are any.
             final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
             if (Files.isRegularFile(file)) {
@@ -71,11 +78,9 @@ public class StroomProperties {
     }
 
     private static void loadResource(final Path file, final Source source) {
-        try {
-            final InputStream inputStream = Files.newInputStream(file);
+        try (final InputStream inputStream = Files.newInputStream(file)) {
             final Properties properties = new Properties();
             properties.load(inputStream);
-            CloseableUtil.close(inputStream);
 
             for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
                 final String key = (String) entry.getKey();

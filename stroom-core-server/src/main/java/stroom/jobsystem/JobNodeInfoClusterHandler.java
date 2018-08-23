@@ -20,8 +20,8 @@ import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.shared.SharedMap;
 

@@ -16,19 +16,18 @@
 
 package stroom.refdata;
 
-import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
 
 import java.util.Objects;
 
 class EffectiveStreamKey {
-    private final DocRef feed;
+    private final String feed;
     private final String streamType;
     private final long fromMs;
     private final long toMs;
     private final int hashCode;
 
-    EffectiveStreamKey(final DocRef feed, final String streamType, final long fromMs, final long toMs) {
+    EffectiveStreamKey(final String feed, final String streamType, final long fromMs, final long toMs) {
         this.feed = feed;
         this.streamType = streamType;
         this.fromMs = fromMs;
@@ -36,7 +35,7 @@ class EffectiveStreamKey {
         hashCode = Objects.hash(feed, streamType, fromMs, toMs);
     }
 
-    DocRef getFeed() {
+    String getFeed() {
         return feed;
     }
 
@@ -71,12 +70,15 @@ class EffectiveStreamKey {
     public void append(final StringBuilder sb) {
         if (feed != null) {
             sb.append("feed = ");
-            sb.append(feed.getName());
+            sb.append(feed);
             sb.append(", ");
         }
-        sb.append("streamType = ");
-        sb.append(streamType);
-        sb.append(", effectiveTimeWindow >= ");
+        if (streamType != null) {
+            sb.append("streamType = ");
+            sb.append(streamType);
+            sb.append(", ");
+        }
+        sb.append("effectiveTimeWindow >= ");
         sb.append(DateUtil.createNormalDateTimeString(fromMs));
         sb.append(" < ");
         sb.append(DateUtil.createNormalDateTimeString(toMs));

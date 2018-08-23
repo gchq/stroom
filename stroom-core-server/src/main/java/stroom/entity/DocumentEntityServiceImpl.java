@@ -31,19 +31,14 @@ import stroom.entity.shared.ProvidesNamePattern;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.importexport.ImportExportHelper;
-import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.persist.EntityManagerSupport;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +62,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     private final SecurityContext securityContext;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
-    private final ImportExportHelper importExportHelper;
 
     private final QueryAppender<E, ?> queryAppender;
     private String entityType;
@@ -75,11 +69,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager,
                                         final EntityManagerSupport entityManagerSupport,
-                                        final ImportExportHelper importExportHelper,
                                         final SecurityContext securityContext) {
         this.entityManager = entityManager;
         this.entityManagerSupport = entityManagerSupport;
-        this.importExportHelper = importExportHelper;
         this.securityContext = securityContext;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
@@ -104,8 +96,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         // Create a new entity instance.
         try {
-            entity = getEntityClass().newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
+            entity = getEntityClass().getConstructor().newInstance();
+        } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new EntityServiceException(e.getMessage());
         }
 
@@ -378,156 +370,156 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public String getEntityType() {
         if (entityType == null) {
             try {
-                entityType = getEntityClass().newInstance().getType();
-            } catch (final InstantiationException | IllegalAccessException e) {
+                entityType = getEntityClass().getConstructor().newInstance().getType();
+            } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
         return entityType;
     }
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        E entity = null;
-
-        try {
-            // See if a document already exists with this uuid.
-            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
-            if (entity == null) {
-                entity = getEntityClass().newInstance();
-            }
-
-            importExportHelper.performImport(entity, dataMap, importState, importMode);
-
-            // Save directly so there is no marshalling of objects that would destroy imported data.
-            if (importState.ok(importMode)) {
-                entity = internalSave(entity);
-            }
-
-        } catch (final RuntimeException | InstantiationException | IllegalAccessException e) {
-            importState.addMessage(Severity.ERROR, e.getMessage());
-        }
-
-        return DocRefUtil.create(entity);
-    }
-
-    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
-        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
-            return entityManagerSupport.executeResult(em -> {
-                final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
-                if (entity != null) {
-                    return importExportHelper.performExport(entity, omitAuditFields, messageList);
-                }
-
-                return Collections.emptyMap();
-            });
-        }
-
-        return Collections.emptyMap();
-    }
-
-    public Set<DocRef> listDocuments() {
-        final List<E> list = find(createCriteria());
-        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
-    }
-
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final List<E> list = find(createCriteria());
-        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    public final DocRef createDocument(final String name) {
-        return DocRefUtil.create(create(name));
-    }
-
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        final E entity = loadByUuid(originalUuid);
-        if (entity == null) {
-            throw new EntityServiceException("Entity not found");
-        }
-        final E copy = copy(entity, copyUuid);
-        return DocRefUtil.create(copy);
-    }
-
-    public DocRef moveDocument(final String uuid) {
-        final E entity = loadByUuid(uuid);
-        if (entity == null) {
-            throw new EntityServiceException("Entity not found");
-        }
-        return DocRefUtil.create(move(entity));
-    }
-
-    public DocRef renameDocument(final String uuid, final String name) {
-        final E entity = loadByUuid(uuid);
-        if (entity == null) {
-            throw new EntityServiceException("Entity not found");
-        }
-        return DocRefUtil.create(rename(entity, name));
-    }
-
-    public void deleteDocument(final String uuid) {
-        final E entity = loadByUuid(uuid);
-        if (entity == null) {
-            throw new EntityServiceException("Entity not found");
-        }
-        delete(entity);
-    }
-
-    public DocRefInfo info(final String uuid) {
-        final E entity = loadByUuid(uuid);
-        if (entity == null) {
-            throw new EntityServiceException("Entity not found");
-        }
-        return new DocRefInfo.Builder()
-                .docRef(new DocRef.Builder()
-                        .type(entity.getType())
-                        .uuid(entity.getUuid())
-                        .name(entity.getName())
-                        .build())
-                .otherInfo("DB ID: " + entity.getId())
-                .createUser(entity.getCreateUser())
-                .createTime(entity.getCreateTime())
-                .updateUser(entity.getUpdateUser())
-                .updateTime(entity.getUpdateTime())
-                .build();
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    // @Transactional
-    @Override
-    public E readDocument(final DocRef docRef) {
-        return loadByUuid(docRef.getUuid());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public E writeDocument(final E document) {
-        return save(document);
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+//
+//    ////////////////////////////////////////////////////////////////////////
+//    // START OF ImportExportActionHandler
+//    ////////////////////////////////////////////////////////////////////////
+//
+//    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+//        E entity = null;
+//
+//        try {
+//            // See if a document already exists with this uuid.
+//            entity = loadByUuid(docRef.getUuid(), Collections.singleton("all"));
+//            if (entity == null) {
+//                entity = getEntityClass().newInstance();
+//            }
+//
+////            importExportHelper.performImport(entity, dataMap, importState, importMode);
+//
+//            // Save directly so there is no marshalling of objects that would destroy imported data.
+//            if (importState.ok(importMode)) {
+//                entity = internalSave(entity);
+//            }
+//
+//        } catch (final RuntimeException | InstantiationException | IllegalAccessException e) {
+//            importState.addMessage(Severity.ERROR, e.getMessage());
+//        }
+//
+//        return DocRefUtil.create(entity);
+//    }
+//
+//    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+//        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+//            return entityManagerSupport.executeResult(em -> {
+//                final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);
+//                if (entity != null) {
+////                    return importExportHelper.performExport(entity, omitAuditFields, messageList);
+//                }
+//
+//                return Collections.emptyMap();
+//            });
+//        }
+//
+//        return Collections.emptyMap();
+//    }
+//
+//    public Set<DocRef> listDocuments() {
+//        final List<E> list = find(createCriteria());
+//        return list.stream().map(DocRefUtil::create).collect(Collectors.toSet());
+//    }
+//
+//    public Map<DocRef, Set<DocRef>> getDependencies() {
+//        final List<E> list = find(createCriteria());
+//        return list.stream().map(DocRefUtil::create).collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
+//    }
+//
+//    ////////////////////////////////////////////////////////////////////////
+//    // END OF ImportExportActionHandler
+//    ////////////////////////////////////////////////////////////////////////
+//
+//    ////////////////////////////////////////////////////////////////////////
+//    // START OF ExplorerActionHandler
+//    ////////////////////////////////////////////////////////////////////////
+//
+//    public final DocRef createDocument(final String name) {
+//        return DocRefUtil.create(create(name));
+//    }
+//
+//    public DocRef copyDocument(final String originalUuid,
+//                               final String copyUuid,
+//                               final Map<String, String> otherCopiesByOriginalUuid) {
+//        final E entity = loadByUuid(originalUuid);
+//        if (entity == null) {
+//            throw new EntityServiceException("Entity not found");
+//        }
+//        final E copy = copy(entity, copyUuid);
+//        return DocRefUtil.create(copy);
+//    }
+//
+//    public DocRef moveDocument(final String uuid) {
+//        final E entity = loadByUuid(uuid);
+//        if (entity == null) {
+//            throw new EntityServiceException("Entity not found");
+//        }
+//        return DocRefUtil.create(move(entity));
+//    }
+//
+//    public DocRef renameDocument(final String uuid, final String name) {
+//        final E entity = loadByUuid(uuid);
+//        if (entity == null) {
+//            throw new EntityServiceException("Entity not found");
+//        }
+//        return DocRefUtil.create(rename(entity, name));
+//    }
+//
+//    public void deleteDocument(final String uuid) {
+//        final E entity = loadByUuid(uuid);
+//        if (entity == null) {
+//            throw new EntityServiceException("Entity not found");
+//        }
+//        delete(entity);
+//    }
+//
+//    public DocRefInfo info(final String uuid) {
+//        final E entity = loadByUuid(uuid);
+//        if (entity == null) {
+//            throw new EntityServiceException("Entity not found");
+//        }
+//        return new DocRefInfo.Builder()
+//                .docRef(new DocRef.Builder()
+//                        .type(entity.getType())
+//                        .uuid(entity.getUuid())
+//                        .name(entity.getName())
+//                        .build())
+//                .otherInfo("DB ID: " + entity.getId())
+//                .createUser(entity.getCreateUser())
+//                .createTime(entity.getCreateTime())
+//                .updateUser(entity.getUpdateUser())
+//                .updateTime(entity.getUpdateTime())
+//                .build();
+//    }
+//
+//    ////////////////////////////////////////////////////////////////////////
+//    // END OF ExplorerActionHandler
+//    ////////////////////////////////////////////////////////////////////////
+//
+//    ////////////////////////////////////////////////////////////////////////
+//    // START OF DocumentActionHandler
+//    ////////////////////////////////////////////////////////////////////////
+//
+//    // @Transactional
+//    @Override
+//    public E readDocument(final DocRef docRef) {
+//        return loadByUuid(docRef.getUuid());
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public E writeDocument(final E document) {
+//        return save(document);
+//    }
+//
+//    ////////////////////////////////////////////////////////////////////////
+//    // END OF DocumentActionHandler
+//    ////////////////////////////////////////////////////////////////////////
 
     @SuppressWarnings("unchecked")
     protected QueryAppender<E, ?> createQueryAppender(final StroomEntityManager entityManager) {

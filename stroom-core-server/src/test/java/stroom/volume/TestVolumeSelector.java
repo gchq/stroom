@@ -20,8 +20,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.util.test.StroomUnitTest;
 
@@ -70,23 +70,23 @@ public class TestVolumeSelector extends StroomUnitTest {
     }
 
     private void test(final VolumeSelector volumeSelector) {
-        final List<Volume> volumes = createVolumeList();
+        final List<VolumeEntity> volumes = createVolumeList();
         for (int i = 0; i < 100; i++) {
             Assert.assertNotNull(volumeSelector.select(volumes));
         }
     }
 
-    private List<Volume> createVolumeList() {
+    private List<VolumeEntity> createVolumeList() {
         final Rack rack1 = Rack.create("rack1");
         final Rack rack2 = Rack.create("rack2");
 
         final Node node1 = Node.create(rack1, "node1");
         final Node node2 = Node.create(rack2, "node2");
 
-        final Volume v1 = Volume.create(node1, "path1", VolumeType.PUBLIC, VolumeState.create(1000, 10000));
-        final Volume v2 = Volume.create(node2, "path2", VolumeType.PUBLIC, VolumeState.create(5000, 10000));
+        final VolumeEntity v1 = VolumeEntity.create(node1, "path1", VolumeType.PUBLIC, VolumeState.create(1000, 10000));
+        final VolumeEntity v2 = VolumeEntity.create(node2, "path2", VolumeType.PUBLIC, VolumeState.create(5000, 10000));
 
-        final List<Volume> volumes = new ArrayList<>();
+        final List<VolumeEntity> volumes = new ArrayList<>();
         volumes.add(v1);
         volumes.add(v2);
 

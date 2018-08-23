@@ -1,6 +1,6 @@
 package stroom.explorer.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.SharedDocRefInfo;
 import stroom.docref.DocRef;
 

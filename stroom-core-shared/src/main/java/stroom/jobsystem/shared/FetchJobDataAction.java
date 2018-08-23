@@ -16,7 +16,7 @@
 
 package stroom.jobsystem.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.ResultList;
 
 public class FetchJobDataAction extends Action<ResultList<JobNodeRow>> {

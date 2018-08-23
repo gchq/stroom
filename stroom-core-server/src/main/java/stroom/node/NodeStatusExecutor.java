@@ -18,7 +18,7 @@ package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 

@@ -1,0 +1,26 @@
+ext.moduleName = 'stroom.ruleset.server'
+
+dependencies {
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-ruleset:stroom-ruleset-shared')
+
+    compile project(':stroom-util-shared')
+    compile project(':stroom-core-server')
+//    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.slf4j_api
+    compile libs.javax_inject
+    compile libs.guice4
+
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.dropwizard_metrics_annotation
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
+}

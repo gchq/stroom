@@ -16,10 +16,13 @@
 
 package stroom.feed;
 
+import stroom.datafeed.StroomStatusCode;
+import stroom.feed.shared.FeedDoc.FeedStatus;
+
 public class GetFeedStatusResponse extends RemoteResponse {
     private static final long serialVersionUID = 9221787861812287256L;
 
-    private FeedStatus status = FeedStatus.Receive;
+    private FeedStatus status = FeedStatus.RECEIVE;
     private String message = null;
     private StroomStatusCode stroomStatusCode;
 
@@ -39,27 +42,27 @@ public class GetFeedStatusResponse extends RemoteResponse {
     }
 
     public static GetFeedStatusResponse createOKDropResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Drop, null);
+        return new GetFeedStatusResponse(FeedStatus.DROP, null);
     }
 
     public static GetFeedStatusResponse createFeedRequiredResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+        return new GetFeedStatusResponse(FeedStatus.REJECT, StroomStatusCode.FEED_MUST_BE_SPECIFIED);
     }
 
     public static GetFeedStatusResponse createFeedIsNotDefinedResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.FEED_IS_NOT_DEFINED);
+        return new GetFeedStatusResponse(FeedStatus.REJECT, StroomStatusCode.FEED_IS_NOT_DEFINED);
     }
 
     public static GetFeedStatusResponse createFeedNotSetToReceiveDataResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
+        return new GetFeedStatusResponse(FeedStatus.REJECT, StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
     }
 
     public static GetFeedStatusResponse createCertificateRequiredResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED);
+        return new GetFeedStatusResponse(FeedStatus.REJECT, StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED);
     }
 
     public static GetFeedStatusResponse createCertificateNotAuthorisedResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Reject, StroomStatusCode.CLIENT_CERTIFICATE_NOT_AUTHORISED);
+        return new GetFeedStatusResponse(FeedStatus.REJECT, StroomStatusCode.CLIENT_CERTIFICATE_NOT_AUTHORISED);
     }
 
     public FeedStatus getStatus() {

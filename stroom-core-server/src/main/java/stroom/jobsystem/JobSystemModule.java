@@ -24,7 +24,7 @@ import stroom.entity.shared.Clearable;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobManager;
 import stroom.jobsystem.shared.JobNode;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class JobSystemModule extends AbstractModule {
     @Override

@@ -17,13 +17,13 @@
 
 package stroom.headless;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.StringCriteria;
-import stroom.feed.FeedService;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.Data;
+import stroom.docref.DocRef;
+import stroom.feed.AttributeMapUtil;
+import stroom.feed.FeedStore;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -38,7 +38,7 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.filter.RecordOutputFilter;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.filter.XMLFilter;
-import stroom.pipeline.filter.XSLTFilter;
+import stroom.pipeline.filter.XsltFilter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
@@ -47,23 +47,16 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.docref.DocRef;
 import stroom.security.Security;
-import stroom.streamstore.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.StreamProcessorService;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -71,7 +64,7 @@ import java.util.List;
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
-    private final FeedService feedService;
+    private final FeedStore feedStore;
     private final PipelineStore pipelineStore;
     private final MetaData metaData;
     private final PipelineHolder pipelineHolder;
@@ -82,13 +75,12 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
     private final StreamHolder streamHolder;
-    private final StreamProcessorService streamProcessorService;
     private final Security security;
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
-                                   @Named("cachedFeedService") final FeedService feedService,
-                                   @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                                   final FeedStore feedStore,
+                                   final PipelineStore pipelineStore,
                                    final MetaData metaData,
                                    final PipelineHolder pipelineHolder,
                                    final FeedHolder feedHolder,
@@ -98,10 +90,9 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
                                    final StreamHolder streamHolder,
-                                   final StreamProcessorService streamProcessorService,
                                    final Security security) {
         this.pipelineFactory = pipelineFactory;
-        this.feedService = feedService;
+        this.feedStore = feedStore;
         this.pipelineStore = pipelineStore;
         this.metaData = metaData;
         this.pipelineHolder = pipelineHolder;
@@ -112,7 +103,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
         this.streamHolder = streamHolder;
-        this.streamProcessorService = streamProcessorService;
         this.security = security;
     }
 
@@ -132,16 +122,16 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 }
 
                 // Load the meta and context data.
-                final MetaMap metaData = new MetaMap();
-                metaData.read(metaStream, false);
+                final AttributeMap metaData = new AttributeMap();
+                AttributeMapUtil.read(metaStream, false, metaData);
 
                 // Get the feed.
                 final String feedName = metaData.get(StroomHeaderArguments.FEED);
-                final Feed feed = getFeed(feedName);
-                feedHolder.setFeed(feed);
+                final FeedDoc feed = getFeed(feedName);
+                feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                 // Set the pipeline so it can be used by a filter if needed.
                 final List<DocRef> pipelines = pipelineStore.findByName(feedName);
@@ -172,35 +162,37 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 this.metaData.putAll(metaData);
                 task.getHeadlessFilter().changeMetaData(metaData);
 
-                // Create the stream.
-                final Stream stream = new Stream();
-                // Set the feed.
-                stream.setFeed(feed);
-
                 // Set effective time.
+                Long effectiveMs = null;
                 try {
                     final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
                     if (effectiveTime != null && !effectiveTime.isEmpty()) {
-                        stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                        effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
                     }
                 } catch (final RuntimeException e) {
                     outputError(e);
                 }
 
+                // Create the stream.
+                final Data stream = new DataImpl.Builder()
+                        .effectiveMs(effectiveMs)
+                        .feedName(feedName)
+                        .build();
+
                 // Add stream providers for lookups etc.
                 final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
                         new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
                 streamHolder.setStream(stream);
-                streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
+                streamHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
                 if (task.getMetaStream() != null) {
                     final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                    streamHolder.addProvider(metaStreamProvider, StreamType.META);
+                    streamHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
                 }
                 if (task.getContextStream() != null) {
                     final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                    streamHolder.addProvider(contextStreamProvider, StreamType.CONTEXT);
+                    streamHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
                 }
 
                 try {
@@ -222,7 +214,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
             filter = getLastFilter(pipeline, SchemaFilter.class);
         }
         if (filter == null) {
-            filter = getLastFilter(pipeline, XSLTFilter.class);
+            filter = getLastFilter(pipeline, XsltFilter.class);
         }
         return filter;
     }
@@ -235,20 +227,17 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         return null;
     }
 
-    private Feed getFeed(final String feedName) {
+    private FeedDoc getFeed(final String feedName) {
         if (feedName == null) {
             throw new RuntimeException("No feed name found in meta data");
         }
 
-        final FindFeedCriteria feedCriteria = new FindFeedCriteria();
-        feedCriteria.setName(new StringCriteria(feedName));
-        final BaseResultList<Feed> feeds = feedService.find(feedCriteria);
-
-        if (feeds.size() == 0) {
+        final List<DocRef> docRefs = feedStore.findByName(feedName);
+        if (docRefs.size() == 0) {
             throw new RuntimeException("No configuration found for feed \"" + feedName + "\"");
         }
 
-        return feeds.getFirst();
+        return feedStore.readDocument(docRefs.get(0));
     }
 
     /**
@@ -269,34 +258,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
             if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
-        }
-    }
-
-    private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
-        private final StreamSourceInputStream inputStream;
-
-        BasicInputStreamProvider(final InputStream inputStream, final long size) {
-            this.inputStream = new StreamSourceInputStream(inputStream, size);
-        }
-
-        @Override
-        public long getStreamCount() {
-            return 1;
-        }
-
-        @Override
-        public StreamSourceInputStream getStream(final long streamNo) {
-            return inputStream;
-        }
-
-        @Override
-        public RASegmentInputStream getSegmentInputStream(final long streamNo) {
-            return null;
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
         }
     }
 }

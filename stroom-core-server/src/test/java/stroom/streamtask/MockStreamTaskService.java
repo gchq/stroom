@@ -21,7 +21,7 @@ import stroom.entity.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 import javax.inject.Singleton;
 
@@ -31,7 +31,7 @@ import javax.inject.Singleton;
  * In memory simple process manager that also uses the mock stream store.
  */
 @Singleton
-public class MockStreamTaskService extends MockEntityService<StreamTask, FindStreamTaskCriteria>
+public class MockStreamTaskService extends MockEntityService<ProcessorFilterTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     @Override
     public BaseResultList<SummaryDataRow> findSummary(final FindStreamTaskCriteria criteria) {
@@ -39,7 +39,7 @@ public class MockStreamTaskService extends MockEntityService<StreamTask, FindStr
     }
 
     @Override
-    public Class<StreamTask> getEntityClass() {
-        return StreamTask.class;
+    public Class<ProcessorFilterTask> getEntityClass() {
+        return ProcessorFilterTask.class;
     }
 }

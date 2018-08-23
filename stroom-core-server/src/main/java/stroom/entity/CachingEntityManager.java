@@ -204,16 +204,6 @@ public class CachingEntityManager implements StroomEntityManager, Clearable {
     }
 
     @Override
-    public void shutdown() {
-        stroomEntityManager.shutdown();
-    }
-
-//    @Override
-//    public void setFlushMode(final FlushModeType mode) {
-//        stroomEntityManager.setFlushMode(mode);
-//    }
-
-    @Override
     public void clearContext() {
         clear();
         stroomEntityManager.clearContext();

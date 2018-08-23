@@ -18,7 +18,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.util.io.AbstractFileVisitor;
 
 import java.io.IOException;
@@ -282,13 +282,13 @@ public class StroomZipRepository {
         return getStroomZipOutputStream(null);
     }
 
-    public StroomZipOutputStream getStroomZipOutputStream(final MetaMap metaMap)
+    public StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
             throws IOException {
         if (finish.get()) {
             throw new RuntimeException("No longer allowed to write new streams to a finished repository");
         }
         final String filename = StroomFileNameUtil.constructFilename(fileCount.incrementAndGet(), repositoryFormat,
-                metaMap, ZIP_EXTENSION);
+                attributeMap, ZIP_EXTENSION);
         final Path file = baseLockDir.resolve(filename);
 
 

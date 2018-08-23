@@ -17,7 +17,7 @@
 package stroom.pool;
 
 import stroom.docstore.shared.Doc;
-import stroom.entity.DocumentPermissionCache;
+import stroom.security.DocumentPermissionCache;
 import stroom.entity.shared.PermissionException;
 import stroom.security.Security;
 import stroom.security.SecurityContext;

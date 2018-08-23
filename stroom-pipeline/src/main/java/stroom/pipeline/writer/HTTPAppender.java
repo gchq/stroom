@@ -2,10 +2,10 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
-import stroom.feed.MetaMapFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStreamException;
+import stroom.datafeed.StroomStreamException;
 import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -84,13 +84,13 @@ public class HTTPAppender extends AbstractAppender {
     protected OutputStream createOutputStream() throws IOException {
         try {
             OutputStream outputStream;
-            final MetaMap metaMap = metaDataHolder.getMetaData();
+            final AttributeMap attributeMap = metaDataHolder.getMetaData();
 
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + metaMap);
+                LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
             }
             startTimeMs = System.currentTimeMillis();
-            metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+            attributeMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
             URL url = new URL(forwardUrl);
             connection = (HttpURLConnection) url.openConnection();
@@ -113,7 +113,7 @@ public class HTTPAppender extends AbstractAppender {
                 connection.addRequestProperty(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
             }
 
-            MetaMap sendHeader = MetaMapFactory.cloneAllowable(metaMap);
+            AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
             for (Entry<String, String> entry : sendHeader.entrySet()) {
                 connection.addRequestProperty(entry.getKey(), entry.getValue());
             }
@@ -153,8 +153,8 @@ public class HTTPAppender extends AbstractAppender {
     private void nextEntry() throws IOException {
         if (zipOutputStream != null) {
             count++;
-            final MetaMap metaMap = metaDataHolder.getMetaData();
-            String fileName = metaMap.get("fileName");
+            final AttributeMap attributeMap = metaDataHolder.getMetaData();
+            String fileName = attributeMap.get("fileName");
             if (fileName == null) {
                 fileName = ModelStringUtil.zeroPad(3, String.valueOf(count)) + ".dat";
             }
@@ -180,8 +180,8 @@ public class HTTPAppender extends AbstractAppender {
                 responseCode = StroomStreamException.checkConnectionResponse(connection);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                final MetaMap metaMap = metaDataHolder.getMetaData();
-                log(SEND_LOG, metaMap, "SEND", forwardUrl, responseCode, byteCountOutputStream.getBytesWritten(), duration);
+                final AttributeMap attributeMap = metaDataHolder.getMetaData();
+                log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, byteCountOutputStream.getBytesWritten(), duration);
 
                 connection.disconnect();
                 connection = null;
@@ -238,9 +238,9 @@ public class HTTPAppender extends AbstractAppender {
 //        }
 //    }
 
-    public void log(final Logger logger, final MetaMap metaMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
+    public void log(final Logger logger, final AttributeMap attributeMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
         if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
-            final Map<String, String> filteredMap = metaMap.entrySet().stream()
+            final Map<String, String> filteredMap = attributeMap.entrySet().stream()
                     .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
             final String kvPairs = CSVFormatter.format(filteredMap);
@@ -268,12 +268,12 @@ public class HTTPAppender extends AbstractAppender {
     }
 
 
-    @PipelineProperty(description = "The URL to send data to")
+    @PipelineProperty(description = "The URL to send data to", displayPriority = 1)
     public void setForwardUrl(final String forwardUrl) {
         this.forwardUrl = forwardUrl;
     }
 
-    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout")
+    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout", displayPriority = 3)
     public void setConnectionTimeout(final String string) {
         connectionTimeout = null;
         if (string != null && !string.isEmpty()) {
@@ -281,17 +281,20 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
-    @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be")
+    @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be", displayPriority = 4)
     public void setForwardChunkSize(final String string) {
         this.forwardChunkSize = ModelStringUtil.parseIECByteSizeString(string);
     }
 
-    @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true")
+    @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true", displayPriority = 2)
     public void setUseCompression(final boolean useCompression) {
         this.useCompression = useCompression;
     }
 
-    @PipelineProperty(description = "Which meta data values will be logged in the send log", defaultValue = "guid,feed,system,environment,remotehost,remoteaddress")
+    @PipelineProperty(
+            description = "Which meta data values will be logged in the send log",
+            defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
+            displayPriority = 5)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);
     }

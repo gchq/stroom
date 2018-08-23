@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared.stepping;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.SharedDocRef;
 
 public class GetPipelineForStreamAction extends Action<SharedDocRef> {

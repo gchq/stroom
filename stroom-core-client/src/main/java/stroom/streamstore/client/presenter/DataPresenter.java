@@ -37,8 +37,7 @@ import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.StepLocation;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.Data;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Marker;
@@ -57,6 +56,11 @@ import java.util.List;
 import java.util.Map;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
+    private static final String META = "Meta";
+    private static final String META_DATA = "Meta Data";
+    private static final String CONTEXT = "Context";
+    private static final String ERROR = "Error";
+
     private final TabData errorTab = new TabDataImpl("Error");
     private final TabData dataTab = new TabDataImpl("Data");
     private final TabData metaTab = new TabDataImpl("Meta");
@@ -66,13 +70,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final ClientDispatchAsync dispatcher;
     private final PagerRows pageRows;
     private final PagerRows streamRows;
-    private final Map<StreamType, OffsetRange<Long>> streamTypeOffsetRangeMap = new HashMap<>();
+    private final Map<String, OffsetRange<Long>> streamTypeOffsetRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
 
     private boolean errorMarkerMode = true;
     private Long currentStreamId;
-    private StreamType currentStreamType;
-    private StreamType currentChildStreamType;
+    private String currentStreamType;
+    private String currentChildStreamType;
     private OffsetRange<Long> currentStreamRange = new OffsetRange<>(0L, 1L);
     private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
     private AbstractFetchDataResult lastResult;
@@ -84,7 +88,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private List<Highlight> highlights;
     private Long highlightStreamId;
     private Long highlightStreamNo;
-    private StreamType highlightChildStreamType;
+    private String highlightChildStreamType;
     private boolean playButtonVisible;
     private ClassificationUiHandlers classificationUiHandlers;
     private BeginSteppingHandler beginSteppingHandler;
@@ -139,17 +143,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Make sure tabs don't do anything in stepping mode.
         if (!steppingSource) {
             if (tab != null) {
-                if ("Meta".equals(tab.getLabel())) {
-                    fetchDataForCurrentStreamNo(StreamType.META);
-                } else if ("Context".equals(tab.getLabel())) {
-                    fetchDataForCurrentStreamNo(StreamType.CONTEXT);
-                } else if ("Error".equals(tab.getLabel())) {
+                if (META.equals(tab.getLabel())) {
+                    fetchDataForCurrentStreamNo(META_DATA);
+                } else if (CONTEXT.equals(tab.getLabel())) {
+                    fetchDataForCurrentStreamNo(CONTEXT);
+                } else if (ERROR.equals(tab.getLabel())) {
                     errorMarkerMode = true;
                     fetchDataForCurrentStreamNo(null);
                 } else {
                     // Turn off error marker mode if we are currently looking at
                     // an error and switching to the data tab.
-                    if (StreamType.ERROR.equals(currentStreamType) && errorMarkerMode) {
+                    if (ERROR.equals(currentStreamType) && errorMarkerMode) {
                         errorMarkerMode = false;
                     }
 
@@ -179,7 +183,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
-    private void fetchDataForCurrentStreamNo(final StreamType childStreamType) {
+    private void fetchDataForCurrentStreamNo(final String childStreamType) {
         currentStreamRange = new OffsetRange<>(currentStreamRange.getOffset(), 1L);
 
         streamTypeOffsetRangeMap.put(currentChildStreamType, currentPageRange);
@@ -192,7 +196,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         update(true);
     }
 
-    public void fetchData(final boolean fireEvents, final Long streamId, final StreamType childStreamType) {
+    public void fetchData(final boolean fireEvents, final Long streamId, final String childStreamType) {
         this.currentStreamId = streamId;
         this.currentChildStreamType = childStreamType;
         currentStreamRange = new OffsetRange<>(0L, 1L);
@@ -202,9 +206,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         update(fireEvents);
     }
 
-    public void fetchData(final Stream stream) {
+    public void fetchData(final Data stream) {
         this.currentStreamId = stream.getId();
-        this.currentStreamType = stream.getStreamType();
+        this.currentStreamType = stream.getTypeName();
         currentStreamRange = new OffsetRange<>(0L, 1L);
         currentPageRange = new OffsetRange<>(0L, 100L);
         streamTypeOffsetRangeMap.clear();
@@ -314,7 +318,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
-    private void updateTabs(final StreamType streamType, final List<StreamType> availableChildStreamTypes) {
+    private void updateTabs(final String streamType, final List<String> availableChildStreamTypes) {
         if (streamType == null) {
             // Hide all links.
             hideTab(errorTab, true);
@@ -335,13 +339,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         } else {
             // Highlight the appropriate link.
-            if (errorMarkerMode && StreamType.ERROR.equals(streamType)) {
+            if (errorMarkerMode && ERROR.equals(streamType)) {
                 getView().getTabBar().selectTab(errorTab);
                 showMarkerPresenter();
-            } else if (StreamType.META.equals(streamType)) {
+            } else if (META_DATA.equals(streamType)) {
                 getView().getTabBar().selectTab(metaTab);
                 showTextPresenter();
-            } else if (StreamType.CONTEXT.equals(streamType)) {
+            } else if (CONTEXT.equals(streamType)) {
                 getView().getTabBar().selectTab(contextTab);
                 showTextPresenter();
             } else {
@@ -350,11 +354,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             }
 
             // Show only applicable links.
-            hideTab(errorTab, !StreamType.ERROR.equals(currentStreamType));
+            hideTab(errorTab, !ERROR.equals(currentStreamType));
             hideTab(dataTab, false);
             if (availableChildStreamTypes != null) {
-                hideTab(metaTab, !availableChildStreamTypes.contains(StreamType.META));
-                hideTab(contextTab, !availableChildStreamTypes.contains(StreamType.CONTEXT));
+                hideTab(metaTab, !availableChildStreamTypes.contains(META_DATA));
+                hideTab(contextTab, !availableChildStreamTypes.contains(CONTEXT));
             } else {
                 hideTab(metaTab, true);
                 hideTab(contextTab, true);
@@ -446,7 +450,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void showStepSource(final Integer taskOffset, final StepLocation stepLocation,
-                               final StreamType childStreamType, final List<Highlight> highlights) {
+                               final String childStreamType, final List<Highlight> highlights) {
         this.highlights = highlights;
         this.highlightStreamId = stepLocation.getStreamId();
         this.highlightStreamNo = stepLocation.getStreamNo() - 1;

@@ -17,50 +17,31 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import stroom.entity.CachingEntityManager;
-import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.importexport.ImportExportHelper;
-import stroom.security.SecurityContext;
-import stroom.persist.EntityManagerSupport;
-import stroom.task.TaskHandler;
-
-import javax.inject.Named;
+import stroom.task.api.TaskHandler;
 
 public class FeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(FeedService.class).to(FeedServiceImpl.class);
+        bind(FeedStore.class).to(FeedStoreImpl.class);
+        bind(FeedDocCache.class).to(FeedDocCacheImpl.class);
         bind(RemoteFeedService.class).annotatedWith(Names.named("remoteFeedService")).to(RemoteFeedServiceImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.feed.FetchSupportedEncodingsActionHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Feed.ENTITY_TYPE).to(stroom.feed.FeedServiceImpl.class);
-
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
-    }
-
-    @Provides
-    @Named("cachedFeedService")
-    public FeedService cachedFeedService(final CachingEntityManager entityManager,
-                                         final EntityManagerSupport entityManagerSupport,
-                                         final ImportExportHelper importExportHelper,
-                                         final SecurityContext securityContext) {
-        return new FeedServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
+        entityServiceByTypeBinder.addBinding(FeedDoc.DOCUMENT_TYPE).to(FeedStoreImpl.class);
     }
 }

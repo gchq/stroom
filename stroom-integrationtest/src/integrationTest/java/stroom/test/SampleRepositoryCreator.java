@@ -38,7 +38,7 @@ public final class SampleRepositoryCreator {
 //        nodeCache = (NodeCache) appContext.getInstance("nodeCache");
 //
 //        // Force nodes to be created
-//        nodeCache.getDefaultNode();
+//        nodeCache.get();
 //
 //        feedService = (FeedService) appContext.getInstance("feedService");
 //

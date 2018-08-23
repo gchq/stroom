@@ -18,26 +18,26 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
-import stroom.feed.MetaMap;
+import stroom.datafeed.BufferFactory;
+import stroom.feed.FeedDocCache;
+import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.streamstore.StreamStore;
-import stroom.util.io.StreamProgressMonitor;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Class that reads a nested directory tree of stroom zip files.
@@ -53,54 +53,60 @@ import java.util.List;
 final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
 
-    private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
+    private final ProxyFileHandler feedFileProcessorHelper;
 
     private final static int DEFAULT_MAX_AGGREGATION = 10000;
     final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistic;
     private final int maxAggregation;
     private final long maxStreamSize;
     private final boolean aggregate = true;
-    private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
+    private final ProxyFileHandler proxyFileHandler;
     private volatile boolean stop = false;
 
     @Inject
     ProxyFileProcessorImpl(final StreamStore streamStore,
-                           @Named("cachedFeedService") final FeedService feedService,
+                           final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
-                           final StroomPropertyService propertyService) {
+                           final ProxyFileProcessorConfig proxyFileProcessorConfig,
+                           final BufferFactory bufferFactory) {
         this(
                 streamStore,
-                feedService,
+                feedDocCache,
                 metaDataStatistic,
-                propertyService.getIntProperty("stroom.maxAggregation", DEFAULT_MAX_AGGREGATION),
-                getByteSize(propertyService.getProperty("stroom.maxStreamSize"), DEFAULT_MAX_STREAM_SIZE)
+                proxyFileProcessorConfig.getMaxAggregation(),
+                proxyFileProcessorConfig.getMaxStreamSize(),
+                bufferFactory
         );
     }
 
     ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedService feedService,
+                           final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
                            final int maxAggregation,
-                           final long maxStreamSize) {
+                           final long maxStreamSize,
+                           final BufferFactory bufferFactory) {
         this.streamStore = streamStore;
-        this.feedService = feedService;
+        this.feedDocCache = feedDocCache;
         this.metaDataStatistic = metaDataStatistic;
         this.maxAggregation = maxAggregation;
         this.maxStreamSize = maxStreamSize;
+
+        feedFileProcessorHelper = new ProxyFileHandler(bufferFactory);
+        proxyFileHandler = new ProxyFileHandler(bufferFactory);
     }
 
     @Override
     public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
-        final Feed feed = feedService.loadByName(feedName);
+        final Optional<FeedDoc> optional = feedDocCache.get(feedName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
 
-        if (feed == null) {
+        if (!optional.isPresent()) {
             LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
             return;
         }
@@ -110,6 +116,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         }
 
         // We don't want to aggregate reference feeds.
+        final FeedDoc feed = optional.get();
         final boolean oneByOne = feed.isReference() || !aggregate;
 
         List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
@@ -166,24 +173,24 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final FeedDoc feed) {
         // We don't want to aggregate reference feeds.
         final boolean oneByOne = feed.isReference() || !aggregate;
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedService, metaDataStatistic, feed, feed.getStreamType());
+                feedDocCache, metaDataStatistic, feed.getName(), feed.getStreamType());
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 
-        final MetaMap globalMetaMap = new MetaMap();
-        globalMetaMap.put(StroomHeaderArguments.FEED, feed.getName());
+        final AttributeMap globalAttributeMap = new AttributeMap();
+        globalAttributeMap.put(StroomHeaderArguments.FEED, feed.getName());
 
-        try {
-            streamTargetStroomStreamHandler.handleHeader(globalMetaMap);
-        } catch (final IOException ioEx) {
-            streamTargetStroomStreamHandler.close();
-            throw new RuntimeException(ioEx);
-        }
+//        try {
+            streamTargetStroomStreamHandler.handleHeader(globalAttributeMap);
+//        } catch (final IOException ioEx) {
+//            streamTargetStroomStreamHandler.close();
+//            throw new RuntimeException(ioEx);
+//        }
 
         final List<StreamTargetStroomStreamHandler> list = new ArrayList<>();
         list.add(streamTargetStroomStreamHandler);

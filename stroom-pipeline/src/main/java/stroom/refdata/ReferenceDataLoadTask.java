@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 import stroom.util.shared.VoidResult;
 
 public class ReferenceDataLoadTask extends ServerTask<VoidResult> {

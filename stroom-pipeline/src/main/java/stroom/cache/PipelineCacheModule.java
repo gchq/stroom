@@ -28,12 +28,12 @@ public class PipelineCacheModule extends AbstractModule {
         bind(SchemaPool.class).to(SchemaPoolImpl.class);
         bind(SchemaLoader.class).to(SchemaLoaderImpl.class);
         bind(ParserFactoryPool.class).to(ParserFactoryPoolImpl.class);
-        bind(XSLTPool.class).to(XSLTPoolImpl.class);
+        bind(XsltPool.class).to(XsltPoolImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(SchemaPoolImpl.class);
         clearableBinder.addBinding().to(ParserFactoryPoolImpl.class);
-        clearableBinder.addBinding().to(XSLTPoolImpl.class);
+        clearableBinder.addBinding().to(XsltPoolImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(SchemaPoolImpl.class);

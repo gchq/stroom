@@ -16,10 +16,9 @@
 
 package stroom.pipeline.shared;
 
-import stroom.entity.shared.Action;
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamType;
+import stroom.task.shared.Action;
+import stroom.data.meta.api.FindDataCriteria;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +30,8 @@ public class PipelineStepAction extends Action<SteppingResult> {
     /**
      * This is what chooses the input to the translation.
      */
-    private FindStreamCriteria criteria;
-    private StreamType childStreamType;
+    private FindDataCriteria criteria;
+    private String childStreamType;
     private StepLocation stepLocation;
     private StepType stepType;
 
@@ -41,19 +40,19 @@ public class PipelineStepAction extends Action<SteppingResult> {
     private DocRef pipeline;
     private Map<String, String> code;
 
-    public FindStreamCriteria getCriteria() {
+    public FindDataCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(final FindStreamCriteria criteria) {
+    public void setCriteria(final FindDataCriteria criteria) {
         this.criteria = criteria;
     }
 
-    public StreamType getChildStreamType() {
+    public String getChildStreamType() {
         return childStreamType;
     }
 
-    public void setChildStreamType(final StreamType childStreamType) {
+    public void setChildStreamType(final String childStreamType) {
         this.childStreamType = childStreamType;
     }
 

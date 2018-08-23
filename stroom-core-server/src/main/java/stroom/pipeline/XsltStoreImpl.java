@@ -17,6 +17,8 @@
 
 package stroom.pipeline;
 
+import stroom.db.migration.doc.pipeline.OldXslt;
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
@@ -25,7 +27,6 @@ import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
@@ -160,36 +161,34 @@ class XsltStoreImpl implements XsltStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    XsltDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                XsltDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldXSLT oldXslt = new OldXSLT();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldXslt, dataMap);
+                } else {
+                    final OldXslt oldXslt = new OldXslt();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldXslt, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new XsltDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
+                    document = new XsltDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
 
-                        document.setDescription(oldXslt.getDescription());
-                    }
+                    document.setDescription(oldXslt.getDescription());
+                }
 
-                    result = serialiser.write(document);
-                    if (dataMap.containsKey("data.xsl")) {
-                        result.put("xsl", dataMap.remove("data.xsl"));
-                    }
+                result = serialiser.write(document);
+                if (dataMap.containsKey("data.xsl")) {
+                    result.put("xsl", dataMap.remove("data.xsl"));
                 }
 
             } catch (final IOException | RuntimeException e) {

@@ -17,9 +17,9 @@
 package stroom.streamtask;
 
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

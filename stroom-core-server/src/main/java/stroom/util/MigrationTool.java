@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -36,7 +37,7 @@ public class MigrationTool {
     static boolean update;
 
     public static void main(final String[] args)
-            throws SQLException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
+            throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         final Map<String, String> map = ArgsUtil.parse(args);
 
         final String url = map.get("jdbcDriverUrl");
@@ -56,7 +57,7 @@ public class MigrationTool {
                     "Must provide jdbcDriverUrl, jdbcDriverClassName, username, password, script");
         }
 
-        DriverManager.registerDriver((Driver) Class.forName(clazz).newInstance());
+        DriverManager.registerDriver((Driver) Class.forName(clazz).getConstructor().newInstance());
 
         final Connection connection = DriverManager.getConnection(url, username, password);
         connection.setAutoCommit(true);

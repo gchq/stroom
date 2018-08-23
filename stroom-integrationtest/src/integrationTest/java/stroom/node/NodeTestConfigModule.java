@@ -17,12 +17,11 @@
 package stroom.node;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.StroomEntityManager;
 
 public class NodeTestConfigModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(NodeConfig.class).to(NodeConfigForTesting.class);
+        bind(NodeCreator.class).to(NodeCreatorForTesting.class);
     }
 
 //    @Bean

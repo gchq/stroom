@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -19,17 +18,11 @@ import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 
 class WrappedComponent extends Component {
-    render() {
-        return this.props.children;
-    }
+  render() {
+    return this.props.children;
+  }
 }
 
-let DragDropComponent = DragDropContext(HTML5Backend)(WrappedComponent)
+const DragDropComponent = DragDropContext(HTML5Backend)(WrappedComponent);
 
-export const DragDropDecorator = (storyFn) => {
-    return (
-        <DragDropComponent>
-            {storyFn()}
-        </DragDropComponent>
-    )
-}
+export const DragDropDecorator = storyFn => <DragDropComponent>{storyFn()}</DragDropComponent>;

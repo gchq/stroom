@@ -26,7 +26,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -163,17 +163,18 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
     }
 
-    @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.")
+    @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+            displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
 
-    @PipelineProperty(description = "Choose the name of the file to write.")
+    @PipelineProperty(description = "Choose the name of the file to write.", displayPriority = 2)
     public void setFileName(final String fileNamePattern) {
         this.fileNamePattern = fileNamePattern;
     }
 
-    @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.")
+    @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.", displayPriority = 3)
     public void setRolledFileName(final String rolledFileNamePattern) {
         this.rolledFileNamePattern = rolledFileNamePattern;
     }

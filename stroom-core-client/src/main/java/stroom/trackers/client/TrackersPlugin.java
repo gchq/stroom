@@ -27,9 +27,9 @@ import stroom.cell.clickable.client.HyperlinkTarget;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.ClientPropertyCache;
+import stroom.properties.global.client.ClientPropertyCache;
 import stroom.node.client.NodeToolsPlugin;
-import stroom.node.shared.ClientProperties;
+import stroom.properties.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
@@ -63,7 +63,7 @@ public class TrackersPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem streamTaskMenuItem;
                         final SvgPreset icon = SvgPresets.MONITORING;
-                        final String stroomUi = result.get(ClientProperties.STROOM_UI_URL) + "/trackers";
+                        final String stroomUi = result.get(ClientProperties.STROOM_UI_URL) + "/processing";
                         if (stroomUi != null && stroomUi.trim().length() > 0) {
                             streamTaskMenuItem = new IconMenuItem(5, icon, null, "Stream Tasks", null, true, () -> {
                                 final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

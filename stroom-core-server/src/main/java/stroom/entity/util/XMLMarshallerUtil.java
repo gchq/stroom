@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 public final class XMLMarshallerUtil {
@@ -53,8 +54,8 @@ public final class XMLMarshallerUtil {
                 Object clone;
 
                 try {
-                    clone = clazz.newInstance();
-                } catch (final InstantiationException | IllegalAccessException e) {
+                    clone = clazz.getConstructor().newInstance();
+                } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                     return obj;
                 }
 

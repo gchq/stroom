@@ -1,0 +1,132 @@
+.app-container {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.app-chrome {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  position:absolute;
+}
+
+.app-chrome__sidebar {
+  height: inherit;
+  position:relative;
+}
+
+.app-chrome__sidebar-menu {
+  width: 15rem;
+  overflow-y: auto;
+  padding-top: 40px;
+}
+
+.app-chrome__sidebar__toggle {
+  color: #ff6f00 !important;
+  position: absolute;
+}
+
+.app-chrome__sidebar__toggle_collapsed {
+  position: relative;
+}
+
+.app-chrome__sidebar__buttons .button {
+  color: white !important;
+}
+
+.app-chrome__sidebar_header {
+  position: absolute;
+}
+
+.sidebar__menu-item.nav {
+  padding: 0.4rem;
+  color: white;
+  outline: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.sidebar__menu-item.doc {
+  color: #cacbcb;
+  padding: 0.1rem;
+  color: white;
+  outline: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.sidebar__menu-item.doc.dnd-over {
+  text-decoration: italic;
+}
+
+.sidebar__menu-item.doc.can-drop {
+  color: green;
+}
+.sidebar__menu-item.doc.cannot-drop {
+  color: red;
+}
+.app-chrome__content {
+  position:relative;
+  width: 100%;
+  height: 100%;
+}
+
+.content-tabs {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-tabs__content {
+  position:absolute;
+  width:100%;
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.app-chrome__content .ui.grid {
+  margin: 0;
+}
+
+.content-tabs__grid {
+  display:block !important;
+}
+
+.app-chrome__content .ui.grid .column {
+  padding: 0.3rem !important;
+}
+
+.content-tabs__close-btn {
+  border: none;
+}
+
+.content-tabs__close-btn:hover {
+  color: red;
+}
+
+.ui.header:first-child {
+  padding-top: 0.5rem !important; // semantic UI has a strange fixation with negative margins
+}
+
+.app-chrome__content .ui.grid h3 {
+  // Correctly align the title
+  // padding-top: 0.3rem !important;
+}
+
+.sidebar__logo {
+  display: inline;
+  align-items: center;
+  position: absolute;
+  left: 40px;
+  // position: relative;
+  // top: 0.3rem;
+  // width: 90px !important;
+}

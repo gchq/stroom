@@ -1,0 +1,22 @@
+ext.moduleName = 'stroom.externaldoc.server'
+
+dependencies {
+    compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-core-server')
+    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-util-shared')
+
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.jetty_http
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.stroomQueryAudit
+    compile libs.stroomQueryAuthorisation
+    compile libs.ws_rs_api
+}

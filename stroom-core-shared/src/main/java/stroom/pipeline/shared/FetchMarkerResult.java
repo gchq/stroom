@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
@@ -34,9 +33,9 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchMarkerResult(final StreamType streamType, final String classification,
+    public FetchMarkerResult(final String streamType, final String classification,
                              final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                             final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes,
+                             final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes,
                              final SharedList<Marker> markers) {
         super(streamType, classification, streamRange, streamRowCount, pageRange, pageRowCount,
                 availableChildStreamTypes);

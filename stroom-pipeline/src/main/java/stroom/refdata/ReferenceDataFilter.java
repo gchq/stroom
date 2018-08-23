@@ -31,11 +31,11 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.refdata.store.FastInfosetValue;
 import stroom.refdata.store.MapDefinition;
-import stroom.refdata.util.PooledByteBufferOutputStream;
 import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
+import stroom.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.CharBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -104,7 +104,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         or
             <value>UK</value>
      */
-    public static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
+    private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
 
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String MAP_ELEMENT = "map";
@@ -503,12 +503,16 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         super.endProcessing();
     }
 
-    @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?", defaultValue = "false")
+    @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?",
+            defaultValue = "false",
+            displayPriority = 1)
     public void setWarnOnDuplicateKeys(final boolean warnOnDuplicateKeys) {
         this.warnOnDuplicateKeys = warnOnDuplicateKeys;
     }
 
-    @PipelineProperty(description = "Allow duplicate keys to override existing values?", defaultValue = "true")
+    @PipelineProperty(description = "Allow duplicate keys to override existing values?",
+            defaultValue = "true",
+            displayPriority = 2)
     public void setOverrideExistingValues(final boolean overrideExistingValues) {
         this.overrideExistingValues = overrideExistingValues;
     }

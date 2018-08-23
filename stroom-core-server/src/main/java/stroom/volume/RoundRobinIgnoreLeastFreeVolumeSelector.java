@@ -16,7 +16,7 @@
 
 package stroom.volume;
 
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 
 import java.util.List;
@@ -27,8 +27,8 @@ public class RoundRobinIgnoreLeastFreeVolumeSelector implements VolumeSelector {
     private final RoundRobinVolumeSelector roundRobinVolumeSelector = new RoundRobinVolumeSelector();
 
     @Override
-    public Volume select(final List<Volume> list) {
-        final List<Volume> filtered = VolumeListUtil.removeVolumesWithoutValidState(list);
+    public VolumeEntity select(final List<VolumeEntity> list) {
+        final List<VolumeEntity> filtered = VolumeListUtil.removeVolumesWithoutValidState(list);
         if (filtered.size() == 0) {
             return roundRobinVolumeSelector.select(list);
         }
@@ -38,8 +38,8 @@ public class RoundRobinIgnoreLeastFreeVolumeSelector implements VolumeSelector {
 
         // Remove the volume with the least amount of free space.
         double smalledFree = Double.MAX_VALUE;
-        Volume smallest = null;
-        for (final Volume volume : filtered) {
+        VolumeEntity smallest = null;
+        for (final VolumeEntity volume : filtered) {
             final VolumeState volumeState = volume.getVolumeState();
             final double free = volumeState.getBytesFree();
             if (free < smalledFree) {

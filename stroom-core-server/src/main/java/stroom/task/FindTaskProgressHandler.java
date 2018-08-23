@@ -19,6 +19,7 @@ package stroom.task;
 import stroom.entity.shared.ResultList;
 import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.TaskProgress;

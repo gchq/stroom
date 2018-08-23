@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
@@ -32,11 +31,11 @@ public class FetchDataResult extends AbstractFetchDataResult {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchDataResult(final StreamType streamType, final String classification,
+    public FetchDataResult(final String streamTypeName, final String classification,
                            final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                           final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes, final String data,
+                           final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes, final String data,
                            final boolean html) {
-        super(streamType, classification, streamRange, streamRowCount, pageRange, pageRowCount,
+        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount,
                 availableChildStreamTypes);
         this.data = data;
         this.html = html;

@@ -17,8 +17,9 @@
 
 package stroom.pipeline;
 
+import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.EntityServiceException;
-import stroom.feed.FeedService;
+import stroom.feed.FeedProperties;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,21 +33,20 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.StreamStore;
-import stroom.streamtask.StreamProcessorService;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
-class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
+class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipelineAction, AbstractFetchDataResult> {
     private final Security security;
+    private final DataFetcher dataFetcher;
 
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
-                                 final FeedService feedService,
-                                 final StreamProcessorService streamProcessorService,
+                                 final FeedProperties feedProperties,
                                  final Provider<FeedHolder> feedHolderProvider,
                                  final Provider<MetaDataHolder> metaDataHolderProvider,
                                  final Provider<PipelineHolder> pipelineHolderProvider,
@@ -58,9 +58,8 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final StreamEventLog streamEventLog,
                                  final Security security,
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
-        super(streamStore,
-                feedService,
-                streamProcessorService,
+        dataFetcher = new DataFetcher(streamStore,
+                feedProperties,
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,
@@ -87,7 +86,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
             final Long streamId = action.getStreamId();
 
             if (streamId != null) {
-                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                return dataFetcher.getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
                         action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
             }
 

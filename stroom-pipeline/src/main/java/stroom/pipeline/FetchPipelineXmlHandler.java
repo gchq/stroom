@@ -19,8 +19,8 @@ package stroom.pipeline;
 import stroom.pipeline.shared.FetchPipelineXmlAction;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedString;
 
 import javax.inject.Inject;

@@ -26,7 +26,7 @@ import stroom.task.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.guice.StroomBeanStore;
-import stroom.task.TaskIdFactory;
+import stroom.task.api.TaskIdFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;

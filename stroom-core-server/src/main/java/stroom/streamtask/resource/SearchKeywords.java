@@ -22,7 +22,7 @@ import com.google.common.base.Strings;
 import stroom.entity.shared.Sort;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 
 import java.util.Arrays;
 
@@ -48,8 +48,8 @@ public class SearchKeywords {
 
     static final String SORT_NEXT = SORT + DELIMITER + NEXT;
 
-    static void addFiltering(String filter, FindStreamProcessorFilterCriteria criteria){
-        if(filter != null){
+    static void addFiltering(String filter, FindStreamProcessorFilterCriteria criteria) {
+        if (filter != null) {
             String[] keywords = filter.split(" ");
 
             Arrays.stream(keywords)
@@ -60,31 +60,28 @@ public class SearchKeywords {
                     .filter(keyword -> !keyword.contains(DELIMITER))
                     .collect(joining());
 
-            if(!Strings.isNullOrEmpty(plainOldFilter)) {
+            if (!Strings.isNullOrEmpty(plainOldFilter)) {
                 criteria.setPipelineNameFilter(plainOldFilter);
             }
         }
     }
 
 
-    private static void add(String special, FindStreamProcessorFilterCriteria criteria){
+    private static void add(String special, FindStreamProcessorFilterCriteria criteria) {
         String[] terms = special.split(DELIMITER);
-        if(terms.length == 2) {
+        if (terms.length == 2) {
             if (terms[0].equalsIgnoreCase(IS)) {
                 if (terms[1].equalsIgnoreCase(ENABLED)) {
                     criteria.setStreamProcessorFilterEnabled(true);
                 } else if (terms[1].equalsIgnoreCase(DISABLED)) {
                     criteria.setStreamProcessorFilterEnabled(false);
-                }
-
-                else if (terms[1].equalsIgnoreCase(COMPLETE)) {
-                    criteria.setStatus(StreamProcessorFilterTracker.COMPLETE);
+                } else if (terms[1].equalsIgnoreCase(COMPLETE)) {
+                    criteria.setStatus(ProcessorFilterTracker.COMPLETE);
                 } else if (terms[1].equalsIgnoreCase(INCOMPLETE)) {
                     criteria.setStatus("");
                 }
-            }
-            else if (terms[0].equalsIgnoreCase(SORT)) {
-                if(terms[1].equalsIgnoreCase(NEXT)){
+            } else if (terms[0].equalsIgnoreCase(SORT)) {
+                if (terms[1].equalsIgnoreCase(NEXT)) {
                     // We don't want any other sorts happening here, so we'll get rid of them.
                     criteria.removeSorts();
                     criteria.addSort(FindStreamTaskCriteria.FIELD_PRIORITY, DESCENDING, false);

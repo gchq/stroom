@@ -27,7 +27,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.TimeUnit;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
@@ -43,7 +43,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, StreamDataSource.STREAM_STORE_DOC_REF, result.getFields()));
+        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, MetaDataSource.STREAM_STORE_DOC_REF, result.getFields()));
     }
 
     void read(final DataRetentionRule rule) {

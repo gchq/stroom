@@ -9,10 +9,14 @@ const ROExpressionTerm = ({ term, isEnabled, expressionId }) => {
   if (!isEnabled) {
     className += ' expression-item--disabled';
   }
+  let value = term.value;
+  if (term.condition === 'IN_DICTIONARY' && term.value) {
+    value = term.value.name;
+  }
 
   return (
     <div className={className}>
-      {term.field} {term.condition} {term.value}
+      {term.field} {term.condition} {value}
     </div>
   );
 };

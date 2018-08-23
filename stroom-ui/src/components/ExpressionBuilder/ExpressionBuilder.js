@@ -16,32 +16,64 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, branch, renderComponent, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
+import { Loader } from 'semantic-ui-react';
 
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
 
-import { withDataSource } from './DataSource';
-import { withExpression } from './withExpression';
-
 import { Checkbox } from 'semantic-ui-react';
-
-import { actionCreators } from './redux';
 
 import lineElementCreators from './expressionLineCreators';
 
-const withSetEditableByUser = withState('editableByUser', 'setEditableByUser', false);
+const withSetEditableByUser = withState('inEditMode', 'setEditableByUser', false);
+
+const ROExpressionBuilder = ({ expressionId, expression }) => (
+  <LineContainer
+    lineContextId={`expression-lines-${expressionId}`}
+    lineElementCreators={lineElementCreators}
+  >
+    <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
+  </LineContainer>
+);
+
+ROExpressionBuilder.propTypes = {
+  expressionId: PropTypes.string.isRequired,
+  expression: PropTypes.object.isRequired,
+};
+
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      expression: state.expressionBuilder.expressions[props.expressionId],
+    }),
+    {
+      // actions
+    },
+  ),
+  withSetEditableByUser,
+  lifecycle({
+    componentDidMount() {
+      this.props.setEditableByUser(this.props.editMode);
+    },
+  }),
+  branch(
+    ({ expression }) => !expression,
+    renderComponent(() => <Loader active>Loading Expression</Loader>),
+  ),
+  withProps(({ showModeToggle, dataSource }) => ({
+    showModeToggle: showModeToggle && !!dataSource,
+  })),
+);
 
 const ExpressionBuilder = ({
   expressionId,
   dataSource,
   expression,
-  isEditableSystemSet,
-
-  // withSetEditableByUser
-  editableByUser,
+  showModeToggle,
+  inEditMode,
   setEditableByUser,
 }) => {
   const roOperator = (
@@ -58,51 +90,38 @@ const ExpressionBuilder = ({
     />
   );
 
-  let theComponent;
-  if (isEditableSystemSet) {
-    theComponent = (
-      <div>
-        <Checkbox
-          label="Edit Mode"
-          toggle
-          checked={editableByUser}
-          onChange={() => setEditableByUser(!editableByUser)}
-        />
-        {editableByUser ? editOperator : roOperator}
-      </div>
-    );
-  } else {
-    theComponent = roOperator;
-  }
-
   return (
     <LineContainer
+      className="Expression-editor__graph"
       lineContextId={`expression-lines-${expressionId}`}
       lineElementCreators={lineElementCreators}
     >
-      {theComponent}
+      {showModeToggle ? (
+        <Checkbox
+          label="Edit Mode"
+          toggle
+          checked={inEditMode}
+          onChange={() => setEditableByUser(!inEditMode)}
+        />
+      ) : (
+        undefined
+      )}
+      {inEditMode ? editOperator : roOperator}
     </LineContainer>
   );
 };
 
-ExpressionBuilder.propTypes = {
-  // Set by container
+const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
+
+EnhancedExpressionBuilder.propTypes = {
+  dataSource: PropTypes.object,
   expressionId: PropTypes.string.isRequired,
-  isEditableSystemSet: PropTypes.bool.isRequired,
-
-  // withDataSource
-  dataSource: PropTypes.object.isRequired,
-
-  // withExpression
-  expression: PropTypes.object.isRequired,
-
-  // withSetEditableByUser
-  setEditableByUser: PropTypes.func.isRequired,
-  editableByUser: PropTypes.bool.isRequired,
+  showModeToggle: PropTypes.bool.isRequired,
+  editMode: PropTypes.bool,
 };
 
-ExpressionBuilder.defaultProps = {
-  isEditableSystemSet: false,
+EnhancedExpressionBuilder.defaultProps = {
+  showModeToggle: false,
 };
 
-export default compose(withDataSource(), withExpression(), withSetEditableByUser)(ExpressionBuilder);
+export default EnhancedExpressionBuilder;

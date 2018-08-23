@@ -1,9 +1,9 @@
 package stroom.pipeline.state;
 
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 
 public interface MetaDataProvider {
     String get(String key);
 
-    MetaMap getMetaData();
+    AttributeMap getMetaData();
 }

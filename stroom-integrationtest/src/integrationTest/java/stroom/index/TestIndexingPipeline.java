@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import stroom.docref.DocRef;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -39,8 +40,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
-import stroom.streamstore.shared.Stream;
+import stroom.data.meta.api.Data;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -50,6 +50,9 @@ import javax.inject.Provider;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     private static final String PIPELINE = "TestIndexingPipeline/TestIndexingPipeline.Pipeline.data.xml";
@@ -112,7 +115,9 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Set the stream for decoration purposes.
             final long id = (long) (Math.random() * 1000);
-            final Stream stream = Stream.createStub(id);
+
+            final Data stream = mock(Data.class);
+            when(stream.getId()).thenReturn(id);
             streamHolderProvider.get().setStream(stream);
 
             // Create the pipeline.

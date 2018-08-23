@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.Period;
 import stroom.policy.DataRetentionExecutor.Progress;
 import stroom.policy.DataRetentionExecutor.Tracker;
@@ -28,7 +29,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class TestDataRetentionExecutor {
     @Test
     public void testTracker() {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");
+        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final DataRetentionRule rule = createRule(1, builder.build(), 1, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
         Tracker tracker = new Tracker(100L, dataRetentionPolicy);

@@ -21,12 +21,11 @@ import org.slf4j.LoggerFactory;
 import stroom.jobsystem.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;
-import stroom.task.TaskCallback;
-import stroom.task.TaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.TaskCallback;
+import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

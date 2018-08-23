@@ -17,6 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.docref.SharedObject;
+import stroom.task.shared.Action;
 
 public class FindAction<C extends BaseCriteria, E extends SharedObject> extends Action<ResultList<E>>
         implements HasCriteria<C> {

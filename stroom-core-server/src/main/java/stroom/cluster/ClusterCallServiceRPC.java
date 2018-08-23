@@ -17,6 +17,7 @@
 package stroom.cluster;
 
 import com.caucho.hessian.server.HessianServlet;
+import stroom.cluster.api.ClusterCallService;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;
@@ -26,7 +27,7 @@ public class ClusterCallServiceRPC extends HessianServlet implements ClusterCall
     private final ClusterCallService clusterCallService;
 
     @Inject
-    public ClusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
+    ClusterCallServiceRPC(@Named("clusterCallServiceLocal") final ClusterCallService clusterCallService) {
         this.clusterCallService = clusterCallService;
     }
 

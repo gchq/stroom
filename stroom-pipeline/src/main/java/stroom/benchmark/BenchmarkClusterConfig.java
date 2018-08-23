@@ -1,13 +1,13 @@
 package stroom.benchmark;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 public class BenchmarkClusterConfig {
     private final int streamCount;
     private final int recordCount;
     private final int concurrentWriters;
 
-    BenchmarkClusterConfig(final StroomPropertyService propertyService) {
+    BenchmarkClusterConfig(final PropertyService propertyService) {
         this.streamCount = propertyService.getIntProperty("stroom.benchmark.streamCount", 0);
         this.recordCount = propertyService.getIntProperty("stroom.benchmark.recordCount", 0);
         this.concurrentWriters = propertyService.getIntProperty("stroom.benchmark.concurrentWriters", 0);

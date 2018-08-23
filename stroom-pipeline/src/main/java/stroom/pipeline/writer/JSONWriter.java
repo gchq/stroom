@@ -309,13 +309,17 @@ public class JSONWriter extends AbstractWriter {
         return indentOutput;
     }
 
-    @PipelineProperty(description = "Should output JSON be indented and include new lines (pretty printed)?", defaultValue = "false")
+    @PipelineProperty(
+            description = "Should output JSON be indented and include new lines (pretty printed)?",
+            defaultValue = "false",
+            displayPriority = 1)
     public void setIndentOutput(final boolean indentOutput) {
         this.indentOutput = indentOutput;
     }
 
     @Override
-    @PipelineProperty(description = "The output character encoding to use.", defaultValue = "UTF-8")
+    @PipelineProperty(
+            description = "The output character encoding to use.", defaultValue = "UTF-8", displayPriority = 2)
     public void setEncoding(final String encoding) {
         super.setEncoding(encoding);
     }

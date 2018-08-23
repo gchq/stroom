@@ -17,26 +17,25 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
-import { withNotes } from '@storybook/addon-notes';
 
-import { connect } from 'react-redux';
-
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import { ExpressionTerm, ExpressionOperator, ExpressionBuilder } from './index';
+import {
+  ExpressionTerm,
+  ExpressionOperator,
+  ExpressionBuilder,
+  actionCreators as expressionBuilderActionCreators,
+} from './index';
 
-import { actionCreators as expressionActionCreators } from './redux';
-import { actionCreators as dataSourceActionCreators } from './DataSource';
-import { actionCreators as docExplorerActionCreators, testTree } from 'components/DocExplorer';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer';
+import { testTree, testDocRefsTypes } from 'components/FolderExplorer/test';
 
-const { expressionChanged } = expressionActionCreators;
-const { receiveDataSource } = dataSourceActionCreators;
-const { receivedDocTree } = docExplorerActionCreators;
+const { expressionChanged } = expressionBuilderActionCreators;
 
 import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
 
 import {
   testExpression,
@@ -49,29 +48,69 @@ import {
 
 import { testDataSource } from './dataSource.testData';
 
-import markdown from './expressionBuilder.md';
-
 storiesOf('Expression Builder', module)
+  .addDecorator(PollyDecorator({
+    documentTree: testTree,
+    docRefTypes: testDocRefsTypes,
+  }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receivedDocTree(testTree));
-    store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
+    store.dispatch(expressionChanged('populatedExNoDs', testExpression));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Populated Editable', () => (
-    <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="populatedExEdit" />
+    <ExpressionBuilder
+      showModeToggle
+      dataSourceUuid="testDs"
+      expressionId="populatedExEdit"
+      dataSource={testDataSource}
+    />
   ))
   .add('Populated ReadOnly', () => (
-    <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedExRO" />
+    <ExpressionBuilder
+      dataSourceUuid="testDs"
+      expressionId="populatedExRO"
+      dataSource={testDataSource}
+    />
   ))
   .add('Simplest Editable', () => (
-    <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="simplestEx" />
+    <ExpressionBuilder
+      showModeToggle
+      dataSourceUuid="testDs"
+      expressionId="simplestEx"
+      dataSource={testDataSource}
+    />
   ))
-  .add('Missing Data Source', () => (
-    <ExpressionBuilder dataSourceUuid="missingDs" expressionId="simplestEx" />
+  .add('Missing Data Source (read only)', () => (
+    <ExpressionBuilder
+      dataSourceUuid="missingDs"
+      expressionId="populatedExNoDs"
+      dataSource={testDataSource}
+    />
   ))
   .add('Missing Expression', () => (
-    <ExpressionBuilder dataSourceUuid="testDs" expressionId="missingEx" />
+    <ExpressionBuilder
+      dataSourceUuid="testDs"
+      expressionId="missingEx"
+      dataSource={testDataSource}
+    />
+  ))
+  .add('Hide mode toggle', () => (
+    <ExpressionBuilder
+      showModeToggle={false}
+      dataSourceUuid="testDs"
+      expressionId="simplestEx"
+      dataSource={testDataSource}
+    />
+  ))
+  .add('Hide mode toggle but be in edit mode', () => (
+    <ExpressionBuilder
+      showModeToggle={false}
+      editMode
+      dataSourceUuid="testDs"
+      expressionId="simplestEx"
+      dataSource={testDataSource}
+    />
   ));

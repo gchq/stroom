@@ -16,11 +16,10 @@
 
 package stroom.refdata;
 
+import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
-import stroom.feed.shared.Feed;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.streamstore.shared.Stream;
 import stroom.task.TaskManager;
 
 import javax.inject.Inject;
@@ -36,13 +35,13 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
 
     @Override
     public void load(final InputStream inputStream,
-                     final Stream stream,
-                     final Feed feed,
+                     final Data data,
+                     final String feedName,
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
 
         taskManager.exec(new ContextDataLoadTask(
-                inputStream, stream, feed, contextPipeline, refStreamDefinition, refDataStore));
+                inputStream, data, feedName, contextPipeline, refStreamDefinition, refDataStore));
     }
 }

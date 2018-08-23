@@ -58,8 +58,7 @@ public class PathCreator {
             "fileExtension",
             StroomProperties.STROOM_TEMP};
 
-    private static final Set<String> NON_ENV_VARS_SET = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
+    private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
 
     private final FeedHolder feedHolder;
     private final PipelineHolder pipelineHolder;
@@ -200,8 +199,8 @@ public class PathCreator {
     }
 
     public String replaceContextVars(String path) {
-        if (feedHolder != null && feedHolder.getFeed() != null) {
-            path = replace(path, "feed", () -> feedHolder.getFeed().getName());
+        if (feedHolder != null && feedHolder.getFeedName() != null) {
+            path = replace(path, "feed", feedHolder::getFeedName);
         }
         if (pipelineHolder != null && pipelineHolder.getPipeline() != null) {
             path = replace(path, "pipeline", () -> pipelineHolder.getPipeline().getName());
@@ -210,7 +209,7 @@ public class PathCreator {
             path = replace(path, "streamId", () -> streamHolder.getStream().getId(), 0);
         }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
-            path = replace(path, "searchId", () -> searchIdHolder.getSearchId());
+            path = replace(path, "searchId", searchIdHolder::getSearchId);
         }
         if (nodeCache != null) {
             path = replace(path, "node", () -> nodeCache.getDefaultNode().getName());

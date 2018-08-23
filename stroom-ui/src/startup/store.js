@@ -18,11 +18,8 @@ import { createStore } from 'redux';
 
 import middleware from 'startup/middleware';
 import reducers from 'startup/reducers';
-import { fetchConfigSynchronously } from 'startup/config';
 
-const initialState = {
-  config: fetchConfigSynchronously(),
-};
+const initialState = {};
 
 const store = createStore(reducers, initialState, middleware);
 

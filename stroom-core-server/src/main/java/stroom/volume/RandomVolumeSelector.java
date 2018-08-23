@@ -16,7 +16,7 @@
 
 package stroom.volume;
 
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class RandomVolumeSelector implements VolumeSelector {
     public static final String NAME = "Random";
 
     @Override
-    public Volume select(final List<Volume> list) {
+    public VolumeEntity select(final List<VolumeEntity> list) {
         if (list.size() == 0) {
             return null;
         }

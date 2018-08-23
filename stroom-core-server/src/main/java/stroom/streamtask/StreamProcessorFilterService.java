@@ -22,17 +22,17 @@ import stroom.entity.FindService;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
 
 public interface StreamProcessorFilterService
-        extends BaseEntityService<StreamProcessorFilter>, FindService<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
-    void addFindStreamCriteria(StreamProcessor streamProcessor,
+        extends BaseEntityService<ProcessorFilter>, FindService<ProcessorFilter, FindStreamProcessorFilterCriteria> {
+    void addFindStreamCriteria(Processor streamProcessor,
                                int priority,
                                QueryData queryData);
 
-    StreamProcessorFilter createNewFilter(DocRef pipelineRef,
-                                          QueryData queryData,
-                                          boolean enabled,
-                                          int priority);
+    ProcessorFilter createNewFilter(DocRef pipelineRef,
+                                    QueryData queryData,
+                                    boolean enabled,
+                                    int priority);
 }

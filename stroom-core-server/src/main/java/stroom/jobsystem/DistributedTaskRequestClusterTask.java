@@ -18,7 +18,7 @@ package stroom.jobsystem;
 
 import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 
 class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskRequestResult> {
     private static final long serialVersionUID = 8371445065601694269L;
