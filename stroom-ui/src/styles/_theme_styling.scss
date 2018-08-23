@@ -210,7 +210,7 @@ table {
 
 .doc-ref-listing__item {
   @include themify($themes){
-    border-top: solid thin themed('dock-ref-listing__item-border') !important;
+    border-top: themed('dock-ref-listing__item-border') !important;
   }
 }
 
