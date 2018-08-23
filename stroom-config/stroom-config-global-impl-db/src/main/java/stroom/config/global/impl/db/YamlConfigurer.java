@@ -27,11 +27,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Singleton
 class YamlConfigurer {
@@ -44,16 +39,10 @@ class YamlConfigurer {
 
     @Inject
     YamlConfigurer(final AppConfig appConfig) {
-        try {
-            final URL url = getClass().getResource("/stroom/config/global/impl/db/default.yaml");
-            final Path path = Paths.get(url.toURI());
-            try (final InputStream inputStream = Files.newInputStream(path)) {
-                read(appConfig, inputStream);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        } catch (final URISyntaxException e) {
-            throw new RuntimeException(e.getMessage(), e);
+        try (final InputStream inputStream = getClass().getResourceAsStream("default.yaml")) {
+            read(appConfig, inputStream);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
 //        final String expected = new String(Files.readAllBytes(exampleFile));

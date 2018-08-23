@@ -4,9 +4,7 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
 
-    compile libs.guice4
     compile libs.jaxb_api
-    compile libs.swagger_annotations
 
     testRuntime libs.jaxb_runtime
     testRuntime libs.javax_activation
