@@ -64,7 +64,7 @@ const AppSearchBar = ({
     trigger={
       <Input
         fluid
-        id="AppSearch__search-input"
+        className="AppSearch__search-input"
         icon="search"
         placeholder="Search..."
         value={searchValue}
@@ -94,10 +94,11 @@ const AppSearchBar = ({
       />
     }
   >
-    <Dropdown.Menu>
+    <Dropdown.Menu className="AppSearch__menu">
       {searchResults.length === 0 &&
         docRefTypes.map(docRefType => (
           <Dropdown.Item
+            className="AppSearch__dropdown-item"
             key={docRefType}
             onClick={() => {
               searchApp({ docRefType });
