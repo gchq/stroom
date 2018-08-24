@@ -16,14 +16,11 @@
 
 import { createActions, handleActions } from 'redux-actions';
 
-import { dataSourceActionCreators } from 'components/ExpressionBuilder';
-const { receiveDataSource } = dataSourceActionCreators;
-
 const initialState = {
   trackers: [],
   isLoading: false,
   showCompleted: false,
-  sortBy: 'Pipeline',
+  sortBy: 'pipelineUuid',
   sortDirection: 'ascending',
   pageSize: 10,
   pageOffset: 0,
@@ -34,7 +31,11 @@ const initialState = {
 };
 
 export const Directions = Object.freeze({ ascending: 'ascending', descending: 'descending' });
-export const SortByOptions = { pipeline: 'Pipeline', priority: 'Priority', progress: 'progress' };
+export const SortByOptions = {
+  pipelineUuid: 'pipelineUuid',
+  priority: 'Priority',
+  progress: 'progress',
+};
 
 export const actionCreators = createActions({
   UPDATE_SORT: (sortBy, sortDirection) => ({ sortBy, sortDirection }),
@@ -156,12 +157,5 @@ const reducers = handleActions(
   },
   initialState,
 );
-
-export const updateTrackerSelection = filterId => (dispatch, getState) => {
-  const state = getState();
-  const selectedTracker = state.trackerDashboard.trackers.find(tracker => tracker.filterId === filterId);
-  dispatch(receiveDataSource('trackerDetailsExpressionDs', selectedTracker.filter.expression.children));
-  dispatch(actionCreators.updateTrackerSelection(filterId));
-};
 
 export default reducers;

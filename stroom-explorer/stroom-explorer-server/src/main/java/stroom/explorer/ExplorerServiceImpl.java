@@ -203,11 +203,11 @@ class ExplorerServiceImpl implements ExplorerService {
         return true;
     }
 
-    private boolean checkType(final ExplorerNode explorerNode, final Set<String> types) {
+    static boolean checkType(final ExplorerNode explorerNode, final Set<String> types) {
         return types == null || types.contains(explorerNode.getType());
     }
 
-    private boolean checkTags(final ExplorerNode explorerNode, final Set<String> tags) {
+    static boolean checkTags(final ExplorerNode explorerNode, final Set<String> tags) {
         if (tags == null) {
             return true;
         } else if (explorerNode.getTags() != null && explorerNode.getTags().length() > 0 && tags.size() > 0) {
@@ -221,7 +221,7 @@ class ExplorerServiceImpl implements ExplorerService {
         return false;
     }
 
-    private boolean checkName(final ExplorerNode explorerNode, final String nameFilter) {
+    static boolean checkName(final ExplorerNode explorerNode, final String nameFilter) {
         return nameFilter == null || explorerNode.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
     }
 
@@ -451,11 +451,10 @@ class ExplorerServiceImpl implements ExplorerService {
             // Check that the user is allowed to create an item of this type in the destination folder.
             checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
             // Copy the item to the destination folder.
-            final DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
+            DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
                     destinationUuid,
                     copiesByOriginalUuid);
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
-            resultDocRefs.add(destinationDocRef);
 
             // Create the explorer node
             if (destinationDocRef != null) {
@@ -464,16 +463,18 @@ class ExplorerServiceImpl implements ExplorerService {
                 // If the source directory and destination directory are the same, rename it with 'copy of'
                 if (sourceDirectoryFolderRef.getUuid().equals(destinationFolderRef.getUuid())) {
                     final String copyName = getCopyName(destinationFolderRef, destinationDocRef);
-                    rename(handler, destinationDocRef, copyName);
+                    destinationDocRef = rename(handler, destinationDocRef, copyName);
                 }
             }
+            resultDocRefs.add(destinationDocRef);
 
             // Handle recursion
+            final DocRef finalDestination = destinationDocRef;
             childNodesByParent.get(sourceDocRef)
                     .forEach(sourceDescendant ->
                             recurseCopy(sourceDocRef,
                                     sourceDescendant.getDocRef(),
-                                    destinationDocRef,
+                                    finalDestination,
                                     permissionInheritance,
                                     resultDocRefs,
                                     resultMessage,

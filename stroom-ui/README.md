@@ -8,14 +8,25 @@ This project uses ESLint for linting, configured with the style described by Sta
 
 If you're using VSCode you should install the following extensions:
 
-* ESLint
-* Prettier
+- ESLint
+- Prettier
 
 ## SCSS
 
 The various startup and test scripts include the running of an SCSS pre-processor.
 Any new style sheets should be written with the .scss extension, the pre-processor will then convert them to .css.
 The components should then import the .css files.
+
+## Semantic UI
+
+We use Semantic UI for most of our components.
+
+If you want to add a font:
+
+1.  Choose one from https://github.com/KyleAMathews/typefaces. These are usefully packaged typefaces. If you want a different source then there are other ways.
+2.  Install it into `node_modules`, e.g. `yarn add typefaces-clear-sans`. This makes it available to the project.
+3.  Import it in the root `index.js`, e.g.: `import 'typeface-clear-sans';`. This adds it into the built files.
+4.  Add it into `src/semantic/src/site/globals/site.variables`. This selects it for use in SUI.
 
 ## Directory structure
 
@@ -39,9 +50,9 @@ src/
 ├── components/
 Re-usable components. Rules of thumb:
 
-* Don't begin writing a component here unless you are certain it will belong in several places in the near future.
-* Don't speculate about re-use. If there's no issue specifically requiring re-use then just accept you'll have to refactor later. Premature optimisation is the root of all evil.
-* Consider copy and pasting if the component is small and likely stable.
+- Don't begin writing a component here unless you are certain it will belong in several places in the near future.
+- Don't speculate about re-use. If there's no issue specifically requiring re-use then just accept you'll have to refactor later. Premature optimisation is the root of all evil.
+- Consider copy and pasting if the component is small and likely stable.
 
 src/
 ├── prototypes/

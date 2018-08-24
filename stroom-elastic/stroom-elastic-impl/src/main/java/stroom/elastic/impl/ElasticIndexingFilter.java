@@ -71,12 +71,12 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
         this.security = security;
     }
 
-    @PipelineProperty(description = "The field name to use as the unique ID for records.")
+    @PipelineProperty(description = "The field name to use as the unique ID for records.", displayPriority = 2)
     public void setIdFieldName(final String value) {
         this.idFieldName = value;
     }
 
-    @PipelineProperty(description = "The elastic index to write records to.")
+    @PipelineProperty(description = "The elastic index to write records to.", displayPriority = 1)
     @PipelinePropertyDocRef(types = ElasticIndexConfigDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;

@@ -40,20 +40,27 @@ import stroom.dictionary.DictionaryResource2;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.shared.DispatchService;
+import stroom.explorer.ExplorerResource;
 import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
 import stroom.persist.PersistLifecycle;
+import stroom.resource.DataResource;
 import stroom.resource.PipelineResource;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreProvider;
 import stroom.resource.ElementResource;
+import stroom.resource.PipelineResource;
 import stroom.resource.SessionResourceStoreImpl;
+import stroom.resource.XsltResource;
 import stroom.ruleset.RuleSetResource;
 import stroom.ruleset.RuleSetResource2;
 import stroom.ruleset.RuleSetService;
@@ -79,6 +86,7 @@ import stroom.servlet.SessionListServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
 import stroom.statistics.sql.search.SqlStatisticsQueryResource;
+import stroom.streamstore.StreamAttributeMapResource;
 import stroom.streamtask.resource.StreamTaskResource;
 
 import javax.servlet.DispatcherType;
@@ -143,10 +151,14 @@ public class App extends Application<Config> {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ByteBufferPool.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
+        GuiceUtil.addHealthCheck(
+                environment.healthChecks(),
+                injector.getInstance(RefDataStoreProvider.class).getOffHeapStore());
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
@@ -198,6 +210,7 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RefDataStore.class);
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");
@@ -236,8 +249,12 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, XsltResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DataResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);

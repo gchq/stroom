@@ -14,90 +14,86 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes, { object } from 'prop-types';
 import { Route, Router, Switch, withRouter } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import ErrorPage from 'sections/ErrorPage';
-import OriginalList from 'prototypes/OriginalList';
-import Graph from 'prototypes/Graph';
+import ErrorPage from 'components/ErrorPage';
+import { appChromeRoutes } from 'sections/AppChrome';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
-import { PipelineEditorFromUrl } from 'prototypes/PipelineEditor';
+import { HandleAuthenticationResponse } from 'startup/Authentication';
 
-import PathNotFound from 'sections/PathNotFound';
+import withConfig from './withConfig';
 
-class Routes extends Component {
-  isLoggedIn() {
-    return !!this.props.idToken;
-  }
+import { PrivateRoute } from './Authentication';
 
-  render() {
-    const { history } = this.props;
-    return (
-      <Router history={history} basename="/">
-        <Switch>
-          {/* Authentication routes */}
-          <Route
-            exact
-            path="/handleAuthenticationResponse"
-            render={() => (
-              <HandleAuthenticationResponse
-                authenticationServiceUrl={this.props.authenticationServiceUrl}
-                authorisationServiceUrl={this.props.authorisationServiceUrl}
-              />
-            )}
+const enhance = compose(
+  withConfig,
+  withRouter,
+  connect(
+    state => ({
+      idToken: state.authentication.idToken,
+      // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
+    }),
+    {},
+  ),
+  withProps(({
+    idToken,
+    config: {
+      advertisedUrl, appClientId, authenticationServiceUrl, authorisationServiceUrl,
+    },
+  }) => ({
+    isLoggedIn: !!idToken,
+    advertisedUrl,
+    appClientId,
+    authenticationServiceUrl,
+    authorisationServiceUrl,
+  })),
+);
+
+const Routes = ({
+  isLoggedIn,
+  appClientId,
+  history,
+  authenticationServiceUrl,
+  authorisationServiceUrl,
+  advertisedUrl,
+  authUsersUiUrl,
+  authTokensUiUrl,
+}) => (
+  <Router history={history} basename="/">
+    <Switch>
+      <Route
+        exact
+        path="/handleAuthenticationResponse"
+        render={() => (
+          <HandleAuthenticationResponse
+            authenticationServiceUrl={authenticationServiceUrl}
+            authorisationServiceUrl={authorisationServiceUrl}
           />
+        )}
+      />
 
-          {/* Application routes - no authentication required */}
-          <Route exact path="/error" component={ErrorPage} />
-          <Route exact path="/prototypes/original_list" component={OriginalList} />
-          <Route exact path="/prototypes/graph" component={Graph} />
+      <Route exact path="/error" component={ErrorPage} />
 
-          {/* Application Routes - require authentication */}
-          <Route
-            exact
-            path="/trackers"
-            render={() =>
-              (this.isLoggedIn() ? (
-                <TrackerDashboard />
-              ) : (
-                <AuthenticationRequest
-                  referrer="/trackers"
-                  uiUrl={this.props.advertisedUrl}
-                  appClientId={this.props.appClientId}
-                  authenticationServiceUrl={this.props.authenticationServiceUrl}
-                  appPermission="MANAGE_USERS"
-                />
-              ))
-            }
-          />
+      {appChromeRoutes.map((p, i) => <PrivateRoute key={i} {...p} />)}
 
-          <Route
-            exact
-            path="/pipelines/:pipelineId"
-            render={({ match }) =>
-              (this.isLoggedIn() ? (
-                <PipelineEditorFromUrl pipelineId={match.params.pipelineId} />
-              ) : (
-                <AuthenticationRequest
-                  referrer={match.url}
-                  uiUrl={this.props.advertisedUrl}
-                  appClientId={this.props.appClientId}
-                  authenticationServiceUrl={this.props.authenticationServiceUrl}
-                />
-              ))
-            }
-          />
+      {/* Direct paths -- these paths make sections accessible outside the AppChrome
+        i.e. for when we want to embed them in Stroom. */}
+      <PrivateRoute
+        exact
+        path="/trackers"
+        referrer="/trackers"
+        render={() => <TrackerDashboard />}
+      />
 
-          <Route component={PathNotFound} />
-        </Switch>
-      </Router>
-    );
-  }
-}
+      {/* Default route */}
+      <Route render={appChromeRoutes.notFound} />
+    </Switch>
+  </Router>
+);
 
 Routes.contextTypes = {
   store: PropTypes.object,
@@ -106,26 +102,4 @@ Routes.contextTypes = {
   }),
 };
 
-Routes.propTypes = {
-  idToken: PropTypes.string.isRequired,
-  // showUnauthorizedDialog: PropTypes.bool.isRequired
-};
-
-const mapStateToProps = state => ({
-  idToken: state.authentication.idToken,
-  // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
-  advertisedUrl: state.config.advertisedUrl,
-  appClientId: state.config.appClientId,
-  authenticationServiceUrl: state.config.authenticationServiceUrl,
-  authorisationServiceUrl: state.config.authorisationServiceUrl,
-});
-
-const mapDispatchToProps = dispatch =>
-  bindActionCreators(
-    {
-      // handleSessionTimeout
-    },
-    dispatch,
-  );
-
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Routes));
+export default enhance(Routes);

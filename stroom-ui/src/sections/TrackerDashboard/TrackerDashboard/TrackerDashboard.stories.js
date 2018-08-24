@@ -16,69 +16,39 @@
 
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { withNotes } from '@storybook/addon-notes';
 import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 
 import { trackers, generateGenericTracker } from '../tracker.testData';
 
 import { actionCreators } from '../redux';
 
-const containerStyle = {
-  border: '30px solid green',
-  height: '500px',
-};
-
-const notes =
-  "This is the tracker dashboard. Sorting, searching, and paging happen remotely so they don't work without further customisation.";
+import 'styles/main.css';
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers(
-      [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
-      2,
-    ));
+  .addDecorator(PollyDecorator({
+    trackers: [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add(
-    'basic',
-    withNotes(notes)(() => (
-      <div style={containerStyle}>
-        <TrackerDashboard />
-      </div>
-    )),
-  );
+  .add('basic', () => <TrackerDashboard />);
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers([], undefined));
+  .addDecorator(PollyDecorator({
+    trackers: undefined,
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add(
-    'No trackers',
-    withNotes(notes)(() => (
-      <div style={containerStyle}>
-        <TrackerDashboard />
-      </div>
-    )),
-  );
+  .add('No trackers', () => <TrackerDashboard />);
 
-const lotsOfTrackers = [];
-[...Array(10).keys()].forEach((i) => {
-  lotsOfTrackers[i] = generateGenericTracker(i);
-});
+const lotsOfTrackers = [...Array(10).keys()].map(i => generateGenericTracker(i));
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers(lotsOfTrackers, 100));
+  .addDecorator(PollyDecorator({
+    trackers: lotsOfTrackers,
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add(
-    'Lots of trackers',
-    withNotes(notes)(() => (
-      <div style={containerStyle}>
-        <TrackerDashboard />
-      </div>
-    )),
-  );
+  .add('Lots of trackers', () => <TrackerDashboard />);

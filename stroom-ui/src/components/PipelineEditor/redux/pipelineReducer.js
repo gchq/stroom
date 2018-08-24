@@ -1,0 +1,235 @@
+import { combineActions, createActions, handleActions } from 'redux-actions';
+
+import {
+  moveElementInPipeline,
+  removeElementFromPipeline,
+  createNewElementInPipeline,
+  reinstateElementToPipeline,
+  setElementPropertyValueInPipeline,
+  revertPropertyToParent,
+  revertPropertyToDefault,
+} from '../pipelineUtils';
+
+import { getPipelineAsTree } from '../pipelineUtils';
+
+const actionCreators = createActions({
+  PIPELINE_RECEIVED: (pipelineId, pipeline) => ({
+    pipelineId,
+    pipeline,
+  }),
+  PIPELINE_SAVE_REQUESTED: pipelineId => ({
+    pipelineId,
+  }),
+  PIPELINE_SAVED: pipelineId => ({
+    pipelineId,
+  }),
+  PIPELINE_SETTINGS_UPDATED: (pipelineId, description) => ({
+    pipelineId,
+    description,
+  }),
+  PIPELINE_ELEMENT_SELECTED: (pipelineId, elementId, initialValues) => ({
+    pipelineId,
+    elementId,
+    initialValues,
+  }),
+  PIPELINE_ELEMENT_MOVED: (pipelineId, itemToMove, destination) => ({
+    pipelineId,
+    itemToMove,
+    destination,
+  }),
+  PIPELINE_ELEMENT_ADDED: (pipelineId, parentId, childDefinition, name) => ({
+    pipelineId,
+    parentId,
+    childDefinition,
+    name,
+  }),
+  PIPELINE_ELEMENT_DELETE_REQUESTED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_DELETE_CANCELLED: pipelineId => ({ pipelineId, elementId: undefined }),
+  PIPELINE_ELEMENT_DELETED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_REINSTATED: (pipelineId, parentId, recycleData) => ({
+    pipelineId,
+    parentId,
+    recycleData,
+  }),
+  PIPELINE_ELEMENT_PROPERTY_UPDATED: (pipelineId, element, name, propertyType, propertyValue) => ({
+    pipelineId,
+    element,
+    name,
+    propertyType,
+    propertyValue,
+  }),
+  PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT: (pipelineId, elementId, name) => ({
+    pipelineId,
+    elementId,
+    name,
+  }),
+  PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT: (pipelineId, elementId, name) => ({
+    pipelineId,
+    elementId,
+    name,
+  }),
+});
+
+const { pipelineElementDeleteRequested, pipelineElementDeleteCancelled } = actionCreators;
+
+// pipelines, keyed on ID, there may be several expressions on a page
+const defaultPipelineState = {
+  isDirty: false,
+  isSaving: false,
+  pendingElementToDelete: undefined,
+};
+
+const updatePipeline = pipeline => ({
+  pipeline,
+  asTree: getPipelineAsTree(pipeline),
+});
+
+const reducer = handleActions(
+  {
+    PIPELINE_RECEIVED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...defaultPipelineState,
+        ...updatePipeline(action.payload.pipeline),
+      },
+    }),
+    PIPELINE_SAVE_REQUESTED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        isSaving: true,
+      },
+    }),
+    PIPELINE_SAVED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        isDirty: false,
+        isSaving: false,
+      },
+    }),
+    PIPELINE_SETTINGS_UPDATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pipeline: {
+          ...state[action.payload.pipelineId].pipeline,
+          description: action.payload.description,
+        },
+        isDirty: true,
+      },
+    }),
+    PIPELINE_ELEMENT_SELECTED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        selectedElementId: action.payload.elementId,
+        selectedElementInitialValues: action.payload.initialValues,
+      },
+    }),
+    [combineActions(pipelineElementDeleteRequested, pipelineElementDeleteCancelled)]: (
+      state,
+      action,
+    ) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pendingElementToDelete: action.payload.elementId,
+      },
+    }),
+    PIPELINE_ELEMENT_DELETED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...updatePipeline(removeElementFromPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.elementId,
+        )),
+        isDirty: true,
+        pendingElementToDelete: undefined,
+      },
+    }),
+    PIPELINE_ELEMENT_REINSTATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(reinstateElementToPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.parentId,
+          action.payload.recycleData,
+        )),
+        isDirty: true,
+      },
+    }),
+    PIPELINE_ELEMENT_ADDED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(createNewElementInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.parentId,
+          action.payload.childDefinition,
+          action.payload.name,
+        )),
+        isDirty: true,
+      },
+    }),
+    PIPELINE_ELEMENT_MOVED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(moveElementInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.itemToMove,
+          action.payload.destination,
+        )),
+        isDirty: true,
+      },
+    }),
+    PIPELINE_ELEMENT_PROPERTY_UPDATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(setElementPropertyValueInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.element,
+          action.payload.name,
+          action.payload.propertyType,
+          action.payload.propertyValue,
+        )),
+        isDirty: true,
+      },
+    }),
+
+    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT: (state, action) => {
+      return {
+        ...state,
+        [action.payload.pipelineId]: {
+          ...state[action.payload.pipelineId],
+          ...updatePipeline(revertPropertyToParent(
+            state[action.payload.pipelineId].pipeline,
+            action.payload.elementId,
+            action.payload.name,
+          )),
+          isDirty: true,
+        },
+      };
+    },
+    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT: (state, action) => {
+      return {
+        ...state,
+        [action.payload.pipelineId]: {
+          ...state[action.payload.pipelineId],
+          ...updatePipeline(revertPropertyToDefault(
+            state[action.payload.pipelineId].pipeline,
+            action.payload.elementId,
+            action.payload.name,
+          )),
+          isDirty: true,
+        },
+      };
+    },
+  },
+  defaultPipelineState,
+);
+
+export { actionCreators, reducer };

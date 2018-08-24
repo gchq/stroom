@@ -20,6 +20,14 @@
 
     <logger name="stroom.statistics" level="info" />
 
+    <!--
+    <logger name="stroom.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer" level="trace" />
+    <logger name="stroom.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer" level="trace" />
+    <logger name="stroom.refdata.RefDataValueByteBufferConsumer" level="trace" />
+    <logger name="stroom.refdata.store.GenericRefDataValueProxyConsumer" level="trace" />
+    -->
+
+
     <logger name="org.flywaydb" level="info" />
 
     <logger name="org.hibernate.tool.hbm2ddl.SchemaUpdate" additivity="false">

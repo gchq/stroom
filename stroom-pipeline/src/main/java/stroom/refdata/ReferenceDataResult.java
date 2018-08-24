@@ -19,9 +19,9 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.refdata.store.RefDataValueProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
-import stroom.xml.event.EventList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,15 +30,16 @@ import java.util.function.Supplier;
 public class ReferenceDataResult implements ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataResult.class);
 
-    private EventList eventList;
+    private RefDataValueProxy refDataValueProxy;
+
     private List<LazyMessage> messages = new ArrayList<>();
 
-    public void setEventList(final EventList eventList) {
-        this.eventList = eventList;
+    public RefDataValueProxy getRefDataValueProxy() {
+        return refDataValueProxy;
     }
 
-    public EventList getEventList() {
-        return eventList;
+    void setRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {
+        this.refDataValueProxy = refDataValueProxy;
     }
 
     public void log(final Severity severity, final Supplier<String> message) {

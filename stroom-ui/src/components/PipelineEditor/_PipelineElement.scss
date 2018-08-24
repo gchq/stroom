@@ -1,0 +1,48 @@
+@import "./Element";
+.Pipeline-element {
+  @extend %element-shared;
+}
+
+.Pipeline-element__type {
+  @extend %element-shared__type;
+}
+
+.Pipeline-element.focus {
+  @extend %element-shared--focus;
+}
+
+.Pipeline-element__icon {
+  @extend %element-shared__icon;
+  height: 25px !important;
+}
+
+.Pipeline-element:hover {
+  background-color: $hover-item-colour;
+}
+
+.Pipeline-element__over {
+  // No common styles for a straight-forward hover at the moment
+}
+
+.Pipeline-element__over_can_drop {
+  border-color: rgb(30, 136, 229);
+  background-color: $selected-item-colour;
+}
+
+.Pipeline-element__cannot_drop {
+  border-color: lightgrey;
+  color: lightgray;
+}
+
+.Pipeline-element__not_over_can_drop {
+  border-color: #68ee3f;
+}
+
+.Pipeline-element__dragging {
+  border-style: dotted;
+  opacity: 0.5;
+}
+
+.Pipeline-element__selected {
+  background-color: $selected-item-colour !important;
+}

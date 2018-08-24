@@ -1,6 +1,23 @@
 @import "./variables";
 @import "./base";
+@import "./panelGroup";
 
-@import "../prototypes/PipelineEditor/PipelineEditor";
-@import "../components/DocExplorer/DocExplorer";
+@import "../components/PipelineEditor/PipelineEditor";
+@import "../components/PipelineSearch/PipelineSearch";
+@import "../components/DataViewer/DataViewer";
+@import "../components/SearchBar/SearchBar";
+@import "../components/DocRefListingEntry/DocRefListing";
+@import "../components/XsltEditor/XsltEditor";
 @import "../components/ExpressionBuilder/ExpressionBuilder";
+@import "../components/LineTo/LineTo";
+@import "../components/IFrame/IFrame";
+
+@import "../sections/TrackerDashboard/TrackerDashboard/TrackerDashboard";
+@import "../sections/AppChrome/AppChrome";
+@import "../sections/Welcome/Welcome";
+@import "../sections/UserSettings/UserSettings";
+
+@import "../prototypes/HorizontalPanel/HorizontalPanel";
+
+@import "./themes";
+@import "./theme_styling";

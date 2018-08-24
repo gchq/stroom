@@ -37,10 +37,10 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
     @Inject
     StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                       final LocationFactoryProxy locationFactory,
-                      final KafkaProducerFactory stroomKafkaProducerFactoryService,
+                      final KafkaProducerFactory kafkaProducerFactory,
                       final HBaseStatisticsConfig hBaseStatisticsConfig,
                       final StroomStatsStoreStore stroomStatsStoreStore) {
-        super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
+        super(errorReceiverProxy, locationFactory, kafkaProducerFactory);
         this.hBaseStatisticsConfig = hBaseStatisticsConfig;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
 
@@ -90,7 +90,7 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
         super.startProcessing();
     }
 
-    @PipelineProperty(description = "The stroom-stats data source to record statistics against.")
+    @PipelineProperty(description = "The stroom-stats data source to record statistics against.", displayPriority = 1)
     @PipelinePropertyDocRef(types = StroomStatsStoreDoc.DOCUMENT_TYPE)
     public void setStatisticsDataSource(final DocRef stroomStatStoreRef) {
         this.stroomStatStoreRef = stroomStatStoreRef;

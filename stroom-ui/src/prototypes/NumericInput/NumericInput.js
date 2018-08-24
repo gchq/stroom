@@ -14,140 +14,121 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 
-import { Input, Button, Icon, Popup } from 'semantic-ui-react'
-import 'semantic-ui-css/semantic.min.css'
+import { Input, Button, Icon, Popup } from 'semantic-ui-react';
+import { compose, withState } from 'recompose';
 
-import './NumericInput.css'
+import './NumericInput.css';
 
-class NumericInput extends Component {
-  componentWillMount () {
-    if (this.props.value) {
-      this.setState({ value: this.props.value })
-    }
+const enhance = compose(
+  withState('isDownDisabled', 'setDownDisabled', false),
+  withState('isUpDisabled', 'setUpDisabled', false),
+);
 
-    this.setState(
-      {
-        isDownDisabled: false,
-        isUpDisabled: false
-      },
-      () => this.setButtonDisabledStates()
-    )
+const getFallBackValue = (defaultValue, placeholder) => {
+  let noValueFallback = defaultValue || placeholder;
+  noValueFallback = noValueFallback || 0;
+  return noValueFallback;
+};
+
+const setButtonDisabledStates = (max, min, value, setUpDisabled, setDownDisabled) => {
+  if (max) setUpDisabled(value >= max);
+  if (min) setDownDisabled(value <= min);
+};
+
+const NumericInput = ({
+  min,
+  max,
+  defaultValue,
+  placeholder,
+  value,
+  isUpDisabled,
+  isDownDisabled,
+  setUpDisabled,
+  setDownDisabled,
+  setValue,
+  onChange,
+}) => {
+  let valueIsBad = false;
+  let valueIsBadMessage = '';
+  if (value < min) {
+    valueIsBad = true;
+    valueIsBadMessage = `${valueIsBadMessage}Minimum value is ${min}`;
+  }
+  if (value > max) {
+    valueIsBad = true;
+    valueIsBadMessage = `${valueIsBadMessage}Maximum value is ${max}`;
   }
 
-  setButtonDisabledStates = () => {
-    if (typeof this.props.max !== 'undefined') {
-      if (this.state.value >= this.props.max) {
-        this.setState({ isUpDisabled: true })
-      } else {
-        this.setState({ isUpDisabled: false })
-      }
-    }
-
-    if (typeof this.props.min !== 'undefined') {
-      if (this.state.value <= this.props.min) {
-        this.setState({ isDownDisabled: true })
-      } else {
-        this.setState({ isDownDisabled: false })
-      }
-    }
-  };
-
-  getFallBackValue () {
-    let noValueFallback = this.props.defaultValue
-      ? this.props.defaultValue
-      : this.props.placeholder
-    noValueFallback = noValueFallback || 0
-    return noValueFallback
-  }
-
-  handleUp = (e, upButtonProps) => {
-    const newValue =
-      (this.state.value ? this.state.value : this.getFallBackValue()) + 1
-    this.setState({ value: newValue }, () => this.setButtonDisabledStates())
-  };
-
-  handleDown = (e, downButtonProps) => {
-    const newValue =
-      (this.state.value ? this.state.value : this.getFallBackValue()) - 1
-    this.setState({ value: newValue }, () => this.setButtonDisabledStates())
-  };
-
-  handleValueChange = (e, inputProps) => {
-    let newValue = parseInt(inputProps.value, 10) // 10 = the radix, indicating decimal
-    if (isNaN(newValue)) {
-      newValue = inputProps.value
-    }
-
-    this.setState({ value: newValue }, () => this.setButtonDisabledStates())
-  };
-
-  render () {
-    const { value, isUpDisabled, isDownDisabled } = this.state
-    const { min, max, defaultValue, placeholder } = this.props
-
-    let valueIsBad = value < min || value > max
-    let valueIsBadMessage = ''
-    if (value < min) {
-      valueIsBad = true
-      valueIsBadMessage = valueIsBadMessage + 'Minimum value is ' + min
-    }
-    if (value > max) {
-      valueIsBad = true
-      valueIsBadMessage = valueIsBadMessage + 'Maximum value is ' + max
-    }
-
-    return (
-      <div>
-        <div className='row'>
-          <div className='input-row'>
-            <Popup
-              trigger={<Input
+  return (
+    <div>
+      <div className="row">
+        <div className="input-row">
+          <Popup
+            trigger={
+              <Input
                 error={valueIsBad}
-                size='tiny'
+                size="tiny"
                 placeholder={placeholder || 0}
-                className='numeric-input'
+                className="numeric-input"
                 value={value}
-                defaultValue={defaultValue || null}
-                onChange={this.handleValueChange}
+                // defaultValue={defaultValue || null}
+                onChange={(e, props) => {
+                  let newValue = parseInt(props.value, 10); // 10 = the radix, indicating decimal
+                  if (isNaN(newValue)) {
+                    newValue = props.value;
+                  }
+                  setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                  onChange(newValue);
+                }}
                 action={
                   <div>
                     <Button
-                      className='button-top'
-                      onClick={this.handleUp}
+                      className="button-top"
+                      onClick={(e, props) => {
+                        const newValue =
+                          parseInt(value || getFallBackValue(defaultValue, placeholder), 10) + 1; // 10 = the radix, indicating decimal
+                        setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                        onChange(newValue);
+                      }}
                       disabled={isUpDisabled}
                     >
-                      <Icon name='angle up' />
+                      <Icon name="angle up" />
                     </Button>
                     <Button
-                      className='button-bottom'
-                      onClick={this.handleDown}
+                      className="button-bottom"
+                      onClick={(e, props) => {
+                        const newValue =
+                          parseInt(value || getFallBackValue(defaultValue, placeholder), 10) - 1; // 10 = the radix, indicating decimal
+                        setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                        onChange(newValue);
+                      }}
                       disabled={isDownDisabled}
                     >
-                      <Icon name='angle down' />
+                      <Icon name="angle down" />
                     </Button>
                   </div>
                 }
-              />}
-              content={valueIsBadMessage}
-              open={valueIsBad}
-              style={{borderColor: 'red'}}
-            />
-          </div>
+              />
+            }
+            content={valueIsBadMessage}
+            open={valueIsBad}
+            style={{ borderColor: 'red' }}
+          />
         </div>
       </div>
-    )
-  }
-}
+    </div>
+  );
+};
 
 NumericInput.propTypes = {
   min: PropTypes.number,
   max: PropTypes.number,
   placeholder: PropTypes.string,
   defaultValue: PropTypes.number,
-  value: PropTypes.number
-}
+  value: PropTypes.number,
+};
 
-export default NumericInput
+export default enhance(NumericInput);

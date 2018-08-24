@@ -158,7 +158,7 @@ public class MockStreamTaskModule extends AbstractModule {
 //                                               final NodeCache nodeCache,
 //                                               final StreamTaskService streamTaskService,
 //                                               final StreamTaskHelper streamTaskHelper,
-//                                               final StroomPropertyService propertyService,
+//                                               final PropertyService propertyService,
 //                                               final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
 //                                               final StreamStore streamStore,
 //                                               final SecurityContext securityContext,
@@ -180,7 +180,7 @@ public class MockStreamTaskModule extends AbstractModule {
 //    @Scope(value = StroomScope.TASK)
 //    public StreamTaskDeleteExecutor streamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
 //                                                             final ClusterLockService clusterLockService,
-//                                                             final StroomPropertyService propertyService,
+//                                                             final PropertyService propertyService,
 //                                                             final TaskContext taskContext,
 //                                                             final StreamTaskCreatorImpl streamTaskCreator,
 //                                                             final StreamProcessorFilterService streamProcessorFilterService) {

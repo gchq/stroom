@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.security.Security;
+import stroom.security.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
 import stroom.data.meta.api.Data;
@@ -80,7 +81,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
                     mockStreamStore,
                     new EffectiveStreamInternPool(),
-                    new Security(new MockSecurityContext()));
+                    new SecurityImpl(new MockSecurityContext()));
 
             Assert.assertEquals("No pooled times yet", 0, effectiveStreamPool.size());
             Assert.assertEquals("No calls to the database yet", 0, findEffectiveStreamSourceCount);
@@ -128,7 +129,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
-                    cacheManager, mockStore, new EffectiveStreamInternPool(), new Security(new MockSecurityContext()), 100, TimeUnit.MILLISECONDS);
+                    cacheManager, mockStore, new EffectiveStreamInternPool(), new SecurityImpl(new MockSecurityContext()), 100, TimeUnit.MILLISECONDS);
 
             Assert.assertEquals("No pooled times yet", 0, effectiveStreamCache.size());
             Assert.assertEquals("No calls to the database yet", 0, mockStore.getCallCount());

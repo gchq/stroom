@@ -17,11 +17,12 @@
 
 package stroom.refdata;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.pipeline.scope.PipelineScopeRunnable;
@@ -29,13 +30,16 @@ import stroom.lifecycle.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.refdata.store.MapDefinition;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreProvider;
+import stroom.refdata.store.RefDataValue;
+import stroom.refdata.store.RefStreamDefinition;
+import stroom.refdata.store.StringValue;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
-import stroom.xml.event.EventList;
-import stroom.xml.event.EventListBuilder;
-import stroom.xml.event.EventListBuilderFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -44,7 +48,16 @@ import java.util.TreeSet;
 
 public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
-    private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
+    private static final String TEST_FEED_1 = "TEST_FEED_1";
+    private static final String TEST_FEED_2 = "TEST_FEED_2";
+    private static final String TEST_PIPELINE_1 = "TEST_PIPELINE_1";
+    private static final String TEST_PIPELINE_2 = "TEST_PIPELINE_2";
+    private static final EffectiveStream EFFECTIVE_STREAM_1 = new EffectiveStream(
+            1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"));
+    private static final EffectiveStream EFFECTIVE_STREAM_2 = new EffectiveStream(
+            2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"));
+    private static final EffectiveStream EFFECTIVE_STREAM_3 = new EffectiveStream(
+            3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z"));
 
     @Inject
     private FeedStore feedStore;
@@ -54,6 +67,15 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private StroomBeanStore beanStore;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private RefDataStoreProvider refDataStoreProvider;
+
+    private RefDataStore refDataStore;
+
+    @Before
+    public void setup() {
+        refDataStore = refDataStoreProvider.getOffHeapStore();
+    }
 
     /**
      * Test.
@@ -69,8 +91,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 //            feed2.setReference(true);
 //            feed2 = feedService.save(feed2);
 
-            final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
-            final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
+            final DocRef pipeline1Ref = pipelineStore.createDocument(TEST_PIPELINE_1);
+            final DocRef pipeline2Ref = pipelineStore.createDocument(TEST_PIPELINE_2);
 
             final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref, feed1, StreamTypeNames.REFERENCE);
             final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref, feed2, StreamTypeNames.REFERENCE);
@@ -82,9 +104,9 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final ReferenceData referenceData = createReferenceData();
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
+            streamSet.add(EFFECTIVE_STREAM_1);
+            streamSet.add(EFFECTIVE_STREAM_2);
+            streamSet.add(EFFECTIVE_STREAM_3);
 
             try (final CacheManager cacheManager = new CacheManager()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
@@ -93,46 +115,67 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         return streamSet;
                     }
                 };
-                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
-                referenceData.setMapStorePool(mapStoreCache);
 
                 // Add multiple reference data items to prove that looping over maps
                 // works.
-                addData(referenceData, pipeline1Ref, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
-                addData(referenceData, pipeline2Ref, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
-                checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
-                checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
-                checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
-                checkData(referenceData, pipelineReferences, "SID_TO_PF_4");
+                addData(pipeline1Ref, new String[]{"USERNAME_TO_PAYROLL_NO_1", "USERNAME_TO_PAYROLL_NO_2"});
+                addData(pipeline2Ref, new String[]{"USERNAME_TO_PAYROLL_NO_3", "USERNAME_TO_PAYROLL_NO_4"});
+                checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_1");
+                checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_2");
+                checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_3");
+                checkData(referenceData, pipelineReferences, "USERNAME_TO_PAYROLL_NO_4");
             } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
         });
     }
 
-    private void addData(final ReferenceData referenceData, final DocRef pipelineRef, final String[] mapNames) {
-        MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-        for (final String mapName : mapNames) {
-            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
-            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
-        }
-        referenceData.put(new MapStoreCacheKey(pipelineRef, 1), mapStoreBuilder.getMapStore());
+    private RefStreamDefinition getRefStreamDefinition(DocRef pipelineRef, long streamId) {
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        String version = pipelineDoc.getVersion();
+        return new RefStreamDefinition(pipelineRef, version, streamId);
+    }
 
-        mapStoreBuilder = new MapStoreBuilderImpl(null);
-        for (final String mapName : mapNames) {
-            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
-            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
-        }
-        referenceData.put(new MapStoreCacheKey(pipelineRef, 2), mapStoreBuilder.getMapStore());
+    private void addData(final DocRef pipelineRef, final String[] mapNames) {
+        EffectiveStream effectiveStream = EFFECTIVE_STREAM_1;
+        RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
 
-        mapStoreBuilder = new MapStoreBuilderImpl(null);
-        for (final String mapName : mapNames) {
-            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
-            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
-        }
-        referenceData.put(new MapStoreCacheKey(pipelineRef, 3), mapStoreBuilder.getMapStore());
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition1, effectiveStream.getEffectiveMs(), refDataLoader -> {
+            refDataLoader.initialise(false);
+            for (final String mapName : mapNames) {
+                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition1, mapName);
+                refDataLoader.put(mapDefinition, "user1", StringValue.of("1111"));
+                refDataLoader.put(mapDefinition, "user2", StringValue.of("2222"));
+            }
+            refDataLoader.completeProcessing();
+        });
+
+        effectiveStream = EFFECTIVE_STREAM_2;
+        RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
+
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition2, effectiveStream.getEffectiveMs(), refDataLoader -> {
+            refDataLoader.initialise(false);
+            for (final String mapName : mapNames) {
+                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition2, mapName);
+                refDataLoader.put(mapDefinition, "user1", StringValue.of("A1111"));
+                refDataLoader.put(mapDefinition, "user2", StringValue.of("A2222"));
+            }
+            refDataLoader.completeProcessing();
+        });
+
+        effectiveStream = EFFECTIVE_STREAM_3;
+        RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
+
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition3, effectiveStream.getEffectiveMs(), refDataLoader -> {
+            refDataLoader.initialise(false);
+            for (final String mapName : mapNames) {
+                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition3, mapName);
+                refDataLoader.put(mapDefinition, "user1", StringValue.of("B1111"));
+                refDataLoader.put(mapDefinition, "user2", StringValue.of("B2222"));
+            }
+            refDataLoader.completeProcessing();
+        });
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences, final String mapName) {
@@ -144,7 +187,11 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
         Assert.assertNull(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1"));
         Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X"));
-        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "SID_TO_PF_X", "user1"));
+        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "USERNAME_TO_PF_X", "user1"));
+    }
+
+    private String addSuffix(final String str, int id) {
+        return str + id;
     }
 
     /**
@@ -153,19 +200,21 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     public void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            final DocRef feed = feedStore.createDocument("TEST_FEED_V3");
+            final DocRef feedRef = feedStore.createDocument("TEST_FEED_V3");
 //            feed.setReference(true);
 //            feed = feedService.save(feed);
 
-            final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234");
-            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed, StreamTypeNames.REFERENCE);
+            final DocRef pipelineRef = pipelineStore.createDocument(TEST_PIPELINE_1);
+            final PipelineReference pipelineReference = new PipelineReference(
+                    pipelineRef, feedRef, StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 
-            final ReferenceData data = createReferenceData();
+            final ReferenceData referenceData = createReferenceData();
 
+            EffectiveStream effectiveStream = new EffectiveStream(0, 0L);
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(0, 0L));
+            streamSet.add(effectiveStream);
 
             try (final CacheManager cacheManager = new CacheManager()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
@@ -174,34 +223,65 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         return streamSet;
                     }
                 };
-                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
-                data.setEffectiveStreamCache(effectiveStreamCache);
-                data.setMapStorePool(mapStoreCache);
+                referenceData.setEffectiveStreamCache(effectiveStreamCache);
 
-                final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-                mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
-                mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-                data.put(new MapStoreCacheKey(pipelineRef, 0), mapStoreBuilder.getMapStore());
+                RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
 
-                Assert.assertEquals("091111", lookup(data, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111"));
-                Assert.assertEquals("user1", lookup(data, pipelineReferences, 0, "NUMBER_TO_SID", "091111"));
-                Assert.assertEquals("user1", lookup(data, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111"));
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
+                    refDataLoader.initialise(false);
+
+                    // load the ref data
+                    // cardNo => username => payrollNo => location
+                    for (int i = 1; i <= 3; i++) {
+                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "CARD_NUMBER_TO_USERNAME");
+                        refDataLoader.put(mapDefinition, addSuffix("cardNo", i), StringValue.of(addSuffix("user", i)));
+
+                        mapDefinition = new MapDefinition(refStreamDefinition, "USERNAME_TO_PAYROLL_NUMBER");
+                        refDataLoader.put(mapDefinition, addSuffix("user", i), StringValue.of(addSuffix("payrollNo", i)));
+
+                        mapDefinition = new MapDefinition(refStreamDefinition, "PAYROLL_NUMBER_TO_LOCATION");
+                        refDataLoader.put(mapDefinition, addSuffix("payrollNo", i), StringValue.of(addSuffix("location", i)));
+                    }
+
+                    refDataLoader.completeProcessing();
+                });
+
+
+                for (int i = 1; i <= 3; i++) {
+                    LOGGER.info("Assertion iteration {}", i);
+
+                    Assertions.assertThat(
+                            lookup(referenceData,
+                                    pipelineReferences,
+                                    0,
+                                    "CARD_NUMBER_TO_USERNAME",
+                                    addSuffix("cardNo", i)))
+                            .isEqualTo(addSuffix("user", i));
+
+                    Assertions.assertThat(
+                            lookup(referenceData, pipelineReferences, 0, "USERNAME_TO_PAYROLL_NUMBER", addSuffix("user", i)))
+                            .isEqualTo(addSuffix("payrollNo", i));
+
+                    Assertions.assertThat(
+                            lookup(referenceData, pipelineReferences, 0, "PAYROLL_NUMBER_TO_LOCATION", addSuffix("payrollNo", i)))
+                            .isEqualTo(addSuffix("location", i));
+
+                    // now do a nested lookup
+                    Assertions.assertThat(
+                            lookup(referenceData, pipelineReferences, 0,
+                                    "CARD_NUMBER_TO_USERNAME/USERNAME_TO_PAYROLL_NUMBER", addSuffix("cardNo", i)))
+                            .isEqualTo(addSuffix("payrollNo", i));
+
+                    // now do a double nested lookup
+                    Assertions.assertThat(
+                            lookup(referenceData, pipelineReferences, 0,
+                                    "CARD_NUMBER_TO_USERNAME/USERNAME_TO_PAYROLL_NUMBER/PAYROLL_NUMBER_TO_LOCATION",
+                                    addSuffix("cardNo", i)))
+                            .isEqualTo(addSuffix("location", i));
+                }
+
             }
         });
-    }
-
-    private EventList getEventsFromString(final String string) {
-        final char[] ch = string.toCharArray();
-        try {
-            builder.characters(ch, 0, ch.length);
-        } catch (final SAXException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        final EventList eventList = builder.getEventList();
-        builder.reset();
-
-        return eventList;
     }
 
     private String lookup(final ReferenceData data,
@@ -218,15 +298,21 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                           final String mapName,
                           final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
-        data.getValue(pipelineReferences, time, mapName, key, result);
-        if (result.getEventList() != null) {
-            return result.getEventList().toString();
+        data.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
+        if (result.getRefDataValueProxy() == null) {
+            return null;
         }
-
-        return null;
+        RefDataValue refDataValue = result.getRefDataValueProxy().supplyValue().orElse(null);
+        if (refDataValue == null) {
+            return null;
+        } else {
+            return ((StringValue) refDataValue).getValue();
+        }
     }
 
     private ReferenceData createReferenceData() {
         return beanStore.getInstance(ReferenceData.class);
     }
+
+
 }

@@ -1,0 +1,58 @@
+@import "../Element";
+.element-palette {
+  background-color: #fafafa;
+}
+
+.ui.header.closed {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.element-palette-category .ui.styled.accordion {
+  border-radius: 0;
+}
+
+.element-palette-category .ui.styled.accordion .content {
+  background-color: #fafafa;
+}
+
+%element-palette-category__elements--shared {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  overflow: hidden;
+  justify-content: left;
+}
+
+.element-palette-category__elements--open {
+  @extend %element-palette-category__elements--shared;
+  max-height: none;
+}
+
+.element-palette-category__elements--closed {
+  @extend %element-palette-category__elements--shared;
+  max-height: 0;
+}
+
+.element-palette-element {
+  @extend %element-shared;
+  margin-bottom: 0.5rem;
+  margin-right: 3px;
+}
+
+.element-palette-element.focus {
+  @extend %element-shared--focus;
+}
+
+.element-palette-element:hover {
+  background-color: $hover-item-colour;
+}
+
+.element-palette__icon {
+  @extend %element-shared__icon;
+}
+
+.element-palette__type {
+  @extend %element-shared__type;
+  box-sizing: border-box;
+}

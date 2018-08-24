@@ -379,13 +379,19 @@ public class SplitFilter extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "The depth of XML elements to split at.", defaultValue = "1")
+    @PipelineProperty(
+            description = "The depth of XML elements to split at.",
+            defaultValue = "1",
+            displayPriority = 1)
     public void setSplitDepth(final int splitDepth) {
         // Add a fudge in here to cope with legacy depth being 0 based.
         this.splitDepth = splitDepth + 1;
     }
 
-    @PipelineProperty(description = "The number of elements at the split depth to count before the XML is split.", defaultValue = "10000")
+    @PipelineProperty(
+            description = "The number of elements at the split depth to count before the XML is split.",
+            defaultValue = "10000",
+            displayPriority = 2)
     public void setSplitCount(final int splitCount) {
         this.splitCount = splitCount;
     }

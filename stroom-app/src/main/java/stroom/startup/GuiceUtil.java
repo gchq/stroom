@@ -24,14 +24,27 @@ public class GuiceUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceUtil.class);
     private static final String HEALTH_CHECK_SUFFIX = "HealthCheck";
 
-    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry, final Injector injector, final Class<? extends HasHealthCheck> clazz) {
+    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry,
+                                      final Injector injector,
+                                      final Class<? extends HasHealthCheck> clazz) {
         final HasHealthCheck hasHealthCheck = injector.getInstance(clazz);
         String name = clazz.getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
         healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
     }
 
-    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler, final Injector injector, final Class<? extends Filter> clazz, final String url) {
+    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry,
+                                      final HasHealthCheck hasHealthCheck) {
+
+        String name = hasHealthCheck.getClass().getName() + HEALTH_CHECK_SUFFIX;
+        LOGGER.debug("Registering heath check {}", name);
+        healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
+    }
+
+    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,
+                                         final Injector injector,
+                                         final Class<? extends Filter> clazz,
+                                         final String url) {
         final Filter filter = injector.getInstance(clazz);
         final FilterHolder filterHolder = new FilterHolder(filter);
         filterHolder.setName(clazz.getSimpleName());
@@ -58,7 +71,10 @@ public class GuiceUtil {
 //        servletContextHandler.addFilter(filterHolder, url, EnumSet.of(DispatcherType.REQUEST));
 //    }
 
-    public static ServletHolder addServlet(final ServletContextHandler servletContextHandler, final Injector injector, final Class<?> clazz, final String url) {
+    public static ServletHolder addServlet(final ServletContextHandler servletContextHandler,
+                                           final Injector injector,
+                                           final Class<?> clazz,
+                                           final String url) {
         final Object object = injector.getInstance(clazz);
         if (!(object instanceof Servlet)) {
             throw new IllegalArgumentException("Expected servlet for object " + clazz.getName());
@@ -86,17 +102,23 @@ public class GuiceUtil {
 //        servletContextHandler.addServlet(servletHolder, url);
 //    }
 
-    public static void addServletListener(final ServletEnvironment servletEnvironment, final Injector injector, final Class<? extends HttpSessionListener> clazz) {
+    public static void addServletListener(final ServletEnvironment servletEnvironment,
+                                          final Injector injector,
+                                          final Class<? extends HttpSessionListener> clazz) {
         final HttpSessionListener httpSessionListener = injector.getInstance(clazz);
         servletEnvironment.addServletListeners(httpSessionListener);
     }
 
-    public static void addResource(final JerseyEnvironment jersey, final Injector injector, final Class<?> clazz) {
+    public static void addResource(final JerseyEnvironment jersey,
+                                   final Injector injector,
+                                   final Class<?> clazz) {
         final Object resource = injector.getInstance(clazz);
         jersey.register(Preconditions.checkNotNull(resource));
     }
 
-    public static void manage(final LifecycleEnvironment lifecycleEnvironment, final Injector injector, final Class<? extends Managed> clazz) {
+    public static void manage(final LifecycleEnvironment lifecycleEnvironment,
+                              final Injector injector,
+                              final Class<? extends Managed> clazz) {
         final Managed managed = injector.getInstance(clazz);
         lifecycleEnvironment.manage(managed);
     }

@@ -13,49 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {
+  createActions,
+  handleActions,
+} from 'redux-actions';
 
-import $ from 'jquery';
+import { wrappedGet } from 'lib/fetchTracker.redux';
 
-export const UPDATE_CONFIG = 'config/UPDATE_CONFIG';
+const initialState = { isReady: false };
 
-const initialState = {};
+const actionCreators = createActions({
+  UPDATE_CONFIG: config => ({ config }),
+  CLEAR_CONFIG: () => ({}),
+});
 
-export default (state = initialState, action) => {
-  switch (action.type) {
-    case UPDATE_CONFIG:
-      return {
-        ...state,
-        ...action.config,
-      };
-    default:
-      return state;
-  }
-};
+const reducer = handleActions(
+  {
+    UPDATE_CONFIG: (state, action) => ({
+      ...state,
+      ...action.payload.config,
+      isReady: true,
+    }),
+    CLEAR_CONFIG: (state, action) => ({
+      isReady: false,
+    }),
+  },
+  initialState,
+);
 
-function updateConfig(config) {
-  return {
-    type: UPDATE_CONFIG,
-    config,
-  };
-}
-
-export const fetchConfig = () => (dispatch) => {
-  fetch('/config.json', { method: 'get' })
-    .then(response => response.json())
-    .then(config => dispatch(updateConfig(config)));
-};
-
-export const fetchConfigSynchronously = () => {
-  // This causes a console warning about synchronous calls degrading the user experience.
-  // In our case it's necessary -- we must retrieve the config before we bootstrap react and
-  // synchronous is the only way.
-  const result = $.ajax({
-    url: '/config.json',
-    contentType: 'application/json',
-    dataType: 'json',
-    method: 'GET',
-    async: false,
+const fetchConfig = () => (dispatch, getState) => {
+  const url = '/config.json';
+  wrappedGet(dispatch, getState(), url, (response) => {
+    response.json().then((config) => {
+      dispatch(actionCreators.updateConfig(config));
+    });
   });
-
-  return result.responseJSON;
 };
+
+export { actionCreators, reducer, fetchConfig };

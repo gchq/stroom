@@ -16,10 +16,10 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.docref.SharedObject;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasType;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.docref.SharedObject;
 
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType, SharedObject {
     private static final long serialVersionUID = 2290622144151007980L;
@@ -31,6 +31,7 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     private String defaultValue;
     private boolean pipelineReference;
     private String[] docRefTypes;
+    private int displayPriority;
 
     public PipelinePropertyType() {
         // Default constructor necessary for GWT serialisation.
@@ -63,6 +64,10 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
 
     public String[] getDocRefTypes() {
         return docRefTypes;
+    }
+
+    public int getDisplayPriority() {
+        return displayPriority;
     }
 
     @Override
@@ -142,8 +147,15 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
             return this;
         }
 
+        public Builder displayPriority(int displayPriority) {
+            this.instance.displayPriority = displayPriority;
+            return this;
+        }
+
         public PipelinePropertyType build() {
             return instance;
         }
+
+
     }
 }

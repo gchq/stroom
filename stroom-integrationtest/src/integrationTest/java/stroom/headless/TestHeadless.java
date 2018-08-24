@@ -20,6 +20,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
@@ -39,6 +41,8 @@ import java.util.List;
 
 @Ignore
 public class TestHeadless {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
+
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
     private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
 
@@ -117,6 +121,10 @@ public class TestHeadless {
 
         final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
         final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
+
+        LOGGER.info("Comparing expected vs actual:\n\t{}\n\t{}",
+                expectedOutputFilePath.toAbsolutePath().toString(),
+                outputFilePath.toAbsolutePath().toString());
 
         // same number of lines output as expected
         Assert.assertEquals(expectedLines.size(), outputLines.size());

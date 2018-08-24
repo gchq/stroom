@@ -21,20 +21,24 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
-import { lineContainerReducer as lineContainer } from 'components/LineTo';
-import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
-import { dataSourceReducer as dataSources } from 'components/ExpressionBuilder';
-import {
-  expressionReducer as expressions,
-} from 'components/ExpressionBuilder';
-import {
-  pipelineReducer as pipelines,
-  elementReducer as elements,
-  addElementToPipelineWizardReducer as addElementToPipelineWizard,
-} from 'prototypes/PipelineEditor';
-import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
-import { errorPageReducer as errorPage } from 'sections/ErrorPage';
-import config from './config';
+import { reducer as appSearch } from 'components/AppSearchBar/redux';
+import { reducer as appChrome } from 'sections/AppChrome/redux';
+import { reducer as docRefTypes } from 'components/DocRefTypes';
+import { reducer as lineContainer } from 'components/LineTo';
+import { reducer as docRefInfo } from 'components/DocRefInfoModal/redux';
+import { reducer as folderExplorer } from 'components/FolderExplorer/redux';
+import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
+import { reducer as pipelineEditor } from 'components/PipelineEditor';
+import { reducer as recentItems } from 'sections/RecentItems';
+import { reducer as xslt } from 'components/XsltEditor';
+import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
+import { reducer as errorPage } from 'components/ErrorPage';
+import { reducer as config } from './config';
+import { reducer as fetch } from 'lib/fetchTracker.redux';
+import { reducer as dataViewers } from 'components/DataViewer';
+import { reducer as keyIsDown } from 'lib/KeyIsDown';
+import { reducer as userSettings } from 'sections/UserSettings';
+import { reducer as selectableItemListings } from 'lib/withSelectableItemListing';
 
 export default combineReducers({
   routing: routerReducer,
@@ -43,12 +47,20 @@ export default combineReducers({
   authorisation,
   config,
   trackerDashboard,
-  explorerTree,
-  dataSources,
-  expressions,
-  pipelines,
-  elements,
-  addElementToPipelineWizard,
+  folderExplorer,
+  expressionBuilder,
+  pipelineEditor,
+  xslt,
   errorPage,
   lineContainer,
+  fetch,
+  recentItems,
+  dataViewers,
+  keyIsDown,
+  docRefTypes,
+  appChrome,
+  userSettings,
+  docRefInfo,
+  appSearch,
+  selectableItemListings
 });

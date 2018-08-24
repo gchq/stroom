@@ -47,7 +47,7 @@ AuthenticationRequest.propTypes = {
   uiUrl: PropTypes.string.isRequired,
   appClientId: PropTypes.string.isRequired,
   authenticationServiceUrl: PropTypes.string.isRequired,
-  appPermission: PropTypes.string.isRequired,
+  appPermission: PropTypes.string,
 };
 
 const mapStateToProps = state => ({});

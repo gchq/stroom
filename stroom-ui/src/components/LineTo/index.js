@@ -1,5 +1,5 @@
 import LineTo from './LineTo';
 import LineContainer from './LineContainer';
-import { lineContainerReducer } from './redux';
+import { reducer } from './redux';
 
-export { LineTo, LineContainer, lineContainerReducer };
+export { LineTo, LineContainer, reducer };

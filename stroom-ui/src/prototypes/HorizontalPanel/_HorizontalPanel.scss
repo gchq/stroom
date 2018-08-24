@@ -1,0 +1,71 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+$header-height: 30px;
+.horizontal-panel__container {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.horizontal-panel__container .grid {
+  margin-left: 0rem;
+  margin-right: 0rem;
+}
+
+.horizontal-panel__container .header {
+  height: $header-height;
+  padding-top: 10px !important;
+}
+
+.horizontal-panel__container .divider {
+  margin-top: 0px !important;
+  margin-bottom: 1px;
+}
+
+.horizontal-panel__content {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.horizontal-panel__content__container {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+}
+
+.horizontal-panel_close-button {
+  padding: 0px !important;
+}
+
+.horizontal-panel_close-button .button {
+  padding: 5px !important;
+}
+
+.horizontal-panel_header-container {
+  background-color: $hover-item-colour;
+  width: 100%;
+  height: 30px;
+}
+
+.HorizontalPanel_title__container {
+  padding-top: 6px !important;
+}
+
+.HorizontalPanel_closeButton__container {
+  height: 22px;
+}

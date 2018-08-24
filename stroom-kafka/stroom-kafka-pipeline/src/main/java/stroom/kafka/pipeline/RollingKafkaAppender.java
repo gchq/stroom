@@ -85,12 +85,16 @@ class RollingKafkaAppender extends AbstractRollingAppender {
                 flushOnSend);
     }
 
-    @PipelineProperty(description = "The record key to apply to records, used to select partition. Replacement variables can be used in path strings such as ${feed}.")
+    @PipelineProperty(
+            description = "The record key to apply to records, used to select partition. Replacement variables can be used in path strings such as ${feed}.",
+            displayPriority = 2)
     public void setRecordKey(final String recordKey) {
         this.recordKey = pathCreator.replaceAll(recordKey);
     }
 
-    @PipelineProperty(description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.")
+    @PipelineProperty(
+            description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.",
+            displayPriority = 1)
     public void setTopic(final String topic) {
         this.topic = pathCreator.replaceAll(topic);
     }
@@ -98,7 +102,8 @@ class RollingKafkaAppender extends AbstractRollingAppender {
     @PipelineProperty(
             description = "Wait for acknowledgement from the Kafka broker when the appender is rolled" +
                     "This is slower but catches errors in the pipeline process",
-            defaultValue = "false")
+            defaultValue = "false",
+            displayPriority = 6)
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }

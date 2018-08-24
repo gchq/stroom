@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import React from 'react'
-import { storiesOf } from '@storybook/react'
-import OriginalList from './OriginalList'
-import StoryRouter from 'storybook-react-router'
+import React from 'react';
+import { storiesOf } from '@storybook/react';
+import OriginalList from './OriginalList';
+import StoryRouter from 'storybook-react-router';
+
+import 'semantic/dist/semantic.min.css';
 
 storiesOf('OriginalList', module)
   .addDecorator(StoryRouter())
-  .add('basic', () => (
-    <OriginalList />
-  ))
+  .add('basic', () => <OriginalList />);

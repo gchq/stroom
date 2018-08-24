@@ -22,6 +22,8 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import { LineContainer, LineTo } from '../index';
 
+import 'semantic/dist/semantic.min.css';
+
 let testBlockStyle = {
     position: 'absolute',
     width:'50px',

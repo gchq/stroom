@@ -33,14 +33,49 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     T to;
     boolean matchNull = false;
 
+    /**
+     * Create a range with no upper or lower bound.
+     */
     public Range() {
         init(null, null);
     }
 
+    /**
+     * @param from The start of the range (inclusive), or null for unbounded.
+     * @param to The end of the range (exclusive), or null for unbounded.
+     */
     public Range(final T from, final T to) {
         init(from, to);
     }
 
+    /**
+     * @param from The start of the range (inclusive), or null for unbounded.
+     * @param to The end of the range (exclusive), or null for unbounded.
+     */
+    public static <T extends Number> Range<T> of(final T from, final T to) {
+        return new Range<>(from, to);
+    }
+
+    /**
+     * Create a {@link Range} with no upper bound.
+     * @param from The start of the range (inclusive), or null for unbounded.
+     */
+    public static <T extends Number> Range<T> from(final T from) {
+        return new Range<>(from, null);
+    }
+
+    /**
+     * Create a {@link Range} with no lower bound.
+     * @param to The end of the range (exclusive), or null for unbounded.
+     */
+    public static <T extends Number> Range<T> to(final T to) {
+        return new Range<>(null, to);
+    }
+
+    /**
+     * @param from The start of the range (inclusive), or null for unbounded.
+     * @param to The end of the range (exclusive), or null for unbounded.
+     */
     protected void init(final T from, final T to) {
         this.from = from;
         this.to = to;
@@ -82,7 +117,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
      * Is this period before a time?
      */
     public boolean before(final long num) {
-        return to != null && to.longValue() < num;
+        return to != null && to.longValue() <= num;
     }
 
     public T getFrom() {

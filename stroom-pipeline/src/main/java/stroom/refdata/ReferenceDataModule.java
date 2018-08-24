@@ -16,23 +16,32 @@
 
 package stroom.refdata;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.pipeline.factory.PipelineElementModule;
+import stroom.refdata.store.RefDataStoreModule;
 import stroom.task.api.TaskHandler;
 
-public class ReferenceDataModule extends AbstractModule {
+public class ReferenceDataModule extends PipelineElementModule {
     @Override
     protected void configure() {
+        super.configure();
+
         bind(ReferenceDataLoader.class).to(ReferenceDataLoaderImpl.class);
         bind(ContextDataLoader.class).to(ContextDataLoaderImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(EffectiveStreamCache.class);
-        clearableBinder.addBinding().to(MapStoreCache.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.refdata.ContextDataLoadTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.refdata.ReferenceDataLoadTaskHandler.class);
+
+        install(new RefDataStoreModule());
+    }
+
+    @Override
+    protected void configureElements() {
+        bindElement(ReferenceDataFilter.class);
     }
 }

@@ -159,6 +159,7 @@ public class ElementRegistry {
                 .type(typeName)
                 .description(property.description())
                 .defaultValue(property.defaultValue())
+                .displayPriority(property.displayPriority())
                 .pipelineReference(paramType.equals(PipelineReference.class))
                 .docRefTypes((docRefProperty != null) ? docRefProperty.types() : null)
                 .build();

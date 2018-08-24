@@ -316,9 +316,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private int termCount(final ExpressionOperator expressionOperator, final String field) {
         int count = 0;
-        if (expressionOperator.enabled()) {
+        if (expressionOperator.getEnabled()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
+                if (item.getEnabled()) {
                     if (item instanceof ExpressionTerm) {
                         if (field.equals(((ExpressionTerm) item).getField())) {
                             count++;

@@ -21,6 +21,7 @@ import com.google.inject.Provides;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityImpl;
 
 public class MockSecurityContextModule extends AbstractModule {
     @Override
@@ -31,6 +32,6 @@ public class MockSecurityContextModule extends AbstractModule {
 
     @Provides
     public Security security(final SecurityContext securityContext) {
-        return new Security(securityContext);
+        return new SecurityImpl(securityContext);
     }
 }

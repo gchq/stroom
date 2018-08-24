@@ -370,9 +370,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static void getTerms(final ExpressionOperator expressionOperator, final String field, final Set<String> terms) {
-        if (expressionOperator.enabled()) {
+        if (expressionOperator.getEnabled()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
+                if (item.getEnabled()) {
                     if (item instanceof ExpressionTerm) {
                         if (field.equals(((ExpressionTerm) item).getField())) {
                             terms.add(((ExpressionTerm) item).getValue());

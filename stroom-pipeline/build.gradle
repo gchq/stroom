@@ -15,24 +15,34 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-task:stroom-task-api')
 
+    compile libs.commons_io
     compile libs.commons_lang
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.fast_infoset
+    compile libs.google_findbugs
     compile libs.guava
     compile libs.guice4
+    compile libs.guice_assistedinject
     compile libs.hadoopCommonShaded
     compile libs.hadoopHdfsShaded
+    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.jackson_core
     compile libs.javax_inject
+    compile libs.jaxb_api
     compile libs.jersey_client
     compile libs.jetty_http
+    compile libs.jsr173_api
+    compile libs.kryo
+    compile libs.lmdbjava
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.stax_api
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
+    compile libs.swagger_annotations
+    compile libs.vavr
     compile libs.ws_rs_api
     compile libs.xml_apis
-    compile libs.swagger_annotations
-    compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')

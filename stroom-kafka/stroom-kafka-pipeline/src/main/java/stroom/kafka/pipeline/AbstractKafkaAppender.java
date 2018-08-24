@@ -199,7 +199,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     @PipelineProperty(
             description = "Wait for acknowledgement from the Kafka broker for all of the messages sent." +
                     "This is slower but catches errors in the pipeline process",
-            defaultValue = "false")
+            defaultValue = "false",
+            displayPriority = 4)
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }
@@ -213,7 +214,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     @SuppressWarnings("unused")
     @PipelineProperty(
             description = "Choose the maximum number of records or events that a message will contain",
-            defaultValue = "1")
+            defaultValue = "1",
+            displayPriority = 3)
     public void setMaxRecordCount(final String maxRecordCount) {
         if (maxRecordCount != null && maxRecordCount.trim().length() > 0) {
             try {

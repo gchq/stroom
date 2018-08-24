@@ -17,6 +17,7 @@
 
 package stroom.pipeline;
 
+import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
 import stroom.pipeline.scope.PipelineScopeRunnable;
@@ -32,15 +33,16 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.data.store.api.StreamStore;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
-class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
+class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipelineAction, AbstractFetchDataResult> {
     private final Security security;
+    private final DataFetcher dataFetcher;
 
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
@@ -56,7 +58,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final StreamEventLog streamEventLog,
                                  final Security security,
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
-        super(streamStore,
+        dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
                 feedHolderProvider,
                 metaDataHolderProvider,
@@ -84,7 +86,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
             final Long streamId = action.getStreamId();
 
             if (streamId != null) {
-                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                return dataFetcher.getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
                         action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
             }
 

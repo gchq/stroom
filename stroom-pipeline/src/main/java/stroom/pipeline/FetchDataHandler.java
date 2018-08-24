@@ -32,14 +32,16 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.data.store.api.StreamStore;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataAction.class)
-class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
+class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetchDataResult> {
     private final Security security;
+    private final DataFetcher dataFetcher;
 
     @Inject
     FetchDataHandler(final StreamStore streamStore,
@@ -55,7 +57,7 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
                      final StreamEventLog streamEventLog,
                      final Security security,
                      final PipelineScopeRunnable pipelineScopeRunnable) {
-        super(streamStore,
+        dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
                 feedHolderProvider,
                 metaDataHolderProvider,
@@ -77,7 +79,7 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
             final Long streamId = action.getStreamId();
 
             if (streamId != null) {
-                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                return dataFetcher.getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
                         action.isMarkerMode(), null, action.isShowAsHtml(), action.getExpandedSeverities());
             }
 

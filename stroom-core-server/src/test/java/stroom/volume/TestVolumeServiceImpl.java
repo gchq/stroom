@@ -33,6 +33,7 @@ import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
+import stroom.security.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
@@ -82,7 +83,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     @Mock
     private EntityManagerSupport entityManagerSupport;
 
-    private final Security security = new Security(new MockSecurityContext());
+    private final Security security = new SecurityImpl(new MockSecurityContext());
 
     @Before
     public void init() {

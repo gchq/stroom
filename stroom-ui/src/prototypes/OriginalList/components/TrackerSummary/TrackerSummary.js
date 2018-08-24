@@ -18,7 +18,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Grid, Segment, List, Accordion, Form, Label, Progress } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import NumericInput from 'prototypes/NumericInput';
 import './TrackerSummary.css';

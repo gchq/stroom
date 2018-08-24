@@ -24,7 +24,7 @@ import { Icon, Button, Confirm } from 'semantic-ui-react';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { canMove } from 'lib/treeUtils';
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 
 import ExpressionTerm from './ExpressionTerm';
 
@@ -79,22 +79,37 @@ function dropCollect(connect, monitor) {
   };
 }
 
+const enhance = compose(
+  connect(
+    state => ({
+      // operators are nested, so take all their props from parent
+    }),
+    {
+      expressionTermAdded,
+      expressionOperatorAdded,
+      expressionItemUpdated,
+      expressionItemMoved,
+      expressionItemDeleted,
+    },
+  ),
+  DragSource(ItemTypes.OPERATOR, dragSource, dragCollect),
+  DropTarget([ItemTypes.OPERATOR, ItemTypes.TERM], dropTarget, dropCollect),
+  withPendingDeletion,
+);
+
 const ExpressionOperator = ({
   expressionId,
   operator,
   isRoot,
   isEnabled,
   dataSource,
-
   expressionTermAdded,
   expressionOperatorAdded,
   expressionItemUpdated,
   expressionItemDeleted,
   expressionItemMoved,
-
   pendingDeletion,
   setPendingDeletion,
-
   connectDropTarget,
   isOver,
   connectDragSource,
@@ -150,11 +165,11 @@ const ExpressionOperator = ({
 
   let enabledButton;
   if (isRoot) {
-    enabledButton = <Button icon="dont" compact basic />;
+    enabledButton = <Button icon="dont" compact color="grey" />;
   } else if (operator.enabled) {
     enabledButton = <Button icon="checkmark" compact color="blue" onClick={onEnabledChange} />;
   } else {
-    enabledButton = <Button icon="checkmark" compact basic onClick={onEnabledChange} />;
+    enabledButton = <Button icon="checkmark" compact color="grey" onClick={onEnabledChange} />;
   }
 
   return (
@@ -173,133 +188,97 @@ const ExpressionOperator = ({
         <Button.Group>
           {LOGICAL_OPERATORS.map(l => (
             <Button
-              color="blue"
-              basic={operator.op !== l}
+              color={operator.op === l ? 'blue' : undefined}
               key={l}
               compact
               onClick={() => onOpChange(l)}
             >
               {l}
             </Button>
-              ))}
+                ))}
         </Button.Group>
 
         <Button.Group floated="right">
           <Button compact onClick={onAddTerm}>
             <Icon name="add" />
-                Term
+                  Term
           </Button>
           <Button compact onClick={onAddOperator}>
             <Icon name="add" />
-                Group
+                  Group
           </Button>
           {enabledButton}
           {!isRoot ? (
             <Button icon="trash" compact onClick={onRequestDeleteOperator} />
-              ) : (
-                <Button disabled icon="dont" compact />
-              )}
+                ) : (
+                  <Button disabled icon="dont" compact />
+                )}
         </Button.Group>
-      </div>))}
+                                           </div>))}
       <div className="operator__children">
         {isOver && dropTarget.canDrop && <div className="operator__placeholder" />}
         {operator.children
-          .map((c) => {
-            let itemElement;
-            switch (c.type) {
-              case 'term':
-                itemElement = (
-                  <div key={c.uuid} id={`expression-item${c.uuid}`}>
-                    <ExpressionTerm
+            .map((c) => {
+              let itemElement;
+              switch (c.type) {
+                case 'term':
+                  itemElement = (
+                    <div key={c.uuid} id={`expression-item${c.uuid}`}>
+                      <ExpressionTerm
+                        dataSource={dataSource}
+                        expressionId={expressionId}
+                        isEnabled={isEnabled && c.enabled}
+                        term={c}
+                      />
+                    </div>
+                  );
+                  break;
+                case 'operator':
+                  itemElement = (
+                    <EnhancedExpressionOperator
                       dataSource={dataSource}
                       expressionId={expressionId}
                       isEnabled={isEnabled && c.enabled}
-                      term={c}
+                      operator={c}
                     />
-                  </div>
-                );
-                break;
-              case 'operator':
-                itemElement = (
-                  <DndExpressionOperator
-                    dataSource={dataSource}
-                    expressionId={expressionId}
-                    isEnabled={isEnabled && c.enabled}
-                    operator={c}
-                  />
-                );
-                break;
-              default:
-                throw new Error(`Invalid operator type: ${c.type}`);
-            }
+                  );
+                  break;
+                default:
+                  throw new Error(`Invalid operator type: ${c.type}`);
+              }
 
-            // Wrap it with a line to
-            return (
-              <div key={c.uuid}>
-                <LineTo
-                  lineId={c.uuid}
-                  lineType="downRightElbow"
-                  fromId={`expression-item${operator.uuid}`}
-                  toId={`expression-item${c.uuid}`}
-                />
-                {itemElement}
-              </div>
-            );
-          })
-          .filter(c => !!c) // null filter
-        }
+              // Wrap it with a line to
+              return (
+                <div key={c.uuid}>
+                  <LineTo
+                    lineId={c.uuid}
+                    lineType="downRightElbow"
+                    fromId={`expression-item${operator.uuid}`}
+                    toId={`expression-item${c.uuid}`}
+                  />
+                  {itemElement}
+                </div>
+              );
+            })
+            .filter(c => !!c) // null filter
+          }
       </div>
     </div>
   );
 };
 
-ExpressionOperator.propTypes = {
-  // Props
+const EnhancedExpressionOperator = enhance(ExpressionOperator);
+
+EnhancedExpressionOperator.propTypes = {
   dataSource: PropTypes.object.isRequired, // complete definition of the data source
   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
   operator: PropTypes.object.isRequired, // the operator that this particular element is to represent
   isRoot: PropTypes.bool.isRequired, // used to prevent deletion of root nodes
   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
-
-  // Actions
-  expressionTermAdded: PropTypes.func.isRequired,
-  expressionOperatorAdded: PropTypes.func.isRequired,
-  expressionItemUpdated: PropTypes.func.isRequired,
-  expressionItemDeleted: PropTypes.func.isRequired,
-  expressionItemMoved: PropTypes.func.isRequired,
-
-  // withPendingDeletion
-  pendingDeletion: PropTypes.bool.isRequired,
-  setPendingDeletion: PropTypes.func.isRequired,
-
-  // React DnD
-  connectDropTarget: PropTypes.func.isRequired,
-  isOver: PropTypes.bool.isRequired,
-  connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired,
 };
 
-ExpressionOperator.defaultProps = {
+EnhancedExpressionOperator.defaultProps = {
   isRoot: false,
 };
 
-// We need to use this ourself, so create a variable
-const DndExpressionOperator = compose(
-  connect(
-    state => ({
-      // operators are nested, so take all their props from parent
-    }),
-    {
-      expressionTermAdded,
-      expressionOperatorAdded,
-      expressionItemUpdated,
-      expressionItemMoved,
-      expressionItemDeleted,
-    },
-  ),
-  DragSource(ItemTypes.OPERATOR, dragSource, dragCollect),
-  DropTarget([ItemTypes.OPERATOR, ItemTypes.TERM], dropTarget, dropCollect),
-  withPendingDeletion,
-)(ExpressionOperator);
-
-export default DndExpressionOperator;
+export default EnhancedExpressionOperator;
