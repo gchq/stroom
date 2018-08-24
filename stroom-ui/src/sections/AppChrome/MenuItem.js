@@ -79,7 +79,7 @@ const enhance = compose(
   withShortcutKeys([
     {
       mousetrapKeys: ['enter'],
-      keyEventMatcher: e => e.key === ArrowUp,
+      keyEventMatcher: e => e.key === 'Enter',
       action: ({menuItemOpened, menuItem, menuItemsOpen}, e) => {
         console.log('Opening Menu Item', menuItem);
         menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);

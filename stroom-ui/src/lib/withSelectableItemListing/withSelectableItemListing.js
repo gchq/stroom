@@ -13,25 +13,6 @@ const upKeys = ['k', 'ctrl+k', 'up'];
 const downKeys = ['j', 'ctrl+j', 'down'];
 const openKeys = ['enter'];
 
-// We need to prevent up and down keys from moving the cursor around in the input
-
-// I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap
-// hasn't handled keypresses that occured inside inputs or textareas.
-// There were some changes to fix this, like binding specifically
-// to a field. But that requires getting the element from the DOM and
-// we'd rather not break outside React to do this. The other alternative
-// is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
-
-// Up
-const upArrow = 38;
-const k = 75;
-
-// Down
-const downArrow = 40;
-const j = 74;
-
-const enter = 13;
-
 const withSelectableItemListing = propsFunc =>
   compose(
     withProps((props) => {
@@ -83,7 +64,7 @@ const withSelectableItemListing = propsFunc =>
     withShortcutKeys([
       {
         mousetrapKeys: upKeys,
-        keyEventMatcher: e => e.keyCode === upArrow || (e.ctrlKey && e.keyCode === k),
+        keyEventMatcher: e => e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'k'),
         action: ({ selectionUp, listingId }, e) => {
           selectionUp(listingId);
           if (e) e.preventDefault();
@@ -91,7 +72,7 @@ const withSelectableItemListing = propsFunc =>
       },
       {
         mousetrapKeys: downKeys,
-        keyEventMatcher: e => e.keyCode === downArrow || (e.ctrlKey && e.keyCode === j),
+        keyEventMatcher: e => e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'j'),
         action: ({ selectionDown, listingId }, e) => {
           selectionDown(listingId);
           if (e) e.preventDefault();
@@ -99,7 +80,7 @@ const withSelectableItemListing = propsFunc =>
       },
       {
         mousetrapKeys: openKeys,
-        keyEventHandler: e => e.keyCode === enter,
+        keyEventMatcher: e => e.key === 'Enter',
         action: ({ openItem, selectableItemListing: { selectedItems } }, e) => {
           if (selectedItems.length === 1) {
             openItem(selectedItems[0]);
