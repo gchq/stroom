@@ -40,15 +40,29 @@ public final class BeanUtil {
         final Map<String, Prop> propMap = new HashMap<>();
         for (final Method method : methods) {
             final String methodName = method.getName();
-            if (methodName.length() > 3 && !methodName.equals("getClass")) {
-                if (methodName.startsWith("get") && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
-                    // Getter.
-                    final String name = getPropertyName(methodName);
+
+            if (methodName.startsWith("is")) {
+                // Boolean Getter.
+
+                if (methodName.length() > 2 && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
+                    final String name = getPropertyName(methodName, 2);
                     final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                     prop.getter = method;
-                } else if (methodName.startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE)) {
-                    // Setter.
-                    final String name = getPropertyName(methodName);
+                }
+
+            } else if (methodName.startsWith("get")) {
+                // Getter.
+
+                if (methodName.length() > 3 && !methodName.equals("getClass") && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
+                    final String name = getPropertyName(methodName, 3);
+                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                    prop.getter = method;
+                }
+            } else if (methodName.startsWith("set")) {
+                // Setter.
+
+                if (methodName.length() > 3 && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE)) {
+                    final String name = getPropertyName(methodName, 3);
                     final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                     prop.setter = method;
                 }
@@ -68,8 +82,8 @@ public final class BeanUtil {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
 
-    private static String getPropertyName(final String methodName) {
-        final String name = methodName.substring(3);
+    private static String getPropertyName(final String methodName, final int len) {
+        final String name = methodName.substring(len);
         return name.substring(0, 1).toLowerCase() + name.substring(1);
     }
 
