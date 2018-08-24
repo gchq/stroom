@@ -20,7 +20,6 @@ import { Header, Icon, Grid } from 'semantic-ui-react';
 
 import AppSearchBar from 'components/AppSearchBar';
 import { DocRefListingEntry } from 'components/DocRefListingEntry';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import withOpenDocRef from './withOpenDocRef';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 

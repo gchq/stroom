@@ -21,12 +21,11 @@ import { connect } from 'react-redux';
 
 import { Button, Modal, Input, Popup, Grid, Header, Icon } from 'semantic-ui-react';
 
-import AppSearchBar from 'components/AppSearchBar'
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb'
-
+import AppSearchBar from 'components/AppSearchBar';
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
-// import DocRefListingEntry from 'components/DocRefListingEntry';
+import DocRefListingEntry from 'components/DocRefListingEntry';
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
@@ -72,114 +71,10 @@ const enhance = compose(
 );
 
 const DocPickerModal = ({
-  modalIsOpen,
-  setModalIsOpen,
-  setFolderUuid,
 
-  currentFolderWithLineage,
-  documentTree,
-  onDocRefPickConfirmed,
-  selectionNotYetMade,
-  pickerId,
-  value,
 }) => {
-  let trigger;
-
-  if (value && value.uuid) {
-    const { lineage, node } = findItem(documentTree, value.uuid);
-    const triggerValue = `${lineage.map(d => d.name).join(' > ')}${
-      lineage.length > 0 ? ' > ' : ''
-    }${node.name}`;
-    trigger = (
-      <Popup
-        trigger={
-          <Button
-            // it moans about mixing trigger and selection, but it's the only way to make it look right..?
-            onFocus={() => setModalIsOpen(true)}
-            basic
-          >
-            <img
-              className="stroom-icon--small"
-              alt="X"
-              src={require(`../../images/docRefTypes/${node.type}.svg`)}
-            />
-            {value.name}
-          </Button>
-        }
-      >
-        {triggerValue}
-      </Popup>
-    );
-  } else {
-    trigger = <Input onFocus={() => setModalIsOpen(true)} value="..." />;
-  }
   return (
-    <Modal
-      trigger={trigger}
-      open={modalIsOpen}
-      onClose={() => setModalIsOpen(false)}
-      size="small"
-      dimmer="inverted"
-    >
-      <Modal.Content scrolling>
-        <Grid className="content-tabs__grid">
-          <Grid.Column width={16}>
-            <AppSearchBar />
-          </Grid.Column>
-          <Grid.Column width={16}>
-            <Header as="h3">
-              <Icon name={icon} />
-              <Header.Content>{title}</Header.Content>
-              {parentFolder && (
-                <Header.Subheader>
-                  <DocRefBreadcrumb docRefUuid={parentFolder.uuid} openDocRef={openDocRef} />
-                </Header.Subheader>
-              )}
-            </Header>
-          </Grid.Column>
-        </Grid>
-        <div className="doc-ref-listing">
-          {docRefs.map((docRef, index) => (
-            <DndDocRefListingEntry
-              key={docRef.uuid}
-              index={index}
-              listingId={listingId}
-              docRefUuid={docRef.uuid}
-              includeBreadcrumb={includeBreadcrumbOnEntries}
-              onNameClick={node => openDocRef(node)}
-              openDocRef={openDocRef}
-            />
-          ))}
-        </div>
-        {/* <DocRefListingEntry
-          listingId={pickerId}
-          icon="search"
-          title="Search"
-          includeBreadcrumbOnEntries={false}
-          parentFolder={currentFolderWithLineage.node}
-          items={currentFolderWithLineage.node.children}
-          openDocRef={d => {
-            // This will open a folder even if children are hidden by filtering...
-            if (d.children && d.children.length > 0) {
-              setFolderUuid(d.uuid);
-            }
-          }}
-        /> */}
-      </Modal.Content>
-      <Modal.Actions>
-        <Button negative onClick={() => setModalIsOpen(false)}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={onDocRefPickConfirmed}
-          labelPosition="right"
-          disabled={selectionNotYetMade}
-          icon="checkmark"
-          content="Choose"
-        />
-      </Modal.Actions>
-    </Modal>
+    <div>I.O.U One DocRefModalPicker</div>
   );
 };
 

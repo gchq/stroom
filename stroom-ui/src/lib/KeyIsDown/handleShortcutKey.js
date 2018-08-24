@@ -1,19 +1,23 @@
+import { openDocRef } from 'sections/RecentItems';
+import { actionCreators as selectableItemActionCreators } from 'lib/withSelectableItemListing';
+
+const { selectionUp, selectionDown } = selectableItemActionCreators;
+
 const SHORTCUT_NAMES = {
   UP: 'up',
   DOWN: 'down',
   OPEN: 'open',
 };
 
-import FOCUSSED_ELEMENTS from './focussedElements';
-import { openDocRef } from 'sections/RecentItems';
-import { actionCreators as selectableItemActionCreators } from 'lib/withSelectableItemListing';
-
-const { selectionUp, selectionDown } = selectableItemActionCreators;
+const FOCUSSED_ELEMENTS = {
+  DOC_REF_LISTING: 'doc-ref-listing',
+  DOC_REF_PICKER: 'doc-ref-picker',
+};
 
 const handleShortcutKey = (history, shortcut) => (dispatch, getState) => {
   const state = getState();
   const {
-    keyIsDown: { keyIsDown, focussedElement },
+    keyIsDown: { focussedElement },
     selectableItemListings,
   } = state;
 
@@ -39,10 +43,14 @@ const handleShortcutKey = (history, shortcut) => (dispatch, getState) => {
             break;
           case FOCUSSED_ELEMENTS.DOC_REF_PICKER:
             break;
+          default:
+            break;
         }
       }
+      break;
+    default:
       break;
   }
 };
 
-export { SHORTCUT_NAMES, handleShortcutKey };
+export { SHORTCUT_NAMES, FOCUSSED_ELEMENTS, handleShortcutKey };
