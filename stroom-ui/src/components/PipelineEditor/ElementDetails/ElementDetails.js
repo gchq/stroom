@@ -11,7 +11,7 @@ import { reduxForm } from 'redux-form';
 
 import { getParentProperty } from '../pipelineUtils';
 
-import HorizontalPanel from 'prototypes/HorizontalPanel';
+import HorizontalPanel from 'components/HorizontalPanel';
 
 import ElementField from './ElementField';
 

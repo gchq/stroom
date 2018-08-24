@@ -10,7 +10,7 @@ import { Grid, Checkbox, List, Card } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
-import HorizontalPanel from 'prototypes/HorizontalPanel';
+import HorizontalPanel from 'components/HorizontalPanel';
 import { ExpressionBuilder } from 'components/ExpressionBuilder';
 
 const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => {
