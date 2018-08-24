@@ -22,7 +22,7 @@ import moment from 'moment';
 import { path } from 'ramda';
 
 import PanelGroup from 'react-panelgroup';
-import HorizontalPanel from 'prototypes/HorizontalPanel';
+import HorizontalPanel from 'components/HorizontalPanel';
 
 import Mousetrap from 'mousetrap';
 

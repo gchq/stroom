@@ -19,7 +19,10 @@ import PropTypes from 'prop-types';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Popup } from 'semantic-ui-react';
+import { Button, Modal, Input, Popup, Grid, Header, Icon } from 'semantic-ui-react';
+
+import AppSearchBar from 'components/AppSearchBar'
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb'
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';

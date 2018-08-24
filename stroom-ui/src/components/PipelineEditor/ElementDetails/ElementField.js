@@ -11,7 +11,7 @@ import { actionCreators } from '../redux';
 import DocPickerModal from 'components/DocPickerModal';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
-import NumericInput from 'prototypes/NumericInput';
+import NumericInput from 'components/NumericInput';
 
 const {
   pipelineElementPropertyUpdated,
