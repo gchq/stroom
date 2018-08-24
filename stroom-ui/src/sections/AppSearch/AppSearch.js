@@ -19,7 +19,6 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { iterateNodes } from 'lib/treeUtils';
-import { DocRefListingWithRouter } from 'components/DocRefListingEntry';
 import { withDocumentTree } from 'components/FolderExplorer';
 
 const enhance = compose(
@@ -40,17 +39,9 @@ const enhance = compose(
     return {
       allDocuments,
     };
-  }, {}
-  )
+  }, {}),
 );
 
-const AppSearch = ({ allDocuments }) => (
-  <DocRefListingWithRouter
-    listingId="app-search"
-    icon="search"
-    title="Search"
-    items={allDocuments}
-  />
-);
+const AppSearch = ({ allDocuments }) => <div>I.O.U one App Search</div>;
 
 export default enhance(AppSearch);

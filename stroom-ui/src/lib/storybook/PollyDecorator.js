@@ -270,7 +270,7 @@ const enhanceLocal = compose(
     resetAllUrls,
   }),
   lifecycle({
-    componentWillMount() {
+    componentDidMount() {
       // must be done before any children have mounted, but the docs say this function is unsafe...
       // We can't hook the constructor in the lifecycle thing, so if we need to replace this later then
       // we can make a little custom component

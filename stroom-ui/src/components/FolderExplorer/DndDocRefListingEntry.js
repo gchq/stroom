@@ -68,7 +68,7 @@ const dragSource = {
 
     // If we are dragging one of the items in a selection, bring across the entire selection
     let selectedDocRefUuids = selectedItems.map(d => d.uuid);
-    if (selectedDocRefUuids.includes(docRefUuid)) {
+    if (selectedDocRefUuids.includes(docRef.uuid)) {
       docRefs = selectedItems;
     }
 

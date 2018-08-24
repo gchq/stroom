@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps, branch, renderComponent } from 'recompose';
+import { compose, withProps, lifecycle, branch, renderComponent } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 
 import ThemedPopup from 'components/ThemedPopup';
@@ -108,6 +108,14 @@ const enhance = compose(
 
     return { actionBarItems };
   }),
+  lifecycle({
+    componentDidMount() {
+      this.props.elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID);
+    },
+    componentWillUnmount() {
+      this.props.elementBlurred(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID);
+    }
+  })
 );
 
 const FolderExplorer = ({
