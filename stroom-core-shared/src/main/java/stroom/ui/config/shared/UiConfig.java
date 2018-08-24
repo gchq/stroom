@@ -40,29 +40,12 @@ public class UiConfig implements SharedObject {
     private String namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private String htmlTitle = "Stroom";
     private String oncontextmenu = "return false;";
-
     private UrlConfig urlConfig;
 
-//    //TODO this one should be stroom.dashboard
-//    public static final String USERS_UI_URL = "stroom.users.ui.url";
-//    public static final String API_KEYS_UI_URL = "stroom.apikeys.ui.url";
-//    public static final String CHANGE_PASSWORD_UI_URL = "stroom.changepassword.url";
-//
-//    public static final String URL_KIBANA_UI = "stroom.url.kibana-ui";
-//    public static final String STROOM_UI_URL = "stroom.ui.url";
-//
-//    public static final String URL_LIST = "stroom.url.list";
-//    public static final String URL_BASE = "stroom.url.";
-//
-//    public static final String EXTERNAL_DOC_REF_TYPES = "stroom.docref.types";
-//    public static final String URL_DOC_REF_UI_BASE = "stroom.docref.url.ui.";
-//    public static final String URL_DOC_REF_SERVICE_BASE = "stroom.docref.url.service.";
-
     private static final long serialVersionUID = 8717922468620533698L;
-//    private HashMap<String, String> map;
 
     public UiConfig() {
-//        map = new HashMap<>();
+        // Default constructor necessary for GWT serialisation.
         processConfig = new ProcessConfig();
         themeConfig = new ThemeConfig();
         queryConfig = new QueryConfig();

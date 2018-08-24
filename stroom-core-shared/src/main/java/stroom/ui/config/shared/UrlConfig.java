@@ -1,8 +1,9 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.docref.SharedObject;
 
-public class UrlConfig {
+public class UrlConfig implements SharedObject {
     private String ui;
     private String authenticationService = "http://auth-service:8099/authentication/v1";
     private String users;
@@ -12,6 +13,10 @@ public class UrlConfig {
     private String trackers;
     private String annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
     private String elastic = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
+
+    public UrlConfig() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
     @JsonPropertyDescription("The URL of Stroom as provided to the browser")
     public String getUi() {

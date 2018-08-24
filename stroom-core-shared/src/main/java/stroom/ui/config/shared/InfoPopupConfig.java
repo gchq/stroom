@@ -1,14 +1,19 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.docref.SharedObject;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class InfoPopupConfig {
+public class InfoPopupConfig implements SharedObject {
     private boolean enabled;
     private String title = "Please Provide Query Info";
     private String validationRegex = "^[\\s\\S]{3,}$";
+
+    public InfoPopupConfig() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
     @JsonPropertyDescription("If you would like users to provide some query info when performing a query set this property to true.")
     public boolean isEnabled() {

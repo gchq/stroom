@@ -1,11 +1,12 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.docref.SharedObject;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ThemeConfig {
+public class ThemeConfig implements SharedObject {
     private String backgroundAttachment = "scroll";
     private String backgroundColor = "#1E88E5";
     private String backgroundImage = "none";
@@ -15,6 +16,10 @@ public class ThemeConfig {
     private String tubeVisible = "hidden";
     private String tubeOpacity = "0.6";
     private String labelColours = "TEST1=#FF0000,TEST2=#FF9900";
+
+    public ThemeConfig() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
     @JsonPropertyDescription("GUI")
     public String getBackgroundAttachment() {
