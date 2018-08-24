@@ -30,9 +30,7 @@ import java.io.OutputStream;
 
 @Singleton
 class YamlConfigurer {
-    //    private static final String USER_CONF_DIR = ".stroom";
     private static final Logger LOGGER = LoggerFactory.getLogger(YamlConfigurer.class);
-//    private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.yaml";
 
     YamlConfigurer() {
     }
@@ -44,26 +42,6 @@ class YamlConfigurer {
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
-
-//        final String expected = new String(Files.readAllBytes(exampleFile));
-//
-//        // Get properties for the current user if there are any.
-//        final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
-//        if (Files.isRegularFile(file)) {
-//            try (final InputStream inputStream = Files.newInputStream(file)) {
-//                read(stroomConfig, inputStream);
-//            } catch (final IOException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            }
-//        } else {
-//            // If no config file exists then dump put all of the config.
-//            try (final OutputStream outputStream = Files.newOutputStream(file)) {
-//                write(stroomConfig, outputStream);
-//
-//            } catch (final IOException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            }
-//        }
     }
 
     void read(final AppConfig appConfig, final InputStream inputStream) throws IOException {

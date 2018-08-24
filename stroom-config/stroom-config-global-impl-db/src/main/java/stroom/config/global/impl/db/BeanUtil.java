@@ -34,7 +34,7 @@ public final class BeanUtil {
         // Utility class.
     }
 
-    public static Map<String, Prop> getProperties(final Object object) {
+    static Map<String, Prop> getProperties(final Object object) {
         final Class<?> clazz = object.getClass();
         final Method[] methods = clazz.getDeclaredMethods();
         final Map<String, Prop> propMap = new HashMap<>();

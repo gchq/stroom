@@ -32,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,9 +47,10 @@ public class ConfigMapper {
     @Inject
     ConfigMapper(final AppConfig appConfig) {
         addMethods(appConfig, "stroom");
+        globalProperties.sort(Comparator.naturalOrder());
     }
 
-    public List<ConfigProperty> getGlobalProperties() {
+    List<ConfigProperty> getGlobalProperties() {
         return globalProperties;
     }
 

@@ -22,16 +22,8 @@ import stroom.docref.SharedObject;
  * This class records global properties that are accessible across the whole
  * cluster.
  */
-public class ConfigProperty implements SharedObject {
+public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> {
     private static final long serialVersionUID = 8440384191352234225L;
-
-    //    public static final String TABLE_NAME = SQLNameConstants.GLOBAL + Entity.SEP + SQLNameConstants.PROPERTY;
-//    public static final String FOREIGN_KEY = Entity.FK_PREFIX + TABLE_NAME + Entity.ID_SUFFIX;
-//    public static final String ENTITY_TYPE = "GlobalProperty";
-//    public static final String SOURCE_FILE = "File";
-//    public static final String SOURCE_DB = "DB";
-//    public static final String SOURCE_DB_DEPRECATED = "DB (Deprecated)";
-//    public static final String SOURCE_DEFAULT = "Default";
 
     private Integer id;
     private String name;
@@ -44,16 +36,6 @@ public class ConfigProperty implements SharedObject {
     private boolean password;
     private boolean requireRestart;
     private boolean requireUiRestart;
-
-//    public void copyTransients(final ConfigProperty configProperty) {
-//        source = configProperty.getSource();
-//        defaultValue = configProperty.getDefaultValue();
-//        description = configProperty.getDescription();
-//        editable = configProperty.isEditable();
-//        password = configProperty.isPassword();
-//        requireRestart = configProperty.isRequireRestart();
-//        requireUiRestart = configProperty.isRequireUiRestart();
-//    }
 
     public Integer getId() {
         return id;
@@ -78,10 +60,6 @@ public class ConfigProperty implements SharedObject {
     public void setValue(final String value) {
         this.value = value;
     }
-
-//    public final String getType() {
-//        return ENTITY_TYPE;
-//    }
 
     public String getDefaultValue() {
         return defaultValue;
@@ -137,6 +115,11 @@ public class ConfigProperty implements SharedObject {
 
     public void setSource(final String source) {
         this.source = source;
+    }
+
+    @Override
+    public int compareTo(final ConfigProperty o) {
+        return name.compareTo(o.name);
     }
 
     public static class Builder {
