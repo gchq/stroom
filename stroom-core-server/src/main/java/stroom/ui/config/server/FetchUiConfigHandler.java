@@ -16,10 +16,12 @@
 
 package stroom.ui.config.server;
 
+import stroom.node.NodeCache;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.ui.config.shared.FetchUiConfigAction;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.BuildInfoUtil;
 
 import javax.inject.Inject;
 
@@ -28,8 +30,14 @@ class FetchUiConfigHandler extends AbstractTaskHandler<FetchUiConfigAction, UiCo
     private final UiConfig uiConfig;
 
     @Inject
-    FetchUiConfigHandler(final UiConfig uiConfig) {
+    FetchUiConfigHandler(final UiConfig uiConfig,
+                         final NodeCache nodeCache) {
         this.uiConfig = uiConfig;
+
+        uiConfig.setBuildDate(BuildInfoUtil.getBuildDate());
+        uiConfig.setBuildVersion(BuildInfoUtil.getBuildVersion());
+        uiConfig.setUpDate(BuildInfoUtil.getUpDate());
+        uiConfig.setNodeName(nodeCache.getDefaultNode().getName());
     }
 
     @Override
