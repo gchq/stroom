@@ -62,7 +62,7 @@ const dragSource = {
   beginDrag({
     docRefWithLineage: {node: docRef},
     selectableItemListing: { selectedItems },
-    keyIsDown: {keyIsDown: { Control, Meta }},
+    keyIsDown: { Control, Meta },
   }) {
     let docRefs = [docRef];
 

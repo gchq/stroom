@@ -40,7 +40,9 @@ const enhance = compose(
   })),
 );
 
-const RecentItems = ({ recentItems, openDocRef }) => (
+const RecentItems = ({
+  recentItems, openDocRef, enableShortcuts, disableShortcuts,
+}) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={16}>
@@ -53,7 +55,12 @@ const RecentItems = ({ recentItems, openDocRef }) => (
         </Header>
       </Grid.Column>
     </Grid>
-    <div className="doc-ref-listing">
+    <div
+      className="doc-ref-listing"
+      tabIndex={0}
+      onFocus={enableShortcuts}
+      onBlur={disableShortcuts}
+    >
       {recentItems.map((docRef, index) => (
         <DocRefListingEntry
           key={docRef.uuid}
