@@ -95,7 +95,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         this.flushOnSend = flushOnSend;
     }
 
-    @PipelineProperty(description = "The Kafka config to use.")
+    @PipelineProperty(description = "The Kafka config to use.", displayPriority = 1)
     @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
     public void setKafkaConfig(final DocRef kafkaConfigRef) {
         this.kafkaConfigRef = kafkaConfigRef;

@@ -17,7 +17,7 @@
 
 package stroom.refdata;
 
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataStoreProvider;
 

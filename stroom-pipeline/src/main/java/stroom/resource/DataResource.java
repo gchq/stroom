@@ -19,17 +19,15 @@
 package stroom.resource;
 
 import io.swagger.annotations.Api;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedProperties;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.DataFetcher;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
@@ -56,8 +54,6 @@ import javax.ws.rs.core.Response;
 @Path("/data/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class DataResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataResource.class);
-
     private final DataFetcher dataFetcher;
     private final Security security;
 

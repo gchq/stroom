@@ -38,7 +38,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class PathCreator {
-    public static final String STROOM_TEMP = "stroom.temp";
+    private static final String STROOM_TEMP = "stroom.temp";
     private static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",

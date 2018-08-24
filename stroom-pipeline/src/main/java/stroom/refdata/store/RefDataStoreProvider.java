@@ -19,16 +19,13 @@ package stroom.refdata.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.PropertyService;
+import stroom.pipeline.writer.PathCreator;
 import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.store.onheapstore.RefDataOnHeapStore;
-import stroom.util.ByteSizeUnit;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,40 +39,26 @@ import java.util.Objects;
 public class RefDataStoreProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreProvider.class);
 
-    static final String OFF_HEAP_STORE_DIR_PROP_KEY = "stroom.refloader.offheapstore.localDir";
-    static final String MAX_STORE_SIZE_BYTES_PROP_KEY = "stroom.refloader.offheapstore.maxStoreSize";
-    private static final String MAX_READERS_PROP_KEY = "stroom.refloader.offheapstore.maxReaders";
-    private static final String MAX_PUTS_BEFORE_COMMIT_PROP_KEY = "stroom.refloader.offheapstore.maxPutsBeforeCommit";
-    private static final String VALUE_BUFFER_CAPACITY_PROP_KEY = "stroom.refloader.offheapstore.valueBufferCapacity";
-
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
 
-    private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1_000;
-//    private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
-    private static final int MAX_READERS_DEFAULT = 100;
-    private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
-
-    private final PropertyService stroomPropertyService;
+    private final RefDataStoreConfig refDataStoreConfig;
     private final RefDataStore offHeapRefDataStore;
 
     @Inject
-    RefDataStoreProvider(final PropertyService stroomPropertyService,
+    RefDataStoreProvider(final RefDataStoreConfig refDataStoreConfig,
                          final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory) {
-        this.stroomPropertyService = stroomPropertyService;
+        this.refDataStoreConfig = refDataStoreConfig;
 
 
         final Path storeDir = getStoreDir();
 
-        long maxStoreSizeBytes = ModelStringUtil.parseIECByteSizeString(stroomPropertyService.getProperty(
-                MAX_STORE_SIZE_BYTES_PROP_KEY, "10G"));
+        long maxStoreSizeBytes = refDataStoreConfig.getMaxStoreSizeBytes();
 
-        int maxReaders = stroomPropertyService.getIntProperty(MAX_READERS_PROP_KEY, MAX_READERS_DEFAULT);
+        int maxReaders = refDataStoreConfig.getMaxReaders();
 
-        int maxPutsBeforeCommit = stroomPropertyService.getIntProperty(
-                MAX_PUTS_BEFORE_COMMIT_PROP_KEY, MAX_PUTS_BEFORE_COMMIT_DEFAULT);
+        int maxPutsBeforeCommit = refDataStoreConfig.getMaxPutsBeforeCommit();
 
-        int valueBufferCapacity = stroomPropertyService.getIntProperty(
-                VALUE_BUFFER_CAPACITY_PROP_KEY, VALUE_BUFFER_CAPACITY_DEFAULT_VALUE);
+        int valueBufferCapacity = refDataStoreConfig.getValueBufferCapacity();
 
         this.offHeapRefDataStore = refDataOffHeapStoreFactory.create(
                 storeDir,
@@ -97,22 +80,22 @@ public class RefDataStoreProvider {
     @StroomSimpleCronSchedule(cron = "0 2 *") // 02:00 every day
     @JobTrackedSchedule(
             jobName = "Ref Data Off-heap Store Purge",
-            description = "Purge old reference data from the off heap store, as defined by " +
-                    RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY)
+            description = "Purge old reference data from the off heap store as configured")
     public void purgeOldData() {
         this.offHeapRefDataStore.purgeOldData();
         // nothing to purge in the heap stores as they are transient objects
     }
 
     private Path getStoreDir() {
-        String storeDirStr = stroomPropertyService.getProperty(OFF_HEAP_STORE_DIR_PROP_KEY);
-        LOGGER.info("Property {} is not set, falling back to {}", OFF_HEAP_STORE_DIR_PROP_KEY, StroomProperties.STROOM_TEMP);
+        String storeDirStr = refDataStoreConfig.getLocalDir();
         Path storeDir;
         if (storeDirStr == null) {
+            LOGGER.info("Off heap store dir is not set, falling back to {}", FileUtil.getTempDir());
             storeDir = FileUtil.getTempDir();
             Objects.requireNonNull(storeDir, "Temp dir is not set");
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
+            storeDirStr = PathCreator.replaceSystemProperties(storeDirStr);
             storeDir = Paths.get(storeDirStr);
         }
 

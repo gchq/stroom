@@ -196,6 +196,13 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     }
 
     @SuppressWarnings("unused")
+    @PipelineProperty(description = "The Kafka config to use.", displayPriority = 1)
+    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
+    public void setKafkaConfig(final DocRef kafkaConfigRef) {
+        this.kafkaConfigRef = kafkaConfigRef;
+    }
+
+    @SuppressWarnings("unused")
     @PipelineProperty(
             description = "Wait for acknowledgement from the Kafka broker for all of the messages sent." +
                     "This is slower but catches errors in the pipeline process",
@@ -203,12 +210,6 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
             displayPriority = 4)
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
-    }
-
-    @PipelineProperty(description = "The Kafka config to use.")
-    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
-    public void setKafkaConfig(final DocRef kafkaConfigRef) {
-        this.kafkaConfigRef = kafkaConfigRef;
     }
 
     @SuppressWarnings("unused")

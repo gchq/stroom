@@ -575,7 +575,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         return pipelineReferences;
     }
 
-    @PipelineProperty(description = "The XSLT to use.")
+    @PipelineProperty(description = "The XSLT to use.", displayPriority = 1)
     @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;

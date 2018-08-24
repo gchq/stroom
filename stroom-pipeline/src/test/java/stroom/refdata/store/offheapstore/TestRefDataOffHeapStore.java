@@ -78,7 +78,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1,300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
 
     @Override
     protected void setDbMaxSizeProperty() {
@@ -416,9 +416,9 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // ensure reentrance works
-        ((RefDataOffHeapStore)refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+        ((RefDataOffHeapStore) refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
             LOGGER.debug("Got lock");
-            ((RefDataOffHeapStore)refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+            ((RefDataOffHeapStore) refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
                 LOGGER.debug("Got inner lock");
             });
         });
@@ -434,7 +434,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         bulkLoadAndAssert(refStreamDefinitions, false, 1000);
 
-        setProperty(RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY, "0ms");
+        getRefDataStoreConfig().setPurgeAge("0ms");
 
         assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
         assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);

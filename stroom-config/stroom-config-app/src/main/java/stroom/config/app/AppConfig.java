@@ -13,6 +13,7 @@ import stroom.node.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;
+import stroom.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.security.AuthenticationConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
@@ -45,6 +46,7 @@ public class AppConfig {
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
     private QueryHistoryConfig queryHistoryConfig;
+    private RefDataStoreConfig refDataStoreConfig;
     private SearchConfig searchConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
     private StatisticsConfig statisticsConfig;
@@ -69,6 +71,7 @@ public class AppConfig {
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
         this.queryHistoryConfig = new QueryHistoryConfig();
+        this.refDataStoreConfig = new RefDataStoreConfig();
         this.searchConfig = new SearchConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
@@ -94,6 +97,7 @@ public class AppConfig {
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
               final QueryHistoryConfig queryHistoryConfig,
+              final RefDataStoreConfig refDataStoreConfig,
               final SearchConfig searchConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
@@ -116,6 +120,7 @@ public class AppConfig {
         this.propertyServiceConfig = propertyServiceConfig;
         this.proxyAggregationConfig = proxyAggregationConfig;
         this.queryHistoryConfig = queryHistoryConfig;
+        this.refDataStoreConfig = refDataStoreConfig;
         this.searchConfig = searchConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
@@ -277,6 +282,15 @@ public class AppConfig {
 
     public void setQueryHistoryConfig(final QueryHistoryConfig queryHistoryConfig) {
         this.queryHistoryConfig = queryHistoryConfig;
+    }
+
+    @JsonProperty("refdata")
+    public RefDataStoreConfig getRefDataStoreConfig() {
+        return refDataStoreConfig;
+    }
+
+    public void setRefDataStoreConfig(final RefDataStoreConfig refDataStoreConfig) {
+        this.refDataStoreConfig = refDataStoreConfig;
     }
 
     @JsonProperty("search")
