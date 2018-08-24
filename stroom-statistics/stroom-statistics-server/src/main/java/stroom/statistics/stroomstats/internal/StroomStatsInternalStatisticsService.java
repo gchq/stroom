@@ -69,9 +69,6 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
-        if (internalStatisticsConfig.getKafkaConfigUuid() == null) {
-            throw new RuntimeException("No Kafka config UUID has been defined, unable to send any events");
-        }
         final DocRef kafkaConfigDocRef = new DocRef(KafkaConfigDoc.DOCUMENT_TYPE, internalStatisticsConfig.getKafkaConfigUuid());
         KafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
         if (stroomKafkaProducer == null) {

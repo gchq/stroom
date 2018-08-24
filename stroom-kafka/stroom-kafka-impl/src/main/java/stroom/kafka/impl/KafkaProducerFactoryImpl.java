@@ -27,6 +27,10 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory {
 
     @Override
     public Optional<KafkaProducer> createProducer(final DocRef kafkaConfigRef) {
+        if (kafkaConfigRef.getUuid() == null) {
+            throw new RuntimeException("No Kafka config UUID has been defined, unable to send any events");
+        }
+
         final KafkaConfigDoc kafkaConfigDoc = kafkaConfigStore.readDocument(kafkaConfigRef);
         if (VERSION.equals(kafkaConfigDoc.getKafkaVersion())) {
             return Optional.of(new KafkaProducerImpl(kafkaConfigDoc));

@@ -28,9 +28,8 @@ import java.util.stream.IntStream;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestStroomStatsInternalStatisticsService {
-
-    public static final String DOC_REF_TYPE_1 = "myDocRefType1";
-    public static final String DOC_REF_TYPE_2 = "myDocRefType2";
+    private static final String DOC_REF_TYPE_1 = "myDocRefType1";
+    private static final String DOC_REF_TYPE_2 = "myDocRefType2";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
 
     @Captor
