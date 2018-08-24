@@ -10,6 +10,7 @@ import DocRefPropType from 'lib/DocRefPropType';
 import { canMove } from 'lib/treeUtils';
 import ItemTypes from 'components/FolderExplorer/dragDropTypes';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
+import withShortcutKeys from 'lib/withShortcutKeys';
 
 const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 
@@ -75,6 +76,17 @@ const enhance = compose(
     prepareDocRefCopy,
     prepareDocRefMove,
   }),
+  withShortcutKeys([
+    {
+      mousetrapKeys: ['enter'],
+      keyEventMatcher: e => e.key === ArrowUp,
+      action: ({menuItemOpened, menuItem, menuItemsOpen}, e) => {
+        console.log('Opening Menu Item', menuItem);
+        menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
+        if (e) e.preventDefault();
+      }
+    }
+  ]),
   DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
   DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
 );
@@ -88,6 +100,8 @@ const MenuItem = ({
   connectDragSource,
   isOver,
   canDrop,
+  enableShortcuts,
+  disableShortcuts
 }) => {
   let className = `sidebar__menu-item ${menuItem.style}`;
   if (isOver) {
@@ -101,7 +115,13 @@ const MenuItem = ({
     }
   }
 
-  return connectDragSource(connectDropTarget(<div className={className} style={{ paddingLeft: `${depth * 0.7}rem` }}>
+  return connectDragSource(connectDropTarget(<div 
+    tabIndex={0} 
+    onFocus={enableShortcuts}
+    onBlur={disableShortcuts}
+    className={className} 
+    style={{ paddingLeft: `${depth * 0.7}rem` }}
+  >
     {menuItem.children && menuItem.children.length > 0 ? (
       <Icon
         onClick={(e) => {

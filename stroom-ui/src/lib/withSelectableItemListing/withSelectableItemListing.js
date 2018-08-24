@@ -80,40 +80,34 @@ const withSelectableItemListing = propsFunc =>
       ({ selectableItemListing }) => !selectableItemListing,
       renderComponent(() => <Loader active>Creating Selectable Item Listing</Loader>),
     ),
-    withShortcutKeys()
-      .beginShortcutAction()
-      .withMousetrapKeys(upKeys)
-      .withKeyEventMatcher(e => e.keyCode === upArrow || (e.ctrlKey && e.keyCode === k))
-      .withAction(({ selectionUp, listingId }, e) => {
-        selectionUp(listingId);
-        if (e) e.preventDefault();
-      })
-      .endShortcutAction()
-
-      .beginShortcutAction()
-      .withMousetrapKeys(downKeys)
-      .withKeyEventMatcher(e => e.keyCode === downArrow || (e.ctrlKey && e.keyCode === j))
-      .withAction(({ selectionDown, listingId }, e) => {
-        selectionDown(listingId);
-        if (e) {
-          e.preventDefault();
-        }
-      })
-      .endShortcutAction()
-
-      .beginShortcutAction()
-      .withMousetrapKeys(openKeys)
-      .withKeyEventMatcher(e => e.keyCode === enter)
-      .withAction(({ openItem, selectableItemListing: { selectedItems } }, e) => {
-        console.log('Open Shortcut Detected in Selectable Item List', selectedItems);
-        if (selectedItems.length === 1) {
-          openItem(selectedItems[0]);
-        }
-        if (e) e.preventDefault();
-      })
-      .endShortcutAction()
-
-      .build(),
+    withShortcutKeys([
+      {
+        mousetrapKeys: upKeys,
+        keyEventMatcher: e => e.keyCode === upArrow || (e.ctrlKey && e.keyCode === k),
+        action: ({ selectionUp, listingId }, e) => {
+          selectionUp(listingId);
+          if (e) e.preventDefault();
+        },
+      },
+      {
+        mousetrapKeys: downKeys,
+        keyEventMatcher: e => e.keyCode === downArrow || (e.ctrlKey && e.keyCode === j),
+        action: ({ selectionDown, listingId }, e) => {
+          selectionDown(listingId);
+          if (e) e.preventDefault();
+        },
+      },
+      {
+        mousetrapKeys: openKeys,
+        keyEventHandler: e => e.keyCode === enter,
+        action: ({ openItem, selectableItemListing: { selectedItems } }, e) => {
+          if (selectedItems.length === 1) {
+            openItem(selectedItems[0]);
+          }
+          if (e) e.preventDefault();
+        },
+      },
+    ]),
   );
 
 export default withSelectableItemListing;

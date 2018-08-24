@@ -1,96 +1,63 @@
 import { compose, lifecycle, withProps } from 'recompose';
 import Mousetrap from 'mousetrap';
 
-class ShortcutAction {
-  constructor(parent) {
-    this.action = () => {
-      console.log('No Action Taken');
-    };
-    this.keyEventMatcher = () => false;
-    this.mousetrapKeys = undefined;
-    this.parent = parent;
-  }
-
-  withAction(action) {
-    this.action = action;
-    return this;
-  }
-
-  withMousetrapKeys(k) {
-    this.mousetrapKeys = k;
-    return this;
-  }
-
-  withKeyEventMatcher(keyEventMatcher) {
-    this.keyEventMatcher = keyEventMatcher;
-    return this;
-  }
-
-  bindMousetrap(getProps) {
-    if (this.mousetrapKeys) {
-      Mousetrap.bind(this.mousetrapKeys, () => this.action(getProps()));
-    }
-  }
-
-  unbindMousetrap() {
-    if (this.mousetrapKeys) {
-      Mousetrap.unbind(this.mousetrapKeys);
-    }
-  }
-
-  fireActionIfMatch(getProps, e) {
-    if (this.keyEventMatcher(e)) {
-      this.action(getProps(), e);
-    }
-  }
-
-  endShortcutAction() {
-    const p = this.parent;
-    this.parent = undefined;
-    return p;
-  }
-}
-
-class ShortcutActionCollection {
-  constructor() {
-    this.shortcutActions = [];
+/**
+ * Need to wrap the component in an instance so this I can put the element to one side
+ * within the lifecycle, then it can be access in the withProps.
+ * This is due to the closure scope of the anonymous functions created for the key bindings.
+ */
+class ShortcutKeyComponent {
+  constructor(shortcutActions) {
     this.element = undefined;
+    this.shortcutActions = shortcutActions;
+    console.log('Creating Shortcut Key Component Thing');
+    // IT IS ONLY CREATING ONE INSTANCE OF THIS PER COMPONENT CLAASS
   }
 
-  beginShortcutAction() {
-    const sa = new ShortcutAction(this);
-    this.shortcutActions.push(sa);
-    return sa;
-  }
-
-  // This function generates the actual HOC, using the shortcut information gathered thus far.
-  // It provides various functions that the wrapped component can use to ensure the lifecycle is correctly managed.
   build() {
-    // We will need to take a record of the element, so we can fetch it's props in our event handlers.
-    // If we do not do this, then the closure takes the props at the point of 'onFocus' being called.
-    const that = this;
+    const enableShortcuts = function () {
+      console.log('Enable Shortcuts', this.element.props.menuItem);
+      this.shortcutActions.forEach((sa) => {
+        if (sa.mousetrapKeys && sa.action) {
+          Mousetrap.bind(sa.mousetrapKeys, () => sa.action(this.element.props));
+        }
+      });
+    }.bind(this);
 
+    const disableShortcuts = function () {
+      console.log('Disable Shortcuts', this.element.props.menuItem);
+      this.shortcutActions.forEach((sa) => {
+        if (sa.mousetrapKeys) {
+          Mousetrap.unbind(sa.mousetrapKeys);
+        }
+      });
+    }.bind(this);
+
+    const onKeyDownWithShortcuts = function (e) {
+      this.shortcutActions.forEach((sa) => {
+        if (sa.action && sa.keyEventMatcher && sa.keyEventMatcher(e)) {
+          sa.action(this.element.props, e);
+        }
+      });
+    }.bind(this);
+
+    const that = this;
     return compose(
       lifecycle({
         componentWillMount() {
           that.element = this; // take a pointer to the React element.
+          console.log('Mounting a Shortcut Component', that.element.props.menuItem);
         },
       }),
       withProps(props => ({
-        enableShortcuts: () => {
-          this.shortcutActions.forEach(sa => sa.bindMousetrap(() => that.element.props));
-        },
-        disableShortcuts: () => {
-          this.shortcutActions.forEach(sa => sa.unbindMousetrap());
-        },
-        onKeyDownWithShortcuts: (e) => {
-          this.shortcutActions.forEach(sa => sa.fireActionIfMatch(() => that.element.props, e));
-        },
+        enableShortcuts,
+        disableShortcuts,
+        onKeyDownWithShortcuts,
       })),
     );
   }
 }
 
-const withShortcutKeys = () => new ShortcutActionCollection();
+const withShortcutKeys = shortcutActions => new ShortcutKeyComponent(shortcutActions).build();
 
 export default withShortcutKeys;

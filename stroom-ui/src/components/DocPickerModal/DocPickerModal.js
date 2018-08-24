@@ -37,7 +37,7 @@ const enhance = compose(
   withDocumentTree,
   connect(
     (
-      { folderExplorer: { documentTree }, docRefListing },
+      { folderExplorer: { documentTree }, selectableItemListings },
       {
         pickerId, onChange, setModalIsOpen, folderUuid, typeFilters,
       },
@@ -46,24 +46,23 @@ const enhance = compose(
         typeFilters.length > 0
           ? filterTree(documentTree, d => typeFilters.includes(d.type))
           : documentTree;
-      const folderUuidToUse = folderUuid || documentTree.uuid;
+      const folderUuidToUse = folderUuid || documentTreeToUse.uuid;
 
-      const thisDocRefListing = docRefListing[pickerId];
+      const selectableItemListing = selectableItemListings[pickerId];
       const currentFolderWithLineage = findItem(documentTreeToUse, folderUuidToUse);
 
       const onDocRefPickConfirmed = () => {
-        const result = findItem(documentTreeToUse, thisDocRefListing.selectedDocRefUuids[0]);
-        onChange(result.node);
+        onChange(selectableItemListing.selectedItems[0]);
         setModalIsOpen(false);
       };
 
       return {
         currentFolderWithLineage,
-        docRefListing: thisDocRefListing,
+        selectableItemListing,
         documentTree: documentTreeToUse,
         onDocRefPickConfirmed,
         selectionNotYetMade:
-          thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
+          selectableItemListing && selectableItemListing.selectedItems.length === 0,
       };
     },
     {},
