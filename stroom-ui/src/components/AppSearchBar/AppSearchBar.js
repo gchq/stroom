@@ -10,24 +10,17 @@ import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 import { DocRefListingEntry } from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
 import withSelectableItemListing, { actionCreators as selectableItemListingActionCreators } from 'lib/withSelectableItemListing';
-import { withInputKeyDown, actionCreators as keyIsDownActionCreators, FOCUSSED_ELEMENTS } from 'lib/KeyIsDown';
 
 const {
   searchTermUpdated,
   searchDocRefTypeChosen
 } = appSearchBarActionCreators;
 
-const {
-  elementFocussed,
-  elementBlurred
-} = keyIsDownActionCreators;
-
 const LISTING_ID = 'app-search-bar';
 
 const enhance = compose(
   withOpenDocRef,
   withDocRefTypes,
-  withInputKeyDown,
   connect(
     ({
       appSearch: {
@@ -42,15 +35,13 @@ const enhance = compose(
     {
       searchApp,
       searchTermUpdated,
-      searchDocRefTypeChosen,
-      elementFocussed,
-      elementBlurred
+      searchDocRefTypeChosen
     },
   ),
-  withSelectableItemListing(({searchResults}) => ({
+  withSelectableItemListing(({searchResults, openDocRef}) => ({
     listingId: LISTING_ID,
     items: searchResults,
-    autofocus: false
+    openItem: openDocRef
   }))
 );
 
@@ -64,9 +55,9 @@ const AppSearchBar = ({
   searchDocRefTypeChosen,
   history,
   docRefTypes,
-  onInputKeyDown,
-  elementFocussed,
-  elementBlurred                                                                                 
+  enableShortcuts,
+  disableShortcuts,
+  onKeyDownWithShortcuts                                                                             
 }) => (
   <Dropdown
     fluid
@@ -78,9 +69,9 @@ const AppSearchBar = ({
         icon="search"
         placeholder="Search..."
         value={searchValue}
-        onKeyDown={onInputKeyDown}
-        onFocus={() => elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
-        onBlur={() => elementBlurred(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
+        onKeyDown={onKeyDownWithShortcuts}
+        onFocus={enableShortcuts}
+        onBlur={disableShortcuts}
         onChange={({ target: { value } }) => {
           searchTermUpdated(value);
           searchApp({ term: value });

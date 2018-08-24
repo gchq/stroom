@@ -71,7 +71,7 @@ function dragCollect(connect, monitor) {
 }
 
 const enhance = compose(
-  connect(({ keyIsDown:{keyIsDown} }) => ({ keyIsDown }), {
+  connect(({ keyIsDown }) => ({ keyIsDown }), {
     prepareDocRefCopy,
     prepareDocRefMove,
   }),

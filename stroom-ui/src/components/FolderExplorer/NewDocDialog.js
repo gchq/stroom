@@ -3,7 +3,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { reduxForm, Field } from 'redux-form';
 
-import { Modal, Header, Button, Icon, Form } from 'semantic-ui-react';
+import { Header, Button, Icon, Form } from 'semantic-ui-react';
 import { InputField } from 'react-semantic-redux-form';
 
 import ThemedModal from 'components/ThemedModal';

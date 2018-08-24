@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps, branch, renderComponent } from 'recompose';
+import { compose, withProps, lifecycle, branch, renderComponent } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 
 import ThemedPopup from 'components/ThemedPopup';
@@ -16,7 +16,6 @@ import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
-import { actionCreators as keyIsDownActionCreators, FOCUSSED_ELEMENTS } from 'lib/KeyIsDown';
 
 const {
   prepareDocRefCreation,
@@ -25,8 +24,6 @@ const {
   prepareDocRefRename,
   prepareDocRefMove,
 } = actionCreators;
-
-const { elementFocussed, elementBlurred } = keyIsDownActionCreators;
 
 const LISTING_ID = 'folder-explorer';
 
@@ -45,15 +42,14 @@ const enhance = compose(
       prepareDocRefRename,
       prepareDocRefMove,
       fetchDocInfo,
-      elementFocussed,
-      elementBlurred,
     },
   ),
   branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
-  withSelectableItemListing(({ folder: { node: { children } } }) => ({
+  withSelectableItemListing(({ openDocRef, folder: { node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
     allowMultiSelect: true,
+    openItem: openDocRef
   })),
   withProps(({
     folder,
@@ -115,8 +111,8 @@ const FolderExplorer = ({
   folderUuid,
   actionBarItems,
   openDocRef,
-  elementFocussed,
-  elementBlurred,
+  enableShortcuts,
+  disableShortcuts,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
@@ -156,10 +152,9 @@ const FolderExplorer = ({
     </Grid>
     <div
       className="doc-ref-listing"
-      tabIndex={1}
-      onFocus={() => elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
-      onClick={() => elementFocussed(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
-      onBlur={() => elementBlurred(FOCUSSED_ELEMENTS.DOC_REF_LISTING, LISTING_ID)}
+      tabIndex={0}
+      onFocus={enableShortcuts}
+      onBlur={disableShortcuts}
     >
       {node.children.map((docRef, index) => (
         <DndDocRefListingEntry

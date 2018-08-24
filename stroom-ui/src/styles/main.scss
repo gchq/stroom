@@ -11,13 +11,12 @@
 @import "../components/ExpressionBuilder/ExpressionBuilder";
 @import "../components/LineTo/LineTo";
 @import "../components/IFrame/IFrame";
+@import "../components/HorizontalPanel/HorizontalPanel";
 
 @import "../sections/TrackerDashboard/TrackerDashboard/TrackerDashboard";
 @import "../sections/AppChrome/AppChrome";
 @import "../sections/Welcome/Welcome";
 @import "../sections/UserSettings/UserSettings";
-
-@import "../prototypes/HorizontalPanel/HorizontalPanel";
 
 @import "./themes";
 @import "./theme_styling";
