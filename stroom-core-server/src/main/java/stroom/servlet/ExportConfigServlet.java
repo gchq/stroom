@@ -28,6 +28,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -65,8 +67,10 @@ public class ExportConfigServlet extends HttpServlet {
 
                 importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
 
-                StreamUtil.streamToStream(Files.newInputStream(tempFile), resp.getOutputStream(), true);
-
+                try (final InputStream inputStream = Files.newInputStream(tempFile);
+                     final OutputStream outputStream = resp.getOutputStream()) {
+                    StreamUtil.streamToStream(inputStream, outputStream);
+                }
             } finally {
                 resourceStore.deleteTempFile(tempResourceKey);
             }

@@ -549,7 +549,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void copyStream(final Data stream, final OutputStream outputStream) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
-        StreamUtil.streamToStream(streamSource.getInputStream(), outputStream, false);
+        StreamUtil.streamToStream(streamSource.getInputStream(), outputStream);
         streamStore.closeStreamSource(streamSource);
     }
 

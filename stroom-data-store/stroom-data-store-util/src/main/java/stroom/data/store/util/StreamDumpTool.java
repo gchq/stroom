@@ -17,16 +17,16 @@
 package stroom.data.store.util;
 
 import com.google.inject.Injector;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
 import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.FileUtil;
@@ -152,17 +152,13 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         try {
             streamSource = streamStore.openStreamSource(streamId);
             if (streamSource != null) {
-                InputStream inputStream = null;
-                try {
-                    inputStream = streamSource.getInputStream();
+                try (InputStream inputStream = streamSource.getInputStream()) {
                     final Path outputFile = outputDir.resolve(streamId + ".dat");
                     System.out.println(
                             "Dumping stream " + count + " of " + total + " to file '" + FileUtil.getCanonicalPath(outputFile) + "'");
                     StreamUtil.streamToFile(inputStream, outputFile);
                 } catch (final RuntimeException e) {
                     e.printStackTrace();
-                } finally {
-                    inputStream.close();
                 }
             }
         } catch (final IOException | RuntimeException e) {

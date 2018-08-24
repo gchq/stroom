@@ -310,13 +310,13 @@ public final class StoreCreationTool {
         try (final OutputStreamProvider outputStreamProvider = dataTarget.getOutputStreamProvider()) {
             try (final InputStream inputStream = Files.newInputStream(dataLocation);
                  final SegmentOutputStream outputStream = outputStreamProvider.next()) {
-                StreamUtil.streamToStream(inputStream, outputStream, false);
+                StreamUtil.streamToStream(inputStream, outputStream);
             }
 
             if (contextLocation != null) {
                 try (final InputStream inputStream = Files.newInputStream(contextLocation);
                      final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
-                    StreamUtil.streamToStream(inputStream, outputStream, false);
+                    StreamUtil.streamToStream(inputStream, outputStream);
                 }
             }
         }

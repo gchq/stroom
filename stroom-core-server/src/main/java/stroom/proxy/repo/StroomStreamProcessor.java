@@ -349,8 +349,12 @@ public class StroomStreamProcessor {
     private void sendHeader(final StroomZipEntry stroomZipEntry, final AttributeMap attributeMap) throws IOException {
         handleEntryStart(stroomZipEntry);
         // Try and use the buffer
-        final InitialByteArrayOutputStream byteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-        AttributeMapUtil.write(attributeMap, byteArrayOutputStream, true);
+        InitialByteArrayOutputStream byteArrayOutputStream = null;
+        try (final InitialByteArrayOutputStream initialByteArrayOutputStream = new InitialByteArrayOutputStream(buffer)) {
+            byteArrayOutputStream = initialByteArrayOutputStream;
+            AttributeMapUtil.write(attributeMap, initialByteArrayOutputStream);
+        }
+
         final BufferPos bufferPos = byteArrayOutputStream.getBufferPos();
         handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());
         handleEntryEnd();

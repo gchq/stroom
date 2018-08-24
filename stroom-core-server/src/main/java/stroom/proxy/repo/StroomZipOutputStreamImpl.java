@@ -121,7 +121,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         for (final String baseName : stroomZipNameSet.getBaseNameList()) {
             if (stroomZipNameSet.getName(baseName, StroomZipFileType.Meta) == null) {
                 zipOutputStream.putNextEntry(new ZipEntry(baseName + StroomZipFileType.Meta.getExtension()));
-                AttributeMapUtil.write(attributeMap, zipOutputStream, false);
+                AttributeMapUtil.write(attributeMap, zipOutputStream);
                 zipOutputStream.closeEntry();
             }
         }

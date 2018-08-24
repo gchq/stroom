@@ -76,11 +76,11 @@ public class AttributeMapUtil {
         read(new ByteArrayInputStream(data), true, attributeMap);
     }
 
-    public static void write(final AttributeMap attributeMap, final OutputStream outputStream, final boolean close) throws IOException {
-        write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET), close);
+    public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {
+        write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET));
     }
 
-    public static void write(final AttributeMap attributeMap, final Writer writer, final boolean close) throws IOException {
+    private static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {
         try {
             attributeMap.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
@@ -98,18 +98,15 @@ public class AttributeMapUtil {
                         }
                     });
         } finally {
-            if (close) {
-                writer.close();
-            } else {
-                writer.flush();
-            }
+            writer.flush();
         }
     }
 
     public static byte[] toByteArray(final AttributeMap attributeMap) throws IOException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        write(attributeMap, byteArrayOutputStream, true);
-        return byteArrayOutputStream.toByteArray();
+        try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            write(attributeMap, byteArrayOutputStream);
+            return byteArrayOutputStream.toByteArray();
+        }
     }
 
     @SuppressWarnings("unchecked")

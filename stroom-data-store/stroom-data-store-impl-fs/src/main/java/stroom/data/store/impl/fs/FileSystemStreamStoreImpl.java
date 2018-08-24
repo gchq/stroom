@@ -42,6 +42,7 @@ import stroom.util.io.FileUtil;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -160,7 +161,9 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
                 // Does the manifest exist ... overwrite it
                 if (FileSystemUtil.isAllFile(childFile)) {
-                    AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile), true);
+                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile)) {
+                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
+                    }
                     doneManifest = true;
                 }
             }
@@ -168,7 +171,9 @@ class FileSystemStreamStoreImpl implements StreamStore {
             if (!doneManifest) {
                 // No manifest done yet ... output one if the parent dir's exist
                 if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-                    AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream(), true);
+                    try (final OutputStream outputStream = fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream()) {
+                        AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), outputStream);
+                    }
                 } else {
                     LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
                 }

@@ -24,8 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -237,23 +237,12 @@ public final class StreamUtil {
      */
     public static void copyFile(final Path fromFile, final Path toFile) throws IOException {
         Files.copy(fromFile, toFile);
-//        try (final InputStream in = Files.newInputStream(fromFile); final OutputStream out = Files.newOutputStream(toFile)) {
-//            streamToStream(in, out);
-//        }
-    }
-
-    /**
-     * Take a stream to another stream (AND CLOSE BOTH).
-     */
-    public static void streamToStream(final InputStream inputStream, final OutputStream outputStream) {
-        streamToStream(inputStream, outputStream, true);
     }
 
     /**
      * Take a stream to another stream.
      */
-    public static long streamToStream(final InputStream inputStream, final OutputStream outputStream,
-                                      final boolean close) {
+    public static long streamToStream(final InputStream inputStream, final OutputStream outputStream) {
         long bytesWritten = 0;
         try {
             final byte[] buffer = new byte[BUFFER_SIZE];
@@ -261,10 +250,6 @@ public final class StreamUtil {
             while ((len = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, len);
                 bytesWritten += len;
-            }
-            if (close) {
-                outputStream.close();
-                inputStream.close();
             }
             return bytesWritten;
         } catch (final IOException ioEx) {

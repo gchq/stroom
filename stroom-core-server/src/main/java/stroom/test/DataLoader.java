@@ -125,7 +125,7 @@ public class DataLoader {
                 try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
                     final AttributeMap map = new AttributeMap();
                     map.put("TestData", "Loaded By SetupSampleData");
-                    AttributeMapUtil.write(map, outputStream, true);
+                    AttributeMapUtil.write(map, outputStream);
                 }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
