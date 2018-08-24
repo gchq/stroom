@@ -142,7 +142,7 @@ public class ContentPackImport {
     }
 
     private List<Path> getContentPackBaseDirs() {
-        return Stream.of(getApplicationJarDir())
+        return Stream.of(getApplicationJarDir(), Optional.of(FileUtil.getTempDir()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
