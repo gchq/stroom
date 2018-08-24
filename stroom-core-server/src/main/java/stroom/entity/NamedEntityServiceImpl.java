@@ -24,7 +24,7 @@ import stroom.entity.shared.NamedEntity;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.security.Security;
-import stroom.util.config.StroomProperties;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.persistence.Transient;
 import java.lang.reflect.InvocationTargetException;
@@ -34,15 +34,18 @@ import java.util.Set;
 
 public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends FindNamedEntityCriteria>
         extends SystemEntityServiceImpl<E, C> implements NamedEntityService<E> {
-    private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
-    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+//    private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
+//    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private final Security security;
+    private final UiConfig uiConfig;
 
     protected NamedEntityServiceImpl(final StroomEntityManager entityManager,
-                                     final Security security) {
+                                     final Security security,
+                                     final UiConfig uiConfig) {
         super(entityManager, security);
         this.security = security;
+        this.uiConfig = uiConfig;
     }
 
     @Override
@@ -100,7 +103,7 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
     @Transient
     @Override
     public String getNamePattern() {
-        return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
+        return uiConfig.getNamePattern();//StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
     }
 
     @Override

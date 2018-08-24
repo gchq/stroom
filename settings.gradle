@@ -28,14 +28,12 @@ include 'stroom-proxy'
 include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
-// Properties
-include 'stroom-properties:stroom-properties-api'
-include 'stroom-properties:stroom-properties-impl'
-include 'stroom-properties:stroom-properties-impl-mock'
-
-include 'stroom-properties:stroom-properties-global-api'
-include 'stroom-properties:stroom-properties-global-impl-db'
-include 'stroom-properties:stroom-properties-global-impl-db-gen'
+// Config
+include 'stroom-config:stroom-config-common'
+include 'stroom-config:stroom-config-app'
+include 'stroom-config:stroom-config-global-api'
+include 'stroom-config:stroom-config-global-impl-db'
+include 'stroom-config:stroom-config-global-impl-db-gen'
 
 // Security
 include 'stroom-security:stroom-security-api'
@@ -46,8 +44,9 @@ include 'stroom-security:stroom-security-client-api'
 include 'stroom-security:stroom-security-client'
 
 // Docstore
+include 'stroom-docstore:stroom-docstore-api'
 include 'stroom-docstore:stroom-docstore-shared'
-include 'stroom-docstore:stroom-docstore-server'
+include 'stroom-docstore:stroom-docstore-impl'
 
 // Data meta projects
 include 'stroom-data-meta:stroom-data-meta-api'
@@ -72,8 +71,9 @@ include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 
 // Elastic
-include 'stroom-elastic:stroom-elastic-server'
-include 'stroom-elastic:stroom-elastic-client-impl_5_6_4'
+include 'stroom-elastic:stroom-elastic-impl-http'
+include 'stroom-elastic:stroom-elastic-impl'
+include 'stroom-elastic:stroom-elastic-api'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
@@ -108,15 +108,14 @@ include 'stroom-app-gwt'
 include 'stroom-test-common'
 
 // Server projects
-include 'stroom-config'
-
 include 'stroom-util'
 
 include 'stroom-pipeline'
 
-include 'stroom-connectors'
-
-include 'stroom-kafka-client-impl_0_10_0_1'
+// Kafka
+include 'stroom-kafka:stroom-kafka-shared'
+include 'stroom-kafka:stroom-kafka-impl'
+include 'stroom-kafka:stroom-kafka-pipeline'
 
 // Package it all together.
 include 'stroom-app'

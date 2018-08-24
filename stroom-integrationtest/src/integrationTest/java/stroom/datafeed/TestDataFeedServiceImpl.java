@@ -31,6 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -39,13 +41,9 @@ import java.util.zip.ZipOutputStream;
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-//@ContextConfiguration(classes = {TestDataFeedServiceImplConfiguration.class})
-//@Ignore("TODO 2015-11-18: These tests have interdependencies: they pass individually but fail when run together. Ignoring so the test may be fixed later.")
 public class TestDataFeedServiceImpl extends TestBase {
     @Inject
     private DataFeedServlet dataFeedService;
-    //    @Inject
-//    private FeedService feedService;
     @Inject
     private MockHttpServletRequest request;
     @Inject
@@ -58,10 +56,6 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.resetMock();
         response.resetMock();
         streamStore.clear();
-//        final FeedDoc referenceFeed = feedService.create("TEST-FEED");
-//        referenceFeed.setStatus(FeedStatus.RECEIVE);
-//        referenceFeed.setReference(true);
-//        feedService.save(referenceFeed);
     }
 
     @Test
@@ -208,8 +202,10 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "GZIP");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        StreamUtil.streamToStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()),
-                new GZIPOutputStream(outputStream));
+        try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
+             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+            StreamUtil.streamToStream(inputStream, gzipOutputStream);
+        }
         request.setInputStream(outputStream.toByteArray());
 
         dataFeedService.doPost(request, response);
@@ -227,8 +223,14 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "GZIP");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        StreamUtil.streamToStream(new ByteArrayInputStream("LINE1\n".getBytes()), new GZIPOutputStream(outputStream));
-        StreamUtil.streamToStream(new ByteArrayInputStream("LINE2\n".getBytes()), new GZIPOutputStream(outputStream));
+        try (final InputStream inputStream = new ByteArrayInputStream("LINE1\n".getBytes());
+             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+            StreamUtil.streamToStream(inputStream, gzipOutputStream);
+        }
+        try (final InputStream inputStream = new ByteArrayInputStream("LINE2\n".getBytes());
+             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+            StreamUtil.streamToStream(inputStream, gzipOutputStream);
+        }
         request.setInputStream(outputStream.toByteArray());
 
         dataFeedService.doPost(request, response);
@@ -259,10 +261,14 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "ZIP");
+
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
-        zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
-        StreamUtil.streamToStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()), zipOutputStream);
+        try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
+             final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
+            StreamUtil.streamToStream(inputStream, zipOutputStream);
+        }
+
         request.setInputStream(outputStream.toByteArray());
 
         dataFeedService.doPost(request, response);
@@ -291,9 +297,13 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "GZIP");
+
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        StreamUtil.streamToStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()),
-                new GZIPOutputStream(outputStream));
+        try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
+             final OutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+            StreamUtil.streamToStream(inputStream, gzipOutputStream);
+        }
+
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
         Assert.assertEquals(0, streamStore.getStreamStoreCount());
@@ -311,10 +321,14 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "ZIP");
+
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
-        zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
-        StreamUtil.streamToStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()), zipOutputStream);
+        try (final InputStream inputStream = new ByteArrayInputStream("SOME TEST DATA".getBytes());
+             final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            zipOutputStream.putNextEntry(new ZipEntry("TEST.txt"));
+            StreamUtil.streamToStream(inputStream, zipOutputStream);
+        }
+
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
         Assert.assertEquals(0, streamStore.getStreamStoreCount());

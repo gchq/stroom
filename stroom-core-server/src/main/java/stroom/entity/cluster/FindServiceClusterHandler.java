@@ -20,7 +20,7 @@ package stroom.entity.cluster;
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;

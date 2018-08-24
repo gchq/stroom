@@ -2,9 +2,9 @@ package stroom.feed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.datafeed.DataFeedConfig;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.shared.RawStreamTypes;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -15,10 +15,13 @@ public class FeedProperties {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedProperties.class);
 
     private final FeedDocCache feedDocCache;
+    private final DataFeedConfig dataFeedConfig;
 
     @Inject
-    FeedProperties(final FeedDocCache feedDocCache) {
+    FeedProperties(final FeedDocCache feedDocCache,
+                   final DataFeedConfig dataFeedConfig) {
         this.feedDocCache = feedDocCache;
+        this.dataFeedConfig = dataFeedConfig;
     }
 
     public String getDisplayClassification(final String feedName) {
@@ -26,7 +29,7 @@ public class FeedProperties {
         final String classification = optional
                 .map(FeedDoc::getClassification)
                 .filter(c -> !c.trim().isEmpty())
-                .orElse(StroomProperties.getProperty("stroom.unknownClassification"));
+                .orElse(dataFeedConfig.getUnknownClassification());
 
         return classification.trim().toUpperCase();
     }

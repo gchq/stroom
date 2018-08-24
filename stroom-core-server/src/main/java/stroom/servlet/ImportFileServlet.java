@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -77,13 +78,13 @@ public final class ImportFileServlet extends HttpServlet {
             }
 
             final FileItem fileItem = items.get("fileUpload");
-            final InputStream inputStream = fileItem.getInputStream();
-
             final ResourceKey uuid = resourceStore.createTempFile(fileItem.getName());
             final Path file = resourceStore.getTempFile(uuid);
             streamEventLog.importStream("Import", FileUtil.getCanonicalPath(file), null);
-
-            StreamUtil.streamToStream(inputStream, Files.newOutputStream(file));
+            try (final InputStream inputStream = fileItem.getInputStream();
+                 final OutputStream outputStream = Files.newOutputStream(file)) {
+                StreamUtil.streamToStream(inputStream, outputStream);
+            }
 
             propertyMap.setSuccess(true);
             uuid.write(propertyMap);

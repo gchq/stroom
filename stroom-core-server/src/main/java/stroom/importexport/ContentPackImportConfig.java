@@ -1,20 +1,19 @@
 package stroom.importexport;
 
-import stroom.properties.api.PropertyService;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Inject;
+import javax.inject.Singleton;
 
-class ContentPackImportConfig {
-    static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
+@Singleton
+public class ContentPackImportConfig {
+    private boolean enabled;
 
-    private final PropertyService propertyService;
-
-    @Inject
-    ContentPackImportConfig(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    @JsonPropertyDescription("If true any content packs found in 'contentPackImport' will be imported into Stroom. Only intended for use on new Stroom instances to reduce the risk of overwriting existing entities")
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    boolean isEnabled() {
-        return propertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
     }
 }

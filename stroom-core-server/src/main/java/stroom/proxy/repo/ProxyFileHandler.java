@@ -168,7 +168,7 @@ public final class ProxyFileHandler {
             stroomStreamHandler.handleEntryStart(targetEntry);
         }
         final InitialByteArrayOutputStream initialByteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-        AttributeMapUtil.write(attributeMap, initialByteArrayOutputStream, false);
+        AttributeMapUtil.write(attributeMap, initialByteArrayOutputStream);
         final BufferPos bufferPos = initialByteArrayOutputStream.getBufferPos();
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
             stroomStreamHandler.handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());

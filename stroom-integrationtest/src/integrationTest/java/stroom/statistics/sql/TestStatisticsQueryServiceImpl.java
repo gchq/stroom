@@ -24,9 +24,8 @@ import io.vavr.Tuple2;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -45,8 +44,8 @@ import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
@@ -118,8 +117,6 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     @Inject
     private SQLStatisticEventStore sqlStatisticEventStore;
     @Inject
-    private StroomDatabaseInfo stroomDatabaseInfo;
-    @Inject
     private TaskManager taskManager;
     @Inject
     private TaskContext taskContext;
@@ -136,37 +133,31 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
     @Override
     public void onBefore() {
-        if (!stroomDatabaseInfo.isMysql()) {
-            LOGGER.warn("Database is not MySQL, skipping test");
-            ignoreAllTests = true;
-        } else {
-            try {
-                sqlStatisticAggregationTransactionHelper
-                        .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-                sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
-                sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME);
-            } catch (final SQLException e) {
-                throw new RuntimeException("Error tearing down tables", e);
-            }
-
-            commonTestControl.teardown();
-            commonTestControl.setup();
-
-            final DocRef statisticStoreRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef);
-            statisticStoreDoc.setDescription("My Description");
-            statisticStoreDoc.setStatisticType(StatisticType.VALUE);
-            statisticStoreDoc.setConfig(new StatisticsDataSourceData());
-            statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG1));
-            statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG2));
-            statisticStoreStore.writeDocument(statisticStoreDoc);
-            this.statisticStoreDoc = statisticStoreDoc;
+        try {
+            sqlStatisticAggregationTransactionHelper
+                    .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
+            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
+            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME);
+        } catch (final SQLException e) {
+            throw new RuntimeException("Error tearing down tables", e);
         }
+
+        commonTestControl.teardown();
+        commonTestControl.setup();
+
+        final DocRef statisticStoreRef = statisticStoreStore.createDocument(STAT_NAME);
+        final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef);
+        statisticStoreDoc.setDescription("My Description");
+        statisticStoreDoc.setStatisticType(StatisticType.VALUE);
+        statisticStoreDoc.setConfig(new StatisticsDataSourceData());
+        statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG1));
+        statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG2));
+        statisticStoreStore.writeDocument(statisticStoreDoc);
+        this.statisticStoreDoc = statisticStoreDoc;
     }
 
     @Test
     public void testSearchStatisticsData_TwoTags() throws SQLException {
-
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             tags.add(new StatisticTag(TAG1, TAG1_VAL));

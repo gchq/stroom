@@ -27,13 +27,12 @@ import stroom.cell.clickable.client.HyperlinkTarget;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.properties.global.client.ClientPropertyCache;
 import stroom.node.client.NodeToolsPlugin;
-import stroom.properties.shared.ClientProperties;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
@@ -41,14 +40,14 @@ public class TrackersPlugin extends NodeToolsPlugin {
 
     private final Provider<IFrameContentPresenter> presenterProvider;
     private final ContentManager contentManager;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public TrackersPlugin(final EventBus eventBus,
                           final ClientSecurityContext securityContext,
                           final Provider<IFrameContentPresenter> presenterProvider,
                           final ContentManager contentManager,
-                          final ClientPropertyCache clientPropertyCache) {
+                          final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
         this.presenterProvider = presenterProvider;
         this.contentManager = contentManager;
@@ -63,7 +62,7 @@ public class TrackersPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem streamTaskMenuItem;
                         final SvgPreset icon = SvgPresets.MONITORING;
-                        final String stroomUi = result.get(ClientProperties.STROOM_UI_URL) + "/processing";
+                        final String stroomUi = result.getUrlConfig().getTrackers();
                         if (stroomUi != null && stroomUi.trim().length() > 0) {
                             streamTaskMenuItem = new IconMenuItem(5, icon, null, "Stream Tasks", null, true, () -> {
                                 final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

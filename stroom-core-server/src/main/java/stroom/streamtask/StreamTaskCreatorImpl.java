@@ -28,7 +28,6 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -37,7 +36,7 @@ import stroom.search.EventRef;
 import stroom.search.EventRefs;
 import stroom.search.EventSearchTask;
 import stroom.security.Security;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.shared.Limits;
@@ -51,15 +50,14 @@ import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -86,10 +84,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Singleton
 public class StreamTaskCreatorImpl implements StreamTaskCreator {
-    static final String STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY = "stroom.streamTask.fillTaskQueue";
-    private static final String STREAM_TASKS_CREATE_TASKS_PROPERTY = "stroom.streamTask.createTasks";
-    private static final String STREAM_TASKS_ASSIGN_TASKS_PROPERTY = "stroom.streamTask.assignTasks";
-    static final String STREAM_TASKS_QUEUE_SIZE_PROPERTY = "stroom.streamTask.queueSize";
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
 
@@ -103,7 +97,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final NodeCache nodeCache;
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
-    private final PropertyService propertyService;
+    private final ProcessConfig processConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final DataMetaService streamMetaService;
     private final Security security;
@@ -154,7 +148,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final NodeCache nodeCache,
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
-                          final PropertyService propertyService,
+                          final ProcessConfig processConfig,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                           final DataMetaService streamMetaService,
                           final Security security) {
@@ -165,7 +159,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.nodeCache = nodeCache;
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
-        this.propertyService = propertyService;
+        this.processConfig = processConfig;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.streamMetaService = streamMetaService;
         this.security = security;
@@ -212,7 +206,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         List<ProcessorFilterTask> assignedStreamTasks = Collections.emptyList();
 
         try {
-            if (isAssignTasksEnabled() && count > 0) {
+            if (processConfig.isAssignTasks() && count > 0) {
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFiltersRef.get();
                 if (filters != null && filters.size() > 0) {
@@ -331,7 +325,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     // See if it has been long enough since we last filled.
                     if (isScheduled()) {
                         LOGGER.debug("fillTaskStore() - Executing CreateStreamTasksTask");
-                        taskManager.execAsync(new CreateStreamTasksTask(), new TaskCallbackAdaptor<VoidResult>() {
+                        taskManager.execAsync(new CreateStreamTasksTask(), new TaskCallbackAdaptor<>() {
                             @Override
                             public void onSuccess(final VoidResult result) {
                                 scheduleNextPollMs();
@@ -400,16 +394,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         // tests will call this directly while scheduled execution could also be
         // running.
         LOGGER.debug("doCreateTasks()");
-
-        try {
-            final Integer newTotalQueueSize = ModelStringUtil
-                    .parseNumberStringAsInt(propertyService.getProperty(STREAM_TASKS_QUEUE_SIZE_PROPERTY));
-            if (newTotalQueueSize != null) {
-                totalQueueSize = newTotalQueueSize;
-            }
-        } catch (final NumberFormatException e) {
-            LOGGER.error("doCreateTasks() - error reading {}", STREAM_TASKS_QUEUE_SIZE_PROPERTY, e);
-        }
+        totalQueueSize = processConfig.getQueueSize();
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("doCreateTasks() - Starting");
@@ -424,7 +409,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         LOGGER.trace("Found {} stream processor filters", filters.size());
 
         // Sort the stream processor filters by priority.
-        Collections.sort(filters, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+        filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
         // Update the stream task store.
         prioritisedFiltersRef.set(filters);
@@ -519,15 +504,15 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         // previously created but are unprocessed, not owned by any
                         // node and their associated stream is unlocked then add
                         // them here.
-                        if (isFillTaskQueueEnabled()) {
+                        if (processConfig.isFillTaskQueue()) {
                             count = addUnownedTasks(taskContext, node, loadedFilter, queue, tasksToCreate);
                         }
 
                         // If we allowing tasks to be created then go ahead and
                         // create some.
-                        if (isCreateTasksEnabled()) {
+                        if (processConfig.isCreateTasks()) {
                             tasksToCreate -= count;
-                            final String logPrefix = "Creating tasks with filter " + loadedFilter.getId();
+//                            final String logPrefix = "Creating tasks with filter " + loadedFilter.getId();
 
                             final Boolean exhausted = exhaustedFilterMap.computeIfAbsent(loadedFilter.getId(), k -> Boolean.FALSE);
 
@@ -761,7 +746,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         final Long maxMetaId = streamMetaService.getMaxId();
-        taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
+        taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<>() {
             @Override
             public void onSuccess(final EventRefs result) {
                 int resultSize = 0;
@@ -895,8 +880,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
      * stream processor
      */
     List<Data> runSelectMetaQuery(final ExpressionOperator expression,
-                                          final long minStreamId,
-                                          final int max) {
+                                  final long minStreamId,
+                                  final int max) {
         // Don't select deleted streams.
         final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
                 .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
@@ -974,19 +959,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         }
     }
 
-    private boolean isFillTaskQueueEnabled() {
-        return propertyService.getBooleanProperty(STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, true);
-    }
-
-    private boolean isCreateTasksEnabled() {
-        return propertyService.getBooleanProperty(STREAM_TASKS_CREATE_TASKS_PROPERTY, true);
-    }
-
-    private boolean isAssignTasksEnabled() {
-        return propertyService.getBooleanProperty(STREAM_TASKS_ASSIGN_TASKS_PROPERTY, true);
-    }
-
-    public AtomicLong getNextDeleteMs() {
+    AtomicLong getNextDeleteMs() {
         return nextDeleteMs;
     }
 }

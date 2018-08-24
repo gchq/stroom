@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 
 public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {

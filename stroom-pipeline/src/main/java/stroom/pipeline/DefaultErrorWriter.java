@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 

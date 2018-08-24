@@ -1,0 +1,10 @@
+ext.moduleName = 'stroom.kafka.server'
+
+dependencies {
+    compile project(':stroom-kafka:stroom-kafka-shared')
+    compile project(':stroom-docstore:stroom-docstore-impl')
+    compile project(':stroom-core-server')
+
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
+}

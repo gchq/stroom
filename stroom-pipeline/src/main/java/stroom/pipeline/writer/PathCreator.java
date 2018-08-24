@@ -22,7 +22,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.util.config.StroomProperties;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
@@ -38,6 +38,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class PathCreator {
+    private static final String STROOM_TEMP = "stroom.temp";
     private static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
@@ -56,7 +57,7 @@ public class PathCreator {
             "fileName",
             "fileStem",
             "fileExtension",
-            StroomProperties.STROOM_TEMP};
+            STROOM_TEMP};
 
     private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
 
@@ -103,8 +104,8 @@ public class PathCreator {
         // Replace stroom.temp
         path = replace(
                 path,
-                StroomProperties.STROOM_TEMP,
-                () -> StroomProperties.getProperty(StroomProperties.STROOM_TEMP));
+                STROOM_TEMP,
+                () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
 
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }

@@ -23,18 +23,17 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
-import stroom.properties.api.PropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
+import stroom.task.api.TaskContext;
+import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -70,27 +69,26 @@ class FileSystemCleanExecutor {
                             final TaskContext taskContext,
                             final TaskManager taskManager,
                             final NodeCache nodeCache,
-                            final PropertyService propertyService) {
+                            final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.taskContext = taskContext;
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;
-        this.batchSize = propertyService.getIntProperty("stroom.fileSystemCleanBatchSize", 20);
+        this.batchSize = config.getDeleteBatchSize();
 
         Long age;
         try {
-            age = ModelStringUtil.parseDurationString(propertyService.getProperty("stroom.fileSystemCleanOldAge"));
+            age = ModelStringUtil.parseDurationString(config.getFileSystemCleanOldAge());
             if (age == null) {
                 age = ModelStringUtil.parseDurationString("1d");
             }
         } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.fileSystemCleanOldAge' value '" + propertyService.getProperty("stroom.fileSystemCleanOldAge")
+            LOGGER.error("Unable to parse property 'stroom.fileSystemCleanOldAge' value '" + config.getFileSystemCleanOldAge()
                     + "', using default of '1d' instead", e);
             age = ModelStringUtil.parseDurationString("1d");
         }
         this.oldAge = age;
-
-        this.deleteOut = propertyService.getBooleanProperty("stroom.fileSystemCleanDeleteOut", false);
+        this.deleteOut = config.isFileSystemCleanDeleteOut();
     }
 
     Long getOldAge() {

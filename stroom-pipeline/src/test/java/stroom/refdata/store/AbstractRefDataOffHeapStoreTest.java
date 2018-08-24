@@ -25,10 +25,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.guice.PipelineScopeModule;
-import stroom.properties.api.PropertyService;
-import stroom.properties.impl.mock.MockPropertyService;
-import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
+import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
 
@@ -36,19 +33,18 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
     private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
 
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
-    private final MockPropertyService mockPropertyService = new MockPropertyService();
-
 //    @Inject
 //    protected RefDataStoreHolder refDataStoreHolder;
 
     @Inject
     private RefDataStoreProvider refDataStoreProvider;
+
+    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
 
     protected RefDataStore refDataStore;
     protected Injector injector;
@@ -64,8 +60,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
         Path dbDir = tmpDir.getRoot().toPath();
         LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
 
-        mockPropertyService.setProperty(RefDataStoreProvider.OFF_HEAP_STORE_DIR_PROP_KEY,
-                dbDir.toAbsolutePath().toString());
+        refDataStoreConfig.setLocalDir(dbDir.toAbsolutePath().toString());
 
         setDbMaxSizeProperty();
 
@@ -73,7 +68,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(PropertyService.class).toInstance(mockPropertyService);
+                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
                     }
@@ -82,17 +77,16 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
         refDataStore = refDataStoreProvider.getOffHeapStore();
     }
 
-    protected void setProperty(String name, String value) {
-        mockPropertyService.setProperty(name, value);
+    protected RefDataStoreConfig getRefDataStoreConfig() {
+        return refDataStoreConfig;
     }
 
     protected void setDbMaxSizeProperty(final long sizeInBytes) {
-        mockPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
-                Long.toString(sizeInBytes));
+        refDataStoreConfig.setMaxStoreSize(Long.toString(sizeInBytes));
     }
 
     protected void setPurgeAgeProperty(final String purgeAge) {
-        mockPropertyService.setProperty(RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY, purgeAge);
+        refDataStoreConfig.setPurgeAge(purgeAge);
     }
 
     protected void setDbMaxSizeProperty() {

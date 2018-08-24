@@ -17,10 +17,7 @@
 package stroom.statistics.sql;
 
 public interface SQLStatisticConstants {
-    String SQL_STATS_FLUSH_FREQUENCY = "10m";
-
     String DATE_FIELD = "Date Time";
-    String KEY_FIELD = "Key";
 
     /**
      * the separator used in the delimited name stored in the STAT_KEY table For
@@ -45,8 +42,6 @@ public interface SQLStatisticConstants {
      * The value to store in the database when the tag's value is null
      */
     String NULL_VALUE_STRING = "<<<<NULL>>>>";
-
-    String PROP_KEY_STATS_MAX_PROCESSING_AGE = "stroom.statistics.sql.maxProcessingAge";
 
     int STAT_VAL_SRC_NAME_COLUMN_LENGTH = 766;
 }

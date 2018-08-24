@@ -17,27 +17,25 @@
 package stroom.index;
 
 import org.apache.lucene.store.LockObtainFailedException;
+import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
-import stroom.docref.DocRef;
 import stroom.task.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.ThreadPoolImpl;
+import stroom.task.api.TaskContext;
+import stroom.task.shared.ThreadPool;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
-import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -67,9 +65,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private final NodeCache nodeCache;
     private final IndexShardService indexShardService;
-    private final IndexConfigCache indexConfigCache;
+    private final IndexStructureCache indexStructureCache;
     private final IndexShardManager indexShardManager;
-    private final PropertyService propertyService;
+    private final IndexConfig indexConfig;
 
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
@@ -83,15 +81,15 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Inject
     public IndexShardWriterCacheImpl(final NodeCache nodeCache,
                                      final IndexShardService indexShardService,
-                                     final PropertyService propertyService,
-                                     final IndexConfigCache indexConfigCache,
+                                     final IndexConfig indexConfig,
+                                     final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,
                                      final TaskContext taskContext) {
         this.nodeCache = nodeCache;
         this.indexShardService = indexShardService;
-        this.propertyService = propertyService;
-        this.indexConfigCache = indexConfigCache;
+        this.indexConfig = indexConfig;
+        this.indexStructureCache = indexStructureCache;
         this.indexShardManager = indexShardManager;
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
@@ -149,8 +147,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             // Look for non deleted, non full, non corrupt index shards.
             if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
                 // Get the index fields.
-                final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-                if (indexConfig != null && indexShard.getDocumentCount() < indexConfig.getIndex().getMaxDocsPerShard()) {
+                final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                if (indexStructure != null && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
                     final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
                     if (indexShardWriter != null) {
                         return indexShardWriter;
@@ -174,7 +172,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final long indexShardId = indexShard.getId();
 
         // Get the index fields.
-        final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
 
         // Create the writer.
         final int ramBufferSizeMB = getRamBufferSize();
@@ -184,7 +182,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
 
         try {
-            final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager, indexConfig, indexShardKey, indexShard, ramBufferSizeMB);
+            final IndexShardWriter indexShardWriter = new IndexShardWriterImpl(indexShardManager, indexStructure, indexShardKey, indexShard, ramBufferSizeMB);
 
             // We have opened the index so update the DB object.
             indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
@@ -208,15 +206,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private int getRamBufferSize() {
         int ramBufferSizeMB = 1024;
-        if (propertyService != null) {
-            try {
-                final String property = propertyService.getProperty("stroom.index.ramBufferSizeMB");
-                if (property != null) {
-                    ramBufferSizeMB = Integer.parseInt(property);
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(() -> "connectWrapper() - Integer.parseInt stroom.index.ramBufferSizeMB", e);
-            }
+        if (indexConfig != null) {
+            ramBufferSizeMB = indexConfig.getRamBufferSizeMB();
         }
         return ramBufferSizeMB;
     }
@@ -494,32 +485,17 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private Settings getSettings() {
         if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60000)) {
-            final long timeToLive = Math.max(0, getDuration("stroom.index.writer.cache.timeToLive", 0));
-            final long timeToIdle = Math.max(0, getDuration("stroom.index.writer.cache.timeToIdle", 0));
-            final long minItems = Math.max(0, propertyService.getLongProperty("stroom.index.writer.cache.minItems", 0));
-            final long coreItems = Math.max(minItems, propertyService.getLongProperty("stroom.index.writer.cache.coreItems", 50));
-            final long maxItems = Math.max(coreItems, propertyService.getLongProperty("stroom.index.writer.cache.maxItems", 100));
+            final CacheConfig cacheConfig = indexConfig.getIndexWriterConfig().getCacheConfig();
+            final long timeToLive = Math.max(0, cacheConfig.getTimeToLiveMs());
+            final long timeToIdle = Math.max(0, cacheConfig.getTimeToIdleMs());
+            final long minItems = Math.max(0, cacheConfig.getMinItems());
+            final long coreItems = Math.max(minItems, cacheConfig.getCoreItems());
+            final long maxItems = Math.max(coreItems, cacheConfig.getMaxItems());
 
             settings = new Settings(System.currentTimeMillis(), timeToLive, timeToIdle, minItems, coreItems, maxItems);
         }
 
         return settings;
-    }
-
-    private long getDuration(final String propertyName, final long defaultValue) {
-        final String propertyValue = propertyService.getProperty(propertyName);
-        Long duration;
-        try {
-            duration = ModelStringUtil.parseDurationString(propertyValue);
-            if (duration == null) {
-                duration = defaultValue;
-            }
-        } catch (final NumberFormatException e) {
-            LOGGER.error(() -> "Unable to parse property '" + propertyName + "' value '" + propertyValue + "', using default of '" + defaultValue + "' instead", e);
-            duration = defaultValue;
-        }
-
-        return duration;
     }
 
     private static class AsyncRunner implements Runner {

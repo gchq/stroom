@@ -18,7 +18,6 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.guice.StroomBeanStore;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;

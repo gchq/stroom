@@ -1,0 +1,7 @@
+ext.moduleName = 'stroom.elastic.api'
+
+dependencies {
+    compile libs.stroomDocRef
+
+    compile libs.slf4j_api
+}

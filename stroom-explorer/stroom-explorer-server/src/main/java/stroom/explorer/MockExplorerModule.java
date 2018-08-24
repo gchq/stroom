@@ -160,9 +160,9 @@ public class MockExplorerModule extends AbstractModule {
 //                                                                           final SecurityContext securityContext) {
 //        return new FetchExplorerPermissionsHandler(explorerService, securityContext);
 //    }
-
-    @Provides
-    public ImportExportActionHandlerFactory importExportActionHandlerFactory() {
-        return type -> null;
-    }
+//
+//    @Provides
+//    public ImportExportActionHandlerFactory importExportActionHandlerFactory() {
+//        return type -> null;
+//    }
 }

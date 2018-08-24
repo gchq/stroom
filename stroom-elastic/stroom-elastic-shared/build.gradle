@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.elastic.shared'
+
+dependencies {
+    compile project(':stroom-docstore:stroom-docstore-shared')
+}

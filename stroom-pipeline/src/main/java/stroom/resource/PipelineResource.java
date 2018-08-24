@@ -5,22 +5,32 @@ import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.*;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.Security;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Api(
@@ -28,8 +38,7 @@ import java.util.stream.Collectors;
         description = "Stroom Pipeline API")
 @Path("/pipelines/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class PipelineResource implements HasHealthCheck  {
-
+public class PipelineResource implements HasHealthCheck {
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
@@ -104,10 +113,10 @@ public class PipelineResource implements HasHealthCheck  {
     @Produces(MediaType.APPLICATION_JSON)
     public Response search(@QueryParam("offset") Integer offset,
                            @QueryParam("pageSize") Integer pageSize,
-                           @QueryParam("filter") String filter){
+                           @QueryParam("filter") String filter) {
         return security.secureResult(() -> {
             // Validate pagination params
-            if((pageSize != null && offset == null) || (pageSize == null && offset != null)){
+            if ((pageSize != null && offset == null) || (pageSize == null && offset != null)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
             }
 
@@ -117,7 +126,7 @@ public class PipelineResource implements HasHealthCheck  {
             int totalPipelines = pipelines.size();
 
             // Filter
-            if(!Strings.isNullOrEmpty(filter)) {
+            if (!Strings.isNullOrEmpty(filter)) {
                 pipelines = pipelines.stream().filter(pipeline -> pipeline.getName().contains(filter)).collect(Collectors.toList());
             }
 
@@ -125,7 +134,7 @@ public class PipelineResource implements HasHealthCheck  {
             pipelines = pipelines.stream().sorted(Comparator.comparing(DocRef::getName)).collect(Collectors.toList());
 
             // Paging
-            if(pageSize != null && offset != null) {
+            if (pageSize != null && offset != null) {
                 final int fromIndex = offset * pageSize;
                 int toIndex = fromIndex + pageSize;
                 if (toIndex >= pipelines.size()) {
@@ -172,7 +181,7 @@ public class PipelineResource implements HasHealthCheck  {
 
         }
 
-        final PipelineDTO dto  = new PipelineDTO(
+        final PipelineDTO dto = new PipelineDTO(
                 pipelineDoc.getParentPipeline(),
                 DocRefUtil.create(pipelineDoc),
                 pipelineDoc.getDescription(),

@@ -5,7 +5,6 @@ dependencies {
     compile libs.stroomQueryApi
 
     compile libs.jaxb_api
-    compile libs.swagger_annotations
 
     testRuntime libs.jaxb_runtime
     testRuntime libs.javax_activation

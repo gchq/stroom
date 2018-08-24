@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.kafka.api'
+
+dependencies {
+    compile project(':stroom-kafka:stroom-kafka-shared')
+    compile project(':stroom-pipeline')
+
+    compile libs.slf4j_api
+}

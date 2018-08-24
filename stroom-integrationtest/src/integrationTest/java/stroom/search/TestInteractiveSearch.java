@@ -21,8 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.index.IndexStore;
 import stroom.docref.DocRef;
+import stroom.index.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -32,10 +32,9 @@ import stroom.query.api.v2.Query;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.security.UserTokenUtil;
-import stroom.task.api.TaskCallback;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.TaskManager;
-import stroom.util.config.StroomProperties;
+import stroom.task.api.TaskCallback;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -423,8 +422,8 @@ public class TestInteractiveSearch extends AbstractSearchTest {
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
         // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         Assert.assertNotNull("Index is null", indexRef);

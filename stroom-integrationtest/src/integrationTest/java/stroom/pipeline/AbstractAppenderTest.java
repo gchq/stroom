@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import org.junit.Assert;
 import stroom.docref.DocRef;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

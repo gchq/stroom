@@ -18,7 +18,6 @@ package stroom.jobsystem;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -29,8 +28,6 @@ import java.util.concurrent.CountDownLatch;
 public class TestClusterLockService extends AbstractCoreIntegrationTest {
     @Inject
     private ClusterLockServiceInnerTransactions testClusterLockServiceTransaction;
-    @Inject
-    private StroomDatabaseInfo stroomDatabaseInfo;
 
     @Test
     public void test() throws InterruptedException {
@@ -57,14 +54,7 @@ public class TestClusterLockService extends AbstractCoreIntegrationTest {
         countDownLatch.await();
         Assert.assertEquals(3, sequence.size());
         Assert.assertEquals(1, sequence.get(0).intValue());
-
-        // HSQL won't do locking but MYSQL will.
-        if (stroomDatabaseInfo.isMysql()) {
-            Assert.assertEquals(2, sequence.get(1).intValue());
-            Assert.assertEquals(3, sequence.get(2).intValue());
-        } else {
-            Assert.assertEquals(3, sequence.get(1).intValue());
-            Assert.assertEquals(2, sequence.get(2).intValue());
-        }
+        Assert.assertEquals(2, sequence.get(1).intValue());
+        Assert.assertEquals(3, sequence.get(2).intValue());
     }
 }

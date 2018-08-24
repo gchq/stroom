@@ -2,23 +2,25 @@ package stroom.externaldoc.client;
 
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.externaldoc.client.presenter.ExternalDocRefPresenter;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.SharedDocRef;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
-import stroom.docref.DocRef;
+import stroom.externaldoc.client.presenter.ExternalDocRefPresenter;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.UrlConfig;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.util.Map;
 
 public class ExternalDocRefPlugin extends DocumentPlugin<SharedDocRef> {
     private final Provider<ExternalDocRefPresenter> editorProvider;
+
+    private static final String ANNOTATIONS_INDEX = "AnnotationsIndex";
+    private static final String ELASTIC_INDEX = "ElasticIndex";
 
     @Inject
     public ExternalDocRefPlugin(final EventBus eventBus,
@@ -26,14 +28,21 @@ public class ExternalDocRefPlugin extends DocumentPlugin<SharedDocRef> {
                                 final ClientDispatchAsync dispatcher,
                                 final ContentManager contentManager,
                                 final DocumentPluginEventManager entityPluginEventManager,
-                                final ClientPropertyCache clientPropertyCache) {
+                                final UiConfigCache clientPropertyCache) {
         super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final Map<String, String> docRefTypes = result.getLookupTable(ClientProperties.EXTERNAL_DOC_REF_TYPES, ClientProperties.URL_DOC_REF_UI_BASE);
-                    docRefTypes.keySet().forEach(this::registerAsPluginForType);
+                    if (result.getUrlConfig() != null) {
+                        final UrlConfig urlConfig = result.getUrlConfig();
+                        if (urlConfig.getAnnotations() != null && urlConfig.getAnnotations().length() > 0) {
+                            registerAsPluginForType(ANNOTATIONS_INDEX);
+                        }
+                        if (urlConfig.getElastic() != null && urlConfig.getElastic().length() > 0) {
+                            registerAsPluginForType(ELASTIC_INDEX);
+                        }
+                    }
                 })
                 .onFailure(caught -> AlertEvent.fireError(ExternalDocRefPlugin.this, caught.getMessage(), null));
     }

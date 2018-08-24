@@ -18,19 +18,20 @@
 package stroom.data.store.impl.fs;
 
 import org.hibernate.LazyInitializationException;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataRow;
+import stroom.data.meta.api.DataStatus;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
 import stroom.data.meta.api.ExpressionUtil;
 import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataRow;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.impl.db.MetaValueConfig;
 import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
@@ -46,13 +47,11 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.volume.VolumeConfig;
-import stroom.volume.VolumeServiceImpl;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -73,6 +72,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private static final String FEED2 = "FEED2";
 
     @Inject
+    private MetaValueConfig metaValueConfig;
+    @Inject
+    private VolumeConfig volumeConfig;
+    @Inject
     private StreamStore streamStore;
     @Inject
     private DataMetaService streamMetaService;
@@ -83,16 +86,17 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private FileSystemStreamPathHelper fileSystemStreamPathHelper;
 
-    @BeforeClass
-    public static void setProperties() {
+    @Before
+    public void setProperties() {
         // Make sure stream attributes get flushed straight away.
-        StroomProperties.setOverrideBooleanProperty("stroom.meta.addAsync", false, StroomProperties.Source.TEST);
-        StroomProperties.setOverrideIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, 2, StroomProperties.Source.TEST);
+        metaValueConfig.setAddAsync(false);
+        volumeConfig.setResilientReplicationCount(2);
     }
 
-    @AfterClass
-    public static void unsetProperties() {
-        StroomProperties.removeOverrides();
+    @After
+    public void unsetProperties() {
+        metaValueConfig.setAddAsync(true);
+        volumeConfig.setResilientReplicationCount(1);
     }
 
     @Test

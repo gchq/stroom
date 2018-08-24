@@ -28,7 +28,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -38,16 +37,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestContentPackImport {
-
     private static Path CONTENT_PACK_DIR;
 
     static {
-        String userHome = System.getProperty("user.home");
-        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        CONTENT_PACK_DIR = FileUtil.getTempDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
     //This is needed as you can't have to RunWith annotations
@@ -65,8 +61,7 @@ public class TestContentPackImport {
 
     @Before
     public void setup() throws IOException {
-        String userHome = System.getProperty("user.home");
-        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        Path contentPackDir = FileUtil.getTempDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
 
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPackDir)) {

@@ -18,7 +18,7 @@ package stroom.entity.client.presenter;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 
 public interface LinkTabPanelView extends View {

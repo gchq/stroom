@@ -20,7 +20,6 @@ package stroom.data.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
 
 import javax.inject.Inject;
@@ -35,7 +34,7 @@ class TestDataTypeServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test

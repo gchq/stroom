@@ -32,8 +32,7 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -56,7 +55,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                          final MainView view,
                          final MainProxy proxy,
                          final KeyboardInterceptor keyboardInterceptor,
-                         final ClientPropertyCache clientPropertyCache) {
+                         final UiConfigCache clientPropertyCache) {
         super(eventBus, view, proxy);
 
         // Handle key presses.
@@ -82,7 +81,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
             }
         });
         registerHandler(clientPropertyCache.addPropertyChangeHandler(
-                event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))
+                event -> getView().setBanner(event.getProperties().getMaintenanceMessage())
                 ));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {

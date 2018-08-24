@@ -28,8 +28,8 @@ import java.io.IOException;
  * Script to create some base data for testing.
  */
 public final class SetupSampleData {
-    public static void main(final String[] args) throws IOException {
-        FileUtil.useDevTempDir();
+    public static void main(final String[] args) {
+//        FileUtil.useDevTempDir();
         System.setProperty("stroom.connectionTesterClassName",
                 "stroom.entity.util.StroomConnectionTesterOkOnException");
 

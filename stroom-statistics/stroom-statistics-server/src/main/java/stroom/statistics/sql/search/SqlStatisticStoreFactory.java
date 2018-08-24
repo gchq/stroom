@@ -4,8 +4,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.properties.shared.ClientProperties;
-import stroom.properties.api.PropertyService;
+import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -30,26 +29,25 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
 
-    private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
-    private static final String PROP_KEY_RESULT_HANDLER_BATCH_SIZE = "stroom.statistics.sql.search.resultHandlerBatchSize";
-    private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
-
     private final StatisticStoreCache statisticStoreCache;
-    private final PropertyService propertyService;
     private final StatisticsSearchService statisticsSearchService;
     private final TaskContext taskContext;
+    private final SearchConfig searchConfig;
+    private final UiConfig clientConfig;
     private final Executor executor;
 
     @Inject
     public SqlStatisticStoreFactory(final StatisticStoreCache statisticStoreCache,
-                                    final PropertyService propertyService,
                                     final StatisticsSearchService statisticsSearchService,
                                     final TaskContext taskContext,
-                                    final ExecutorProvider executorProvider) {
+                                    final ExecutorProvider executorProvider,
+                                    final SearchConfig searchConfig,
+                                    final UiConfig clientConfig) {
         this.statisticStoreCache = statisticStoreCache;
-        this.propertyService = propertyService;
         this.statisticsSearchService = statisticsSearchService;
         this.taskContext = taskContext;
+        this.searchConfig = searchConfig;
+        this.clientConfig = clientConfig;
 
         // TODO do we want to limit this with a thread pool?
         this.executor = executorProvider.getExecutor();
@@ -72,8 +70,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(statisticStoreDoc, "Statistic configuration could not be found for uuid "
                 + docRef.getUuid());
 
-        final Store store = buildStore(searchRequest, statisticStoreDoc);
-        return store;
+        return buildStore(searchRequest, statisticStoreDoc);
     }
 
     private Store buildStore(final SearchRequest searchRequest,
@@ -87,7 +84,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
         //wrap the resultHandler in a new store, initiating the search in the process
-        final SqlStatisticsStore store = new SqlStatisticsStore(
+        return new SqlStatisticsStore(
                 searchRequest,
                 statisticStoreDoc,
                 statisticsSearchService,
@@ -96,22 +93,20 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                 resultHandlerBatchSize,
                 executor,
                 taskContext);
-
-        return store;
     }
 
     private List<Integer> getDefaultMaxResultsSizes() {
-        final String value = propertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
     private List<Integer> getStoreSizes() {
-        final String value = propertyService.getProperty(PROP_KEY_STORE_SIZE);
+        final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
 
     private int getResultHandlerBatchSize() {
-        return propertyService.getIntProperty(PROP_KEY_RESULT_HANDLER_BATCH_SIZE, DEFAULT_ROWS_IN_BATCH);
+        return searchConfig.getResultHandlerBatchSize();
     }
 
     private List<Integer> extractValues(String value) {

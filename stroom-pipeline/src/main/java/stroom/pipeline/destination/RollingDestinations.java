@@ -18,11 +18,10 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.properties.api.PropertyService;
 import stroom.task.api.TaskContext;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 
@@ -36,16 +35,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RollingDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 
-    private static final int DEFAULT_MAX_ACTIVE_DESTINATIONS = 100;
     private static final int MAX_TRY_COUNT = 1000;
 
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
-    private final PropertyService propertyService;
+    private final AppenderConfig appenderConfig;
 
     @Inject
-    public RollingDestinations(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    public RollingDestinations(final AppenderConfig appenderConfig) {
+        this.appenderConfig = appenderConfig;
     }
 
     public RollingDestination borrow(final TaskContext taskContext, final Object key,
@@ -71,7 +69,7 @@ public class RollingDestinations {
         // Try and get an existing destination for the key or create one if necessary.
         final RollingDestination destination = currentDestinations.computeIfAbsent(key, k -> {
             try {
-                final int maxActiveDestinations = getMaxActiveDestinations();
+                final int maxActiveDestinations = appenderConfig.getMaxActiveDestinations();
 
                 // Try and cope with too many active destinations.
                 if (currentDestinations.size() > maxActiveDestinations) {
@@ -199,20 +197,5 @@ public class RollingDestinations {
                 }
             }
         });
-    }
-
-    private int getMaxActiveDestinations() {
-        int maxActiveDestinations = DEFAULT_MAX_ACTIVE_DESTINATIONS;
-        if (propertyService != null) {
-            try {
-                final String property = propertyService.getProperty("stroom.pipeline.appender.maxActiveDestinations");
-                if (property != null) {
-                    maxActiveDestinations = Integer.parseInt(property);
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error("getMaxActiveDestinations() - Integer.parseInt stroom.pipeline.appender.maxActiveDestinations", e);
-            }
-        }
-        return maxActiveDestinations;
     }
 }

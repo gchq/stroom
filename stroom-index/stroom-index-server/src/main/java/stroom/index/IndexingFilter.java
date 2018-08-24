@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
@@ -40,7 +41,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
@@ -64,7 +64,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final IndexConfigCache indexConfigCache;
+    private final IndexStructureCache indexStructureCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
@@ -80,12 +80,12 @@ class IndexingFilter extends AbstractXMLFilter {
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final IndexConfigCache indexConfigCache) {
+                   final IndexStructureCache indexStructureCache) {
         this.streamHolder = streamHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.indexConfigCache = indexConfigCache;
+        this.indexStructureCache = indexStructureCache;
     }
 
     /**
@@ -100,14 +100,14 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final IndexConfig indexConfig = indexConfigCache.get(indexRef);
-            if (indexConfig == null) {
+            final IndexStructure indexStructure = indexStructureCache.get(indexRef);
+            if (indexStructure == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw new LoggedException("Unable to load index");
             }
 
-            final IndexDoc index = indexConfig.getIndex();
-            indexFieldsMap = indexConfig.getIndexFieldsMap();
+            final IndexDoc index = indexStructure.getIndex();
+            indexFieldsMap = indexStructure.getIndexFieldsMap();
 
             // Create a key to create shards with.
             if (streamHolder == null || streamHolder.getStream() == null) {
@@ -185,7 +185,7 @@ class IndexingFilter extends AbstractXMLFilter {
         super.endElement(uri, localName, qName);
     }
 
-    private void processDocument() throws SAXException {
+    private void processDocument() {
         // Write the document if we have dropped out of the record element and
         // have indexed some fields.
         if (fieldsIndexed > 0) {

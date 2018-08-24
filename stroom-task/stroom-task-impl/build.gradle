@@ -1,9 +1,4 @@
 ext.moduleName = 'stroom.task.impl'
 
 dependencies {
-//    compile project(':stroom-task:stroom-task-api')
-//    compile project(':stroom-util')
-//
-//    compile libs.guice4
-//    compile libs.javax_inject
 }

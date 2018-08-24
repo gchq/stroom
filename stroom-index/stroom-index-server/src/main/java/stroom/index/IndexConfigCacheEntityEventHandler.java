@@ -17,6 +17,7 @@
 
 package stroom.index;
 
+import stroom.docref.DocRef;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -24,7 +25,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -32,17 +32,17 @@ import java.util.List;
 @EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeCache nodeCache;
-    private final IndexConfigCacheImpl indexConfigCache;
+    private final IndexStructureCacheImpl indexStructureCache;
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
 
     @Inject
     IndexConfigCacheEntityEventHandler(final NodeCache nodeCache,
-                                       final IndexConfigCacheImpl indexConfigCache,
+                                       final IndexStructureCacheImpl indexStructureCache,
                                        final IndexShardService indexShardService,
                                        final IndexShardWriterCache indexShardWriterCache) {
         this.nodeCache = nodeCache;
-        this.indexConfigCache = indexConfigCache;
+        this.indexStructureCache = indexStructureCache;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
     }
@@ -50,7 +50,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     @Override
     public void onChange(final EntityEvent event) {
         if (IndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
-            indexConfigCache.remove(event.getDocRef());
+            indexStructureCache.remove(event.getDocRef());
             updateIndex(event.getDocRef());
         }
     }
@@ -66,8 +66,8 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         shards.forEach(shard -> {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
             if (indexShardWriter != null) {
-                final IndexConfig indexConfig = indexConfigCache.get(indexRef);
-                indexShardWriter.updateIndexConfig(indexConfig);
+                final IndexStructure indexStructure = indexStructureCache.get(indexRef);
+                indexShardWriter.updateIndexStructure(indexStructure);
             }
         });
     }

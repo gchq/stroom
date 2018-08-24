@@ -84,7 +84,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public void updateIndexConfig(final IndexConfig indexConfig) {
+    public void updateIndexStructure(final IndexStructure indexStructure) {
     }
 
     @Override

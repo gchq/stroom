@@ -21,25 +21,24 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.io.StreamCloser;
 import stroom.node.NodeServiceModule;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
-import stroom.properties.api.PropertyService;
-import stroom.task.api.TaskHandler;
 import stroom.task.TaskModule;
+import stroom.task.api.TaskHandler;
 import stroom.volume.VolumeModule;
 
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class FileSystemDataStoreModule extends AbstractModule {
     private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/db/migration";
     private static final String FLYWAY_TABLE = "data_store_schema_history";
-    private static final String CONNECTION_PROPERTY_PREFIX = "stroom.data.store.";
 
     @Override
     protected void configure() {
@@ -59,9 +58,11 @@ public class FileSystemDataStoreModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final PropertyService propertyService) {
-        final ConnectionConfig connectionConfig = getConnectionConfig(propertyService);
-        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(propertyService);
+    ConnectionProvider getConnectionProvider(final Provider<DataStoreServiceConfig> configProvider) {
+        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
+
+        connectionConfig.validate();
 
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
@@ -83,14 +84,6 @@ public class FileSystemDataStoreModule extends AbstractModule {
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;
-    }
-
-    private ConnectionConfig getConnectionConfig(final PropertyService propertyService) {
-        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
-    }
-
-    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService propertyService) {
-        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
     }
 
     @Override

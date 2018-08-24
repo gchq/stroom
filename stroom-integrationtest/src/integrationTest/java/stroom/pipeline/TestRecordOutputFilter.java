@@ -18,7 +18,8 @@ package stroom.pipeline;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.docref.DocRef;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -38,7 +39,6 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
-import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -155,9 +155,6 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
                 final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");
 
-                // Make sure the config dir is set.
-                System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
-
                 // Delete any output file.
                 FileUtil.deleteFile(outputFile);
                 FileUtil.deleteFile(outputLockFile);
@@ -211,7 +208,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
 
                 final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(dir + outputXMLStem + ".out");
                 final Path tmpFile = refFile.getParent().resolve(outputXMLStem + ".out_tmp");
-                Files.delete(tmpFile);
+                Files.deleteIfExists(tmpFile);
                 StreamUtil.copyFile(outputFile, tmpFile);
                 ComparisonHelper.compareFiles(refFile, tmpFile);
 

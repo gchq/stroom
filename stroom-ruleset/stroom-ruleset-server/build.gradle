@@ -8,12 +8,13 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-core-server')
 //    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.slf4j_api
     compile libs.javax_inject
+
     compile libs.guice4
 
     compile libs.dropwizard_metrics_healthchecks

@@ -13,7 +13,6 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.ConnectionProvider;
@@ -48,9 +47,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
-    private static final String PROP_KEY_SQL_SEARCH_MAX_RESULTS = "stroom.statistics.sql.search.maxResults";
-    private static final String PROP_KEY_SQL_SEARCH_FETCH_SIZE = "stroom.statistics.sql.search.fetchSize";
-
     private static final String KEY_TABLE_ALIAS = "K";
     private static final String VALUE_TABLE_ALIAS = "V";
     private static final String ALIASED_TIME_MS_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.TIME_MS;
@@ -59,7 +55,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
 
     private final ConnectionProvider connectionProvider;
-    private final PropertyService propertyService;
+    private final SearchConfig searchConfig;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -72,9 +68,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(final ConnectionProvider connectionProvider,
-                                final PropertyService propertyService) {
+                                final SearchConfig searchConfig) {
         this.connectionProvider = connectionProvider;
-        this.propertyService = propertyService;
+        this.searchConfig = searchConfig;
     }
 
     @Override
@@ -179,7 +175,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // now add the query terms
         SQLTagValueWhereClauseConverter.buildTagValueWhereClause(criteria.getFilterTermsTree(), sql);
 
-        final int maxResults = propertyService.getIntProperty(PROP_KEY_SQL_SEARCH_MAX_RESULTS, 100000);
+        final int maxResults = searchConfig.getMaxResults();
         sql.append(" LIMIT " + maxResults);
 
         LOGGER.debug("Search query: {}", sql.toString());
@@ -358,7 +354,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // will have mode on each time.
         Flowable<Val[]> resultSetFlowable = Flowable
                 .using(
-                        () -> new PreparedStatementResourceHolder(connectionProvider, sql, propertyService),
+                        () -> new PreparedStatementResourceHolder(connectionProvider, sql, searchConfig),
                         factory -> {
                             LOGGER.debug("Converting factory to a flowable");
                             Preconditions.checkNotNull(factory);
@@ -485,7 +481,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         PreparedStatementResourceHolder(final DataSource dataSource,
                                         final SqlBuilder sql,
-                                        final PropertyService propertyService) {
+                                        final SearchConfig searchConfig) {
             try {
                 connection = dataSource.getConnection();
             } catch (SQLException e) {
@@ -501,17 +497,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         ResultSet.CONCUR_READ_ONLY,
                         ResultSet.CLOSE_CURSORS_AT_COMMIT);
 
-                String fetchSizeStr = propertyService.getProperty(PROP_KEY_SQL_SEARCH_FETCH_SIZE);
-                if (fetchSizeStr != null && !fetchSizeStr.isEmpty()) {
-                    try {
-                        int fetchSize = Integer.valueOf(fetchSizeStr);
-                        LOGGER.debug("Setting fetch size to {}", fetchSize);
-                        preparedStatement.setFetchSize(fetchSize);
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeException(String.format("Error converting value [%s] for property %s to an integer",
-                                fetchSizeStr, PROP_KEY_SQL_SEARCH_FETCH_SIZE), e);
-                    }
-                }
+                final int fetchSize = searchConfig.getFetchSize();
+                LOGGER.debug("Setting fetch size to {}", fetchSize);
+                preparedStatement.setFetchSize(fetchSize);
 
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
                 LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));

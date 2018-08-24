@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 
 public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutView {

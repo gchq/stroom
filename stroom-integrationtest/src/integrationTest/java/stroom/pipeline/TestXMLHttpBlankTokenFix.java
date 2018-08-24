@@ -19,7 +19,9 @@ package stroom.pipeline;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.docref.DocRef;
+import stroom.pipeline.scope.PipelineScopeRunnable;
+import stroom.persist.CoreConfig;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
@@ -34,7 +36,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -55,6 +56,8 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     private static final String FORMAT = "XMLHttpBlankTokenFix/HttpSplitterWithBlankTokenFix.TextConverter.data.xml";
     private static final String XSLT_LOCATION = "XMLHttpBlankTokenFix/HttpProblem.xsl";
 
+    @Inject
+    private CoreConfig coreConfig;
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -101,9 +104,6 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
             xsltStore.writeDocument(xsltDoc);
 
             final Path testDir = getCurrentTestDir();
-
-            // Make sure the config dir is set.
-            System.setProperty("stroom.temp", FileUtil.getCanonicalPath(testDir));
 
             // Delete any output file.
             final Path outputFile = testDir.resolve("XMLHttpBlankTokenFix.xml");

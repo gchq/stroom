@@ -10,7 +10,6 @@ dependencies {
     compile project(':stroom-security:stroom-security-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-properties:stroom-properties-api')
 
     compile libs.stroomDocRef
     compile libs.gwt_user

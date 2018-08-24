@@ -1,9 +1,12 @@
 package stroom.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
+import stroom.config.global.impl.db.GlobalConfigModule;
+import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -19,7 +22,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dictionary.DictionaryHandlerModule());
         install(new stroom.docstore.db.DBPersistenceModule());
         install(new stroom.document.DocumentModule());
-        install(new stroom.elastic.ElasticModule());
+        install(new stroom.elastic.impl.ElasticModule());
+        install(new stroom.elastic.impl.http.HttpElasticModule());
         install(new stroom.entity.EntityModule());
         install(new stroom.entity.event.EntityEventModule());
         install(new stroom.entity.cluster.EntityClusterModule());
@@ -27,13 +31,14 @@ public class CoreModule extends AbstractModule {
         install(new stroom.explorer.ExplorerModule());
         install(new stroom.externaldoc.ExternalDocRefModule());
         install(new stroom.feed.FeedModule());
-        install(new stroom.guice.PipelineScopeModule());
+        install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.importexport.ImportExportHandlerModule());
         install(new stroom.index.IndexModule());
         install(new stroom.index.IndexElementModule());
         install(new stroom.jobsystem.JobSystemModule());
-        install(new stroom.kafka.KafkaModule());
+        install(new stroom.kafka.impl.KafkaModule());
+        install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.lifecycle.LifecycleModule());
         install(new stroom.logging.LoggingModule());
         install(new stroom.node.NodeModule());
@@ -50,8 +55,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.policy.PolicyModule());
-        install(new stroom.properties.impl.PropertyModule());
-        install(new stroom.properties.global.impl.db.GlobalPropertiesDbModule());
+//        install(new stroom.properties.impl.PropertyModule());
+        install(new GlobalConfigModule());
+        install(new GlobalConfigDbModule());
         install(new stroom.query.QueryModule());
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.ruleset.RulesetModule());
@@ -77,6 +83,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.TaskModule());
         install(new stroom.task.cluster.ClusterTaskModule());
+        install(new stroom.ui.config.server.UiConfigModule());
         install(new stroom.visualisation.VisualisationModule());
         install(new stroom.volume.VolumeModule());
         install(new stroom.xmlschema.XmlSchemaModule());

@@ -19,17 +19,17 @@ package stroom.servlet;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.ImportExportService;
-import stroom.properties.api.PropertyService;
 import stroom.resource.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -39,25 +39,23 @@ import java.util.ArrayList;
  */
 public class ExportConfigServlet extends HttpServlet {
     private static final long serialVersionUID = -4533441835216235920L;
-    private static final String PROPERTY = "stroom.export.enabled";
 
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
-    private final transient PropertyService propertyService;
+    private final transient ExportConfig exportConfig;
 
     @Inject
     ExportConfigServlet(final ImportExportService importExportService,
                         final ResourceStore resourceStore,
-                        final PropertyService propertyService) {
+                        final ExportConfig exportConfig) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
-        this.propertyService = propertyService;
+        this.exportConfig = exportConfig;
     }
 
     @Override
-    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-            throws ServletException, IOException {
-        final boolean enabled = propertyService.getBooleanProperty(PROPERTY, false);
+    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+        final boolean enabled = exportConfig.isEnabled();
         if (enabled) {
             final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
 
@@ -69,8 +67,10 @@ public class ExportConfigServlet extends HttpServlet {
 
                 importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
 
-                StreamUtil.streamToStream(Files.newInputStream(tempFile), resp.getOutputStream(), true);
-
+                try (final InputStream inputStream = Files.newInputStream(tempFile);
+                     final OutputStream outputStream = resp.getOutputStream()) {
+                    StreamUtil.streamToStream(inputStream, outputStream);
+                }
             } finally {
                 resourceStore.deleteTempFile(tempResourceKey);
             }

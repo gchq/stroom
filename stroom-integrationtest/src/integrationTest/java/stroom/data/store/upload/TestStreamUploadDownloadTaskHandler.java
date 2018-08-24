@@ -33,7 +33,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;

@@ -3,11 +3,10 @@ ext.moduleName = 'stroom.pipeline'
 dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-shared')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
@@ -16,11 +15,9 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-task:stroom-task-api')
 
-    compile project(':stroom-connectors')
-
-    compile libs.vavr
     compile libs.commons_io
     compile libs.commons_lang
+    compile libs.dropwizard_metrics_healthchecks
     compile libs.fast_infoset
     compile libs.google_findbugs
     compile libs.guava
@@ -42,14 +39,13 @@ dependencies {
     compile libs.stax_api
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
+    compile libs.swagger_annotations
+    compile libs.vavr
     compile libs.ws_rs_api
     compile libs.xml_apis
-    compile libs.swagger_annotations
-    compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
@@ -59,7 +55,7 @@ dependencies {
     testCompile libs.mockito_core
     testCompile libs.assertj_core
 
-    //the following logging libs are needed when running junits outside dropwizard
+    // The following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j
     testRuntime libs.log4j_over_slf4j

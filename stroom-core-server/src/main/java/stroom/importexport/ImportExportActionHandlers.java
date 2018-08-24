@@ -16,74 +16,41 @@
 
 package stroom.importexport;
 
-import stroom.properties.shared.ClientProperties;
-import stroom.properties.api.PropertyService;
-import stroom.guice.StroomBeanStore;
-
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 class ImportExportActionHandlers {
-    private final StroomBeanStore beanStore;
-    private final ImportExportActionHandlerFactory importExportActionHandlerFactory;
-    private final PropertyService propertyService;
-
-    private volatile Handlers handlers;
+    private final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders;
+    private volatile Map<String, ImportExportActionHandler> handlers;
 
     @Inject
-    ImportExportActionHandlers(final StroomBeanStore beanStore, final ImportExportActionHandlerFactory importExportActionHandlerFactory, final PropertyService propertyService) {
-        this.beanStore = beanStore;
-        this.importExportActionHandlerFactory = importExportActionHandlerFactory;
-        this.propertyService = propertyService;
+    ImportExportActionHandlers(final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders) {
+        this.importExportActionHandlerProviders = importExportActionHandlerProviders;
     }
 
     ImportExportActionHandler getHandler(final String type) {
-        final Map<String, ImportExportActionHandler> handlerMap = getAllHandlers();
-        return handlerMap.get(type);
+        return getHandlers().get(type);
     }
 
-    Map<String, ImportExportActionHandler> getAllHandlers() {
-        return getHandlers().allHandlers;
-    }
-
-    private Handlers getHandlers() {
+    Map<String, ImportExportActionHandler> getHandlers() {
         if (handlers == null) {
-            handlers = new Handlers(beanStore, importExportActionHandlerFactory, propertyService);
-        }
-        return handlers;
-    }
+            final Map<String, ImportExportActionHandler> map = new HashMap<>();
+            for (ImportExportActionHandler handler : importExportActionHandlerProviders.get()) {
+                final String type = handler.getDocumentType().getType();
 
-    private static class Handlers {
-        private final Map<String, ImportExportActionHandler> allHandlers = new ConcurrentHashMap<>();
-
-        Handlers(final StroomBeanStore beanStore,
-                 final ImportExportActionHandlerFactory importExportActionHandlerFactory,
-                 final PropertyService propertyService) {
-            // Add external handlers.
-            propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES)
-                    .forEach(type -> {
-                        final ImportExportActionHandler importExportActionHandler = importExportActionHandlerFactory.create(type);
-                        if (importExportActionHandler != null) {
-                            addImportExportActionHandler(importExportActionHandler);
-                        }
-                    });
-
-            // Add internal handlers.
-            final Set<ImportExportActionHandler> set = beanStore.getInstancesOfType(ImportExportActionHandler.class);
-            set.forEach(this::addImportExportActionHandler);
-        }
-
-        private void addImportExportActionHandler(final ImportExportActionHandler handler) {
-            final String type = handler.getDocumentType().getType();
-
-            final ImportExportActionHandler existingActionHandler = allHandlers.putIfAbsent(type, handler);
-            if (existingActionHandler != null) {
-                throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                final ImportExportActionHandler existingActionHandler = map.putIfAbsent(type, handler);
+                if (existingActionHandler != null) {
+                    throw new RuntimeException("A handler already exists for '" + type + "' existing {" + existingActionHandler + "} new {" + handler + "}");
+                }
             }
+            handlers = map;
         }
+
+        return handlers;
     }
 }

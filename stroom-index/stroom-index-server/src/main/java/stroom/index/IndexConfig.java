@@ -1,47 +1,34 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.index;
 
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldsMap;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import java.util.List;
+import javax.inject.Singleton;
 
+@Singleton
 public class IndexConfig {
-    private final IndexDoc index;
-    private final List<IndexField> indexFields;
-    private final IndexFieldsMap indexFieldsMap;
+    private int ramBufferSizeMB = 1024;
+    private IndexWriterConfig indexWriterConfig;
 
-    public IndexConfig(final IndexDoc index, final List<IndexField> indexFields, final IndexFieldsMap indexFieldsMap) {
-        this.index = index;
-        this.indexFields = indexFields;
-        this.indexFieldsMap = indexFieldsMap;
+    public IndexConfig() {
+        this.indexWriterConfig = new IndexWriterConfig();
     }
 
-    public IndexDoc getIndex() {
-        return index;
+    @JsonPropertyDescription("The amount of RAM Lucene can use to buffer when indexing in Mb")
+    public int getRamBufferSizeMB() {
+        return ramBufferSizeMB;
     }
 
-    public List<IndexField> getIndexFields() {
-        return indexFields;
+    public void setRamBufferSizeMB(final int ramBufferSizeMB) {
+        this.ramBufferSizeMB = ramBufferSizeMB;
     }
 
-    public IndexFieldsMap getIndexFieldsMap() {
-        return indexFieldsMap;
+    @JsonProperty("writer")
+    public IndexWriterConfig getIndexWriterConfig() {
+        return indexWriterConfig;
+    }
+
+    public void setIndexWriterConfig(final IndexWriterConfig indexWriterConfig) {
+        this.indexWriterConfig = indexWriterConfig;
     }
 }

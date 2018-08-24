@@ -25,18 +25,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
 import stroom.security.client.event.LogoutEvent;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
+import stroom.ui.config.client.UiConfigCache;
 
 public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final ClientDispatchAsync dispatcher;
     private final LocationManager locationManager;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public LoginManager(
@@ -44,7 +43,7 @@ public class LoginManager implements HasHandlers {
             final CurrentUser currentUser,
             final ClientDispatchAsync dispatcher,
             final LocationManager locationManager,
-            final ClientPropertyCache clientPropertyCache) {
+            final UiConfigCache clientPropertyCache) {
         this.eventBus = eventBus;
         this.currentUser = currentUser;
         this.dispatcher = dispatcher;
@@ -73,12 +72,12 @@ public class LoginManager implements HasHandlers {
                     // Redirect the page to logout.
                     clientPropertyCache.get()
                             .onSuccess(result -> {
-                                final String authServiceUrl = result.get(ClientProperties.AUTHENTICATION_SERVICE_URL);
+                                final String authServiceUrl = result.getUrlConfig().getAuthenticationService();
                                 // Send the user's browser to the remote Authentication Service's logout endpoint.
                                 // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
                                 // bypassing certificate checks. We need this to enable username/password
                                 // logins in an environment where the user's browser always presents a certificate.
-                                String redirectUrl = URL.encode(result.get(ClientProperties.ADVERTISED_HOST_URL) + "?prompt=login");
+                                String redirectUrl = URL.encode(result.getUrlConfig().getUi() + "?prompt=login");
                                 Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
                             });
                 })

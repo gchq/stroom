@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class SearchIdHolder implements Holder {

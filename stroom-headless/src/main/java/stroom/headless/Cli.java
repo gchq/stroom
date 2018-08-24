@@ -22,16 +22,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.fs.FSPersistenceConfig;
 import stroom.entity.util.XMLUtil;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
+import stroom.persist.CoreConfig;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
-import stroom.util.config.StroomProperties;
-import stroom.util.config.StroomProperties.Source;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -74,6 +73,8 @@ public class Cli extends AbstractCommandLineTool {
     private Path tmpDir;
 
     @Inject
+    private CoreConfig coreConfig;
+    @Inject
     private FSPersistenceConfig fsPersistenceConfig;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
@@ -104,13 +105,6 @@ public class Cli extends AbstractCommandLineTool {
 
     public void setTmp(final String tmp) {
         this.tmp = tmp;
-
-        final Path tempDir = Paths.get(tmp);
-
-        // Redirect the temp dir for headless.
-        StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(tempDir), Source.USER_CONF);
-
-        FileUtil.forgetTempDir();
     }
 
     @Override
@@ -169,38 +163,24 @@ public class Cli extends AbstractCommandLineTool {
     @Override
     public void run() {
         try {
-//            StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", Source.TEST);
-//
-//            StroomProperties.setOverrideProperty("stroom.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/stroom/HSQLDB.DAT;shutdown=true", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.jdbcDriverUsername", "sa", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.jdbcDriverPassword", "", Source.TEST);
-//
-//            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverClassName", "org.hsqldb.jdbcDriver", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.statistics.sql.jpaDialect", "org.hibernate.dialect.HSQLDialect", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUrl", "jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverUsername", "sa", Source.TEST);
-//            StroomProperties.setOverrideProperty("stroom.statistics.sql.jdbcDriverPassword", "", Source.TEST);
+            // Initialise some variables.
+            init();
 
-            StroomProperties.setOverrideProperty("stroom.lifecycle.enabled", "false", Source.TEST);
+            // Create the Guice injector and inject members.
+            createInjector();
+
+            // Setup temp dir.
+            final Path tempDir = Paths.get(tmp);
+            coreConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
 
             process();
         } finally {
-            StroomProperties.removeOverrides();
-
             ExternalShutdownController.shutdown();
         }
     }
 
     private void process() {
         final long startTime = System.currentTimeMillis();
-
-        // Initialise some variables.
-        init();
-
-        // Create the Guice injector and inject members.
-        createInjector();
 
         pipelineScopeRunnable.scopeRunnable(this::processInPipelineScope);
 

@@ -1,5 +1,7 @@
 package stroom.importexport;
 
+import java.util.Set;
+
 public interface ImportExportActionHandlerFactory {
-    ImportExportActionHandler create(String type);
+    Set<ImportExportActionHandler> getImportExportActionHandlers();
 }

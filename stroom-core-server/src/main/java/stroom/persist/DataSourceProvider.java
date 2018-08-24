@@ -1,20 +1,19 @@
 package stroom.persist;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.PropertyService;
-import stroom.util.config.StroomProperties;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,57 +23,70 @@ import java.sql.Statement;
 public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
 
-    private final PropertyService propertyService;
+    private final Provider<CoreConfig> configProvider;
     private volatile DataSource dataSource;
 
     @Inject
-    DataSourceProvider(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    DataSourceProvider(final Provider<CoreConfig> configProvider) {
+        this.configProvider = configProvider;
     }
 
-    private ComboPooledDataSource dataSource() {
-        try {
-            final ComboPooledDataSource dataSource = new ComboPooledDataSource();
-            dataSource.setDataSourceName("stroom");
-            dataSource.setDescription("Stroom data source");
+    private DataSource dataSource() {
+//        try {
+        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
 
-            final ConnectionConfig dataSourceConfig = getDataSourceConfig();
-            dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
-            dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
-            dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
-            dataSource.setPassword(dataSourceConfig.getJdbcDriverPassword());
+        connectionConfig.validate();
 
-            final C3P0Config config = getC3P0Config();
-            dataSource.setMaxStatements(config.getMaxStatements());
-            dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
-            dataSource.setInitialPoolSize(config.getInitialPoolSize());
-            dataSource.setMinPoolSize(config.getMinPoolSize());
-            dataSource.setMaxPoolSize(config.getMaxPoolSize());
-            dataSource.setIdleConnectionTestPeriod(config.getIdleConnectionTestPeriod());
-            dataSource.setMaxIdleTime(config.getMaxIdleTime());
-            dataSource.setAcquireIncrement(config.getAcquireIncrement());
-            dataSource.setAcquireRetryAttempts(config.getAcquireRetryAttempts());
-            dataSource.setAcquireRetryDelay(config.getAcquireRetryDelay());
-            dataSource.setCheckoutTimeout(config.getCheckoutTimeout());
-            dataSource.setMaxAdministrativeTaskTime(config.getMaxAdministrativeTaskTime());
-            dataSource.setMaxIdleTimeExcessConnections(config.getMaxIdleTimeExcessConnections());
-            dataSource.setMaxConnectionAge(config.getMaxConnectionAge());
-            dataSource.setUnreturnedConnectionTimeout(config.getUnreturnedConnectionTimeout());
-            dataSource.setStatementCacheNumDeferredCloseThreads(config.getStatementCacheNumDeferredCloseThreads());
-            dataSource.setNumHelperThreads(config.getNumHelperThreads());
+        final HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
+        config.setUsername(connectionConfig.getJdbcDriverUsername());
+        config.setPassword(connectionConfig.getJdbcDriverPassword());
+        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
+        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
 
-            dataSource.setPreferredTestQuery("select 1");
-            dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
-
-            return dataSource;
-        } catch (final PropertyVetoException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        return new HikariDataSource(config);
+//            dataSource.setDataSourceName("stroom");
+//            dataSource.setDescription("Stroom data source");
+//
+//            final ConnectionConfig dataSourceConfig = coreConfig.getConnectionConfig();
+//            dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
+//            dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
+//            dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
+//            dataSource.setPassword(dataSourceConfig.getJdbcDriverPassword());
+//
+//            final C3P0Config config = getC3P0Config();
+//            dataSource.setMaxStatements(config.getMaxStatements());
+//            dataSource.setMaxStatementsPerConnection(config.getMaxStatementsPerConnection());
+//            dataSource.setInitialPoolSize(config.getInitialPoolSize());
+//            dataSource.setMinPoolSize(config.getMinPoolSize());
+//            dataSource.setMaxPoolSize(config.getMaxPoolSize());
+//            dataSource.setIdleConnectionTestPeriod(config.getIdleConnectionTestPeriod());
+//            dataSource.setMaxIdleTime(config.getMaxIdleTime());
+//            dataSource.setAcquireIncrement(config.getAcquireIncrement());
+//            dataSource.setAcquireRetryAttempts(config.getAcquireRetryAttempts());
+//            dataSource.setAcquireRetryDelay(config.getAcquireRetryDelay());
+//            dataSource.setCheckoutTimeout(config.getCheckoutTimeout());
+//            dataSource.setMaxAdministrativeTaskTime(config.getMaxAdministrativeTaskTime());
+//            dataSource.setMaxIdleTimeExcessConnections(config.getMaxIdleTimeExcessConnections());
+//            dataSource.setMaxConnectionAge(config.getMaxConnectionAge());
+//            dataSource.setUnreturnedConnectionTimeout(config.getUnreturnedConnectionTimeout());
+//            dataSource.setStatementCacheNumDeferredCloseThreads(config.getStatementCacheNumDeferredCloseThreads());
+//            dataSource.setNumHelperThreads(config.getNumHelperThreads());
+//
+//            dataSource.setPreferredTestQuery("select 1");
+//            dataSource.setConnectionTesterClassName(StroomProperties.getProperty("stroom.connectionTesterClassName"));
+//
+//            return dataSource;
+//        } catch (final PropertyVetoException e) {
+//            LOGGER.error(e.getMessage(), e);
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
     }
 
     private Flyway flyway(final DataSource dataSource) {
-        final String jpaHbm2DdlAuto = StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate");
+        final String jpaHbm2DdlAuto = configProvider.get().getHibernateConfig().getJpaHbm2DdlAuto();
         if (!"update".equals(jpaHbm2DdlAuto)) {
             final Flyway flyway = new Flyway();
             flyway.setDataSource(dataSource);
@@ -217,11 +229,7 @@ public class DataSourceProvider implements Provider<DataSource> {
         return dataSource;
     }
 
-    private ConnectionConfig getDataSourceConfig() {
-        return new ConnectionConfig("stroom.", propertyService);
-    }
-
-    private C3P0Config getC3P0Config() {
-        return new C3P0Config("stroom.db.connectionPool.", propertyService);
-    }
+//    private C3P0Config getC3P0Config() {
+//        return new C3P0Config("stroom.db.connectionPool.", propertyService);
+//    }
 }

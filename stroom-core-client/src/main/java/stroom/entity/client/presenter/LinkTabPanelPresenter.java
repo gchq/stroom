@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.data.table.client.Refreshable;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.widget.tab.client.presenter.Layer;
+import com.gwtplatform.mvp.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;

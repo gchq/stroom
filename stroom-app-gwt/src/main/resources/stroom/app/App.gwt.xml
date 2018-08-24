@@ -58,6 +58,7 @@
     <!--  Minimal -->
     <inherits name="stroom.properties.Properties" />
     <inherits name="stroom.properties.global.GlobalProperties" />
+    <inherits name="stroom.ui.config.UiConfig" />
     <inherits name="stroom.data.meta.Meta" />
     <inherits name="stroom.externaldoc.ExternalDocRef" />
     <inherits name="stroom.about.About" />

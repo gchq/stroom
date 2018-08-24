@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -37,14 +36,12 @@ import stroom.security.Security;
 import stroom.security.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -52,14 +49,15 @@ import java.util.Set;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestVolumeServiceImpl extends StroomUnitTest {
+    private static final Path DEFAULT_VOLUMES_PATH;
+    private static final Path DEFAULT_INDEX_VOLUME_PATH;
+    private static final Path DEFAULT_STREAM_VOLUME_PATH;
 
-    private static final Path DEFAULT_VOLUMES_PATH = Paths.get(
-            System.getProperty("user.home"),
-            StroomProperties.USER_CONF_DIR
-    ).resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
-
-    private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
-    private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
+    static {
+        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
+        DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
+        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
+    }
 
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
@@ -77,9 +75,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     private final VolumeEntity public2b = VolumeEntity.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
 
+    private VolumeConfig volumeConfig = new VolumeConfig();
     private MockVolumeService volumeServiceImpl = null;
-    @Mock
-    private VolumeConfig volumeConfig;
     @Mock
     private StroomEntityManager stroomEntityManager;
     @Mock
@@ -98,8 +95,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeList.add(public2a);
         volumeList.add(public2b);
 
-        Mockito.when(volumeConfig.getResilientReplicationCount()).thenReturn(2);
-//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
+        volumeConfig.setResilientReplicationCount(2);
 
         volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), volumeConfig, null);
         volumeServiceImpl.volumeList = volumeList;
@@ -121,7 +117,6 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         // Check that we round robin OK
         Assert.assertTrue(call1.contains(public2a) ^ call2.contains(public2a));
         Assert.assertTrue(call1.contains(public2b) ^ call2.contains(public2b));
-
     }
 
     @Test
@@ -164,10 +159,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testStartup_Disabled() {
-        Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(false);
-//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
-
-//        volumeServiceImpl.startup();
+        volumeConfig.setCreateDefaultOnStart(false);
 
         Assert.assertFalse(volumeServiceImpl.saveCalled);
         Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
@@ -176,10 +168,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testStartup_EnabledExistingVolumes() {
-        Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(true);
-//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
-
-//        volumeServiceImpl.startup();
+        volumeConfig.setCreateDefaultOnStart(true);
 
         Assert.assertFalse(volumeServiceImpl.saveCalled);
         Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
@@ -188,9 +177,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testStartup_EnabledNoExistingVolumes() {
-        Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(true);
-
-//        mockPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+        volumeConfig.setCreateDefaultOnStart(true);
         volumeServiceImpl.volumeList.clear();
         volumeServiceImpl.getStreamVolumeSet(node1a);
 //        volumeServiceImpl.startup();

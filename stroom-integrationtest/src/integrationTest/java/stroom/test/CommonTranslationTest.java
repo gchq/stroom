@@ -23,7 +23,6 @@ import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.data.meta.api.DataMetaService;
-import stroom.data.store.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;

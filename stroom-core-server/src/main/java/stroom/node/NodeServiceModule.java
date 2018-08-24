@@ -26,6 +26,7 @@ import stroom.entity.FindService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerModule;
 import stroom.security.Security;
+import stroom.ui.config.shared.UiConfig;
 
 public class NodeServiceModule extends AbstractModule {
     @Override
@@ -46,8 +47,9 @@ public class NodeServiceModule extends AbstractModule {
     @Named("cachedNodeService")
     public NodeService cachedNodeService(final CachingEntityManager entityManager,
                                          final Security security,
+                                         final UiConfig uiConfig,
                                          final NodeServiceTransactionHelper nodeServiceTransactionHelper) {
-        return new NodeServiceImpl(entityManager, security, nodeServiceTransactionHelper);
+        return new NodeServiceImpl(entityManager, security, uiConfig, nodeServiceTransactionHelper);
     }
 
     @Override

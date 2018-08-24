@@ -58,7 +58,7 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler {

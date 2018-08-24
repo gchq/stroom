@@ -34,14 +34,14 @@ public class IndexModule extends AbstractModule {
 
         bind(IndexShardManager.class).to(IndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
-        bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
+        bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(IndexConfigCacheImpl.class);
+        clearableBinder.addBinding().to(IndexStructureCacheImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.index.CloseIndexShardActionHandler.class);

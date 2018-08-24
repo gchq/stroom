@@ -18,25 +18,26 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.util.config.StroomProperties;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.List;
 
 public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
+    @Inject
+    private ProcessConfig processConfig;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -123,9 +124,9 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
             commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
         }
 
-        final int initialQueueSize = StroomProperties.getIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 1000);
-        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 1000, StroomProperties.Source.TEST);
-        StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, false, StroomProperties.Source.TEST);
+        final int initialQueueSize = processConfig.getQueueSize();
+        processConfig.setQueueSize(1000);
+        processConfig.setFillTaskQueue(false);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
@@ -144,8 +145,8 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         tasks = streamTaskCreator.assignStreamTasks(node, 1000);
         Assert.assertEquals(1000, tasks.size());
 
-        StroomProperties.setBooleanProperty(StreamTaskCreatorImpl.STREAM_TASKS_FILL_TASK_QUEUE_PROPERTY, true, StroomProperties.Source.TEST);
-        StroomProperties.setIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, initialQueueSize, StroomProperties.Source.TEST);
+        processConfig.setQueueSize(initialQueueSize);
+        processConfig.setFillTaskQueue(true);
     }
 
     @Test

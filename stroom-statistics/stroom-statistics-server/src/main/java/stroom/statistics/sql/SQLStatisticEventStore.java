@@ -25,7 +25,6 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -62,7 +61,7 @@ public class SQLStatisticEventStore implements Statistics {
     private final StatisticStoreValidator statisticsDataSourceValidator;
     private final StatisticStoreCache statisticsDataSourceCache;
     private final SQLStatisticCache statisticCache;
-    private final PropertyService propertyService;
+    private final SQLStatisticsConfig config;
     /**
      * SQL for testing querying the stat/tag names
      * <p>
@@ -89,10 +88,10 @@ public class SQLStatisticEventStore implements Statistics {
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
-                           final PropertyService propertyService) {
+                           final SQLStatisticsConfig config) {
 
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
-        this.propertyService = propertyService;
+        this.config = config;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
 
@@ -105,14 +104,14 @@ public class SQLStatisticEventStore implements Statistics {
                                   final StatisticStoreValidator statisticsDataSourceValidator,
                                   final StatisticStoreCache statisticsDataSourceCache,
                                   final SQLStatisticCache statisticCache,
-                                  final PropertyService propertyService) {
+                                  final SQLStatisticsConfig config) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.aggregatorSizeThreshold = aggregatorSizeThreshold;
         this.poolAgeMsThreshold = poolAgeMsThreshold;
         this.poolSize = poolSize;
-        this.propertyService = propertyService;
+        this.config = config;
 
         initPool(getObjectPoolConfig());
     }
@@ -222,12 +221,10 @@ public class SQLStatisticEventStore implements Statistics {
      * @return The threshold in ms since unix epoch
      */
     private Long getEventProcessingThresholdMs() {
-        final String eventProcessingThresholdStr = propertyService
-                .getProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE);
-
+        final String eventProcessingThresholdStr = config.getMaxProcessingAge();
         if (eventProcessingThresholdStr != null && !eventProcessingThresholdStr.isEmpty()) {
             final long duration = ModelStringUtil.parseDurationString(eventProcessingThresholdStr);
-            return Long.valueOf(System.currentTimeMillis() - duration);
+            return System.currentTimeMillis() - duration;
         } else {
             return null;
         }

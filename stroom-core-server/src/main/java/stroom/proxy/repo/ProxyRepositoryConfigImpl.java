@@ -12,7 +12,7 @@ public class ProxyRepositoryConfigImpl implements ProxyRepositoryConfig {
      */
     @Override
     @JsonProperty
-    public String getRepoDir() {
+    public String getDir() {
         return repoDir;
     }
 
@@ -36,7 +36,7 @@ public class ProxyRepositoryConfigImpl implements ProxyRepositoryConfig {
      */
     @Override
     @JsonProperty
-    public String getRepositoryFormat() {
+    public String getFormat() {
         return repositoryFormat;
     }
 

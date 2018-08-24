@@ -17,7 +17,13 @@
 package stroom.persist;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.zaxxer.hikari.HikariConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 /**
@@ -28,6 +34,26 @@ public class DataSourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataSource.class).toProvider(DataSourceProvider.class);
+    }
+
+    @Provides
+    @Singleton
+    ConnectionProvider getConnectionProvider(final Provider<CoreConfig> configProvider) {
+        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
+
+        connectionConfig.validate();
+
+        final HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
+        config.setUsername(connectionConfig.getJdbcDriverUsername());
+        config.setPassword(connectionConfig.getJdbcDriverPassword());
+        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
+        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
+        final ConnectionProvider connectionProvider = new ConnectionProvider(config);
+//        flyway(connectionProvider);
+        return connectionProvider;
     }
 
     @Override

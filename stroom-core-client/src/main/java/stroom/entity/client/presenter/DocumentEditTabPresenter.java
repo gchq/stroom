@@ -37,7 +37,7 @@ import stroom.util.client.ImageUtil;
 import stroom.util.shared.HasType;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.tab.client.presenter.Layer;
+import com.gwtplatform.mvp.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;

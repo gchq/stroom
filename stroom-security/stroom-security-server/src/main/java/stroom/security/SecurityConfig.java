@@ -1,13 +1,20 @@
 package stroom.security;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+import javax.inject.Singleton;
+
+@Singleton
 public class SecurityConfig {
     private String authenticationServiceUrl;
-    private String advertisedStroomUrl;
     private boolean authenticationRequired = true;
-    private String apiToken;
-    private String authServicesBaseUrl;
+    private String apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc";
+    private String authServicesBaseUrl = "http://auth-service:8099";
     private JwtConfig jwtConfig;
+    private boolean preventLogin;
+    private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
 
+    @JsonPropertyDescription("The URL of the authentication service")
     public String getAuthenticationServiceUrl() {
         return authenticationServiceUrl;
     }
@@ -16,14 +23,7 @@ public class SecurityConfig {
         this.authenticationServiceUrl = authenticationServiceUrl;
     }
 
-    public String getAdvertisedStroomUrl() {
-        return advertisedStroomUrl;
-    }
-
-    public void setAdvertisedStroomUrl(final String advertisedStroomUrl) {
-        this.advertisedStroomUrl = advertisedStroomUrl;
-    }
-
+    @JsonPropertyDescription("Choose whether Stroom requires authenticated access")
     public boolean isAuthenticationRequired() {
         return authenticationRequired;
     }
@@ -32,6 +32,7 @@ public class SecurityConfig {
         this.authenticationRequired = authenticationRequired;
     }
 
+    @JsonPropertyDescription("The API token Stroom will use to authenticate itself when accessing other services")
     public String getApiToken() {
         return apiToken;
     }
@@ -40,6 +41,7 @@ public class SecurityConfig {
         this.apiToken = apiToken;
     }
 
+    @JsonPropertyDescription("The URL of the auth service")
     public String getAuthServicesBaseUrl() {
         return authServicesBaseUrl;
     }
@@ -56,10 +58,29 @@ public class SecurityConfig {
         this.jwtConfig = jwtConfig;
     }
 
-    public static class JwtConfig {
-        private String jwtIssuer;
-        private boolean enableTokenRevocationCheck;
+    @JsonPropertyDescription("Prevent new logins to the system. This is useful if the system is scheduled to have an outage.")
+    public boolean isPreventLogin() {
+        return preventLogin;
+    }
 
+    public void setPreventLogin(final boolean preventLogin) {
+        this.preventLogin = preventLogin;
+    }
+
+    @JsonPropertyDescription("The regex pattern for user names")
+    public String getUserNamePattern() {
+        return userNamePattern;
+    }
+
+    public void setUserNamePattern(final String userNamePattern) {
+        this.userNamePattern = userNamePattern;
+    }
+
+    public static class JwtConfig {
+        private String jwtIssuer= "stroom";
+        private boolean enableTokenRevocationCheck = true;
+
+        @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
         public String getJwtIssuer() {
             return jwtIssuer;
         }
@@ -68,6 +89,7 @@ public class SecurityConfig {
             this.jwtIssuer = jwtIssuer;
         }
 
+        @JsonPropertyDescription("Whether or not to enable remote calls to the auth service to check if a token we have has been revoked.")
         public boolean isEnableTokenRevocationCheck() {
             return enableTokenRevocationCheck;
         }

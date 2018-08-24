@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,7 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestConfigure extends StroomUnitTest {
+public class TestConfigure {
     @Test
     public void testNotOK() {
         final Parameter parameter = new Parameter();
@@ -50,7 +49,7 @@ public class TestConfigure extends StroomUnitTest {
 
     @Test
     public void test_Main() throws IOException {
-        final Path testFile = getCurrentTestDir().resolve("TestConfigure_server.xml");
+        final Path testFile = Files.createTempFile("TestConfigure_server", "xml");
         final Path sourceFile = Paths.get("./src/test/resources/stroom/util/config/server.xml");
         Files.deleteIfExists(testFile);
         Files.copy(sourceFile, testFile);

@@ -36,7 +36,7 @@ import stroom.node.client.view.NodeEditViewImpl;
 import stroom.node.client.view.VolumeEditViewImpl;
 import stroom.node.client.view.WrapperView;
 import stroom.node.client.view.WrapperViewImpl;
-import stroom.properties.global.client.ClientPropertyCache;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.properties.global.client.presenter.ManageGlobalPropertyEditPresenter;
 import stroom.properties.global.client.presenter.ManageGlobalPropertyListPresenter;
 import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter;
@@ -46,7 +46,7 @@ import stroom.properties.global.client.view.ManageGlobalPropertyViewImpl;
 public class MonitoringModule extends PluginModule {
     @Override
     protected void configure() {
-        bind(ClientPropertyCache.class).asEagerSingleton();
+        bind(UiConfigCache.class).asEagerSingleton();
 
         bindPlugin(DatabaseTablesMonitoringPlugin.class);
 

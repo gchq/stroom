@@ -29,8 +29,8 @@ import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.StringListBox;
 import stroom.util.client.JSONUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
-import stroom.widget.tab.client.presenter.Layer;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.LayerContainer;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

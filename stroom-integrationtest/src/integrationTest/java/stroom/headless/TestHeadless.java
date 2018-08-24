@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Version;
 import stroom.util.zip.ZipUtil;
@@ -49,97 +48,92 @@ public class TestHeadless {
 
     @Test
     public void test() throws IOException {
-        try {
-            Path newTempDir = FileUtil.getTempDir().resolve("headless");
-            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
+        Path newTempDir = FileUtil.getTempDir().resolve("headless");
+//        StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
-            // Make sure the new temp directory is empty.
-            if (Files.isDirectory(newTempDir)) {
-                FileUtils.deleteDirectory(newTempDir.toFile());
-            }
-
-            final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
-            final Path testPath = base.resolve("TestHeadless");
-            final Path tmpPath = testPath.resolve("tmp");
-            FileUtil.deleteDir(tmpPath);
-            Files.createDirectories(tmpPath);
-
-            final Path contentDirPath = tmpPath.resolve("content");
-            final Path inputDirPath = tmpPath.resolve("input");
-            final Path outputDirPath = tmpPath.resolve("output");
-
-            Files.createDirectories(contentDirPath);
-            Files.createDirectories(inputDirPath);
-            Files.createDirectories(outputDirPath);
-
-            final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath().normalize();
-            final Path outputFilePath = outputDirPath.resolve("output");
-            final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
-
-            // Create input zip file
-            final Path rawInputPath = testPath.resolve("input");
-            Files.createDirectories(rawInputPath);
-            final Path inputFilePath = inputDirPath.resolve("001.zip");
-            Files.deleteIfExists(inputFilePath);
-            ZipUtil.zip(inputFilePath, rawInputPath);
-
-            // Create config zip file
-            final Path contentPacks = tmpPath.resolve("contentPacks");
-            Files.createDirectories(contentPacks);
-            importXmlSchemas(contentPacks);
-
-            // Copy required config into the temp dir.
-            final Path rawConfigPath = tmpPath.resolve("config");
-            Files.createDirectories(rawConfigPath);
-            final Path configUnzippedDirPath = samplesPath.resolve("config");
-            FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
-
-            // Unzip the downloaded content packs into the temp dir.
-            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacks)) {
-                stream.forEach(file -> {
-                    try {
-                        ZipUtil.unzip(file, rawConfigPath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
-            // Build the config zip file.
-            final Path configFilePath = tmpPath.resolve("config.zip");
-            Files.deleteIfExists(configFilePath);
-            ZipUtil.zip(configFilePath, rawConfigPath);
-
-            final Headless headless = new Headless();
-
-            headless.setConfig(FileUtil.getCanonicalPath(configFilePath));
-            headless.setContent(FileUtil.getCanonicalPath(contentDirPath));
-            headless.setInput(FileUtil.getCanonicalPath(inputDirPath));
-            headless.setOutput(FileUtil.getCanonicalPath(outputFilePath));
-            headless.setTmp(FileUtil.getCanonicalPath(newTempDir));
-            headless.run();
-
-            final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
-            final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
-
-            LOGGER.info("Comparing expected vs actual:\n\t{}\n\t{}",
-                    expectedOutputFilePath.toAbsolutePath().toString(),
-                    outputFilePath.toAbsolutePath().toString());
-
-            // same number of lines output as expected
-            Assert.assertEquals(expectedLines.size(), outputLines.size());
-
-            // make sure all lines are present in both
-            Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
-
-            // content should exactly match expected file
-            ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
-
-        } finally {
-            StroomProperties.removeOverrides();
+        // Make sure the new temp directory is empty.
+        if (Files.isDirectory(newTempDir)) {
+            FileUtils.deleteDirectory(newTempDir.toFile());
         }
+
+        final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
+        final Path testPath = base.resolve("TestHeadless");
+        final Path tmpPath = testPath.resolve("tmp");
+        FileUtil.deleteDir(tmpPath);
+        Files.createDirectories(tmpPath);
+
+        final Path contentDirPath = tmpPath.resolve("content");
+        final Path inputDirPath = tmpPath.resolve("input");
+        final Path outputDirPath = tmpPath.resolve("output");
+
+        Files.createDirectories(contentDirPath);
+        Files.createDirectories(inputDirPath);
+        Files.createDirectories(outputDirPath);
+
+        final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath().normalize();
+        final Path outputFilePath = outputDirPath.resolve("output");
+        final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
+
+        // Create input zip file
+        final Path rawInputPath = testPath.resolve("input");
+        Files.createDirectories(rawInputPath);
+        final Path inputFilePath = inputDirPath.resolve("001.zip");
+        Files.deleteIfExists(inputFilePath);
+        ZipUtil.zip(inputFilePath, rawInputPath);
+
+        // Create config zip file
+        final Path contentPacks = tmpPath.resolve("contentPacks");
+        Files.createDirectories(contentPacks);
+        importXmlSchemas(contentPacks);
+
+        // Copy required config into the temp dir.
+        final Path rawConfigPath = tmpPath.resolve("config");
+        Files.createDirectories(rawConfigPath);
+        final Path configUnzippedDirPath = samplesPath.resolve("config");
+        FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
+
+        // Unzip the downloaded content packs into the temp dir.
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacks)) {
+            stream.forEach(file -> {
+                try {
+                    ZipUtil.unzip(file, rawConfigPath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        // Build the config zip file.
+        final Path configFilePath = tmpPath.resolve("config.zip");
+        Files.deleteIfExists(configFilePath);
+        ZipUtil.zip(configFilePath, rawConfigPath);
+
+        final Headless headless = new Headless();
+
+        headless.setConfig(FileUtil.getCanonicalPath(configFilePath));
+        headless.setContent(FileUtil.getCanonicalPath(contentDirPath));
+        headless.setInput(FileUtil.getCanonicalPath(inputDirPath));
+        headless.setOutput(FileUtil.getCanonicalPath(outputFilePath));
+        headless.setTmp(FileUtil.getCanonicalPath(newTempDir));
+        headless.run();
+
+        final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
+        final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
+
+        LOGGER.info("Comparing expected vs actual:\n\t{}\n\t{}",
+                expectedOutputFilePath.toAbsolutePath().toString(),
+                outputFilePath.toAbsolutePath().toString());
+
+        // same number of lines output as expected
+        Assert.assertEquals(expectedLines.size(), outputLines.size());
+
+        // make sure all lines are present in both
+        Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
+
+        // content should exactly match expected file
+        ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
     }
 
     private void importXmlSchemas(final Path path) {

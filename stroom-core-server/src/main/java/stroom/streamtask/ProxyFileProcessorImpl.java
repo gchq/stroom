@@ -18,19 +18,18 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.store.StreamProgressMonitor;
+import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
 import stroom.feed.FeedDocCache;
-import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.StreamProgressMonitor;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -55,9 +54,6 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     private final ProxyFileHandler feedFileProcessorHelper;
 
-    private final static int DEFAULT_MAX_AGGREGATION = 10000;
-    final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
-
     private final StreamStore streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistic;
@@ -71,14 +67,14 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     ProxyFileProcessorImpl(final StreamStore streamStore,
                            final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
-                           final ProxyFileProcessorConfig proxyFileProcessorConfig,
+                           final ProxyAggregationConfig proxyAggregationConfig,
                            final BufferFactory bufferFactory) {
         this(
                 streamStore,
                 feedDocCache,
                 metaDataStatistic,
-                proxyFileProcessorConfig.getMaxAggregation(),
-                proxyFileProcessorConfig.getMaxStreamSize(),
+                proxyAggregationConfig.getMaxAggregation(),
+                proxyAggregationConfig.getMaxStreamSizeBytes(),
                 bufferFactory
         );
     }
@@ -186,7 +182,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         globalAttributeMap.put(StroomHeaderArguments.FEED, feed.getName());
 
 //        try {
-            streamTargetStroomStreamHandler.handleHeader(globalAttributeMap);
+        streamTargetStroomStreamHandler.handleHeader(globalAttributeMap);
 //        } catch (final IOException ioEx) {
 //            streamTargetStroomStreamHandler.close();
 //            throw new RuntimeException(ioEx);
@@ -213,20 +209,20 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         return null;
     }
 
-    static long getByteSize(final String propertyValue, final long defaultValue) {
-        Long value = null;
-        try {
-            value = ModelStringUtil.parseIECByteSizeString(propertyValue);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        if (value == null) {
-            value = defaultValue;
-        }
-
-        return value;
-    }
+//    static long getByteSize(final String propertyValue, final long defaultValue) {
+//        Long value = null;
+//        try {
+//            value = ModelStringUtil.parseIECByteSizeString(propertyValue);
+//        } catch (final RuntimeException e) {
+//            LOGGER.error(e.getMessage(), e);
+//        }
+//
+//        if (value == null) {
+//            value = defaultValue;
+//        }
+//
+//        return value;
+//    }
 
     /**
      * Stops the task as soon as possible.

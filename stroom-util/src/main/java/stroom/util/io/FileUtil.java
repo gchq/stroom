@@ -19,10 +19,8 @@ package stroom.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.config.StroomProperties;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -55,8 +53,12 @@ public final class FileUtil {
         // Utility.
     }
 
-    public static Path getInitialTempDir() {
-        final String pathString = StroomProperties.getProperty(StroomProperties.STROOM_TEMP);
+    private static String getTempPath() {
+        return System.getProperty("java.io.tmpdir");
+    }
+
+    private static Path getInitialTempDir() {
+        final String pathString = getTempPath();
         if (pathString == null) {
             throw new RuntimeException("No temp path is specified");
         }
@@ -86,30 +88,34 @@ public final class FileUtil {
         return tempDir;
     }
 
-    public static void useDevTempDir() {
-        try {
-            final Path tempDir = getTempDir();
-
-            final Path devDir = tempDir.resolve("dev");
-            Files.createDirectories(devDir);
-
-            final String path = FileUtil.getCanonicalPath(devDir);
-
-            // Redirect the temp dir for dev.
-
-            StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, path, StroomProperties.Source.USER_CONF);
-            // Also set the temp dir as a system property as EclipseDevMode
-            // starts a new JVM and will forget this property otherwise.
-            System.setProperty(StroomProperties.STROOM_TEMP, path);
-
-            LOGGER.info("Using temp dir '" + path + "'");
-
-            forgetTempDir();
-
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public static void setTempDir(final Path tempDir) {
+        FileUtil.tempDir = tempDir;
     }
+
+    //    public static void useDevTempDir() {
+//        try {
+//            final Path tempDir = getTempDir();
+//
+//            final Path devDir = tempDir.resolve("dev");
+//            Files.createDirectories(devDir);
+//
+//            final String path = FileUtil.getCanonicalPath(devDir);
+//
+//            // Redirect the temp dir for dev.
+//
+//            StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, path, StroomProperties.Source.USER_CONF);
+//            // Also set the temp dir as a system property as EclipseDevMode
+//            // starts a new JVM and will forget this property otherwise.
+//            System.setProperty(StroomProperties.STROOM_TEMP, path);
+//
+//            LOGGER.info("Using temp dir '" + path + "'");
+//
+//            forgetTempDir();
+//
+//        } catch (final IOException e) {
+//            throw new UncheckedIOException(e);
+//        }
+//    }
 
     public static void forgetTempDir() {
         synchronized (FileUtil.class) {

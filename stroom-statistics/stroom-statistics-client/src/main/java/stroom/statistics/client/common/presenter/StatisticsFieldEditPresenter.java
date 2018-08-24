@@ -21,8 +21,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.UiConfig;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -41,14 +41,14 @@ public class StatisticsFieldEditPresenter
 
     @Inject
     public StatisticsFieldEditPresenter(final EventBus eventBus, final StatisticsFieldEditView view,
-                                        final ClientPropertyCache clientPropertyCache) {
+                                        final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
 
         final StatisticsFieldEditPresenter thisPresenter = this;
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    String fieldNamePattern = result.get(ClientProperties.NAME_PATTERN);
+                    String fieldNamePattern = result.getNamePattern();
 
                     if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
                         fieldNamePattern = DEFAULT_NAME_PATTERN_VALUE;

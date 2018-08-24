@@ -38,7 +38,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
-import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
@@ -82,9 +81,9 @@ public class TestEventSearch extends AbstractSearchTest {
 
     private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount, final List<String> componentIds,
                       final boolean extractValues) {
-        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
-        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
-        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        // ADDED THIS SECTION TO TEST GUICE VALUE INJECTION.
+//        StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);

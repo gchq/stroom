@@ -3,18 +3,17 @@ package stroom.data.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
-import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.MetaDataSource;
 
 import javax.inject.Inject;
 
@@ -26,7 +25,7 @@ class TestDataMetaServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test

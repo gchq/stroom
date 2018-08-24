@@ -19,7 +19,7 @@ package stroom.pipeline.task;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.data.store.tools.StoreCreationTool;
+import stroom.test.StoreCreationTool;
 import stroom.node.NodeCache;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;

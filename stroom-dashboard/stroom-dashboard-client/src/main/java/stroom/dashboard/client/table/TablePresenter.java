@@ -68,8 +68,8 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
@@ -148,7 +148,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final ClientDispatchAsync dispatcher,
-                          final ClientPropertyCache clientPropertyCache,
+                          final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
                           final Provider<IFramePresenter> iFramePresenterProvider,
                           final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
@@ -180,8 +180,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE);
-                    final String value = result.get(ClientProperties.DEFAULT_MAX_RESULTS);
+                    // TODO : @66 fix table link URLs
+//                    namedUrls = result.getLookupTable(UiConfig.URL_LIST, UiConfig.URL_BASE);
+                    final String value = result.getDefaultMaxResults();
                     if (value != null) {
                         final String[] parts = value.split(",");
                         final int[] arr = new int[parts.length];

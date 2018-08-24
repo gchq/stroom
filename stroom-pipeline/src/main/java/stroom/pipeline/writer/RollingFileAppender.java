@@ -106,15 +106,15 @@ public class RollingFileAppender extends AbstractRollingAppender {
             if (key == null) {
                 dir = getRandomOutputPath();
                 dir = pathCreator.replaceContextVars(dir);
-                dir = PathCreator.replaceSystemProperties(dir);
+                dir = pathCreator.replaceSystemProperties(dir);
 
                 fileName = fileNamePattern;
                 fileName = pathCreator.replaceContextVars(fileName);
-                fileName = PathCreator.replaceSystemProperties(fileName);
+                fileName = pathCreator.replaceSystemProperties(fileName);
 
                 rolledFileName = rolledFileNamePattern;
                 rolledFileName = pathCreator.replaceContextVars(rolledFileName);
-                rolledFileName = PathCreator.replaceSystemProperties(rolledFileName);
+                rolledFileName = pathCreator.replaceSystemProperties(rolledFileName);
 
                 key = dir + '/' + fileName;
             }

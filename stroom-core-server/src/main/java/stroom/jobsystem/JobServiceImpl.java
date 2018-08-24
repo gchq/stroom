@@ -26,11 +26,12 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.FieldMap;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomStartup;
@@ -55,9 +56,10 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
                    final Security security,
+                   final UiConfig uiConfig,
                    final StroomBeanStore stroomBeanStore,
                    final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
-        super(entityManager, security);
+        super(entityManager, security, uiConfig);
         this.stroomBeanStore = stroomBeanStore;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }

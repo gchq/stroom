@@ -20,7 +20,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.data.store.api.StreamStore;
-import stroom.data.store.tools.StoreCreationTool;
+import stroom.test.StoreCreationTool;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 

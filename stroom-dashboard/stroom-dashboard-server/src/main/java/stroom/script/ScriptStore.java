@@ -17,7 +17,7 @@
 
 package stroom.script;
 
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 

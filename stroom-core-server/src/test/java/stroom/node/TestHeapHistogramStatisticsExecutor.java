@@ -29,11 +29,8 @@ public class TestHeapHistogramStatisticsExecutor {
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
 
-    @Mock
-    private HeapHistogramConfig heapHistogramConfig;
-
-    private HeapHistogramService heapHistogramService;
     private HeapHistogramStatisticsExecutor executor;
+    private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
 
     @Before
     public void setup() {
@@ -43,10 +40,7 @@ public class TestHeapHistogramStatisticsExecutor {
             final Node node1a = Node.create(rack1, "1a");
             final NodeCache nodeCache = new NodeCache(node1a);
 
-            Mockito.when(heapHistogramConfig.getClassNameMatchRegex()).thenReturn("^stroom\\..*$");
-            Mockito.when(heapHistogramConfig.getExecutable()).thenReturn("jmap");
-
-            heapHistogramService = new HeapHistogramService(heapHistogramConfig);
+            final HeapHistogramService heapHistogramService = new HeapHistogramService(heapHistogramConfig);
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeCache);
         } catch (final RuntimeException e) {
             throw new RuntimeException("Error during test setup", e);
@@ -94,8 +88,9 @@ public class TestHeapHistogramStatisticsExecutor {
 
         //Given
         //no regex so should get all classes back
-        Mockito.when(heapHistogramConfig.getClassNameMatchRegex()).thenReturn("");
-//        mockPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
+        heapHistogramConfig.setClassNameMatchRegex("");
+
+//        mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
 
 //        Mockito.when(statisticsFactory.instance())
 //                .thenReturn(statistics);
@@ -129,8 +124,7 @@ public class TestHeapHistogramStatisticsExecutor {
     @StroomExpectedException(exception = {RuntimeException.class, IOException.class})
     public void testExecBadExecutable() {
         //Given
-        Mockito.when(heapHistogramConfig.getExecutable()).thenReturn("badNameForJmapExecutable");
-//        mockPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
+        heapHistogramConfig.setjMapExecutable("badNameForJmapExecutable");
 
         //When
         boolean thrownException = false;

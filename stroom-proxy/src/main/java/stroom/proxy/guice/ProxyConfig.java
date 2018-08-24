@@ -8,6 +8,9 @@ import stroom.proxy.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ProxyConfig {
     private String proxyConfigDir;
     private ProxyRequestConfig proxyRequestConfig;
@@ -80,5 +83,9 @@ public class ProxyConfig {
     @JsonProperty
     public String getProxyConfigDir() {
         return proxyConfigDir;
+    }
+
+    public void setProxyConfigDir(final String proxyConfigDir) {
+        this.proxyConfigDir = proxyConfigDir;
     }
 }

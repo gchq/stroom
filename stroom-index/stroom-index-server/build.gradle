@@ -3,12 +3,11 @@ ext.moduleName = 'stroom.index.server'
 dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-docstore:stroom-docstore-shared')
-    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-index:stroom-index-shared')
     compile project(':stroom-pipeline')
     compile project(':stroom-security:stroom-security-api')
@@ -24,10 +23,9 @@ dependencies {
     compile libs.hibernate_jpa_api
     compile libs.eventLogging
     compile libs.guava
+    compile libs.guice4
     compile libs.javax_inject
-
     compile libs.jaxb_api
-
     compile libs.lucene_analyzers_common
     compile libs.lucene_core
     compile libs.lucene_queryparser
@@ -35,7 +33,6 @@ dependencies {
     compile libs.xml_apis
     compile libs.swagger_annotations
     compile libs.ws_rs_api
-    compile libs.guice4
 
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks

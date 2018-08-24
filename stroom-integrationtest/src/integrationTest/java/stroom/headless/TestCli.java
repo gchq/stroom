@@ -19,7 +19,6 @@ package stroom.headless;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.test.ComparisonHelper;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.zip.ZipUtil;
 
@@ -36,7 +35,6 @@ public class TestCli {
 
     @Test
     public void test() throws IOException {
-        try {
 //            Path newTempDir = FileUtil.getTempDir().resolve("headless");
 //            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 //
@@ -45,32 +43,32 @@ public class TestCli {
 //                FileUtils.deleteDirectory(newTempDir.toFile());
 //            }
 
-            final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
-            final Path testPath = base.resolve("TestHeadless");
-            final Path outputPath = testPath.resolve("output");
-            FileUtil.deleteDir(outputPath);
-            Files.createDirectories(outputPath);
+        final Path base = StroomHeadlessTestFileUtil.getTestResourcesDir();
+        final Path testPath = base.resolve("TestHeadless");
+        final Path outputPath = testPath.resolve("output");
+        FileUtil.deleteDir(outputPath);
+        Files.createDirectories(outputPath);
 
-            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(outputPath), StroomProperties.Source.TEST);
+//            StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(outputPath), StroomProperties.Source.TEST);
 
-            final Path contentDirPath = testPath.resolve("content");
-            final Path inputDirPath = testPath.resolve("input");
+        final Path contentDirPath = testPath.resolve("content");
+        final Path inputDirPath = testPath.resolve("input");
 
-            Files.createDirectories(contentDirPath);
-            Files.createDirectories(inputDirPath);
+        Files.createDirectories(contentDirPath);
+        Files.createDirectories(inputDirPath);
 
 //            final Path samplesPath = base.resolve("../../../../stroom-core-server/src/test/resources/samples").toAbsolutePath().normalize();
-            final Path errorFilePath = outputPath.resolve("error.log");
-            final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
+        final Path errorFilePath = outputPath.resolve("error.log");
+        final Path expectedOutputFilePath = testPath.resolve("expectedOutput");
 
-            // Create input zip file
-            final Path inputSourcePath = testPath.resolve("input_source");
-            Files.createDirectories(inputSourcePath);
-            final Path inputFilePath = inputDirPath.resolve("001.zip");
-            Files.deleteIfExists(inputFilePath);
-            ZipUtil.zip(inputFilePath, inputSourcePath);
+        // Create input zip file
+        final Path inputSourcePath = testPath.resolve("input_source");
+        Files.createDirectories(inputSourcePath);
+        final Path inputFilePath = inputDirPath.resolve("001.zip");
+        Files.deleteIfExists(inputFilePath);
+        ZipUtil.zip(inputFilePath, inputSourcePath);
 
-            final Path outputFilePath = outputPath.resolve("output.log");
+        final Path outputFilePath = outputPath.resolve("output.log");
 
 //            // Create config zip file
 //            final Path contentPacks = tmpPath.resolve("contentPacks");
@@ -101,32 +99,28 @@ public class TestCli {
 //            Files.deleteIfExists(configFilePath);
 //            ZipUtil.zip(configFilePath, rawConfigPath);
 
-            final Cli cli = new Cli();
+        final Cli cli = new Cli();
 
 //            cli.setConfig(FileUtil.getCanonicalPath(configFilePath));
-            cli.setContent(FileUtil.getCanonicalPath(contentDirPath));
-            cli.setInput(FileUtil.getCanonicalPath(inputDirPath));
-            cli.setError(FileUtil.getCanonicalPath(errorFilePath));
-            cli.setTmp(FileUtil.getCanonicalPath(outputPath));
-            cli.run();
+        cli.setContent(FileUtil.getCanonicalPath(contentDirPath));
+        cli.setInput(FileUtil.getCanonicalPath(inputDirPath));
+        cli.setError(FileUtil.getCanonicalPath(errorFilePath));
+        cli.setTmp(FileUtil.getCanonicalPath(outputPath));
+        cli.run();
 
-            final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
-            final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
-            final List<String> errorLines = Files.readAllLines(errorFilePath, Charset.defaultCharset());
+        final List<String> expectedLines = Files.readAllLines(expectedOutputFilePath, Charset.defaultCharset());
+        final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
+        final List<String> errorLines = Files.readAllLines(errorFilePath, Charset.defaultCharset());
 
-            // same number of lines output as expected
-            Assert.assertEquals(expectedLines.size(), outputLines.size());
-            Assert.assertEquals(0, errorLines.size());
+        // same number of lines output as expected
+        Assert.assertEquals(expectedLines.size(), outputLines.size());
+        Assert.assertEquals(0, errorLines.size());
 
-            // make sure all lines are present in both
-            Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
+        // make sure all lines are present in both
+        Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
 
-            // content should exactly match expected file
-            ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
-
-        } finally {
-            StroomProperties.removeOverrides();
-        }
+        // content should exactly match expected file
+        ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
     }
 
 //    private void importXmlSchemas(final Path path) {

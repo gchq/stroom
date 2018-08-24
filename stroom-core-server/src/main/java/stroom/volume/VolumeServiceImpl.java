@@ -44,7 +44,6 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
@@ -136,13 +135,12 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
             synchronized (this) {
                 if (!initialised) {
                     security.insecure(() -> {
-                        boolean isEnabled = volumeConfig.isCreateOnStartup();
+                        boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
 
                         if (isEnabled) {
                             List<VolumeEntity> existingVolumes = getCurrentState();
                             if (existingVolumes.size() == 0) {
-                                Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
-
+                                final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
                                 if (optDefaultVolumePath.isPresent()) {
                                     Node node = nodeCache.getDefaultNode();
                                     Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
@@ -156,7 +154,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                                 LOGGER.info("Existing volumes exist, won't create default volumes");
                             }
                         } else {
-                            LOGGER.info("Creation of default volumes is currently disabled by property: " + VolumeConfig.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+                            LOGGER.info("Creation of default volumes is currently disabled");
                         }
 
                         initialised = true;
@@ -614,18 +612,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private Optional<Path> getDefaultVolumesPath() {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
-                this::getUserHomeDir,
+                () -> Optional.of(FileUtil.getTempDir()),
                 Optional::empty)
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
                 .findFirst()
                 .map(Optional::get)
                 .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
-    }
-
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
     }
 
     private Optional<Path> getApplicationJarDir() {

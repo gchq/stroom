@@ -30,7 +30,6 @@ import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.properties.api.PropertyService;
 import stroom.search.SearchException;
 import stroom.task.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -51,19 +50,19 @@ public class IndexShardSearchTaskHandler {
 
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardService indexShardService;
-    private final PropertyService propertyService;
+    private final IndexShardSearchConfig shardConfig;
     private final ExecutorProvider executorProvider;
     private final TaskContext taskContext;
 
     @Inject
     IndexShardSearchTaskHandler(final IndexShardWriterCache indexShardWriterCache,
                                 final IndexShardService indexShardService,
-                                final PropertyService propertyService,
+                                final IndexShardSearchConfig shardConfig,
                                 final ExecutorProvider executorProvider,
                                 final TaskContext taskContext) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardService = indexShardService;
-        this.propertyService = propertyService;
+        this.shardConfig = shardConfig;
         this.executorProvider = executorProvider;
         this.taskContext = taskContext;
     }
@@ -132,7 +131,7 @@ public class IndexShardSearchTaskHandler {
 
         // If there is an error building the query then it will be null here.
         if (query != null) {
-            final int maxDocIdQueueSize = getIntProperty("stroom.search.shard.maxDocIdQueueSize", 1000);
+            final int maxDocIdQueueSize = shardConfig.getMaxDocIdQueueSize();
             LOGGER.debug(() -> "Creating docIdStore with size " + maxDocIdQueueSize);
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
@@ -241,19 +240,19 @@ public class IndexShardSearchTaskHandler {
         }
     }
 
-    private int getIntProperty(final String propertyName, final int defaultValue) {
-        int value = defaultValue;
-
-        final String string = propertyService.getProperty(propertyName);
-        if (string != null && string.length() > 0) {
-            try {
-                value = Integer.parseInt(string);
-            } catch (final NumberFormatException e) {
-                LOGGER.error(() -> "Unable to parse property '" + propertyName + "' value '" + string
-                        + "', using default of '" + defaultValue + "' instead", e);
-            }
-        }
-
-        return value;
-    }
+//    private int getIntProperty(final String propertyName, final int defaultValue) {
+//        int value = defaultValue;
+//
+//        final String string = propertyService.getProperty(propertyName);
+//        if (string != null && string.length() > 0) {
+//            try {
+//                value = Integer.parseInt(string);
+//            } catch (final NumberFormatException e) {
+//                LOGGER.error(() -> "Unable to parse property '" + propertyName + "' value '" + string
+//                        + "', using default of '" + defaultValue + "' instead", e);
+//            }
+//        }
+//
+//        return value;
+//    }
 }

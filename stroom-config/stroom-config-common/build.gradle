@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.config.common'
+
+dependencies {
+    compile libs.jackson_annotations
+}

@@ -20,27 +20,28 @@ import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.UserRef;
+import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
-import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchUserAndPermissionsAction.class)
 class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
-    private static final String PREVENT_LOGIN_PROPERTY = "stroom.maintenance.preventLogin";
-
     private final Security security;
     private final SecurityContext securityContext;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
+    private final SecurityConfig securityConfig;
 
     @Inject
     FetchUserAndPermissionsHandler(final Security security,
                                    final SecurityContext securityContext,
-                                   final UserAndPermissionsHelper userAndPermissionsHelper) {
+                                   final UserAndPermissionsHelper userAndPermissionsHelper,
+                                   final SecurityConfig securityConfig) {
         this.security = security;
         this.securityContext = securityContext;
         this.userAndPermissionsHelper = userAndPermissionsHelper;
+        this.securityConfig = securityConfig;
     }
 
     @Override
@@ -51,7 +52,7 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
                 return null;
             }
 
-            final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
+            final boolean preventLogin = securityConfig.isPreventLogin();
             if (preventLogin) {
                 security.asUser(UserTokenUtil.create(userRef.getName(), null), () -> {
                     if (!securityContext.isAdmin()) {

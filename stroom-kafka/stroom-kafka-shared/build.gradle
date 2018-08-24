@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.kafka.shared'
+
+dependencies {
+    compile project(':stroom-docstore:stroom-docstore-shared')
+}

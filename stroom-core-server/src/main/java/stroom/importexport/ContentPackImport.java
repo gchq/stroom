@@ -18,7 +18,6 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.StroomStartup;
 
@@ -30,11 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {
@@ -63,7 +62,7 @@ public class ContentPackImport {
         if (isEnabled) {
             doImport();
         } else {
-            LOGGER.info("Content pack import currently disabled via property: {}", ContentPackImportConfig.AUTO_IMPORT_ENABLED_PROP_KEY);
+            LOGGER.info("Content pack import currently disabled via property");
         }
     }
 
@@ -143,18 +142,12 @@ public class ContentPackImport {
     }
 
     private List<Path> getContentPackBaseDirs() {
-        return Arrays.asList(getApplicationJarDir(), getUserHomeDir()).stream()
+        return Stream.of(getApplicationJarDir(), Optional.of(FileUtil.getTempDir()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
                 .collect(Collectors.toList());
     }
-
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
-    }
-
 
     private Optional<Path> getApplicationJarDir() {
         try {

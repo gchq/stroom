@@ -83,8 +83,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
     private static class FetchJsonFunction extends StroomExtensionFunctionDefinition<FetchJson> {
         @Inject
         FetchJsonFunction(final Provider<FetchJson> functionCallProvider) {
-            super("fetch-json", 2, 2, new SequenceType[]{
-                    SequenceType.SINGLE_STRING,
+            super("fetch-json", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.NODE_SEQUENCE, functionCallProvider);
         }

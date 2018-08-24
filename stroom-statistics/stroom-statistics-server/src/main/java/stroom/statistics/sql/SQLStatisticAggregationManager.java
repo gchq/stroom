@@ -18,16 +18,13 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.jobsystem.ClusterLockService;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.PropertyService;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -38,7 +35,6 @@ public class SQLStatisticAggregationManager {
      * The number of records to add to the aggregate from the aggregate source
      * table on each pass
      */
-    public static final int DEFAULT_BATCH_SIZE = 1000000;
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationManager.class);
     /**
      * The cluster lock to acquire to prevent other nodes from concurrently
@@ -49,31 +45,17 @@ public class SQLStatisticAggregationManager {
     private final ClusterLockService clusterLockService;
     private final SQLStatisticAggregationTransactionHelper helper;
     private final TaskContext taskContext;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
     private int batchSize;
 
     @Inject
     SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
                                    final SQLStatisticAggregationTransactionHelper helper,
                                    final TaskContext taskContext,
-                                   final StroomDatabaseInfo stroomDatabaseInfo,
-                                   final PropertyService propertyService) {
+                                   final SQLStatisticsConfig sqlStatisticsConfig) {
         this.clusterLockService = clusterLockService;
         this.helper = helper;
         this.taskContext = taskContext;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
-
-        Integer batchSize = DEFAULT_BATCH_SIZE;
-        try {
-            batchSize = ModelStringUtil.parseNumberStringAsInt(propertyService.getProperty("stroom.statistics.sql.statisticAggregationBatchSize"));
-            if (batchSize == null || batchSize == 0) {
-                batchSize = DEFAULT_BATCH_SIZE;
-            }
-        } catch (final RuntimeException e) {
-
-        }
-
-        this.batchSize = batchSize;
+        this.batchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
     }
 
     @StroomSimpleCronSchedule(cron = "5,15,25,35,45,55 * *")
@@ -102,52 +84,50 @@ public class SQLStatisticAggregationManager {
      * Step 3 - Remove duplicates using temporary table<br/>
      */
     public void aggregate(final long timeNow) {
-        if (stroomDatabaseInfo.isMysql()) {
-            guard.lock();
+        guard.lock();
+        try {
+            LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}",
+                    DateUtil.createNormalDateTimeString(timeNow));
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
+            // TODO delete any rows in SQL_STAT_VAL that have a data older
+            // than
+            // (now minus maxProcessingAge) rounded
+            // to the most coarse precision. Needs to be done first so we
+            // don't
+            // have to aggregate any old data
             try {
-                LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}",
-                        DateUtil.createNormalDateTimeString(timeNow));
-                final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                helper.deleteOldStats(timeNow, taskContext);
 
-                // TODO delete any rows in SQL_STAT_VAL that have a data older
-                // than
-                // (now minus maxProcessingAge) rounded
-                // to the most coarse precision. Needs to be done first so we
-                // don't
-                // have to aggregate any old data
-                try {
-                    helper.deleteOldStats(timeNow, taskContext);
+                long processedCount;
+                int iteration = 0;
+                // Process batches of records until we have processed one
+                // that
+                // was not a full batch
+                do {
+                    processedCount = helper.aggregateConfigStage1(taskContext, "Iteration: " + ++iteration + "",
+                            batchSize, timeNow);
 
-                    long processedCount = 0;
-                    int iteration = 0;
-                    // Process batches of records until we have processed one
-                    // that
-                    // was not a full batch
-                    do {
-                        processedCount = helper.aggregateConfigStage1(taskContext, "Iteration: " + ++iteration + "",
-                                batchSize, timeNow);
+                } while (processedCount == batchSize && !Thread.currentThread().isInterrupted());
 
-                    } while (processedCount == batchSize && !Thread.currentThread().isInterrupted());
-
-                    if (!Thread.currentThread().isInterrupted()) {
-                        helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
-                    }
-
-                } catch (final SQLException ex) {
-                    throw EntityServiceExceptionUtil.create(ex);
-                } finally {
-                    LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
-                            DateUtil.createNormalDateTimeString(timeNow));
+                if (!Thread.currentThread().isInterrupted()) {
+                    helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
                 }
-            } catch (final RuntimeException e) {
-                throw EntityServiceExceptionUtil.create(e);
+
+            } catch (final SQLException ex) {
+                throw EntityServiceExceptionUtil.create(ex);
             } finally {
-                guard.unlock();
+                LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
+                        DateUtil.createNormalDateTimeString(timeNow));
             }
+        } catch (final RuntimeException e) {
+            throw EntityServiceExceptionUtil.create(e);
+        } finally {
+            guard.unlock();
         }
     }
 
-    public void setBatchSize(final int batchSize) {
+    void setBatchSize(final int batchSize) {
         this.batchSize = batchSize;
     }
 }

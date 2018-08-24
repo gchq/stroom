@@ -16,16 +16,14 @@
 
 package stroom.pipeline.writer;
 
-import stroom.properties.api.PropertyProvider;
-
 import java.util.Set;
 
 final class SystemPropertyUtil {
     private static final SystemPropertyProvider SYSTEM_PROPERTY_PROVIDER = new SystemPropertyProvider();
 
-    static String replaceProperty(final String string, final PropertyProvider provider) {
-        return replaceProperty(string, provider, null);
-    }
+//    static String replaceProperty(final String string, final PropertyProvider provider) {
+//        return replaceProperty(string, provider, null);
+//    }
 
     static String replaceProperty(String string, final PropertyProvider provider,
                                   final Set<String> ignore) {
@@ -74,5 +72,9 @@ final class SystemPropertyUtil {
             }
             return prop;
         }
+    }
+
+    interface PropertyProvider {
+        String getProperty(String name);
     }
 }

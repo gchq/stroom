@@ -46,22 +46,21 @@ import stroom.dashboard.shared.SearchRequest;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.CreateProcessorAction;
@@ -81,7 +80,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -89,10 +87,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         implements QueryUiHandlers, HasDirtyHandlers, Queryable {
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
-    public static final int TEN_SECONDS = 10000;
-
-    private static final long DEFAULT_TIME_LIMIT = 30L;
-    private static final long DEFAULT_RECORD_LIMIT = 1000000L;
+    static final int TEN_SECONDS = 10000;
 
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
@@ -119,8 +114,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private QueryComponentSettings queryComponentSettings;
     private String currentWarnings;
     private ButtonView processButton;
-    private long defaultProcessorTimeLimit = DEFAULT_TIME_LIMIT;
-    private long defaultProcessorRecordLimit = DEFAULT_RECORD_LIMIT;
+    private long defaultProcessorTimeLimit;
+    private long defaultProcessorRecordLimit;
     private boolean initialised;
     private Timer autoRefreshTimer;
     private String lastUsedQueryInfo;
@@ -139,7 +134,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final MenuListPresenter menuListPresenter,
                           final ClientDispatchAsync dispatcher,
                           final ClientSecurityContext securityContext,
-                          final ClientPropertyCache clientPropertyCache,
+                          final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
                           final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
@@ -189,9 +184,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    defaultProcessorTimeLimit = result.getLong(ClientProperties.PROCESS_TIME_LIMIT, DEFAULT_TIME_LIMIT);
-                    defaultProcessorRecordLimit = result.getLong(ClientProperties.PROCESS_RECORD_LIMIT,
-                            DEFAULT_RECORD_LIMIT);
+                    defaultProcessorTimeLimit = result.getProcessConfig().getDefaultTimeLimit();
+                    defaultProcessorRecordLimit = result.getProcessConfig().getDefaultRecordLimit();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
@@ -312,7 +306,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 }
             }
         }
-        Collections.sort(fields, Comparator.comparing(DataSourceField::getName));
+        fields.sort(Comparator.comparing(DataSourceField::getName));
         expressionPresenter.init(dispatcher, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();
@@ -542,7 +536,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private QueryComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof QueryComponentSettings)) {
+        if (!(settings instanceof QueryComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }
@@ -619,13 +613,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, () -> addTerm()));
+        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, this::addTerm));
         menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
-                true, () -> addOperator()));
+                true, this::addOperator));
         menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
-                null, hasSelection, () -> disable()));
+                null, hasSelection, this::disable));
         menuItems.add(new IconMenuItem(4, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
-                hasSelection, () -> delete()));
+                hasSelection, this::delete));
 
         return menuItems;
     }

@@ -50,7 +50,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.UserTokenUtil;
+import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -549,7 +549,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void copyStream(final Data stream, final OutputStream outputStream) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
-        StreamUtil.streamToStream(streamSource.getInputStream(), outputStream, false);
+        StreamUtil.streamToStream(streamSource.getInputStream(), outputStream);
         streamStore.closeStreamSource(streamSource);
     }
 

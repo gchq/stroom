@@ -155,6 +155,7 @@ ext.libs = [
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson",
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core:$versions.jackson",
         jackson_databind               : "com.fasterxml.jackson.core:jackson-databind:$versions.jackson", //was 2.8.5, now 2.8.6
+        jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$versions.jackson", //was 2.8.5, now 2.8.6
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist:3.18.1-GA",
         javax_activation               : "javax.activation:javax.activation-api:1.2.0",

@@ -29,17 +29,15 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.PropertyService;
 import stroom.refdata.store.AbstractRefDataStore;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataProcessingInfo;
 import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreConfig;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.refdata.store.offheapstore.lmdb.LmdbDb;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.store.offheapstore.databases.MapUidReverseDb;
@@ -47,6 +45,8 @@ import stroom.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreMetaDb;
+import stroom.refdata.store.offheapstore.lmdb.LmdbDb;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.ByteBufferUtils;
@@ -83,9 +83,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
-    public static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.purgeAge";
-    private static final String DATA_RETENTION_AGE_DEFAULT_VALUE = "30d";
-
     public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private final Path dbDir;
@@ -105,7 +102,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
 
-    private final PropertyService stroomPropertyService;
+    private final RefDataStoreConfig refDataStoreConfig;
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
     // For synchronising access to the data belonging to a MapDefinition
@@ -132,7 +129,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final PropertyService stroomPropertyService) {
+            final RefDataStoreConfig refDataStoreConfig) {
 
         this.dbDir = dbDir;
         this.maxSize = maxSize;
@@ -186,7 +183,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
 
-        this.stroomPropertyService = stroomPropertyService;
+        this.refDataStoreConfig = refDataStoreConfig;
         this.byteBufferPool = byteBufferPool;
 
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
@@ -755,7 +752,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private String getDataRetentionAgeString() {
-        return stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE);
+        return refDataStoreConfig.getPurgeAge();
     }
 
     private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowMs) {

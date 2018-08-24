@@ -18,7 +18,7 @@
 package stroom.resources.document.v1;
 
 import com.codahale.metrics.annotation.Timed;
-import stroom.document.DocumentStore;
+import stroom.docstore.DocumentStore;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;

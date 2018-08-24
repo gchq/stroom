@@ -17,9 +17,9 @@
 package stroom.search;
 
 import org.junit.Assert;
+import stroom.docref.DocRef;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -35,7 +35,6 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
@@ -101,15 +100,15 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-        StroomProperties.setOverrideProperty(
-                "stroom.search.shard.concurrentTasks",
-                Integer.toString(maxShardTasks),
-                StroomProperties.Source.TEST);
-
-        StroomProperties.setOverrideProperty(
-                "stroom.search.extraction.concurrentTasks",
-                Integer.toString(maxExtractionTasks),
-                StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//                "stroom.search.shard.concurrentTasks",
+//                Integer.toString(maxShardTasks),
+//                StroomProperties.Source.TEST);
+//
+//        StroomProperties.setOverrideProperty(
+//                "stroom.search.extraction.concurrentTasks",
+//                Integer.toString(maxExtractionTasks),
+//                StroomProperties.Source.TEST);
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);

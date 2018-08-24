@@ -1,33 +1,39 @@
 package stroom.benchmark;
 
-import stroom.properties.api.PropertyService;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class BenchmarkClusterConfig {
-    private final int streamCount;
-    private final int recordCount;
-    private final int concurrentWriters;
+    private int streamCount = 1000;
+    private int recordCount = 10000;
+    private int concurrentWriters = 10;
 
-    BenchmarkClusterConfig(final PropertyService propertyService) {
-        this.streamCount = propertyService.getIntProperty("stroom.benchmark.streamCount", 0);
-        this.recordCount = propertyService.getIntProperty("stroom.benchmark.recordCount", 0);
-        this.concurrentWriters = propertyService.getIntProperty("stroom.benchmark.concurrentWriters", 0);
-    }
-
-    BenchmarkClusterConfig() {
-        this.streamCount = 0;
-        this.recordCount = 0;
-        this.concurrentWriters = 0;
-    }
-
-    int getStreamCount() {
+    @JsonPropertyDescription("Set the number of streams to be created during a benchmark test")
+    public int getStreamCount() {
         return streamCount;
     }
 
-    int getRecordCount() {
+    public void setStreamCount(final int streamCount) {
+        this.streamCount = streamCount;
+    }
+
+    @JsonPropertyDescription("Set the number of records to be created for each stream during a benchmark test")
+    public int getRecordCount() {
         return recordCount;
     }
 
-    int getConcurrentWriters() {
+    public void setRecordCount(final int recordCount) {
+        this.recordCount = recordCount;
+    }
+
+    @JsonPropertyDescription("Set the number of threads to use concurrently to write test streams")
+    public int getConcurrentWriters() {
         return concurrentWriters;
+    }
+
+    public void setConcurrentWriters(final int concurrentWriters) {
+        this.concurrentWriters = concurrentWriters;
     }
 }

@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.guice.StroomBeanStore;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.security.Security;
 import stroom.data.store.api.StreamSource;

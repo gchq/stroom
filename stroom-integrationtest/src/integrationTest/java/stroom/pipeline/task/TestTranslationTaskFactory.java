@@ -31,7 +31,7 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
-import stroom.data.store.tools.StoreCreationTool;
+import stroom.test.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;

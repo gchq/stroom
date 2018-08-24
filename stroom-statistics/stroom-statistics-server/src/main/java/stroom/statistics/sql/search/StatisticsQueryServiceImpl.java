@@ -33,7 +33,6 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsQueryServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
-    private static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
     public static final long PROCESS_PAYLOAD_INTERVAL_SECS = 1L;
 
     private final StatisticsDataSourceProvider statisticsDataSourceProvider;

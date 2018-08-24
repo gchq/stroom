@@ -29,13 +29,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.properties.api.PropertyService;
-import stroom.properties.impl.mock.MockPropertyService;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataProcessingInfo;
 import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreConfig;
 import stroom.refdata.store.RefDataStoreModule;
 import stroom.refdata.store.RefDataStoreProvider;
 import stroom.refdata.store.RefDataValue;
@@ -74,30 +73,29 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRefDataOnHeapStore {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
 
-    public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
-    public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
+    private static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
+    private static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
 
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    private final PropertyService mockPropertyService = new MockPropertyService();
+    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
 
     @Inject
     private RefDataStoreProvider refDataStoreProvider;
     private RefDataStore refDataStore;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(PropertyService.class).toInstance(mockPropertyService);
+                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
                         install(new RefDataStoreModule());
                     }
                 });
@@ -155,7 +153,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doOverwrite_keyValueStore() throws Exception {
+    public void testOverwrite_doOverwrite_keyValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -166,7 +164,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doOverwrite_rangeValueStore() throws Exception {
+    public void testOverwrite_doOverwrite_rangeValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -177,7 +175,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite_keyValueStore() throws Exception {
+    public void testOverwrite_doNotOverwrite_keyValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -188,7 +186,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite_rangeValueStore() throws Exception {
+    public void testOverwrite_doNotOverwrite_rangeValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -201,7 +199,7 @@ public class TestRefDataOnHeapStore {
     private void doKeyValueOverwriteTest(final boolean overwriteExisting,
                                          final StringValue value1,
                                          final StringValue value2,
-                                         final StringValue expectedFinalValue) throws Exception {
+                                         final StringValue expectedFinalValue) {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         long effectiveTimeMs = System.currentTimeMillis();
@@ -232,7 +230,7 @@ public class TestRefDataOnHeapStore {
     private void doKeyRangeValueOverwriteTest(final boolean overwriteExisting,
                                               final StringValue value1,
                                               final StringValue value2,
-                                              final StringValue expectedFinalValue) throws Exception {
+                                              final StringValue expectedFinalValue) {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         long effectiveTimeMs = System.currentTimeMillis();
@@ -265,7 +263,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_noOverwriteBigCommitInterval() throws Exception {
+    public void loader_noOverwriteBigCommitInterval() {
         boolean overwriteExisting = false;
         int commitInterval = Integer.MAX_VALUE;
 
@@ -273,7 +271,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_noOverwriteSmallCommitInterval() throws Exception {
+    public void loader_noOverwriteSmallCommitInterval() {
         boolean overwriteExisting = false;
         int commitInterval = 2;
 
@@ -281,7 +279,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_noOverwriteWithDuplicateData() throws Exception {
+    public void loader_noOverwriteWithDuplicateData() {
         int commitInterval = Integer.MAX_VALUE;
 
         RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -294,7 +292,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_overwriteWithDuplicateData() throws Exception {
+    public void loader_overwriteWithDuplicateData() {
         int commitInterval = Integer.MAX_VALUE;
 
         RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();

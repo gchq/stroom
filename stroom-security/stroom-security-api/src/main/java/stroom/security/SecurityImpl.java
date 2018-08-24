@@ -1,6 +1,7 @@
 package stroom.security;
 
 import stroom.security.shared.PermissionException;
+import stroom.security.util.UserTokenUtil;
 
 import java.util.function.Supplier;
 

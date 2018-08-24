@@ -26,8 +26,8 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import stroom.widget.tab.client.presenter.Layer;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.LayerContainer;
 
 import java.util.HashSet;
 import java.util.Iterator;

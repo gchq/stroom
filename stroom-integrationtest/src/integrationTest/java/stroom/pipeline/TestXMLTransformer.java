@@ -18,7 +18,8 @@ package stroom.pipeline;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.docref.DocRef;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -33,7 +34,6 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
-import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -176,9 +176,6 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
                 final Path tempDir = getCurrentTestDir();
-
-                // Make sure the config dir is set.
-                System.setProperty("stroom.temp", FileUtil.getCanonicalPath(tempDir));
 
                 // Delete any output file.
                 final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");

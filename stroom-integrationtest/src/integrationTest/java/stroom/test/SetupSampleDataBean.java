@@ -20,10 +20,12 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.impl.db.MetaKeyService;
+import stroom.data.store.api.StreamStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.util.ConnectionUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -35,15 +37,13 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
+import stroom.persist.ConnectionProvider;
 import stroom.pipeline.PipelineStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
-import stroom.data.store.api.StreamStore;
-import stroom.data.meta.impl.db.MetaKeyService;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.util.io.FileUtil;
@@ -101,6 +101,7 @@ public final class SetupSampleDataBean {
     private final IndexVolumeService indexVolumeService;
     private final StatisticStoreStore statisticStoreStore;
     private final StroomStatsStoreStore stroomStatsStoreStore;
+    private final ConnectionProvider connectionProvider;
 
     @Inject
     SetupSampleDataBean(final FeedStore feedStore,
@@ -116,7 +117,8 @@ public final class SetupSampleDataBean {
                         final IndexStore indexStore,
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
-                        final StroomStatsStoreStore stroomStatsStoreStore) {
+                        final StroomStatsStoreStore stroomStatsStoreStore,
+                        final ConnectionProvider connectionProvider) {
         this.feedStore = feedStore;
         this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
@@ -131,6 +133,7 @@ public final class SetupSampleDataBean {
         this.indexVolumeService = indexVolumeService;
         this.statisticStoreStore = statisticStoreStore;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
+        this.connectionProvider = connectionProvider;
     }
 
 //    private void createStreamAttributes() {
@@ -269,7 +272,7 @@ public final class SetupSampleDataBean {
             }
         }
 
-        try (final Connection connection = ConnectionUtil.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             new V6_0_0_21__Dictionary().migrate(connection);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage());

@@ -27,17 +27,19 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.datafeed.DataFeedConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.docstore.memory.MemoryPersistence;
 import stroom.entity.shared.Range;
+import stroom.feed.FeedNameValidator;
 import stroom.feed.FeedStore;
 import stroom.feed.FeedStoreImpl;
 import stroom.feed.shared.FeedDoc;
-import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineStoreImpl;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.refdata.store.AbstractRefDataOffHeapStoreTest;
@@ -82,7 +84,8 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
 
     private final SecurityContext securityContext = new MockSecurityContext();
     private final Persistence persistence = new MemoryPersistence();
-    private final FeedStore feedStore = new FeedStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
+    private final FeedNameValidator feedNameValidator = new FeedNameValidator(new DataFeedConfig());
+    private final FeedStore feedStore = new FeedStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence, feedNameValidator);
     private final PipelineStore pipelineStore = new PipelineStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
 
     @Mock

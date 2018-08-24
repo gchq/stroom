@@ -1,7 +1,7 @@
 package stroom.resource;
 
 import io.swagger.annotations.Api;
-import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;

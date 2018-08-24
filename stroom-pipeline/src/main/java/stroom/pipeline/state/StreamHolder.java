@@ -19,7 +19,7 @@ package stroom.pipeline.state;
 import stroom.data.meta.api.Data;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.io.StreamCloser;
 
 import javax.inject.Inject;

@@ -18,7 +18,7 @@ package stroom.task;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.guice.PipelineScopeModule;
+import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandler;
 import stroom.task.cluster.ClusterTaskModule;

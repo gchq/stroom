@@ -1,14 +1,23 @@
 package stroom.proxy.repo;
 
-import stroom.util.config.StroomProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class ProxyRepositoryDBConfig implements ProxyRepositoryConfig {
+    private String dir = "${stroom.temp}/stroom-proxy";
+    private String format = "#{'$'}{pathId}/#{'$'}{id}";
+    private String rollCron = "";
+
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
+    @JsonPropertyDescription("The stroom proxy dir to write data to from a pipeline")
     @Override
-    public String getRepoDir() {
-        return StroomProperties.getProperty("stroom.proxy.store.dir");
+    public String getDir() {
+        return dir;
+    }
+
+    public void setDir(final String dir) {
+        this.dir = dir;
     }
 
     /**
@@ -24,17 +33,26 @@ public class ProxyRepositoryDBConfig implements ProxyRepositoryConfig {
      * Replacement variables that cannot be resolved will be output as '_'.
      * Please ensure that all templates include the '${id}' replacement variable at the start of the file name, failure to do this will result in an invalid repository.
      */
+    @JsonPropertyDescription("The format to use for the stroom proxy store")
     @Override
-    public String getRepositoryFormat() {
-        return StroomProperties.getProperty("stroom.proxy.store.format", false);
+    public String getFormat() {
+        return format;
     }
 
+    public void setFormat(final String format) {
+        this.format = format;
+    }
 
     /**
      * Interval to roll any writing repositories.
      */
+    @JsonPropertyDescription("How often should the stroom proxy store be rolled")
     @Override
     public String getRollCron() {
-        return StroomProperties.getProperty("stroom.proxy.store.rollCron");
+        return rollCron;
+    }
+
+    public void setRollCron(final String rollCron) {
+        this.rollCron = rollCron;
     }
 }

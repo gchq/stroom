@@ -19,23 +19,22 @@ package stroom.policy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.store.DataRetentionAgeUtil;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.Period;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.jobsystem.ClusterLockService;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.data.store.DataRetentionAgeUtil;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 
@@ -74,29 +73,28 @@ public class DataRetentionExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
-    private static final String STREAM_DELETE_BATCH_SIZE_PROPERTY = "stroom.stream.deleteBatchSize";
 
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
-    private final PropertyService propertyService;
     private final DictionaryStore dictionaryStore;
     private final DataSource dataSource;
+    private final PolicyConfig policyConfig;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
     DataRetentionExecutor(final TaskContext taskContext,
                           final ClusterLockService clusterLockService,
                           final DataRetentionService dataRetentionService,
-                          final PropertyService propertyService,
                           final DictionaryStore dictionaryStore,
-                          final DataSource dataSource) {
+                          final DataSource dataSource,
+                          final PolicyConfig policyConfig) {
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
         this.dataRetentionService = dataRetentionService;
-        this.propertyService = propertyService;
         this.dictionaryStore = dictionaryStore;
         this.dataSource = dataSource;
+        this.policyConfig = policyConfig;
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
@@ -130,7 +128,7 @@ public class DataRetentionExecutor {
             final List<DataRetentionRule> rules = dataRetentionPolicy.getRules();
             if (rules != null && rules.size() > 0) {
                 // Figure out what the batch size will be for deletion.
-                final int batchSize = propertyService.getIntProperty(STREAM_DELETE_BATCH_SIZE_PROPERTY, 1000);
+                final int batchSize = policyConfig.getDeleteBatchSize();
 
                 // Calculate the data retention ages for all enabled rules.
                 final LocalDateTime now = LocalDateTime.now();
@@ -220,23 +218,7 @@ public class DataRetentionExecutor {
         if (activeRules.getActiveRules().size() > 0) {
 
 
-
-
-
             // TODO : @66 FIX DATA RETENTION SO THAT EXPRESSIONS ARE PROPERLY EVALUATED AGAINST THE DATA META SERVICE.
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //            // Create an object that can find streams with prepared statements and see if they match rules.

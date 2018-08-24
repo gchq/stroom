@@ -238,7 +238,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                 AttributeMapUtil.read(sourceStream, false, segmentAttributeMap);
             }
             try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
-                AttributeMapUtil.write(segmentAttributeMap, outputStream, false);
+                AttributeMapUtil.write(segmentAttributeMap, outputStream);
             }
         }
         if (StroomZipFileType.Context.equals(stroomZipFileType)) {

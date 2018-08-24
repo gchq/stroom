@@ -36,7 +36,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory {
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig == null || Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig == null || Strings.isNullOrEmpty(proxyRepositoryConfig.getDir())) {
             add(handlers);
         }
         return handlers;
@@ -44,7 +44,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory {
 
     @Override
     public List<StreamHandler> addSendHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig != null && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig != null && !Strings.isNullOrEmpty(proxyRepositoryConfig.getDir())) {
             add(handlers);
         }
         return handlers;

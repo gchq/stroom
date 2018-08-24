@@ -1,8 +1,8 @@
 package stroom.statistics.stroomstats.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.kafka.AbstractKafkaProducerFilter;
-import stroom.kafka.StroomKafkaProducerFactoryService;
+import stroom.kafka.pipeline.AbstractKafkaProducerFilter;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -11,9 +11,8 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.properties.api.PropertyService;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
-import stroom.statistics.stroomstats.kafka.TopicNameFactory;
+import stroom.statistics.stroomstats.internal.HBaseStatisticsConfig;
 import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.util.shared.Severity;
 
@@ -28,8 +27,7 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.STROOM_STATS)
 class StroomStatsFilter extends AbstractKafkaProducerFilter {
-
-    private final TopicNameFactory topicNameFactory;
+    private final HBaseStatisticsConfig hBaseStatisticsConfig;
     private final StroomStatsStoreStore stroomStatsStoreStore;
 
     private String topic;
@@ -39,12 +37,11 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
     @Inject
     StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                       final LocationFactoryProxy locationFactory,
-                      final PropertyService propertyService,
-                      final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                      final TopicNameFactory topicNameFactory,
+                      final KafkaProducerFactory kafkaProducerFactory,
+                      final HBaseStatisticsConfig hBaseStatisticsConfig,
                       final StroomStatsStoreStore stroomStatsStoreStore) {
-        super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
-        this.topicNameFactory = topicNameFactory;
+        super(errorReceiverProxy, locationFactory, kafkaProducerFactory);
+        this.hBaseStatisticsConfig = hBaseStatisticsConfig;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
 
     }
@@ -79,7 +76,15 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
             throw new LoggedException(msg);
         }
 
-        topic = topicNameFactory.getTopic(stroomStatsStoreEntity.getStatisticType());
+        switch (stroomStatsStoreEntity.getStatisticType()) {
+            case COUNT:
+                topic = hBaseStatisticsConfig.getKafkaTopicsConfig().getCount();
+                break;
+            case VALUE:
+                topic = hBaseStatisticsConfig.getKafkaTopicsConfig().getValue();
+                break;
+        }
+
         recordKey = stroomStatsStoreEntity.getUuid();
 
         super.startProcessing();

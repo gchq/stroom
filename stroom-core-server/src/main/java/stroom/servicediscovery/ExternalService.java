@@ -1,16 +1,13 @@
 package stroom.servicediscovery;
 
 import com.google.common.base.Preconditions;
-import io.vavr.Tuple2;
 import org.apache.curator.x.discovery.ProviderStrategy;
 import org.apache.curator.x.discovery.strategies.RandomStrategy;
 import org.apache.curator.x.discovery.strategies.StickyStrategy;
-import stroom.util.config.StroomProperties;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Stream;
 
 /**
  * The canonical list of external services.
@@ -57,20 +54,22 @@ public enum ExternalService {
     public static Optional<ExternalService> getExternalService(final String docRefType) {
         Preconditions.checkNotNull(docRefType);
 
-        //lazy population of the map
-        ExternalService requestedExternalService = docRefTypeToServiceMap.computeIfAbsent(docRefType, k ->
-                Stream.of(ExternalService.values())
-                        .map(externalService -> {
-                            String type = StroomProperties.getProperty(
-                                    PROP_KEY_PREFIX + externalService.getServiceKey() + DOC_REF_TYPE_SUFFIX);
-                            return new Tuple2<>(externalService, type);
-                        })
-                        .filter(tuple2 -> tuple2._2().equals(docRefType))
-                        .map(Tuple2::_1)
-                        .findFirst()
-                        .orElse(null)
-        );
-        return Optional.ofNullable(requestedExternalService);
+//        //lazy population of the map
+//        ExternalService requestedExternalService = docRefTypeToServiceMap.computeIfAbsent(docRefType, k ->
+//                Stream.of(ExternalService.values())
+//                        .map(externalService -> {
+//                            String type = StroomProperties.getProperty(
+//                                    PROP_KEY_PREFIX + externalService.getServiceKey() + DOC_REF_TYPE_SUFFIX);
+//                            return new Tuple2<>(externalService, type);
+//                        })
+//                        .filter(tuple2 -> tuple2._2().equals(docRefType))
+//                        .map(Tuple2::_1)
+//                        .findFirst()
+//                        .orElse(null)
+//        );
+//        return Optional.ofNullable(requestedExternalService);
+
+        return Optional.empty();
     }
 
     /**
@@ -78,13 +77,17 @@ public enum ExternalService {
      */
     public String getBaseServiceName() {
         String propKey = PROP_KEY_PREFIX + serviceKey + NAME_SUFFIX;
-        return Preconditions.checkNotNull(StroomProperties.getProperty(propKey),
-                "Property %s does not have a value but should", propKey);
+//        return Preconditions.checkNotNull(StroomProperties.getProperty(propKey),
+//                "Property %s does not have a value but should", propKey);
+
+        return null;
     }
 
     public int getVersion() {
         String propKey = PROP_KEY_PREFIX + serviceKey + VERSION_SUFFIX;
-        return StroomProperties.getIntProperty(propKey, 1);
+//        return StroomProperties.getIntProperty(propKey, 1);
+
+        return 0;
     }
 
     public String getVersionedServiceName() {

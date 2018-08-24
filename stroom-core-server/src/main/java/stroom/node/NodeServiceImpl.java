@@ -23,9 +23,9 @@ import stroom.entity.StroomEntityManager;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.properties.api.PropertyService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,8 +42,9 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     @Inject
     NodeServiceImpl(final StroomEntityManager entityManager,
                     final Security security,
+                    final UiConfig uiConfig,
                     final NodeServiceTransactionHelper nodeServiceUtil) {
-        super(entityManager, security);
+        super(entityManager, security, uiConfig);
         this.nodeServiceUtil = nodeServiceUtil;
     }
 

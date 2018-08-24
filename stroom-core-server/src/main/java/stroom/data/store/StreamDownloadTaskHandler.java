@@ -24,6 +24,7 @@ import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
+import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.AttributeMapUtil;
 import stroom.proxy.repo.StroomFileNameUtil;
@@ -40,7 +41,6 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
-import stroom.datafeed.BufferFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -207,8 +207,10 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
                     // Write out the manifest
                     if (part == 1 || part == -1) {
-                        AttributeMapUtil.write(dataSource.getAttributes(), stroomZipOutputStream
-                                .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName()), true);
+                        try (final OutputStream outputStream = stroomZipOutputStream
+                                .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName())) {
+                            AttributeMapUtil.write(dataSource.getAttributes(), outputStream);
+                        }
                     }
 
                     // False here as the loop does the next next next

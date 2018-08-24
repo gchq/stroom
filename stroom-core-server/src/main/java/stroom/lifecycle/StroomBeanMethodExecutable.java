@@ -18,7 +18,6 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.guice.StroomBeanStore;
 import stroom.task.shared.Task;
 import stroom.util.lifecycle.MethodReference;
 

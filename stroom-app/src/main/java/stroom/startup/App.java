@@ -210,7 +210,9 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
-        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RefDataStore.class);
+        GuiceUtil.addHealthCheck(
+                environment.healthChecks(),
+                injector.getInstance(RefDataStoreProvider.class).getOffHeapStore());
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");

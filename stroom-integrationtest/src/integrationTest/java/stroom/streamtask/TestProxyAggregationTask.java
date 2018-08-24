@@ -235,7 +235,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
             Assert.assertTrue("Expecting bad zip file to still be there",
                     Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad")));
-            Assert.assertFalse("Expecting task to just send the one file and leave the bad one", Files.isRegularFile(testFile2));
+            Assert.assertFalse("Expecting task to just write the one file and leave the bad one", Files.isRegularFile(testFile2));
         }
     }
 

@@ -102,7 +102,7 @@ public final class ZipUtil {
         InputStream is = null;
         try {
             is = new BufferedInputStream(Files.newInputStream(file));
-            StreamUtil.streamToStream(is, zipOutputStream, false);
+            StreamUtil.streamToStream(is, zipOutputStream);
         } finally {
             CloseableUtil.close(is);
         }
@@ -126,7 +126,7 @@ public final class ZipUtil {
 
                         // Write file.
                         try (final OutputStream outputStream = Files.newOutputStream(file)) {
-                            StreamUtil.streamToStream(zip, outputStream, false);
+                            StreamUtil.streamToStream(zip, outputStream);
                         }
                     }
                 } finally {

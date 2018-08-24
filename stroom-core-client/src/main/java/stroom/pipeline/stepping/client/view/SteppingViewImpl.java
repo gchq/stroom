@@ -28,7 +28,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
-import stroom.widget.tab.client.presenter.LayerContainer;
+import com.gwtplatform.mvp.client.LayerContainer;
 
 public class SteppingViewImpl extends ViewImpl implements SteppingView, RequiresResize, ProvidesResize {
     private final Widget widget;
