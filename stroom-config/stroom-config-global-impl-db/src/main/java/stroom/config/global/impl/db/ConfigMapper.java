@@ -82,15 +82,15 @@ public class ConfigMapper {
 
                         // Create global property.
                         final String defaultValue = getDefaultValue(v.getObject(), v.getGetter());
-                        final ConfigProperty globalProperty = new ConfigProperty();
-                        globalProperty.setSource("Code");
-                        globalProperty.setName(fullPath);
-                        globalProperty.setDefaultValue(defaultValue);
-                        globalProperty.setValue(defaultValue);
-                        globalProperty.setDescription(specifiedDescription);
-                        globalProperty.setEditable(true);
-                        globalProperty.setPassword(fullPath.toLowerCase().contains("pass"));
-                        globalProperties.add(globalProperty);
+                        final ConfigProperty configProperty = new ConfigProperty();
+                        configProperty.setSource("Code");
+                        configProperty.setName(fullPath);
+                        configProperty.setDefaultValue(defaultValue);
+                        configProperty.setValue(defaultValue);
+                        configProperty.setDescription(specifiedDescription);
+                        configProperty.setEditable(true);
+                        configProperty.setPassword(fullPath.toLowerCase().contains("pass"));
+                        globalProperties.add(configProperty);
 
                     } else {
                         addMethods(value, fullPath);

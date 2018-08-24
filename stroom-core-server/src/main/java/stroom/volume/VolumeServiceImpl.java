@@ -77,7 +77,6 @@ import java.util.stream.Stream;
 public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
 
-    static final String USER_CONF_DIR = ".stroom";
     static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
     static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
     static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
@@ -613,18 +612,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private Optional<Path> getDefaultVolumesPath() {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
-                this::getUserHomeDir,
+                () -> Optional.of(FileUtil.getTempDir()),
                 Optional::empty)
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
                 .findFirst()
                 .map(Optional::get)
                 .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
-    }
-
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, USER_CONF_DIR)));
     }
 
     private Optional<Path> getApplicationJarDir() {

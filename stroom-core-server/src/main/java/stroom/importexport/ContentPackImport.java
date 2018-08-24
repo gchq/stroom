@@ -29,15 +29,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {
-    static final String USER_CONF_DIR = ".stroom";
     static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
@@ -143,18 +142,12 @@ public class ContentPackImport {
     }
 
     private List<Path> getContentPackBaseDirs() {
-        return Arrays.asList(getApplicationJarDir(), getUserHomeDir()).stream()
+        return Stream.of(getApplicationJarDir())
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
                 .collect(Collectors.toList());
     }
-
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, USER_CONF_DIR)));
-    }
-
 
     private Optional<Path> getApplicationJarDir() {
         try {

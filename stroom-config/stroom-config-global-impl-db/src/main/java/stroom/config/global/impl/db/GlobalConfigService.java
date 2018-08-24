@@ -24,7 +24,7 @@ import java.util.List;
 public interface GlobalConfigService {
     List<ConfigProperty> list();
 
-    ConfigProperty load(ConfigProperty globalProperty);
+    ConfigProperty load(ConfigProperty configProperty);
 
-    ConfigProperty save(ConfigProperty globalProperty);
+    ConfigProperty save(ConfigProperty configProperty);
 }

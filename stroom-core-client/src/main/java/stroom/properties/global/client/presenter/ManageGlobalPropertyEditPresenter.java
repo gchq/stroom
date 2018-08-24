@@ -38,7 +38,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
-    private ConfigProperty globalProperty;
+    private ConfigProperty configProperty;
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
@@ -56,8 +56,8 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         return securityContext;
     }
 
-    void showEntity(final ConfigProperty globalProperty, final PopupUiHandlers popupUiHandlers) {
-        final String caption = getEntityDisplayType() + " - " + globalProperty.getName();
+    void showEntity(final ConfigProperty configProperty, final PopupUiHandlers popupUiHandlers) {
+        final String caption = getEntityDisplayType() + " - " + configProperty.getName();
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -79,9 +79,9 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
 
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
-        if (globalProperty.getId() != null) {
+        if (configProperty.getId() != null) {
             // Reload it so we always have the latest version
-            final LoadGlobalConfigAction action = new LoadGlobalConfigAction(globalProperty);
+            final LoadGlobalConfigAction action = new LoadGlobalConfigAction(configProperty);
             dispatcher.exec(action).onSuccess(result -> {
                 setEntity(result);
                 read();
@@ -89,8 +89,8 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
                         getPopupSize(), caption, internalPopupUiHandlers);
             });
         } else {
-            // new globalProperty
-            setEntity(globalProperty);
+            // new configProperty
+            setEntity(configProperty);
             read();
             ShowPopupEvent.fire(ManageGlobalPropertyEditPresenter.this, ManageGlobalPropertyEditPresenter.this, popupType,
                     getPopupSize(), caption, internalPopupUiHandlers);
@@ -102,11 +102,11 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
     }
 
     private ConfigProperty getEntity() {
-        return globalProperty;
+        return configProperty;
     }
 
     private void setEntity(final ConfigProperty entity) {
-        this.globalProperty = entity;
+        this.configProperty = entity;
     }
 
     private String getEntityDisplayType() {
