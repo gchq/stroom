@@ -2,10 +2,21 @@ package stroom.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.cluster.impl.ClusterModule;
+import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigModule;
+import stroom.proxy.guice.ProxyConfig;
 
 public class AppModule extends AbstractModule {
+    private final AppConfig appConfig;
+
+    public AppModule(final AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
     @Override
     protected void configure() {
+        install(new AppConfigModule(appConfig));
+
         install(new CoreModule());
 
         install(new ClusterModule());

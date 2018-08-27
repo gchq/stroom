@@ -15,7 +15,7 @@ import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;
 import stroom.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
-import stroom.security.AuthenticationConfig;
+import stroom.security.SecurityConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 import stroom.servlet.ExportConfig;
 import stroom.statistics.StatisticsConfig;
@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig {
-    private AuthenticationConfig authenticationConfig;
+
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ContentPackImportConfig contentPackImportConfig;
@@ -48,13 +48,13 @@ public class AppConfig {
     private QueryHistoryConfig queryHistoryConfig;
     private RefDataStoreConfig refDataStoreConfig;
     private SearchConfig searchConfig;
+    private SecurityConfig securityConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
     private StatisticsConfig statisticsConfig;
     private UiConfig uiConfig;
     private VolumeConfig volumeConfig;
 
     public AppConfig() {
-        this.authenticationConfig = new AuthenticationConfig();
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
         this.contentPackImportConfig = new ContentPackImportConfig();
@@ -73,6 +73,7 @@ public class AppConfig {
         this.queryHistoryConfig = new QueryHistoryConfig();
         this.refDataStoreConfig = new RefDataStoreConfig();
         this.searchConfig = new SearchConfig();
+        this.securityConfig = new SecurityConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
         this.uiConfig = new UiConfig();
@@ -80,8 +81,7 @@ public class AppConfig {
     }
 
     @Inject
-    AppConfig(final AuthenticationConfig authenticationConfig,
-              final BenchmarkClusterConfig benchmarkClusterConfig,
+    AppConfig(final BenchmarkClusterConfig benchmarkClusterConfig,
               final ClusterConfig clusterConfig,
               final ContentPackImportConfig contentPackImportConfig,
               final CoreConfig coreConfig,
@@ -99,11 +99,11 @@ public class AppConfig {
               final QueryHistoryConfig queryHistoryConfig,
               final RefDataStoreConfig refDataStoreConfig,
               final SearchConfig searchConfig,
+              final SecurityConfig securityConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
               final UiConfig uiConfig,
               final VolumeConfig volumeConfig) {
-        this.authenticationConfig = authenticationConfig;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
         this.clusterConfig = clusterConfig;
         this.contentPackImportConfig = contentPackImportConfig;
@@ -122,19 +122,11 @@ public class AppConfig {
         this.queryHistoryConfig = queryHistoryConfig;
         this.refDataStoreConfig = refDataStoreConfig;
         this.searchConfig = searchConfig;
+        this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
         this.uiConfig = uiConfig;
         this.volumeConfig = volumeConfig;
-    }
-
-    @JsonProperty("authentication")
-    public AuthenticationConfig getAuthenticationConfig() {
-        return authenticationConfig;
-    }
-
-    public void setAuthenticationConfig(final AuthenticationConfig authenticationConfig) {
-        this.authenticationConfig = authenticationConfig;
     }
 
     @JsonProperty("benchmark")
@@ -300,6 +292,15 @@ public class AppConfig {
 
     public void setSearchConfig(final SearchConfig searchConfig) {
         this.searchConfig = searchConfig;
+    }
+
+    @JsonProperty("security")
+    public SecurityConfig getSecurityConfig() {
+        return securityConfig;
+    }
+
+    public void setSecurityConfig(final SecurityConfig securityConfig) {
+        this.securityConfig = securityConfig;
     }
 
     @JsonProperty("serviceDiscovery")

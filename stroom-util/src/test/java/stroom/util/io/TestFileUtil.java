@@ -16,7 +16,7 @@
 
 package stroom.util.io;
 
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,7 +57,7 @@ public class TestFileUtil extends StroomUnitTest {
         simpleExecutor.waitForComplete();
         simpleExecutor.stop(false);
 
-        Assert.assertEquals(false, exception.get());
+        Assert.assertFalse(exception.get());
 
         FileUtil.deleteDir(Paths.get(rootDir));
     }
@@ -67,7 +67,7 @@ public class TestFileUtil extends StroomUnitTest {
         stringBuilder.append(rootDir);
         for (int i = 0; i < 10; i++) {
             stringBuilder.append("/");
-            stringBuilder.append(RandomUtils.nextInt(10));
+            stringBuilder.append(RandomUtils.nextInt(0, 10));
         }
         final String dirToCreate = stringBuilder.toString();
         return dirToCreate;

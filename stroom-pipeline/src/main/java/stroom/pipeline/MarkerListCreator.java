@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;

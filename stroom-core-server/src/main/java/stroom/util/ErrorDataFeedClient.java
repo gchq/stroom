@@ -16,14 +16,13 @@
 
 package stroom.util;
 
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import stroom.util.io.StreamUtil;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -57,7 +56,7 @@ public final class ErrorDataFeedClient {
     private static byte[] buildDataBuffer(final int size) {
         final StringBuilder builder = new StringBuilder();
         while (builder.length() < size) {
-            builder.append(((short) (RandomUtils.nextInt(20))) + 'a');
+            builder.append(((short) (RandomUtils.nextInt(0, 20))) + 'a');
         }
         return builder.toString().getBytes(StreamUtil.DEFAULT_CHARSET);
 

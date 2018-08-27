@@ -1,16 +1,4 @@
 ---
-authentication:
-  jwt:
-    jwtIssuer: "stroom"
-    enableTokenRevocationCheck: true
-  security:
-    authenticationServiceUrl: null
-    authenticationRequired: true
-    apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
-    authServicesBaseUrl: "http://auth-service:8099"
-    jwtConfig: null
-    preventLogin: false
-    userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
 benchmark:
   streamCount: 1000
   recordCount: 10000
@@ -127,6 +115,13 @@ proxyAggregation:
 queryHistory:
   itemsRetention: 100
   daysRetention: 365
+refdata:
+  localDir: "${stroom.temp}/refDataOffHeapStore"
+  maxPutsBeforeCommit: 1000
+  maxReaders: 100
+  maxStoreSize: "50G"
+  purgeAge: "30d"
+  valueBufferCapacity: 1000
 search:
   maxStoredDataQueueSize: 1000
   maxBooleanClauseCount: 1024
@@ -138,6 +133,17 @@ search:
     maxDocIdQueueSize: 1000000
     maxThreads: 4
     maxThreadsPerTask: 2
+security:
+  authentication:
+    authenticationServiceUrl: null
+    authenticationRequired: true
+    apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
+    authServicesBaseUrl: "http://auth-service:8099"
+    preventLogin: false
+    userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
+    jwt:
+      jwtIssuer: "stroom"
+      enableTokenRevocationCheck: true
 serviceDiscovery:
   enabled: false
   zookeeperUrl: "localhost:2181"

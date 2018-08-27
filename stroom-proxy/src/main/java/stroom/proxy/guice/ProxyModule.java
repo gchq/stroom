@@ -3,21 +3,15 @@ package stroom.proxy.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import stroom.content.ContentSyncConfig;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
 import stroom.docstore.Persistence;
 import stroom.docstore.fs.FSPersistence;
-import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
-import stroom.proxy.handler.LogStreamConfig;
-import stroom.proxy.handler.ProxyRequestConfig;
 import stroom.proxy.handler.ProxyRequestHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
-import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
-import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 import stroom.ruleset.AttributeMapFilterFactoryImpl;
 import stroom.ruleset.RuleSetService;
 import stroom.ruleset.RuleSetServiceImpl;
@@ -34,12 +28,7 @@ public class ProxyModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ProxyRequestConfig.class).toProvider(proxyConfig::getProxyRequestConfig);
-        bind(LogStreamConfig.class).toProvider(proxyConfig::getLogStreamConfig);
-        bind(ForwardStreamConfig.class).toProvider(proxyConfig::getForwardStreamConfig);
-        bind(ProxyRepositoryConfig.class).toProvider(proxyConfig::getProxyRepositoryConfig);
-        bind(ProxyRepositoryReaderConfig.class).toProvider(proxyConfig::getProxyRepositoryReaderConfig);
-        bind(ContentSyncConfig.class).toProvider(proxyConfig::getContentSyncConfig);
+        install(new ProxyConfigModule(proxyConfig));
 
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);

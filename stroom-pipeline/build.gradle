@@ -17,6 +17,7 @@ dependencies {
 
     compile libs.commons_io
     compile libs.commons_lang
+    compile libs.commons_text
     compile libs.dropwizard_metrics_healthchecks
     compile libs.fast_infoset
     compile libs.google_findbugs

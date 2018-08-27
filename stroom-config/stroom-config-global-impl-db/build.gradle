@@ -10,6 +10,7 @@ dependencies {
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
 
+    compile libs.commons_text
     compile libs.flyway_core
     compile libs.guice4
     compile libs.hikari

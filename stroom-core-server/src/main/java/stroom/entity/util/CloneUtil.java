@@ -16,7 +16,7 @@
 
 package stroom.entity.util;
 
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.io.Serializable;
 

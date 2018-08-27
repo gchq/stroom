@@ -16,7 +16,7 @@
 
 package stroom.xml.converter.ds3;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import stroom.xml.converter.ds3.ref.VarMap;
 
 import java.util.Set;
