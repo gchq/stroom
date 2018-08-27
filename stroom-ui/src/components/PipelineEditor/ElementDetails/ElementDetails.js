@@ -71,14 +71,14 @@ const ElementDetails = ({
   ].properties.add.filter(property => property.element === selectedElementId);
 
   const title = (
-    <React.Fragment>
+    <div className="element-details__title">
       <Image
         size="small"
         src={require(`../images/${elementType.icon}`)}
         className="element-details__icon"
       />
-      {element.id}
-    </React.Fragment>
+      <div><strong>{element.id}</strong></div>
+    </div>
   );
 
   const content = (

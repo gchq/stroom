@@ -29,9 +29,9 @@ const HorizontalPanel = ({
   headerSize,
 }) => (
   <div className="horizontal-panel__container">
-    <Grid className="horizontal-panel_header-container">
+    <Grid className="horizontal-panel_header-container background-element">
       <Grid.Column width={titleColumns || 4} className="HorizontalPanel_title__container">
-        <strong>{title}</strong>
+        {title}
       </Grid.Column>
       <Grid.Column width={menuColumns || 12}>
         <Menu secondary>

@@ -39,8 +39,8 @@ $themes: (
     selected-color:#cae1f1,
     hover-color: #e8e8e8,
 
-    raised-element__background-color: #2185d0,
-    raised-element__border: #fff,
+    raised-element__background-color: #dceffd,
+    raised-element__border: 1px solid #fff,
   ),
   dark: (
     background__color: #282829,
@@ -87,6 +87,6 @@ $themes: (
 
     //NEW -- this is really great. Apply this more widely
     raised-element__background-color: #4d5250,
-    raised-element__border: #aaa,
+    raised-element__border: 1px solid #aaa,
   ),
 );

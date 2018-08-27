@@ -358,8 +358,18 @@ table {
   @include themify($themes) {
     background-color: themed('raised-element__background-color') !important;
     border: themed('raised-element__border') !important;
+    color: themed('text__color') !important;
   }
 }
+
+.raised-element--borderless {
+  @include themify($themes) {
+    background-color: themed('raised-element__background-color') !important;
+    border: 0px !important;
+    color: themed('text__color') !important;
+  }
+}
+
 
 .element-palette-category__title {
   @include themify($themes) {

@@ -12,8 +12,14 @@
   width: 100%;
 }
 
+.element-details__title {
+  display: inline-flex;
+}
+
 .element-details__icon {
-  height: 10px;
+  height: 20px !important;
+  width: 20px !important;
+  padding-right:5px;
 }
 
 .element-details__field {

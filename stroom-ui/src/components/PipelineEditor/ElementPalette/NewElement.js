@@ -41,7 +41,7 @@ const NewElement = ({
   hasFocus,
   setHasFocus,
 }) =>
-  connectDragSource(<div className={`element-palette-element raised-element ${hasFocus ? 'focus' : 'no-focus'}`}>
+  connectDragSource(<div className={`element-palette-element raised-element--borderless ${hasFocus ? 'focus' : 'no-focus'}`}>
     <div className="element-palette-element__button-contents">
       <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
       <button
