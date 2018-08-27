@@ -137,7 +137,7 @@ const FolderExplorer = ({
     key={i}
     trigger={
       <Button
-        className="action-bar__button"
+        className="icon-button"
         circular
         onClick={onClick}
         icon={icon}

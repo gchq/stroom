@@ -147,7 +147,8 @@ const RawPipelineEditor = ({
           <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={l => openDocRef(history, l)} />
         </Header.Subheader>
       </Header></Grid.Column>
-      <Grid.Column width={4}><SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
+      <Grid.Column width={4}>
+        <SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
         <CreateChildPipeline
           pipelineId={pipelineId}
           startInheritedPipeline={startInheritedPipeline}

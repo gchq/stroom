@@ -37,8 +37,8 @@ const HorizontalPanel = ({
         <Menu secondary>
           <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
             {headerMenuItems}
-            <Menu.Item className="horizontal-panel_close-button">
-              <Button icon="close" onClick={() => onClose()} />
+            <Menu.Item className="horizontal-panel_close-button ">
+              <Button className="icon-button" icon="close" onClick={() => onClose()} />
             </Menu.Item>
           </Menu.Menu>
         </Menu>

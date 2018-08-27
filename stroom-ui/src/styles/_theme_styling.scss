@@ -233,9 +233,7 @@ table {
 }
 
 
-
-
-.action-bar__button {
+.icon-button {
   @include themify($themes) {
     border: themed('icon-button__border') !important;
     background-color: themed('icon-button__background-color') !important;
@@ -243,12 +241,11 @@ table {
   }
 }
 
-.action-bar__button:hover {
+.icon-button:hover {
   @include themify($themes) {
     color: themed('icon-button__color--hover') !important;
   }
 }
-
 
 
 
