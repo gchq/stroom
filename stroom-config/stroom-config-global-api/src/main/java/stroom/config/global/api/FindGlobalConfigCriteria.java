@@ -16,25 +16,22 @@
 
 package stroom.config.global.api;
 
+import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.StringCriteria;
 
-public class FindGlobalConfigCriteria {
+public class FindGlobalConfigCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1451984883275627717L;
-    private boolean addDefault = true;
+
     private StringCriteria name = new StringCriteria();
+
+    public FindGlobalConfigCriteria() {
+        // Default constructor necessary for GWT serialisation.
+    }
 
     public static FindGlobalConfigCriteria create(final String name) {
         FindGlobalConfigCriteria criteria = new FindGlobalConfigCriteria();
         criteria.setName(new StringCriteria(name, null));
         return criteria;
-    }
-
-    public boolean isAddDefault() {
-        return addDefault;
-    }
-
-    public void setAddDefault(boolean addDefault) {
-        this.addDefault = addDefault;
     }
 
     public StringCriteria getName() {

@@ -24,25 +24,24 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.meta.api.DataRow;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.config.global.api.FetchGlobalConfigAction;
 import stroom.config.global.api.FindGlobalConfigCriteria;
 import stroom.config.global.api.ConfigProperty;
+import stroom.entity.shared.ResultList;
+import stroom.streamstore.client.presenter.FindStreamActionDataProvider;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
 public class ManageGlobalPropertyListPresenter
         extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
-    private final ClientDispatchAsync dispatcher;
-    private FindGlobalConfigCriteria criteria;
+    private final FetchGlobalConfigActionDataProvider dataProvider;
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true));
-
-        criteria = new FindGlobalConfigCriteria();
-        this.dispatcher = dispatcher;
 
         // Name.
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
@@ -86,10 +85,13 @@ public class ManageGlobalPropertyListPresenter
         getView().addEndColumn(new EndColumn<>());
 
 
+        this.dataProvider = new FetchGlobalConfigActionDataProvider(dispatcher, getView());
+        this.dataProvider.setCriteria(new FindGlobalConfigCriteria());
+
 //        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
 //                getView());
 //        dataProvider.setCriteria(criteria);
-        refresh();
+//        refresh();
     }
 
 //    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
@@ -110,10 +112,11 @@ public class ManageGlobalPropertyListPresenter
 
     @Override
     public void refresh() {
-        dispatcher.exec(new FetchGlobalConfigAction(criteria)).onSuccess(result -> {
-            getView().setRowData(0, result);
-            getView().setRowCount(result.size(), true);
-        });
+        dataProvider.refresh();
+//        dispatcher.exec(new FetchGlobalConfigAction(criteria)).onSuccess(result -> {
+//            getView().setRowData(0, result);
+//            getView().setRowCount(result.size(), true);
+//        });
     }
 
     public ConfigProperty getSelectedItem() {
@@ -124,12 +127,12 @@ public class ManageGlobalPropertyListPresenter
         getView().getSelectionModel().setSelected(row);
     }
 
-    public void setCriteria(final FindGlobalConfigCriteria criteria) {
-        this.criteria = criteria;
-        refresh();
-    }
-
+//    public void setCriteria(final FindGlobalConfigCriteria criteria) {
+//        this.criteria = criteria;
+//        refresh();
+//    }
+//
     FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
-        return criteria;
+        return dataProvider.getCriteria();
     }
 }
