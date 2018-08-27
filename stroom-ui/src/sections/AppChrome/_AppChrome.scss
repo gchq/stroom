@@ -9,12 +9,12 @@
   flex-direction: row;
   width: 100%;
   height: 100%;
-  position:absolute;
+  position: absolute;
 }
 
 .app-chrome__sidebar {
   height: inherit;
-  position:relative;
+  position: relative;
 }
 
 .app-chrome__sidebar-menu {
@@ -38,6 +38,10 @@
 
 .app-chrome__sidebar_header {
   position: absolute;
+}
+
+.sidebar__menu-item:focus {
+  border: solid thin blue;
 }
 
 .sidebar__menu-item.nav {
@@ -72,7 +76,7 @@
   color: red;
 }
 .app-chrome__content {
-  position:relative;
+  position: relative;
   width: 100%;
   height: 100%;
 }
@@ -85,8 +89,8 @@
 }
 
 .content-tabs__content {
-  position:absolute;
-  width:100%;
+  position: absolute;
+  width: 100%;
   display: flex;
   flex-flow: column;
   height: 100%;
@@ -97,7 +101,7 @@
 }
 
 .content-tabs__grid {
-  display:block !important;
+  display: block !important;
 }
 
 .app-chrome__content .ui.grid .column {

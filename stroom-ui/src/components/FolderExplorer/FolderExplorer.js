@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps, lifecycle, branch, renderComponent } from 'recompose';
+import { compose, withProps, branch, renderComponent } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 
 import ThemedPopup from 'components/ThemedPopup';
@@ -137,7 +137,7 @@ const FolderExplorer = ({
     key={i}
     trigger={
       <Button
-        className="action-bar__button"
+        className="icon-button"
         circular
         onClick={onClick}
         icon={icon}

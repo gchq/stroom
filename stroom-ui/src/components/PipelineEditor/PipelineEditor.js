@@ -147,7 +147,8 @@ const RawPipelineEditor = ({
           <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={l => openDocRef(history, l)} />
         </Header.Subheader>
       </Header></Grid.Column>
-      <Grid.Column width={4}><SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
+      <Grid.Column width={4}>
+        <SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
         <CreateChildPipeline
           pipelineId={pipelineId}
           startInheritedPipeline={startInheritedPipeline}
@@ -177,7 +178,7 @@ const RawPipelineEditor = ({
       >
         <div className="Pipeline-editor__topPanel">
           <LineContainer
-            className="Pipeline-editor__graph"
+            className="Pipeline-editor__graph background-element"
             lineContextId={`pipeline-lines-${pipelineId}`}
             lineElementCreators={lineElementCreators}
           >

@@ -1,11 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Popup } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
+import ThemedPopup from 'components/ThemedPopup';
 
 const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
-  <Popup
+  <ThemedPopup
     trigger={
       <Button
+        className="icon-button"
         floated="right"
         circular
         icon="cogs"
@@ -18,7 +20,7 @@ const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
 
 OpenPipelineSettings.propTypes = {
   pipelineId: PropTypes.string.isRequired,
-  pipelineSettingsOpened: PropTypes.func.isRequired
+  pipelineSettingsOpened: PropTypes.func.isRequired,
 };
 
 export default OpenPipelineSettings;

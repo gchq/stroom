@@ -1,11 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Popup } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
+import ThemedPopup from 'components/ThemedPopup';
 
 const CreateChildPipeline = ({ pipelineId, startInheritedPipeline }) => (
-  <Popup
+  <ThemedPopup
     trigger={
       <Button
+        className="icon-button"
         floated="right"
         circular
         icon="recycle"
@@ -18,7 +20,7 @@ const CreateChildPipeline = ({ pipelineId, startInheritedPipeline }) => (
 
 CreateChildPipeline.propTypes = {
   pipelineId: PropTypes.string.isRequired,
-  startInheritedPipeline: PropTypes.func.isRequired
+  startInheritedPipeline: PropTypes.func.isRequired,
 };
 
 export default CreateChildPipeline;

@@ -233,9 +233,7 @@ table {
 }
 
 
-
-
-.action-bar__button {
+.icon-button {
   @include themify($themes) {
     border: themed('icon-button__border') !important;
     background-color: themed('icon-button__background-color') !important;
@@ -243,12 +241,11 @@ table {
   }
 }
 
-.action-bar__button:hover {
+.icon-button:hover {
   @include themify($themes) {
     color: themed('icon-button__color--hover') !important;
   }
 }
-
 
 
 
@@ -346,3 +343,37 @@ table {
   }
 }
 
+
+
+.background-element {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+  }
+}
+
+.raised-element {
+  @include themify($themes) {
+    background-color: themed('raised-element__background-color') !important;
+    border: themed('raised-element__border') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.raised-element--borderless {
+  @include themify($themes) {
+    background-color: themed('raised-element__background-color') !important;
+    border: 0px !important;
+    color: themed('text__color') !important;
+  }
+}
+
+
+.element-palette-category__title {
+  @include themify($themes) {
+    color: themed('text__color') !important;
+  }
+}
+
+.element-palette-category__title .icon {
+  border: 0 !important;
+}

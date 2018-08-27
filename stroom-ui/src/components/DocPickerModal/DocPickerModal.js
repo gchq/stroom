@@ -19,13 +19,8 @@ import PropTypes from 'prop-types';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Popup, Grid, Header, Icon } from 'semantic-ui-react';
-
-import AppSearchBar from 'components/AppSearchBar';
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
-import DocRefListingEntry from 'components/DocRefListingEntry';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
@@ -37,7 +32,7 @@ const enhance = compose(
   withDocumentTree,
   connect(
     (
-      { folderExplorer: { documentTree }, docRefListing },
+      { folderExplorer: { documentTree }, selectableItemListings },
       {
         pickerId, onChange, setModalIsOpen, folderUuid, typeFilters,
       },
@@ -46,37 +41,30 @@ const enhance = compose(
         typeFilters.length > 0
           ? filterTree(documentTree, d => typeFilters.includes(d.type))
           : documentTree;
-      const folderUuidToUse = folderUuid || documentTree.uuid;
+      const folderUuidToUse = folderUuid || documentTreeToUse.uuid;
 
-      const thisDocRefListing = docRefListing[pickerId];
+      const selectableItemListing = selectableItemListings[pickerId];
       const currentFolderWithLineage = findItem(documentTreeToUse, folderUuidToUse);
 
       const onDocRefPickConfirmed = () => {
-        const result = findItem(documentTreeToUse, thisDocRefListing.selectedDocRefUuids[0]);
-        onChange(result.node);
+        onChange(selectableItemListing.selectedItems[0]);
         setModalIsOpen(false);
       };
 
       return {
         currentFolderWithLineage,
-        docRefListing: thisDocRefListing,
+        selectableItemListing,
         documentTree: documentTreeToUse,
         onDocRefPickConfirmed,
         selectionNotYetMade:
-          thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
+          selectableItemListing && selectableItemListing.selectedItems.length === 0,
       };
     },
     {},
   ),
 );
 
-const DocPickerModal = ({
-
-}) => {
-  return (
-    <div>I.O.U One DocRefModalPicker</div>
-  );
-};
+const DocPickerModal = () => <div>I.O.U One DocRefModalPicker</div>;
 
 const EnhancedDocPickerModal = enhance(DocPickerModal);
 

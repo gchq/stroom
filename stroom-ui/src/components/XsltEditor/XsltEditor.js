@@ -16,16 +16,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-// eslint-disable-next-line
-import brace from 'brace';
-import 'brace/mode/xml';
-import 'brace/theme/github';
-import 'brace/keybinding/vim';
-
 import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import AceEditor from 'react-ace';
 import { Loader, Header, Grid } from 'semantic-ui-react';
 
 import SaveXslt from './SaveXslt';
@@ -33,6 +26,7 @@ import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
 import { openDocRef } from 'sections/RecentItems';
+import ThemedAceEditor from 'components/ThemedAceEditor'
 
 import { actionCreators } from './redux';
 
@@ -82,12 +76,10 @@ const XsltEditor = ({
     </Grid>
     <div className="xslt-editor">
       <div className="xslt-editor__ace-container">
-        <AceEditor
+        <ThemedAceEditor
           style={{ width: '100%', height: '100%', minHeight: '25rem' }}
           name={`${xsltId}-ace-editor`}
           mode="xml"
-          theme="github"
-          keyboardHandler="vim"
           value={xslt.xsltData}
           onChange={(newValue) => {
             if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);

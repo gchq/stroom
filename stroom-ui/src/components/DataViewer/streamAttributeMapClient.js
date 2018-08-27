@@ -70,7 +70,7 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
 const cleanExpression = (expression) => {
   // UUIDs are not part of Expression
   delete expression.uuid;
-  expression.children.map((child) => {
+  expression.children.forEach((child) => {
     delete child.uuid;
   });
 

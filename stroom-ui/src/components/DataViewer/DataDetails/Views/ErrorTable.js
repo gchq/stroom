@@ -16,10 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { Loader, Icon, Popup } from 'semantic-ui-react';
-import { path, splitAt } from 'ramda';
+import {  Icon } from 'semantic-ui-react';
+import { splitAt } from 'ramda';
 
 // eslint-disable-next-line
 import brace from 'brace';
@@ -29,6 +27,8 @@ import 'brace/keybinding/vim';
 
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
+
+import ThemedPopup from 'components/ThemedPopup';
 
 const ErrorTable = ({ errors }) => {
   const tableColumns = [
@@ -47,7 +47,7 @@ const ErrorTable = ({ errors }) => {
         const position = 'right center';
         if (row.value === 'INFO') {
           return (
-            <Popup
+            <ThemedPopup
               trigger={<Icon color="blue" name="info circle" />}
               content={location}
               position={position}
@@ -55,7 +55,7 @@ const ErrorTable = ({ errors }) => {
           );
         } else if (row.value === 'WARNING') {
           return (
-            <Popup
+            <ThemedPopup
               trigger={<Icon color="orange" name="warning circle" />}
               content={location}
               position={position}
@@ -63,7 +63,7 @@ const ErrorTable = ({ errors }) => {
           );
         } else if (row.value === 'ERROR') {
           return (
-            <Popup
+            <ThemedPopup
               trigger={<Icon color="red" name="warning circle" />}
               content={location}
               position={position}
@@ -71,7 +71,7 @@ const ErrorTable = ({ errors }) => {
           );
         } else if (row.value === 'FATAL') {
           return (
-            <Popup
+            <ThemedPopup
               trigger={<Icon color="red" name="bomb" />}
               content={location}
               position={position}

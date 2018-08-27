@@ -1,11 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Popup } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
+import ThemedPopup from 'components/ThemedPopup';
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (
-  <Popup
+  <ThemedPopup
     trigger={
       <Button
+        className="icon-button"
         floated="right"
         circular
         icon="save"

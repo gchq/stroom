@@ -15,9 +15,8 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
-
-import ThemedAceEditor from 'components/ThemedAceEditor';
+import { compose, withProps } from 'recompose';
+import { connect } from 'react-redux';
 
 // eslint-disable-next-line
 import brace from 'brace';
@@ -26,22 +25,27 @@ import 'brace/theme/github';
 import 'brace/theme/ambiance';
 import 'brace/keybinding/vim';
 
-const EventView = ({ events }) => (
-  <div className="EventView__container">
-    <div className="EventView__aceEditor__container">
-      <ThemedAceEditor
-        className="EventView__aceEditor"
-        style={{ width: '100%', height: '100%' }}
-        mode="xml"
-        value={events}
-        readOnly
-      />
-    </div>
-  </div>
+import AceEditor from 'react-ace';
+
+const enhance = compose(
+  connect(
+    ({ userSettings: { theme } }) => ({
+      theme,
+    }),
+    {},
+  ),
+  withProps(({ theme }) => ({
+    aceEditorTheme: theme === 'theme-light' ? 'github' : 'ambiance',
+  })),
 );
 
-EventView.propTypes = {
-  events: PropTypes.string.isRequired,
-};
-
-export default EventView;
+/**
+ * This handles theme switching for the AceEditor. It also applies the vim keyboard handler,
+ * because we'll want that everywhere we use the AceEditor.
+ */
+const ThemedAceEditor = ({
+  aceEditorTheme, theme, header, content, actions, ...rest
+}) => (
+  <AceEditor theme={aceEditorTheme} keyboardHandler="vim" {...rest} />
+);
+export default enhance(ThemedAceEditor);

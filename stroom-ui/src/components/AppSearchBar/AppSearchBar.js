@@ -9,7 +9,7 @@ import { searchApp } from 'components/FolderExplorer/explorerClient';
 import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 import { DocRefListingEntry } from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
-import withSelectableItemListing, { actionCreators as selectableItemListingActionCreators } from 'lib/withSelectableItemListing';
+import withSelectableItemListing from 'lib/withSelectableItemListing';
 
 const {
   searchTermUpdated,

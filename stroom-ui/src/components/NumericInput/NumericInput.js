@@ -17,8 +17,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Input, Button, Icon, Popup } from 'semantic-ui-react';
+import { Input, Button, Icon } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
+
+import ThemedPopup from 'components/ThemedPopup';
 
 import './NumericInput.css';
 
@@ -66,7 +68,7 @@ const NumericInput = ({
     <div>
       <div className="row">
         <div className="input-row">
-          <Popup
+          <ThemedPopup
             trigger={
               <Input
                 error={valueIsBad}

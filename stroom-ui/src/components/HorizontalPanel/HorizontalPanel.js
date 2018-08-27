@@ -11,7 +11,7 @@ const enhance = compose(
       const { onClose } = this.props;
       Mousetrap.bind('esc', () => onClose());
     },
-    componentDidMount() {
+    componentWillUnmount() {
       Mousetrap.unbind('esc');
     },
   }),
@@ -29,16 +29,16 @@ const HorizontalPanel = ({
   headerSize,
 }) => (
   <div className="horizontal-panel__container">
-    <Grid className="horizontal-panel_header-container">
+    <Grid className="horizontal-panel_header-container background-element">
       <Grid.Column width={titleColumns || 4} className="HorizontalPanel_title__container">
-        <strong>{title}</strong>
+        {title}
       </Grid.Column>
       <Grid.Column width={menuColumns || 12}>
         <Menu secondary>
           <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
             {headerMenuItems}
-            <Menu.Item className="horizontal-panel_close-button">
-              <Button icon="close" onClick={() => onClose()} />
+            <Menu.Item className="horizontal-panel_close-button ">
+              <Button className="icon-button" icon="close" onClick={() => onClose()} />
             </Menu.Item>
           </Menu.Menu>
         </Menu>
