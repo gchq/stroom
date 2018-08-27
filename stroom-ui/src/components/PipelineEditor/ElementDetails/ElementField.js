@@ -4,9 +4,11 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Form, Popup, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
+import { Form, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
+
+import ThemedPopup from 'components/ThemedPopup';
 
 import DocPickerModal from 'components/DocPickerModal';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
@@ -385,7 +387,7 @@ const ElementField = ({
         <label>{description}</label>
         {field}
       </Form.Field>
-      <Popup
+      <ThemedPopup
         hoverable
         trigger={<Icon name="setting" color="blue" size="large" />}
         content={popOverContent}

@@ -1,9 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Popup } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
+
+import ThemedPopup from 'components/ThemedPopup';
 
 const SaveXslt = ({ xslt: { isSaving, isDirty }, saveXslt, xsltId }) => (
-  <Popup
+  <ThemedPopup
     trigger={
       <Button
         floated="right"

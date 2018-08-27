@@ -4,12 +4,13 @@ import {
   Container,
   Input,
   Button,
-  Popup,
   Grid,
   Message,
 } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
+
+import ThemedPopup from 'components/ThemedPopup';
 
 import {
   ExpressionBuilder,
@@ -78,7 +79,7 @@ const SearchBar = ({
       <Grid className="SearchBar__layoutGrid">
         <Grid.Row>
           <Grid.Column width={1}>
-            <Popup
+            <ThemedPopup
               trigger={
                 <Button
                   disabled={searchIsInvalid}
@@ -147,7 +148,7 @@ const SearchBar = ({
     <React.Fragment>
       <Grid className="SearchBar__layoutGrid">
         <Grid.Column width={1}>
-          <Popup
+          <ThemedPopup
             trigger={
               <Button
                 circular

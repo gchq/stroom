@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Popup, Grid, Header, Icon } from 'semantic-ui-react';
+import { Button, Modal, Input, Grid, Header, Icon } from 'semantic-ui-react';
 
 import AppSearchBar from 'components/AppSearchBar';
 import DocRefPropType from 'lib/DocRefPropType';
