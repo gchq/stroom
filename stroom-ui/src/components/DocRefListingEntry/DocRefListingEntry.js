@@ -29,8 +29,8 @@ const DocRefListingEntry = ({
   selectionToggled,
 }) => (
   <div
-    className={`doc-ref-listing__item ${className} ${
-      selectedItems.map(d => d.uuid).includes(docRef.uuid) ? 'doc-ref-listing__item--selected' : ''
+    className={`hoverable ${className} ${
+      selectedItems.map(d => d.uuid).includes(docRef.uuid) ? 'selected' : ''
     }`}
     onClick={(e) => {
       selectionToggled(listingId, index, keyIsDown);

@@ -214,74 +214,6 @@ table {
   }
 }
 
-.doc-ref-listing__item:hover {
-  @include themify($themes){
-    background-color: themed('hover-color') !important;
-  }
-}
-
-.doc-ref-listing__item--selected {
-  @include themify($themes) {
-    background-color: themed('selected-color') !important;
-  }
-}
-
-.doc-ref-listing__item--selected:hover {
-  @include themify($themes) {
-    background-color: themed('selected-color') !important;
-  }
-}
-
-
-.icon-button {
-  @include themify($themes) {
-    border: themed('icon-button__border') !important;
-    background-color: themed('icon-button__background-color') !important;
-    color: themed('icon-button__color')
-  }
-}
-
-.icon-button:hover {
-  @include themify($themes) {
-    color: themed('icon-button__color--hover') !important;
-  }
-}
-
-input {
-  @include themify($themes) {
-    background-color: themed('background__color') !important;
-    border: themed('border') !important;
-  }
-}
-
-.AppSearch__search-input input {
-  @include themify($themes) {
-    background-color: themed('dropdown__background-color') !important;
-    border: themed('dropdown__border') !important;
-  }
-}
-
-.AppSearch__search-input i {
-  @include themify($themes) {
-    color: themed('icon__color') !important;
-  }
-}
-
-.AppSearch__dropdown-item {
-  @include themify($themes) {
-    color: themed('text__color') !important;
-  }
-}
-
-.AppSearch__menu {
-  @include themify($themes) {
-    background-color: themed('dropdown__background-color') !important;
-    border: themed('dropdown__border') !important;
-  }
-}
-
-
-
 
 /////////////////////
 // Specific styles //
@@ -302,6 +234,12 @@ input {
 ////////////////////////
 // General-use styles //
 ////////////////////////
+
+input {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+  }
+}
 
 .form {
   label {
@@ -336,6 +274,18 @@ input {
   }
 }
 
+.selected {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
+  }
+}
+
+.selected:hover {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
+  }
+}
+
 .flat {
   @include themify($themes) {
     background-color: themed('background__color') !important;
@@ -365,5 +315,19 @@ input {
 .borderless {
   @include themify($themes) {
     border: 0 !important;
+  }
+}
+
+.icon-button {
+  @include themify($themes) {
+    border: themed('icon-button__border') !important;
+    background-color: themed('icon-button__background-color') !important;
+    color: themed('icon-button__color')
+  }
+}
+
+.icon-button:hover {
+  @include themify($themes) {
+    color: themed('icon-button__color--hover') !important;
   }
 }
