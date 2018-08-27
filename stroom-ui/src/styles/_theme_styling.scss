@@ -346,3 +346,27 @@ table {
   }
 }
 
+
+
+.background-element {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+  }
+}
+
+.raised-element {
+  @include themify($themes) {
+    background-color: themed('raised-element__background-color') !important;
+    border: themed('raised-element__border') !important;
+  }
+}
+
+.element-palette-category__title {
+  @include themify($themes) {
+    color: themed('text__color') !important;
+  }
+}
+
+.element-palette-category__title .icon {
+  border: 0 !important;
+}

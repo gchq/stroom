@@ -177,7 +177,7 @@ const RawPipelineEditor = ({
       >
         <div className="Pipeline-editor__topPanel">
           <LineContainer
-            className="Pipeline-editor__graph"
+            className="Pipeline-editor__graph background-element"
             lineContextId={`pipeline-lines-${pipelineId}`}
             lineElementCreators={lineElementCreators}
           >
