@@ -116,25 +116,69 @@
 
 
 
-// This is mostly about overriding SUI styles
+
+
+
+
+
+
+
+
+
+
+/////////////////////
+// Specific styles //
+/////////////////////
+
+.tooltip-popup {
+  @include themify($themes) {
+    &.place-top {
+      &:after {
+        border-top-color: themed('modal__background-color') !important;
+        border-top-style: solid !important;
+        border-top-width: 6px !important;
+      }
+    }
+  }
+}
+
+.breadcrumb__divider {
+  @include themify($themes) {
+    color: themed('breadcrumb__divider___color') !important;
+  }
+}
+
+.breadcrumb__section {
+  @include themify($themes) {
+    color: themed('breadcrumb__section___color') !important;
+  }
+}
+
+.breadcrumb__section--active {
+  @include themify($themes) {
+    color: themed('breadcrumb__section--active___color') !important;
+  }
+}
+
+////////////////////////
+// General-use styles //
+////////////////////////
+
 table {
   @include themify($themes) {
-    // '!important because it overrides SUI
     background-color: themed('table__background-color') !important ;
     color: themed('text__color') !important;
-    border: themed('able__border-color') !important;
+    border: themed('table__border-color') !important;
   }
 
   td {
     @include themify($themes) {
-      // '!important because it overrides SUI
       color: themed('text__color') !important;
     }
   }
 
   th {
     @include themify($themes) {
-      // '!important because it overrides SUI
       background-color: themed('table__background-color') !important ;
       color: themed('text__color') !important;
     }
@@ -145,6 +189,32 @@ table {
 
 
 
+
+
+
+input {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+  }
+}
+
+.form {
+  label {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
+  }
+
+  input {
+    @include themify($themes) {
+      background-color: themed('background__color') !important;
+      color: themed('text__color') !important;
+    }
+  }
+}
+
+// Styling SUI dropdowns was surprisingly gnarly, 
+// even though most of it is the standard palette.
 .dropdown {
   // This styles the main drop-down box
   @include themify($themes) {
@@ -180,78 +250,6 @@ table {
   .item:hover, .text:hover {
     @include themify($themes) {
       background-color:  themed('dropdown__hover-color')  !important;
-    }
-  }
-}
-
-
-
-
-.breadcrumb__divider {
-  @include themify($themes) {
-    color: themed('breadcrumb__divider___color') !important;
-  }
-}
-
-.breadcrumb__section {
-  @include themify($themes) {
-    color: themed('breadcrumb__section___color') !important;
-  }
-}
-
-.breadcrumb__section--active {
-  @include themify($themes) {
-    color: themed('breadcrumb__section--active___color') !important;
-  }
-}
-
-
-
-
-.doc-ref-listing__item {
-  @include themify($themes){
-    border-top: themed('dock-ref-listing__item-border') !important;
-  }
-}
-
-
-/////////////////////
-// Specific styles //
-/////////////////////
-
-.tooltip-popup {
-  @include themify($themes) {
-    &.place-top {
-      &:after {
-        border-top-color: themed('modal__background-color') !important;
-        border-top-style: solid !important;
-        border-top-width: 6px !important;
-      }
-    }
-  }
-}
-
-////////////////////////
-// General-use styles //
-////////////////////////
-
-input {
-  @include themify($themes) {
-    background-color: themed('background__color') !important;
-  }
-}
-
-.form {
-  label {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  input {
-    @include themify($themes) {
-      background-color: themed('background__color') !important;
-      color: themed('text__color') !important;
     }
   }
 }
