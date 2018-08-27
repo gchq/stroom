@@ -206,7 +206,7 @@ const AppChrome = ({
                 <Button
                   aria-label="Show/hide the sidebar"
                   size="large"
-                  className="app-chrome__sidebar__toggle"
+                  className="app-chrome__sidebar__toggle raised"
                   icon="bars"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />
@@ -235,7 +235,7 @@ const AppChrome = ({
               <Button
                 size="large"
                 icon="bars"
-                className="app-chrome__sidebar__toggle_collapsed"
+                className="app-chrome__sidebar__toggle_collapsed raised"
                 onClick={() => setIsExpanded(!isExpanded)}
               />
               {getContractedMenuItems(menuItems)}

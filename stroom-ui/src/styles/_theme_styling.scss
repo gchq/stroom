@@ -247,11 +247,17 @@ table {
   }
 }
 
-
+input {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+    border: themed('border') !important;
+  }
+}
 
 .AppSearch__search-input input {
   @include themify($themes) {
     background-color: themed('dropdown__background-color') !important;
+    border: themed('dropdown__border') !important;
   }
 }
 
@@ -277,62 +283,12 @@ table {
 
 
 
-.themed-modal__header {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-
-
-
-.themed-modal__content {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.themed-modal__content  .form input {
-  @include themify($themes) {
-    border: themed('modal__border') !important;
-  }
-}
-
-.themed-modal__actions {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-
-
-
-
-.form {
-  label {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  input {
-    @include themify($themes) {
-      background-color: themed('modal__background-color') !important;
-      color: themed('text__color') !important;
-    }
-  }
-}
-
-
-
+/////////////////////
+// Specific styles //
+/////////////////////
 
 .tooltip-popup {
   @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('sidebar__color') !important;
     &.place-top {
       &:after {
         border-top-color: themed('modal__background-color') !important;
@@ -343,37 +299,71 @@ table {
   }
 }
 
+////////////////////////
+// General-use styles //
+////////////////////////
 
+.form {
+  label {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
+  }
 
-.background-element {
+  input {
+    @include themify($themes) {
+      background-color: themed('background__color') !important;
+      color: themed('text__color') !important;
+    }
+  }
+}
+
+.button {
   @include themify($themes) {
     background-color: themed('background__color') !important;
+    color: themed('text__color') !important;
+  }
+  .icon {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
   }
 }
 
-.raised-element {
+.hoverable:hover {
+  @include themify($themes) {
+    background-color: themed('hover-color') !important;
+  }
+}
+
+.flat {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.raised {
   @include themify($themes) {
     background-color: themed('raised-element__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.border {
+  @include themify($themes) {
+    border: themed('border') !important;
+  }
+}
+
+.raised-border {
+  @include themify($themes) {
     border: themed('raised-element__border') !important;
-    color: themed('text__color') !important;
   }
 }
 
-.raised-element--borderless {
+.borderless {
   @include themify($themes) {
-    background-color: themed('raised-element__background-color') !important;
-    border: 0px !important;
-    color: themed('text__color') !important;
+    border: 0 !important;
   }
-}
-
-
-.element-palette-category__title {
-  @include themify($themes) {
-    color: themed('text__color') !important;
-  }
-}
-
-.element-palette-category__title .icon {
-  border: 0 !important;
 }

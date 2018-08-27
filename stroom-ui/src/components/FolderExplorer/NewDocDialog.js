@@ -84,6 +84,7 @@ const NewDocDialog = ({
         <Form.Field>
           <label>Permission Inheritance</label>
           <Field
+            className="raised-border"
             name="permissionInheritance"
             component={({ input: { onChange, value } }) => (
               <PermissionInheritancePicker onChange={onChange} value={value} />
@@ -95,7 +96,7 @@ const NewDocDialog = ({
     actions={
       <React.Fragment>
         <Button negative onClick={completeDocRefCreation}>
-          <Icon name="checkmark" /> Cancel
+          <Icon name="close" /> Cancel
         </Button>
         <Button
           positive

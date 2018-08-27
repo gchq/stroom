@@ -130,7 +130,7 @@ class TrackerDashboard extends Component {
                   value={searchCriteria}
                   onChange={(event, data) => onHandleSearchChange(data)}
                   onKeyPress={(event, data) => onHandleSearch(event, data)}
-                  action={<Button onClick={() => onHandleSearch()}>Search</Button>}
+                  action={<Button classname='icon-button' onClick={() => onHandleSearch()}/>}
                   // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
                   ref={input => (this.searchInputRef = input)}
                 />
