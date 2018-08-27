@@ -82,6 +82,7 @@ const SearchBar = ({
             <ThemedPopup
               trigger={
                 <Button
+                  className="icon-button"
                   disabled={searchIsInvalid}
                   circular
                   icon="edit"
@@ -93,7 +94,7 @@ const SearchBar = ({
                   }}
                 />
               }
-              content="Switch to using the expression builder. You won't be able to convert back to a text search and keep your expression."
+              content={<React.Fragment><p>Switch to using the expression builder.</p> <p>You won't be able to convert back to a text search and keep your expression.</p></React.Fragment>}
             />
           </Grid.Column>
           <Grid.Column width={12}>
