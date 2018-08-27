@@ -56,8 +56,8 @@
 
     <!-- Import functional areas -->
     <!--  Minimal -->
-    <inherits name="stroom.properties.Properties" />
-    <inherits name="stroom.properties.global.GlobalProperties" />
+    <inherits name="stroom.config.Config" />
+    <inherits name="stroom.config.global.GlobalConfig" />
     <inherits name="stroom.ui.config.UiConfig" />
     <inherits name="stroom.data.meta.Meta" />
     <inherits name="stroom.externaldoc.ExternalDocRef" />

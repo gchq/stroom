@@ -1,7 +1,7 @@
 package stroom.config.global.impl.db;
 
-import stroom.properties.global.api.FetchGlobalConfigAction;
-import stroom.properties.global.api.ConfigProperty;
+import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.ConfigProperty;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;

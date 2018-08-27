@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.api;
+package stroom.config.global.api;
 
 import stroom.entity.shared.StringCriteria;
 

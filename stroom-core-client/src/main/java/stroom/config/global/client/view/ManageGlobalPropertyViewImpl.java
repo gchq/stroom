@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.client.view;
+package stroom.config.global.client.view;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -24,9 +24,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyUiHandlers;
+import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
+import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
+import stroom.config.global.client.presenter.ManageGlobalPropertyUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 

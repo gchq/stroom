@@ -24,7 +24,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.impl.db.stroom.tables.records.ConfigRecord;
-import stroom.properties.global.api.ConfigProperty;
+import stroom.config.global.api.ConfigProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;

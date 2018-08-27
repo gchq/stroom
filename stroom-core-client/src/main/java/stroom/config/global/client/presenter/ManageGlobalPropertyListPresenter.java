@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.client.presenter;
+package stroom.config.global.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -26,9 +26,9 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.properties.global.api.FetchGlobalConfigAction;
-import stroom.properties.global.api.FindGlobalConfigCriteria;
-import stroom.properties.global.api.ConfigProperty;
+import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.FindGlobalConfigCriteria;
+import stroom.config.global.api.ConfigProperty;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.properties.global.client.presenter;
+package stroom.config.global.client.presenter;
 
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
@@ -23,9 +23,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.properties.global.api.ConfigProperty;
-import stroom.properties.global.api.LoadGlobalConfigAction;
-import stroom.properties.global.api.SaveGlobalConfigAction;
+import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.api.LoadGlobalConfigAction;
+import stroom.config.global.api.SaveGlobalConfigAction;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;

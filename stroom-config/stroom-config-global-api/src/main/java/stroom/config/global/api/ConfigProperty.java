@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.api;
+package stroom.config.global.api;
 
 import stroom.docref.SharedObject;
 
@@ -36,6 +36,10 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
     private boolean password;
     private boolean requireRestart;
     private boolean requireUiRestart;
+
+    public ConfigProperty() {
+        // Required for Gwt
+    }
 
     public Integer getId() {
         return id;

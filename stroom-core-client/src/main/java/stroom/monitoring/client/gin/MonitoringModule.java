@@ -37,11 +37,11 @@ import stroom.node.client.view.VolumeEditViewImpl;
 import stroom.node.client.view.WrapperView;
 import stroom.node.client.view.WrapperViewImpl;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyEditPresenter;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyListPresenter;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter;
-import stroom.properties.global.client.view.GlobalPropertyEditViewImpl;
-import stroom.properties.global.client.view.ManageGlobalPropertyViewImpl;
+import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
+import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
+import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
+import stroom.config.global.client.view.GlobalPropertyEditViewImpl;
+import stroom.config.global.client.view.ManageGlobalPropertyViewImpl;
 
 public class MonitoringModule extends PluginModule {
     @Override

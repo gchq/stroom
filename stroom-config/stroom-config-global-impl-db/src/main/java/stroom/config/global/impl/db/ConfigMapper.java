@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.impl.db.BeanUtil.Prop;
-import stroom.properties.global.api.ConfigProperty;
+import stroom.config.global.api.ConfigProperty;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

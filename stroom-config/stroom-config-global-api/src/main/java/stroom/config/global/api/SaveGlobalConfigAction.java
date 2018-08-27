@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.api;
+package stroom.config.global.api;
 
 import stroom.task.shared.Action;
 
-public class LoadGlobalConfigAction extends Action<ConfigProperty> {
+public class SaveGlobalConfigAction extends Action<ConfigProperty> {
     private static final long serialVersionUID = 6083235358421128201L;
 
     private ConfigProperty configProperty;
 
-    public LoadGlobalConfigAction() {
+    public SaveGlobalConfigAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public LoadGlobalConfigAction(final ConfigProperty configProperty) {
+    public SaveGlobalConfigAction(final ConfigProperty configProperty) {
         this.configProperty = configProperty;
     }
 
@@ -37,6 +37,6 @@ public class LoadGlobalConfigAction extends Action<ConfigProperty> {
 
     @Override
     public String getTaskName() {
-        return "Load Global Property";
+        return "Save Global Property";
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.client.presenter;
+package stroom.config.global.client.presenter;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -25,8 +25,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.properties.global.api.ConfigProperty;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
+import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;

@@ -17,7 +17,7 @@
 
 package stroom.config.global.impl.db;
 
-import stroom.properties.global.api.ConfigProperty;
+import stroom.config.global.api.ConfigProperty;
 
 import java.util.List;
 

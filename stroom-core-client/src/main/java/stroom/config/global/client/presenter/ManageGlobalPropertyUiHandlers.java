@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.client.presenter;
+package stroom.config.global.client.presenter;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
