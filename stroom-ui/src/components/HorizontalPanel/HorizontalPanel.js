@@ -11,7 +11,7 @@ const enhance = compose(
       const { onClose } = this.props;
       Mousetrap.bind('esc', () => onClose());
     },
-    componentDidMount() {
+    componentWillUnmount() {
       Mousetrap.unbind('esc');
     },
   }),

@@ -17,7 +17,6 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Modal } from 'semantic-ui-react';
 
 // eslint-disable-next-line
 import brace from 'brace';

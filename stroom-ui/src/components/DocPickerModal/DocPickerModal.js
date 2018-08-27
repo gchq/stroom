@@ -19,13 +19,8 @@ import PropTypes from 'prop-types';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Grid, Header, Icon } from 'semantic-ui-react';
-
-import AppSearchBar from 'components/AppSearchBar';
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
-import DocRefListingEntry from 'components/DocRefListingEntry';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
@@ -69,13 +64,7 @@ const enhance = compose(
   ),
 );
 
-const DocPickerModal = ({
-
-}) => {
-  return (
-    <div>I.O.U One DocRefModalPicker</div>
-  );
-};
+const DocPickerModal = () => <div>I.O.U One DocRefModalPicker</div>;
 
 const EnhancedDocPickerModal = enhance(DocPickerModal);
 

@@ -11,7 +11,7 @@ const actionCreators = createActions({
   SELECTION_TOGGLED: (listingId, index, keyIsDown = {}) => ({ listingId, index, keyIsDown }),
 });
 
-const { selectableListingBlurred, selectionUp, selectionDown } = actionCreators;
+const { selectionUp, selectionDown } = actionCreators;
 
 const defaultStatePerListing = {
   items: [],
@@ -94,7 +94,6 @@ const reducer = handleActions(
           addToSelection(selectedItemIndexes, index);
         } else if (keyIsDown.Shift) {
           selectedItemIndexes = [];
-          const phase = 0;
           items.forEach((n, nIndex) => {
             if (singleSelectedItemIndex < index) {
               for (let i = singleSelectedItemIndex; i <= index; i++) {

@@ -16,10 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { Loader, Icon } from 'semantic-ui-react';
-import { path, splitAt } from 'ramda';
 
 import ThemedAceEditor from 'components/ThemedAceEditor';
 

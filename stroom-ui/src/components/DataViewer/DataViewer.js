@@ -183,15 +183,11 @@ const DataViewer = ({
 
         const eventIcon = <Icon color="blue" name="file" />;
         const warningIcon = <Icon color="orange" name="warning circle" />;
-        const errorIcon = <Icon color="red" name="warning circle" />;
 
-        let icon,
-          title;
+        let icon;
         if (stream.stream.streamType.name === 'Events') {
-          title = 'Events';
           icon = eventIcon;
         } else if (stream.stream.streamType.name === 'Error') {
-          title = 'Error';
           icon = warningIcon;
         }
 

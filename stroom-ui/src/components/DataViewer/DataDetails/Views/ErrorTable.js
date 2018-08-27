@@ -16,10 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { Loader, Icon } from 'semantic-ui-react';
-import { path, splitAt } from 'ramda';
+import {  Icon } from 'semantic-ui-react';
+import { splitAt } from 'ramda';
 
 // eslint-disable-next-line
 import brace from 'brace';
