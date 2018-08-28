@@ -22,6 +22,9 @@ import Mousetrap from 'mousetrap';
 
 import PanelGroup from 'react-panelgroup';
 
+import ReactTable from 'react-table';
+import 'react-table/react-table.css';
+
 import {
   Header,
   Icon,
@@ -39,6 +42,8 @@ import { actionCreators, Directions, SortByOptions } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
+
+import ProcessingList from '../ProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
 const {
@@ -261,75 +266,13 @@ const TrackerDashboard = ({
             />
           </Menu.Menu>
         </Menu>
-        <PanelGroup direction="column" panelWidths={panelSizes}>
-          <div>
+        <PanelGroup direction="column">
+          <div className="processing__table__container">
             <div
               id="table-container"
               className={`table-container${showDetails ? ' showing-details' : ''}`}
             >
-              <Table selectable sortable basic="very" className="tracker-table" columns={15}>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.HeaderCell
-                      sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
-                      onClick={() => onHandleSort(SortByOptions.pipeline, sortBy, sortDirection)}
-                    >
-                      Pipeline name
-                    </Table.HeaderCell>
-                    <Table.HeaderCell
-                      sorted={sortBy === SortByOptions.priority ? sortDirection : null}
-                      onClick={() => onHandleSort(SortByOptions.priority, sortBy, sortDirection)}
-                    >
-                      Priority
-                    </Table.HeaderCell>
-                    <Table.HeaderCell
-                      sorted={sortBy === SortByOptions.progress ? sortDirection : null}
-                      onClick={() => onHandleSort(SortByOptions.progress, sortBy, sortDirection)}
-                    >
-                      Progress
-                    </Table.HeaderCell>
-                  </Table.Row>
-                </Table.Header>
-
-                <Table.Body>
-                  {trackers.map(({
-                      pipelineName,
-                      priority,
-                      trackerPercent,
-                      filterId,
-                      createdOn,
-                      createUser,
-                      updateUser,
-                      updatedOn,
-                      enabled,
-                      status,
-                      lastPollAge,
-                      taskCount,
-                      trackerMs,
-                      streamCount,
-                      eventCount,
-                    }) => (
-                      <Table.Row
-                        key={filterId}
-                        className="tracker-row"
-                        onClick={() => onHandleTrackerSelection(filterId, trackers)}
-                        active={selectedTrackerId === filterId}
-                      >
-                        <Table.Cell className="name-column" textAlign="left" width={7}>
-                          TODO: backend broken, awaiting re-write
-                        </Table.Cell>
-                        <Table.Cell className="priority-column" textAlign="center" width={1}>
-                          <Label circular color="green">
-                            {priority}
-                          </Label>
-                        </Table.Cell>
-                        <Table.Cell className="progress-column" width={7}>
-                          <Progress indicating percent={trackerPercent} />
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                </Table.Body>
-              </Table>
+              <ProcessingList onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}/>
               <div className="pagination-container">
                 <Pagination
                   activePage={pageOffset + 1}
