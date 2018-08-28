@@ -22,29 +22,18 @@ import Mousetrap from 'mousetrap';
 
 import PanelGroup from 'react-panelgroup';
 
-import {
-  Header,
-  Icon,
-  Button,
-  Input,
-  Menu,
-  Pagination,
-  Grid,
-} from 'semantic-ui-react';
+import { Header, Icon, Button, Input, Menu, Pagination, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
-import TrackerDetails from '../TrackerDetails/TrackerDetails';
+import ProcessingDetails from '../ProcessingDetails/ProcessingDetails';
 
-import ProcessingList from '../ProcessingList';
+import ProcessingList from '../ProcessingList/ProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
 const {
-  updateTrackerSelection,
-  resetPaging,
-  updateSearchCriteria,
-  changePage,
+  updateTrackerSelection, resetPaging, updateSearchCriteria, changePage,
 } = actionCreators;
 
 const enhance = compose(
@@ -204,7 +193,7 @@ const TrackerDashboard = ({
               </div>
             </div>
           </div>
-          <TrackerDetails />
+          <ProcessingDetails />
         </PanelGroup>
       </div>
     </div>

@@ -23,9 +23,12 @@ import Mousetrap from 'mousetrap';
 
 import { Table, Label, Progress } from 'semantic-ui-react';
 
-import { actionCreators, Directions, SortByOptions } from './redux';
+import ReactTable from 'react-table';
+import 'react-table/react-table.css';
 
-import { fetchTrackers, TrackerSelection } from './streamTasksResourceClient';
+import { actionCreators, Directions, SortByOptions } from '../redux';
+
+import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 
 const {
   updateSort,

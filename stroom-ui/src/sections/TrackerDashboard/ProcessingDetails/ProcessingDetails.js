@@ -13,7 +13,7 @@ import { enableToggle } from '../streamTasksResourceClient';
 import HorizontalPanel from 'components/HorizontalPanel';
 import { ExpressionBuilder } from 'components/ExpressionBuilder';
 
-const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => {
+const ProcessingDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => {
   const title = selectedTracker.pipelineName;
 
   const headerMenuItems = (
@@ -99,7 +99,7 @@ const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTracker
   );
 };
 
-TrackerDetails.propTypes = {
+ProcessingDetails.propTypes = {
   selectedTracker: PropTypes.object.isRequired,
   onHandleEnableToggle: PropTypes.func.isRequired,
   onHandleTrackerSelection: PropTypes.func.isRequired,
@@ -120,4 +120,4 @@ export default compose(
     }),
   ),
   branch(({ selectedTracker }) => !selectedTracker, renderComponent(() => <div />)),
-)(TrackerDetails);
+)(ProcessingDetails);
