@@ -136,7 +136,7 @@ const enhance = compose(
   }),
 );
 
-const ProcessingSection = ({
+const ProcessingContainer = ({
   trackers,
   searchCriteria,
   pageOffset,
@@ -200,8 +200,8 @@ const ProcessingSection = ({
   </React.Fragment>
 );
 
-ProcessingSection.contextTypes = {
+ProcessingContainer.contextTypes = {
   store: PropTypes.object.isRequired,
 };
 
-export default enhance(ProcessingSection);
+export default enhance(ProcessingContainer);

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import ProcessingSection from './ProcessingSection/ProcessingSection';
+import ProcessingContainer from './ProcessingContainer/ProcessingContainer';
 import { default as reducer } from './redux';
 
 export { reducer };
 
-export default ProcessingSection;
+export { ProcessingContainer as Processing };
