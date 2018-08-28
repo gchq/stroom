@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { Header, Icon, Grid } from 'semantic-ui-react/dist/commonjs';
 
 import { AppChrome } from '.';
-import TrackerDashboard from 'sections/TrackerDashboard';
+import ProcessingSection from 'sections/ProcessingSection';
 import DocEditor from 'components/DocEditor';
 import Welcome from 'sections/Welcome';
 import DataViewer from 'components/DataViewer';
@@ -67,7 +67,7 @@ export default [
   {
     exact: true,
     path: '/s/processing',
-    render: props => <AppChrome activeMenuItem="Processing" content={<TrackerDashboard />} />,
+    render: props => <AppChrome activeMenuItem="Processing" content={<ProcessingSection />} />,
   },
   {
     exact: true,

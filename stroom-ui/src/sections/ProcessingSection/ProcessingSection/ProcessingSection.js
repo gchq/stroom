@@ -136,7 +136,7 @@ const enhance = compose(
   }),
 );
 
-const TrackerDashboard = ({
+const ProcessingSection = ({
   trackers,
   searchCriteria,
   pageOffset,
@@ -200,8 +200,8 @@ const TrackerDashboard = ({
   </React.Fragment>
 );
 
-TrackerDashboard.contextTypes = {
+ProcessingSection.contextTypes = {
   store: PropTypes.object.isRequired,
 };
 
-export default enhance(TrackerDashboard);
+export default enhance(ProcessingSection);

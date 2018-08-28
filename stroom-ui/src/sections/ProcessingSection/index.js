@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import TrackerDashboard from './TrackerDashboard/TrackerDashboard';
+import ProcessingSection from './ProcessingSection/ProcessingSection';
 import { default as reducer } from './redux';
 
 export { reducer };
 
-export default TrackerDashboard;
+export default ProcessingSection;

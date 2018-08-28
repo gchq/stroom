@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 
 import ErrorPage from 'components/ErrorPage';
 import { appChromeRoutes } from 'sections/AppChrome';
-import TrackerDashboard from 'sections/TrackerDashboard';
+import ProcessingSection from 'sections/ProcessingSection';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 
 import withConfig from './withConfig';
@@ -86,7 +86,7 @@ const Routes = ({
         exact
         path="/trackers"
         referrer="/trackers"
-        render={() => <TrackerDashboard />}
+        render={() => <ProcessingSection />}
       />
 
       {/* Default route */}
