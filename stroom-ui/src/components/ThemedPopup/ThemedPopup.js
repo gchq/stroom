@@ -49,7 +49,7 @@ const ThemedPopup = ({
     <a data-tip data-for={uuid}>
       {trigger}
     </a>
-    <ReactTooltip id={uuid} className="tooltip-popup raised" effect="solid">
+    <ReactTooltip id={uuid} className="tooltip-popup raised-low" effect="solid">
       {content}
     </ReactTooltip>
   </div>

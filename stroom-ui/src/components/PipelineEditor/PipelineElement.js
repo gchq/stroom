@@ -234,7 +234,7 @@ const PipelineElement = ({
   };
 
   return compose(connectDragSource, connectDropTarget)(
-    <div className={`${className} raised borderless `} onClick={handleClick}>
+    <div className={`${className} raised-low borderless `} onClick={handleClick}>
     <AddElementModal
       {...{
           setNewElementDefinition,

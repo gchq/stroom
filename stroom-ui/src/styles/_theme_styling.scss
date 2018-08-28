@@ -22,113 +22,18 @@
   @return map-get($theme-map, $key);
 }
 
-.app-chrome {
-  @include themify($themes) {
-    color: themed("text__color");
-    background-color: themed("background__color");
-  }
-  .title {
-    font-family: sans-serif;
-    font-weight: lighter;
-  }
-  .button {
-    cursor: pointer;
-    border-radius: 5px;
-    padding: 15px 32px;
-    display: inline-block;
-    transition: color 0.1s, border-color 0.1s, background-color 0.1s;
-    @include themify($themes) {
-      border: themed("button__border");
-      color: themed("button__text-color");
-      border-color: themed("button__text-color");
-      background-color: themed("button__color");
-      text-transform: themed("button__text-transform");
-      &:hover {
-        color: themed("button__text-hover-color");
-        border-color: themed("button__text-hover-color");
-        background-color: themed("buttonHoverColor");
-      }
-    }
-  }
-}
+
+/////////////////////
+// Specific styles //
+/////////////////////
 
 
-
-
-.app-chrome__sidebar-menu {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-  }
-}
-
-.app-chrome__sidebar {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-  }
-}
-
-.app-chrome__sidebar__toggle {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color') !important;
-    color: themed('sidebar__header-color') !important;
-    // Override the default button look so it blends in with the rest of the sidebar.
-    border: 0 !important;
-  }
-}
-
-.app-chrome__sidebar__buttons .button {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-    color: themed('sidebar__header-color');
-  }
-}
 
 .sidebar__logo svg path {
   @include themify($themes) {
     fill: themed('sidebar__header-color');
   }
 }
-
-.sidebar__menu-item--doc {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-    color: themed('sidebar__color');
-  }
-}
-
-
-
-
-
-.ui.header {
-  @include themify($themes) {
-    color: themed('text__color');
-  }
-}
-
-.ui.header>.icon {
-  @include themify($themes) {
-    color: themed('header__icon-color');
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/////////////////////
-// Specific styles //
-/////////////////////
 
 .tooltip-popup {
   @include themify($themes) {
@@ -163,6 +68,18 @@
 ////////////////////////
 // General-use styles //
 ////////////////////////
+.header {
+  @include themify($themes) {
+    color: themed('text__color');
+  }
+}
+
+.header>.icon {
+  @include themify($themes) {
+    color: themed('header__icon-color');
+  }
+}
+
 
 table {
   @include themify($themes) {
@@ -291,9 +208,16 @@ input {
   }
 }
 
-.raised {
+.raised-low {
   @include themify($themes) {
-    background-color: themed('raised-element__background-color') !important;
+    background-color: themed('raised-low__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.raised-high {
+  @include themify($themes) {
+    background-color: themed('raised-high__background-color') !important;
     color: themed('text__color') !important;
   }
 }
