@@ -1,3 +1,7 @@
+///////////////
+// Functions //
+///////////////
+
 @import "themes.scss";
 @mixin themify($themes: $themes) {
   @each $theme, $map in $themes {
@@ -22,91 +26,22 @@
   @return map-get($theme-map, $key);
 }
 
-.app-chrome {
-  @include themify($themes) {
-    color: themed("text__color");
-    background-color: themed("background__color");
-  }
-  .title {
-    font-family: sans-serif;
-    font-weight: lighter;
-  }
-  .button {
-    cursor: pointer;
-    border-radius: 5px;
-    padding: 15px 32px;
-    display: inline-block;
-    transition: color 0.1s, border-color 0.1s, background-color 0.1s;
-    @include themify($themes) {
-      border: themed("button__border");
-      color: themed("button__text-color");
-      border-color: themed("button__text-color");
-      background-color: themed("button__color");
-      text-transform: themed("button__text-transform");
-      &:hover {
-        color: themed("button__text-hover-color");
-        border-color: themed("button__text-hover-color");
-        background-color: themed("buttonHoverColor");
-      }
-    }
-  }
-}
 
 
 
 
-.app-chrome__sidebar-menu {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-  }
-}
-
-.app-chrome__sidebar {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-  }
-}
-
-.app-chrome__sidebar__toggle {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color') !important;
-    color: themed('sidebar__header-color') !important;
-    // Override the default button look so it blends in with the rest of the sidebar.
-    border: 0 !important;
-  }
-}
-
-.app-chrome__sidebar__buttons .button {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-    color: themed('sidebar__header-color');
-  }
-}
-
-.sidebar__logo svg path {
-  @include themify($themes) {
-    fill: themed('sidebar__header-color');
-  }
-}
-
-.sidebar__menu-item--doc {
-  @include themify($themes) {
-    background-color: themed('sidebar__background-color');
-    color: themed('sidebar__color');
-  }
-}
+////////////////////////
+// General-use styles //
+////////////////////////
 
 
-
-
-
-.ui.header {
+.header {
   @include themify($themes) {
     color: themed('text__color');
   }
 }
 
-.ui.header>.icon {
+.header>.icon {
   @include themify($themes) {
     color: themed('header__icon-color');
   }
@@ -115,27 +50,22 @@
 
 
 
-
-// This is mostly about overriding SUI styles
 table {
   @include themify($themes) {
-    // '!important because it overrides SUI
-    background-color: themed('table__background-color') !important ;
+    background-color: themed('raised-low__background-color') !important ;
     color: themed('text__color') !important;
-    border: themed('able__border-color') !important;
+    border: themed('border') !important;
   }
 
   td {
     @include themify($themes) {
-      // '!important because it overrides SUI
       color: themed('text__color') !important;
     }
   }
 
   th {
     @include themify($themes) {
-      // '!important because it overrides SUI
-      background-color: themed('table__background-color') !important ;
+      background-color: themed('raised-low__background-color') !important ;
       color: themed('text__color') !important;
     }
   }
@@ -144,7 +74,33 @@ table {
 
 
 
+input {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+    color: themed('text__color') !important;
+  }
+}
 
+.form {
+  label {
+    @include themify($themes) {
+      color: themed('text__color') !important;
+    }
+  }
+
+  input {
+    @include themify($themes) {
+      background-color: themed('background__color') !important;
+      color: themed('text__color') !important;
+    }
+  }
+}
+
+
+
+
+// Styling SUI dropdowns was surprisingly gnarly, 
+// even though most of it is the standard palette.
 .dropdown {
   // This styles the main drop-down box
   @include themify($themes) {
@@ -186,6 +142,116 @@ table {
 
 
 
+.button {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+
+
+.hoverable:hover {
+  @include themify($themes) {
+    background-color: themed('hover-color') !important;
+  }
+}
+
+.selected {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
+  }
+}
+
+.selected:hover {
+  @include themify($themes) {
+    background-color: themed('selected-color') !important;
+  }
+}
+
+.flat {
+  @include themify($themes) {
+    background-color: themed('background__color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.raised-low {
+  @include themify($themes) {
+    background-color: themed('raised-low__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.raised-high {
+  @include themify($themes) {
+    background-color: themed('raised-high__background-color') !important;
+    color: themed('text__color') !important;
+  }
+}
+
+.border {
+  @include themify($themes) {
+    border: themed('border') !important;
+  }
+}
+
+.raised-border {
+  @include themify($themes) {
+    border: themed('raised-element__border') !important;
+  }
+}
+
+.borderless {
+  @include themify($themes) {
+    border: 0 !important;
+  }
+}
+
+
+
+.icon-button {
+  @include themify($themes) {
+    border: themed('icon-button__border') !important;
+    background-color: themed('icon-button__background-color') !important;
+    color: themed('icon-button__color') !important;
+  }
+}
+
+.icon-button:hover {
+  @include themify($themes) {
+    color: themed('icon-button__color--hover') !important;
+  }
+}
+
+
+/////////////////////
+// Specific styles //
+/////////////////////
+
+.sidebar__logo svg path {
+  @include themify($themes) {
+    fill: themed('sidebar__header-color');
+  }
+}
+
+.app-chrome__sidebar__toggle {
+  @include themify($themes) {
+    color: themed('sidebar__header-color') !important;
+  }
+}
+
+.tooltip-popup {
+  @include themify($themes) {
+    &.place-top {
+      &:after {
+        border-top-color: themed('raised-high__background-color') !important;
+        border-top-style: solid !important;
+        border-top-width: 6px !important;
+      }
+    }
+  }
+}
 
 .breadcrumb__divider {
   @include themify($themes) {
@@ -203,177 +269,4 @@ table {
   @include themify($themes) {
     color: themed('breadcrumb__section--active___color') !important;
   }
-}
-
-
-
-
-.doc-ref-listing__item {
-  @include themify($themes){
-    border-top: themed('dock-ref-listing__item-border') !important;
-  }
-}
-
-.doc-ref-listing__item:hover {
-  @include themify($themes){
-    background-color: themed('hover-color') !important;
-  }
-}
-
-.doc-ref-listing__item--selected {
-  @include themify($themes) {
-    background-color: themed('selected-color') !important;
-  }
-}
-
-.doc-ref-listing__item--selected:hover {
-  @include themify($themes) {
-    background-color: themed('selected-color') !important;
-  }
-}
-
-
-.icon-button {
-  @include themify($themes) {
-    border: themed('icon-button__border') !important;
-    background-color: themed('icon-button__background-color') !important;
-    color: themed('icon-button__color')
-  }
-}
-
-.icon-button:hover {
-  @include themify($themes) {
-    color: themed('icon-button__color--hover') !important;
-  }
-}
-
-
-
-.AppSearch__search-input input {
-  @include themify($themes) {
-    background-color: themed('dropdown__background-color') !important;
-  }
-}
-
-.AppSearch__search-input i {
-  @include themify($themes) {
-    color: themed('icon__color') !important;
-  }
-}
-
-.AppSearch__dropdown-item {
-  @include themify($themes) {
-    color: themed('text__color') !important;
-  }
-}
-
-.AppSearch__menu {
-  @include themify($themes) {
-    background-color: themed('dropdown__background-color') !important;
-    border: themed('dropdown__border') !important;
-  }
-}
-
-
-
-
-.themed-modal__header {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-
-
-
-.themed-modal__content {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.themed-modal__content  .form input {
-  @include themify($themes) {
-    border: themed('modal__border') !important;
-  }
-}
-
-.themed-modal__actions {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-
-
-
-
-.form {
-  label {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  input {
-    @include themify($themes) {
-      background-color: themed('modal__background-color') !important;
-      color: themed('text__color') !important;
-    }
-  }
-}
-
-
-
-
-.tooltip-popup {
-  @include themify($themes) {
-    background-color: themed('modal__background-color') !important;
-    color: themed('sidebar__color') !important;
-    &.place-top {
-      &:after {
-        border-top-color: themed('modal__background-color') !important;
-        border-top-style: solid !important;
-        border-top-width: 6px !important;
-      }
-    }
-  }
-}
-
-
-
-.background-element {
-  @include themify($themes) {
-    background-color: themed('background__color') !important;
-  }
-}
-
-.raised-element {
-  @include themify($themes) {
-    background-color: themed('raised-element__background-color') !important;
-    border: themed('raised-element__border') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.raised-element--borderless {
-  @include themify($themes) {
-    background-color: themed('raised-element__background-color') !important;
-    border: 0px !important;
-    color: themed('text__color') !important;
-  }
-}
-
-
-.element-palette-category__title {
-  @include themify($themes) {
-    color: themed('text__color') !important;
-  }
-}
-
-.element-palette-category__title .icon {
-  border: 0 !important;
 }

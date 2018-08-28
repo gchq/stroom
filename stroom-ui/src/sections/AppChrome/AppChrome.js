@@ -170,7 +170,12 @@ const getContractedMenuItems = menuItems =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
-        <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
+        <Button
+          className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
+          key={menuItem.title}
+          icon={menuItem.icon}
+          onClick={menuItem.onClick}
+        />
       )}
       {menuItem.children && getContractedMenuItems(menuItem.children)}
     </React.Fragment>
@@ -194,19 +199,19 @@ const AppChrome = ({
   }
   return (
     <div className={`app-container ${theme}`}>
-      <div className="app-chrome">
+      <div className="app-chrome flat">
         <MoveDocRefDialog />
         <RenameDocRefDialog />
         <DeleteDocRefDialog />
         <CopyDocRefDialog />
-        <div className="app-chrome__sidebar">
+        <div className="raised-high">
           {isExpanded ? (
             <React.Fragment>
-              <div className="app-chrome__sidebar_header">
+              <div className="app-chrome__sidebar_header header">
                 <Button
                   aria-label="Show/hide the sidebar"
                   size="large"
-                  className="app-chrome__sidebar__toggle"
+                  className="app-chrome__sidebar__toggle raised-high borderless "
                   icon="bars"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />
@@ -226,7 +231,7 @@ const AppChrome = ({
                   </svg>
                 </div>
               </div>
-              <div className="app-chrome__sidebar-menu">
+              <div className="app-chrome__sidebar-menu raised-high">
                 {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
               </div>
             </React.Fragment>
@@ -235,7 +240,7 @@ const AppChrome = ({
               <Button
                 size="large"
                 icon="bars"
-                className="app-chrome__sidebar__toggle_collapsed"
+                className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
                 onClick={() => setIsExpanded(!isExpanded)}
               />
               {getContractedMenuItems(menuItems)}

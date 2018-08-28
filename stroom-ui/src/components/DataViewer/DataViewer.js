@@ -178,20 +178,21 @@ const DataViewer = ({
       Header: '',
       accessor: 'type',
       Cell: (row) => {
+        //TODO Resotre the row icon
         // This block of code is mostly about making a sensible looking popup.
-        const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.stream.id === row.original.streamId);
+        // const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.stream.id === row.original.streamId);
 
-        const eventIcon = <Icon color="blue" name="file" />;
-        const warningIcon = <Icon color="orange" name="warning circle" />;
+        // const eventIcon = <Icon color="blue" name="file" />;
+        // const warningIcon = <Icon color="orange" name="warning circle" />;
 
-        let icon;
-        if (stream.stream.streamType.name === 'Events') {
-          icon = eventIcon;
-        } else if (stream.stream.streamType.name === 'Error') {
-          icon = warningIcon;
-        }
+        // let icon;
+        // if (stream.stream.streamType.name === 'Events') {
+        //   icon = eventIcon;
+        // } else if (stream.stream.streamType.name === 'Error') {
+        //   icon = warningIcon;
+        // }
 
-        return icon;
+        // return icon;
       },
       width: 35,
     },
@@ -242,8 +243,8 @@ const DataViewer = ({
       getTrProps={(state, rowInfo, column) => ({
         className:
           selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
-            ? 'DataTable__selectedRow'
-            : undefined,
+            ? 'DataTable__selectedRow hoverable'
+            : 'hoverable',
       })}
     />
   );

@@ -46,7 +46,7 @@ const UserSettings = ({ theme, themeChanged }) => (
       <Grid.Column width={12}>
         <Header as="h3">
           <Icon name="user" />
-          <Header.Content>Me</Header.Content>
+          <Header.Content className="header">Me</Header.Content>
         </Header>
       </Grid.Column>
     </Grid>

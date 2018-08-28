@@ -15,16 +15,26 @@
  */
 
 import React from 'react';
-import { compose } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import ReactTooltip from 'react-tooltip';
+import uuidv4 from 'uuid/v4';
 
-const enhance = compose(connect(
-  ({ userSettings: { theme } }) => ({
-    theme,
-  }),
-  {},
-));
+const enhance = compose(
+  connect(
+    ({ userSettings: { theme } }) => ({
+      theme,
+    }),
+    {},
+  ),
+  // It'd be nice to use the simpler form of tooltip, the one where
+  // the content is in the anchor tag. But this only works for simple
+  // content and we want to support richer content, e.g. for
+  // multi-line tooltips. If we're going to do it this way then we need
+  // an ID to tie the anchor tag to the component. We don't have one
+  // so to prevent conflicts we'll pass in a UUID.
+  withProps(() => ({ uuid: uuidv4() })),
+);
 
 /**
  * A themed popup is required because Semantic UI popups are mounted
@@ -33,11 +43,16 @@ const enhance = compose(connect(
  * enough.
  */
 const ThemedPopup = ({
-  trigger, content, theme, ...rest
+  trigger, content, theme, uuid, ...rest
 }) => (
   <div className={theme}>
-    <a data-tip={content}> {trigger} </a>
-    <ReactTooltip className="tooltip-popup" effect="solid" />
+    <a data-tip data-for={uuid}>
+      {trigger}
+    </a>
+    <ReactTooltip id={uuid} className="tooltip-popup raised-low" effect="solid">
+      {content}
+    </ReactTooltip>
   </div>
 );
+
 export default enhance(ThemedPopup);

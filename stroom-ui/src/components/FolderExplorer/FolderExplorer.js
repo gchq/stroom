@@ -122,7 +122,7 @@ const FolderExplorer = ({
       <Grid.Column width={11}>
         <Header as="h3">
           <Icon name="folder" />
-          <Header.Content>{node.name}</Header.Content>
+          <Header.Content className="header">{node.name}</Header.Content>
           <Header.Subheader>
             <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
           </Header.Subheader>

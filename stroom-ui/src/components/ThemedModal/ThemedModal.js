@@ -42,9 +42,9 @@ const ThemedModal = ({
   dimmer, theme, header, content, actions, ...rest
 }) => (
   <Modal dimmer={dimmer} className={theme} {...rest}>
-    <div className="themed-modal__header">{header}</div>
-    <Modal.Content className="themed-modal__content">{content}</Modal.Content>
-    <Modal.Actions className="themed-modal__actions">{actions}</Modal.Actions>
+    <div className="raised-low">{header}</div>
+    <Modal.Content className="raised-low">{content}</Modal.Content>
+    <Modal.Actions className="raised-low">{actions}</Modal.Actions>
   </Modal>
 );
 export default enhance(ThemedModal);

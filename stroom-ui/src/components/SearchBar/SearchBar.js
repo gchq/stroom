@@ -67,12 +67,12 @@ const SearchBar = ({
   const searchButton = (
     <Button
       disabled={searchIsInvalid}
+      className="icon-button"
+      icon="search"
       onClick={() => {
         onSearch(expressionId);
       }}
-    >
-      Search
-    </Button>
+    />
   );
   const searchInput = (
     <React.Fragment>
@@ -82,6 +82,7 @@ const SearchBar = ({
             <ThemedPopup
               trigger={
                 <Button
+                  className="icon-button"
                   disabled={searchIsInvalid}
                   circular
                   icon="edit"
@@ -93,7 +94,7 @@ const SearchBar = ({
                   }}
                 />
               }
-              content="Switch to using the expression builder. You won't be able to convert back to a text search and keep your expression."
+              content={<React.Fragment><p>Switch to using the expression builder.</p> <p>You won't be able to convert back to a text search and keep your expression.</p></React.Fragment>}
             />
           </Grid.Column>
           <Grid.Column width={12}>
@@ -153,7 +154,7 @@ const SearchBar = ({
               <Button
                 circular
                 icon="text cursor"
-                className="SearchBar__modeButton"
+                className="SearchBar__modeButton icon-button"
                 onClick={() => setIsExpression(false)}
               />
             }
@@ -174,7 +175,7 @@ const SearchBar = ({
     </React.Fragment>
   );
 
-  return <div className="SearchBar">{isExpression ? expressionBuilder : searchInput}</div>;
+  return <div className="SearchBar flat">{isExpression ? expressionBuilder : searchInput}</div>;
 };
 
 SearchBar.propTypes = {

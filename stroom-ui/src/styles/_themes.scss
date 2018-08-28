@@ -1,92 +1,52 @@
 $themes: (
   light: (
+    // General
     background__color: #fff,
     text__color: rgba(0,0,0,.8),
+    selected-color:#cae1f1,
+    hover-color: #e8e8e8,
+    raised-low__background-color: #dceffd,
+    raised-high__background-color: #2185d0,
+    raised-element__border: 1px solid #fff,
+    border: 1px solid #dfe0e1,
 
-    button__text-color: rgba(0,0,0,.6),
-    button__text-transform: none,
-    button__text-hover-color: #61b0e7,
-    button__color: #dfe0e1,
-    button__border: 0px solid #fff,
-
-    sidebar__background-color:#2185d0,
-    sidebar__color: rgba(255,255,255,0.9),
+    // Specific
     sidebar__header-color: #fff,
-
     header__icon-color: #2185d0,
-
-    table__background-color:#fff,
-    table__border-color: #dfe0e1,
-
     dropdown__background-color: #fff,
     dropdown__border: 1px solid #dfe0e1,
     dropdown__hover-color: #dfe0e1,
-
     breadcrumb__divider___color: black,
     breadcrumb__section___color: black,
     breadcrumb__section--active___color: black,
-
-    dock-ref-listing__item-border: dotted thin #dedede,
-
     icon-button__border:none,
     icon-button__background-color:#e4e4e4,
     icon-button__color: #4d5250,
     icon-button__color--hover: black,
-    
-    modal__background-color: #2185d0, // TODO is this 'raised-thing__background-color'?
-    modal__border: 1px solid #fff, // TODO is this 'border'?
-    
-    selected-color:#cae1f1,
-    hover-color: #e8e8e8,
-
-    raised-element__background-color: #dceffd,
-    raised-element__border: 1px solid #fff,
   ),
   dark: (
+    // General
     background__color: #282829,
     text__color: #ddd,
+    selected-color:#185e90,
+    hover-color: #1f4a69,
+    raised-low__background-color: #4d5250,
+    raised-high__background-color: #4d5250,
+    raised-element__border: 1px solid #aaa,
+    border:1px solid #4d5250, 
 
-    icon__color: #ddd,
-    icon__color--hover: white,
-
-    button__text-color: #aaa,
-    button__text-transform: uppercase,
-    button__text-hover-color: #ddd,
-    button__color: #333,
-    button__border: 1px solid #aaa, // TODO is this border__color?
-
-    sidebar__background-color: #4d5250, // TODO is this 'raised-thing__background-color'?
-    sidebar__color: #fff,
+    // Specific
     sidebar__header-color: white,
-
     header__icon-color: #2185d0,
-
-    table__background-color:#4d5250,
-    table__border-color: #4d5250,
-
     dropdown__background-color: #282829,
     dropdown__border: 1px solid #4d5250,
     dropdown__hover-color: #4d5250,
-
     breadcrumb__divider___color: white,
     breadcrumb__section___color: white,
     breadcrumb__section--active___color: white,
-
-    dock-ref-listing__item-border: dotted thin #525252,
-
     icon-button__border:none,
     icon-button__background-color:#282829,
     icon-button__color: #adadad,
     icon-button__color--hover: #ffffff,
-
-    modal__background-color: #4d5250, // TODO is this 'raised-thing__background-color'?
-    modal__border: 1px solid #aaa, // TODO is this 'border'?
-
-    selected-color:#185e90,
-    hover-color: #1f4a69,
-
-    //NEW -- this is really great. Apply this more widely
-    raised-element__background-color: #4d5250,
-    raised-element__border: 1px solid #aaa,
   ),
 );

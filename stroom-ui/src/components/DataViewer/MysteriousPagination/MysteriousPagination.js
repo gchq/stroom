@@ -74,6 +74,7 @@ const MysteriousPagination = ({
     <React.Fragment>
       <Button.Group size="mini" basic>
         <Button
+          className="border"
           aria-label="Go to the previous page"
           icon
           disabled={pageOffsetIndexFromOne === 1}
@@ -87,7 +88,7 @@ const MysteriousPagination = ({
             key={pageValue === '?' ? uuidv4() : pageValue}
             disabled={pageValue === '?'}
             active={pageValue === pageOffsetIndexFromOne}
-            className="MysteriousPagination__paginationButton"
+            className="MysteriousPagination__paginationButton border"
             size="mini"
             onClick={(_, data) => {
               // data.children shows the index from one (the display index)
@@ -101,11 +102,10 @@ const MysteriousPagination = ({
 
         <Button
           aria-label="Go to the next page"
-          icon
+          icon="right arrow"
+          className="border"
           onClick={() => onPageChange(pageOffset + 1, pageSize)}
-        >
-          <Icon name="right arrow" />
-        </Button>
+        />
       </Button.Group>
       <div className="MysteriousPagination__pageSizeSelection">
         <div>Show&nbsp;</div>

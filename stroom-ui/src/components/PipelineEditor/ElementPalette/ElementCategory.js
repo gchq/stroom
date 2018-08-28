@@ -23,14 +23,10 @@ const ElementCategory = ({
 }) => (
   <div className="element-palette-category">
     <Accordion styled>
-      <Accordion.Title
-        active={isOpen}
-        onClick={() => setIsOpen(!isOpen)}
-        className="background-element element-palette-category__title"
-      >
-        <Icon name="dropdown" classsName="element-palette-category__dropdown-icon" /> {displayTitle}
+      <Accordion.Title active={isOpen} onClick={() => setIsOpen(!isOpen)} className="flat">
+        <Icon name="dropdown" className="borderless" /> {displayTitle}
       </Accordion.Title>
-      <Accordion.Content active={isOpen} className="background-element">
+      <Accordion.Content active={isOpen} className="flat">
         <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
           {elementsWithData.map(e => (
             <NewElement key={e.element.type} elementWithData={e} />
