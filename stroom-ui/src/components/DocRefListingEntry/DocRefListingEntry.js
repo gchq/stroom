@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
+import { compose, withHandlers } from 'recompose';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
@@ -9,12 +10,34 @@ import { actionCreators as selectableItemActionCreators } from 'lib/withSelectab
 
 const { selectionToggled } = selectableItemActionCreators;
 
-const enhance = connect(
-  ({ keyIsDown, selectableItemListings }, { listingId }) => ({
-    selectableItemListing: selectableItemListings[listingId],
-    keyIsDown,
+const enhance = compose(
+  connect(
+    ({ keyIsDown, selectableItemListings }, { listingId, docRef }) => {
+      const selectableItemListing = selectableItemListings[listingId];
+      let isSelected = false;
+      if (selectableItemListing) {
+        isSelected = selectableItemListing.selectedItems.map(d => d.uuid).includes(docRef.uuid);
+      }
+      return {
+        isSelected,
+        keyIsDown,
+      };
+    },
+    { selectionToggled },
+  ),
+  withHandlers({
+    onRowClick: ({
+      listingId, index, keyIsDown, selectionToggled,
+    }) => (e) => {
+      selectionToggled(listingId, index, keyIsDown);
+      e.preventDefault();
+    },
+    onNameClick: ({ openDocRef, docRef }) => (e) => {
+      openDocRef(docRef);
+      e.stopPropagation();
+      e.preventDefault();
+    },
   }),
-  { selectionToggled },
 );
 
 const DocRefListingEntry = ({
@@ -22,20 +45,13 @@ const DocRefListingEntry = ({
   docRef,
   openDocRef,
   includeBreadcrumb,
-  selectableItemListing: { selectedItems },
-  index,
-  keyIsDown,
-  listingId,
-  selectionToggled,
+  isSelected,
+  onRowClick,
+  onNameClick,
 }) => (
   <div
-    className={`hoverable ${className} ${
-      selectedItems.map(d => d.uuid).includes(docRef.uuid) ? 'selected' : ''
-    }`}
-    onClick={(e) => {
-      selectionToggled(listingId, index, keyIsDown);
-      e.preventDefault();
-    }}
+    className={`hoverable ${className || ''} ${isSelected ? 'selected' : ''}`}
+    onClick={onRowClick}
   >
     <div>
       <img
@@ -43,15 +59,8 @@ const DocRefListingEntry = ({
         alt="X"
         src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
       />
-      <span
-        className="doc-ref-listing__name"
-        onClick={(e) => {
-          openDocRef(docRef);
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-      >
-        {docRef.name}
+      <span className="doc-ref-listing__name" onClick={onNameClick}>
+        {docRef.name} {isSelected ? 'selected' : ''}
       </span>
     </div>
 

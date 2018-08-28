@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
-import { DropTarget } from 'react-dnd'; 
+import { compose, withHandlers } from 'recompose';
+import { DropTarget } from 'react-dnd';
 import { DragSource } from 'react-dnd';
 import { Icon } from 'semantic-ui-react/dist/commonjs';
 
@@ -10,8 +10,9 @@ import DocRefPropType from 'lib/DocRefPropType';
 import { canMove } from 'lib/treeUtils';
 import ItemTypes from 'components/FolderExplorer/dragDropTypes';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
-import withShortcutKeys from 'lib/withShortcutKeys';
+import { actionCreators as appChromeActionCreators } from './redux';
 
+const { menuItemOpened } = appChromeActionCreators;
 const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 
 const dropTarget = {
@@ -72,36 +73,50 @@ function dragCollect(connect, monitor) {
 }
 
 const enhance = compose(
-  connect(({ keyIsDown }) => ({ keyIsDown }), {
-    prepareDocRefCopy,
-    prepareDocRefMove,
-  }),
-  withShortcutKeys([
-    {
-      mousetrapKeys: ['enter'],
-      keyEventMatcher: e => e.key === 'Enter',
-      action: ({menuItemOpened, menuItem, menuItemsOpen}, e) => {
-        console.log('Opening Menu Item', menuItem);
-        menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
-        if (e) e.preventDefault();
+  connect(
+    (
+      { keyIsDown, appChrome: { areMenuItemsOpen }, selectableItemListings },
+      { listingId, menuItem: { key } },
+    ) => {
+      const selectableItemListing = selectableItemListings[listingId];
+      let isSelected = false;
+      if (selectableItemListing) {
+        isSelected = selectableItemListing.selectedItems.filter(m => m.key === key).length === 1;
       }
+
+      return { isSelected, keyIsDown, areMenuItemsOpen };
+    },
+    {
+      prepareDocRefCopy,
+      prepareDocRefMove,
+      menuItemOpened,
+    },
+  ),
+  withHandlers({
+    onCaretClick: ({menuItem, menuItemOpened, areMenuItemsOpen}) => e => {
+      menuItemOpened(menuItem.key, !areMenuItemsOpen[menuItem.key]);
+      e.preventDefault();
+    },
+    onTitleClick: ({menuItem, menuItemOpened, areMenuItemsOpen}) => e => {
+      menuItem.onClick();
     }
-  ]),
+  }),
   DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
   DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
 );
 
 const MenuItem = ({
   menuItem,
-  menuItemsOpen,
+  areMenuItemsOpen,
   menuItemOpened,
   depth,
+  isSelected,
   connectDropTarget,
   connectDragSource,
   isOver,
   canDrop,
-  enableShortcuts,
-  disableShortcuts
+  onTitleClick, 
+  onCaretClick
 }) => {
   let className = `sidebar__menu-item ${menuItem.style}`;
   if (isOver) {
@@ -114,21 +129,15 @@ const MenuItem = ({
       className += ' cannot-drop';
     }
   }
+  if (isSelected) {
+    className += ' selected';
+  }
 
-  return connectDragSource(connectDropTarget(<div 
-    tabIndex={0} 
-    onFocus={enableShortcuts}
-    onBlur={disableShortcuts}
-    className={className} 
-    style={{ paddingLeft: `${depth * 0.7}rem` }}
-  >
+  return connectDragSource(connectDropTarget(<div className={className} style={{ paddingLeft: `${depth * 0.7}rem` }}>
     {menuItem.children && menuItem.children.length > 0 ? (
       <Icon
-        onClick={(e) => {
-              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
-              e.preventDefault();
-            }}
-        name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
+        onClick={onCaretClick}
+        name={`caret ${areMenuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
       />
         ) : menuItem.key !== 'stroom' ? (
           <Icon />
@@ -137,16 +146,11 @@ const MenuItem = ({
         )}
     <Icon name={menuItem.icon} />
     <span
-      onClick={() => {
-            if (menuItem.children) {
-              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
-            }
-            menuItem.onClick();
-          }}
+      onClick={onTitleClick}
     >
       {menuItem.title}
     </span>
-  </div>));
+                                             </div>));
 };
 
 MenuItem.propTypes = {
@@ -158,8 +162,7 @@ MenuItem.propTypes = {
     style: PropTypes.string.isRequired,
   }).isRequired,
   docRef: DocRefPropType,
-  menuItemsOpen: PropTypes.object.isRequired,
-  menuItemOpened: PropTypes.func.isRequired,
+  listingId: PropTypes.string.isRequired,
   depth: PropTypes.number.isRequired,
 };
 

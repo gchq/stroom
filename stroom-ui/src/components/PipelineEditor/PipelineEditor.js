@@ -41,7 +41,7 @@ import Bin from './Bin';
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
 
-import { openDocRef } from 'sections/RecentItems';
+import openDocRef from 'sections/RecentItems/openDocRef';
 import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { actionCreators } from './redux';

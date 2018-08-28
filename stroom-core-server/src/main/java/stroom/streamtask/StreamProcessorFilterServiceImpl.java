@@ -184,10 +184,11 @@ class StreamProcessorFilterServiceImpl
                     sql.append(alias);
                     sql.append(".streamProcessor as sp");
                 }
-                if (fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
-                    sql.append(" INNER JOIN FETCH ");
-                    sql.append("sp.pipeline");
-                }
+                // TODO this no longer works
+//                if (fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
+//                    sql.append(" INNER JOIN FETCH ");
+//                    sql.append("sp.pipelineName");
+//                }
             }
         }
 

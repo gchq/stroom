@@ -1,4 +1,4 @@
-import { actionCreators } from './redux';
+import { actionCreators } from 'sections/RecentItems/redux';
 
 const { docRefOpened } = actionCreators;
 

@@ -26,218 +26,14 @@
   @return map-get($theme-map, $key);
 }
 
-
-
-
-
-////////////////////////
-// General-use styles //
-////////////////////////
-
-
-.header {
-  @include themify($themes) {
-    color: themed('text__color');
-  }
-}
-
-.header>.icon {
-  @include themify($themes) {
-    color: themed('header__icon-color');
-  }
-}
-
-
-
-
-table {
-  @include themify($themes) {
-    background-color: themed('raised-low__background-color') !important ;
-    color: themed('text__color') !important;
-    border: themed('border') !important;
-  }
-
-  td {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  th {
-    @include themify($themes) {
-      background-color: themed('raised-low__background-color') !important ;
-      color: themed('text__color') !important;
-    }
-  }
-}
-
-
-
-
-input {
-  @include themify($themes) {
-    background-color: themed('background__color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.form {
-  label {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  input {
-    @include themify($themes) {
-      background-color: themed('background__color') !important;
-      color: themed('text__color') !important;
-    }
-  }
-}
-
-
-
-
-// Styling SUI dropdowns was surprisingly gnarly, 
-// even though most of it is the standard palette.
-.dropdown {
-  // This styles the main drop-down box
-  @include themify($themes) {
-    background-color: themed('dropdown__background-color') !important;
-    color: themed('text__color') !important;
-    border: themed('dropdown__border') !important;
-  }
-  // This styles the actual drop-down bit.
-  .menu {
-    @include themify($themes) {
-      background-color: themed('dropdown__background-color') !important;
-      color: themed('text__color') !important;
-      border: themed('dropdown__border') !important;
-    }
-  }
-
-  // This makes sure the text is the right colour
-  .text {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  // We need to get rid of the border for erverything inside the drop-down.
-  .text, .active, .item, .icon {
-    border:0 !important;
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
-
-  // We need a hover colour for the drop-down.
-  .item:hover, .text:hover {
-    @include themify($themes) {
-      background-color:  themed('dropdown__hover-color')  !important;
-    }
-  }
-}
-
-
-
-.button {
-  @include themify($themes) {
-    background-color: themed('background__color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-
-
-.hoverable:hover {
-  @include themify($themes) {
-    background-color: themed('hover-color') !important;
-  }
-}
-
-.selected {
-  @include themify($themes) {
-    background-color: themed('selected-color') !important;
-  }
-}
-
-.selected:hover {
-  @include themify($themes) {
-    background-color: themed('selected-color') !important;
-  }
-}
-
-.flat {
-  @include themify($themes) {
-    background-color: themed('background__color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.raised-low {
-  @include themify($themes) {
-    background-color: themed('raised-low__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.raised-high {
-  @include themify($themes) {
-    background-color: themed('raised-high__background-color') !important;
-    color: themed('text__color') !important;
-  }
-}
-
-.border {
-  @include themify($themes) {
-    border: themed('border') !important;
-  }
-}
-
-.raised-border {
-  @include themify($themes) {
-    border: themed('raised-element__border') !important;
-  }
-}
-
-.borderless {
-  @include themify($themes) {
-    border: 0 !important;
-  }
-}
-
-
-
-.icon-button {
-  @include themify($themes) {
-    border: themed('icon-button__border') !important;
-    background-color: themed('icon-button__background-color') !important;
-    color: themed('icon-button__color') !important;
-  }
-}
-
-.icon-button:hover {
-  @include themify($themes) {
-    color: themed('icon-button__color--hover') !important;
-  }
-}
-
-
+<<<<<<< HEAD
 /////////////////////
 // Specific styles //
 /////////////////////
 
 .sidebar__logo svg path {
   @include themify($themes) {
-    fill: themed('sidebar__header-color');
-  }
-}
-
-.app-chrome__sidebar__toggle {
-  @include themify($themes) {
-    color: themed('sidebar__header-color') !important;
+    fill: themed("sidebar__header-color");
   }
 }
 
@@ -245,7 +41,7 @@ input {
   @include themify($themes) {
     &.place-top {
       &:after {
-        border-top-color: themed('raised-high__background-color') !important;
+        border-top-color: themed("raised-high__background-color") !important;
         border-top-style: solid !important;
         border-top-width: 6px !important;
       }
@@ -255,18 +51,257 @@ input {
 
 .breadcrumb__divider {
   @include themify($themes) {
-    color: themed('breadcrumb__divider___color') !important;
+    color: themed("breadcrumb__divider___color") !important;
   }
 }
 
 .breadcrumb__section {
   @include themify($themes) {
-    color: themed('breadcrumb__section___color') !important;
+    color: themed("breadcrumb__section___color") !important;
   }
 }
 
 .breadcrumb__section--active {
   @include themify($themes) {
-    color: themed('breadcrumb__section--active___color') !important;
+    color: themed("breadcrumb__section--active___color") !important;
+  }
+}
+=======
+
+
+
+>>>>>>> 2281445e525dbbe6fff8097942e507f9556b0dd4
+
+////////////////////////
+// General-use styles //
+////////////////////////
+
+.header {
+  @include themify($themes) {
+    color: themed("text__color");
+  }
+}
+
+.header > .icon {
+  @include themify($themes) {
+    color: themed("header__icon-color");
+  }
+}
+
+table {
+  @include themify($themes) {
+    background-color: themed("raised-low__background-color") !important ;
+    color: themed("text__color") !important;
+    border: themed("border") !important;
+  }
+
+  td {
+    @include themify($themes) {
+      color: themed("text__color") !important;
+    }
+  }
+
+  th {
+    @include themify($themes) {
+      background-color: themed("raised-low__background-color") !important ;
+      color: themed("text__color") !important;
+    }
+  }
+}
+
+.dropdown__content {
+  @include themify($themes) {
+    background-color: themed("background__color") !important;
+  }
+}
+
+input {
+  @include themify($themes) {
+    background-color: themed("background__color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
+.form {
+  label {
+    @include themify($themes) {
+      color: themed("text__color") !important;
+    }
+  }
+
+  input {
+    @include themify($themes) {
+      background-color: themed("background__color") !important;
+      color: themed("text__color") !important;
+    }
+  }
+}
+
+// Styling SUI dropdowns was surprisingly gnarly,
+// even though most of it is the standard palette.
+.dropdown {
+  // This styles the main drop-down box
+  @include themify($themes) {
+    background-color: themed("dropdown__background-color") !important;
+    color: themed("text__color") !important;
+    border: themed("dropdown__border") !important;
+  }
+  // This styles the actual drop-down bit.
+  .menu {
+    @include themify($themes) {
+      background-color: themed("dropdown__background-color") !important;
+      color: themed("text__color") !important;
+      border: themed("dropdown__border") !important;
+    }
+  }
+
+  // This makes sure the text is the right colour
+  .text {
+    @include themify($themes) {
+      color: themed("text__color") !important;
+    }
+  }
+
+  // We need to get rid of the border for erverything inside the drop-down.
+  .text,
+  .active,
+  .item,
+  .icon {
+    border: 0 !important;
+    @include themify($themes) {
+      color: themed("text__color") !important;
+    }
+  }
+
+  // We need a hover colour for the drop-down.
+  .item:hover,
+  .text:hover {
+    @include themify($themes) {
+      background-color: themed("dropdown__hover-color") !important;
+    }
+  }
+}
+
+.button {
+  @include themify($themes) {
+    background-color: themed("background__color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
+.hoverable:hover {
+  @include themify($themes) {
+    background-color: themed("hover-color") !important;
+  }
+}
+
+.selected {
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
+  }
+}
+
+.selected:hover {
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
+  }
+}
+
+.flat {
+  @include themify($themes) {
+    background-color: themed("background__color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
+.raised-low {
+  @include themify($themes) {
+    background-color: themed("raised-low__background-color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
+.raised-high {
+  @include themify($themes) {
+    background-color: themed("raised-high__background-color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
+.border {
+  @include themify($themes) {
+    border: themed("border") !important;
+  }
+}
+
+.raised-border {
+  @include themify($themes) {
+    border: themed("raised-element__border") !important;
+  }
+}
+
+.borderless {
+  @include themify($themes) {
+    border: 0 !important;
+  }
+}
+
+.icon-button {
+  @include themify($themes) {
+    border: themed("icon-button__border") !important;
+    background-color: themed("icon-button__background-color") !important;
+    color: themed("icon-button__color") !important;
+  }
+}
+
+.icon-button:hover {
+  @include themify($themes) {
+    color: themed("icon-button__color--hover") !important;
+  }
+}
+
+/////////////////////
+// Specific styles //
+/////////////////////
+
+.sidebar__logo svg path {
+  @include themify($themes) {
+    fill: themed("sidebar__header-color");
+  }
+}
+
+.app-chrome__sidebar__toggle {
+  @include themify($themes) {
+    color: themed("sidebar__header-color") !important;
+  }
+}
+
+.tooltip-popup {
+  @include themify($themes) {
+    &.place-top {
+      &:after {
+        border-top-color: themed("raised-high__background-color") !important;
+        border-top-style: solid !important;
+        border-top-width: 6px !important;
+      }
+    }
+  }
+}
+
+.breadcrumb__divider {
+  @include themify($themes) {
+    color: themed("breadcrumb__divider___color") !important;
+  }
+}
+
+.breadcrumb__section {
+  @include themify($themes) {
+    color: themed("breadcrumb__section___color") !important;
+  }
+}
+
+.breadcrumb__section--active {
+  @include themify($themes) {
+    color: themed("breadcrumb__section--active___color") !important;
   }
 }

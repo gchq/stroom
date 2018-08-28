@@ -34,6 +34,7 @@ const reducer = handleActions(
         ...state,
         [listingId]: {
           ...defaultStatePerListing,
+          ...state[listingId], // any existing state
           items,
           allowMultiSelect,
         },
