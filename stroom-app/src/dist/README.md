@@ -12,6 +12,6 @@ This package contains:
     
     
 To run Stroom for the first time you should:
-1. Check you're happy with the logging in `config.yml` and update the environment variables in `stroom.conf`. E.g. configure the location of the MySQL databases.
+1. Check you're happy with the logging and other system configuration in `config.yml`, e.g. configure the location of the MySQL databases.
 2. Run `./stroom.sh start`
 3. Run `./stroom.sh log` to see the logs, or `./stroom.sh stop` to stop Stroom.
