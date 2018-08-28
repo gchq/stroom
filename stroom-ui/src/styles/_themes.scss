@@ -1,5 +1,6 @@
 $themes: (
   light: (
+    // General
     background__color: #fff,
     text__color: rgba(0,0,0,.8),
     selected-color:#cae1f1,
@@ -9,6 +10,7 @@ $themes: (
     raised-element__border: 1px solid #fff,
     border: 1px solid #dfe0e1,
 
+    // Specific
     sidebar__header-color: #fff,
     header__icon-color: #2185d0,
     dropdown__background-color: #fff,
@@ -23,6 +25,7 @@ $themes: (
     icon-button__color--hover: black,
   ),
   dark: (
+    // General
     background__color: #282829,
     text__color: #ddd,
     selected-color:#185e90,
@@ -32,6 +35,7 @@ $themes: (
     raised-element__border: 1px solid #aaa,
     border:1px solid #4d5250, 
 
+    // Specific
     sidebar__header-color: white,
     header__icon-color: #2185d0,
     dropdown__background-color: #282829,
