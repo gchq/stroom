@@ -27,12 +27,9 @@ import { actionCreators, Directions, SortByOptions } from './redux';
 
 import { fetchTrackers, TrackerSelection } from './streamTasksResourceClient';
 
-// const { expressionChanged } = expressionActionCreators;
 const {
   updateSort,
-  updateTrackerSelection,
   moveSelection,
-  resetPaging,
   updateSearchCriteria,
   changePage,
   pageRight,
@@ -43,37 +40,20 @@ const enhance = compose(
   connect(
     ({
       trackerDashboard: {
-        // isLoading,
         trackers,
-        // showCompleted,
         sortBy,
         sortDirection,
-        selectedTrackerId,
-        // searchCriteria,
-        // pageSize,
-        // pageOffset,
-        // totalTrackers,
-        // numberOfPages,
+        selectedTrackerId
       },
     }) => ({
-      // isLoading,
       trackers,
-      // showCompleted,
       sortBy,
       sortDirection,
       selectedTrackerId,
-      // searchCriteria,
-      // pageSize,
-      // pageOffset,
-      // totalTrackers,
-      // numberOfPages,
     }),
     {
       fetchTrackers,
-      resetPaging,
       updateSort,
-      updateTrackerSelection,
-      // expressionChanged,
       moveSelection,
       updateSearchCriteria,
       changePage,
@@ -84,13 +64,6 @@ const enhance = compose(
   withHandlers({
     onMoveSelection: ({ moveSelection }) => (direction) => {
       moveSelection(direction);
-    },
-
-    onHandlePageChange: ({ changePage, fetchTrackers }) => (data) => {
-      if (data.activePage < data.totalPages) {
-        changePage(data.activePage - 1);
-        fetchTrackers();
-      }
     },
     onHandlePageRight: ({ pageRight, fetchTrackers }) => () => {
       pageRight();
@@ -123,34 +96,15 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        fetchTrackers,
-        resetPaging,
         onMoveSelection,
         onHandlePageRight,
-        onHandlePageLeft,
-        onHandleTrackerSelection,
-        onHandleSearch,
+        onHandlePageLeft
       } = this.props;
-
-      fetchTrackers();
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
       Mousetrap.bind('right', () => onHandlePageRight());
       Mousetrap.bind('left', () => onHandlePageLeft());
-      Mousetrap.bind('esc', () => onHandleTrackerSelection(undefined));
-      Mousetrap.bind('ctrl+shift+f', () => this.searchInputRef.focus());
-      Mousetrap.bind('enter', () => onHandleSearch());
-      Mousetrap.bind('return', () => onHandleSearch());
-
-      // This component monitors window size. For every change it will fetch the
-      // trackers. The fetch trackers function will only fetch trackers that fit
-      // in the viewport, which means the view will update to fit.
-      window.addEventListener('resize', (event) => {
-        // Resizing the window is another time when paging gets reset.
-        resetPaging();
-        fetchTrackers();
-      });
     },
   }),
 );

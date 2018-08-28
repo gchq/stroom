@@ -38,7 +38,7 @@ import {
   Grid,
 } from 'semantic-ui-react';
 
-import { actionCreators, Directions, SortByOptions } from '../redux';
+import { actionCreators, Directions } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
@@ -47,7 +47,6 @@ import ProcessingList from '../ProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
 const {
-  updateSort,
   updateTrackerSelection,
   moveSelection,
   resetPaging,
@@ -64,9 +63,6 @@ const enhance = compose(
         isLoading,
         trackers,
         showCompleted,
-        sortBy,
-        sortDirection,
-        selectedTrackerId,
         searchCriteria,
         pageSize,
         pageOffset,
@@ -77,9 +73,6 @@ const enhance = compose(
       isLoading,
       trackers,
       showCompleted,
-      sortBy,
-      sortDirection,
-      selectedTrackerId,
       searchCriteria,
       pageSize,
       pageOffset,
@@ -89,14 +82,10 @@ const enhance = compose(
     {
       fetchTrackers,
       resetPaging,
-      updateSort,
       updateTrackerSelection,
       expressionChanged,
-      moveSelection,
       updateSearchCriteria,
       changePage,
-      pageRight,
-      pageLeft,
     },
   ),
   withHandlers({
@@ -116,9 +105,6 @@ const enhance = compose(
 
       expressionChanged('trackerDetailsExpression', expression);
     },
-    onMoveSelection: ({ moveSelection }) => (direction) => {
-      moveSelection(direction);
-    },
     onHandleSearchChange: ({ resetPaging, updateSearchCriteria, fetchTrackers }) => (data) => {
       resetPaging();
       updateSearchCriteria(data.value);
@@ -136,71 +122,25 @@ const enhance = compose(
         fetchTrackers();
       }
     },
-    onHandlePageRight: ({ pageRight, fetchTrackers }) => () => {
-      pageRight();
-      fetchTrackers(TrackerSelection.first);
-    },
-    onHandlePageLeft: ({ pageLeft, fetchTrackers }) => () => {
-      pageLeft();
-      fetchTrackers(TrackerSelection.first);
-    },
-    onHandleSort: ({ updateSort, fetchTrackers }) => (
-      newSortBy,
-      currentSortBy,
-      currentDirection,
-    ) => {
-      if (currentSortBy === newSortBy) {
-        if (currentDirection === Directions.ascending) {
-          updateSort(newSortBy, Directions.descending);
-          fetchTrackers();
-        }
-        updateSort(newSortBy, Directions.ascending);
-        fetchTrackers();
-      }
-      updateSort(newSortBy, Directions.ascending);
-      fetchTrackers();
-    },
   }),
-  withProps(({ trackers, selectedTrackerId }) => ({
-    selectedTracker: trackers.find(tracker => tracker.filterId === selectedTrackerId),
-  })),
   withProps(({ selectedTracker }) => ({
     showDetails: selectedTracker !== undefined,
-  })),
-  withProps(({ showDetails }) => ({
-    // 370 is the minimum height because it lets all the tracker details be displayed
-    detailsPanelMinimumHeight: showDetails ? 200 : 0,
-  })),
-  withProps(({ detailsPanelMinimumHeight, showDetails }) => ({
-    panelSizes: [
-      {},
-      {
-        resize: 'dynamic',
-        minSize: detailsPanelMinimumHeight,
-        size: showDetails ? detailsPanelMinimumHeight : 0,
-      },
-    ],
   })),
   lifecycle({
     componentDidMount() {
       const {
         fetchTrackers,
         resetPaging,
-        onMoveSelection,
-        onHandlePageRight,
-        onHandlePageLeft,
+        // onMoveSelection,
+        // onHandlePageRight,
+        // onHandlePageLeft,
         onHandleTrackerSelection,
         onHandleSearch,
       } = this.props;
 
       fetchTrackers();
 
-      Mousetrap.bind('up', () => onMoveSelection('up'));
-      Mousetrap.bind('down', () => onMoveSelection('down'));
-      Mousetrap.bind('right', () => onHandlePageRight());
-      Mousetrap.bind('left', () => onHandlePageLeft());
       Mousetrap.bind('esc', () => onHandleTrackerSelection(undefined));
-      Mousetrap.bind('ctrl+shift+f', () => this.searchInputRef.focus());
       Mousetrap.bind('enter', () => onHandleSearch());
       Mousetrap.bind('return', () => onHandleSearch());
 
@@ -218,28 +158,14 @@ const enhance = compose(
 
 const TrackerDashboard = ({
   trackers,
-  sortBy,
-  sortDirection,
-  selectedTrackerId,
   searchCriteria,
   pageOffset,
   numberOfPages,
-  updateSort,
-  fetchTrackers,
-  updateTrackerSelection,
-  expressionChanged,
-  selectedTracker,
   showDetails,
-  detailsPanelMinimumHeight,
-  panelSizes,
-  onHandleSort,
   onHandleTrackerSelection,
-  onMoveSelection,
   onHandleSearchChange,
   onHandleSearch,
   onHandlePageChange,
-  onHandlePageRight,
-  onHandlePageLeft,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
@@ -272,7 +198,9 @@ const TrackerDashboard = ({
               id="table-container"
               className={`table-container${showDetails ? ' showing-details' : ''}`}
             >
-              <ProcessingList onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}/>
+              <ProcessingList
+                onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
+              />
               <div className="pagination-container">
                 <Pagination
                   activePage={pageOffset + 1}
