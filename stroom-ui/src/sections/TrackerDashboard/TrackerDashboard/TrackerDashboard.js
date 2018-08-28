@@ -22,15 +22,9 @@ import Mousetrap from 'mousetrap';
 
 import PanelGroup from 'react-panelgroup';
 
-import ReactTable from 'react-table';
-import 'react-table/react-table.css';
-
 import {
   Header,
   Icon,
-  Label,
-  Table,
-  Progress,
   Button,
   Input,
   Menu,
@@ -38,9 +32,9 @@ import {
   Grid,
 } from 'semantic-ui-react';
 
-import { actionCreators, Directions } from '../redux';
+import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
-import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
+import { fetchTrackers } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
 
 import ProcessingList from '../ProcessingList';
@@ -48,12 +42,9 @@ import ProcessingList from '../ProcessingList';
 const { expressionChanged } = expressionActionCreators;
 const {
   updateTrackerSelection,
-  moveSelection,
   resetPaging,
   updateSearchCriteria,
   changePage,
-  pageRight,
-  pageLeft,
 } = actionCreators;
 
 const enhance = compose(
