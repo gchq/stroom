@@ -32,7 +32,7 @@ import {
   Input,
   Menu,
   Pagination,
-  Grid
+  Grid,
 } from 'semantic-ui-react';
 
 import { actionCreators, Directions, SortByOptions } from '../redux';
@@ -50,21 +50,6 @@ const {
   pageRight,
   pageLeft,
 } = actionCreators;
-
-
-const mapStateToProps = state => ({
-  dimTable: state.trackerDashboard.isLoading,
-  trackers: state.trackerDashboard.trackers,
-  showCompleted: state.trackerDashboard.showCompleted,
-  sortBy: state.trackerDashboard.sortBy,
-  sortDirection: state.trackerDashboard.sortDirection,
-  selectedTrackerId: state.trackerDashboard.selectedTrackerId,
-  searchCriteria: state.trackerDashboard.searchCriteria,
-  pageSize: state.trackerDashboard.pageSize,
-  pageOffset: state.trackerDashboard.pageOffset,
-  totalTrackers: state.trackerDashboard.totalTrackers,
-  numberOfPages: state.trackerDashboard.numberOfPages,
-});
 
 const mapDispatchToProps = dispatch => ({
   fetchTrackers: () => dispatch(fetchTrackers()),
@@ -116,9 +101,37 @@ const mapDispatchToProps = dispatch => ({
   },
 });
 
-
 const enhance = compose(
-  connect(mapStateToProps, mapDispatchToProps),
+  connect(
+    ({
+      trackerDashboard: {
+        isLoading,
+        trackers,
+        showCompleted,
+        sortBy,
+        sortDirection,
+        selectedTrackerId,
+        searchCriteria,
+        pageSize,
+        pageOffset,
+        totalTrackers,
+        numberOfPages,
+      },
+    }) => ({
+      isLoading,
+      trackers,
+      showCompleted,
+      sortBy,
+      sortDirection,
+      selectedTrackerId,
+      searchCriteria,
+      pageSize,
+      pageOffset,
+      totalTrackers,
+      numberOfPages,
+    }),
+    mapDispatchToProps,
+  ),
   lifecycle({
     componentDidMount() {
       console.log('Mounted the component, time to fetch trackers');
@@ -215,7 +228,7 @@ class TrackerDashboard extends Component {
                   value={searchCriteria}
                   onChange={(event, data) => onHandleSearchChange(data)}
                   onKeyPress={(event, data) => onHandleSearch(event, data)}
-                  action={<Button classname='icon-button' onClick={() => onHandleSearch()}/>}
+                  action={<Button classname="icon-button" onClick={() => onHandleSearch()} />}
                   // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
                   ref={input => (this.searchInputRef = input)}
                 />
@@ -320,9 +333,5 @@ class TrackerDashboard extends Component {
 TrackerDashboard.contextTypes = {
   store: PropTypes.object.isRequired,
 };
-
-
-
-
 
 export default enhance(TrackerDashboard);
