@@ -5,6 +5,13 @@ buildscript {
     }
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+
+        // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
+        // Later versions of the JOOQ Gradle plugin should make this unnecessary.
+        classpath 'com.sun.xml.bind:jaxb-core:2.3.0.1'
+        classpath 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
+        classpath 'javax.activation:activation:1.1.1'
+        classpath 'javax.xml.bind:jaxb-api:2.3.0'
     }
 }
 
@@ -17,7 +24,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "2.0.4" apply false
 
-    id 'nu.studer.jooq' version '2.0.9' apply false
+    id 'nu.studer.jooq' version '3.0.0' apply false
 }
 
 task wrapper(type: Wrapper) {
@@ -77,7 +84,7 @@ ext.versions = [
         jackson           : '2.9.1', //in line with dropwizard 1.2.2
         jersey            : '2.25.1',
         jetty             : '9.4.8.v20171121', //in line with dropwizard 1.2.2
-        jooq              : '3.10.1',
+        jooq              : '3.11.4',
         junit_jupiter     : '5.2.0',
         logback           : '1.2.3', //in line with dropwizard 1.2.2
         lucene            : '5.5.3',
