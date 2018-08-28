@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.explorer;
+package stroom.explorer.impl.db;
 
-import fri.util.database.jpa.tree.closuretable.ClosureTableTreeNode;
 import stroom.docref.DocRef;
 
 import javax.persistence.Column;
@@ -28,17 +27,24 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
+import java.util.Objects;
 
-@Entity
-@Table(name = "explorerTreeNode", uniqueConstraints = @UniqueConstraint(columnNames = {"type", "uuid"}))
-public class ExplorerTreeNode implements ClosureTableTreeNode {
-    private Long id;
+public class ExplorerTreeNode {
+    private Integer id;
     private String type;
     private String uuid;
     private String name;
     private String tags;
 
     public ExplorerTreeNode() {
+    }
+
+    public ExplorerTreeNode(final Integer id, final String type, final String uuid, final String name, final String tags) {
+        this.id = id;
+        this.type = type;
+        this.uuid = uuid;
+        this.name = name;
+        this.tags = tags;
     }
 
     public ExplorerTreeNode(final String type, final String uuid, final String name, final String tags) {
@@ -48,7 +54,7 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         this.tags = tags;
     }
 
-    static ExplorerTreeNode create(final DocRef docRef) {
+    public static ExplorerTreeNode create(final DocRef docRef) {
         if (docRef == null) {
             return null;
         }
@@ -60,19 +66,14 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         return explorerTreeNode;
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", columnDefinition = "INT")
-    @XmlTransient
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(final Long id) {
+    public void setId(final Integer id) {
         this.id = id;
     }
 
-    @Column(name = "type", nullable = false)
     public String getType() {
         return type;
     }
@@ -81,7 +82,6 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         this.type = type;
     }
 
-    @Column(name = "uuid", nullable = false)
     public String getUuid() {
         return uuid;
     }
@@ -90,7 +90,6 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         this.uuid = uuid;
     }
 
-    @Column(name = "name", nullable = false)
     public String getName() {
         return name;
     }
@@ -99,7 +98,6 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         this.name = name;
     }
 
-    @Column(name = "tags")
     public String getTags() {
         return tags;
     }
@@ -108,7 +106,6 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         this.tags = tags;
     }
 
-    @Transient
     public DocRef getDocRef() {
         return new DocRef(type, uuid, name);
     }
@@ -121,5 +118,18 @@ public class ExplorerTreeNode implements ClosureTableTreeNode {
         clone.name = name;
         clone.tags = tags;
         return clone;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ExplorerTreeNode that = (ExplorerTreeNode) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

@@ -18,15 +18,18 @@ package stroom.explorer;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import fri.util.database.jpa.commons.DbSession;
+import stroom.explorer.impl.db.ExplorerDbModule;
+import stroom.explorer.impl.db.ExplorerTreeDao;
+import stroom.explorer.impl.db.ExplorerTreeDaoImpl;
 import stroom.task.api.TaskHandler;
 
 public class ExplorerModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new ExplorerDbModule());
+
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
         bind(ExplorerTreeDao.class).to(ExplorerTreeDaoImpl.class);
-        bind(DbSession.class).to(DbSessionJpaImpl.class);
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
 

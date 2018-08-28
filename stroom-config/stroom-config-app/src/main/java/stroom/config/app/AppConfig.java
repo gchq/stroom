@@ -7,6 +7,7 @@ import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
 import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
+import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
 import stroom.lifecycle.LifecycleConfig;
 import stroom.node.NodeConfig;
@@ -29,7 +30,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig {
-
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ContentPackImportConfig contentPackImportConfig;
@@ -37,6 +37,7 @@ public class AppConfig {
     private DataConfig dataConfig;
     private DataFeedConfig dataFeedConfig;
     private DataSourceUrlConfig dataSourceUrlConfig;
+    private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
@@ -62,6 +63,7 @@ public class AppConfig {
         this.dataConfig = new DataConfig();
         this.dataFeedConfig = new DataFeedConfig();
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
+        this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
@@ -88,6 +90,7 @@ public class AppConfig {
               final DataConfig dataConfig,
               final DataFeedConfig dataFeedConfig,
               final DataSourceUrlConfig dataSourceUrlConfig,
+              final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
@@ -111,6 +114,7 @@ public class AppConfig {
         this.dataConfig = dataConfig;
         this.dataFeedConfig = dataFeedConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
+        this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.lifecycleConfig = lifecycleConfig;
         this.pipelineConfig = pipelineConfig;
@@ -192,6 +196,15 @@ public class AppConfig {
 
     public void setDataSourceUrlConfig(final DataSourceUrlConfig dataSourceUrlConfig) {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
+    }
+
+    @JsonProperty("explorer")
+    public ExplorerConfig getExplorerConfig() {
+        return explorerConfig;
+    }
+
+    public void setExplorerConfig(final ExplorerConfig explorerConfig) {
+        this.explorerConfig = explorerConfig;
     }
 
     @JsonProperty("export")

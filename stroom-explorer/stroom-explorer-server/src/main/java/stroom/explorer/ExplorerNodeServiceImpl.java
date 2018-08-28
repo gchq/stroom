@@ -1,12 +1,13 @@
 package stroom.explorer;
 
-import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.impl.db.ExplorerTreeDao;
+import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     // TODO : This is a temporary means to set tags on nodes for the purpose of finding data source nodes.
     // TODO : The explorer will eventually allow a user to set custom tags and to find nodes searching by tag.
     private static final Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
+
     static {
         DEFAULT_TAG_MAP.put("StatisticStore", "DataSource");
         DEFAULT_TAG_MAP.put("ElasticIndex", "DataSource");
@@ -278,40 +280,40 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
-        try {
-            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
-            final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
-            setTags(docNode);
-            explorerTreeDao.addChild(folderNode, docNode);
+//        try {
+        final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
+        final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
+        setTags(docNode);
+        explorerTreeDao.addChild(folderNode, docNode);
 
-        } catch (final UniqueConstraintViolationException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+//        } catch (final UniqueConstraintViolationException e) {
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
     }
 
     private void moveNode(final DocRef parentFolderRef, final DocRef docRef) {
-        try {
-            final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
-            explorerTreeDao.move(docNode, folderNode);
+//        try {
+        final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
+        final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
+        explorerTreeDao.move(docNode, folderNode);
 
-        } catch (final UniqueConstraintViolationException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+//        } catch (final UniqueConstraintViolationException e) {
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
     }
 
     private void updateNode(final DocRef docRef) {
-        try {
-            final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
-            if (docNode != null) {
-                docNode.setType(docRef.getType());
-                docNode.setUuid(docRef.getUuid());
-                docNode.setName(docRef.getName());
-                explorerTreeDao.update(docNode);
-            }
-        } catch (final UniqueConstraintViolationException e) {
-            throw new RuntimeException(e.getMessage(), e);
+//        try {
+        final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
+        if (docNode != null) {
+            docNode.setType(docRef.getType());
+            docNode.setUuid(docRef.getUuid());
+            docNode.setName(docRef.getName());
+            explorerTreeDao.update(docNode);
         }
+//        } catch (final UniqueConstraintViolationException e) {
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
     }
 
     private void setTags(final ExplorerTreeNode explorerTreeNode) {

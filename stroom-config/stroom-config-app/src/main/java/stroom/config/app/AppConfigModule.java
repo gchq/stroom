@@ -8,6 +8,7 @@ import stroom.data.meta.impl.db.DataMetaServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
+import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
 import stroom.lifecycle.LifecycleConfig;
 import stroom.node.HeapHistogramConfig;
@@ -59,6 +60,7 @@ public class AppConfigModule extends AbstractModule {
         bind(DataStoreServiceConfig.class).toProvider(() -> appConfig.getDataConfig().getDataStoreServiceConfig());
         bind(DataFeedConfig.class).toProvider(appConfig::getDataFeedConfig);
         bind(DataSourceUrlConfig.class).toProvider(appConfig::getDataSourceUrlConfig);
+        bind(ExplorerConfig.class).toProvider(appConfig::getExplorerConfig);
         bind(ExportConfig.class).toProvider(appConfig::getExportConfig);
         bind(LifecycleConfig.class).toProvider(appConfig::getLifecycleConfig);
         bind(NodeConfig.class).toProvider(appConfig::getNodeConfig);

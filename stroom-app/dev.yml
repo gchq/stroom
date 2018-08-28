@@ -93,6 +93,16 @@ appConfig:
     statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
     annotations: "http://${STROOM_HOST:-localhost}/annotationsService/queryApi/v1"
     elasticIndex: "http://${STROOM_HOST:-localhost}/queryElasticService/queryApi/v1"
+  explorer:
+    connection:
+      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+      jdbcDriverUsername: stroomuser
+      jdbcDriverPassword: stroompassword1
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
   export:
     enabled: false
   lifecycle:

@@ -64,6 +64,8 @@ include 'stroom-data-store:stroom-data-store-util'
 // Explorer
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-server'
+include 'stroom-explorer:stroom-explorer-impl-db'
+include 'stroom-explorer:stroom-explorer-impl-db-gen'
 
 // Index
 include 'stroom-index:stroom-index-shared'

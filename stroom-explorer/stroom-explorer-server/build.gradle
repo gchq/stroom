@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.explorer.server'
 
 dependencies {
-    compile files('libs/jpatreedao-1.0.jar')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-entity-shared')
@@ -9,6 +8,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-explorer:stroom-explorer-impl-db')
     compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef
