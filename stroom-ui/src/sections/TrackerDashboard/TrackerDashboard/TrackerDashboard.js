@@ -51,6 +51,91 @@ const {
   pageLeft,
 } = actionCreators;
 
+
+const mapStateToProps = state => ({
+  dimTable: state.trackerDashboard.isLoading,
+  trackers: state.trackerDashboard.trackers,
+  showCompleted: state.trackerDashboard.showCompleted,
+  sortBy: state.trackerDashboard.sortBy,
+  sortDirection: state.trackerDashboard.sortDirection,
+  selectedTrackerId: state.trackerDashboard.selectedTrackerId,
+  searchCriteria: state.trackerDashboard.searchCriteria,
+  pageSize: state.trackerDashboard.pageSize,
+  pageOffset: state.trackerDashboard.pageOffset,
+  totalTrackers: state.trackerDashboard.totalTrackers,
+  numberOfPages: state.trackerDashboard.numberOfPages,
+});
+
+const mapDispatchToProps = dispatch => ({
+  fetchTrackers: () => dispatch(fetchTrackers()),
+  resetPaging: () => dispatch(resetPaging()),
+  onHandleSort: (sortBy, sortDirection) => {
+    dispatch(updateSort(sortBy, sortDirection));
+    dispatch(fetchTrackers());
+  },
+  onHandleTrackerSelection: (filterId, trackers) => {
+    dispatch(updateTrackerSelection(filterId));
+
+    let expression;
+    if (filterId !== undefined) {
+      const tracker = trackers.find(t => t.filterId === filterId);
+      if (tracker && tracker.filter) {
+        expression = tracker.filter.expression;
+      }
+    }
+
+    dispatch(expressionActionCreators.expressionChanged('trackerDetailsExpression', expression));
+  },
+  onMoveSelection: (direction) => {
+    dispatch(moveSelection(direction));
+  },
+  onHandleSearchChange: (data) => {
+    dispatch(resetPaging());
+    dispatch(updateSearchCriteria(data.value));
+    // This line enables search as you type. Whether we want it or not depends on performance
+    dispatch(fetchTrackers());
+  },
+  onHandleSearch: (event) => {
+    if (event === undefined || event.key === 'Enter') {
+      dispatch(fetchTrackers());
+    }
+  },
+  onHandlePageChange: (data) => {
+    if (data.activePage < data.totalPages) {
+      dispatch(changePage(data.activePage - 1));
+      dispatch(fetchTrackers());
+    }
+  },
+  onHandlePageRight: () => {
+    dispatch(pageRight());
+    dispatch(fetchTrackers(TrackerSelection.first));
+  },
+  onHandlePageLeft: () => {
+    dispatch(pageLeft());
+    dispatch(fetchTrackers(TrackerSelection.first));
+  },
+});
+
+
+const enhance = compose(
+  connect(mapStateToProps, mapDispatchToProps),
+  lifecycle({
+    componentDidMount() {
+      console.log('Mounted the component, time to fetch trackers');
+      this.props.fetchTrackers();
+
+      // This component monitors window size. For every change it will fetch the
+      // trackers. The fetch trackers function will only fetch trackers that fit
+      // in the viewport, which means the view will update to fit.
+      window.addEventListener('resize', (event) => {
+        // Resizing the window is another time when paging gets reset.
+        this.props.resetPaging();
+        this.props.fetchTrackers();
+      });
+    },
+  }),
+);
+
 class TrackerDashboard extends Component {
   handleSort(newSortBy, currentSortBy, currentDirection) {
     if (currentSortBy === newSortBy) {
@@ -197,7 +282,7 @@ class TrackerDashboard extends Component {
                             active={selectedTrackerId === filterId}
                           >
                             <Table.Cell className="name-column" textAlign="left" width={7}>
-                              {pipelineName}
+                              TODO: backend broken, awaiting re-write
                             </Table.Cell>
                             <Table.Cell className="priority-column" textAlign="center" width={1}>
                               <Label circular color="green">
@@ -236,87 +321,8 @@ TrackerDashboard.contextTypes = {
   store: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = state => ({
-  dimTable: state.trackerDashboard.isLoading,
-  trackers: state.trackerDashboard.trackers,
-  showCompleted: state.trackerDashboard.showCompleted,
-  sortBy: state.trackerDashboard.sortBy,
-  sortDirection: state.trackerDashboard.sortDirection,
-  selectedTrackerId: state.trackerDashboard.selectedTrackerId,
-  searchCriteria: state.trackerDashboard.searchCriteria,
-  pageSize: state.trackerDashboard.pageSize,
-  pageOffset: state.trackerDashboard.pageOffset,
-  totalTrackers: state.trackerDashboard.totalTrackers,
-  numberOfPages: state.trackerDashboard.numberOfPages,
-});
 
-const mapDispatchToProps = dispatch => ({
-  fetchTrackers: () => dispatch(fetchTrackers()),
-  resetPaging: () => dispatch(resetPaging()),
-  onHandleSort: (sortBy, sortDirection) => {
-    dispatch(updateSort(sortBy, sortDirection));
-    dispatch(fetchTrackers());
-  },
-  onHandleTrackerSelection: (filterId, trackers) => {
-    dispatch(updateTrackerSelection(filterId));
 
-    let expression;
-    if (filterId !== undefined) {
-      const tracker = trackers.find(t => t.filterId === filterId);
-      if (tracker && tracker.filter) {
-        expression = tracker.filter.expression;
-      }
-    }
 
-    dispatch(expressionActionCreators.expressionChanged('trackerDetailsExpression', expression));
-  },
-  onMoveSelection: (direction) => {
-    dispatch(moveSelection(direction));
-  },
-  onHandleSearchChange: (data) => {
-    dispatch(resetPaging());
-    dispatch(updateSearchCriteria(data.value));
-    // This line enables search as you type. Whether we want it or not depends on performance
-    dispatch(fetchTrackers());
-  },
-  onHandleSearch: (event) => {
-    if (event === undefined || event.key === 'Enter') {
-      dispatch(fetchTrackers());
-    }
-  },
-  onHandlePageChange: (data) => {
-    if (data.activePage < data.totalPages) {
-      dispatch(changePage(data.activePage - 1));
-      dispatch(fetchTrackers());
-    }
-  },
-  onHandlePageRight: () => {
-    dispatch(pageRight());
-    dispatch(fetchTrackers(TrackerSelection.first));
-  },
-  onHandlePageLeft: () => {
-    dispatch(pageLeft());
-    dispatch(fetchTrackers(TrackerSelection.first));
-  },
-});
-
-const enhance = compose(
-  connect(mapStateToProps, mapDispatchToProps),
-  lifecycle({
-    componentDidMount() {
-      console.log('Mounted the component, time to fetch trackers');
-      this.props.fetchTrackers();
-
-      // This component monitors window size. For every change it will fetch the
-      // trackers. The fetch trackers function will only fetch trackers that fit
-      // in the viewport, which means the view will update to fit.
-      window.addEventListener('resize', (event) => {
-        // Resizing the window is another time when paging gets reset.
-        this.props.resetPaging();
-        this.props.fetchTrackers();
-      });
-    },
-  }),
-);
 
 export default enhance(TrackerDashboard);
