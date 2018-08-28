@@ -77,6 +77,7 @@ table {
 input {
   @include themify($themes) {
     background-color: themed('background__color') !important;
+    color: themed('text__color') !important;
   }
 }
 
