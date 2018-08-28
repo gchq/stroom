@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, withProps, mapProps, withHandlers } from 'recompose';
+import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
 import PanelGroup from 'react-panelgroup';
@@ -89,6 +89,9 @@ const enhance = compose(
       expressionChanged,
       moveSelection,
       updateSearchCriteria,
+      changePage,
+      pageRight,
+      pageLeft,
     },
   ),
   withHandlers({
@@ -177,6 +180,7 @@ const enhance = compose(
     componentDidMount() {
       const {
         fetchTrackers,
+        resetPaging,
         onMoveSelection,
         onHandlePageRight,
         onHandlePageLeft,
@@ -184,7 +188,7 @@ const enhance = compose(
         onHandleSearch,
       } = this.props;
 
-      this.props.fetchTrackers();
+      fetchTrackers();
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
@@ -200,8 +204,8 @@ const enhance = compose(
       // in the viewport, which means the view will update to fit.
       window.addEventListener('resize', (event) => {
         // Resizing the window is another time when paging gets reset.
-        this.props.resetPaging();
-        this.props.fetchTrackers();
+        resetPaging();
+        fetchTrackers();
       });
     },
   }),
