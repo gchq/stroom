@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, branch, renderComponent } from 'recompose';
+import { compose, branch, renderComponent, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
 import moment from 'moment';
@@ -12,6 +12,27 @@ import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
 import HorizontalPanel from 'components/HorizontalPanel';
 import { ExpressionBuilder } from 'components/ExpressionBuilder';
+
+const { updateTrackerSelection } = actionCreators;
+
+const enhance = compose(
+  connect(
+    ({ processing: { trackers } }) => ({ trackers }),
+    { enableToggle, updateTrackerSelection },
+  ),
+  withHandlers({
+    onHandleEnableToggle: ({ enableToggle }) => (filterId, isCurrentlyEnabled) => {
+      enableToggle(filterId, isCurrentlyEnabled);
+    },
+    onHandleTrackerSelection: ({ updateTrackerSelection }) => (filterId) => {
+      updateTrackerSelection(filterId);
+    },
+  }),
+  withProps(({ trackers, selectedTrackerId }) => ({
+    selectedTracker: trackers.find(tracker => tracker.filterId === selectedTrackerId),
+  })),
+  branch(({ selectedTracker }) => !selectedTracker, renderComponent(() => <div />)),
+);
 
 const ProcessingDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => {
   const title = selectedTracker.pipelineName;
@@ -105,19 +126,4 @@ ProcessingDetails.propTypes = {
   onHandleTrackerSelection: PropTypes.func.isRequired,
 };
 
-export default compose(
-  connect(
-    (state, props) => ({
-      selectedTracker: state.processing.trackers.find(tracker => tracker.filterId === state.processing.selectedTrackerId),
-    }),
-    dispatch => ({
-      onHandleEnableToggle: (filterId, isCurrentlyEnabled) => {
-        dispatch(enableToggle(filterId, isCurrentlyEnabled));
-      },
-      onHandleTrackerSelection: (filterId) => {
-        dispatch(actionCreators.updateTrackerSelection(filterId));
-      },
-    }),
-  ),
-  branch(({ selectedTracker }) => !selectedTracker, renderComponent(() => <div />)),
-)(ProcessingDetails);
+export default enhance(ProcessingDetails);
