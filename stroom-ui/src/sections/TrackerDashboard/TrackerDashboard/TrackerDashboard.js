@@ -16,8 +16,8 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { connect, } from 'react-redux';
+import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
 import PanelGroup from 'react-panelgroup';
@@ -40,6 +40,7 @@ import { actionCreators as expressionActionCreators } from 'components/Expressio
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
 
+const { expressionChanged } = expressionActionCreators;
 const {
   updateSort,
   updateTrackerSelection,
@@ -50,56 +51,6 @@ const {
   pageRight,
   pageLeft,
 } = actionCreators;
-
-const mapDispatchToProps = dispatch => ({
-  fetchTrackers: () => dispatch(fetchTrackers()),
-  resetPaging: () => dispatch(resetPaging()),
-  onHandleSort: (sortBy, sortDirection) => {
-    dispatch(updateSort(sortBy, sortDirection));
-    dispatch(fetchTrackers());
-  },
-  onHandleTrackerSelection: (filterId, trackers) => {
-    dispatch(updateTrackerSelection(filterId));
-
-    let expression;
-    if (filterId !== undefined) {
-      const tracker = trackers.find(t => t.filterId === filterId);
-      if (tracker && tracker.filter) {
-        expression = tracker.filter.expression;
-      }
-    }
-
-    dispatch(expressionActionCreators.expressionChanged('trackerDetailsExpression', expression));
-  },
-  onMoveSelection: (direction) => {
-    dispatch(moveSelection(direction));
-  },
-  onHandleSearchChange: (data) => {
-    dispatch(resetPaging());
-    dispatch(updateSearchCriteria(data.value));
-    // This line enables search as you type. Whether we want it or not depends on performance
-    dispatch(fetchTrackers());
-  },
-  onHandleSearch: (event) => {
-    if (event === undefined || event.key === 'Enter') {
-      dispatch(fetchTrackers());
-    }
-  },
-  onHandlePageChange: (data) => {
-    if (data.activePage < data.totalPages) {
-      dispatch(changePage(data.activePage - 1));
-      dispatch(fetchTrackers());
-    }
-  },
-  onHandlePageRight: () => {
-    dispatch(pageRight());
-    dispatch(fetchTrackers(TrackerSelection.first));
-  },
-  onHandlePageLeft: () => {
-    dispatch(pageLeft());
-    dispatch(fetchTrackers(TrackerSelection.first));
-  },
-});
 
 const enhance = compose(
   connect(
@@ -130,11 +81,12 @@ const enhance = compose(
       totalTrackers,
       numberOfPages,
     }),
-    mapDispatchToProps,
+    {
+      fetchTrackers, resetPaging, updateSort, updateTrackerSelection, expressionChanged, moveSelection, updateSearchCriteria
+    },
   ),
   lifecycle({
     componentDidMount() {
-      console.log('Mounted the component, time to fetch trackers');
       this.props.fetchTrackers();
 
       // This component monitors window size. For every change it will fetch the
@@ -147,32 +99,84 @@ const enhance = compose(
       });
     },
   }),
+
+  withHandlers({
+    onHandleTrackerSelection: ({updateTrackerSelection, expressionChanged}) => (filterId, trackers) => {
+      updateTrackerSelection(filterId);
+  
+      let expression;
+      if (filterId !== undefined) {
+        const tracker = trackers.find(t => t.filterId === filterId);
+        if (tracker && tracker.filter) {
+          expression = tracker.filter.expression;
+        }
+      }
+  
+      expressionChanged('trackerDetailsExpression', expression);
+    },
+    onMoveSelection: ({moveSelection}) => direction => {
+      moveSelection(direction);
+    },
+    onHandleSearchChange: ({resetPaging, updateSearchCriteria, fetchTrackers}) => data => {
+      resetPaging();
+      updateSearchCriteria(data.value);
+      // This line enables search as you type. Whether we want it or not depends on performance
+      fetchTrackers();
+    },
+    onHandleSearch: ({fetchTrackers}) => event => {
+      if (event === undefined || event.key === 'Enter') {
+        fetchTrackers();
+      }
+    },
+    onHandlePageChange: ({changePage, fetchTrackers}) => data => {
+      if (data.activePage < data.totalPages) {
+        changePage(data.activePage - 1);
+        fetchTrackers();
+      }
+    },
+    onHandlePageRight: ({pageRight, fetchTrackers}) => () => {
+      pageRight();
+      fetchTrackers(TrackerSelection.first);
+    },
+    onHandlePageLeft: ({pageLeft, fetchTrackers}) => () => {
+      pageLeft();
+      fetchTrackers(TrackerSelection.first);
+    },
+    onHandleSort: ({updateSort, fetchTrackers}) => (newSortBy, currentSortBy, currentDirection) => {
+      if (currentSortBy === newSortBy) {
+        if (currentDirection === Directions.ascending) {
+          updateSort(newSortBy, Directions.descending);
+          fetchTrackers();
+        }
+        updateSort(newSortBy, Directions.ascending);
+        fetchTrackers();
+      }
+      updateSort(newSortBy, Directions.ascending);
+      fetchTrackers();
+    }
+  }),
 );
 
-const TrackerDashboard = ({trackers,
+const TrackerDashboard = ({
+  trackers,
   sortBy,
   sortDirection,
   selectedTrackerId,
   searchCriteria,
   pageOffset,
   numberOfPages, 
+  updateSort,
+  fetchTrackers,
+  updateTrackerSelection,
+  expressionChanged,
+  onHandleSort,
   onHandleTrackerSelection,
   onMoveSelection,
-  onHandleSort,
   onHandleSearchChange,
   onHandleSearch,
   onHandlePageChange,
   onHandlePageRight,
   onHandlePageLeft}) => {
-  const handleSort = (newSortBy, currentSortBy, currentDirection) => {
-    if (currentSortBy === newSortBy) {
-      if (currentDirection === Directions.ascending) {
-        return onHandleSort(newSortBy, Directions.descending);
-      }
-      return onHandleSort(newSortBy, Directions.ascending);
-    }
-    return onHandleSort(newSortBy, Directions.ascending);
-  }
 
   const selectedTracker = trackers.find(tracker => tracker.filterId === selectedTrackerId);
   const showDetails = selectedTracker !== undefined;
@@ -222,7 +226,7 @@ const TrackerDashboard = ({trackers,
                 value={searchCriteria}
                 onChange={(event, data) => onHandleSearchChange(data)}
                 onKeyPress={(event, data) => onHandleSearch(event, data)}
-                action={<Button classname="icon-button" onClick={() => onHandleSearch()} />}
+                action={<Button className="icon-button" onClick={() => onHandleSearch()} />}
                 // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
                 ref={input => (this.searchInputRef = input)}
               />
@@ -240,7 +244,7 @@ const TrackerDashboard = ({trackers,
                       <Table.HeaderCell
                         sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
                         onClick={() =>
-                          handleSort(SortByOptions.pipeline, sortBy, sortDirection)
+                          onHandleSort(SortByOptions.pipeline, sortBy, sortDirection)
                         }
                       >
                         Pipeline name
@@ -248,7 +252,7 @@ const TrackerDashboard = ({trackers,
                       <Table.HeaderCell
                         sorted={sortBy === SortByOptions.priority ? sortDirection : null}
                         onClick={() =>
-                          handleSort(SortByOptions.priority, sortBy, sortDirection)
+                          onHandleSort(SortByOptions.priority, sortBy, sortDirection)
                         }
                       >
                         Priority
@@ -256,7 +260,7 @@ const TrackerDashboard = ({trackers,
                       <Table.HeaderCell
                         sorted={sortBy === SortByOptions.progress ? sortDirection : null}
                         onClick={() =>
-                          handleSort(SortByOptions.progress, sortBy, sortDirection)
+                          onHandleSort(SortByOptions.progress, sortBy, sortDirection)
                         }
                       >
                         Progress
@@ -286,6 +290,7 @@ const TrackerDashboard = ({trackers,
                           key={filterId}
                           className="tracker-row"
                           onClick={() => onHandleTrackerSelection(filterId, trackers)}
+                          // onClick={() => onHandleTrackerSelection(filterId, trackers, updateTrackerSelection, expressionChanged)}
                           active={selectedTrackerId === filterId}
                         >
                           <Table.Cell className="name-column" textAlign="left" width={7}>
