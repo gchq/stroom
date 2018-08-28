@@ -58,7 +58,11 @@ const NewDocDialog = ({
     size="small"
     closeOnDimmerClick={false}
     header={
-      <Header icon="plus" content={`Create a New Doc Ref in ${destination && destination.name}`} />
+      <Header
+        className="header"
+        icon="plus"
+        content={`Create a New Doc Ref in ${destination && destination.name}`}
+      />
     }
     content={
       <Form>

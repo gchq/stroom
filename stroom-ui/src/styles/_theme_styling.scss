@@ -187,11 +187,6 @@ input {
     background-color: themed('background__color') !important;
     color: themed('text__color') !important;
   }
-  .icon {
-    @include themify($themes) {
-      color: themed('text__color') !important;
-    }
-  }
 }
 
 
@@ -259,7 +254,7 @@ input {
   @include themify($themes) {
     border: themed('icon-button__border') !important;
     background-color: themed('icon-button__background-color') !important;
-    color: themed('icon-button__color')
+    color: themed('icon-button__color') !important;
   }
 }
 
