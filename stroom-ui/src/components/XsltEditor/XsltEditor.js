@@ -25,7 +25,7 @@ import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
-import { openDocRef } from 'sections/RecentItems';
+import openDocRef from 'sections/RecentItems/openDocRef';
 import ThemedAceEditor from 'components/ThemedAceEditor'
 
 import { actionCreators } from './redux';

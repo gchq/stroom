@@ -29,7 +29,7 @@ import { reducer as docRefInfo } from 'components/DocRefInfoModal/redux';
 import { reducer as folderExplorer } from 'components/FolderExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
-import { reducer as recentItems } from 'sections/RecentItems';
+import { reducer as recentItems } from 'sections/RecentItems/redux';
 import { reducer as xslt } from 'components/XsltEditor';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'components/ErrorPage';

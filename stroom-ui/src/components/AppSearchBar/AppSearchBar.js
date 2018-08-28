@@ -1,53 +1,49 @@
 import React from 'react';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
-import { Input, Dropdown } from 'semantic-ui-react';
+import { Input } from 'semantic-ui-react';
+import { withRouter } from 'react-router-dom';
 
 import { actionCreators as appSearchBarActionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
-import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
+import openDocRef from 'sections/RecentItems/openDocRef';
 import { DocRefListingEntry } from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
-const {
-  searchTermUpdated,
-  searchDocRefTypeChosen
-} = appSearchBarActionCreators;
+const { searchTermUpdated, searchDocRefTypeChosen } = appSearchBarActionCreators;
 
 const LISTING_ID = 'app-search-bar';
 
+const withDropdownOpen = withState('isDropDownOpen', 'setDropdownOpen', false);
+
 const enhance = compose(
-  withOpenDocRef,
+  withRouter,
   withDocRefTypes,
+  withDropdownOpen,
   connect(
-    ({
-      appSearch: {
-        searchTerm, searchDocRefType, searchResults, selectedIndex,
-      },
-    }, props) => ({
+    ({ appSearch: { searchTerm, searchDocRefType, searchResults } }, props) => ({
       searchValue:
         searchTerm.length > 0 ? searchTerm : searchDocRefType ? `type:${searchDocRefType}` : '',
-      selectedIndex,
       searchResults,
     }),
     {
       searchApp,
       searchTermUpdated,
-      searchDocRefTypeChosen
+      searchDocRefTypeChosen,
+      openDocRef,
     },
   ),
-  withSelectableItemListing(({searchResults, openDocRef}) => ({
+  withSelectableItemListing(({ searchResults, openDocRef, history }) => ({
     listingId: LISTING_ID,
     items: searchResults,
-    openItem: openDocRef
-  }))
+    openItem: d => openDocRef(history, d),
+  })),
 );
 
 const AppSearchBar = ({
   searchResults,
-  selectedIndex,
   searchApp,
   openDocRef,
   searchValue,
@@ -55,62 +51,40 @@ const AppSearchBar = ({
   searchDocRefTypeChosen,
   history,
   docRefTypes,
-  enableShortcuts,
-  disableShortcuts,
-  onKeyDownWithShortcuts                                                                             
+  onKeyDownWithShortcuts,
+  isDropDownOpen,
+  setDropdownOpen,
 }) => (
-  <Dropdown
-    fluid
-    icon={null}
-    trigger={
-      <Input
-        fluid
-        className="border flat"
-        icon="search"
-        placeholder="Search..."
-        value={searchValue}
-        onKeyDown={onKeyDownWithShortcuts}
-        onFocus={enableShortcuts}
-        onBlur={disableShortcuts}
-        onChange={({ target: { value } }) => {
-          searchTermUpdated(value);
-          searchApp({ term: value });
-        }}
-      />
-    }
-  >
-    <Dropdown.Menu className="border flat">
-      {searchResults.length === 0 &&
-        docRefTypes.map(docRefType => (
-          <Dropdown.Item
-            className="flat"
-            key={docRefType}
-            onClick={() => {
-              searchApp({ docRefType });
-              searchDocRefTypeChosen(docRefType);
-            }}
-          >
-            <img
-              className="stroom-icon--small"
-              alt="X"
-              src={require(`../../images/docRefTypes/${docRefType}.svg`)}
-            />
-            {docRefType}
-          </Dropdown.Item>
-        ))}
-      {searchResults.length > 0 &&
-        searchResults.map((searchResult, index) => (
+  <div className="dropdown">
+    <Input
+      fluid
+      className="border flat"
+      icon="search"
+      placeholder="Search..."
+      value={searchValue}
+      onFocus={() => setDropdownOpen(true)}
+      onBlur={() => setDropdownOpen(false)}
+      onKeyDown={onKeyDownWithShortcuts}
+      onChange={({ target: { value } }) => {
+        searchTermUpdated(value);
+        searchApp({ term: value });
+      }}
+    />
+    {isDropDownOpen && (
+      <div className="dropdown__content">
+        {searchResults.map((searchResult, index) => (
           <DocRefListingEntry
             key={searchResult.uuid}
             index={index}
             listingId={LISTING_ID}
             docRef={searchResult}
-            openDocRef={openDocRef}
+            openDocRef={d => openDocRef(history, d)}
             includeBreadcrumb
           />
         ))}
-    </Dropdown.Menu>
-  </Dropdown>
+      </div>
+    )}
+  </div>
 );
 
 const EnhancedAppSearchBar = enhance(AppSearchBar);

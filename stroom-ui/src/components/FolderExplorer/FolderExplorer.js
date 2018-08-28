@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
+import { withRouter } from 'react-router-dom';
 
 import ThemedPopup from 'components/ThemedPopup';
 import AppSearchBar from 'components/AppSearchBar';
@@ -11,7 +12,7 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import DndDocRefListingEntry from './DndDocRefListingEntry';
-import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
+import openDocRef from 'sections/RecentItems/openDocRef';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
@@ -29,7 +30,7 @@ const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
   withDocumentTree,
-  withOpenDocRef,
+  withRouter,
   connect(
     ({ folderExplorer: { documentTree }, selectableItemListings }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
@@ -42,14 +43,15 @@ const enhance = compose(
       prepareDocRefRename,
       prepareDocRefMove,
       fetchDocInfo,
+      openDocRef,
     },
   ),
   branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
-  withSelectableItemListing(({ openDocRef, folder: { node: { children } } }) => ({
+  withSelectableItemListing(({ openDocRef, history, folder: { node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
     allowMultiSelect: true,
-    openItem: openDocRef
+    openItem: d => openDocRef(history, d),
   })),
   withProps(({
     folder,
@@ -111,8 +113,7 @@ const FolderExplorer = ({
   folderUuid,
   actionBarItems,
   openDocRef,
-  enableShortcuts,
-  disableShortcuts,
+  onKeyDownWithShortcuts,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
@@ -130,32 +131,25 @@ const FolderExplorer = ({
       </Grid.Column>
       <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
-          {actionBarItems.map(({
- onClick, icon, tooltip, disabled,
-}, i) => (
-  <ThemedPopup
-    key={i}
-    trigger={
-      <Button
-        className="icon-button"
-        circular
-        onClick={onClick}
-        icon={icon}
-        disabled={disabled}
-      />
+          {actionBarItems.map(({onClick, icon, tooltip, disabled}, i) => (
+            <ThemedPopup
+              key={i}
+              trigger={
+                <Button
+                  className="icon-button"
+                  circular
+                  onClick={onClick}
+                  icon={icon}
+                  disabled={disabled}
+                />
               }
-    content={tooltip}
-  />
+              content={tooltip}
+            />
           ))}
         </span>
       </Grid.Column>
     </Grid>
-    <div
-      className="doc-ref-listing"
-      tabIndex={0}
-      onFocus={enableShortcuts}
-      onBlur={disableShortcuts}
-    >
+    <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
       {node.children.map((docRef, index) => (
         <DndDocRefListingEntry
           key={docRef.uuid}

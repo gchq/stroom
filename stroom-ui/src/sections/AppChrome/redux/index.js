@@ -10,7 +10,7 @@ const actionCreators = {
 };
 
 const reducer = combineReducers({
-  menuItemsOpen: menuItemsOpenReducer,
+  areMenuItemsOpen: menuItemsOpenReducer,
 });
 
 export { actionCreators, reducer };
