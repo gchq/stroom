@@ -42,7 +42,7 @@
   @include themify($themes) {
     &.place-top {
       &:after {
-        border-top-color: themed('modal__background-color') !important;
+        border-top-color: themed('raised-high__background-color') !important;
         border-top-style: solid !important;
         border-top-width: 6px !important;
       }
@@ -93,9 +93,9 @@
 
 table {
   @include themify($themes) {
-    background-color: themed('table__background-color') !important ;
+    background-color: themed('raised-low__background-color') !important ;
     color: themed('text__color') !important;
-    border: themed('table__border-color') !important;
+    border: themed('border') !important;
   }
 
   td {
@@ -106,7 +106,7 @@ table {
 
   th {
     @include themify($themes) {
-      background-color: themed('table__background-color') !important ;
+      background-color: themed('raised-low__background-color') !important ;
       color: themed('text__color') !important;
     }
   }
