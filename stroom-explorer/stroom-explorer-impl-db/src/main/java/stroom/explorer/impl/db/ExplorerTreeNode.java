@@ -47,13 +47,6 @@ public class ExplorerTreeNode {
         this.tags = tags;
     }
 
-    public ExplorerTreeNode(final String type, final String uuid, final String name, final String tags) {
-        this.type = type;
-        this.uuid = uuid;
-        this.name = name;
-        this.tags = tags;
-    }
-
     public static ExplorerTreeNode create(final DocRef docRef) {
         if (docRef == null) {
             return null;

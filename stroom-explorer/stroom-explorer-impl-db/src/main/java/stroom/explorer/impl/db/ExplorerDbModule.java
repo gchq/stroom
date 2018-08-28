@@ -17,16 +17,7 @@ public class ExplorerDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-//        bind(FeedService.class).to(FeedServiceImpl.class);
-//        bind(DataTypeService.class).to(DataTypeServiceImpl.class);
-//        bind(ProcessorService.class).to(ProcessorServiceImpl.class);
-//        bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
-//        bind(MetaValueService.class).to(MetaValueServiceImpl.class);
-//        bind(DataMetaService.class).to(DataMetaServiceImpl.class);
-//        bind(DataSecurityFilter.class).to(DataSecurityFilterImpl.class);
-//
-//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(Cleanup.class);
+        bind(ExplorerTreeDao.class).to(ExplorerTreeDaoImpl.class);
     }
 
     @Provides

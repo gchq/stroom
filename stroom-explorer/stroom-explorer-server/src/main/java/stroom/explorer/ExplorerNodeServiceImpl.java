@@ -280,30 +280,19 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
-//        try {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
         final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
         setTags(docNode);
         explorerTreeDao.addChild(folderNode, docNode);
-
-//        } catch (final UniqueConstraintViolationException e) {
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
     }
 
     private void moveNode(final DocRef parentFolderRef, final DocRef docRef) {
-//        try {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
         final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
         explorerTreeDao.move(docNode, folderNode);
-
-//        } catch (final UniqueConstraintViolationException e) {
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
     }
 
     private void updateNode(final DocRef docRef) {
-//        try {
         final ExplorerTreeNode docNode = getNodeForDocRef(docRef).orElse(null);
         if (docNode != null) {
             docNode.setType(docRef.getType());
@@ -311,9 +300,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             docNode.setName(docRef.getName());
             explorerTreeDao.update(docNode);
         }
-//        } catch (final UniqueConstraintViolationException e) {
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
     }
 
     private void setTags(final ExplorerTreeNode explorerTreeNode) {

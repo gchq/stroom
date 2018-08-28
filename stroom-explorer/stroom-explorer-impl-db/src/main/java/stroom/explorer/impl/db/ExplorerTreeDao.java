@@ -17,90 +17,29 @@
 package stroom.explorer.impl.db;
 
 import java.util.List;
-import java.util.Map;
 
 public interface ExplorerTreeDao {
-    int UNDEFINED_POSITION = -1;
+    void update(ExplorerTreeNode node);
 
-    boolean isPersistent(ExplorerTreeNode var1);
-
-    ExplorerTreeNode find(Integer var1);
-
-    void update(ExplorerTreeNode var1);
-
-    boolean isRoot(ExplorerTreeNode var1);
-
-    ExplorerTreeNode createRoot(ExplorerTreeNode var1);
-
-    int size(ExplorerTreeNode var1);
+    ExplorerTreeNode createRoot(ExplorerTreeNode node);
 
     List<ExplorerTreeNode> getRoots();
 
     void removeAll();
 
-    List<ExplorerTreeNode> getTree(ExplorerTreeNode var1);
+    List<ExplorerTreeNode> getTree(ExplorerTreeNode node);
 
-    List<ExplorerTreeNode> getTreeCacheable(ExplorerTreeNode var1);
+    List<ExplorerTreeNode> getChildren(ExplorerTreeNode node);
 
-    List<ExplorerTreeNode> findSubTree(ExplorerTreeNode var1, List<ExplorerTreeNode> var2);
+    ExplorerTreeNode getParent(ExplorerTreeNode node);
 
-    List<ExplorerTreeNode> findDirectChildren(List<ExplorerTreeNode> var1);
+    List<ExplorerTreeNode> getPath(ExplorerTreeNode node);
 
-    boolean isLeaf(ExplorerTreeNode var1);
+    ExplorerTreeNode addChild(ExplorerTreeNode parent, ExplorerTreeNode child);
 
-    int getChildCount(ExplorerTreeNode var1);
+    void remove(ExplorerTreeNode node);
 
-    List<ExplorerTreeNode> getChildren(ExplorerTreeNode var1);
-
-    ExplorerTreeNode getRoot(ExplorerTreeNode var1);
-
-    ExplorerTreeNode getParent(ExplorerTreeNode var1);
-
-    List<ExplorerTreeNode> getPath(ExplorerTreeNode var1);
-
-    int getLevel(ExplorerTreeNode var1);
-
-    boolean isEqualToOrChildOf(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-    boolean isChildOf(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-    ExplorerTreeNode addChild(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-    ExplorerTreeNode addChildAt(ExplorerTreeNode var1, ExplorerTreeNode var2, int var3);
-
-    ExplorerTreeNode addChildBefore(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-    void remove(ExplorerTreeNode var1);
-
-    void move(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-    void moveTo(ExplorerTreeNode var1, ExplorerTreeNode var2, int var3);
-
-    void moveBefore(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-    void moveToBeRoot(ExplorerTreeNode var1);
-
-    ExplorerTreeNode copy(ExplorerTreeNode var1, ExplorerTreeNode var2, ExplorerTreeNode var3);
-
-    ExplorerTreeNode copyTo(ExplorerTreeNode var1, ExplorerTreeNode var2, int var3, ExplorerTreeNode var4);
-
-    ExplorerTreeNode copyBefore(ExplorerTreeNode var1, ExplorerTreeNode var2, ExplorerTreeNode var3);
-
-    ExplorerTreeNode copyToBeRoot(ExplorerTreeNode var1, ExplorerTreeNode var2);
-
-//    void setCopiedNodeRenamer(TreeDao.CopiedNodeRenamer<ExplorerTreeNode> var1);
-
-    List<ExplorerTreeNode> find(ExplorerTreeNode var1, Map<String, Object> var2);
-
-//    void setUniqueTreeConstraint(UniqueTreeConstraint<ExplorerTreeNode> var1);
-//
-//    void setCheckUniqueConstraintOnUpdate(boolean var1);
-
-//    void checkUniqueConstraint(ExplorerTreeNode var1, ExplorerTreeNode var2, ExplorerTreeNode var3) ;
-//
-//    public interface CopiedNodeRenamer<ExplorerTreeNode extends TreeNode> {
-//        void renameCopiedNode(ExplorerTreeNode var1);
-//    }
+    void move(ExplorerTreeNode node, ExplorerTreeNode parent);
 
     ExplorerTreeNode findByUUID(final String uuid);
 }
