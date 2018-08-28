@@ -39,7 +39,7 @@ const {
 const enhance = compose(
   connect(
     ({
-      trackerDashboard: {
+      processing: {
         isLoading,
         trackers,
         showCompleted,

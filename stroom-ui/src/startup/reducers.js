@@ -31,7 +31,7 @@ import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
 import { reducer as recentItems } from 'sections/RecentItems';
 import { reducer as xslt } from 'components/XsltEditor';
-import { reducer as trackerDashboard } from 'sections/ProcessingSection';
+import { reducer as processing } from 'sections/ProcessingSection';
 import { reducer as errorPage } from 'components/ErrorPage';
 import { reducer as config } from './config';
 import { reducer as fetch } from 'lib/fetchTracker.redux';
@@ -46,7 +46,7 @@ export default combineReducers({
   authentication,
   authorisation,
   config,
-  trackerDashboard,
+  processing,
   folderExplorer,
   expressionBuilder,
   pipelineEditor,

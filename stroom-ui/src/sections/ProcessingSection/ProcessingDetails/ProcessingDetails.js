@@ -108,7 +108,7 @@ ProcessingDetails.propTypes = {
 export default compose(
   connect(
     (state, props) => ({
-      selectedTracker: state.trackerDashboard.trackers.find(tracker => tracker.filterId === state.trackerDashboard.selectedTrackerId),
+      selectedTracker: state.processing.trackers.find(tracker => tracker.filterId === state.processing.selectedTrackerId),
     }),
     dispatch => ({
       onHandleEnableToggle: (filterId, isCurrentlyEnabled) => {

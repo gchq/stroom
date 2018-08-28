@@ -60,7 +60,7 @@ Prototypes or components that are not yet used in the application. If you're exp
 
 src/
 ├── sections/
-Significant sections of the application. These are not reusable components but rather substantial more-or-less standalone areas of the application, e.g. TrackerDashboards. Organisation within each section could follow a similar pattern to the application as a whole. These sections must use index.js to export specific functionality. Never add to the index because something somewhere else wants to use some functionality you've written in here. That way lies spaghetti. If something is genuinely common then it can be refactored into components.
+Significant sections of the application. These are not reusable components but rather substantial more-or-less standalone areas of the application, e.g. Processing. Organisation within each section could follow a similar pattern to the application as a whole. These sections must use index.js to export specific functionality. Never add to the index because something somewhere else wants to use some functionality you've written in here. That way lies spaghetti. If something is genuinely common then it can be refactored into components.
 
 src/
 ├── startup/

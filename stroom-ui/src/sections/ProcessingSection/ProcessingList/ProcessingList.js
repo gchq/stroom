@@ -42,7 +42,7 @@ const {
 const enhance = compose(
   connect(
     ({
-      trackerDashboard: {
+      processing: {
         trackers,
         sortBy,
         sortDirection,
