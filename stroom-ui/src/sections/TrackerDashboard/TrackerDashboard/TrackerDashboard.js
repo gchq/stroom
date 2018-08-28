@@ -149,186 +149,179 @@ const enhance = compose(
   }),
 );
 
-class TrackerDashboard extends Component {
-  handleSort(newSortBy, currentSortBy, currentDirection) {
+const TrackerDashboard = ({trackers,
+  sortBy,
+  sortDirection,
+  selectedTrackerId,
+  searchCriteria,
+  pageOffset,
+  numberOfPages, 
+  onHandleTrackerSelection,
+  onMoveSelection,
+  onHandleSort,
+  onHandleSearchChange,
+  onHandleSearch,
+  onHandlePageChange,
+  onHandlePageRight,
+  onHandlePageLeft}) => {
+  const handleSort = (newSortBy, currentSortBy, currentDirection) => {
     if (currentSortBy === newSortBy) {
       if (currentDirection === Directions.ascending) {
-        return this.props.onHandleSort(newSortBy, Directions.descending);
+        return onHandleSort(newSortBy, Directions.descending);
       }
-      return this.props.onHandleSort(newSortBy, Directions.ascending);
+      return onHandleSort(newSortBy, Directions.ascending);
     }
-    return this.props.onHandleSort(newSortBy, Directions.ascending);
+    return onHandleSort(newSortBy, Directions.ascending);
   }
 
-  render() {
-    const {
-      trackers,
-      sortBy,
-      sortDirection,
-      selectedTrackerId,
-      searchCriteria,
-      pageOffset,
-      numberOfPages,
-    } = this.props;
-    const {
-      onHandleTrackerSelection,
-      onMoveSelection,
-      onHandleSearchChange,
-      onHandleSearch,
-      onHandlePageChange,
-      onHandlePageRight,
-      onHandlePageLeft,
-    } = this.props;
+  const selectedTracker = trackers.find(tracker => tracker.filterId === selectedTrackerId);
+  const showDetails = selectedTracker !== undefined;
+  // 370 is the minimum height because it lets all the tracker details be displayed
+  const detailsPanelMinimumHeight = showDetails ? 370 : 0;
 
-    const selectedTracker = trackers.find(tracker => tracker.filterId === selectedTrackerId);
-    const showDetails = selectedTracker !== undefined;
-    // 370 is the minimum height because it lets all the tracker details be displayed
-    const detailsPanelMinimumHeight = showDetails ? 370 : 0;
+  const panelSizes = [
+    {},
+    {
+      resize: 'dynamic',
+      minSize: detailsPanelMinimumHeight,
+      size: detailsPanelMinimumHeight,
+    },
+  ];
 
-    const panelSizes = [
-      {},
-      {
-        resize: 'dynamic',
-        minSize: detailsPanelMinimumHeight,
-        size: detailsPanelMinimumHeight,
-      },
-    ];
+  if (!showDetails) panelSizes[1].size = 0;
 
-    if (!showDetails) panelSizes[1].size = 0;
+  // TODO: At some point move the shortcuts to some common location;
+  //       we will want to use the same binding for 'search' throughout.
+  // Set up hotkeys to move the selection up and down
+  Mousetrap.bind('up', () => onMoveSelection('up'));
+  Mousetrap.bind('down', () => onMoveSelection('down'));
+  Mousetrap.bind('right', () => onHandlePageRight());
+  Mousetrap.bind('left', () => onHandlePageLeft());
+  Mousetrap.bind('esc', () => onHandleTrackerSelection(undefined));
+  Mousetrap.bind('ctrl+shift+f', () => this.searchInputRef.focus());
+  Mousetrap.bind('enter', () => onHandleSearch());
+  Mousetrap.bind('return', () => onHandleSearch());
 
-    // TODO: At some point move the shortcuts to some common location;
-    //       we will want to use the same binding for 'search' throughout.
-    // Set up hotkeys to move the selection up and down
-    Mousetrap.bind('up', () => onMoveSelection('up'));
-    Mousetrap.bind('down', () => onMoveSelection('down'));
-    Mousetrap.bind('right', () => onHandlePageRight());
-    Mousetrap.bind('left', () => onHandlePageLeft());
-    Mousetrap.bind('esc', () => onHandleTrackerSelection(undefined));
-    Mousetrap.bind('ctrl+shift+f', () => this.searchInputRef.focus());
-    Mousetrap.bind('enter', () => onHandleSearch());
-    Mousetrap.bind('return', () => onHandleSearch());
+  return (
+    <React.Fragment>
+      <Grid className="content-tabs__grid">
+        <Grid.Column width={12}>
+          <Header as="h3">
+            <Icon name="play" />
+            <Header.Content>Processing</Header.Content>
+          </Header>
+        </Grid.Column>
+      </Grid>
+      <div className="tracker-container">
+        <div className="tracker">
+          <Menu attached="top">
+            <Menu.Menu position="left" className="search-container">
+              <Input
+                fluid
+                placeholder="Search..."
+                value={searchCriteria}
+                onChange={(event, data) => onHandleSearchChange(data)}
+                onKeyPress={(event, data) => onHandleSearch(event, data)}
+                action={<Button classname="icon-button" onClick={() => onHandleSearch()} />}
+                // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
+                ref={input => (this.searchInputRef = input)}
+              />
+            </Menu.Menu>
+          </Menu>
+          <PanelGroup direction="column" panelWidths={panelSizes}>
+            <div>
+              <div
+                id="table-container"
+                className={`table-container${showDetails ? ' showing-details' : ''}`}
+              >
+                <Table selectable sortable basic="very" className="tracker-table" columns={15}>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.HeaderCell
+                        sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
+                        onClick={() =>
+                          handleSort(SortByOptions.pipeline, sortBy, sortDirection)
+                        }
+                      >
+                        Pipeline name
+                      </Table.HeaderCell>
+                      <Table.HeaderCell
+                        sorted={sortBy === SortByOptions.priority ? sortDirection : null}
+                        onClick={() =>
+                          handleSort(SortByOptions.priority, sortBy, sortDirection)
+                        }
+                      >
+                        Priority
+                      </Table.HeaderCell>
+                      <Table.HeaderCell
+                        sorted={sortBy === SortByOptions.progress ? sortDirection : null}
+                        onClick={() =>
+                          handleSort(SortByOptions.progress, sortBy, sortDirection)
+                        }
+                      >
+                        Progress
+                      </Table.HeaderCell>
+                    </Table.Row>
+                  </Table.Header>
 
-    return (
-      <React.Fragment>
-        <Grid className="content-tabs__grid">
-          <Grid.Column width={12}>
-            <Header as="h3">
-              <Icon name="play" />
-              <Header.Content>Processing</Header.Content>
-            </Header>
-          </Grid.Column>
-        </Grid>
-        <div className="tracker-container">
-          <div className="tracker">
-            <Menu attached="top">
-              <Menu.Menu position="left" className="search-container">
-                <Input
-                  fluid
-                  placeholder="Search..."
-                  value={searchCriteria}
-                  onChange={(event, data) => onHandleSearchChange(data)}
-                  onKeyPress={(event, data) => onHandleSearch(event, data)}
-                  action={<Button classname="icon-button" onClick={() => onHandleSearch()} />}
-                  // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
-                  ref={input => (this.searchInputRef = input)}
-                />
-              </Menu.Menu>
-            </Menu>
-            <PanelGroup direction="column" panelWidths={panelSizes}>
-              <div>
-                <div
-                  id="table-container"
-                  className={`table-container${showDetails ? ' showing-details' : ''}`}
-                >
-                  <Table selectable sortable basic="very" className="tracker-table" columns={15}>
-                    <Table.Header>
-                      <Table.Row>
-                        <Table.HeaderCell
-                          sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
-                          onClick={() =>
-                            this.handleSort(SortByOptions.pipeline, sortBy, sortDirection)
-                          }
+                  <Table.Body>
+                    {trackers.map(({
+                        pipelineName,
+                        priority,
+                        trackerPercent,
+                        filterId,
+                        createdOn,
+                        createUser,
+                        updateUser,
+                        updatedOn,
+                        enabled,
+                        status,
+                        lastPollAge,
+                        taskCount,
+                        trackerMs,
+                        streamCount,
+                        eventCount,
+                      }) => (
+                        <Table.Row
+                          key={filterId}
+                          className="tracker-row"
+                          onClick={() => onHandleTrackerSelection(filterId, trackers)}
+                          active={selectedTrackerId === filterId}
                         >
-                          Pipeline name
-                        </Table.HeaderCell>
-                        <Table.HeaderCell
-                          sorted={sortBy === SortByOptions.priority ? sortDirection : null}
-                          onClick={() =>
-                            this.handleSort(SortByOptions.priority, sortBy, sortDirection)
-                          }
-                        >
-                          Priority
-                        </Table.HeaderCell>
-                        <Table.HeaderCell
-                          sorted={sortBy === SortByOptions.progress ? sortDirection : null}
-                          onClick={() =>
-                            this.handleSort(SortByOptions.progress, sortBy, sortDirection)
-                          }
-                        >
-                          Progress
-                        </Table.HeaderCell>
-                      </Table.Row>
-                    </Table.Header>
-
-                    <Table.Body>
-                      {trackers.map(({
-                          pipelineName,
-                          priority,
-                          trackerPercent,
-                          filterId,
-                          createdOn,
-                          createUser,
-                          updateUser,
-                          updatedOn,
-                          enabled,
-                          status,
-                          lastPollAge,
-                          taskCount,
-                          trackerMs,
-                          streamCount,
-                          eventCount,
-                        }) => (
-                          <Table.Row
-                            key={filterId}
-                            className="tracker-row"
-                            onClick={() => onHandleTrackerSelection(filterId, trackers)}
-                            active={selectedTrackerId === filterId}
-                          >
-                            <Table.Cell className="name-column" textAlign="left" width={7}>
-                              TODO: backend broken, awaiting re-write
-                            </Table.Cell>
-                            <Table.Cell className="priority-column" textAlign="center" width={1}>
-                              <Label circular color="green">
-                                {priority}
-                              </Label>
-                            </Table.Cell>
-                            <Table.Cell className="progress-column" width={7}>
-                              <Progress indicating percent={trackerPercent} />
-                            </Table.Cell>
-                          </Table.Row>
-                        ))}
-                    </Table.Body>
-                  </Table>
-                  <div className="pagination-container">
-                    <Pagination
-                      activePage={pageOffset + 1}
-                      totalPages={numberOfPages || 1}
-                      firstItem={null}
-                      lastItem={null}
-                      size="tiny"
-                      onPageChange={(event, data) => onHandlePageChange(data)}
-                    />
-                  </div>
+                          <Table.Cell className="name-column" textAlign="left" width={7}>
+                            TODO: backend broken, awaiting re-write
+                          </Table.Cell>
+                          <Table.Cell className="priority-column" textAlign="center" width={1}>
+                            <Label circular color="green">
+                              {priority}
+                            </Label>
+                          </Table.Cell>
+                          <Table.Cell className="progress-column" width={7}>
+                            <Progress indicating percent={trackerPercent} />
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                  </Table.Body>
+                </Table>
+                <div className="pagination-container">
+                  <Pagination
+                    activePage={pageOffset + 1}
+                    totalPages={numberOfPages || 1}
+                    firstItem={null}
+                    lastItem={null}
+                    size="tiny"
+                    onPageChange={(event, data) => onHandlePageChange(data)}
+                  />
                 </div>
               </div>
-              <TrackerDetails />
-            </PanelGroup>
-          </div>
+            </div>
+            <TrackerDetails />
+          </PanelGroup>
         </div>
-      </React.Fragment>
-    );
-  }
-}
+      </div>
+    </React.Fragment>
+  );
+};
 
 TrackerDashboard.contextTypes = {
   store: PropTypes.object.isRequired,
