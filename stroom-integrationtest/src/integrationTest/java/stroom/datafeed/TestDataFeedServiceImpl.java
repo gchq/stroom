@@ -178,7 +178,7 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         dataFeedService.doPost(request, response);
 
-        checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Compressed stream invalid - No Zip Entries");
+        checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Compressed stream invalid");
     }
 
     @Test

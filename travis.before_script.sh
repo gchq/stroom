@@ -33,11 +33,6 @@ else
     echo "Start all the services we need to run the integration tests in stroom"
     ./bounceIt.sh 'up -d --build' -e -y -x kafka stroom-db stroom-stats-db zookeeper
     popd
-
-    echo "Configure our plugins directory so stroom can find the kafka jar"
-    mkdir -p ~/.stroom/plugins
-    #Run the script to convert stroom.conf.template into stroom.conf
-    ./stroom.conf.sh
 fi
 
 exit 0

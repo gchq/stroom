@@ -47,16 +47,14 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
 import stroom.persist.PersistLifecycle;
-import stroom.resource.DataResource;
-import stroom.resource.PipelineResource;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
-import stroom.refdata.util.ByteBufferPool;
-import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataStoreProvider;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.resource.DataResource;
 import stroom.resource.ElementResource;
 import stroom.resource.PipelineResource;
 import stroom.resource.SessionResourceStoreImpl;
@@ -193,7 +191,7 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
-        final AppModule appModule = new AppModule();
+        final AppModule appModule = new AppModule(configuration.getAppConfig());
         final Injector injector = Guice.createInjector(appModule);
 
         // Start the persistence service. This needs to be done before anything else as other filters and services rely on it.

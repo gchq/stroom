@@ -24,7 +24,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.impl.db.stroom.tables.records.ConfigRecord;
-import stroom.properties.global.api.ConfigProperty;
+import stroom.config.global.api.ConfigProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -257,16 +257,14 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
     private void delete(final String name) {
-        security.secure(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            try (final Connection connection = connectionProvider.getConnection()) {
-                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-                create
-                        .deleteFrom(CONFIG)
-                        .where(CONFIG.NAME.eq(name));
-            } catch (final SQLException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        });
+        try (final Connection connection = connectionProvider.getConnection()) {
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            create
+                    .deleteFrom(CONFIG)
+                    .where(CONFIG.NAME.eq(name));
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     private void recordHistory(final ConfigProperty configProperty) {

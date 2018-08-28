@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import org.apache.commons.lang.mutable.MutableLong;
+import org.apache.commons.lang3.mutable.MutableLong;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

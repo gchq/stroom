@@ -82,7 +82,7 @@ class UserServiceImpl implements UserService {
 
     private final EntityServiceHelper<User> entityServiceHelper;
     private final DocumentPermissionService documentPermissionService;
-    private final SecurityConfig securityConfig;
+    private final AuthenticationConfig securityConfig;
 
     private final QueryAppender<User, FindUserCriteria> queryAppender;
 
@@ -93,7 +93,7 @@ class UserServiceImpl implements UserService {
     UserServiceImpl(final StroomEntityManager entityManager,
                     final Security security,
                     final DocumentPermissionService documentPermissionService,
-                    final SecurityConfig securityConfig) {
+                    final AuthenticationConfig securityConfig) {
         this.entityManager = entityManager;
         this.security = security;
         this.documentPermissionService = documentPermissionService;

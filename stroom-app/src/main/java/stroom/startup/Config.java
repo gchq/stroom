@@ -10,12 +10,10 @@ public class Config extends Configuration {
     private AppConfig appConfig;
     private ProxyConfig proxyConfig;
 
-    @JsonProperty
     public String getMode() {
         return mode;
     }
 
-    @JsonProperty
     public void setMode(final String mode) {
         this.mode = mode;
     }
@@ -28,12 +26,10 @@ public class Config extends Configuration {
         this.appConfig = appConfig;
     }
 
-    @JsonProperty
     public ProxyConfig getProxyConfig() {
         return proxyConfig;
     }
 
-    @JsonProperty
     public void setProxyConfig(final ProxyConfig proxyConfig) {
         this.proxyConfig = proxyConfig;
     }

@@ -10,5 +10,11 @@ dependencies {
     compile project(':stroom-data-store:stroom-data-store-impl-fs')
 
     compile libs.jackson_annotations
+    compile libs.jackson_core
+    compile libs.jackson_databind
+    compile libs.jackson_dataformat_yaml
     compile libs.javax_inject
+
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
 }

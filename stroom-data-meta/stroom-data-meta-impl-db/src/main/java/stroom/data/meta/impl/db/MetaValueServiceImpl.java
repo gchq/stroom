@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
@@ -321,29 +322,12 @@ class MetaValueServiceImpl implements MetaValueService {
      */
     @Override
     public List<DataRow> decorateDataWithAttributes(final List<Data> list) {
-
-//        final List<StreamDataRow> result = new ArrayList<>();
         final Map<Long, DataRow> rowMap = new HashMap<>();
 
         // Get a list of valid data ids.
-//        final Map<EntityRef, Optional<Object>> entityCache = new HashMap<>();
-//        final Map<DocRef, Optional<Object>> uuidCache = new HashMap<>();
-        final List<Long> idList = new ArrayList<>();
-        for (final Data data : list) {
-            rowMap.put(data.getId(), new DataRow(data));
-            idList.add(data.getId());
-        }
-
-//        if (rowMap.size() == 0) {
-//            return;
-//        }
-
-//        final List<MetaKey> allKeys = metaKeyService.findAll();
-//        final Map<Integer, MetaKey> keyMap = new HashMap<>();
-//        for (final MetaKey key : allKeys) {
-//            keyMap.put(key.getId(), key);
-//        }
-
+        final List<Long> idList = list.parallelStream()
+                .map(Data::getId)
+                .collect(Collectors.toList());
 
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
@@ -357,13 +341,12 @@ class MetaValueServiceImpl implements MetaValueService {
                     .where(META_VAL.DATA_ID.in(idList))
                     .fetch()
                     .forEach(r -> {
-                        final long dataId = r.component1();
                         final int keyId = r.component2();
-
                         final Optional<String> optional = metaKeyService.getNameForId(keyId);
                         if (optional.isPresent()) {
+                            final long dataId = r.component1();
                             final String value = String.valueOf(r.component3());
-                            rowMap.get(dataId).addAttribute(optional.get(), value);
+                            rowMap.computeIfAbsent(dataId, k -> new DataRow()).addAttribute(optional.get(), value);
                         }
                     });
 
@@ -372,7 +355,18 @@ class MetaValueServiceImpl implements MetaValueService {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        return new ArrayList<>(rowMap.values());
+        final List<DataRow> dataRows = new ArrayList<>();
+        for (final Data data : list) {
+            DataRow dataRow = rowMap.get(data.getId());
+            if (dataRow != null) {
+                dataRow.setData(data);
+            } else {
+                dataRow = new DataRow(data);
+            }
+            dataRows.add(dataRow);
+        }
+
+        return dataRows;
 
 
 //        final SqlBuilder sql = new SqlBuilder();

@@ -1,0 +1,307 @@
+---
+benchmark:
+  streamCount: 1000
+  recordCount: 10000
+  concurrentWriters: 10
+cluster:
+  clusterCallUseLocal: true
+  clusterCallReadTimeout: "30s"
+  clusterCallIgnoreSSLHostnameVerifier: true
+  clusterResponseTimeout: "30s"
+contentPackImport:
+  enabled: false
+core:
+  node: null
+  rack: null
+  temp: null
+  databaseMultiInsertMaxBatchSize: 500
+  connection:
+    jdbcDriverClassName: null
+    jdbcDriverUrl: null
+    jdbcDriverUsername: null
+    jdbcDriverPassword: null
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
+  hibernate:
+    dialect: "org.hibernate.dialect.MySQLInnoDBDialect"
+    showSql: false
+    formatSql: false
+    jpaHbm2DdlAuto: "validate"
+    generateStatistics: true
+data:
+  meta:
+    metaValueConfig: null
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+      jdbcDriverPassword: null
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+  store:
+    deletePurgeAge: "7d"
+    deleteBatchSize: 1000
+    fileSystemCleanBatchSize: 20
+    fileSystemCleanDeleteOut: false
+    fileSystemCleanOldAge: "1d"
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+      jdbcDriverPassword: null
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+feed:
+  receiptPolicyUuid: null
+  bufferSize: 8192
+  unknownClassification: "UNKNOWN CLASSIFICATION"
+  feedNamePattern: "^[A-Z0-9_-]{3,}$"
+dataSourceUrl:
+  index: "http://127.0.0.1:8080/api/stroom-index/v2"
+  statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
+  annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
+  elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+export:
+  enabled: false
+lifecycle:
+  enabled: true
+  executionInterval: "10s"
+node:
+  node: "tba"
+  rack: "tba"
+  status:
+    heapHistogram:
+      classNameMatchRegex: "^stroom\\..*$"
+      classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
+        $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
+      jMapExecutable: "jmap"
+pipeline:
+  xslt:
+    maxElements: 1000000
+  appender:
+    maxActiveDestinations: 100
+policy:
+  deleteBatchSize: 1000
+process:
+  assignTasks: true
+  createTasks: true
+  deleteAge: "1d"
+  deletePurgeAge: "7d"
+  deleteBatchSize: 1000
+  fillTaskQueue: true
+  queueSize: 1000
+properties:
+  connection:
+    jdbcDriverClassName: null
+    jdbcDriverUrl: null
+    jdbcDriverUsername: null
+    jdbcDriverPassword: null
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
+proxyAggregation:
+  proxyDir: "${stroom.temp}/proxy"
+  proxyThreads: 10
+  maxAggregation: 10000
+  maxAggregationScan: 100000
+  maxStreamSize: "1G"
+queryHistory:
+  itemsRetention: 100
+  daysRetention: 365
+refdata:
+  localDir: "${stroom.temp}/refDataOffHeapStore"
+  maxPutsBeforeCommit: 1000
+  maxReaders: 100
+  maxStoreSize: "50G"
+  purgeAge: "30d"
+  valueBufferCapacity: 1000
+search:
+  maxStoredDataQueueSize: 1000
+  maxBooleanClauseCount: 1024
+  storeSize: "1000000,100,10,1"
+  extraction:
+    maxThreads: 4
+    maxThreadsPerTask: 2
+  shard:
+    maxDocIdQueueSize: 1000000
+    maxThreads: 4
+    maxThreadsPerTask: 2
+security:
+  authentication:
+    authenticationServiceUrl: null
+    authenticationRequired: true
+    apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
+    authServicesBaseUrl: "http://auth-service:8099"
+    preventLogin: false
+    userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
+    jwt:
+      jwtIssuer: "stroom"
+      enableTokenRevocationCheck: true
+serviceDiscovery:
+  enabled: false
+  zookeeperUrl: "localhost:2181"
+  servicesHostNameOrIpAddress: "localhost"
+  servicesPort: 8080
+  curatorBaseSleepTimeMs: 5000
+  curatorMaxSleepTimeMs: 300000
+  curatorMaxRetries: 100
+  zookeeperBasePath: "/stroom-services"
+statistics:
+  sql:
+    docRefType: "StatisticStore"
+    statisticAggregationBatchSize: 1000000
+    maxProcessingAge: null
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+      jdbcDriverPassword: null
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+    search:
+      storeSize: "1000000,100,10,1"
+      resultHandlerBatchSize: 5000
+      maxResults: 100000
+      fetchSize: 5000
+  hbase:
+    docRefType: "StroomStatsStore"
+    kafkaConfigUuid: null
+    eventsPerMessage: 100
+    kafkaTopics:
+      count: "statisticEvents-Count"
+      value: "statisticEvents-Value"
+  internal:
+    pipelineStreamProcessor:
+    - type: "StatisticStore"
+      uuid: "946a80fc-a59a-11e6-bdc4-0242ac110002"
+      name: "PipelineStreamProcessor"
+    - type: "StroomStatsStore"
+      uuid: "efd9bad4-0bab-460f-ae98-79e9717deeaf"
+      name: "PipelineStreamProcessor"
+    memory:
+    - type: "StatisticStore"
+      uuid: "77c09ccb-e251-4ca5-bca0-56a842654397"
+      name: "Memory"
+    - type: "StroomStatsStore"
+      uuid: "d8a7da4f-ef6d-47e0-b16a-af26367a2798"
+      name: "Memory"
+    heapHistogramBytes:
+    - type: "StatisticStore"
+      uuid: "934a1600-b456-49bf-9aea-f1e84025febd"
+      name: "Heap Histogram Bytes"
+    - type: "StroomStatsStore"
+      uuid: "b0110ab4-ac25-4b73-b4f6-96f2b50b456a"
+      name: "Heap Histogram Bytes"
+    benchmarkCluster:
+    - type: "StatisticStore"
+      uuid: "946a88c6-a59a-11e6-bdc4-0242ac110002"
+      name: "Benchmark-Cluster Test"
+    - type: "StroomStatsStore"
+      uuid: "2503f703-5ce0-4432-b9d4-e3272178f47e"
+      name: "Benchmark-Cluster Test"
+    volumes:
+    - type: "StatisticStore"
+      uuid: "ac4d8d10-6f75-4946-9708-18b8cb42a5a3"
+      name: "Volumes"
+    - type: "StroomStatsStore"
+      uuid: "60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e"
+      name: "Volumes"
+    eventsPerSecond:
+    - type: "StatisticStore"
+      uuid: "a9936548-2572-448b-9d5b-8543052c4d92"
+      name: "EPS"
+    - type: "StroomStatsStore"
+      uuid: "cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6"
+      name: "EPS"
+    cpu:
+    - type: "StatisticStore"
+      uuid: "af08c4a7-ee7c-44e4-8f5e-e9c6be280434"
+      name: "CPU"
+    - type: "StroomStatsStore"
+      uuid: "1edfd582-5e60-413a-b91c-151bd544da47"
+      name: "CPU"
+    streamTaskQueueSize:
+    - type: "StatisticStore"
+      uuid: "946a7f0f-a59a-11e6-bdc4-0242ac110002"
+      name: "Stream Task Queue Size"
+    - type: "StroomStatsStore"
+      uuid: "4ce8d6e7-94be-40e1-8294-bf29dd089962"
+      name: "Stream Task Queue Size"
+    metaDataStreamSize:
+    - type: "StatisticStore"
+      uuid: "946a8814-a59a-11e6-bdc4-0242ac110002"
+      name: "Meta Data-Stream Size"
+    - type: "StroomStatsStore"
+      uuid: "3b25d63b-5472-44d0-80e8-8eea94f40f14"
+      name: "Meta Data-Stream Size"
+    metaDataStreamsReceived:
+    - type: "StatisticStore"
+      uuid: "946a87bc-a59a-11e6-bdc4-0242ac110002"
+      name: "Meta Data-Streams Received"
+    - type: "StroomStatsStore"
+      uuid: "5535f493-29ae-4ee6-bba6-735aa3104136"
+      name: "Meta Data-Streams Received"
+    heapHistogramInstances:
+    - type: "StatisticStore"
+      uuid: "e4f243b8-2c70-4d6e-9d5a-16466bf8764f"
+      name: "Heap Histogram Instances"
+    - type: "StroomStatsStore"
+      uuid: "bdd933a4-4309-47fd-98f6-1bc2eb555f20"
+      name: "Heap Histogram Instances"
+ui:
+  welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+    \ systems.</p>"
+  aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+    \ systems.</p>"
+  buildDate: "TBD"
+  buildVersion: "TBD"
+  nodeName: null
+  upDate: null
+  maintenanceMessage: null
+  defaultMaxResults: "1000000,100,10,1"
+  helpUrl: null
+  namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+  htmlTitle: "Stroom"
+  oncontextmenu: "return false;"
+  process:
+    defaultTimeLimit: 30
+    defaultRecordLimit: 1000000
+  theme:
+    backgroundAttachment: "scroll"
+    backgroundColor: "#1E88E5"
+    backgroundImage: "none"
+    backgroundPosition: "0 0"
+    backgroundRepeat: "repeat"
+    backgroundOpacity: "0"
+    tubeVisible: "hidden"
+    tubeOpacity: "0.6"
+    labelColours: "TEST1=#FF0000,TEST2=#FF9900"
+  query:
+    infoPopup:
+      enabled: false
+      title: "Please Provide Query Info"
+      validationRegex: "^[\\s\\S]{3,}$"
+  url:
+    ui: null
+    authenticationService: "http://auth-service:8099/authentication/v1"
+    users: null
+    apiKeys: null
+    changepassword: null
+    kibana: null
+    trackers: null
+    annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
+    elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+volumes:
+  resilientReplicationCount: 1
+  preferLocalVolumes: false
+  volumeSelector: "RoundRobin"
+  createDefaultOnStart: false

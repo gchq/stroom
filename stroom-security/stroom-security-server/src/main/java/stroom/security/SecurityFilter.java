@@ -60,7 +60,7 @@ public class SecurityFilter implements Filter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
 
-    private final SecurityConfig config;
+    private final AuthenticationConfig config;
     private final UiConfig uiConfig;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
@@ -70,7 +70,7 @@ public class SecurityFilter implements Filter {
 
     @Inject
     public SecurityFilter(
-            final SecurityConfig config,
+            final AuthenticationConfig config,
             final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,

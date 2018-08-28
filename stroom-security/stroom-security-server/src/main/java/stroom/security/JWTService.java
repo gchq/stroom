@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
-import stroom.security.SecurityConfig.JwtConfig;
+import stroom.security.AuthenticationConfig.JwtConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,7 +34,7 @@ class JWTService {
     private final boolean checkTokenRevocation;
 
     @Inject
-    JWTService(final SecurityConfig securityConfig,
+    JWTService(final AuthenticationConfig securityConfig,
                final JwtConfig jwtConfig,
                final AuthenticationServiceClients authenticationServiceClients) {
         this.authJwtIssuer = jwtConfig.getJwtIssuer();

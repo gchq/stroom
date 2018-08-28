@@ -16,7 +16,7 @@
 
 package stroom.security;
 
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 
 public final class PasswordGenerator {
     private static final char[] CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
@@ -29,7 +29,7 @@ public final class PasswordGenerator {
     public static String generatePassword() {
         final char[] password = new char[PASSWORD_LENGTH];
         for (int i = 0; i < PASSWORD_LENGTH; i++) {
-            final int index = RandomUtils.nextInt(CHARS.length);
+            final int index = RandomUtils.nextInt(0, CHARS.length);
             password[i] = CHARS[index];
         }
 

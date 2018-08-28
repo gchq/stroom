@@ -31,13 +31,13 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
     private final Security security;
     private final SecurityContext securityContext;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
-    private final SecurityConfig securityConfig;
+    private final AuthenticationConfig securityConfig;
 
     @Inject
     FetchUserAndPermissionsHandler(final Security security,
                                    final SecurityContext securityContext,
                                    final UserAndPermissionsHelper userAndPermissionsHelper,
-                                   final SecurityConfig securityConfig) {
+                                   final AuthenticationConfig securityConfig) {
         this.security = security;
         this.securityContext = securityContext;
         this.userAndPermissionsHelper = userAndPermissionsHelper;

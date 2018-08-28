@@ -11,21 +11,21 @@ import javax.inject.Singleton;
 @Singleton
 public class StatisticsConfig {
     private SQLStatisticsConfig sqlStatisticsConfig;
-    private HBaseStatisticsConfig hBaseStatisticsConfig;
+    private HBaseStatisticsConfig hbaseStatisticsConfig;
     private InternalStatisticsConfig internalStatisticsConfig;
 
     public StatisticsConfig() {
         this.sqlStatisticsConfig = new SQLStatisticsConfig();
-        this.hBaseStatisticsConfig = new HBaseStatisticsConfig();
+        this.hbaseStatisticsConfig = new HBaseStatisticsConfig();
         this.internalStatisticsConfig = new InternalStatisticsConfig();
     }
 
     @Inject
     public StatisticsConfig(final SQLStatisticsConfig sqlStatisticsConfig,
-                            final HBaseStatisticsConfig hBaseStatisticsConfig,
+                            final HBaseStatisticsConfig hbaseStatisticsConfig,
                             final InternalStatisticsConfig internalStatisticsConfig) {
         this.sqlStatisticsConfig = sqlStatisticsConfig;
-        this.hBaseStatisticsConfig = hBaseStatisticsConfig;
+        this.hbaseStatisticsConfig = hbaseStatisticsConfig;
         this.internalStatisticsConfig = internalStatisticsConfig;
     }
 
@@ -39,12 +39,12 @@ public class StatisticsConfig {
     }
 
     @JsonProperty("hbase")
-    public HBaseStatisticsConfig gethBaseStatisticsConfig() {
-        return hBaseStatisticsConfig;
+    public HBaseStatisticsConfig getHbaseStatisticsConfig() {
+        return hbaseStatisticsConfig;
     }
 
-    public void sethBaseStatisticsConfig(final HBaseStatisticsConfig hBaseStatisticsConfig) {
-        this.hBaseStatisticsConfig = hBaseStatisticsConfig;
+    public void setHbaseStatisticsConfig(final HBaseStatisticsConfig hbaseStatisticsConfig) {
+        this.hbaseStatisticsConfig = hbaseStatisticsConfig;
     }
 
     @JsonProperty("internal")

@@ -21,7 +21,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.properties.global.client.presenter.ManageGlobalPropertyPresenter;
+import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.node.client.presenter.ManageVolumesPresenter;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;

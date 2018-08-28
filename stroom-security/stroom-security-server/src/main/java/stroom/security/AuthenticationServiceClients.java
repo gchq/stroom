@@ -49,7 +49,7 @@ class AuthenticationServiceClients {
     private final boolean enableAuth;
 
     @Inject
-    AuthenticationServiceClients(final SecurityConfig securityConfig) {
+    AuthenticationServiceClients(final AuthenticationConfig securityConfig) {
         enableAuth = securityConfig.isAuthenticationRequired();
         if (enableAuth) {
             if (Strings.isNullOrEmpty(securityConfig.getApiToken())) {
