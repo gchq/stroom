@@ -78,13 +78,11 @@ const enhance = compose(
       { keyIsDown, appChrome: { areMenuItemsOpen }, selectableItemListings },
       { listingId, menuItem: { key } },
     ) => {
-      const selectableItemListing = selectableItemListings[listingId];
-      let isSelected = false;
-      if (selectableItemListing) {
-        isSelected = selectableItemListing.selectedItems.filter(m => m.key === key).length === 1;
-      }
+      const { selectedItems = [], focussedItem } = selectableItemListings[listingId] || {}
+      const isSelected = selectedItems.map(d => d.key).includes(key);
+      const inFocus = focussedItem && focussedItem.key === key;
 
-      return { isSelected, keyIsDown, areMenuItemsOpen };
+      return { isSelected, inFocus, keyIsDown, areMenuItemsOpen };
     },
     {
       prepareDocRefCopy,
@@ -102,7 +100,7 @@ const enhance = compose(
     }
   }),
   DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
-  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
+  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect)
 );
 
 const MenuItem = ({
@@ -111,6 +109,7 @@ const MenuItem = ({
   menuItemOpened,
   depth,
   isSelected,
+  inFocus,
   connectDropTarget,
   connectDragSource,
   isOver,
@@ -128,6 +127,9 @@ const MenuItem = ({
     } else {
       className += ' cannot-drop';
     }
+  }
+  if (inFocus) {
+    className += ' inFocus';
   }
   if (isSelected) {
     className += ' selected';

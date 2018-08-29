@@ -1,6 +1,6 @@
 import withSelectableItemListing from './withSelectableItemListing';
-import { actionCreators, reducer } from './redux';
+import { actionCreators, reducer, SELECTION_BEHAVIOUR } from './redux';
 
 export default withSelectableItemListing;
 
-export { withSelectableItemListing, actionCreators, reducer };
+export { withSelectableItemListing, actionCreators, reducer, SELECTION_BEHAVIOUR };

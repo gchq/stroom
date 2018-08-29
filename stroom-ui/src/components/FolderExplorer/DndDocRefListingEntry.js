@@ -6,7 +6,7 @@ import { DragSource } from 'react-dnd';
 import { DropTarget } from 'react-dnd';
 
 import { findItem, canMove } from 'lib/treeUtils';
-import { DocRefListingEntry } from 'components/DocRefListingEntry';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
@@ -119,21 +119,21 @@ const DndDocRefListingEntry = ({
   isOver,
   canDrop,
 }) => {
-  let className = '';
+  let additionalClasses = [];
   if (isOver) {
-    className += ' dnd-over';
+    additionalClasses.push('dnd-over');
   }
   if (isOver) {
     if (canDrop) {
-      className += ' can-drop';
+      additionalClasses.push('can-drop');
     } else {
-      className += ' cannot-drop';
+      additionalClasses.push('cannot-drop');
     }
   }
 
   return connectDragSource(connectDropTarget(<div>
     <DocRefListingEntry
-      className={className}
+      additionalClasses={additionalClasses}
       index={index}
       openDocRef={openDocRef}
       docRef={node}
