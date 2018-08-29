@@ -104,8 +104,7 @@ const enhance = compose(
         Header: 'Progress',
         accessor: 'progress',
         Cell: row => (
-          <Line percent="10" strokeWidth="4" strokeColor="#D3D3D3" />
-          // <Progress indicating percent={row.trackerPercent} />
+          <Line percent={row.trackerPercent} strokeWidth="3" trailWidth="3"/>
         ),
       },
     ],
