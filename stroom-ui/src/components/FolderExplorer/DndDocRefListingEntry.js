@@ -113,7 +113,6 @@ const DndDocRefListingEntry = ({
   listingId,
   selectableItemListing: { selectedItems },
   onNameClick,
-  includeBreadcrumb,
   openDocRef,
   connectDropTarget,
   connectDragSource,
@@ -136,7 +135,6 @@ const DndDocRefListingEntry = ({
     <DocRefListingEntry
       className={className}
       index={index}
-      includeBreadcrumb={includeBreadcrumb}
       openDocRef={openDocRef}
       docRef={node}
       listingId={listingId}
@@ -150,14 +148,12 @@ EnhancedDocRefListingEntry.propTypes = {
   index: PropTypes.number.isRequired,
   listingId: PropTypes.string.isRequired,
   docRefUuid: PropTypes.string.isRequired,
-  includeBreadcrumb: PropTypes.bool.isRequired,
   onNameClick: PropTypes.func.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };
 
 EnhancedDocRefListingEntry.defaultProps = {
   checkedDocRefs: [],
-  includeBreadcrumb: true,
 };
 
 export default EnhancedDocRefListingEntry;

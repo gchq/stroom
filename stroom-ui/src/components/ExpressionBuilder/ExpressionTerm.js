@@ -25,7 +25,7 @@ import { DragSource } from 'react-dnd';
 
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
-import DocPickerModal from 'components/DocPickerModal';
+import DocPicker from 'components/DocPicker';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
 const { expressionItemUpdated, expressionItemDeleted } = actionCreators;
@@ -247,7 +247,7 @@ const ExpressionTerm = ({
     }
     case 'IN_DICTIONARY': {
       valueWidget = (
-        <DocPickerModal
+        <DocPicker
           pickerId={pickerId}
           typeFilters={['Dictionary']}
           onChange={onDictionaryValueChange}

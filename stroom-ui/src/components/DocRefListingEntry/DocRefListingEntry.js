@@ -40,11 +40,28 @@ const enhance = compose(
   }),
 );
 
-const DocRefListingEntry = ({
+const RawDocRefListingEntry = ({
+  className, docRef, isSelected, onRowClick, onNameClick,
+}) => (
+  <div
+    className={`hoverable ${className || ''} ${isSelected ? 'selected' : ''}`}
+    onClick={onRowClick}
+  >
+    <img
+      className="stroom-icon--large"
+      alt="X"
+      src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
+    />
+    <span className="doc-ref-listing__name" onClick={onNameClick}>
+      {docRef.name}
+    </span>
+  </div>
+);
+
+const RawDocRefListingEntryWithBreadcrumb = ({
   className,
   docRef,
   openDocRef,
-  includeBreadcrumb,
   isSelected,
   onRowClick,
   onNameClick,
@@ -60,25 +77,27 @@ const DocRefListingEntry = ({
         src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
       />
       <span className="doc-ref-listing__name" onClick={onNameClick}>
-        {docRef.name} {isSelected ? 'selected' : ''}
+        {docRef.name}
       </span>
     </div>
 
-    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={docRef.uuid} openDocRef={openDocRef} />}
+    <DocRefBreadcrumb docRefUuid={docRef.uuid} openDocRef={openDocRef} />
   </div>
 );
 
-DocRefListingEntry.propTypes = {
-  index: PropTypes.number.isRequired,
-  className: PropTypes.string,
-  docRef: DocRefPropType,
-  isSelected: PropTypes.bool.isRequired,
-  openDocRef: PropTypes.func.isRequired,
-};
+const DocRefListingEntry = enhance(RawDocRefListingEntry);
+const DocRefListingEntryWithBreadcrumb = enhance(RawDocRefListingEntryWithBreadcrumb);
 
-DocRefListingEntry.defaultProps = {
-  includeBreadcrumb: true,
-  isSelected: false,
-};
+[DocRefListingEntry, DocRefListingEntryWithBreadcrumb].forEach(d =>
+  (d.propTypes = {
+    listingId: PropTypes.string.isRequired,
+    docRef: DocRefPropType,
+    index: PropTypes.number.isRequired,
+    className: PropTypes.string,
+    isSelected: PropTypes.bool,
+    openDocRef: PropTypes.func.isRequired,
+  }));
 
-export default enhance(DocRefListingEntry);
+export default DocRefListingEntry;
+
+export { DocRefListingEntry, DocRefListingEntryWithBreadcrumb };

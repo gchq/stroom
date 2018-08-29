@@ -18,16 +18,19 @@ import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
+import { Input } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
+import { DocRefListingEntryWithBreadcrumb } from 'components/DocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
+import withSelectableItemListing from 'lib/withSelectableItemListing';
 
-const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
+const withDropdownOpen = withState('isDropDownOpen', 'setDropdownOpen', false);
 const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
 
 const enhance = compose(
-  withModal,
+  withDropdownOpen,
   withFolderUuid,
   withDocumentTree,
   connect(
@@ -54,7 +57,7 @@ const enhance = compose(
       return {
         currentFolderWithLineage,
         selectableItemListing,
-        documentTree: documentTreeToUse,
+        documents: documentTreeToUse.children || [],
         onDocRefPickConfirmed,
         selectionNotYetMade:
           selectableItemListing && selectableItemListing.selectedItems.length === 0,
@@ -62,11 +65,56 @@ const enhance = compose(
     },
     {},
   ),
+  withSelectableItemListing(({ pickerId, documents }) => ({
+    listingId: pickerId,
+    items: documents,
+    openItem: d => console.log('Open item in selectable listing?', d),
+  })),
 );
 
-const DocPickerModal = () => <div>I.O.U One DocRefModalPicker</div>;
+const DocPicker = ({
+  value,
+  listingId,
+  setDropdownOpen,
+  isDropDownOpen,
+  documents,
+  onKeyDownWithShortcuts,
+}) => (
+  <div
+    className="dropdown"
+    tabIndex={0}
+    onFocus={() => setDropdownOpen(true)}
+    onBlur={() => setDropdownOpen(false)}
+    onKeyDown={onKeyDownWithShortcuts}
+  >
+    <Input
+      fluid
+      tabIndex={-1}
+      className="border flat"
+      icon="search"
+      placeholder="Search..."
+      value={value}
+      onChange={({ target: { value } }) => {
+        // searchTermUpdated(value);
+        // searchApp({ term: value });
+        console.log('Updating value', value);
+      }}
+    />
+    <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
+      {documents.map((searchResult, index) => (
+        <DocRefListingEntryWithBreadcrumb
+          key={searchResult.uuid}
+          index={index}
+          listingId={listingId}
+          docRef={searchResult}
+          openDocRef={d => console.log('Open Doc Ref?', d)}
+        />
+      ))}
+    </div>
+  </div>
+);
 
-const EnhancedDocPickerModal = enhance(DocPickerModal);
+const EnhancedDocPickerModal = enhance(DocPicker);
 
 EnhancedDocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,

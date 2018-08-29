@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 
 import AppSearchBar from './AppSearchBar';
@@ -27,6 +28,7 @@ import 'semantic/dist/semantic.min.css';
 
 storiesOf('App Search Bar', module)
   .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('Search Bar', () => <AppSearchBar />);

@@ -10,7 +10,7 @@ import { actionCreators } from '../redux';
 
 import ThemedPopup from 'components/ThemedPopup';
 
-import DocPickerModal from 'components/DocPickerModal';
+import DocPicker from 'components/DocPicker';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
 import NumericInput from 'components/NumericInput';
@@ -288,7 +288,7 @@ const getField = (
       break;
     case 'docref':
       elementField = (
-        <DocPickerModal
+        <DocPicker
           pickerId={getPickerName(name)}
           typeFilter={docRefTypes}
           onChange={({node, lineage}) => {

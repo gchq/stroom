@@ -19,7 +19,7 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { compose, withState } from 'recompose';
 
-import { DocPickerModal } from 'components/DocPickerModal';
+import { DocPicker } from 'components/DocPicker';
 import { testTree, fromSetupSampleData } from 'components/FolderExplorer/test';
 
 import { pickRandomItem } from 'lib/treeUtils';
@@ -28,24 +28,26 @@ import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-storiesOf('Doc Ref Modal Picker', module)
+storiesOf('Doc Ref Picker', module)
   .addDecorator(ControlledInputDecorator) // must be the 'first' one
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData }))
   .addDecorator(KeyIsDownDecorator())
+  .addDecorator(ThemedDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(ReduxDecorator)
-  .add('Doc Ref Picker', () => <DocPickerModal pickerId="modal1" />)
+  .add('Doc Ref Picker', () => <DocPicker pickerId="modal1" />)
   .add('Doc Ref Picker (filter to pipeline)', () => (
-    <DocPickerModal pickerId="modal2" typeFilters={['Pipeline']} />
+    <DocPicker pickerId="modal2" typeFilters={['Pipeline']} />
   ))
   .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
-    <DocPickerModal pickerId="modal3" typeFilters={['Feed', 'Dictionary']} />
+    <DocPicker pickerId="modal3" typeFilters={['Feed', 'Dictionary']} />
   ))
   .add('Doc Ref Picker (filter to Folders)', () => (
-    <DocPickerModal pickerId="modal4" typeFilters={['Folder']} />
+    <DocPicker pickerId="modal4" typeFilters={['Folder']} />
   ));

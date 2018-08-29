@@ -113,6 +113,7 @@ const FolderExplorer = ({
   folderUuid,
   actionBarItems,
   openDocRef,
+  history,
   onKeyDownWithShortcuts,
 }) => (
   <React.Fragment>
@@ -125,7 +126,7 @@ const FolderExplorer = ({
           <Icon name="folder" />
           <Header.Content className="header">{node.name}</Header.Content>
           <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
+            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={d => openDocRef(history, d)} />
           </Header.Subheader>
         </Header>
       </Grid.Column>
@@ -156,8 +157,8 @@ const FolderExplorer = ({
           index={index}
           listingId={LISTING_ID}
           docRefUuid={docRef.uuid}
-          onNameClick={node => openDocRef(node)}
-          openDocRef={openDocRef}
+          onNameClick={d => openDocRef(history, d)}
+          openDocRef={d => openDocRef(history, d)}
         />
       ))}
     </div>
