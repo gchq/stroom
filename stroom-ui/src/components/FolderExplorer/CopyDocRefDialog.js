@@ -26,7 +26,7 @@ import { actionCreators } from './redux';
 import { copyDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
 
-import DocPickerModal from 'components/DocPickerModal';
+import DocPicker from 'components/DocPicker';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefCopy } = actionCreators;
@@ -85,7 +85,7 @@ const CopyDocRefDialog = ({
           <Field
             name="destination"
             component={({ input: { onChange, value } }) => (
-              <DocPickerModal pickerId={pickerId} onChange={onChange} value={value} />
+              <DocPicker pickerId={pickerId} onChange={onChange} value={value} />
             )}
           />
         </Form.Field>
