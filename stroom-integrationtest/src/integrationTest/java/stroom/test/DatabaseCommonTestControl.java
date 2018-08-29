@@ -69,8 +69,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             ClusterLock.TABLE_NAME,
             "doc",
             DocumentPermission.TABLE_NAME,
-            "explorerTreeNode",
-            "explorerTreePath",
+            "explorer_node",
+            "explorer_path",
             "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,
