@@ -10,10 +10,10 @@ import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
 
-import stroom.explorer.impl.db.stroom.tables.Explorertreenode;
-import stroom.explorer.impl.db.stroom.tables.Explorertreepath;
-import stroom.explorer.impl.db.stroom.tables.records.ExplorertreenodeRecord;
-import stroom.explorer.impl.db.stroom.tables.records.ExplorertreepathRecord;
+import stroom.explorer.impl.db.stroom.tables.ExplorerNode;
+import stroom.explorer.impl.db.stroom.tables.ExplorerPath;
+import stroom.explorer.impl.db.stroom.tables.records.ExplorerNodeRecord;
+import stroom.explorer.impl.db.stroom.tables.records.ExplorerPathRecord;
 
 
 /**
@@ -34,15 +34,15 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
-    public static final Identity<ExplorertreenodeRecord, Integer> IDENTITY_EXPLORERTREENODE = Identities0.IDENTITY_EXPLORERTREENODE;
+    public static final Identity<ExplorerNodeRecord, Integer> IDENTITY_EXPLORER_NODE = Identities0.IDENTITY_EXPLORER_NODE;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<ExplorertreenodeRecord> KEY_EXPLORERTREENODE_PRIMARY = UniqueKeys0.KEY_EXPLORERTREENODE_PRIMARY;
-    public static final UniqueKey<ExplorertreenodeRecord> KEY_EXPLORERTREENODE_TYPE = UniqueKeys0.KEY_EXPLORERTREENODE_TYPE;
-    public static final UniqueKey<ExplorertreepathRecord> KEY_EXPLORERTREEPATH_PRIMARY = UniqueKeys0.KEY_EXPLORERTREEPATH_PRIMARY;
+    public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_PRIMARY = UniqueKeys0.KEY_EXPLORER_NODE_PRIMARY;
+    public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_TYPE = UniqueKeys0.KEY_EXPLORER_NODE_TYPE;
+    public static final UniqueKey<ExplorerPathRecord> KEY_EXPLORER_PATH_PRIMARY = UniqueKeys0.KEY_EXPLORER_PATH_PRIMARY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -54,12 +54,12 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     private static class Identities0 {
-        public static Identity<ExplorertreenodeRecord, Integer> IDENTITY_EXPLORERTREENODE = Internal.createIdentity(Explorertreenode.EXPLORERTREENODE, Explorertreenode.EXPLORERTREENODE.ID);
+        public static Identity<ExplorerNodeRecord, Integer> IDENTITY_EXPLORER_NODE = Internal.createIdentity(ExplorerNode.EXPLORER_NODE, ExplorerNode.EXPLORER_NODE.ID);
     }
 
     private static class UniqueKeys0 {
-        public static final UniqueKey<ExplorertreenodeRecord> KEY_EXPLORERTREENODE_PRIMARY = Internal.createUniqueKey(Explorertreenode.EXPLORERTREENODE, "KEY_explorerTreeNode_PRIMARY", Explorertreenode.EXPLORERTREENODE.ID);
-        public static final UniqueKey<ExplorertreenodeRecord> KEY_EXPLORERTREENODE_TYPE = Internal.createUniqueKey(Explorertreenode.EXPLORERTREENODE, "KEY_explorerTreeNode_type", Explorertreenode.EXPLORERTREENODE.TYPE, Explorertreenode.EXPLORERTREENODE.UUID);
-        public static final UniqueKey<ExplorertreepathRecord> KEY_EXPLORERTREEPATH_PRIMARY = Internal.createUniqueKey(Explorertreepath.EXPLORERTREEPATH, "KEY_explorerTreePath_PRIMARY", Explorertreepath.EXPLORERTREEPATH.ANCESTOR, Explorertreepath.EXPLORERTREEPATH.DESCENDANT);
+        public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_PRIMARY = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, "KEY_explorer_node_PRIMARY", ExplorerNode.EXPLORER_NODE.ID);
+        public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_TYPE = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, "KEY_explorer_node_type", ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID);
+        public static final UniqueKey<ExplorerPathRecord> KEY_EXPLORER_PATH_PRIMARY = Internal.createUniqueKey(ExplorerPath.EXPLORER_PATH, "KEY_explorer_path_PRIMARY", ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DESCENDANT);
     }
 }

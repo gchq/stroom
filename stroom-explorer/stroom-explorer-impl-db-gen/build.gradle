@@ -38,7 +38,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
                         // Add anything you want included in generation below
-                        includes = 'explorerTreeNode|explorerTreePath'
+                        includes = 'explorer_node|explorer_path'
                         // We don't want to include flyway versioning
                         excludes = 'explorer_schema_version'
                     }

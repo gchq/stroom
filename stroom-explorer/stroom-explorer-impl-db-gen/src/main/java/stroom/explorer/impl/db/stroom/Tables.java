@@ -6,8 +6,8 @@ package stroom.explorer.impl.db.stroom;
 
 import javax.annotation.Generated;
 
-import stroom.explorer.impl.db.stroom.tables.Explorertreenode;
-import stroom.explorer.impl.db.stroom.tables.Explorertreepath;
+import stroom.explorer.impl.db.stroom.tables.ExplorerNode;
+import stroom.explorer.impl.db.stroom.tables.ExplorerPath;
 
 
 /**
@@ -24,12 +24,12 @@ import stroom.explorer.impl.db.stroom.tables.Explorertreepath;
 public class Tables {
 
     /**
-     * The table <code>stroom.explorerTreeNode</code>.
+     * The table <code>stroom.explorer_node</code>.
      */
-    public static final Explorertreenode EXPLORERTREENODE = stroom.explorer.impl.db.stroom.tables.Explorertreenode.EXPLORERTREENODE;
+    public static final ExplorerNode EXPLORER_NODE = stroom.explorer.impl.db.stroom.tables.ExplorerNode.EXPLORER_NODE;
 
     /**
-     * The table <code>stroom.explorerTreePath</code>.
+     * The table <code>stroom.explorer_path</code>.
      */
-    public static final Explorertreepath EXPLORERTREEPATH = stroom.explorer.impl.db.stroom.tables.Explorertreepath.EXPLORERTREEPATH;
+    public static final ExplorerPath EXPLORER_PATH = stroom.explorer.impl.db.stroom.tables.ExplorerPath.EXPLORER_PATH;
 }

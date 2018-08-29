@@ -10,8 +10,8 @@ import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.Internal;
 
-import stroom.explorer.impl.db.stroom.tables.Explorertreenode;
-import stroom.explorer.impl.db.stroom.tables.Explorertreepath;
+import stroom.explorer.impl.db.stroom.tables.ExplorerNode;
+import stroom.explorer.impl.db.stroom.tables.ExplorerPath;
 
 
 /**
@@ -31,17 +31,17 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index EXPLORERTREENODE_PRIMARY = Indexes0.EXPLORERTREENODE_PRIMARY;
-    public static final Index EXPLORERTREENODE_TYPE = Indexes0.EXPLORERTREENODE_TYPE;
-    public static final Index EXPLORERTREEPATH_PRIMARY = Indexes0.EXPLORERTREEPATH_PRIMARY;
+    public static final Index EXPLORER_NODE_PRIMARY = Indexes0.EXPLORER_NODE_PRIMARY;
+    public static final Index EXPLORER_NODE_TYPE = Indexes0.EXPLORER_NODE_TYPE;
+    public static final Index EXPLORER_PATH_PRIMARY = Indexes0.EXPLORER_PATH_PRIMARY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index EXPLORERTREENODE_PRIMARY = Internal.createIndex("PRIMARY", Explorertreenode.EXPLORERTREENODE, new OrderField[] { Explorertreenode.EXPLORERTREENODE.ID }, true);
-        public static Index EXPLORERTREENODE_TYPE = Internal.createIndex("type", Explorertreenode.EXPLORERTREENODE, new OrderField[] { Explorertreenode.EXPLORERTREENODE.TYPE, Explorertreenode.EXPLORERTREENODE.UUID }, true);
-        public static Index EXPLORERTREEPATH_PRIMARY = Internal.createIndex("PRIMARY", Explorertreepath.EXPLORERTREEPATH, new OrderField[] { Explorertreepath.EXPLORERTREEPATH.ANCESTOR, Explorertreepath.EXPLORERTREEPATH.DESCENDANT }, true);
+        public static Index EXPLORER_NODE_PRIMARY = Internal.createIndex("PRIMARY", ExplorerNode.EXPLORER_NODE, new OrderField[] { ExplorerNode.EXPLORER_NODE.ID }, true);
+        public static Index EXPLORER_NODE_TYPE = Internal.createIndex("type", ExplorerNode.EXPLORER_NODE, new OrderField[] { ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID }, true);
+        public static Index EXPLORER_PATH_PRIMARY = Internal.createIndex("PRIMARY", ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DESCENDANT }, true);
     }
 }

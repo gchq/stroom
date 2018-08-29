@@ -16,8 +16,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static stroom.explorer.impl.db.stroom.tables.Explorertreenode.EXPLORERTREENODE;
-import static stroom.explorer.impl.db.stroom.tables.Explorertreepath.EXPLORERTREEPATH;
+import static stroom.explorer.impl.db.stroom.tables.ExplorerNode.EXPLORER_NODE;
+import static stroom.explorer.impl.db.stroom.tables.ExplorerPath.EXPLORER_PATH;
 
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeDaoImpl.class);
@@ -26,10 +26,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private boolean removeReferencedNodes;
     private final ConnectionProvider connectionProvider;
 
-    private final stroom.explorer.impl.db.stroom.tables.Explorertreepath p = EXPLORERTREEPATH.as("p");
-    private final stroom.explorer.impl.db.stroom.tables.Explorertreepath p1 = EXPLORERTREEPATH.as("p1");
-    private final stroom.explorer.impl.db.stroom.tables.Explorertreepath p2 = EXPLORERTREEPATH.as("p2");
-    private final stroom.explorer.impl.db.stroom.tables.Explorertreenode n = EXPLORERTREENODE.as("n");
+    private final stroom.explorer.impl.db.stroom.tables.ExplorerPath p = EXPLORER_PATH.as("p");
+    private final stroom.explorer.impl.db.stroom.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
+    private final stroom.explorer.impl.db.stroom.tables.ExplorerPath p2 = EXPLORER_PATH.as("p2");
+    private final stroom.explorer.impl.db.stroom.tables.ExplorerNode n = EXPLORER_NODE.as("n");
 
     @Inject
     ExplorerTreeDaoImpl(final ConnectionProvider connectionProvider) {
@@ -65,7 +65,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //                    .and(p.DESCENDANT.eq(node.getId()))
 //                    .fetch()
 //                    .stream()
-//                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+//                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
 //                    .collect(Collectors.toList());
 //
 //            if (result.size() <= 0) {
@@ -101,12 +101,12 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final int id = create
-                    .insertInto(EXPLORERTREENODE)
-                    .set(EXPLORERTREENODE.TYPE, node.getType())
-                    .set(EXPLORERTREENODE.UUID, node.getUuid())
-                    .set(EXPLORERTREENODE.NAME, node.getName())
-                    .set(EXPLORERTREENODE.TAGS, node.getTags())
-                    .returning(EXPLORERTREENODE.ID)
+                    .insertInto(EXPLORER_NODE)
+                    .set(EXPLORER_NODE.TYPE, node.getType())
+                    .set(EXPLORER_NODE.UUID, node.getUuid())
+                    .set(EXPLORER_NODE.NAME, node.getName())
+                    .set(EXPLORER_NODE.TAGS, node.getTags())
+                    .returning(EXPLORER_NODE.ID)
                     .fetchOne()
                     .getId();
             node.setId(id);
@@ -124,12 +124,12 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
-                    .update(EXPLORERTREENODE)
-                    .set(EXPLORERTREENODE.TYPE, node.getType())
-                    .set(EXPLORERTREENODE.UUID, node.getUuid())
-                    .set(EXPLORERTREENODE.NAME, node.getName())
-                    .set(EXPLORERTREENODE.TAGS, node.getTags())
-                    .where(EXPLORERTREENODE.ID.eq(node.getId()))
+                    .update(EXPLORER_NODE)
+                    .set(EXPLORER_NODE.TYPE, node.getType())
+                    .set(EXPLORER_NODE.UUID, node.getUuid())
+                    .set(EXPLORER_NODE.NAME, node.getName())
+                    .set(EXPLORER_NODE.TAGS, node.getTags())
+                    .where(EXPLORER_NODE.ID.eq(node.getId()))
                     .execute();
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -141,11 +141,11 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
-                    .insertInto(EXPLORERTREEPATH)
-                    .set(EXPLORERTREEPATH.ANCESTOR, path.getAncestor())
-                    .set(EXPLORERTREEPATH.DESCENDANT, path.getDescendant())
-                    .set(EXPLORERTREEPATH.DEPTH, path.getDepth())
-                    .set(EXPLORERTREEPATH.ORDERINDEX, path.getOrderIndex())
+                    .insertInto(EXPLORER_PATH)
+                    .set(EXPLORER_PATH.ANCESTOR, path.getAncestor())
+                    .set(EXPLORER_PATH.DESCENDANT, path.getDescendant())
+                    .set(EXPLORER_PATH.DEPTH, path.getDepth())
+                    .set(EXPLORER_PATH.ORDER_INDEX, path.getOrderIndex())
                     .execute();
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -158,13 +158,13 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
-                    .update(EXPLORERTREEPATH)
-                    .set(EXPLORERTREEPATH.ANCESTOR, path.getAncestor())
-                    .set(EXPLORERTREEPATH.DESCENDANT, path.getDescendant())
-                    .set(EXPLORERTREEPATH.DEPTH, path.getDepth())
-                    .set(EXPLORERTREEPATH.ORDERINDEX, path.getOrderIndex())
-                    .where(EXPLORERTREEPATH.ANCESTOR.eq(path.getAncestor()))
-                    .and(EXPLORERTREEPATH.DESCENDANT.eq(path.getDescendant()))
+                    .update(EXPLORER_PATH)
+                    .set(EXPLORER_PATH.ANCESTOR, path.getAncestor())
+                    .set(EXPLORER_PATH.DESCENDANT, path.getDescendant())
+                    .set(EXPLORER_PATH.DEPTH, path.getDepth())
+                    .set(EXPLORER_PATH.ORDER_INDEX, path.getOrderIndex())
+                    .where(EXPLORER_PATH.ANCESTOR.eq(path.getAncestor()))
+                    .and(EXPLORER_PATH.DESCENDANT.eq(path.getDescendant()))
                     .execute();
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -290,7 +290,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                             .from(p)
                             .where(p.ANCESTOR.eq(parent.getId()))
                             .and(p.DEPTH.eq(1))
-                            .orderBy(p.ORDERINDEX)))
+                            .orderBy(p.ORDER_INDEX)))
                     .fetch()
                     .stream()
                     .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
@@ -584,7 +584,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                             .where(p1.ANCESTOR.eq(nodeId))))
                     .fetch()
                     .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                     .collect(Collectors.toList());
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -665,7 +665,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                             .where(p2.ANCESTOR.eq(node.getId()))))
                     .fetch()
                     .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                     .collect(Collectors.toList());
 
             List<ExplorerTreePath> pathSiblings = getAllTreePathSiblings(node.getId());
@@ -694,7 +694,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     .where(p.ANCESTOR.eq(parent.getId()))
                     .fetch()
                     .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                     .collect(Collectors.toList());
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -729,7 +729,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 //                            .where(p2.ANCESTOR.eq(parent.getId()))))
 //                    .fetch()
 //                    .stream()
-//                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+//                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
 //                    .collect(Collectors.toList());
 //        } catch (final SQLException e) {
 //            LOGGER.error(e.getMessage(), e);
@@ -793,7 +793,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .where(p.DESCENDANT.eq(parent.getId()))
                         .fetch()
                         .stream()
-                        .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                        .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                         .collect(Collectors.toList());
                 pathsToClone.addAll(paths);
             } catch (final SQLException e) {
@@ -810,7 +810,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .orderBy(p.DEPTH)
                         .fetch()
                         .stream()
-                        .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                        .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                         .collect(Collectors.toList());
                 pathsToClone.addAll(paths);
 
@@ -885,10 +885,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     .selectFrom(p)
                     .where(p.ANCESTOR.eq(parentId))
                     .and(p.DEPTH.eq(1))
-                    .orderBy(p.ORDERINDEX)
+                    .orderBy(p.ORDER_INDEX)
                     .fetch()
                     .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                     .collect(Collectors.toList());
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -908,10 +908,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                             .from(p2)
                             .where(p2.DESCENDANT.eq(nodeId))
                             .and(p2.DEPTH.eq(1))))
-                    .orderBy(p.ORDERINDEX)
+                    .orderBy(p.ORDER_INDEX)
                     .fetch()
                     .stream()
-                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderindex()))
+                    .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()))
                     .collect(Collectors.toList());
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);

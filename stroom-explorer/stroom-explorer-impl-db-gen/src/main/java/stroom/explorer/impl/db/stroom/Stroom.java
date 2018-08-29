@@ -15,8 +15,8 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.explorer.impl.db.DefaultCatalog;
-import stroom.explorer.impl.db.stroom.tables.Explorertreenode;
-import stroom.explorer.impl.db.stroom.tables.Explorertreepath;
+import stroom.explorer.impl.db.stroom.tables.ExplorerNode;
+import stroom.explorer.impl.db.stroom.tables.ExplorerPath;
 
 
 /**
@@ -32,7 +32,7 @@ import stroom.explorer.impl.db.stroom.tables.Explorertreepath;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -203578054;
+    private static final long serialVersionUID = -1049387906;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -40,14 +40,14 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.explorerTreeNode</code>.
+     * The table <code>stroom.explorer_node</code>.
      */
-    public final Explorertreenode EXPLORERTREENODE = stroom.explorer.impl.db.stroom.tables.Explorertreenode.EXPLORERTREENODE;
+    public final ExplorerNode EXPLORER_NODE = stroom.explorer.impl.db.stroom.tables.ExplorerNode.EXPLORER_NODE;
 
     /**
-     * The table <code>stroom.explorerTreePath</code>.
+     * The table <code>stroom.explorer_path</code>.
      */
-    public final Explorertreepath EXPLORERTREEPATH = stroom.explorer.impl.db.stroom.tables.Explorertreepath.EXPLORERTREEPATH;
+    public final ExplorerPath EXPLORER_PATH = stroom.explorer.impl.db.stroom.tables.ExplorerPath.EXPLORER_PATH;
 
     /**
      * No further instances allowed
@@ -74,7 +74,7 @@ public class Stroom extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
-            Explorertreenode.EXPLORERTREENODE,
-            Explorertreepath.EXPLORERTREEPATH);
+            ExplorerNode.EXPLORER_NODE,
+            ExplorerPath.EXPLORER_PATH);
     }
 }
