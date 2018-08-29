@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { compose, withHandlers, withProps } from 'recompose';
+import { compose, withHandlers, withProps, lifecycle } from 'recompose';
 import { Pagination, Dropdown } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
@@ -77,6 +77,14 @@ const enhance = compose(
     activePage: pageOffset + 1,
     totalPages: numberOfPages || 1,
   })),
+  lifecycle({
+    componentDidMount() {
+      console.log({ children: this.props });
+      React.Children.map(this.props.children, (child, i) => {
+        console.log({ child });
+      });
+    },
+  }),
 );
 
 const ProcessingPagination = ({
@@ -88,6 +96,7 @@ const ProcessingPagination = ({
 }) => (
   <div className="pagination__container">
     <Pagination
+      className="flat raised-border"
       activePage={activePage}
       totalPages={totalPages}
       firstItem={null}

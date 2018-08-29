@@ -265,3 +265,9 @@ input {
     color: themed("breadcrumb__section--active___color") !important;
   }
 }
+
+.pagination__container .pagination a {
+  @include themify($themes) {
+    color: themed("text__color") !important;
+  }
+}
