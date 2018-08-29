@@ -7,7 +7,6 @@ import {
   renderComponent,
   withProps,
   withHandlers,
-  withPropsOnChange,
 } from 'recompose';
 import { connect } from 'react-redux';
 

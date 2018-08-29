@@ -23,12 +23,12 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
-import { Table, Label, Progress } from 'semantic-ui-react';
+import { Progress } from 'semantic-ui-react';
 
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { actionCreators, Directions, SortByOptions } from '../redux';
+import { actionCreators, Directions } from '../redux';
 
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 

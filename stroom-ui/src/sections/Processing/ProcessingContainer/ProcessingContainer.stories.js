@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import Processing from './Processing';
+import ProcessingContainer from './ProcessingContainer';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
