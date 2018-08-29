@@ -28,37 +28,26 @@ import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
 import ProcessingDetails from '../ProcessingDetails/ProcessingDetails';
+import ProcessingPagination from '../ProcessingPagination/ProcessingPagination';
 
 import ProcessingList from '../ProcessingList/ProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
 const {
-  updateTrackerSelection, resetPaging, updateSearchCriteria, changePage,
+  updateTrackerSelection, resetPaging, updateSearchCriteria, 
 } = actionCreators;
 
 const enhance = compose(
   connect(
     ({
       processing: {
-        isLoading,
         trackers,
-        showCompleted,
         searchCriteria,
-        pageSize,
-        pageOffset,
-        totalTrackers,
-        numberOfPages,
         selectedTrackerId,
       },
     }) => ({
-      isLoading,
       trackers,
-      showCompleted,
       searchCriteria,
-      pageSize,
-      pageOffset,
-      totalTrackers,
-      numberOfPages,
       selectedTrackerId,
     }),
     {
@@ -67,7 +56,6 @@ const enhance = compose(
       updateTrackerSelection,
       expressionChanged,
       updateSearchCriteria,
-      changePage,
     },
   ),
   withHandlers({
@@ -95,12 +83,6 @@ const enhance = compose(
     },
     onHandleSearch: ({ fetchTrackers }) => (event) => {
       if (event === undefined || event.key === 'Enter') {
-        fetchTrackers();
-      }
-    },
-    onHandlePageChange: ({ changePage, fetchTrackers }) => (data) => {
-      if (data.activePage < data.totalPages) {
-        changePage(data.activePage - 1);
         fetchTrackers();
       }
     },
@@ -136,21 +118,21 @@ const ProcessingContainer = ({
   trackers,
   searchCriteria,
   selectedTrackerId,
-  pageOffset,
-  numberOfPages,
   showDetails,
   onHandleTrackerSelection,
   onHandleSearchChange,
   onHandleSearch,
-  onHandlePageChange,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
+      <Grid.Column width={6}>
         <Header as="h3">
           <Icon name="play" />
           <Header.Content className="header">Processing</Header.Content>
         </Header>
+      </Grid.Column>
+      <Grid.Column width={10}>
+      <ProcessingPagination/>
       </Grid.Column>
     </Grid>
     <div className="tracker-container">

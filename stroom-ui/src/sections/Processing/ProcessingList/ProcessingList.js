@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -24,7 +24,7 @@ import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
 import { Progress } from 'react-sweet-progress';
-import "react-sweet-progress/lib/style.css";
+import 'react-sweet-progress/lib/style.css';
 
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -34,12 +34,7 @@ import { actionCreators, Directions } from '../redux';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 
 const {
-  updateSort,
-  moveSelection,
-  updateSearchCriteria,
-  changePage,
-  pageRight,
-  pageLeft,
+  updateSort, moveSelection, updateSearchCriteria, pageRight, pageLeft,
 } = actionCreators;
 
 const enhance = compose(
@@ -59,7 +54,6 @@ const enhance = compose(
       updateSort,
       moveSelection,
       updateSearchCriteria,
-      changePage,
       pageRight,
       pageLeft,
     },
@@ -104,9 +98,7 @@ const enhance = compose(
       {
         Header: 'Progress',
         accessor: 'progress',
-        Cell: row => (
-          <Progress percent={row.trackerPercent} symbolClassName="flat-text"/>
-        ),
+        Cell: row => <Progress percent={row.trackerPercent} symbolClassName="flat-text" />,
       },
     ],
     tableData: trackers.map(({ filterId, priority, trackerPercent }) => ({
@@ -142,7 +134,6 @@ const ProcessingList = ({
     manual
     className="Table__reactTable"
     sortable
-    pageSize={10}
     showPagination={false}
     data={tableData}
     columns={tableColumns}
