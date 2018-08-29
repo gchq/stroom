@@ -48,6 +48,7 @@ const enhance = compose(
         pageOffset,
         totalTrackers,
         numberOfPages,
+        selectedTrackerId,
       },
     }) => ({
       isLoading,
@@ -58,6 +59,7 @@ const enhance = compose(
       pageOffset,
       totalTrackers,
       numberOfPages,
+      selectedTrackerId,
     }),
     {
       fetchTrackers,
@@ -109,10 +111,7 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        fetchTrackers,
-        resetPaging,
-        onHandleTrackerSelection,
-        onHandleSearch,
+        fetchTrackers, resetPaging, onHandleTrackerSelection, onHandleSearch,
       } = this.props;
 
       fetchTrackers();
@@ -136,6 +135,7 @@ const enhance = compose(
 const ProcessingContainer = ({
   trackers,
   searchCriteria,
+  selectedTrackerId,
   pageOffset,
   numberOfPages,
   showDetails,
@@ -170,19 +170,26 @@ const ProcessingContainer = ({
           </Menu.Menu>
         </Menu>
         <div className="processing__table__container table__container">
-            <div
-              id="table-container"
-              className={`table-container${showDetails ? ' showing-details' : ''} table__reactTable__container`}
-            >
-        <PanelGroup direction="column">
-      
+          <div
+            id="table-container"
+            className={`table-container${
+              showDetails ? ' showing-details' : ''
+            } table__reactTable__container`}
+          >
+            {selectedTrackerId === undefined || selectedTrackerId === null ? (
               <ProcessingList
                 onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
               />
-          <ProcessingDetails />
-        </PanelGroup>
-        </div>
+            ) : (
+              <PanelGroup direction="column">
+                <ProcessingList
+                  onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
+                />
+                <ProcessingDetails />
+              </PanelGroup>
+            )}
           </div>
+        </div>
       </div>
     </div>
   </React.Fragment>

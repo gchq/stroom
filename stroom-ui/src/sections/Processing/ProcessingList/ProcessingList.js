@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -23,7 +23,8 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
-import { Progress } from 'semantic-ui-react';
+import { Progress } from 'react-sweet-progress';
+import "react-sweet-progress/lib/style.css";
 
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -103,6 +104,9 @@ const enhance = compose(
       {
         Header: 'Progress',
         accessor: 'progress',
+        Cell: row => (
+          <Progress percent={row.trackerPercent} symbolClassName="flat-text"/>
+        ),
       },
     ],
     tableData: trackers.map(({ filterId, priority, trackerPercent }) => ({

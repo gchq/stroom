@@ -21,7 +21,7 @@
 }
 
 .table__reactTable .rt-td {
-  padding: 2px 2px;
+  padding: 2px 2px !important;
 }
 
 .table__reactTable .rt-tbody .rt-td {
@@ -40,8 +40,12 @@
   max-height: 23px;
 }
 
+.ReactTable .rt-th, .ReactTable .rt-td {
+  padding: 2px 2px !important;
+}
+
 .ReactTable .rt-thead.-header {
-  box-shadow: none;
+  box-shadow: none; 
   border-bottom: solid 1px lightgrey;
 }
 
