@@ -3,8 +3,8 @@ import { createActions, handleActions, combineActions } from 'redux-actions';
 const SELECTION_BEHAVIOUR = {
   NONE: 0,
   SINGLE: 1,
-  MULTIPLE: 2
-}
+  MULTIPLE: 2,
+};
 
 const actionCreators = createActions({
   SELECTABLE_LISTING_MOUNTED: (listingId, items, selectionBehaviour) => ({
@@ -27,7 +27,7 @@ const defaultStatePerListing = {
   focusIndex: -1, // Used for simple item selection, by array index
   lastSelectedIndex: -1,
   selectedItems: [],
-  selectedItemIndexes: [],
+  selectedItemIndexes: new Set(),
 };
 
 // There will be an entry for each listing ID registered
@@ -70,7 +70,7 @@ const reducer = handleActions(
         [listingId]: {
           ...listingState,
           focusIndex: nextIndex,
-          focussedItem
+          focussedItem,
         },
       };
     },
@@ -86,49 +86,42 @@ const reducer = handleActions(
         items,
         selectionBehaviour,
       } = listingState;
-      const indexToUse = index || focusIndex;
+      const indexToUse = index !== undefined ? index : focusIndex;
 
-      if (selectionBehaviour === SELECTION_BEHAVIOUR.NONE) {
-        return state;
+      if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
+        const isCurrentlySelected = selectedItemIndexes.has(indexToUse);
+        if (isCurrentlySelected) {
+          if (keyIsDown.Control || keyIsDown.Meta) {
+            selectedItemIndexes = selectedItemIndexes.delete(indexToUse);
+          } else {
+            selectedItemIndexes = new Set();
+          }
+        } else if (selectionBehaviour === SELECTION_BEHAVIOUR.MULTIPLE) {
+          if (keyIsDown.Control || keyIsDown.Meta) {
+            selectedItemIndexes.add(indexToUse);
+          } else if (keyIsDown.Shift) {
+            selectedItemIndexes = new Set();
+            items.forEach((n, nIndex) => {
+              if (focusIndex < lastSelectedIndex) {
+                for (let i = focusIndex; i <= lastSelectedIndex; i++) {
+                  selectedItemIndexes.add(i);
+                }
+              } else {
+                for (let i = lastSelectedIndex; i <= focusIndex; i++) {
+                  selectedItemIndexes.add(i);
+                }
+              }
+            });
+          } else {
+            selectedItemIndexes = new Set([indexToUse]);
+          }
+        } else {
+          selectedItemIndexes = new Set([indexToUse]);
+        }
       }
 
-      const addToSelection = (arr, indexToUse) => {
-        if (!arr.includes(indexToUse)) {
-          arr.push(indexToUse);
-        }
-      };
-
-      const isCurrentlySelected = selectedItemIndexes.includes(indexToUse);
-      if (isCurrentlySelected) {
-        if (keyIsDown.Control || keyIsDown.Meta) {
-          selectedItemIndexes = selectedItemIndexes.filter((u, i) => i !== indexToUse);
-        } else {
-          selectedItemIndexes = [];
-        }
-      } else if (selectionBehaviour === SELECTION_BEHAVIOUR.MULTIPLE) {
-        if (keyIsDown.Control || keyIsDown.Meta) {
-          addToSelection(selectedItemIndexes, indexToUse);
-        } else if (keyIsDown.Shift) {
-          selectedItemIndexes = [];
-          items.forEach((n, nIndex) => {
-            if (focusIndex < lastSelectedIndex) {
-              for (let i = focusIndex; i <= lastSelectedIndex; i++) {
-                addToSelection(selectedItemIndexes, i);
-              }
-            } else {
-              for (let i = lastSelectedIndex; i <= focusIndex; i++) {
-                addToSelection(selectedItemIndexes, i);
-              }
-            }
-          });
-        } else {
-          selectedItemIndexes = [indexToUse];
-        }
-      } else {
-        selectedItemIndexes = [indexToUse];
-      }
-
-      const selectedItems = selectedItemIndexes.map(i => items[i]);
+      const selectedItems = [];
+      selectedItemIndexes.forEach(i => selectedItems.push(items[i]));
 
       return {
         ...state,
