@@ -33,7 +33,6 @@ const enhance = compose(
       e.preventDefault();
     },
     onNameClick: ({ openDocRef, docRef }) => (e) => {
-      console.log('Name click', docRef);
       openDocRef(docRef);
       e.stopPropagation();
       e.preventDefault();
@@ -78,7 +77,7 @@ const RawDocRefListingEntryWithBreadcrumb = ({
         src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
       />
       <span className="doc-ref-listing__name" onClick={onNameClick}>
-        {docRef.name} {isSelected ? 'selected' : ''}
+        {docRef.name}
       </span>
     </div>
 

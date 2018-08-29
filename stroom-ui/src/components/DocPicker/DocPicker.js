@@ -57,7 +57,7 @@ const enhance = compose(
       return {
         currentFolderWithLineage,
         selectableItemListing,
-        documents: documentTreeToUse.children,
+        documents: documentTreeToUse.children || [],
         onDocRefPickConfirmed,
         selectionNotYetMade:
           selectableItemListing && selectableItemListing.selectedItems.length === 0,
@@ -65,9 +65,7 @@ const enhance = compose(
     },
     {},
   ),
-  withSelectableItemListing(({
-    pickerId, documents,
-  }) => ({
+  withSelectableItemListing(({ pickerId, documents }) => ({
     listingId: pickerId,
     items: documents,
     openItem: d => console.log('Open item in selectable listing?', d),
@@ -82,35 +80,37 @@ const DocPicker = ({
   documents,
   onKeyDownWithShortcuts,
 }) => (
-  <div className="dropdown">
+  <div
+    className="dropdown"
+    tabIndex={0}
+    onFocus={() => setDropdownOpen(true)}
+    onBlur={() => setDropdownOpen(false)}
+    onKeyDown={onKeyDownWithShortcuts}
+  >
     <Input
       fluid
+      tabIndex={-1}
       className="border flat"
       icon="search"
       placeholder="Search..."
       value={value}
-      onFocus={() => setDropdownOpen(true)}
-      onBlur={() => setDropdownOpen(false)}
-      onKeyDown={onKeyDownWithShortcuts}
       onChange={({ target: { value } }) => {
         // searchTermUpdated(value);
         // searchApp({ term: value });
         console.log('Updating value', value);
       }}
     />
-    {isDropDownOpen && (
-      <div className="dropdown__content">
-        {documents.map((searchResult, index) => (
-          <DocRefListingEntryWithBreadcrumb
-            key={searchResult.uuid}
-            index={index}
-            listingId={listingId}
-            docRef={searchResult}
-            openDocRef={d => console.log('Open Doc Ref?', d)}
-          />
-        ))}
-      </div>
-    )}
+    <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
+      {documents.map((searchResult, index) => (
+        <DocRefListingEntryWithBreadcrumb
+          key={searchResult.uuid}
+          index={index}
+          listingId={listingId}
+          docRef={searchResult}
+          openDocRef={d => console.log('Open Doc Ref?', d)}
+        />
+      ))}
+    </div>
   </div>
 );
 

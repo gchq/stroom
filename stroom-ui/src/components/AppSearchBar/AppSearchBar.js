@@ -55,34 +55,36 @@ const AppSearchBar = ({
   isDropDownOpen,
   setDropdownOpen,
 }) => (
-  <div className="dropdown">
+  <div
+    className="dropdown"
+    tabIndex={0}
+    onFocus={() => setDropdownOpen(true)}
+    onBlur={() => setDropdownOpen(false)}
+    onKeyDown={onKeyDownWithShortcuts}
+  >
     <Input
+      tabIndex={-1}
       fluid
       className="border flat"
       icon="search"
       placeholder="Search..."
       value={searchValue}
-      onFocus={() => setDropdownOpen(true)}
-      onBlur={() => setDropdownOpen(false)}
-      onKeyDown={onKeyDownWithShortcuts}
       onChange={({ target: { value } }) => {
         searchTermUpdated(value);
         searchApp({ term: value });
       }}
     />
-    {isDropDownOpen && (
-      <div className="dropdown__content">
-        {searchResults.map((searchResult, index) => (
-          <DocRefListingEntryWithBreadcrumb
-            key={searchResult.uuid}
-            index={index}
-            listingId={LISTING_ID}
-            docRef={searchResult}
-            openDocRef={d => openDocRef(history, d)}
-          />
-        ))}
-      </div>
-    )}
+    <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
+      {searchResults.map((searchResult, index) => (
+        <DocRefListingEntryWithBreadcrumb
+          key={searchResult.uuid}
+          index={index}
+          listingId={LISTING_ID}
+          docRef={searchResult}
+          openDocRef={d => openDocRef(history, d)}
+        />
+      ))}
+    </div>
   </div>
 );
 
