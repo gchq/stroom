@@ -23,7 +23,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
-import { Progress } from 'semantic-ui-react';
+import { Line } from 'rc-progress';
 
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -104,7 +104,8 @@ const enhance = compose(
         Header: 'Progress',
         accessor: 'progress',
         Cell: row => (
-          <Progress indicating percent={row.trackerPercent} />
+          <Line percent="10" strokeWidth="4" strokeColor="#D3D3D3" />
+          // <Progress indicating percent={row.trackerPercent} />
         ),
       },
     ],
