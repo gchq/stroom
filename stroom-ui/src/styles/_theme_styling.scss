@@ -155,6 +155,26 @@ input {
   }
 }
 
+.inFocus {
+  @include themify($themes) {
+    border: solid thick themed("selected-color") !important;
+  }
+}
+
+.raised-high .selected {
+  @include themify($themes) {
+    background-color: themed(
+      "raised-high__selected-background-color"
+    ) !important;
+  }
+}
+
+.raised-high .inFocus {
+  @include themify($themes) {
+    border: solid thick themed("raised-high__selected-background-color") !important;
+  }
+}
+
 .selected:hover {
   @include themify($themes) {
     background-color: themed("selected-color") !important;
@@ -208,9 +228,11 @@ input {
   }
 }
 
-.icon-button:hover {
+.icon-button:hover,
+.icon-button:focus {
   @include themify($themes) {
     color: themed("icon-button__color--hover") !important;
+    background-color: themed("icon-button__background-color--hover") !important;
   }
 }
 

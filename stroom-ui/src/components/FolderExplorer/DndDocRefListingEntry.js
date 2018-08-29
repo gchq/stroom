@@ -119,21 +119,21 @@ const DndDocRefListingEntry = ({
   isOver,
   canDrop,
 }) => {
-  let className = '';
+  let additionalClasses = [];
   if (isOver) {
-    className += ' dnd-over';
+    additionalClasses.push('dnd-over');
   }
   if (isOver) {
     if (canDrop) {
-      className += ' can-drop';
+      additionalClasses.push('can-drop');
     } else {
-      className += ' cannot-drop';
+      additionalClasses.push('cannot-drop');
     }
   }
 
   return connectDragSource(connectDropTarget(<div>
     <DocRefListingEntry
-      className={className}
+      additionalClasses={additionalClasses}
       index={index}
       openDocRef={openDocRef}
       docRef={node}

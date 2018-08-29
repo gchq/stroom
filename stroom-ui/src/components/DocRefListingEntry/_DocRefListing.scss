@@ -7,7 +7,7 @@
 }
 
 .doc-ref-listing__item {
-  padding: 0.3rem;
+  padding: 0.7rem;
   border-top: solid thin $very-light-grey;
 }
 
@@ -38,10 +38,4 @@
   position: relative;
   top: -0.3rem;
   padding-left: 0.5rem;
-}
-
-.action-bar__button {
-  background-color: white !important;
-  border: solid thin $very-light-grey !important;
-  box-sizing: border-box;
 }

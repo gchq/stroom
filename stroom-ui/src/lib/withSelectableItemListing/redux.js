@@ -1,21 +1,31 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
 
+const SELECTION_BEHAVIOUR = {
+  NONE: 0,
+  SINGLE: 1,
+  MULTIPLE: 2
+}
+
 const actionCreators = createActions({
-  SELECTABLE_LISTING_MOUNTED: (listingId, items, allowMultiSelect) => ({
+  SELECTABLE_LISTING_MOUNTED: (listingId, items, selectionBehaviour) => ({
     listingId,
     items,
-    allowMultiSelect,
+    selectionBehaviour,
   }),
-  SELECTION_UP: listingId => ({ listingId, selectionChange: -1 }),
-  SELECTION_DOWN: listingId => ({ listingId, selectionChange: 1 }),
+  FOCUS_UP: listingId => ({ listingId, direction: -1 }),
+  FOCUS_DOWN: listingId => ({ listingId, direction: 1 }),
+  SELECT_FOCUSSED: (listingId, keyIsDown = {}) => ({ listingId, keyIsDown }),
   SELECTION_TOGGLED: (listingId, index, keyIsDown = {}) => ({ listingId, index, keyIsDown }),
 });
 
-const { selectionUp, selectionDown } = actionCreators;
+const {
+  focusUp, focusDown, selectFocussed, selectionToggled,
+} = actionCreators;
 
 const defaultStatePerListing = {
   items: [],
-  singleSelectedItemIndex: -1, // Used for simple item selection, by array index
+  focusIndex: -1, // Used for simple item selection, by array index
+  lastSelectedIndex: -1,
   selectedItems: [],
   selectedItemIndexes: [],
 };
@@ -27,7 +37,7 @@ const reducer = handleActions(
   {
     SELECTABLE_LISTING_MOUNTED: (state, action) => {
       const {
-        payload: { listingId, items, allowMultiSelect },
+        payload: { listingId, items, selectionBehaviour },
       } = action;
 
       return {
@@ -36,81 +46,86 @@ const reducer = handleActions(
           ...defaultStatePerListing,
           ...state[listingId], // any existing state
           items,
-          allowMultiSelect,
+          selectionBehaviour,
         },
       };
     },
-    [combineActions(selectionUp, selectionDown)]: (state, action) => {
+    [combineActions(focusUp, focusDown)]: (state, action) => {
       const {
-        payload: { listingId, selectionChange },
+        payload: { listingId, direction },
       } = action;
 
       const listingState = state[listingId];
-      const { items, singleSelectedItemIndex } = listingState;
+      const { items, focusIndex } = listingState;
 
       // Calculate the next index based on the selection change
       let nextIndex = 0;
-      if (singleSelectedItemIndex !== -1) {
-        nextIndex = (items.length + (singleSelectedItemIndex + selectionChange)) % items.length;
+      if (focusIndex !== -1) {
+        nextIndex = (items.length + (focusIndex + direction)) % items.length;
       }
-
-      // Calculate single item arrays for the other parts of the state
-      const selectedItems = [items[nextIndex]];
-      const selectedItemIndexes = [nextIndex];
+      const focussedItem = items.find((item, i) => i === nextIndex);
 
       return {
         ...state,
         [listingId]: {
           ...listingState,
-          singleSelectedItemIndex: nextIndex,
-          selectedItems,
-          selectedItemIndexes,
+          focusIndex: nextIndex,
+          focussedItem
         },
       };
     },
-    SELECTION_TOGGLED: (state, action) => {
+    [combineActions(selectFocussed, selectionToggled)]: (state, action) => {
       const {
         payload: { listingId, index, keyIsDown },
       } = action;
       const listingState = state[listingId];
       let {
-        selectedItemIndexes, singleSelectedItemIndex, items, allowMultiSelect,
+        selectedItemIndexes,
+        focusIndex,
+        lastSelectedIndex,
+        items,
+        selectionBehaviour,
       } = listingState;
+      const indexToUse = index || focusIndex;
 
-      const addToSelection = (arr, index) => {
-        if (!arr.includes(index)) {
-          arr.push(index);
+      if (selectionBehaviour === SELECTION_BEHAVIOUR.NONE) {
+        return state;
+      }
+
+      const addToSelection = (arr, indexToUse) => {
+        if (!arr.includes(indexToUse)) {
+          arr.push(indexToUse);
         }
       };
 
-      const isCurrentlySelected = selectedItemIndexes.includes(index);
+      const isCurrentlySelected = selectedItemIndexes.includes(indexToUse);
       if (isCurrentlySelected) {
         if (keyIsDown.Control || keyIsDown.Meta) {
-          selectedItemIndexes = selectedItemIndexes.filter((u, i) => i !== index);
+          selectedItemIndexes = selectedItemIndexes.filter((u, i) => i !== indexToUse);
         } else {
           selectedItemIndexes = [];
         }
-      } else if (allowMultiSelect) {
+      } else if (selectionBehaviour === SELECTION_BEHAVIOUR.MULTIPLE) {
         if (keyIsDown.Control || keyIsDown.Meta) {
-          addToSelection(selectedItemIndexes, index);
+          addToSelection(selectedItemIndexes, indexToUse);
         } else if (keyIsDown.Shift) {
           selectedItemIndexes = [];
           items.forEach((n, nIndex) => {
-            if (singleSelectedItemIndex < index) {
-              for (let i = singleSelectedItemIndex; i <= index; i++) {
+            if (focusIndex < lastSelectedIndex) {
+              for (let i = focusIndex; i <= lastSelectedIndex; i++) {
                 addToSelection(selectedItemIndexes, i);
               }
             } else {
-              for (let i = index; i <= singleSelectedItemIndex; i++) {
+              for (let i = lastSelectedIndex; i <= focusIndex; i++) {
                 addToSelection(selectedItemIndexes, i);
               }
             }
           });
         } else {
-          selectedItemIndexes = [index];
+          selectedItemIndexes = [indexToUse];
         }
       } else {
-        selectedItemIndexes = [index];
+        selectedItemIndexes = [indexToUse];
       }
 
       const selectedItems = selectedItemIndexes.map(i => items[i]);
@@ -121,7 +136,8 @@ const reducer = handleActions(
           ...listingState,
           selectedItems,
           selectedItemIndexes,
-          singleSelectedItemIndex: index,
+          focusIndex: indexToUse,
+          lastSelectedIndex: indexToUse,
         },
       };
     },
@@ -129,4 +145,4 @@ const reducer = handleActions(
   defaultState,
 );
 
-export { actionCreators, reducer };
+export { actionCreators, reducer, SELECTION_BEHAVIOUR };

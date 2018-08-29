@@ -63,7 +63,8 @@ const AppSearchBar = ({
     onKeyDown={onKeyDownWithShortcuts}
   >
     <Input
-      tabIndex={-1}
+      onFocus={() => setDropdownOpen(true)}
+      onBlur={() => setDropdownOpen(false)}
       fluid
       className="border flat"
       icon="search"

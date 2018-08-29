@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
-import { compose, withHandlers } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
@@ -13,13 +13,13 @@ const { selectionToggled } = selectableItemActionCreators;
 const enhance = compose(
   connect(
     ({ keyIsDown, selectableItemListings }, { listingId, docRef }) => {
-      const selectableItemListing = selectableItemListings[listingId];
-      let isSelected = false;
-      if (selectableItemListing) {
-        isSelected = selectableItemListing.selectedItems.map(d => d.uuid).includes(docRef.uuid);
-      }
+      const { selectedItems = [], focussedItem } = selectableItemListings[listingId] || {};
+      const isSelected = selectedItems.map(d => d.uuid).includes(docRef.uuid);
+      const inFocus = focussedItem && focussedItem.uuid === docRef.uuid;
+
       return {
         isSelected,
+        inFocus,
         keyIsDown,
       };
     },
@@ -38,15 +38,25 @@ const enhance = compose(
       e.preventDefault();
     },
   }),
+  withProps(({ additionalClasses = [], isSelected, inFocus }) => {
+    if (isSelected) {
+      additionalClasses.push('selected');
+    }
+    if (inFocus) {
+      additionalClasses.push('inFocus');
+    }
+    const className = `hoverable doc-ref-listing__item ${additionalClasses.join(' ')}`;
+
+    return {
+      className,
+    };
+  }),
 );
 
 const RawDocRefListingEntry = ({
   className, docRef, isSelected, onRowClick, onNameClick,
 }) => (
-  <div
-    className={`hoverable ${className || ''} ${isSelected ? 'selected' : ''}`}
-    onClick={onRowClick}
-  >
+  <div className={className} onClick={onRowClick}>
     <img
       className="stroom-icon--large"
       alt="X"
@@ -66,10 +76,7 @@ const RawDocRefListingEntryWithBreadcrumb = ({
   onRowClick,
   onNameClick,
 }) => (
-  <div
-    className={`hoverable ${className || ''} ${isSelected ? 'selected' : ''}`}
-    onClick={onRowClick}
-  >
+  <div className={className} onClick={onRowClick}>
     <div>
       <img
         className="stroom-icon--large"
@@ -93,7 +100,7 @@ const DocRefListingEntryWithBreadcrumb = enhance(RawDocRefListingEntryWithBreadc
     listingId: PropTypes.string.isRequired,
     docRef: DocRefPropType,
     index: PropTypes.number.isRequired,
-    className: PropTypes.string,
+    additionalClasses: PropTypes.array,
     isSelected: PropTypes.bool,
     openDocRef: PropTypes.func.isRequired,
   }));
