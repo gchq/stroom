@@ -26,52 +26,6 @@
   @return map-get($theme-map, $key);
 }
 
-<<<<<<< HEAD
-/////////////////////
-// Specific styles //
-/////////////////////
-
-.sidebar__logo svg path {
-  @include themify($themes) {
-    fill: themed("sidebar__header-color");
-  }
-}
-
-.tooltip-popup {
-  @include themify($themes) {
-    &.place-top {
-      &:after {
-        border-top-color: themed("raised-high__background-color") !important;
-        border-top-style: solid !important;
-        border-top-width: 6px !important;
-      }
-    }
-  }
-}
-
-.breadcrumb__divider {
-  @include themify($themes) {
-    color: themed("breadcrumb__divider___color") !important;
-  }
-}
-
-.breadcrumb__section {
-  @include themify($themes) {
-    color: themed("breadcrumb__section___color") !important;
-  }
-}
-
-.breadcrumb__section--active {
-  @include themify($themes) {
-    color: themed("breadcrumb__section--active___color") !important;
-  }
-}
-=======
-
-
-
->>>>>>> 2281445e525dbbe6fff8097942e507f9556b0dd4
-
 ////////////////////////
 // General-use styles //
 ////////////////////////
