@@ -23,7 +23,8 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 
-import { Line } from 'rc-progress';
+import { Progress } from 'react-sweet-progress';
+import "react-sweet-progress/lib/style.css";
 
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -104,7 +105,7 @@ const enhance = compose(
         Header: 'Progress',
         accessor: 'progress',
         Cell: row => (
-          <Line percent={row.trackerPercent} strokeWidth="3" trailWidth="3"/>
+          <Progress percent={row.trackerPercent} symbolClassName="flat-text"/>
         ),
       },
     ],

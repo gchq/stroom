@@ -168,6 +168,12 @@ input {
   }
 }
 
+.flat-text {
+  @include themify($themes) {
+    color: themed("text__color") !important;
+  }
+}
+
 .raised-low {
   @include themify($themes) {
     background-color: themed("raised-low__background-color") !important;
