@@ -28,7 +28,7 @@ import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;

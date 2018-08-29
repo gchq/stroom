@@ -21,7 +21,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import stroom.docref.DocRef;
 import stroom.docstore.EncodingUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.query.api.v2.DocRefInfo;

@@ -29,7 +29,7 @@ import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.docref.DocRef;
 
 import stroom.query.api.v2.ExpressionOperator;

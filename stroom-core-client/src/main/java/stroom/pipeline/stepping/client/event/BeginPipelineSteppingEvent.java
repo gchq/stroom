@@ -19,7 +19,7 @@ package stroom.pipeline.stepping.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
     private static Type<Handler> TYPE;

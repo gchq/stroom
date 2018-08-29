@@ -17,7 +17,8 @@
 
 package stroom.explorer;
 
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchExplorerNodeResult;

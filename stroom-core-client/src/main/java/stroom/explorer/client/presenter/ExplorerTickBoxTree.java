@@ -35,7 +35,7 @@ import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerTickBoxCell;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.util.shared.HasNodeState;
+import stroom.explorer.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MultiSelectEvent;
 

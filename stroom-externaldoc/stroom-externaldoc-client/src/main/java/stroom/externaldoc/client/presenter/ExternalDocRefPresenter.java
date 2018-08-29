@@ -7,7 +7,7 @@ import stroom.cell.clickable.client.Hyperlink;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;

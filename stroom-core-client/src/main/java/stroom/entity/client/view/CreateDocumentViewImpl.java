@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 

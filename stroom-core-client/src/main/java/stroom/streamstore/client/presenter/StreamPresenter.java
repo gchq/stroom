@@ -45,7 +45,7 @@ import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.ResultList;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;

@@ -17,6 +17,7 @@
 
 package stroom.explorer;
 
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerServiceDeleteAction;
 import stroom.security.Security;

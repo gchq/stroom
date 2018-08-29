@@ -20,7 +20,7 @@ package stroom.importexport;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefs;
-import stroom.explorer.ExplorerService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;

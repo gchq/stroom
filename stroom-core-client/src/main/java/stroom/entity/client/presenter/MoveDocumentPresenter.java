@@ -28,7 +28,7 @@ import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;

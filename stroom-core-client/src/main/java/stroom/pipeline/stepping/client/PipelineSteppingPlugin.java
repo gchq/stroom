@@ -24,7 +24,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;

@@ -17,7 +17,7 @@
 
 package stroom.explorer;
 
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.docref.DocRef;
 
 interface ExplorerEventLog {

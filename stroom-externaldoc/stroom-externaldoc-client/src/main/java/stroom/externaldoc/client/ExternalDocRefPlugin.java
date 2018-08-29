@@ -8,7 +8,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.externaldoc.client.presenter.ExternalDocRefPresenter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UrlConfig;

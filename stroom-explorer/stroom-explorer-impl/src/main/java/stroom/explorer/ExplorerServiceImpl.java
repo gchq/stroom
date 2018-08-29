@@ -18,8 +18,10 @@
 package stroom.explorer;
 
 import stroom.entity.shared.PermissionException;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -33,7 +35,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.HasNodeState;
+import stroom.explorer.shared.HasNodeState;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

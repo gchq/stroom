@@ -17,9 +17,8 @@
 package stroom.explorer;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import stroom.importexport.ImportExportActionHandler;
-import stroom.importexport.ImportExportActionHandlerFactory;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
 
 public class MockExplorerModule extends AbstractModule {
     @Override

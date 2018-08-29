@@ -1,6 +1,8 @@
 ext.moduleName = 'stroom.explorer.api'
 
 dependencies {
+    compile project(':stroom-task:stroom-task-api') // TODO : @66 Can be removed after we move to new UI and resources.
+
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
 

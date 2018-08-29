@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.explorer;
+package stroom.explorer.api;
 
-import stroom.entity.shared.PermissionInheritance;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +45,7 @@ public interface ExplorerNodeService {
 
     /**
      * This will return all descendants (including itself) for a doc ref
+     *
      * @param folderRef The root of the tree query
      * @return A list of all descendants.
      */
@@ -52,6 +53,7 @@ public interface ExplorerNodeService {
 
     /**
      * This will return the immediate children of a folder doc ref
+     *
      * @param folderRef The root of the tree query
      * @return A list of the immediate children
      */

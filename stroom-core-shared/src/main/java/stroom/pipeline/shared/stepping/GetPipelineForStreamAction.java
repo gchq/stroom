@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.stepping;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 
 public class GetPipelineForStreamAction extends Action<SharedDocRef> {
     private static final long serialVersionUID = -1773544031158236156L;

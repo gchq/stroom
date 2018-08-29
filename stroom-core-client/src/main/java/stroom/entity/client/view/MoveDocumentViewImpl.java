@@ -25,7 +25,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
 
 public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {

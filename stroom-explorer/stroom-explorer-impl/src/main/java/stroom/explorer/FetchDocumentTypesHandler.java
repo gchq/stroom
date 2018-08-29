@@ -16,6 +16,7 @@
 
 package stroom.explorer;
 
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchDocumentTypesAction;
 import stroom.security.Security;

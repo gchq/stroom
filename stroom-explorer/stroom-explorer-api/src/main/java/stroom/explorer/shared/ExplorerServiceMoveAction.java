@@ -17,24 +17,23 @@
 
 package stroom.explorer.shared;
 
-import stroom.task.shared.Action;
-import stroom.entity.shared.PermissionInheritance;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 
 import java.util.List;
 
-public class ExplorerServiceCopyAction extends Action<BulkActionResult> {
+public class ExplorerServiceMoveAction extends Action<BulkActionResult> {
     private static final long serialVersionUID = 800905016214418723L;
 
     private List<DocRef> docRefs;
     private DocRef destinationFolderRef;
     private PermissionInheritance permissionInheritance;
 
-    public ExplorerServiceCopyAction() {
+    public ExplorerServiceMoveAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerServiceCopyAction(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public ExplorerServiceMoveAction(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
         this.docRefs = docRefs;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
@@ -54,6 +53,6 @@ public class ExplorerServiceCopyAction extends Action<BulkActionResult> {
 
     @Override
     public String getTaskName() {
-        return "Copy " + docRefs.size() + " documents to '" + destinationFolderRef + "'";
+        return "Move " + docRefs.size() + " documents to '" + destinationFolderRef + "'";
     }
 }

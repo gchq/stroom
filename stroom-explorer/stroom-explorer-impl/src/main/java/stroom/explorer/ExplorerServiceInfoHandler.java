@@ -1,6 +1,7 @@
 package stroom.explorer;
 
-import stroom.entity.shared.SharedDocRefInfo;
+import stroom.explorer.shared.SharedDocRefInfo;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerServiceInfoAction;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.Security;

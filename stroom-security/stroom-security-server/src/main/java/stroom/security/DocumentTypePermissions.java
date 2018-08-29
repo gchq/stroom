@@ -2,7 +2,7 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.explorer.ExplorerService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.security.shared.DocumentPermissionNames;

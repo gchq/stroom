@@ -1,4 +1,4 @@
-package stroom.util.shared;
+package stroom.explorer.shared;
 
 public interface HasNodeState {
     NodeState getNodeState();

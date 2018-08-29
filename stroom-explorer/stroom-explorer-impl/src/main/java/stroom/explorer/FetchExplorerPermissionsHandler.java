@@ -17,6 +17,7 @@
 
 package stroom.explorer;
 
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;

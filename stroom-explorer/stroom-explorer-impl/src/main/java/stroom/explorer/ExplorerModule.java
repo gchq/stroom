@@ -19,6 +19,8 @@ package stroom.explorer;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.impl.db.ExplorerDbModule;
 import stroom.task.api.TaskHandler;
 

@@ -19,7 +19,7 @@ package stroom.pipeline.stepping;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;

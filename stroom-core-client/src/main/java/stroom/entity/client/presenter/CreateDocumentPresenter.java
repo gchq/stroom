@@ -30,7 +30,7 @@ import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;

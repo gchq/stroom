@@ -17,7 +17,8 @@
 
 package stroom.explorer;
 
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerServiceRenameAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;

@@ -1,5 +1,6 @@
 package stroom.explorer;
 
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.security.Security;

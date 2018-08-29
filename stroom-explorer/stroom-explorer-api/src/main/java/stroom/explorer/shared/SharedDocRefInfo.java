@@ -1,4 +1,4 @@
-package stroom.entity.shared;
+package stroom.explorer.shared;
 
 public class SharedDocRefInfo extends SharedDocRef {
     private String otherInfo;

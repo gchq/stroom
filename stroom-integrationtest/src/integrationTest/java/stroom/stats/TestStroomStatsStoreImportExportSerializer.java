@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
-import stroom.explorer.ExplorerService;
+import stroom.explorer.api.ExplorerService;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState;
 import stroom.statistics.shared.StatisticStore;

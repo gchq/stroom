@@ -2,12 +2,13 @@ package stroom.explorer;
 
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
-import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.*;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.HasNodeState;
+import stroom.explorer.shared.HasNodeState;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;

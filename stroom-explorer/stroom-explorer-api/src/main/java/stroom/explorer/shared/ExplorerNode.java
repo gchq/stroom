@@ -16,14 +16,11 @@
 
 package stroom.explorer.shared;
 
-import stroom.entity.shared.HasUuid;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasNodeState;
-import stroom.util.shared.HasType;
 import stroom.docref.SharedObject;
 
-public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayValue, SharedObject {
+public class ExplorerNode implements HasNodeState, HasDisplayValue, SharedObject {
     private static final long serialVersionUID = -5216736591679930246L;
 
     private String type;
@@ -53,12 +50,10 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
         return new ExplorerNode(docRef.getType(), docRef.getUuid(), docRef.getName(), null);
     }
 
-    @Override
     public String getType() {
         return type;
     }
 
-    @Override
     public String getUuid() {
         return uuid;
     }
@@ -112,7 +107,7 @@ public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayV
 
     @Override
     public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof ExplorerNode)) {
+        if (!(obj instanceof ExplorerNode)) {
             return false;
         }
 

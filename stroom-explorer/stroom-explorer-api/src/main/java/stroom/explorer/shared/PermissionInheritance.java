@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.shared;
+package stroom.explorer.shared;
 
 import stroom.docref.HasDisplayValue;
 

@@ -25,7 +25,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
-import stroom.entity.shared.SharedDocRefInfo;
+import stroom.explorer.shared.SharedDocRefInfo;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;

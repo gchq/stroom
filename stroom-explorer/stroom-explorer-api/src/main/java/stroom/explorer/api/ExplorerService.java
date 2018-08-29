@@ -15,14 +15,14 @@
  *
  */
 
-package stroom.explorer;
+package stroom.explorer.api;
 
-import stroom.entity.shared.PermissionInheritance;
+import stroom.docref.DocRef;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.docref.DocRef;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.query.api.v2.DocRefInfo;
 
 import java.util.List;

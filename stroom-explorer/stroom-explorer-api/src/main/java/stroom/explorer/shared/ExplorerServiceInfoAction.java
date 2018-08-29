@@ -1,8 +1,7 @@
 package stroom.explorer.shared;
 
-import stroom.task.shared.Action;
-import stroom.entity.shared.SharedDocRefInfo;
 import stroom.docref.DocRef;
+import stroom.task.shared.Action;
 
 public class ExplorerServiceInfoAction extends Action<SharedDocRefInfo> {
 

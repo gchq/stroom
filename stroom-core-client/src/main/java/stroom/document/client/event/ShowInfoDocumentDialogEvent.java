@@ -20,7 +20,7 @@ package stroom.document.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.entity.shared.SharedDocRefInfo;
+import stroom.explorer.shared.SharedDocRefInfo;
 
 public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialogEvent.Handler> {
     private static Type<Handler> TYPE;

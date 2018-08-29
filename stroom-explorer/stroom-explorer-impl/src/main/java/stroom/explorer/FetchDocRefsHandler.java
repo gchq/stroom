@@ -18,7 +18,8 @@ package stroom.explorer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.SharedDocRef;
+import stroom.explorer.shared.SharedDocRef;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchDocRefsAction;
 import stroom.docref.DocRef;

@@ -20,7 +20,7 @@ package stroom.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
-import stroom.explorer.ExplorerNodeService;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.docref.DocRef;
