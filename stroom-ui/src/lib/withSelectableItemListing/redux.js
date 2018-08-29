@@ -122,11 +122,13 @@ const reducer = handleActions(
 
       const selectedItems = [];
       selectedItemIndexes.forEach(i => selectedItems.push(items[i]));
+      const focussedItem = items.find((item, i) => i === indexToUse);
 
       return {
         ...state,
         [listingId]: {
           ...listingState,
+          focussedItem,
           selectedItems,
           selectedItemIndexes,
           focusIndex: indexToUse,

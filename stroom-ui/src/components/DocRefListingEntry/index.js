@@ -1,5 +1,5 @@
-import DocRefListingEntry, { DocRefListingEntryWithBreadcrumb } from './DocRefListingEntry';
+import DocRefListingEntry from './DocRefListingEntry';
 
 export default DocRefListingEntry;
 
-export { DocRefListingEntry, DocRefListingEntryWithBreadcrumb };
+export { DocRefListingEntry };

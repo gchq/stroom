@@ -8,7 +8,8 @@ import { withRouter } from 'react-router-dom';
 import { actionCreators as appSearchBarActionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
 import openDocRef from 'sections/RecentItems/openDocRef';
-import { DocRefListingEntryWithBreadcrumb } from 'components/DocRefListingEntry';
+import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
@@ -77,13 +78,15 @@ const AppSearchBar = ({
     />
     <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
       {searchResults.map((searchResult, index) => (
-        <DocRefListingEntryWithBreadcrumb
+        <DocRefListingEntry
           key={searchResult.uuid}
           index={index}
           listingId={LISTING_ID}
           docRef={searchResult}
           openDocRef={d => openDocRef(history, d)}
-        />
+        >
+          <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={openDocRef} />
+        </DocRefListingEntry>
       ))}
     </div>
   </div>

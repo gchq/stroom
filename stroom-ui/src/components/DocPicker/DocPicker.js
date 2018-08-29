@@ -16,15 +16,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
-import { Input } from 'semantic-ui-react';
+import { Input, Button, Loader, Icon } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
-import { DocRefListingEntryWithBreadcrumb } from 'components/DocRefListingEntry';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
+import { SELECTION_BEHAVIOUR } from 'lib/withSelectableItemListing/redux';
 
 const withDropdownOpen = withState('isDropDownOpen', 'setDropdownOpen', false);
 const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
@@ -57,7 +58,7 @@ const enhance = compose(
       return {
         currentFolderWithLineage,
         selectableItemListing,
-        documents: documentTreeToUse.children || [],
+        currentFolderWithLineage,
         onDocRefPickConfirmed,
         selectionNotYetMade:
           selectableItemListing && selectableItemListing.selectedItems.length === 0,
@@ -65,10 +66,15 @@ const enhance = compose(
     },
     {},
   ),
-  withSelectableItemListing(({ pickerId, documents }) => ({
+  branch(
+    ({ currentFolderWithLineage }) => !(currentFolderWithLineage && currentFolderWithLineage.node),
+    renderComponent(() => <Loader active>Loading data</Loader>),
+  ),
+  withSelectableItemListing(({ pickerId, currentFolderWithLineage }) => ({
     listingId: pickerId,
-    items: documents,
+    items: currentFolderWithLineage.node.children,
     openItem: d => console.log('Open item in selectable listing?', d),
+    selectionBehaviour: SELECTION_BEHAVIOUR.SINGLE,
   })),
 );
 
@@ -77,8 +83,9 @@ const DocPicker = ({
   listingId,
   setDropdownOpen,
   isDropDownOpen,
-  documents,
+  currentFolderWithLineage,
   onKeyDownWithShortcuts,
+  setFolderUuid,
 }) => (
   <div
     className="dropdown"
@@ -91,8 +98,7 @@ const DocPicker = ({
       fluid
       tabIndex={-1}
       className="border flat"
-      icon="search"
-      placeholder="Search..."
+      placeholder="Choose..."
       value={value}
       onChange={({ target: { value } }) => {
         // searchTermUpdated(value);
@@ -101,15 +107,35 @@ const DocPicker = ({
       }}
     />
     <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
-      {documents.map((searchResult, index) => (
-        <DocRefListingEntryWithBreadcrumb
-          key={searchResult.uuid}
-          index={index}
-          listingId={listingId}
-          docRef={searchResult}
-          openDocRef={d => console.log('Open Doc Ref?', d)}
-        />
-      ))}
+      <div className="doc-picker-header">
+        {currentFolderWithLineage.lineage &&
+          currentFolderWithLineage.lineage.length > 0 && (
+            <Icon
+              name="arrow left"
+              size='large'
+              onClick={() =>
+                setFolderUuid(currentFolderWithLineage.lineage[currentFolderWithLineage.lineage.length - 1]
+                    .uuid)
+              }
+            />
+          )}
+        {currentFolderWithLineage.node.name}
+      </div>
+      <div className="doc-picker-listing">
+        {currentFolderWithLineage.node.children && currentFolderWithLineage.node.children.map((searchResult, index) => (
+          <DocRefListingEntry
+            key={searchResult.uuid}
+            index={index}
+            listingId={listingId}
+            docRef={searchResult}
+            openDocRef={d => console.log('Open Doc Ref?', d)}
+            enterFolder={d => setFolderUuid(d.uuid)}
+          />
+        ))}
+      </div>
+      <div className="doc-picker-footer">
+        <Button primary>Choose</Button>
+      </div>
     </div>
   </div>
 );

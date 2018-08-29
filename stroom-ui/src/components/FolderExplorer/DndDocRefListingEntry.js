@@ -6,7 +6,7 @@ import { DragSource } from 'react-dnd';
 import { DropTarget } from 'react-dnd';
 
 import { findItem, canMove } from 'lib/treeUtils';
-import { DocRefListingEntry } from 'components/DocRefListingEntry';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
