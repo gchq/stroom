@@ -87,31 +87,50 @@ const ProcessingDetails = ({
                     .toLowerCase()}
                 </List.Item>
                 <List.Item>
-                  {selectedTracker.status ? 'has a' : 'does not have a '} <strong>status</strong>
-                  {selectedTracker.status ? ` of ${selectedTracker.status}` : undefined}
+                  {selectedTracker.status ? (
+                    <span>
+                      has a <strong>status</strong> of {selectedTracker.status}
+                    </span>
+                  ) : (
+                    <span>
+                      does not have a <strong>status</strong>
+                    </span>
+                  )}
                 </List.Item>
                 <List.Item>
-                  {selectedTracker.streamCount ? 'has a' : 'does not have a '}
-                  <strong>stream count</strong>
-                  {selectedTracker.streamCount ? ` of ${selectedTracker.streamCount}` : undefined}
+                  {selectedTracker.streamCount ? (
+                    <span>
+                      has a <strong>stream count</strong> of {selectedTracker.streamCount}
+                    </span>
+                  ) : (
+                    <span>
+                      does not have a <strong>stream count</strong>
+                    </span>
+                  )}
                 </List.Item>
                 <List.Item>
-                  {selectedTracker.eventCount ? 'has an' : 'does not have an '}
-                  <strong>event count</strong>
-                  {selectedTracker.eventCount ? ` of ${selectedTracker.eventCount}` : undefined}
+                  {selectedTracker.eventCount ? (
+                    <span>
+                      has an <strong>event count</strong> of {selectedTracker.eventCount}
+                    </span>
+                  ) : (
+                    <span>
+                      does not have an <strong>event count</strong>
+                    </span>
+                  )}
                 </List.Item>
               </React.Fragment>
             ) : (
               <List.Item>has not yet done any work</List.Item>
             )}
             <List.Item>
-              was <strong>created</strong> by '{selectedTracker.createUser} '
+              was <strong>created</strong> by '{selectedTracker.createUser}' 
               {moment(selectedTracker.createdOn)
                 .calendar()
                 .toLowerCase()}
             </List.Item>
             <List.Item>
-              was <strong>updated</strong> by '{selectedTracker.updateUser} '
+              was <strong>updated</strong> by '{selectedTracker.updateUser}' 
               {moment(selectedTracker.updatedOn)
                 .calendar()
                 .toLowerCase()}
