@@ -17,6 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { path } from 'ramda';
+
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
@@ -43,10 +45,7 @@ const enhance = compose(
   connect(
     ({
       processing: {
-        trackers,
-        sortBy,
-        sortDirection,
-        selectedTrackerId
+        trackers, sortBy, sortDirection, selectedTrackerId,
       },
     }) => ({
       trackers,
@@ -76,33 +75,46 @@ const enhance = compose(
       pageLeft();
       fetchTrackers(TrackerSelection.first);
     },
-    onHandleSort: ({ updateSort, fetchTrackers }) => (
-      newSortBy,
-      currentSortBy,
-      currentDirection,
-    ) => {
-      if (currentSortBy === newSortBy) {
-        if (currentDirection === Directions.ascending) {
-          updateSort(newSortBy, Directions.descending);
-          fetchTrackers();
-        }
-        updateSort(newSortBy, Directions.ascending);
+    onHandleSort: ({ updateSort, fetchTrackers }) => (sort) => {
+      if (sort !== undefined) {
+        const direction = sort.desc ? Directions.descending : Directions.ascending;
+        const sortBy = sort.id === 'pipelineName' ? 'pipeline' : sort.id;
+        updateSort(sortBy, direction);
         fetchTrackers();
       }
-      updateSort(newSortBy, Directions.ascending);
-      fetchTrackers();
     },
   }),
   withProps(({ trackers, selectedTrackerId }) => ({
     selectedTracker: trackers.find(tracker => tracker.filterId === selectedTrackerId),
+    tableColumns: [
+      {
+        Header: '',
+        accessor: 'filterId',
+        show: false,
+      },
+      {
+        Header: 'Pipeline name',
+        accessor: 'pipelineName',
+      },
+      {
+        Header: 'Priority',
+        accessor: 'priority',
+      },
+      {
+        Header: 'Progress',
+        accessor: 'progress',
+      },
+    ],
+    tableData: trackers.map(({ filterId, priority, trackerPercent }) => ({
+      filterId,
+      pipelineName: 'TODO: awaiting backend re-write. Sorting broken too.',
+      priority,
+      progress: trackerPercent,
+    })),
   })),
   lifecycle({
     componentDidMount() {
-      const {
-        onMoveSelection,
-        onHandlePageRight,
-        onHandlePageLeft
-      } = this.props;
+      const { onMoveSelection, onHandlePageRight, onHandlePageLeft } = this.props;
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
@@ -116,73 +128,43 @@ const ProcessingList = ({
   sortBy,
   sortDirection,
   trackers,
+  tableColumns,
+  tableData,
   selectedTrackerId,
   onHandleSort,
   onSelection,
 }) => (
-  <Table selectable sortable basic="very" className="tracker-table" columns={15}>
-    <Table.Header>
-      <Table.Row>
-        <Table.HeaderCell
-          sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
-          onClick={() => onHandleSort(SortByOptions.pipeline, sortBy, sortDirection)}
-        >
-          Pipeline name
-        </Table.HeaderCell>
-        <Table.HeaderCell
-          sorted={sortBy === SortByOptions.priority ? sortDirection : null}
-          onClick={() => onHandleSort(SortByOptions.priority, sortBy, sortDirection)}
-        >
-          Priority
-        </Table.HeaderCell>
-        <Table.HeaderCell
-          sorted={sortBy === SortByOptions.progress ? sortDirection : null}
-          onClick={() => onHandleSort(SortByOptions.progress, sortBy, sortDirection)}
-        >
-          Progress
-        </Table.HeaderCell>
-      </Table.Row>
-    </Table.Header>
+  <ReactTable
+    manual
+    className="Table__reactTable"
+    sortable
+    pageSize={10}
+    showPagination={false}
+    data={tableData}
+    columns={tableColumns}
+    onFetchData={(state, instance) => onHandleSort(state.sorted[0])}
+    getTdProps={(state, rowInfo, column, instance) => ({
+      onClick: (e, handleOriginal) => {
+        onSelection(rowInfo.original.filterId, trackers);
 
-    <Table.Body>
-      {trackers.map(({
-          pipelineName,
-          priority,
-          trackerPercent,
-          filterId,
-          createdOn,
-          createUser,
-          updateUser,
-          updatedOn,
-          enabled,
-          status,
-          lastPollAge,
-          taskCount,
-          trackerMs,
-          streamCount,
-          eventCount,
-        }) => (
-          <Table.Row
-            key={filterId}
-            className="tracker-row"
-            onClick={() => onSelection(filterId, trackers)}
-            active={selectedTrackerId === filterId}
-          >
-            <Table.Cell className="name-column" textAlign="left" width={7}>
-              TODO: backend broken, awaiting re-write
-            </Table.Cell>
-            <Table.Cell className="priority-column" textAlign="center" width={1}>
-              <Label circular color="green">
-                {priority}
-              </Label>
-            </Table.Cell>
-            <Table.Cell className="progress-column" width={7}>
-              <Progress indicating percent={trackerPercent} />
-            </Table.Cell>
-          </Table.Row>
-        ))}
-    </Table.Body>
-  </Table>
+        // IMPORTANT! React-Table uses onClick internally to trigger
+        // events like expanding SubComponents and pivots.
+        // By default a custom 'onClick' handler will override this functionality.
+        // If you want to fire the original onClick handler, call the
+        // 'handleOriginal' function.
+        if (handleOriginal) {
+          handleOriginal();
+        }
+      },
+    })}
+    getTrProps={(state, rowInfo, column) => ({
+      className:
+        selectedTrackerId !== undefined &&
+        path(['original', 'filterId'], rowInfo) === selectedTrackerId
+          ? 'selected hoverable'
+          : 'hoverable',
+    })}
+  />
 );
 
 ProcessingList.propTypes = {

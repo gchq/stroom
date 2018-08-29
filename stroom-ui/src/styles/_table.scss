@@ -1,0 +1,51 @@
+.table__container {
+  height: calc(100% - 40px);
+  position: relative;
+}
+
+.table__reactTable__container {
+  position: absolute;
+  top: 0; // If you want to push the top of the table down a bit, e.g. for a toolbar, do it here.
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.table__reactTable {
+  position: absolute;
+  top: 0px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  border: none;
+}
+
+.table__reactTable .rt-td {
+  padding: 2px 2px;
+}
+
+.table__reactTable .rt-tbody .rt-td {
+  border-right: none; // Make the table much more compact
+}
+
+.table__reactTable .rt-table .rt-body .rt-tr-group {
+  max-height: 23px;
+}
+
+.ReactTable {
+  width: 100%;  
+}
+
+.ReactTable .rt-tbody .rt-tr-group {
+  max-height: 23px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  border-bottom: solid 1px lightgrey;
+}
+
+// TODO: This should be in the theming section
+.table__selectedRow {
+  background-color: $selected-item-colour;
+}

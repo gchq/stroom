@@ -111,9 +111,6 @@ const enhance = compose(
       const {
         fetchTrackers,
         resetPaging,
-        // onMoveSelection,
-        // onHandlePageRight,
-        // onHandlePageLeft,
         onHandleTrackerSelection,
         onHandleSearch,
       } = this.props;
@@ -172,29 +169,20 @@ const ProcessingContainer = ({
             />
           </Menu.Menu>
         </Menu>
-        <PanelGroup direction="column">
-          <div className="processing__table__container">
+        <div className="processing__table__container table__container">
             <div
               id="table-container"
-              className={`table-container${showDetails ? ' showing-details' : ''}`}
+              className={`table-container${showDetails ? ' showing-details' : ''} table__reactTable__container`}
             >
+        <PanelGroup direction="column">
+      
               <ProcessingList
                 onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
               />
-              <div className="pagination-container">
-                <Pagination
-                  activePage={pageOffset + 1}
-                  totalPages={numberOfPages || 1}
-                  firstItem={null}
-                  lastItem={null}
-                  size="tiny"
-                  onPageChange={(event, data) => onHandlePageChange(data)}
-                />
-              </div>
-            </div>
-          </div>
           <ProcessingDetails />
         </PanelGroup>
+        </div>
+          </div>
       </div>
     </div>
   </React.Fragment>
