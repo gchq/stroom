@@ -21,7 +21,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.entity.shared.Clearable;
-import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.task.api.TaskHandler;
 

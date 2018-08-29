@@ -210,6 +210,11 @@ public class FeedStoreImpl implements FeedStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return FeedDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

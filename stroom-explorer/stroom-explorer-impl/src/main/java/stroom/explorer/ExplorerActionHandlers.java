@@ -16,6 +16,8 @@
 
 package stroom.explorer;
 
+import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerProvider;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.lifecycle.StroomBeanStore;

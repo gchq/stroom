@@ -152,6 +152,11 @@ class DashboardStoreImpl implements DashboardStore {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
+    @Override
+    public String getType() {
+        return DashboardDoc.DOCUMENT_TYPE;
+    }
+
     private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {

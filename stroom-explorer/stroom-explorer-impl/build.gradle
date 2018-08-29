@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.explorer.server'
+ext.moduleName = 'stroom.explorer.impl'
 
 dependencies {
     compile project(':stroom-core-shared')
@@ -14,7 +14,7 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.eventLogging
-//    compile libs.flyway_core
+    compile libs.flyway_core
     compile libs.guice4
     compile libs.hibernate_jpa_api
     compile libs.javax_inject
@@ -22,10 +22,4 @@ dependencies {
     compile libs.jaxb_api
 
     compile libs.slf4j_api
-
-    integrationTestCompile libs.junit
-
-    integrationTestRuntime libs.mysql_connector_java
-    integrationTestRuntime libs.jaxb_runtime
-    integrationTestRuntime libs.javax_activation
 }

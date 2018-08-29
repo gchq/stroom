@@ -208,6 +208,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return XmlSchemaDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

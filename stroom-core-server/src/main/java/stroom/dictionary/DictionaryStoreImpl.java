@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.migration.doc.dictionary.OldDictionaryDoc;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docref.DocRef;
 import stroom.docstore.EncodingUtil;
 import stroom.docstore.JsonSerialiser2;
 import stroom.docstore.Persistence;
@@ -29,7 +30,6 @@ import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -271,6 +271,11 @@ class DictionaryStoreImpl implements DictionaryStore {
         }
 
         return result;
+    }
+
+    @Override
+    public String getType() {
+        return DictionaryDoc.ENTITY_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

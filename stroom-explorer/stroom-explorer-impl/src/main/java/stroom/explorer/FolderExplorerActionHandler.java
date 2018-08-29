@@ -2,6 +2,7 @@ package stroom.explorer;
 
 import stroom.entity.NameValidationUtil;
 import stroom.entity.shared.PermissionException;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.impl.db.ExplorerTreeDao;
 import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.explorer.shared.DocumentType;

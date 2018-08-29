@@ -5,6 +5,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-docstore:stroom-docstore-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-task:stroom-task-api')
 

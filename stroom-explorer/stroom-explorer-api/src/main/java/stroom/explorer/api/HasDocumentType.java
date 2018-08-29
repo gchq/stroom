@@ -1,4 +1,4 @@
-package stroom.explorer;
+package stroom.explorer.api;
 
 import stroom.explorer.shared.DocumentType;
 

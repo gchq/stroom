@@ -210,6 +210,11 @@ public class PipelineStoreImpl implements PipelineStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return PipelineDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

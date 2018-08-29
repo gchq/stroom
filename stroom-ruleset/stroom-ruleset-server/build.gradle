@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.ruleset.server'
 dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-ruleset:stroom-ruleset-shared')
 
     compile project(':stroom-util-shared')

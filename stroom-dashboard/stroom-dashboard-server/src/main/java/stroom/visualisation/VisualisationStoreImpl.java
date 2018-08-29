@@ -151,6 +151,11 @@ class VisualisationStoreImpl implements VisualisationStore {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
+    @Override
+    public String getType() {
+        return VisualisationDoc.DOCUMENT_TYPE;
+    }
+
     private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {

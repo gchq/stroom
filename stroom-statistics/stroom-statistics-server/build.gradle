@@ -14,6 +14,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-kafka:stroom-kafka-pipeline')
 

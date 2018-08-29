@@ -41,7 +41,7 @@ class ImportExportActionHandlers {
         if (handlers == null) {
             final Map<String, ImportExportActionHandler> map = new HashMap<>();
             for (ImportExportActionHandler handler : importExportActionHandlerProviders.get()) {
-                final String type = handler.getDocumentType().getType();
+                final String type = handler.getType();
 
                 final ImportExportActionHandler existingActionHandler = map.putIfAbsent(type, handler);
                 if (existingActionHandler != null) {

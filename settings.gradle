@@ -17,16 +17,9 @@ rootProject.name = 'stroom'
  *
  */
 
-// Task execution.
-include 'stroom-task:stroom-task-api'
-include 'stroom-task:stroom-task-impl'
-
-// Proxy project.
-include 'stroom-proxy'
-
-// Shared projects.
-include 'stroom-util-shared'
-include 'stroom-entity-shared'
+// App.
+include 'stroom-app'
+include 'stroom-app-gwt'
 
 // Config
 include 'stroom-config:stroom-config-common'
@@ -35,13 +28,17 @@ include 'stroom-config:stroom-config-global-api'
 include 'stroom-config:stroom-config-global-impl-db'
 include 'stroom-config:stroom-config-global-impl-db-gen'
 
-// Security
-include 'stroom-security:stroom-security-api'
-include 'stroom-security:stroom-security-shared'
-include 'stroom-security:stroom-security-server'
-include 'stroom-security:stroom-security-impl-mock'
-include 'stroom-security:stroom-security-client-api'
-include 'stroom-security:stroom-security-client'
+// Core
+include 'stroom-core-shared'
+include 'stroom-core-server'
+include 'stroom-core-client-widget'
+include 'stroom-core-client'
+
+// Dashboard
+include 'stroom-dashboard:stroom-dashboard-shared'
+include 'stroom-dashboard:stroom-dashboard-client'
+include 'stroom-dashboard:stroom-dashboard-server'
+include 'stroom-dashboard-gwt'
 
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
@@ -61,21 +58,61 @@ include 'stroom-data-store:stroom-data-store-impl-fs-db-gen'
 include 'stroom-data-store:stroom-data-store-impl-mock'
 include 'stroom-data-store:stroom-data-store-util'
 
+// Elastic
+include 'stroom-elastic:stroom-elastic-impl-http'
+include 'stroom-elastic:stroom-elastic-impl'
+include 'stroom-elastic:stroom-elastic-api'
+
+// Entity // TODO : @66 Remove
+include 'stroom-entity-shared'
+
 // Explorer
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
 include 'stroom-explorer:stroom-explorer-impl-db-gen'
 
+// External Doc
+include 'stroom-externaldoc:stroom-externaldoc-server'
+include 'stroom-externaldoc:stroom-externaldoc-client'
+
+// Headless
+include 'stroom-headless'
+
+// Import Export
+include 'stroom-importexport:stroom-importexport-api'
+include 'stroom-importexport:stroom-importexport-impl'
+
 // Index
 include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 
-// Elastic
-include 'stroom-elastic:stroom-elastic-impl-http'
-include 'stroom-elastic:stroom-elastic-impl'
-include 'stroom-elastic:stroom-elastic-api'
+// Integration tests.
+include 'stroom-integrationtest'
+
+// Kafka
+include 'stroom-kafka:stroom-kafka-shared'
+include 'stroom-kafka:stroom-kafka-impl'
+include 'stroom-kafka:stroom-kafka-pipeline'
+
+// Pipeline
+include 'stroom-pipeline'
+
+// Proxy project.
+include 'stroom-proxy'
+
+// Ruleset
+include 'stroom-ruleset:stroom-ruleset-shared'
+include 'stroom-ruleset:stroom-ruleset-server'
+
+// Security
+include 'stroom-security:stroom-security-api'
+include 'stroom-security:stroom-security-shared'
+include 'stroom-security:stroom-security-server'
+include 'stroom-security:stroom-security-impl-mock'
+include 'stroom-security:stroom-security-client-api'
+include 'stroom-security:stroom-security-client'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
@@ -83,47 +120,13 @@ include 'stroom-statistics:stroom-statistics-shared'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-server'
 
-// Dashboard
-include 'stroom-dashboard:stroom-dashboard-shared'
-include 'stroom-dashboard:stroom-dashboard-client'
-include 'stroom-dashboard:stroom-dashboard-server'
-include 'stroom-dashboard-gwt'
+// Task execution.
+include 'stroom-task:stroom-task-api'
+include 'stroom-task:stroom-task-impl'
 
-// External Doc
-include 'stroom-externaldoc:stroom-externaldoc-server'
-include 'stroom-externaldoc:stroom-externaldoc-client'
-
-// Core
-include 'stroom-core-shared'
-include 'stroom-core-server'
-include 'stroom-core-client-widget'
-include 'stroom-core-client'
-
-// Ruleset
-include 'stroom-ruleset:stroom-ruleset-shared'
-include 'stroom-ruleset:stroom-ruleset-server'
-
-// GWT compilation projects.
-include 'stroom-app-gwt'
-
-// Common test project
+// Test project
 include 'stroom-test-common'
 
-// Server projects
+// Util
 include 'stroom-util'
-
-include 'stroom-pipeline'
-
-// Kafka
-include 'stroom-kafka:stroom-kafka-shared'
-include 'stroom-kafka:stroom-kafka-impl'
-include 'stroom-kafka:stroom-kafka-pipeline'
-
-// Package it all together.
-include 'stroom-app'
-
-// Headless
-include 'stroom-headless'
-
-// Integration tests.
-include 'stroom-integrationtest'
+include 'stroom-util-shared'

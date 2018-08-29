@@ -203,6 +203,11 @@ class TextConverterStoreImpl implements TextConverterStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return TextConverterDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

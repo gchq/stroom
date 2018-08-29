@@ -203,6 +203,11 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return StatisticStoreDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 package stroom.externaldoc;
 
 import com.google.inject.AbstractModule;
-import stroom.explorer.ExplorerActionHandlerProvider;
+import stroom.explorer.api.ExplorerActionHandlerProvider;
 import stroom.importexport.ImportExportActionHandlerFactory;
 
 public class ExternalDocRefModule extends AbstractModule {

@@ -131,6 +131,11 @@ public class RuleSetServiceImpl implements RuleSetService {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
+    @Override
+    public String getType() {
+        return RuleSet.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

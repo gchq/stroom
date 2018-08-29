@@ -203,6 +203,11 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return StroomStatsStoreDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

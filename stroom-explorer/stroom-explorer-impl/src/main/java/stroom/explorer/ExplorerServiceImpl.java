@@ -19,6 +19,7 @@ package stroom.explorer;
 
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;

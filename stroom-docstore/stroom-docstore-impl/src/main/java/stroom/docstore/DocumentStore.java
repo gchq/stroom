@@ -17,7 +17,7 @@
 
 package stroom.docstore;
 
-import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 
 public interface DocumentStore<D> extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D> {

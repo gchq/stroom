@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.explorer;
+package stroom.explorer.api;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;

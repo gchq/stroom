@@ -9,6 +9,7 @@ dependencies {
     compile project(':stroom-ruleset:stroom-ruleset-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-docstore:stroom-docstore-shared')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-config:stroom-config-global-api')

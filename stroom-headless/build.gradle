@@ -10,6 +10,7 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-impl')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-pipeline')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-impl-mock')

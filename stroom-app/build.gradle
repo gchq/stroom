@@ -67,6 +67,7 @@ dependencies {
     compile project(':stroom-config:stroom-config-global-impl-db')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-impl')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-security:stroom-security-server')
     compile project(':stroom-index:stroom-index-server')
     compile project(':stroom-docstore:stroom-docstore-impl')

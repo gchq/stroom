@@ -1,7 +1,7 @@
 package stroom.externaldoc;
 
-import stroom.explorer.ExplorerActionHandler;
-import stroom.explorer.ExplorerActionHandlerProvider;
+import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerProvider;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportActionHandlerFactory;
 import stroom.security.SecurityContext;

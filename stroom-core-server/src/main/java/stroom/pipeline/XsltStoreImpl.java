@@ -200,6 +200,11 @@ class XsltStoreImpl implements XsltStore {
         return result;
     }
 
+    @Override
+    public String getType() {
+        return XsltDoc.DOCUMENT_TYPE;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

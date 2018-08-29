@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.docstore.server'
 
 dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-docstore:stroom-docstore-shared')
 

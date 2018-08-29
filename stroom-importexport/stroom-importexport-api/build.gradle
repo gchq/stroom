@@ -1,0 +1,13 @@
+ext.moduleName = 'stroom.importexport.api'
+
+dependencies {
+    compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+
+    compile libs.jaxb_api
+
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
+}

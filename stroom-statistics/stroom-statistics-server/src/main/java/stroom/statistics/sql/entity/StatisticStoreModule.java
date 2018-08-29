@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
-import stroom.explorer.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.statistics.shared.StatisticStoreDoc;
 
