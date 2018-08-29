@@ -120,8 +120,8 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 
         final List<String> entityClassNames = Arrays.asList(
                 "stroom.dashboard.shared.QueryEntity",
-                "stroom.explorer.ExplorerTreeNode",
-                "stroom.explorer.ExplorerTreePath",
+//                "stroom.explorer.ExplorerTreeNode",
+//                "stroom.explorer.ExplorerTreePath",
                 "stroom.index.shared.IndexShard",
                 "stroom.jobsystem.shared.ClusterLock",
                 "stroom.jobsystem.shared.Job",

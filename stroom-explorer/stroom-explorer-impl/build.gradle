@@ -1,0 +1,31 @@
+ext.moduleName = 'stroom.explorer.server'
+
+dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-explorer:stroom-explorer-impl-db')
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.eventLogging
+//    compile libs.flyway_core
+    compile libs.guice4
+    compile libs.hibernate_jpa_api
+    compile libs.javax_inject
+
+    compile libs.jaxb_api
+
+    compile libs.slf4j_api
+
+    integrationTestCompile libs.junit
+
+    integrationTestRuntime libs.mysql_connector_java
+    integrationTestRuntime libs.jaxb_runtime
+    integrationTestRuntime libs.javax_activation
+}

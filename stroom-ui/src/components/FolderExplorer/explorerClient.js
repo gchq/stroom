@@ -30,8 +30,13 @@ export const searchApp = ({term='', docRefType='', pageOffset=0, pageSize=10}) =
   const state = getState();
   const params = `searchTerm=${term}&docRefType=${docRefType}&pageOffset=${pageOffset}&pageSize=${pageSize}`;
   const url = `${state.config.explorerServiceUrl}/search?${params}`;
-  wrappedGet(dispatch, state, url, response =>
-    response.json().then(searchResults => dispatch(searchResultsReturned(searchResults))));
+  wrappedGet(
+    dispatch, 
+    state, 
+    url,
+    r => r.json().then(searchResults => dispatch(searchResultsReturned(searchResults))),
+    {},
+    true);
 }
 
 export const fetchDocTree = () => (dispatch, getState) => {

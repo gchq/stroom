@@ -23,6 +23,11 @@
   padding-top: 40px;
 }
 
+.app-chrome__sidebar-menu:focus {
+  background-color: clear;
+  border: solid thick red;
+}
+
 .app-chrome__sidebar__toggle {
   color: #ff6f00 !important;
   position: absolute;
@@ -38,10 +43,6 @@
 
 .app-chrome__sidebar_header {
   position: absolute;
-}
-
-.sidebar__menu-item:focus {
-  border: solid thin blue;
 }
 
 .sidebar__menu-item.nav {
@@ -65,8 +66,12 @@
   overflow-x: hidden;
 }
 
+.sidebar__menu-item.selected {
+  font-weight: bold;
+}
+
 .sidebar__menu-item.doc.dnd-over {
-  text-decoration: italic;
+  font-weight: italic;
 }
 
 .sidebar__menu-item.doc.can-drop {

@@ -22,6 +22,9 @@ import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTest
 
 import AppSearchBar from './AppSearchBar';
 
+import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
+
 storiesOf('App Search Bar', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecorator)

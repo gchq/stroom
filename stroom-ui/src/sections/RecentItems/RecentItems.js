@@ -17,32 +17,31 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Header, Icon, Grid } from 'semantic-ui-react';
+import { withRouter } from 'react-router-dom';
 
 import AppSearchBar from 'components/AppSearchBar';
 import { DocRefListingEntry } from 'components/DocRefListingEntry';
-import withOpenDocRef from './withOpenDocRef';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
+import openDocRef from './openDocRef';
 
 const LISTING_ID = 'recent-items';
 
 const enhance = compose(
-  withOpenDocRef,
+  withRouter,
   connect(
     ({ recentItems }, props) => ({
       recentItems,
     }),
-    {},
+    { openDocRef },
   ),
-  withSelectableItemListing(({ openDocRef, recentItems }) => ({
+  withSelectableItemListing(({ openDocRef, history, recentItems }) => ({
     listingId: LISTING_ID,
-    openItem: openDocRef,
+    openItem: d => openDocRef(history, d),
     items: recentItems,
   })),
 );
 
-const RecentItems = ({
-  recentItems, openDocRef, enableShortcuts, disableShortcuts,
-}) => (
+const RecentItems = ({ recentItems, openDocRef, onKeyDownWithShortcuts }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={16}>
@@ -55,12 +54,7 @@ const RecentItems = ({
         </Header>
       </Grid.Column>
     </Grid>
-    <div
-      className="doc-ref-listing"
-      tabIndex={0}
-      onFocus={enableShortcuts}
-      onBlur={disableShortcuts}
-    >
+    <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
       {recentItems.map((docRef, index) => (
         <DocRefListingEntry
           key={docRef.uuid}

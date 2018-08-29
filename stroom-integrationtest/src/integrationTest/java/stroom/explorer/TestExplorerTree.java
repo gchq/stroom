@@ -16,8 +16,9 @@
 
 package stroom.explorer;
 
-import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import org.junit.Test;
+import stroom.explorer.impl.db.ExplorerTreeDao;
+import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -28,7 +29,7 @@ public class TestExplorerTree extends AbstractCoreIntegrationTest {
     private ExplorerTreeDao explorerTreeDao;
 
     @Test
-    public void testCreateTree() throws UniqueConstraintViolationException {
+    public void testCreateTree() {
         ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
         ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
         ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));
@@ -38,27 +39,7 @@ public class TestExplorerTree extends AbstractCoreIntegrationTest {
         explorerTreeDao.addChild(a, newTreePojo("A1"));
         ExplorerTreeNode c1 = explorerTreeDao.addChild(c, newTreePojo("C1"));
         explorerTreeDao.addChild(c1, newTreePojo("C11"));
-//        outputTree(root, dao);
-
-        //commitDbTransaction(session, "insert tree nodes");
-//        return root.getId();
     }
-//
-//    protected ClosureTableTreeDao newDao(final DbSession session)	{
-//        ClosureTableTreeDao dao =
-//                new ClosureTableTreeDao(
-//                        ExplorerTreeNode.class,
-//                        ExplorerTreePath.class,
-//                        false,
-//                        session);
-//
-//        dao.setRemoveReferencedNodes(true);
-//
-////        if (isTestCopy() == false)
-////            dao.setUniqueTreeConstraint(newUniqueWholeTreeConstraintImpl());
-//
-//        return dao;
-//    }
 
     private ExplorerTreeNode newTreePojo(final String name) {
         final ExplorerTreeNode explorerTreeNode = new ExplorerTreeNode();

@@ -1,17 +1,12 @@
 import React from 'react';
 
-import { compose, lifecycle, branch, withProps, renderComponent } from 'recompose';
+import { compose, lifecycle, branch, withProps, withHandlers, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react/dist/commonjs';
 
 import { actionCreators } from './redux';
-import withShortcutKeys from 'lib/withShortcutKeys';
 
 const { selectableListingMounted, selectionUp, selectionDown } = actionCreators;
-
-const upKeys = ['k', 'ctrl+k', 'up'];
-const downKeys = ['j', 'ctrl+j', 'down'];
-const openKeys = ['enter'];
 
 const withSelectableItemListing = propsFunc =>
   compose(
@@ -61,34 +56,28 @@ const withSelectableItemListing = propsFunc =>
       ({ selectableItemListing }) => !selectableItemListing,
       renderComponent(() => <Loader active>Creating Selectable Item Listing</Loader>),
     ),
-    withShortcutKeys([
-      {
-        mousetrapKeys: upKeys,
-        keyEventMatcher: e => e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'k'),
-        action: ({ selectionUp, listingId }, e) => {
+    withHandlers({
+      onKeyDownWithShortcuts: ({
+        selectionUp,
+        selectionDown,
+        listingId,
+        openItem,
+        selectableItemListing: { selectedItems },
+      }) => (e) => {
+        if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'k')) {
           selectionUp(listingId);
-          if (e) e.preventDefault();
-        },
-      },
-      {
-        mousetrapKeys: downKeys,
-        keyEventMatcher: e => e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'j'),
-        action: ({ selectionDown, listingId }, e) => {
+          e.preventDefault();
+        } else if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'j')) {
           selectionDown(listingId);
-          if (e) e.preventDefault();
-        },
-      },
-      {
-        mousetrapKeys: openKeys,
-        keyEventMatcher: e => e.key === 'Enter',
-        action: ({ openItem, selectableItemListing: { selectedItems } }, e) => {
+          e.preventDefault();
+        } else if (e.key === 'Enter') {
           if (selectedItems.length === 1) {
             openItem(selectedItems[0]);
           }
-          if (e) e.preventDefault();
-        },
+          e.preventDefault();
+        }
       },
-    ]),
+    }),
   );
 
 export default withSelectableItemListing;

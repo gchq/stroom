@@ -52,6 +52,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
 import static stroom.data.meta.impl.db.stroom.tables.Data.DATA;
 import static stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
@@ -148,7 +149,7 @@ class DataMetaServiceImpl implements DataMetaService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .select(data.ID.max())
+                    .select(max(data.ID))
                     .from(data)
                     .fetchOptional()
                     .map(Record1::value1)
@@ -507,7 +508,7 @@ class DataMetaServiceImpl implements DataMetaService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .select(data.ID.max())
+                    .select(max(data.ID))
                     .from(data)
                     .where(condition)
                     .fetchOptional()
