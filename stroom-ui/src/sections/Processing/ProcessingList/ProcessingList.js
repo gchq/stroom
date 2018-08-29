@@ -140,7 +140,9 @@ const ProcessingList = ({
     onFetchData={(state, instance) => onHandleSort(state.sorted[0])}
     getTdProps={(state, rowInfo, column, instance) => ({
       onClick: (e, handleOriginal) => {
-        onSelection(rowInfo.original.filterId, trackers);
+        if (rowInfo !== undefined) {
+          onSelection(rowInfo.original.filterId, trackers);
+        }
 
         // IMPORTANT! React-Table uses onClick internally to trigger
         // events like expanding SubComponents and pivots.

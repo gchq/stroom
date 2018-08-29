@@ -124,33 +124,26 @@ const ProcessingContainer = ({
   onHandleSearch,
 }) => (
   <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={6}>
-        <Header as="h3">
-          <Icon name="play" />
-          <Header.Content className="header">Processing</Header.Content>
-        </Header>
-      </Grid.Column>
-      <Grid.Column width={10}>
+    <div className="processing__header-container">
+      <Header as="h3">
+        <Icon name="play" />
+        <Header.Content className="header">Processing</Header.Content>
+      </Header>
+      <Input
+        className="border"
+        fluid
+        placeholder="Search..."
+        value={searchCriteria}
+        onChange={(event, data) => onHandleSearchChange(data)}
+        onKeyPress={(event, data) => onHandleSearch(event, data)}
+        action={<Button className="icon-button" onClick={() => onHandleSearch()} />}
+        // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
+        ref={input => (this.searchInputRef = input)}
+      />
       <ProcessingPagination/>
-      </Grid.Column>
-    </Grid>
+    </div>
     <div className="tracker-container">
       <div className="tracker">
-        <Menu attached="top">
-          <Menu.Menu position="left" className="search-container">
-            <Input
-              fluid
-              placeholder="Search..."
-              value={searchCriteria}
-              onChange={(event, data) => onHandleSearchChange(data)}
-              onKeyPress={(event, data) => onHandleSearch(event, data)}
-              action={<Button className="icon-button" onClick={() => onHandleSearch()} />}
-              // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
-              ref={input => (this.searchInputRef = input)}
-            />
-          </Menu.Menu>
-        </Menu>
         <div className="processing__table__container table__container">
           <div
             id="table-container"

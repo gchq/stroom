@@ -16,13 +16,13 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { compose, withHandlers } from 'recompose';
-import { Pagination } from 'semantic-ui-react';
+import { compose, withHandlers, withProps } from 'recompose';
+import { Pagination, Dropdown } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { fetchTrackers } from '../streamTasksResourceClient';
 
-const { changePage } = actionCreators;
+const { changePage, updatePageSize } = actionCreators;
 
 const enhance = compose(
   connect(
@@ -34,6 +34,7 @@ const enhance = compose(
     {
       fetchTrackers,
       changePage,
+      updatePageSize,
     },
   ),
   withHandlers({
@@ -41,18 +42,62 @@ const enhance = compose(
       changePage(data.activePage - 1);
       fetchTrackers();
     },
+    onHandlePageSizeChange: ({ updatePageSize, fetchTrackers }) => (event, data) => {
+      updatePageSize(data.value);
+      fetchTrackers();
+    },
   }),
+  withProps(({ pageOffset, numberOfPages }) => ({
+    pageOptions: [
+      {
+        text: 10,
+        value: 10,
+      },
+      {
+        text: 20,
+        value: 20,
+      },
+      {
+        text: 30,
+        value: 30,
+      },
+      {
+        text: 40,
+        value: 40,
+      },
+      {
+        text: 50,
+        value: 50,
+      },
+      {
+        text: 100,
+        value: 100,
+      },
+    ],
+    activePage: pageOffset + 1,
+    totalPages: numberOfPages || 1,
+  })),
 );
 
-const ProcessingPagination = ({ pageOffset, numberOfPages, onHandlePageChange }) => (
-  <Pagination
-    activePage={pageOffset + 1}
-    totalPages={numberOfPages || 1}
-    firstItem={null}
-    lastItem={null}
-    size="tiny"
-    onPageChange={(event, data) => onHandlePageChange(data)}
-  />
+const ProcessingPagination = ({
+  activePage,
+  totalPages,
+  pageOptions,
+  onHandlePageChange,
+  onHandlePageSizeChange,
+}) => (
+  <div className="pagination__container">
+    <Pagination
+      activePage={activePage}
+      totalPages={totalPages}
+      firstItem={null}
+      lastItem={null}
+      size="tiny"
+      onPageChange={(event, data) => onHandlePageChange(data)}
+    />
+    <div>Show</div>
+    <Dropdown fluid selection options={pageOptions} onChange={onHandlePageSizeChange} />
+  </div>
 );
 
 export default enhance(ProcessingPagination);
