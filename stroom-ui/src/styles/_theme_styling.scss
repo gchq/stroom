@@ -293,3 +293,9 @@ input {
     color: themed("text__color") !important;
   }
 }
+
+.pagination__container .pagination .active{
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
+  }
+}
