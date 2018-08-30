@@ -46,7 +46,7 @@ const RecentItems = ({ recentItems, openDocRef, onKeyDownWithShortcuts }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={16}>
-        <AppSearchBar />
+        <AppSearchBar chooseDocRef={openDocRef}/>
       </Grid.Column>
       <Grid.Column width={16}>
         <Header as="h3">

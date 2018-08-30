@@ -26,7 +26,7 @@ const stripDocRef = docRef => ({
   name: docRef.name,
 });
 
-export const searchApp = ({term='', docRefType='', pageOffset=0, pageSize=10}) => (dispatch, getState) => {
+export const searchApp = (pickerId, {term='', docRefType='', pageOffset=0, pageSize=10}) => (dispatch, getState) => {
   const state = getState();
   const params = `searchTerm=${term}&docRefType=${docRefType}&pageOffset=${pageOffset}&pageSize=${pageSize}`;
   const url = `${state.config.explorerServiceUrl}/search?${params}`;
@@ -34,7 +34,7 @@ export const searchApp = ({term='', docRefType='', pageOffset=0, pageSize=10}) =
     dispatch, 
     state, 
     url,
-    r => r.json().then(searchResults => dispatch(searchResultsReturned(searchResults))),
+    r => r.json().then(searchResults => dispatch(searchResultsReturned(pickerId, searchResults))),
     {},
     true);
 }

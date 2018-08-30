@@ -1,56 +1,52 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { Input } from 'semantic-ui-react';
-import { withRouter } from 'react-router-dom';
 
-import { actionCreators as appSearchBarActionCreators } from './redux';
+import { actionCreators as appSearchBarActionCreators, defaultPickerState } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
-import openDocRef from 'sections/RecentItems/openDocRef';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
 import DocRefListingEntry from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
-const { searchTermUpdated, searchDocRefTypeChosen } = appSearchBarActionCreators;
-
-const LISTING_ID = 'app-search-bar';
+const { searchTermUpdated } = appSearchBarActionCreators;
 
 const withDropdownOpen = withState('isDropDownOpen', 'setDropdownOpen', false);
 
 const enhance = compose(
-  withRouter,
   withDocRefTypes,
   withDropdownOpen,
   connect(
-    ({ appSearch: { searchTerm, searchDocRefType, searchResults } }, props) => ({
-      searchValue:
-        searchTerm.length > 0 ? searchTerm : searchDocRefType ? `type:${searchDocRefType}` : '',
-      searchResults,
-    }),
+    ({ appSearch }, { pickerId }) => {
+      const appSearchForPicker = appSearch[pickerId] || defaultPickerState;
+      const { searchTerm, searchResults } = appSearchForPicker;
+      return {
+        searchTerm,
+        searchResults,
+      };
+    },
     {
       searchApp,
       searchTermUpdated,
-      searchDocRefTypeChosen,
-      openDocRef,
     },
   ),
-  withSelectableItemListing(({ searchResults, openDocRef, history }) => ({
-    listingId: LISTING_ID,
+  withSelectableItemListing(({ pickerId, searchResults, chooseDocRef }) => ({
+    listingId: pickerId,
     items: searchResults,
-    openItem: d => openDocRef(history, d),
+    openItem: d => chooseDocRef(d),
   })),
 );
 
 const AppSearchBar = ({
+  pickerId,
   searchResults,
   searchApp,
-  openDocRef,
+  chooseDocRef,
   searchValue,
   searchTermUpdated,
-  searchDocRefTypeChosen,
-  history,
   docRefTypes,
   onKeyDownWithShortcuts,
   isDropDownOpen,
@@ -72,8 +68,8 @@ const AppSearchBar = ({
       placeholder="Search..."
       value={searchValue}
       onChange={({ target: { value } }) => {
-        searchTermUpdated(value);
-        searchApp({ term: value });
+        searchTermUpdated(pickerId, value);
+        searchApp(pickerId, { term: value });
       }}
     />
     <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
@@ -81,11 +77,11 @@ const AppSearchBar = ({
         <DocRefListingEntry
           key={searchResult.uuid}
           index={index}
-          listingId={LISTING_ID}
+          listingId={pickerId}
           docRef={searchResult}
-          openDocRef={d => openDocRef(history, d)}
+          openDocRef={chooseDocRef}
         >
-          <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={openDocRef} />
+          <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={chooseDocRef} />
         </DocRefListingEntry>
       ))}
     </div>
@@ -94,6 +90,13 @@ const AppSearchBar = ({
 
 const EnhancedAppSearchBar = enhance(AppSearchBar);
 
-EnhancedAppSearchBar.propTypes = {};
+EnhancedAppSearchBar.propTypes = {
+  pickerId: PropTypes.string.isRequired,
+  chooseDocRef: PropTypes.func.isRequired,
+};
+
+EnhancedAppSearchBar.defaultProps = {
+  pickerId: 'global',
+};
 
 export default EnhancedAppSearchBar;

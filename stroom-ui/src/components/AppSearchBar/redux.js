@@ -1,34 +1,38 @@
 import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
-  SEARCH_TERM_UPDATED: searchTerm => ({ searchTerm }),
-  SEARCH_DOC_REF_TYPE_CHOSEN: searchDocRefType => ({ searchDocRefType }),
-  SEARCH_RESULTS_RETURNED: searchResults => ({ searchResults }),
+  SEARCH_TERM_UPDATED: (pickerId, searchTerm) => ({ pickerId, searchTerm }),
+  SEARCH_RESULTS_RETURNED: (pickerId, searchResults) => ({ pickerId, searchResults }),
 });
 
-const defaultState = {
+const defaultPickerState = {
   searchTerm: '',
   searchResults: [],
 };
 
+const defaultState = {};
+
 const reducer = handleActions(
   {
-    SEARCH_TERM_UPDATED: (state, { payload: { searchTerm } }) => ({
+    SEARCH_TERM_UPDATED: (state, action) => ({
       ...state,
-      searchTerm,
-      searchDocRefType: undefined,
+      [action.payload.pickerId]: {
+        ...defaultPickerState,
+        ...state[action.payload.pickerId],
+        searchTerm: action.payload.searchTerm,
+        searchDocRefType: undefined,
+      },
     }),
-    SEARCH_DOC_REF_TYPE_CHOSEN: (state, { payload: { searchDocRefType } }) => ({
+    SEARCH_RESULTS_RETURNED: (state, action) => ({
       ...state,
-      searchTerm: '',
-      searchDocRefType,
-    }),
-    SEARCH_RESULTS_RETURNED: (state, { payload: { searchResults } }) => ({
-      ...state,
-      searchResults,
+      [action.payload.pickerId]: {
+        ...defaultPickerState,
+        ...state[action.payload.pickerId],
+        searchResults: action.payload.searchResults,
+      },
     }),
   },
   defaultState,
 );
 
-export { actionCreators, reducer };
+export { actionCreators, reducer, defaultPickerState };
