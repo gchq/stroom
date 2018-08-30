@@ -16,7 +16,7 @@ import openDocRef from 'sections/RecentItems/openDocRef';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
-import withSelectableItemListing from 'lib/withSelectableItemListing';
+import withSelectableItemListing, { SELECTION_BEHAVIOUR } from 'lib/withSelectableItemListing';
 
 const {
   prepareDocRefCreation,
@@ -50,7 +50,7 @@ const enhance = compose(
   withSelectableItemListing(({ openDocRef, history, folder: { node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
-    allowMultiSelect: true,
+    selectionBehaviour: SELECTION_BEHAVIOUR.MULTIPLE,
     openItem: d => openDocRef(history, d),
   })),
   withProps(({
@@ -113,6 +113,7 @@ const FolderExplorer = ({
   folderUuid,
   actionBarItems,
   openDocRef,
+  history,
   onKeyDownWithShortcuts,
 }) => (
   <React.Fragment>
@@ -125,13 +126,13 @@ const FolderExplorer = ({
           <Icon name="folder" />
           <Header.Content className="header">{node.name}</Header.Content>
           <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
+            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={d => openDocRef(history, d)} />
           </Header.Subheader>
         </Header>
       </Grid.Column>
       <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
-          {actionBarItems.map(({onClick, icon, tooltip, disabled}, i) => (
+          {actionBarItems.map(({onClick, icon, tooltip}, i) => (
             <ThemedPopup
               key={i}
               trigger={
@@ -140,7 +141,6 @@ const FolderExplorer = ({
                   circular
                   onClick={onClick}
                   icon={icon}
-                  disabled={disabled}
                 />
               }
               content={tooltip}
@@ -156,8 +156,8 @@ const FolderExplorer = ({
           index={index}
           listingId={LISTING_ID}
           docRefUuid={docRef.uuid}
-          onNameClick={node => openDocRef(node)}
-          openDocRef={openDocRef}
+          onNameClick={d => openDocRef(history, d)}
+          openDocRef={d => openDocRef(history, d)}
         />
       ))}
     </div>

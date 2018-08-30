@@ -6,7 +6,7 @@ import { DragSource } from 'react-dnd';
 import { DropTarget } from 'react-dnd';
 
 import { findItem, canMove } from 'lib/treeUtils';
-import { DocRefListingEntry } from 'components/DocRefListingEntry';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
@@ -113,30 +113,28 @@ const DndDocRefListingEntry = ({
   listingId,
   selectableItemListing: { selectedItems },
   onNameClick,
-  includeBreadcrumb,
   openDocRef,
   connectDropTarget,
   connectDragSource,
   isOver,
   canDrop,
 }) => {
-  let className = '';
+  let additionalClasses = [];
   if (isOver) {
-    className += ' dnd-over';
+    additionalClasses.push('dnd-over');
   }
   if (isOver) {
     if (canDrop) {
-      className += ' can-drop';
+      additionalClasses.push('can-drop');
     } else {
-      className += ' cannot-drop';
+      additionalClasses.push('cannot-drop');
     }
   }
 
   return connectDragSource(connectDropTarget(<div>
     <DocRefListingEntry
-      className={className}
+      additionalClasses={additionalClasses}
       index={index}
-      includeBreadcrumb={includeBreadcrumb}
       openDocRef={openDocRef}
       docRef={node}
       listingId={listingId}
@@ -150,14 +148,12 @@ EnhancedDocRefListingEntry.propTypes = {
   index: PropTypes.number.isRequired,
   listingId: PropTypes.string.isRequired,
   docRefUuid: PropTypes.string.isRequired,
-  includeBreadcrumb: PropTypes.bool.isRequired,
   onNameClick: PropTypes.func.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };
 
 EnhancedDocRefListingEntry.defaultProps = {
   checkedDocRefs: [],
-  includeBreadcrumb: true,
 };
 
 export default EnhancedDocRefListingEntry;

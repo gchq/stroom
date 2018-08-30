@@ -20,63 +20,63 @@ import { storiesOf } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
-import TrackerDetails from './TrackerDetails';
+import ProcessingDetails from './ProcessingDetails';
 import { actionCreators } from '../redux';
 import { trackers } from '../tracker.testData';
 
 import 'semantic/dist/semantic.min.css';
 
-storiesOf('TrackerDetails', module)
+storiesOf('ProcessingDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(1));
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_undefinedLastPollAge]));
   }))
   .add('Minimal tracker with undefined last poll age', () => (
     <div>
-      <TrackerDetails />
+      <ProcessingDetails />
     </div>
   ));
 
-storiesOf('TrackerDetails', module)
+storiesOf('ProcessingDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(2));
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_nullLastPollAge]));
   }))
   .add('Minimal tracker with null last poll age', () => (
     <div>
-      <TrackerDetails />
+      <ProcessingDetails />
     </div>
   ));
 
-storiesOf('TrackerDetails', module)
+storiesOf('ProcessingDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(3));
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_emptyLastPollAge]));
   }))
   .add('Minimal tracker with empty last poll age', () => (
     <div>
-      <TrackerDetails />
+      <ProcessingDetails />
     </div>
   ));
 
-storiesOf('TrackerDetails', module)
+storiesOf('ProcessingDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(4));
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker]));
   }))
   .add('Maximal tracker', () => (
     <div>
-      <TrackerDetails />
+      <ProcessingDetails />
     </div>
   ));
 
-storiesOf('TrackerDetails', module)
+storiesOf('ProcessingDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(actionCreators.updateTrackerSelection(5));
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker_withLongName]));
   }))
   .add('Maximal tracker with a long name', () => (
     <div>
-      <TrackerDetails />
+      <ProcessingDetails />
     </div>
   ));

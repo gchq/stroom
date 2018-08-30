@@ -6,22 +6,22 @@ export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', no
 export const fetchTrackers = trackerSelection => (dispatch, getState) => {
   const state = getState();
 
-  const rowsToFetch = state.trackerDashboard.pageSize;
+  const rowsToFetch = state.processing.pageSize;
   dispatch(actionCreators.updatePageSize(rowsToFetch));
 
   let url = `${state.config.streamTaskServiceUrl}/?`;
   url += `pageSize=${rowsToFetch}`;
-  url += `&offset=${state.trackerDashboard.pageOffset}`;
-  if (state.trackerDashboard.sortBy !== undefined) {
-    url += `&sortBy=${state.trackerDashboard.sortBy}`;
-    url += `&sortDirection=${state.trackerDashboard.sortDirection}`;
+  url += `&offset=${state.processing.pageOffset}`;
+  if (state.processing.sortBy !== undefined) {
+    url += `&sortBy=${state.processing.sortBy}`;
+    url += `&sortDirection=${state.processing.sortDirection}`;
   }
 
   if (
-    state.trackerDashboard.searchCriteria !== '' &&
-    state.trackerDashboard.searchCriteria !== undefined
+    state.processing.searchCriteria !== '' &&
+    state.processing.searchCriteria !== undefined
   ) {
-    url += `&filter=${state.trackerDashboard.searchCriteria}`;
+    url += `&filter=${state.processing.searchCriteria}`;
   }
 
   wrappedGet(

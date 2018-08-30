@@ -8,7 +8,8 @@ import { withRouter } from 'react-router-dom';
 import { actionCreators as appSearchBarActionCreators } from './redux';
 import { searchApp } from 'components/FolderExplorer/explorerClient';
 import openDocRef from 'sections/RecentItems/openDocRef';
-import { DocRefListingEntry } from 'components/DocRefListingEntry';
+import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import { withDocRefTypes } from 'components/DocRefTypes';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
@@ -55,35 +56,39 @@ const AppSearchBar = ({
   isDropDownOpen,
   setDropdownOpen,
 }) => (
-  <div className="dropdown">
+  <div
+    className="dropdown"
+    tabIndex={0}
+    onFocus={() => setDropdownOpen(true)}
+    onBlur={() => setDropdownOpen(false)}
+    onKeyDown={onKeyDownWithShortcuts}
+  >
     <Input
+      onFocus={() => setDropdownOpen(true)}
+      onBlur={() => setDropdownOpen(false)}
       fluid
       className="border flat"
       icon="search"
       placeholder="Search..."
       value={searchValue}
-      onFocus={() => setDropdownOpen(true)}
-      onBlur={() => setDropdownOpen(false)}
-      onKeyDown={onKeyDownWithShortcuts}
       onChange={({ target: { value } }) => {
         searchTermUpdated(value);
         searchApp({ term: value });
       }}
     />
-    {isDropDownOpen && (
-      <div className="dropdown__content">
-        {searchResults.map((searchResult, index) => (
-          <DocRefListingEntry
-            key={searchResult.uuid}
-            index={index}
-            listingId={LISTING_ID}
-            docRef={searchResult}
-            openDocRef={d => openDocRef(history, d)}
-            includeBreadcrumb
-          />
-        ))}
-      </div>
-    )}
+    <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
+      {searchResults.map((searchResult, index) => (
+        <DocRefListingEntry
+          key={searchResult.uuid}
+          index={index}
+          listingId={LISTING_ID}
+          docRef={searchResult}
+          openDocRef={d => openDocRef(history, d)}
+        >
+          <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={openDocRef} />
+        </DocRefListingEntry>
+      ))}
+    </div>
   </div>
 );
 

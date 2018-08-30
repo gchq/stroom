@@ -1,8 +1,10 @@
 @import "./variables";
 @import "./base";
 @import "./panelGroup";
+@import "./table";
 @import "./dropdown";
 
+@import "../components/DocPicker/DocPicker";
 @import "../components/PipelineEditor/PipelineEditor";
 @import "../components/PipelineSearch/PipelineSearch";
 @import "../components/DataViewer/DataViewer";
@@ -14,7 +16,7 @@
 @import "../components/IFrame/IFrame";
 @import "../components/HorizontalPanel/HorizontalPanel";
 
-@import "../sections/TrackerDashboard/TrackerDashboard/TrackerDashboard";
+@import "../sections/Processing/ProcessingContainer";
 @import "../sections/AppChrome/AppChrome";
 @import "../sections/Welcome/Welcome";
 @import "../sections/UserSettings/UserSettings";

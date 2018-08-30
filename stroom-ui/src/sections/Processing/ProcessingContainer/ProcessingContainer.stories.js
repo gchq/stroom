@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import TrackerDashboard from './TrackerDashboard';
+import ProcessingContainer from './ProcessingContainer';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
@@ -27,28 +27,28 @@ import { actionCreators } from '../redux';
 
 import 'styles/main.css';
 
-storiesOf('TrackerDashboard', module)
+storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
     trackers: [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('basic', () => <TrackerDashboard />);
+  .add('basic', () => <Processing />);
 
-storiesOf('TrackerDashboard', module)
+storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
     trackers: undefined,
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('No trackers', () => <TrackerDashboard />);
+  .add('No trackers', () => <Processing />);
 
 const lotsOfTrackers = [...Array(10).keys()].map(i => generateGenericTracker(i));
 
-storiesOf('TrackerDashboard', module)
+storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
     trackers: lotsOfTrackers,
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('Lots of trackers', () => <TrackerDashboard />);
+  .add('Lots of trackers', () => <Processing />);

@@ -20,7 +20,8 @@ import { Header, Icon, Grid } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
 import AppSearchBar from 'components/AppSearchBar';
-import { DocRefListingEntry } from 'components/DocRefListingEntry';
+import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
+import DocRefListingEntry from 'components/DocRefListingEntry';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 import openDocRef from './openDocRef';
 
@@ -62,8 +63,9 @@ const RecentItems = ({ recentItems, openDocRef, onKeyDownWithShortcuts }) => (
           listingId={LISTING_ID}
           docRef={docRef}
           openDocRef={openDocRef}
-          includeBreadcrumb
-        />
+        >
+          <DocRefBreadcrumb docRefUuid={docRef.uuid} openDocRef={openDocRef} />
+        </DocRefListingEntry>
       ))}
     </div>
   </React.Fragment>

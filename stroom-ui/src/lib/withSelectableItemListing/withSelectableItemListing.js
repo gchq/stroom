@@ -4,52 +4,56 @@ import { compose, lifecycle, branch, withProps, withHandlers, renderComponent } 
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react/dist/commonjs';
 
-import { actionCreators } from './redux';
+import { actionCreators, SELECTION_BEHAVIOUR } from './redux';
 
-const { selectableListingMounted, selectionUp, selectionDown } = actionCreators;
+const {
+  selectableListingMounted, selectFocussed, focusUp, focusDown,
+} = actionCreators;
 
 const withSelectableItemListing = propsFunc =>
   compose(
     withProps((props) => {
       const {
-        listingId, items, openItem, allowMultiSelect = false,
+        listingId, items, openItem, selectionBehaviour = SELECTION_BEHAVIOUR.NONE,
       } = propsFunc(props);
 
       return {
         listingId,
         items,
-        allowMultiSelect,
+        selectionBehaviour,
         openItem,
       };
     }),
     connect(
-      ({ selectableItemListings }, { listingId }) => ({
+      ({ selectableItemListings, keyIsDown }, { listingId }) => ({
         selectableItemListing: selectableItemListings[listingId],
+        keyIsDown,
       }),
       {
         selectableListingMounted,
-        selectionUp,
-        selectionDown,
+        selectFocussed,
+        focusUp,
+        focusDown,
       },
     ),
     lifecycle({
       componentDidUpdate(prevProps, prevState, snapshot) {
         const {
-          items, listingId, selectableListingMounted, allowMultiSelect,
+          items, listingId, selectableListingMounted, selectionBehaviour,
         } = this.props;
 
         const itemsChanged = JSON.stringify(items) !== JSON.stringify(prevProps.items);
 
         if (itemsChanged) {
-          selectableListingMounted(listingId, items, allowMultiSelect);
+          selectableListingMounted(listingId, items, selectionBehaviour);
         }
       },
       componentDidMount() {
         const {
-          selectableListingMounted, listingId, items, allowMultiSelect,
+          selectableListingMounted, listingId, items, selectionBehaviour,
         } = this.props;
 
-        selectableListingMounted(listingId, items, allowMultiSelect);
+        selectableListingMounted(listingId, items, selectionBehaviour);
       },
     }),
     branch(
@@ -58,23 +62,30 @@ const withSelectableItemListing = propsFunc =>
     ),
     withHandlers({
       onKeyDownWithShortcuts: ({
-        selectionUp,
-        selectionDown,
+        focusUp,
+        focusDown,
+        selectFocussed,
         listingId,
         openItem,
-        selectableItemListing: { selectedItems },
+        selectableItemListing: { selectedItems, focussedItem, selectionBehaviour },
+        keyIsDown,
       }) => (e) => {
         if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'k')) {
-          selectionUp(listingId);
+          focusUp(listingId);
           e.preventDefault();
         } else if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'j')) {
-          selectionDown(listingId);
+          focusDown(listingId);
           e.preventDefault();
         } else if (e.key === 'Enter') {
-          if (selectedItems.length === 1) {
-            openItem(selectedItems[0]);
+          if (focussedItem) {
+            openItem(focussedItem);
           }
           e.preventDefault();
+        } else if (e.key === ' ') {
+          if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
+            selectFocussed(listingId, keyIsDown);
+            e.preventDefault();
+          }
         }
       },
     }),

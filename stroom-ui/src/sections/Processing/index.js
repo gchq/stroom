@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import TrackerDashboard from './TrackerDashboard/TrackerDashboard';
+import ProcessingContainer from './ProcessingContainer/ProcessingContainer';
 import { default as reducer } from './redux';
 
 export { reducer };
 
-export default TrackerDashboard;
+export { ProcessingContainer as Processing };

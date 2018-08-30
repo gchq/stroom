@@ -187,15 +187,13 @@ const enhance = compose(
     onKeyDownWithNestingShortcuts: ({
       onKeyDownWithShortcuts,
       menuItemOpened,
-      selectableItemListing: { selectedItems },
+      selectableItemListing: { focussedItem },
     }) => (e) => {
-      const selectedMenuItem = selectedItems.length > 0 ? selectedItems[0] : undefined;
-
-      if (selectedMenuItem) {
+      if (focussedItem) {
         if (e.key === 'ArrowRight') {
-          menuItemOpened(selectedMenuItem.key, true);
+          menuItemOpened(focussedItem.key, true);
         } else if (e.key === 'ArrowLeft') {
-          menuItemOpened(selectedMenuItem.key, false);
+          menuItemOpened(focussedItem.key, false);
         }
       }
 

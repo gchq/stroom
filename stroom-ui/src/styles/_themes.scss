@@ -1,17 +1,17 @@
 $themes: (
   light: (
     // General
-    background__color: #fff,
-    text__color: rgba(0,0,0,.8),
-    selected-color:#cae1f1,
+      background__color: #fff,
+    text__color: rgba(0, 0, 0, 0.8),
+    selected-color: #cae1f1,
     hover-color: #e8e8e8,
     raised-low__background-color: #dceffd,
     raised-high__background-color: #2185d0,
+    raised-high__selected-background-color: #1c70b1,
     raised-element__border: 1px solid #fff,
     border: 1px solid #dfe0e1,
-
     // Specific
-    sidebar__header-color: #fff,
+      sidebar__header-color: #fff,
     header__icon-color: #2185d0,
     dropdown__background-color: #fff,
     dropdown__border: 1px solid #dfe0e1,
@@ -19,24 +19,25 @@ $themes: (
     breadcrumb__divider___color: black,
     breadcrumb__section___color: black,
     breadcrumb__section--active___color: black,
-    icon-button__border:none,
-    icon-button__background-color:#e4e4e4,
+    icon-button__border: none,
+    icon-button__background-color: #e4e4e4,
+    icon-button__background-color--hover: #a8a8a8,
     icon-button__color: #4d5250,
-    icon-button__color--hover: black,
+    icon-button__color--hover: black
   ),
   dark: (
     // General
-    background__color: #282829,
+      background__color: #282829,
     text__color: #ddd,
-    selected-color:#185e90,
+    selected-color: #185e90,
     hover-color: #1f4a69,
     raised-low__background-color: #4d5250,
     raised-high__background-color: #4d5250,
+    raised-high__selected-background-color: #747c79,
     raised-element__border: 1px solid #aaa,
-    border:1px solid #4d5250, 
-
+    border: 1px solid #4d5250,
     // Specific
-    sidebar__header-color: white,
+      sidebar__header-color: white,
     header__icon-color: #2185d0,
     dropdown__background-color: #282829,
     dropdown__border: 1px solid #4d5250,
@@ -44,9 +45,10 @@ $themes: (
     breadcrumb__divider___color: white,
     breadcrumb__section___color: white,
     breadcrumb__section--active___color: white,
-    icon-button__border:none,
-    icon-button__background-color:#282829,
+    icon-button__border: none,
+    icon-button__background-color: #282829,
+    icon-button__background-color--hover: #616161,
     icon-button__color: #adadad,
-    icon-button__color--hover: #ffffff,
-  ),
+    icon-button__color--hover: #ffffff
+  )
 );

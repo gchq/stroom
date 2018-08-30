@@ -26,52 +26,6 @@
   @return map-get($theme-map, $key);
 }
 
-<<<<<<< HEAD
-/////////////////////
-// Specific styles //
-/////////////////////
-
-.sidebar__logo svg path {
-  @include themify($themes) {
-    fill: themed("sidebar__header-color");
-  }
-}
-
-.tooltip-popup {
-  @include themify($themes) {
-    &.place-top {
-      &:after {
-        border-top-color: themed("raised-high__background-color") !important;
-        border-top-style: solid !important;
-        border-top-width: 6px !important;
-      }
-    }
-  }
-}
-
-.breadcrumb__divider {
-  @include themify($themes) {
-    color: themed("breadcrumb__divider___color") !important;
-  }
-}
-
-.breadcrumb__section {
-  @include themify($themes) {
-    color: themed("breadcrumb__section___color") !important;
-  }
-}
-
-.breadcrumb__section--active {
-  @include themify($themes) {
-    color: themed("breadcrumb__section--active___color") !important;
-  }
-}
-=======
-
-
-
->>>>>>> 2281445e525dbbe6fff8097942e507f9556b0dd4
-
 ////////////////////////
 // General-use styles //
 ////////////////////////
@@ -201,6 +155,26 @@ input {
   }
 }
 
+.inFocus {
+  @include themify($themes) {
+    border: solid thick themed("selected-color") !important;
+  }
+}
+
+.raised-high .selected {
+  @include themify($themes) {
+    background-color: themed(
+      "raised-high__selected-background-color"
+    ) !important;
+  }
+}
+
+.raised-high .inFocus {
+  @include themify($themes) {
+    border: solid thick themed("raised-high__selected-background-color") !important;
+  }
+}
+
 .selected:hover {
   @include themify($themes) {
     background-color: themed("selected-color") !important;
@@ -210,6 +184,12 @@ input {
 .flat {
   @include themify($themes) {
     background-color: themed("background__color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
+.flat-text {
+  @include themify($themes) {
     color: themed("text__color") !important;
   }
 }
@@ -254,9 +234,11 @@ input {
   }
 }
 
-.icon-button:hover {
+.icon-button:hover,
+.icon-button:focus {
   @include themify($themes) {
     color: themed("icon-button__color--hover") !important;
+    background-color: themed("icon-button__background-color--hover") !important;
   }
 }
 
@@ -303,5 +285,11 @@ input {
 .breadcrumb__section--active {
   @include themify($themes) {
     color: themed("breadcrumb__section--active___color") !important;
+  }
+}
+
+.pagination__container .pagination a {
+  @include themify($themes) {
+    color: themed("text__color") !important;
   }
 }

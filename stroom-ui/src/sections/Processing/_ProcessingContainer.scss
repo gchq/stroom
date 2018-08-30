@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import './ProcessingPagination/ProcessingPagination';
 
 .tracker-container {
   position: relative;
-  height: calc(100% - 100px);
+  height: calc(100% - 87px);
 }
 
 .tracker {
   position: absolute;
+  height: 100%;
+  width: 100%;
 }
 
 .tracker-container .SplitPane {
@@ -159,4 +162,25 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   border: none !important;
   -webkit-box-shadow: none;
   box-shadow: none;
+}
+
+
+.processing__table__container{
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+}
+
+
+
+.processing__header-container {
+  display: inline-flex !important;
+}
+
+.processing__header-container .input {
+  margin-left: 10px !important;
+  margin-top: 5px;
+  height: 40px;
+  min-width: 200px;
+  flex-grow: 1;
 }
