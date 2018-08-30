@@ -77,20 +77,13 @@ const enhance = compose(
     activePage: pageOffset + 1,
     totalPages: numberOfPages || 1,
   })),
-  lifecycle({
-    componentDidMount() {
-      console.log({ children: this.props });
-      React.Children.map(this.props.children, (child, i) => {
-        console.log({ child });
-      });
-    },
-  }),
 );
 
 const ProcessingPagination = ({
   activePage,
   totalPages,
   pageOptions,
+  pageSize,
   onHandlePageChange,
   onHandlePageSizeChange,
 }) => (
@@ -105,7 +98,7 @@ const ProcessingPagination = ({
       onPageChange={(event, data) => onHandlePageChange(data)}
     />
     <div className="pagination__text">Show</div>
-    <Dropdown fluid selection options={pageOptions} onChange={onHandlePageSizeChange} />
+    <Dropdown fluid selection value={pageSize} options={pageOptions} onChange={onHandlePageSizeChange} />
   </div>
 );
 
