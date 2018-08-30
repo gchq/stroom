@@ -19,33 +19,24 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
-
 import PanelGroup from 'react-panelgroup';
-
 import { Header, Icon, Button, Input, Menu, Grid } from 'semantic-ui-react';
+import ReactTooltip from 'react-tooltip';
 
+import ThemedPopup from 'components/ThemedPopup';
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
 import ProcessingDetails from '../ProcessingDetails/ProcessingDetails';
 import ProcessingPagination from '../ProcessingPagination/ProcessingPagination';
-
 import ProcessingList from '../ProcessingList/ProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
-const {
-  updateTrackerSelection, resetPaging, updateSearchCriteria, 
-} = actionCreators;
+const { updateTrackerSelection, resetPaging, updateSearchCriteria } = actionCreators;
 
 const enhance = compose(
   connect(
-    ({
-      processing: {
-        trackers,
-        searchCriteria,
-        selectedTrackerId,
-      },
-    }) => ({
+    ({ processing: { trackers, searchCriteria, selectedTrackerId } }) => ({
       trackers,
       searchCriteria,
       selectedTrackerId,
@@ -136,11 +127,48 @@ const ProcessingContainer = ({
         value={searchCriteria}
         onChange={(event, data) => onHandleSearchChange(data)}
         onKeyPress={(event, data) => onHandleSearch(event, data)}
-        action={<Button className="icon-button" onClick={() => onHandleSearch()} />}
-        // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
-        ref={input => (this.searchInputRef = input)}
       />
-      <ProcessingPagination/>
+
+      <div className="processing__search__help">
+        <a data-tip data-for="search_tooltip">
+          <Icon name="question circle" size="large" />
+        </a>
+        <ReactTooltip
+          place="bottom"
+          id="search_tooltip"
+          className="tooltip-popup raised-low"
+          effect="solid"
+        >
+          <div>
+            <p>You may search for a tracker by part or all of a pipeline name. </p>
+            <p> You may also use the following key words to filter the results:</p>
+            <ul>
+              <li>
+                <code>is:enabled</code>
+              </li>
+              <li>
+                <code>is:disabled</code>
+              </li>
+              <li>
+                <code>is:complete</code>
+              </li>
+              <li>
+                <code>is:incomplete</code>
+              </li>
+            </ul>
+            <p>
+              You may also sort the list to display the trackers that will next receive processing,
+              using:
+            </p>
+            <ul>
+              <li>
+                <code>sort:next</code>
+              </li>
+            </ul>
+          </div>
+        </ReactTooltip>
+      </div>
+      <ProcessingPagination />
     </div>
     <div className="tracker-container">
       <div className="tracker">
