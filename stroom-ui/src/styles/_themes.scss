@@ -3,7 +3,7 @@ $themes: (
     // General
     background__color: #fff,
     text__color: rgba(0, 0, 0, 0.8),
-    text__color--deemphasised: rgba(0, 0, 0, 0.8),
+    text__color--deemphasised: #fff,
     selected-color: #cae1f1,
     hover-color: #e8e8e8,
     raised-low__background-color: #dceffd,
@@ -30,7 +30,7 @@ $themes: (
   dark: (
     // General
     background__color: #282829,
-    text__color: #ddd,
+    text__color: #cacbcb,
     text__color--deemphasised: #cacbcb,
     selected-color: #185e90,
     hover-color: #1f4a69,

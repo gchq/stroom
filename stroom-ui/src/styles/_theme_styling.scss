@@ -251,18 +251,11 @@ input {
     fill: themed("sidebar__header-color");
   }
 }
-
 .sidebar__menu-item {
   @include themify($themes) {
     color: themed('text__color--deemphasised');
   }
 }
-.sidebar__text-color {
-  @include themify($themes) {
-    color: themed('text__color--deemphasised');
-  }
-}
-
 .app-chrome__sidebar__toggle {
   @include themify($themes) {
     color: themed("sidebar__header-color") !important;
@@ -286,13 +279,11 @@ input {
     color: themed("breadcrumb__divider___color") !important;
   }
 }
-
 .breadcrumb__section {
   @include themify($themes) {
     color: themed("breadcrumb__section___color") !important;
   }
 }
-
 .breadcrumb__section--active {
   @include themify($themes) {
     color: themed("breadcrumb__section--active___color") !important;
@@ -304,8 +295,18 @@ input {
     color: themed("text__color") !important;
   }
 }
-
 .pagination__container .pagination .active{
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
+  }
+}
+
+.react-sweet-progress-line {
+  @include themify($themes) {
+    background-color: themed("raised-low__background-color") !important;
+  }
+}
+.react-sweet-progress-line-inner {
   @include themify($themes) {
     background-color: themed("selected-color") !important;
   }

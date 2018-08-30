@@ -98,7 +98,11 @@ const enhance = compose(
       {
         Header: 'Progress',
         accessor: 'progress',
-        Cell: row => <Progress percent={row.trackerPercent} symbolClassName="flat-text" />,
+        Cell: row => 
+          <Progress 
+            percent={row.trackerPercent} 
+            symbolClassName="flat-text" 
+            />,
       },
     ],
     tableData: trackers.map(({ filterId, priority, trackerPercent }) => ({
