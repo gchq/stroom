@@ -22,7 +22,7 @@ import Mousetrap from 'mousetrap';
 
 import PanelGroup from 'react-panelgroup';
 
-import { Header, Icon, Button, Input, Menu, Grid } from 'semantic-ui-react';
+import { Header, Icon, Button, Input } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';

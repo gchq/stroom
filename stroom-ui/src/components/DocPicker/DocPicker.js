@@ -60,7 +60,6 @@ const enhance = compose(
       return {
         currentFolderWithLineage,
         selectableItemListing,
-        currentFolderWithLineage,
         onDocRefPickConfirmed,
         parentFolder,
         selectionNotYetMade:
@@ -68,7 +67,7 @@ const enhance = compose(
       };
     },
     {},
-  ),
+  ), 
   withHandlers({
     enterFolder: ({setFolderUuid, parentFolder}) => d => setFolderUuid(d.uuid),
     goBackToParentFolder: ({setFolderUuid, parentFolder}) => () => {if (parentFolder) {setFolderUuid(parentFolder.uuid)}}
