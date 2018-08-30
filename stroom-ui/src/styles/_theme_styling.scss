@@ -252,6 +252,17 @@ input {
   }
 }
 
+.sidebar__menu-item {
+  @include themify($themes) {
+    color: themed('text__color--deemphasised');
+  }
+}
+.sidebar__text-color {
+  @include themify($themes) {
+    color: themed('text__color--deemphasised');
+  }
+}
+
 .app-chrome__sidebar__toggle {
   @include themify($themes) {
     color: themed("sidebar__header-color") !important;

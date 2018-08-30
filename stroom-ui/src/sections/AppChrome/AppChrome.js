@@ -211,6 +211,7 @@ const getExpandedMenuItems = (
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
+        className="sidebar__text-color"
         key={menuItem.key}
         menuItem={menuItem}
         depth={depth}
