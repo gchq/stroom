@@ -5,5 +5,18 @@
 
 .pagination__container .pagination {
   height: 40px;
-  margin-top:5px;
+  margin-top:5px !important;
+}
+
+.pagination__text {
+  padding-top: 15px;
+  padding-left: 20px;
+  padding-right:5px;
+}
+
+.pagination__container .selection.dropdown {
+  margin-top:5px !important;
+  height: 40px;
+  width:70px !important;
+  margin-right:10px;
 }

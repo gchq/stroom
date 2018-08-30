@@ -96,7 +96,7 @@ const ProcessingPagination = ({
 }) => (
   <div className="pagination__container">
     <Pagination
-      className="flat raised-border"
+      className="flat border"
       activePage={activePage}
       totalPages={totalPages}
       firstItem={null}
@@ -104,7 +104,7 @@ const ProcessingPagination = ({
       size="tiny"
       onPageChange={(event, data) => onHandlePageChange(data)}
     />
-    <div>Show</div>
+    <div className="pagination__text">Show</div>
     <Dropdown fluid selection options={pageOptions} onChange={onHandlePageSizeChange} />
   </div>
 );
