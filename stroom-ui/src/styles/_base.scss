@@ -65,3 +65,15 @@ body {
   margin-right: 0.3rem;
   margin-left: 0.3rem;
 }
+
+
+body ::-webkit-scrollbar {
+}
+
+body ::-webkit-scrollbar-track {
+  background-color:#333333 !important;
+}
+
+body ::-webkit-scrollbar-thumb {
+  background-color: #848484a3 !important;
+}
