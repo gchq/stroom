@@ -20,20 +20,20 @@ import withSelectableItemListing, {
 } from 'lib/withSelectableItemListing';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
-const { searchTermUpdated, navigateToFolder, openDropdown, closeDropdown, switchMode, chooseDocRef } = appSearchBarActionCreators;
+const { searchTermUpdated, navigateToFolder, openDropdown, closeDropdown, switchMode } = appSearchBarActionCreators;
 
 const enhance = compose(
   withDocumentTree,
   connect(
     (
       { appSearch, recentItems, selectableItemListings, folderExplorer: { documentTree } },
-      { pickerId, typeFilters },
+      { pickerId, typeFilters, value },
     ) => {
       const appSearchForPicker = appSearch[pickerId] || defaultPickerState;
       const selectableItemListing =
         selectableItemListings[pickerId] || defaultSelectableItemListingState;
       const {
-        searchTerm, navFolder, searchResults, searchMode, isOpen, chosenDocRef
+        searchTerm, navFolder, searchResults, searchMode, isOpen
       } = appSearchForPicker;
       const documentTreeToUse =
         typeFilters.length > 0
@@ -47,8 +47,8 @@ const enhance = compose(
 
       if (isOpen) {
         valueToShow = searchTerm;
-      } else if (chosenDocRef) {
-        valueToShow = chosenDocRef.name;
+      } else if (value) {
+        valueToShow = value.name;
       } else {
         valueToShow = '';
       }
@@ -113,19 +113,21 @@ const enhance = compose(
       navigateToFolder,
       openDropdown,
       closeDropdown,
-      switchMode,
-      chooseDocRef
+      switchMode
     },
   ),
   withHandlers({
-    chooseDocRef: ({chooseDocRef, pickerId}) => d => chooseDocRef(pickerId, d)
+    onChange: ({pickerId, onChange, closeDropdown}) => d => {
+      onChange(d);
+      closeDropdown(pickerId);
+    }
   }),
   withSelectableItemListing(({
-    pickerId, docRefs, navigateToFolder, parentFolder, chooseDocRef
+    pickerId, docRefs, navigateToFolder, parentFolder, onChange
   }) => ({
     listingId: pickerId,
     items: docRefs,
-    openItem: chooseDocRef,
+    openItem: onChange,
     enterItem: d => navigateToFolder(pickerId, d),
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
@@ -187,7 +189,7 @@ const AppSearchBar = ({
   provideBreadcrumbs,
   switchMode,
   modeOptions,
-  chooseDocRef
+  onChange
 }) => (
   <div
     className="dropdown"
@@ -225,7 +227,7 @@ const AppSearchBar = ({
             index={index}
             listingId={pickerId}
             docRef={searchResult}
-            openDocRef={chooseDocRef}
+            openDocRef={onChange}
             enterFolder={d => navigateToFolder(pickerId, d)}
           >
             {provideBreadcrumbs && (

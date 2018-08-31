@@ -253,7 +253,7 @@ input {
 }
 .sidebar__menu-item {
   @include themify($themes) {
-    color: themed('text__color--deemphasised');
+    color: themed("text__color--deemphasised");
   }
 }
 .app-chrome__sidebar__toggle {
@@ -295,7 +295,7 @@ input {
     color: themed("text__color") !important;
   }
 }
-.pagination__container .pagination .active{
+.pagination__container .pagination .active {
   @include themify($themes) {
     background-color: themed("selected-color") !important;
   }
@@ -312,36 +312,34 @@ input {
   }
 }
 
-
 body ::-webkit-scrollbar {
 }
 body ::-webkit-scrollbar-track {
   @include themify($themes) {
-    background-color:themed('scrollbar__track-color') !important;
+    background-color: themed("scrollbar__track-color") !important;
   }
 }
 body ::-webkit-scrollbar-thumb {
   @include themify($themes) {
-    background-color: themed('scrollbar__thumb-color') !important;
+    background-color: themed("scrollbar__thumb-color") !important;
   }
 }
 
 .tabs {
   .tabular.menu {
+    border-bottom: 1px solid #5f5f5f !important;
 
-     border-bottom: 1px solid #5f5f5f !important;
-  
     .active.item {
       @include themify($themes) {
         background-color: themed("background__color") !important;
-        color: themed("text__color") !important;  
+        color: themed("text__color") !important;
         border: themed("border") !important;
       }
     }
     .item {
       @include themify($themes) {
         background-color: themed("background__color") !important;
-        color: themed("text__color") !important;  
+        color: themed("text__color") !important;
         border: none !important;
       }
     }
@@ -349,7 +347,7 @@ body ::-webkit-scrollbar-thumb {
   .tab {
     @include themify($themes) {
       background-color: themed("background__color") !important;
-      color: themed("text__color") !important;  
+      color: themed("text__color") !important;
       border: none !important;
     }
   }

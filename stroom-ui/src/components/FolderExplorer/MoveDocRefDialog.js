@@ -31,11 +31,10 @@ import PermissionInheritancePicker from 'components/PermissionInheritancePicker'
 
 const { completeDocRefMove } = actionCreators;
 
+const LISTING_ID = 'move-item-listing';
+
 const enhance = compose(
   withDocumentTree,
-  withProps(({ pickerId }) => ({
-    pickerId: `move-doc-ref-${pickerId}`,
-  })),
   connect(
     ({
       folderExplorer: { documentTree },
@@ -66,7 +65,6 @@ const enhance = compose(
 );
 
 const MoveDocRefDialog = ({
-  pickerId,
   isMoving,
   uuids,
   completeDocRefMove,
@@ -82,7 +80,7 @@ const MoveDocRefDialog = ({
           <Field
             name="destination"
             component={({ input: { onChange, value } }) => (
-              <AppSearchBar pickerId={pickerId} onChange={onChange} value={value} />
+              <AppSearchBar pickerId={LISTING_ID} onChange={onChange} value={value} />
             )}
           />
         </Form.Field>
@@ -117,9 +115,5 @@ const MoveDocRefDialog = ({
     </Modal.Actions>
   </Modal>
 );
-
-MoveDocRefDialog.propTypes = {
-  pickerId: PropTypes.string.isRequired,
-};
 
 export default enhance(MoveDocRefDialog);

@@ -7,7 +7,6 @@ const actionCreators = createActions({
   CLOSE_DROPDOWN: pickerId => ({ pickerId, isOpen: false }),
   SWITCH_MODE: (pickerId, mode) => ({ pickerId, mode }),
   NAVIGATE_TO_FOLDER: (pickerId, navFolder) => ({ pickerId, navFolder }),
-  CHOOSE_DOC_REF: (pickerId, chosenDocRef) => ({ pickerId, chosenDocRef }),
   SEARCH_TERM_UPDATED: (pickerId, searchTerm) => ({ pickerId, searchTerm }),
   SEARCH_RESULTS_RETURNED: (pickerId, searchResults) => ({ pickerId, searchResults }),
 });
@@ -24,7 +23,6 @@ const defaultPickerState = {
   searchTerm: '',
   searchResults: [],
   navFolder: undefined,
-  chosenDocRef: undefined,
   isOpen: false,
   searchMode: SEARCH_MODE.NAVIGATION,
 };
@@ -40,11 +38,6 @@ const reducer = handleActions(
     SWITCH_MODE: (state, action) =>
       updateIdSubstate(state, action.payload.pickerId, defaultPickerState, {
         searchMode: action.payload.mode,
-      }),
-    CHOOSE_DOC_REF: (state, action) =>
-      updateIdSubstate(state, action.payload.pickerId, defaultPickerState, {
-        chosenDocRef: action.payload.chosenDocRef,
-        isOpen: false
       }),
     NAVIGATE_TO_FOLDER: (state, action) =>
       updateIdSubstate(state, action.payload.pickerId, defaultPickerState, {
