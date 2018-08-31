@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withProps, withHandlers } from 'recompose';
+import { compose, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Icon, Button } from 'semantic-ui-react';
 
@@ -112,6 +112,7 @@ const enhance = compose(
       return {
         searchMode,
         valueToShow,
+        selectableItemListing,
         docRefs,
         hasNoResults: docRefs.length === 0,
         noResultsText: searchMode === SEARCH_MODE.NAVIGATION ? 'empty' : 'no results',

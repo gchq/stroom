@@ -3,15 +3,14 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 
-import { actionCreators } from './redux';
-
-const { docRefOpened } = actionCreators;
-
 import { findItem } from 'lib/treeUtils';
 import FolderExplorer from 'components/FolderExplorer';
 import PipelineEditor from 'components/PipelineEditor';
 import XsltEditor from 'components/XsltEditor';
 import PathNotFound from 'components/PathNotFound';
+import { actionCreators } from './redux';
+
+const { docRefOpened } = actionCreators;
 
 const enhance = compose(
   connect(({ folderExplorer: { documentTree } }) => ({ documentTree }), { docRefOpened }),
