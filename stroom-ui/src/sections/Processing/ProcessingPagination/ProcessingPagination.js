@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { compose, withHandlers, withProps, lifecycle } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 import { Pagination, Dropdown } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
@@ -98,7 +98,13 @@ const ProcessingPagination = ({
       onPageChange={(event, data) => onHandlePageChange(data)}
     />
     <div className="pagination__text">Show</div>
-    <Dropdown fluid selection value={pageSize} options={pageOptions} onChange={onHandlePageSizeChange} />
+    <Dropdown
+      fluid
+      selection
+      value={pageSize}
+      options={pageOptions}
+      onChange={onHandlePageSizeChange}
+    />
   </div>
 );
 
