@@ -24,7 +24,6 @@ import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import withLocalStorage from 'lib/withLocalStorage';
-import openDocRef from 'sections/RecentItems/openDocRef';
 import MenuItem from './MenuItem';
 import {
   MoveDocRefDialog,
@@ -74,6 +73,10 @@ const getOpenMenuItems = (menuItems, areMenuItemsOpen, openMenuItems = []) => {
 
 const enhance = compose(
   withDocumentTree,
+  withRouter,
+  withHandlers({
+    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+  }),
   connect(
     (
       {
@@ -91,11 +94,9 @@ const enhance = compose(
     }),
     {
       menuItemOpened,
-      openDocRef,
       themeChanged,
     },
   ),
-  withRouter,
   withIsExpanded,
   lifecycle({
     componentDidMount() {
@@ -116,7 +117,7 @@ const enhance = compose(
       },
       getDocumentTreeMenuItems((d) => {
         menuItemOpened(d.uuid, true);
-        openDocRef(history, d);
+        openDocRef(d);
       }, documentTree),
       {
         key: 'data',
@@ -162,13 +163,6 @@ const enhance = compose(
             style: 'nav',
           },
         ],
-      },
-      {
-        key: 'recent-items',
-        title: 'Recent Items',
-        onClick: () => history.push(`${pathPrefix}/recentItems`),
-        icon: 'file outline',
-        style: 'nav',
       },
     ];
     const openMenuItems = getOpenMenuItems(menuItems, areMenuItemsOpen);

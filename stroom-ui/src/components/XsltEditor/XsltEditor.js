@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, lifecycle, renderComponent, branch } from 'recompose';
+import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { Loader, Header, Grid } from 'semantic-ui-react';
@@ -25,7 +25,6 @@ import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
-import openDocRef from 'sections/RecentItems/openDocRef';
 import ThemedAceEditor from 'components/ThemedAceEditor'
 
 import { actionCreators } from './redux';
@@ -34,12 +33,15 @@ const { xsltUpdated } = actionCreators;
 
 const enhance = compose(
   withRouter,
+  withHandlers({
+    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+  }),
   connect(
     ({ xslt }, { xsltId }) => ({
       xslt: xslt[xsltId],
     }),
     {
-      fetchXslt, xsltUpdated, saveXslt, openDocRef,
+      fetchXslt, xsltUpdated, saveXslt,
     },
   ),
   lifecycle({
@@ -66,7 +68,7 @@ const XsltEditor = ({
           />
           <Header.Content>{xsltId}</Header.Content>
           <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={l => openDocRef(history, l)} />
+            <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={openDocRef} />
           </Header.Subheader>
         </Header>
       </Grid.Column>

@@ -12,7 +12,6 @@ import UserSettings from 'sections/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
 import AppSearch from 'sections/AppSearch';
-import RecentItems from 'sections/RecentItems';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
 
@@ -88,11 +87,6 @@ export default [
     exact: true,
     path: '/s/search',
     render: props => <AppChrome activeMenuItem="Search" content={<AppSearch />} />,
-  },
-  {
-    exact: true,
-    path: '/s/recentItems',
-    render: props => <AppChrome activeMenuItem="Recent Items" content={<RecentItems />} />,
   },
   {
     exact: true,

@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
+import { compose, lifecycle, withState, branch, renderComponent, withProps, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { Grid, Header, Loader } from 'semantic-ui-react';
@@ -41,7 +41,6 @@ import Bin from './Bin';
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
 
-import openDocRef from 'sections/RecentItems/openDocRef';
 import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { actionCreators } from './redux';
@@ -63,6 +62,9 @@ const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDeta
 
 const enhance = compose(
   withRouter,
+  withHandlers({
+    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+  }),
   connect(
     (
       { pipelineEditor: { pipelines, elements } },
@@ -77,7 +79,6 @@ const enhance = compose(
       savePipeline,
       fetchElements,
       fetchElementProperties,
-      openDocRef,
       startInheritedPipeline,
       pipelineSettingsOpened
     },
@@ -144,7 +145,7 @@ const RawPipelineEditor = ({
         />
         <Header.Content>{pipeline.docRef.name}</Header.Content>
         <Header.Subheader>
-          <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={l => openDocRef(history, l)} />
+          <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
         </Header.Subheader>
       </Header></Grid.Column>
       <Grid.Column width={4}>

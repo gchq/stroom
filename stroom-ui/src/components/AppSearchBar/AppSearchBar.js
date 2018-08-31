@@ -28,7 +28,7 @@ const enhance = compose(
   withDocumentTree,
   connect(
     (
-      { appSearch, selectableItemListings, folderExplorer: { documentTree } },
+      { appSearch, recentItems, selectableItemListings, folderExplorer: { documentTree } },
       { pickerId, typeFilters },
     ) => {
       const appSearchForPicker = appSearch[pickerId] || defaultPickerState;
@@ -42,10 +42,14 @@ const enhance = compose(
           ? filterTree(documentTree, d => typeFilters.includes(d.type))
           : documentTree;
 
-      let docRefs = searchResults;
+      let docRefs;
       let thisFolder;
       let parentFolder;
       let valueToShow;
+      let headerTitle;
+      let headerIcon;
+      let headerAction = () => {};
+
       if (isOpen) {
         valueToShow = searchTerm;
       } else if (chosenDocRef) {
@@ -54,15 +58,40 @@ const enhance = compose(
         valueToShow = '';
       }
 
-      if (searchMode === SEARCH_MODE.NAVIGATION) {
-        const navFolderToUse = navFolder || documentTreeToUse;
-        const navFolderWithLineage = findItem(documentTreeToUse, navFolderToUse.uuid);
-        docRefs = navFolderWithLineage.node.children;
-        thisFolder = navFolderWithLineage.node;
+      switch (searchMode) {
+        case (SEARCH_MODE.NAVIGATION): {
+          const navFolderToUse = navFolder || documentTreeToUse;
+          const navFolderWithLineage = findItem(documentTreeToUse, navFolderToUse.uuid);
+          docRefs = navFolderWithLineage.node.children;
+          thisFolder = navFolderWithLineage.node;
 
-        if (navFolderWithLineage.lineage && navFolderWithLineage.lineage.length > 0) {
-          parentFolder = navFolderWithLineage.lineage[navFolderWithLineage.lineage.length - 1];
+          if (navFolderWithLineage.lineage && navFolderWithLineage.lineage.length > 0) {
+            parentFolder = navFolderWithLineage.lineage[navFolderWithLineage.lineage.length - 1];
+          }
+          headerTitle = thisFolder.name;
+          if (parentFolder) {
+            headerIcon = 'arrow left';
+            headerAction = () => navigateToFolder(pickerId, parentFolder);
+          } else {
+            headerIcon = 'folder';
+          }
+          break;
         }
+        case (SEARCH_MODE.GLOBAL_SEARCH): {
+          headerIcon = 'search';
+          headerTitle = 'Search';
+          docRefs = searchResults;
+          break;
+        }
+        case (SEARCH_MODE.RECENT_ITEMS): {
+          docRefs = recentItems;
+          headerTitle = 'Recent Items';
+          headerIcon = 'history';
+          break;
+        }
+        default:
+          docRefs = [];
+          break;
       }
 
       const modeOptions = [
@@ -73,6 +102,10 @@ const enhance = compose(
         {
           mode: SEARCH_MODE.NAVIGATION,
           icon: 'folder'
+        },
+        {
+          mode: SEARCH_MODE.RECENT_ITEMS,
+          icon: 'history'
         }
       ]
 
@@ -86,7 +119,10 @@ const enhance = compose(
         thisFolder,
         parentFolder,
         isOpen,
-        modeOptions
+        modeOptions,
+        headerTitle,
+        headerIcon,
+        headerAction,
       };
     },
     {
@@ -111,39 +147,6 @@ const enhance = compose(
     enterItem: d => navigateToFolder(pickerId, d),
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
-  withProps(({
-    searchMode, parentFolder, navigateToFolder, pickerId, thisFolder,
-  }) => {
-    let headerTitle;
-    let headerIcon;
-    let headerAction = () => {};
-
-    switch (searchMode) {
-      case SEARCH_MODE.GLOBAL_SEARCH: {
-        headerIcon = 'search';
-        headerTitle = 'Search';
-        break;
-      }
-      case SEARCH_MODE.NAVIGATION: {
-        headerTitle = thisFolder.name;
-        if (parentFolder) {
-          headerIcon = 'arrow left';
-          headerAction = () => navigateToFolder(pickerId, parentFolder);
-        } else {
-          headerIcon = 'dont';
-        }
-        break;
-      }
-      default:
-        break;
-    }
-
-    return {
-      headerTitle,
-      headerIcon,
-      headerAction,
-    };
-  }),
 );
 
 const AppSearchBar = ({
@@ -192,7 +195,7 @@ const AppSearchBar = ({
         {headerTitle}
         <Button.Group floated='right'>
           {modeOptions.map(modeOption =>
-            <Button icon={modeOption.icon} onClick={() => switchMode(pickerId, modeOption.mode)} />
+            <Button key={modeOption.mode} icon={modeOption.icon} onClick={() => switchMode(pickerId, modeOption.mode)} />
           )}
         </Button.Group>
       </div>

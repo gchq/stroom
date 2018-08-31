@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps, branch, renderComponent } from 'recompose';
+import { compose, withProps, branch, renderComponent, withHandlers } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
@@ -12,7 +12,6 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import DndDocRefListingEntry from './DndDocRefListingEntry';
-import openDocRef from 'sections/RecentItems/openDocRef';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
@@ -31,6 +30,9 @@ const LISTING_ID = 'folder-explorer';
 const enhance = compose(
   withDocumentTree,
   withRouter,
+  withHandlers({
+    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+  }),
   connect(
     ({ folderExplorer: { documentTree }, selectableItemListings }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
@@ -43,15 +45,14 @@ const enhance = compose(
       prepareDocRefRename,
       prepareDocRefMove,
       fetchDocInfo,
-      openDocRef,
     },
   ),
   branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
-  withSelectableItemListing(({ openDocRef, history, folder: { node: { children } } }) => ({
+  withSelectableItemListing(({ openDocRef, folder: { node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
     selectionBehaviour: SELECTION_BEHAVIOUR.MULTIPLE,
-    openItem: d => openDocRef(history, d),
+    openItem: openDocRef,
   })),
   withProps(({
     folder,
@@ -113,7 +114,6 @@ const FolderExplorer = ({
   folderUuid,
   actionBarItems,
   openDocRef,
-  history,
   onKeyDownWithShortcuts,
 }) => (
   <React.Fragment>
@@ -126,7 +126,7 @@ const FolderExplorer = ({
           <Icon name="folder" />
           <Header.Content className="header">{node.name}</Header.Content>
           <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={d => openDocRef(history, d)} />
+            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
           </Header.Subheader>
         </Header>
       </Grid.Column>
@@ -156,8 +156,8 @@ const FolderExplorer = ({
           index={index}
           listingId={LISTING_ID}
           docRefUuid={docRef.uuid}
-          onNameClick={d => openDocRef(history, d)}
-          openDocRef={d => openDocRef(history, d)}
+          onNameClick={openDocRef}
+          openDocRef={openDocRef}
         />
       ))}
     </div>

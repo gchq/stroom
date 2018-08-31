@@ -17,6 +17,7 @@ const { openDropdown, closeDropdown } = actionCreators;
 const SEARCH_MODE = {
   GLOBAL_SEARCH: 0,
   NAVIGATION: 1,
+  RECENT_ITEMS: 2
 };
 
 const defaultPickerState = {
