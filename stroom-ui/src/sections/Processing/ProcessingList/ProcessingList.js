@@ -80,35 +80,41 @@ const enhance = compose(
       }
     },
   }),
-  withProps(({ trackers, selectedTrackerId }) => ({
-    selectedTracker: trackers.find(tracker => tracker.filterId === selectedTrackerId),
-    tableColumns: [
-      {
-        Header: '',
-        accessor: 'filterId',
-        show: false,
-      },
-      {
-        Header: 'Pipeline name',
-        accessor: 'pipelineName',
-      },
-      {
-        Header: 'Priority',
-        accessor: 'priority',
-      },
-      {
-        Header: 'Progress',
-        accessor: 'progress',
-        Cell: row => <Progress percent={row.trackerPercent} symbolClassName="flat-text" />,
-      },
-    ],
-    tableData: trackers.map(({ filterId, priority, trackerPercent }) => ({
+  withProps(({ trackers, selectedTrackerId }) => {
+    let tableData = trackers.map(({ filterId, priority, trackerPercent }) => ({
       filterId,
       pipelineName: 'TODO: awaiting backend re-write. Sorting broken too.',
       priority,
       progress: trackerPercent,
-    })),
-  })),
+    }));
+
+    // TODO add a row for loading more data
+
+    return {
+      selectedTracker: trackers.find(tracker => tracker.filterId === selectedTrackerId),
+      tableColumns: [
+        {
+          Header: '',
+          accessor: 'filterId',
+          show: false,
+        },
+        {
+          Header: 'Pipeline name',
+          accessor: 'pipelineName',
+        },
+        {
+          Header: 'Priority',
+          accessor: 'priority',
+        },
+        {
+          Header: 'Progress',
+          accessor: 'progress',
+          Cell: row => <Progress percent={row.trackerPercent} symbolClassName="flat-text" />,
+        },
+      ],
+      tableData,
+    };
+  }),
   lifecycle({
     componentDidMount() {
       const { onMoveSelection, onHandlePageRight, onHandlePageLeft } = this.props;
