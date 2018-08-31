@@ -1,5 +1,7 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
 
+import { updateIdSubstate } from 'lib/reduxFormUtils';
+
 const SELECTION_BEHAVIOUR = {
   NONE: 0,
   SINGLE: 1,
@@ -22,7 +24,7 @@ const {
   focusUp, focusDown, selectFocussed, selectionToggled,
 } = actionCreators;
 
-const defaultStatePerListing = {
+const defaultSelectableItemListingState = {
   items: [],
   focusIndex: -1, // Used for simple item selection, by array index
   lastSelectedIndex: -1,
@@ -40,15 +42,10 @@ const reducer = handleActions(
         payload: { listingId, items, selectionBehaviour },
       } = action;
 
-      return {
-        ...state,
-        [listingId]: {
-          ...defaultStatePerListing,
-          ...state[listingId], // any existing state
-          items,
-          selectionBehaviour,
-        },
-      };
+      return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
+        items,
+        selectionBehaviour,
+      });
     },
     [combineActions(focusUp, focusDown)]: (state, action) => {
       const {
@@ -65,14 +62,10 @@ const reducer = handleActions(
       }
       const focussedItem = items.find((item, i) => i === nextIndex);
 
-      return {
-        ...state,
-        [listingId]: {
-          ...listingState,
-          focusIndex: nextIndex,
-          focussedItem,
-        },
-      };
+      return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
+        focusIndex: nextIndex,
+        focussedItem,
+      });
     },
     [combineActions(selectFocussed, selectionToggled)]: (state, action) => {
       const {
@@ -124,20 +117,16 @@ const reducer = handleActions(
       selectedItemIndexes.forEach(i => selectedItems.push(items[i]));
       const focussedItem = items.find((item, i) => i === indexToUse);
 
-      return {
-        ...state,
-        [listingId]: {
-          ...listingState,
-          focussedItem,
-          selectedItems,
-          selectedItemIndexes,
-          focusIndex: indexToUse,
-          lastSelectedIndex: indexToUse,
-        },
-      };
+      return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
+        focussedItem,
+        selectedItems,
+        selectedItemIndexes,
+        focusIndex: indexToUse,
+        lastSelectedIndex: indexToUse,
+      });
     },
   },
   defaultState,
 );
 
-export { actionCreators, reducer, SELECTION_BEHAVIOUR };
+export { actionCreators, reducer, SELECTION_BEHAVIOUR, defaultSelectableItemListingState };

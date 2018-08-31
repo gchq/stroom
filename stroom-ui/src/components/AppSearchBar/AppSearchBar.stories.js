@@ -19,7 +19,9 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
 
 import AppSearchBar from './AppSearchBar';
 
@@ -27,8 +29,20 @@ import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 storiesOf('App Search Bar', module)
+  .addDecorator(ControlledInputDecorator) // must be the 'first' one
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
+  .addDecorator(KeyIsDownDecorator())
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('Search Bar', () => <AppSearchBar chooseDocRef={d => console.log('Open Doc Ref', d)}/>);
+  .add('Search Bar (global)', () => <AppSearchBar />)
+  .add('Doc Ref Picker', () => <AppSearchBar pickerId="docRefPicker1" />)
+  .add('Doc Ref Picker (filter to pipeline)', () => (
+    <AppSearchBar pickerId="docRefPicker2" typeFilters={['Pipeline']} />
+  ))
+  .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
+    <AppSearchBar pickerId="docRefPicker3" typeFilters={['Feed', 'Dictionary']} />
+  ))
+  .add('Doc Ref Picker (filter to Folders)', () => (
+    <AppSearchBar pickerId="docRefPicker4" typeFilters={['Folder']} />
+  ));

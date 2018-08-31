@@ -26,7 +26,7 @@ import { actionCreators } from './redux';
 import { moveDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
 
-import DocPicker from 'components/DocPicker';
+import AppSearchBar from 'components/AppSearchBar';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefMove } = actionCreators;
@@ -82,7 +82,7 @@ const MoveDocRefDialog = ({
           <Field
             name="destination"
             component={({ input: { onChange, value } }) => (
-              <DocPicker pickerId={pickerId} onChange={onChange} value={value} />
+              <AppSearchBar pickerId={pickerId} onChange={onChange} value={value} />
             )}
           />
         </Form.Field>

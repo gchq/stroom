@@ -6,3 +6,12 @@ export const minLength2 = minLength(2);
 
 export const truncate = (text, limit) =>
   (text.length > limit ? `${text.substr(0, limit)}...` : text);
+
+export const updateIdSubstate = (state, id, defaults, updates) => ({
+  ...state,
+  [id]: {
+    ...defaults,
+    ...state[id],
+    ...updates,
+  },
+});

@@ -10,7 +10,7 @@ import { actionCreators } from '../redux';
 
 import Tooltip from 'components/Tooltip';
 
-import DocPicker from 'components/DocPicker';
+import AppSearchBar from 'components/AppSearchBar';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
 import NumericInput from 'components/NumericInput';
@@ -288,7 +288,7 @@ const getField = (
       break;
     case 'docref':
       elementField = (
-        <DocPicker
+        <AppSearchBar
           pickerId={getPickerName(name)}
           typeFilter={docRefTypes}
           onChange={({node, lineage}) => {
