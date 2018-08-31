@@ -311,3 +311,17 @@ input {
     background-color: themed("selected-color") !important;
   }
 }
+
+
+body ::-webkit-scrollbar {
+}
+body ::-webkit-scrollbar-track {
+  @include themify($themes) {
+    background-color:themed('scrollbar__track-color') !important;
+  }
+}
+body ::-webkit-scrollbar-thumb {
+  @include themify($themes) {
+    background-color: themed('scrollbar__thumb-color') !important;
+  }
+}

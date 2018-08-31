@@ -25,7 +25,9 @@ $themes: (
     icon-button__background-color: #e4e4e4,
     icon-button__background-color--hover: #a8a8a8,
     icon-button__color: #4d5250,
-    icon-button__color--hover: black
+    icon-button__color--hover: black,
+    scrollbar__track-color: #d3d3d3,
+    scrollbar__thumb-color: #a7a6a6,
   ),
   dark: (
     // General
@@ -53,6 +55,8 @@ $themes: (
     icon-button__background-color: #282829,
     icon-button__background-color--hover: #616161,
     icon-button__color: #adadad,
-    icon-button__color--hover: #ffffff
+    icon-button__color--hover: #ffffff,
+    scrollbar__track-color: #333333,
+    scrollbar__thumb-color: #848484,
   )
 );

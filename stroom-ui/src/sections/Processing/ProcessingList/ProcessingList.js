@@ -98,11 +98,7 @@ const enhance = compose(
       {
         Header: 'Progress',
         accessor: 'progress',
-        Cell: row => 
-          <Progress 
-            percent={row.trackerPercent} 
-            symbolClassName="flat-text" 
-            />,
+        Cell: row => <Progress percent={row.trackerPercent} symbolClassName="flat-text" />,
       },
     ],
     tableData: trackers.map(({ filterId, priority, trackerPercent }) => ({
@@ -158,13 +154,21 @@ const ProcessingList = ({
         }
       },
     })}
-    getTrProps={(state, rowInfo, column) => ({
-      className:
+    getTrProps={(state, rowInfo, column) => {
+      // We don't want to see a hover on a row without data.
+      // If a row is selected we want to see the selected color.
+      const isSelected =
         selectedTrackerId !== undefined &&
-        path(['original', 'filterId'], rowInfo) === selectedTrackerId
-          ? 'selected hoverable'
-          : 'hoverable',
-    })}
+        path(['original', 'filterId'], rowInfo) === selectedTrackerId;
+      const hasData = path(['original', 'filterId'], rowInfo) !== undefined;
+      let className;
+      if (hasData) {
+        className = isSelected ? 'selected hoverable' : 'hoverable';
+      }
+      return {
+        className,
+      };
+    }}
   />
 );
 
