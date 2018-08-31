@@ -41,13 +41,14 @@ const enhance = compose(
   connect(
     ({
       processing: {
-        trackers, sortBy, sortDirection, selectedTrackerId,
+        trackers, sortBy, sortDirection, selectedTrackerId, pageSize,
       },
     }) => ({
       trackers,
       sortBy,
       sortDirection,
       selectedTrackerId,
+      pageSize,
     }),
     {
       fetchTrackers,
@@ -127,14 +128,16 @@ const ProcessingList = ({
   tableColumns,
   tableData,
   selectedTrackerId,
+  pageSize,
   onHandleSort,
   onSelection,
 }) => (
   <ReactTable
     manual
-    className="Table__reactTable"
+    className="table__reactTable"
     sortable
     showPagination={false}
+    pageSize={pageSize}
     data={tableData}
     columns={tableColumns}
     onFetchData={(state, instance) => onHandleSort(state.sorted[0])}
