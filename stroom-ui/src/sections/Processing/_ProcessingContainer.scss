@@ -176,12 +176,16 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
 
 .processing__header-container {
   display: inline-flex !important;
+  padding-bottom: 10px;
+  padding-top: 3px;
 }
 
 .processing__header-container .header {
   // We don't want this header to be obnoxious about it's surrounding space 
   // -- this is a header bar not a flowing page of text.
   margin-bottom: 0px !important;
+  // We want to space the header from the left hand-edge.
+  padding-left: 6px !important;
 }
 
 .processing__header-container .content.header{
@@ -193,7 +197,7 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
 
 
 .processing__header-container .input {
-  margin-left: 10px !important;
+  margin-left: 20px !important;
   margin-top: 5px;
   height: 40px;
   min-width: 200px;

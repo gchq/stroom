@@ -1,6 +1,7 @@
 .pagination__container {
   display: inline-flex;
-  padding-left: 10px;
+  padding-left: 20px;
+  padding-right: 10px;
 }
 
 .pagination__container .pagination {
@@ -10,7 +11,7 @@
 
 .pagination__text {
   padding-top: 15px;
-  padding-left: 20px;
+  padding-left: 10px;
   padding-right:5px;
 }
 
@@ -18,5 +19,4 @@
   margin-top:5px !important;
   height: 40px;
   width:70px !important;
-  margin-right:10px;
 }
