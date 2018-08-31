@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withHandlers } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Icon, Button } from 'semantic-ui-react';
 
@@ -15,7 +15,6 @@ import {
 import { searchApp } from 'components/FolderExplorer/explorerClient';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
 import DocRefListingEntry from 'components/DocRefListingEntry';
-import { withDocRefTypes } from 'components/DocRefTypes';
 import withSelectableItemListing, {
   defaultSelectableItemListingState,
 } from 'lib/withSelectableItemListing';
@@ -24,7 +23,6 @@ import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 const { searchTermUpdated, navigateToFolder, openDropdown, closeDropdown, switchMode, chooseDocRef } = appSearchBarActionCreators;
 
 const enhance = compose(
-  withDocRefTypes,
   withDocumentTree,
   connect(
     (
@@ -46,9 +44,6 @@ const enhance = compose(
       let thisFolder;
       let parentFolder;
       let valueToShow;
-      let headerTitle;
-      let headerIcon;
-      let headerAction = () => {};
 
       if (isOpen) {
         valueToShow = searchTerm;
@@ -68,25 +63,14 @@ const enhance = compose(
           if (navFolderWithLineage.lineage && navFolderWithLineage.lineage.length > 0) {
             parentFolder = navFolderWithLineage.lineage[navFolderWithLineage.lineage.length - 1];
           }
-          headerTitle = thisFolder.name;
-          if (parentFolder) {
-            headerIcon = 'arrow left';
-            headerAction = () => navigateToFolder(pickerId, parentFolder);
-          } else {
-            headerIcon = 'folder';
-          }
           break;
         }
         case (SEARCH_MODE.GLOBAL_SEARCH): {
-          headerIcon = 'search';
-          headerTitle = 'Search';
           docRefs = searchResults;
           break;
         }
         case (SEARCH_MODE.RECENT_ITEMS): {
           docRefs = recentItems;
-          headerTitle = 'Recent Items';
-          headerIcon = 'history';
           break;
         }
         default:
@@ -121,9 +105,6 @@ const enhance = compose(
         parentFolder,
         isOpen,
         modeOptions,
-        headerTitle,
-        headerIcon,
-        headerAction,
       };
     },
     {
@@ -148,6 +129,42 @@ const enhance = compose(
     enterItem: d => navigateToFolder(pickerId, d),
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
+  withProps(({pickerId, searchMode, thisFolder, parentFolder, navigateToFolder}) => {
+    let headerTitle;
+    let headerIcon;
+    let headerAction = () => {};
+
+    switch (searchMode) {
+      case (SEARCH_MODE.NAVIGATION): {
+        headerTitle = thisFolder.name;
+        if (parentFolder) {
+          headerIcon = 'arrow left';
+          headerAction = () => navigateToFolder(pickerId, parentFolder);
+        } else {
+          headerIcon = 'folder';
+        }
+        break;
+      }
+      case (SEARCH_MODE.GLOBAL_SEARCH): {
+        headerIcon = 'search';
+        headerTitle = 'Search';
+        break;
+      }
+      case (SEARCH_MODE.RECENT_ITEMS): {
+        headerTitle = 'Recent Items';
+        headerIcon = 'history';
+        break;
+      }
+      default:
+        break;
+    }
+
+    return {
+      headerTitle,
+      headerIcon,
+      headerAction,
+    }
+  })
 );
 
 const AppSearchBar = ({

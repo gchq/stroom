@@ -95,9 +95,7 @@ const withSelectableItemListing = propsFunc =>
             enterItem(focussedItem);
           }
         } else if (e.ctrlKey && (e.key === 'ArrowLeft' || e.key === 'h')) {
-          if (focussedItem) {
-            goBack();
-          }
+          goBack();
         } else if (e.key === ' ') {
           if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
             selectFocussed(listingId, keyIsDown);

@@ -42,10 +42,14 @@ const reducer = handleActions(
         payload: { listingId, items, selectionBehaviour },
       } = action;
 
-      return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
-        items,
-        selectionBehaviour,
-      });
+      return {
+        ...state,
+        [listingId]: {
+          ...defaultSelectableItemListingState,
+          items,
+          selectionBehaviour,
+        },
+      };
     },
     [combineActions(focusUp, focusDown)]: (state, action) => {
       const {
