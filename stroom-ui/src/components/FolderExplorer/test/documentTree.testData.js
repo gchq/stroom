@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 import loremIpsum from 'lorem-ipsum';
-
-import { guid } from 'lib/treeUtils';
+import uuidv4 from 'uuid/v4';
 
 function createRandomItem(docRefType) {
   return {
-    uuid: guid(),
+    uuid: uuidv4(),
     type: docRefType,
     name: loremIpsum(LOREM_CONFIG),
   };
@@ -28,17 +27,17 @@ function createRandomItem(docRefType) {
 const LOREM_CONFIG = { count: 3, units: 'words' };
 
 const testTree = {
-  uuid: guid(),
+  uuid: uuidv4(),
   name: 'Stroom',
   type: 'Folder',
   children: [
     {
-      uuid: guid(),
+      uuid: uuidv4(),
       type: 'Folder',
       name: 'Some Examples',
       children: [
         {
-          uuid: guid(),
+          uuid: uuidv4(),
           type: 'Folder',
           name: 'Stroom 101',
           children: [
@@ -50,7 +49,7 @@ const testTree = {
           ],
         },
         {
-          uuid: guid(),
+          uuid: uuidv4(),
           type: 'Folder',
           name: 'Stroom Elastic Example',
           children: [
@@ -64,12 +63,12 @@ const testTree = {
       ],
     },
     {
-      uuid: guid(),
+      uuid: uuidv4(),
       type: 'Folder',
       name: 'Yet More Examples',
       children: [
         {
-          uuid: guid(),
+          uuid: uuidv4(),
           type: 'Folder',
           name: 'Stroom 102',
           children: [
@@ -79,14 +78,14 @@ const testTree = {
             createRandomItem('Index'),
             createRandomItem('Dashboard'),
             {
-              uuid: guid(),
+              uuid: uuidv4(),
               type: 'Visualisation',
               name: 'abababababababa',
             },
           ],
         },
         {
-          uuid: guid(),
+          uuid: uuidv4(),
           type: 'Folder',
           name: 'Stroom Annotations Example',
           children: [
@@ -100,19 +99,19 @@ const testTree = {
       ],
     },
     {
-      uuid: guid(),
+      uuid: uuidv4(),
       type: 'Folder',
       name: 'Stuff that wont match for tests',
       children: [
         {
-          uuid: guid(),
+          uuid: uuidv4(),
           type: 'Visualisation',
           name: 'abcdefghijklmnopqrstuvwxyz',
         },
       ],
     },
     {
-      uuid: guid(),
+      uuid: uuidv4(),
       type: 'Dashboard',
       name: 'ababababababababa',
     },

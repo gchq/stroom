@@ -15,13 +15,13 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
+import uuidv4 from 'uuid/v4';
 import { connect } from 'react-redux';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { Polly } from '@pollyjs/core';
 import * as JsSearch from 'js-search';
 
 import {
-  guid,
   findItem,
   addItemsToTree,
   findByUuids,
@@ -148,7 +148,7 @@ server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
   } = JSON.parse(req.body);
 
   const newDocRef = {
-    uuid: guid(),
+    uuid: uuidv4(),
     type: docRefType,
     name: docRefName,
     children: docRefType === 'Folder' ? [] : undefined,
@@ -164,9 +164,9 @@ server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
 
 // Copies need to be deep
 const copyDocRef = docRef => ({
-  uuid: guid(),
+  uuid: uuidv4(),
   type: docRef.type,
-  name: `${docRef.name}-copy-${guid()}`,
+  name: `${docRef.name}-copy-${uuidv4()}`,
   children: docRef.children ? docRef.children.map(copyDocRef) : undefined,
 });
 

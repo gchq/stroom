@@ -15,19 +15,6 @@
  */
 
 /**
- * Utility function to generate GUID like strings.
- * https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
- */
-export function guid() {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  }
-  return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-}
-
-/**
  * This function can be used to convert all the values inside an object using
  * a specified mapper function. The output object will have the same keys as the input
  * but with the mapped values.
@@ -35,6 +22,8 @@ export function guid() {
  * @param {object} input The input object
  * @param {function} mapper Mapping function to apply to each value in the object
  */
+import uuidv4 from 'uuid/v4';
+
 export function mapObject(input, mapper) {
   return Object.keys(input).reduce((previous, current) => {
     previous[current] = mapper(input[current]);
@@ -128,7 +117,7 @@ export function canMove(itemToMove, destinationFolder) {
 export function assignRandomUuids(tree) {
   return tree
     ? {
-      uuid: tree.uuid ? tree.uuid : guid(), // assign a UUID if there isn't already one
+      uuid: tree.uuid ? tree.uuid : uuidv4(), // assign a UUID if there isn't already one
       ...tree,
       children: tree.children ? tree.children.map(c => assignRandomUuids(c)) : undefined,
     }
@@ -318,7 +307,7 @@ export function addItemsToTree(treeNode, parentUuid, items) {
   if (treeNode.uuid === parentUuid) {
     items.forEach((item) => {
       if (!item.uuid) {
-        item.uuid = guid();
+        item.uuid = uuidv4();
       }
       children.push(item);
     });
