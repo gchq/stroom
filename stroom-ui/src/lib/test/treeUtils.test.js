@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { guid, itemIsInSubtree, canMove, findItem } from '../treeUtils';
+import { itemIsInSubtree, canMove, findItem } from '../treeUtils';
 
 // Denormalised so I can refer to individual elements in the tree.
 const oneOne = {
@@ -94,18 +94,6 @@ const testTree = {
 };
 
 describe('Tree Utils', () => {
-  describe('#guid()', () => {
-    test('should create distinct values 1000 times', () => {
-      const numberValues = 1000;
-      const set1 = new Set([]);
-
-      for (let x = 0; x < numberValues; x++) {
-        set1.add(guid());
-      }
-
-      expect(set1.size).toBe(numberValues);
-    });
-  });
   describe('#itemIsInSubtree()', () => {
     test('should find a match when is root', () => {
       const found = itemIsInSubtree(testTree, testTree);
