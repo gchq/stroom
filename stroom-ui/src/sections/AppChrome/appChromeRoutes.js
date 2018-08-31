@@ -7,7 +7,7 @@ import { AppChrome } from '.';
 import { Processing } from 'sections/Processing';
 import DocEditor from 'components/DocEditor';
 import Welcome from 'sections/Welcome';
-import DataViewer from 'components/DataViewer';
+import DataViewer from 'sections/DataViewer';
 import UserSettings from 'sections/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';

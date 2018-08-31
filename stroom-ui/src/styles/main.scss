@@ -7,7 +7,7 @@
 @import "../components/AppSearchBar/AppSearchBar";
 @import "../components/PipelineEditor/PipelineEditor";
 @import "../components/PipelineSearch/PipelineSearch";
-@import "../components/DataViewer/DataViewer";
+@import "../sections/DataViewer/DataViewer";
 @import "../components/SearchBar/SearchBar";
 @import "../components/DocRefListingEntry/DocRefListing";
 @import "../components/XsltEditor/XsltEditor";
@@ -16,9 +16,10 @@
 @import "../components/IFrame/IFrame";
 @import "../components/HorizontalPanel/HorizontalPanel";
 
-@import "../sections/Processing/ProcessingContainer";
 @import "../sections/AppChrome/AppChrome";
 @import "../sections/Welcome/Welcome";
+@import "../sections/DataViewer/DataViewer";
+@import "../sections/Processing/ProcessingContainer";
 @import "../sections/UserSettings/UserSettings";
 
 @import "./themes";

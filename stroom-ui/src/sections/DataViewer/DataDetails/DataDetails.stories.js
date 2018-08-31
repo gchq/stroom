@@ -17,7 +17,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import DataDetails from 'components/DataViewer/DataDetails';
+import DataDetails from 'sections/DataViewer/DataDetails';
 
 import 'semantic/dist/semantic.min.css';
 import { errorData, eventData } from './DataDetails.testData';

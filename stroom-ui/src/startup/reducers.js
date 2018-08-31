@@ -35,7 +35,7 @@ import { reducer as processing } from 'sections/Processing';
 import { reducer as errorPage } from 'components/ErrorPage';
 import { reducer as config } from './config';
 import { reducer as fetch } from 'lib/fetchTracker.redux';
-import { reducer as dataViewers } from 'components/DataViewer';
+import { reducer as dataViewers } from 'sections/DataViewer';
 import { reducer as keyIsDown } from 'lib/KeyIsDown';
 import { reducer as userSettings } from 'sections/UserSettings';
 import { reducer as selectableItemListings } from 'lib/withSelectableItemListing';
