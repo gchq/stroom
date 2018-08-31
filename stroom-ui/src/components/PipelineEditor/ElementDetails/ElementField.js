@@ -8,7 +8,7 @@ import { Form, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 
 import DocPicker from 'components/DocPicker';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
@@ -387,7 +387,7 @@ const ElementField = ({
         <label>{description}</label>
         {field}
       </Form.Field>
-      <ThemedPopup
+      <Tooltip
         hoverable
         trigger={<Icon name="setting" color="blue" size="large" />}
         content={popOverContent}

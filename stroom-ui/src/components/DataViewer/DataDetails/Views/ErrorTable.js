@@ -28,7 +28,7 @@ import 'brace/keybinding/vim';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 
 const ErrorTable = ({ errors }) => {
   const tableColumns = [
@@ -47,7 +47,7 @@ const ErrorTable = ({ errors }) => {
         const position = 'right center';
         if (row.value === 'INFO') {
           return (
-            <ThemedPopup
+            <Tooltip
               trigger={<Icon color="blue" name="info circle" />}
               content={location}
               position={position}
@@ -55,7 +55,7 @@ const ErrorTable = ({ errors }) => {
           );
         } else if (row.value === 'WARNING') {
           return (
-            <ThemedPopup
+            <Tooltip
               trigger={<Icon color="orange" name="warning circle" />}
               content={location}
               position={position}
@@ -63,7 +63,7 @@ const ErrorTable = ({ errors }) => {
           );
         } else if (row.value === 'ERROR') {
           return (
-            <ThemedPopup
+            <Tooltip
               trigger={<Icon color="red" name="warning circle" />}
               content={location}
               position={position}
@@ -71,7 +71,7 @@ const ErrorTable = ({ errors }) => {
           );
         } else if (row.value === 'FATAL') {
           return (
-            <ThemedPopup
+            <Tooltip
               trigger={<Icon color="red" name="bomb" />}
               content={location}
               position={position}

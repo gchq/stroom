@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import { Input, Button, Icon } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 
 import './NumericInput.css';
 
@@ -68,7 +68,7 @@ const NumericInput = ({
     <div>
       <div className="row">
         <div className="input-row">
-          <ThemedPopup
+          <Tooltip
             trigger={
               <Input
                 error={valueIsBad}

@@ -10,7 +10,7 @@ import {
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 
 import {
   ExpressionBuilder,
@@ -79,7 +79,7 @@ const SearchBar = ({
       <Grid className="SearchBar__layoutGrid">
         <Grid.Row>
           <Grid.Column width={1}>
-            <ThemedPopup
+            <Tooltip
               trigger={
                 <Button
                   className="icon-button"
@@ -149,7 +149,7 @@ const SearchBar = ({
     <React.Fragment>
       <Grid className="SearchBar__layoutGrid">
         <Grid.Column width={1}>
-          <ThemedPopup
+          <Tooltip
             trigger={
               <Button
                 circular

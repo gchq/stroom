@@ -28,7 +28,7 @@ const enhance = compose(
   // so to prevent conflicts we'll pass in a UUID.
   withProps(() => ({ uuid: uuidv4() })));
 
-const ThemedPopup = ({
+const Tooltip = ({
   trigger, content, className, uuid, ...rest
 }) => (
   <div className={className}>
@@ -41,4 +41,4 @@ const ThemedPopup = ({
   </div>
 );
 
-export default enhance(ThemedPopup);
+export default enhance(Tooltip);

@@ -5,7 +5,7 @@ import { compose, withProps, branch, renderComponent } from 'recompose';
 import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 import AppSearchBar from 'components/AppSearchBar';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { findItem } from 'lib/treeUtils';
@@ -133,7 +133,7 @@ const FolderExplorer = ({
       <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
           {actionBarItems.map(({onClick, icon, tooltip}, i) => (
-            <ThemedPopup
+            <Tooltip
               key={i}
               trigger={
                 <Button

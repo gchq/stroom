@@ -22,7 +22,7 @@ import Mousetrap from 'mousetrap';
 import PanelGroup from 'react-panelgroup';
 import { Header, Icon, Input } from 'semantic-ui-react';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
@@ -129,7 +129,7 @@ const ProcessingContainer = ({
       />
 
       <div className="processing__search__help">
-        <ThemedPopup
+        <Tooltip
           trigger={<Icon name="question circle" size="large" />}
           content={<div>
             <p>You may search for a tracker by part or all of a pipeline name. </p>

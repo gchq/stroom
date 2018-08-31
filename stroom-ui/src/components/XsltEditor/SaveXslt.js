@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'semantic-ui-react';
 
-import ThemedPopup from 'components/ThemedPopup';
+import Tooltip from 'components/Tooltip';
 
 const SaveXslt = ({ xslt: { isSaving, isDirty }, saveXslt, xsltId }) => (
-  <ThemedPopup
+  <Tooltip
     trigger={
       <Button
         floated="right"
