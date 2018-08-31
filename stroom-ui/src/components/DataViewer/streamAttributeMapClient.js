@@ -101,7 +101,7 @@ export const fetchDataSource = dataViewerId => (dispatch, getState) => {
 export const getDetailsForSelectedRow = dataViewerId => (dispatch, getState) => {
   const state = getState();
   const dataView = state.dataViewers[dataViewerId];
-  const streamId = dataView.streamAttributeMaps[dataView.selectedRow].stream.id;
+  const streamId = dataView.streamAttributeMaps[dataView.selectedRow].data.id;
   const url = `${state.config.streamAttributeMapServiceUrl}/${streamId}`;
 
   wrappedGet(

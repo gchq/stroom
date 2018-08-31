@@ -116,7 +116,7 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
                         </Table.Row>
                       );
                     }
-                      return undefined;
+                    return undefined;
                   })}
                 </Table.Body>
               </Table>
@@ -156,7 +156,7 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
   return (
     <div className="DetailsTabs__container">
       <div className="DetailsTabs__contained">
-        <Tab className="DetailsTabs__Tab" panes={panes} />
+        <Tab className="DetailsTabs__Tab tabs" panes={panes} />
       </div>
     </div>
   );
