@@ -20,9 +20,9 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 import PanelGroup from 'react-panelgroup';
-import ReactTooltip from 'react-tooltip';
 import { Header, Icon, Input } from 'semantic-ui-react';
 
+import ThemedPopup from 'components/ThemedPopup';
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
@@ -129,16 +129,9 @@ const ProcessingContainer = ({
       />
 
       <div className="processing__search__help">
-        <a data-tip data-for="search_tooltip">
-          <Icon name="question circle" size="large" />
-        </a>
-        <ReactTooltip
-          place="bottom"
-          id="search_tooltip"
-          className="tooltip-popup raised-low"
-          effect="solid"
-        >
-          <div>
+        <ThemedPopup
+          trigger={<Icon name="question circle" size="large" />}
+          content={<div>
             <p>You may search for a tracker by part or all of a pipeline name. </p>
             <p> You may also use the following key words to filter the results:</p>
             <ul>
@@ -164,8 +157,8 @@ const ProcessingContainer = ({
                 <code>sort:next</code>
               </li>
             </ul>
-          </div>
-        </ReactTooltip>
+          </div>}
+        />
       </div>
       <ProcessingPagination />
     </div>
