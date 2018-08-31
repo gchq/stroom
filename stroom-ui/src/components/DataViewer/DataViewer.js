@@ -178,23 +178,27 @@ const DataViewer = ({
       Header: '',
       accessor: 'type',
       Cell: (row) => {
-        //TODO Resotre the row icon
         // This block of code is mostly about making a sensible looking popup.
-        // const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.stream.id === row.original.streamId);
+        const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
 
-        // const eventIcon = <Icon color="blue" name="file" />;
-        // const warningIcon = <Icon color="orange" name="warning circle" />;
+        const eventIcon = <Icon color="blue" name="file" />;
+        const warningIcon = <Icon color="orange" name="warning circle" />;
 
-        // let icon;
-        // if (stream.stream.streamType.name === 'Events') {
-        //   icon = eventIcon;
-        // } else if (stream.stream.streamType.name === 'Error') {
-        //   icon = warningIcon;
-        // }
+        let icon;
+        if (stream.data.typeName === 'Error') {
+          icon = warningIcon;
+        }
+        else {
+          icon = eventIcon;
+        }  
 
-        // return icon;
+        return icon;
       },
       width: 35,
+    },
+    {
+      Header: 'Type',
+      accessor: 'type',
     },
     {
       Header: 'Created',
@@ -210,20 +214,23 @@ const DataViewer = ({
     },
   ];
 
-  const tableData = streamAttributeMaps.map(streamAttributeMap => ({
-    streamId: path(['stream', 'id'], streamAttributeMap),
-    created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
-    type: path(['stream', 'streamType', 'displayValue'], streamAttributeMap),
-    feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
-    pipeline: path(['stream', 'streamProcessor', 'pipelineName'], streamAttributeMap),
-  }));
+  const tableData = streamAttributeMaps.map(streamAttributeMap => {
+    console.log({streamAttributeMap});
+    return ({
+    streamId: streamAttributeMap.data.id,
+    created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
+    type: streamAttributeMap.data.typeName,
+    feed: streamAttributeMap.data.feedName,
+    pipeline: streamAttributeMap.data.pipelineUuid,
+  })
+});
 
   const table = (
     <ReactTable
       sortable={false}
       pageSize={pageSize}
       showPagination={false}
-      className="DataTable__reactTable"
+      className="table__reactTable"
       data={tableData}
       columns={tableColumns}
       getTdProps={(state, rowInfo, column, instance) => ({
@@ -240,12 +247,20 @@ const DataViewer = ({
           }
         },
       })}
-      getTrProps={(state, rowInfo, column) => ({
-        className:
-          selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
-            ? 'DataTable__selectedRow hoverable'
-            : 'hoverable',
-      })}
+      getTrProps={(state, rowInfo, column) => {
+        // We don't want to see a hover on a row without data.
+        // If a row is selected we want to see the selected color.
+        const isSelected = selectedRow !== undefined && 
+                           path(['index'], rowInfo) === selectedRow;
+        const hasData = path(['original', 'created'], rowInfo) !== undefined;
+        let className;
+        if (hasData) {
+          className = isSelected ? 'selected hoverable' : 'hoverable';
+        }
+        return {
+          className,
+        };
+      }}
     />
   );
 

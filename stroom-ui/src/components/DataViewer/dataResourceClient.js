@@ -6,7 +6,7 @@ export const getDataForSelectedRow = dataViewerId => (dispatch, getState) => {
 
   // TODO get other parms, e.g. for paging
   const selectedRow = state.dataViewers[dataViewerId].selectedRow;
-  const streamId = state.dataViewers[dataViewerId].streamAttributeMaps[selectedRow].stream.id;
+  const streamId = state.dataViewers[dataViewerId].streamAttributeMaps[selectedRow].data.id;
   const params = `streamId=${streamId}&streamsOffset=0&streamsLength=1&pageOffset=0&pageSize=100`;
 
   const url = `${state.config.dataServiceUrl}/?${params}`;
