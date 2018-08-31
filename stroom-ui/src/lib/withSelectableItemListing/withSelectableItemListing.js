@@ -14,7 +14,12 @@ const withSelectableItemListing = propsFunc =>
   compose(
     withProps((props) => {
       const {
-        listingId, items, openItem, selectionBehaviour = SELECTION_BEHAVIOUR.NONE,
+        listingId,
+        items,
+        openItem,
+        enterItem,
+        goBack,
+        selectionBehaviour = SELECTION_BEHAVIOUR.NONE,
       } = propsFunc(props);
 
       return {
@@ -22,6 +27,8 @@ const withSelectableItemListing = propsFunc =>
         items,
         selectionBehaviour,
         openItem,
+        enterItem: enterItem || openItem,
+        goBack: goBack || (() => console.log('Going back not implemented')),
       };
     }),
     connect(
@@ -67,6 +74,8 @@ const withSelectableItemListing = propsFunc =>
         selectFocussed,
         listingId,
         openItem,
+        enterItem,
+        goBack,
         selectableItemListing: { selectedItems, focussedItem, selectionBehaviour },
         keyIsDown,
       }) => (e) => {
@@ -81,6 +90,14 @@ const withSelectableItemListing = propsFunc =>
             openItem(focussedItem);
           }
           e.preventDefault();
+        } else if (e.ctrlKey && (e.key === 'ArrowRight' || e.key === 'l')) {
+          if (focussedItem) {
+            enterItem(focussedItem);
+          }
+        } else if (e.ctrlKey && (e.key === 'ArrowLeft' || e.key === 'h')) {
+          if (focussedItem) {
+            goBack();
+          }
         } else if (e.key === ' ') {
           if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
             selectFocussed(listingId, keyIsDown);

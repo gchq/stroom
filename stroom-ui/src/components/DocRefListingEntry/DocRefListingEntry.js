@@ -6,7 +6,6 @@ import { compose, withHandlers, withProps } from 'recompose';
 import { Icon } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
-import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
 import { actionCreators as selectableItemActionCreators } from 'lib/withSelectableItemListing';
 
 const { selectionToggled } = selectableItemActionCreators;

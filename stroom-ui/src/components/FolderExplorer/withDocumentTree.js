@@ -1,5 +1,7 @@
-import { compose, lifecycle } from 'recompose';
+import React from 'react';
+import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
+import { Loader } from 'semantic-ui-react';
 
 import { fetchDocTree } from 'components/FolderExplorer/explorerClient';
 
@@ -9,7 +11,7 @@ import { fetchDocTree } from 'components/FolderExplorer/explorerClient';
  * Once the config has been returned, it then kicks off the various fetch operations for global data.
  */
 export default compose(
-  connect(undefined, {
+  connect(({ folderExplorer: { documentTree } }) => ({ documentTree }), {
     fetchDocTree,
   }),
   lifecycle({
@@ -17,4 +19,8 @@ export default compose(
       this.props.fetchDocTree();
     },
   }),
+  branch(
+    ({ documentTree }) => documentTree.waitingForTree,
+    renderComponent(() => <Loader active>Loading document tree</Loader>),
+  ),
 );

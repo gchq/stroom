@@ -20,10 +20,9 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 import PanelGroup from 'react-panelgroup';
-import { Header, Icon, Button, Input, Menu, Grid } from 'semantic-ui-react';
 import ReactTooltip from 'react-tooltip';
+import { Header, Icon, Input } from 'semantic-ui-react';
 
-import ThemedPopup from 'components/ThemedPopup';
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';

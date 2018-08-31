@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState, branch, renderComponent } from 'recompose';
+import { compose, withState, branch, renderComponent, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Button, Loader, Icon } from 'semantic-ui-react';
 
@@ -54,26 +54,34 @@ const enhance = compose(
         onChange(selectableItemListing.selectedItems[0]);
         setModalIsOpen(false);
       };
+      const parentFolder = (currentFolderWithLineage.lineage &&
+      currentFolderWithLineage.lineage.length > 0) ? currentFolderWithLineage.lineage[currentFolderWithLineage.lineage.length - 1] : undefined;
 
       return {
         currentFolderWithLineage,
         selectableItemListing,
-        currentFolderWithLineage,
         onDocRefPickConfirmed,
+        parentFolder,
         selectionNotYetMade:
           selectableItemListing && selectableItemListing.selectedItems.length === 0,
       };
     },
     {},
-  ),
+  ), 
+  withHandlers({
+    enterFolder: ({setFolderUuid, parentFolder}) => d => setFolderUuid(d.uuid),
+    goBackToParentFolder: ({setFolderUuid, parentFolder}) => () => {if (parentFolder) {setFolderUuid(parentFolder.uuid)}}
+  }),
   branch(
     ({ currentFolderWithLineage }) => !(currentFolderWithLineage && currentFolderWithLineage.node),
     renderComponent(() => <Loader active>Loading data</Loader>),
   ),
-  withSelectableItemListing(({ pickerId, currentFolderWithLineage }) => ({
+  withSelectableItemListing(({ pickerId, currentFolderWithLineage, enterFolder, goBackToParentFolder }) => ({
     listingId: pickerId,
     items: currentFolderWithLineage.node.children,
     openItem: d => console.log('Open item in selectable listing?', d),
+    enterItem: enterFolder,
+    goBack: goBackToParentFolder,
     selectionBehaviour: SELECTION_BEHAVIOUR.SINGLE,
   })),
 );
@@ -86,6 +94,9 @@ const DocPicker = ({
   currentFolderWithLineage,
   onKeyDownWithShortcuts,
   setFolderUuid,
+  parentFolder,
+  enterFolder,
+  goBackToParentFolder
 }) => (
   <div
     className="dropdown"
@@ -107,21 +118,17 @@ const DocPicker = ({
       }}
     />
     <div className={`dropdown__content ${isDropDownOpen ? 'open' : ''}`}>
-      <div className="doc-picker-header">
-        {currentFolderWithLineage.lineage &&
-          currentFolderWithLineage.lineage.length > 0 && (
+      <div className="app-search-header">
+        {parentFolder && (
             <Icon
               name="arrow left"
               size='large'
-              onClick={() =>
-                setFolderUuid(currentFolderWithLineage.lineage[currentFolderWithLineage.lineage.length - 1]
-                    .uuid)
-              }
+              onClick={goBackToParentFolder}
             />
           )}
         {currentFolderWithLineage.node.name}
       </div>
-      <div className="doc-picker-listing">
+      <div className="app-search-listing">
         {currentFolderWithLineage.node.children && currentFolderWithLineage.node.children.map((searchResult, index) => (
           <DocRefListingEntry
             key={searchResult.uuid}
@@ -129,11 +136,11 @@ const DocPicker = ({
             listingId={listingId}
             docRef={searchResult}
             openDocRef={d => console.log('Open Doc Ref?', d)}
-            enterFolder={d => setFolderUuid(d.uuid)}
+            enterFolder={enterFolder}
           />
         ))}
       </div>
-      <div className="doc-picker-footer">
+      <div className="app-search-footer">
         <Button primary>Choose</Button>
       </div>
     </div>

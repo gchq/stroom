@@ -31,4 +31,4 @@ storiesOf('App Search Bar', module)
   .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('Search Bar', () => <AppSearchBar />);
+  .add('Search Bar', () => <AppSearchBar chooseDocRef={d => console.log('Open Doc Ref', d)}/>);
