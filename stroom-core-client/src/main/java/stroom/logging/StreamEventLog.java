@@ -50,6 +50,8 @@ public class StreamEventLog {
     private FolderService folderService;
     @Resource
     private StreamStore streamStore;
+    @Resource
+    private CurrentActivity currentActivity;
 
     public void importStream(final Date receivedDate, final String feedName, final String path, final Throwable th) {
         try {
@@ -65,6 +67,7 @@ public class StreamEventLog {
 
             final Import imp = new Import();
             imp.setSource(multiObject);
+            currentActivity.decorate(imp::getData);
             imp.setOutcome(EventLoggingUtil.createOutcome(th));
 
             event.getEventDetail().setImport(imp);
@@ -104,6 +107,7 @@ public class StreamEventLog {
 
                 final Export exp = new Export();
                 exp.setSource(multiObject);
+                currentActivity.decorate(exp::getData);
                 exp.setOutcome(EventLoggingUtil.createOutcome(th));
 
                 event.getEventDetail().setExport(exp);
@@ -143,6 +147,7 @@ public class StreamEventLog {
         if (streamType != null) {
             object.getData().add(EventLoggingUtil.createData("StreamType", streamType.getDisplayValue()));
         }
+        currentActivity.decorate(object::getData);
 
         return object;
     }

@@ -881,7 +881,7 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Query info popup 
+        // Query info popup
         list.add(new GlobalProperty.Builder()
                 .name("stroom.query.infoPopup.enabled")
                 .value("false")
@@ -904,7 +904,35 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Common statistics store properties 
+        // Activity Recording
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.enabled")
+                .value("true")
+                .description("If you would like users to be able to record some info about the activity they are performing set this property to true.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.editorTitle")
+                .value("Edit Activity Info")
+                .description("The title of the activity editor popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.editorBody")
+                .value("Activity Code:</br>" +
+                        "<input type=\"text\" name=\"code\">Code</input></br></br>" +
+                        "Activity Description:</br>" +
+                        "<textarea rows=\"4\">Description</textarea></br>" +
+                        "Explain what the activity is")
+                .description("The HTML to display in the activity editor popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+
+        // Common statistics store properties
         list.add(new GlobalProperty.Builder()
                 .name("stroom.statistics.common.statisticEngines")
                 .value("sql")

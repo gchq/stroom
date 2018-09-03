@@ -23,6 +23,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.about.client.presenter.AboutPresenter;
+import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.app.client.presenter.AppPresenter;
@@ -76,7 +77,7 @@ import stroom.widget.popup.client.gin.PopupModule;
 import stroom.xmlschema.client.gin.XMLSchemaGinjector;
 import stroom.xmlschema.client.gin.XMLSchemaModule;
 
-@GinModules({ClientDispatchModule.class, AppModule.class, PopupModule.class, AlertModule.class, WelcomeModule.class,
+@GinModules({ClientDispatchModule.class, ActivityModule.class, AppModule.class, PopupModule.class, AlertModule.class, WelcomeModule.class,
         SecurityModule.class, EntityModule.class, PluginsModule.class, FolderModule.class, TaskModule.class,
         QueryModule.class, StreamStoreModule.class, PolicyModule.class, FeedModule.class, PipelineModule.class, DictionaryModule.class,
         XMLSchemaModule.class, MonitoringModule.class, CacheModule.class, IndexModule.class,

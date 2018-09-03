@@ -47,6 +47,9 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.QUERY_INFO_POPUP_ENABLED);
         addProperty(props, ClientProperties.QUERY_INFO_POPUP_TITLE);
         addProperty(props, ClientProperties.QUERY_INFO_POPUP_VALIDATION_REGEX);
+        addProperty(props, ClientProperties.ACTIVITY_ENABLED);
+        addProperty(props, ClientProperties.ACTIVITY_EDITOR_TITLE);
+        addProperty(props, ClientProperties.ACTIVITY_EDITOR_BODY);
 
         return props;
     }

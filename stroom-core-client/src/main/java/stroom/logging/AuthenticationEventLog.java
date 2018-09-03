@@ -33,6 +33,8 @@ public class AuthenticationEventLog {
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
+    @Resource
+    private CurrentActivity currentActivity;
 
     public void logon(final String userName) {
         logon(userName, true, null, null);
@@ -82,6 +84,7 @@ public class AuthenticationEventLog {
 
             final Authenticate authenticate = new Authenticate();
             authenticate.setAction(action);
+            currentActivity.decorate(authenticate::getData);
             event.getEventDetail().setAuthenticate(authenticate);
 
             final User user = new User();

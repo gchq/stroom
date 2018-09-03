@@ -21,6 +21,9 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -48,6 +51,8 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     SimplePanel treeContainer;
     @UiField(provided = true)
     SvgButton typeFilter;
+    @UiField
+    Button activityContainer;
 
     @Inject
     public ExplorerTreeViewImpl(final Binder binder) {
@@ -65,6 +70,11 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     @Override
     public void setDeleteEnabled(final boolean enabled) {
         deleteItem.setEnabled(enabled);
+    }
+
+    @Override
+    public Button getActivityContainer() {
+        return activityContainer;
     }
 
     @UiHandler("newItem")

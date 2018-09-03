@@ -42,6 +42,9 @@ public class ClientProperties implements SharedObject {
     public static final String QUERY_INFO_POPUP_ENABLED = "stroom.query.infoPopup.enabled";
     public static final String QUERY_INFO_POPUP_TITLE = "stroom.query.infoPopup.title";
     public static final String QUERY_INFO_POPUP_VALIDATION_REGEX = "stroom.query.infoPopup.validationRegex";
+    public static final String ACTIVITY_ENABLED = "stroom.activity.enabled";
+    public static final String ACTIVITY_EDITOR_TITLE = "stroom.activity.editorTitle";
+    public static final String ACTIVITY_EDITOR_BODY = "stroom.activity.editorBody";
 
     private HashMap<String, String> map;
 
