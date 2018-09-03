@@ -11,7 +11,6 @@ import DataViewer from 'sections/DataViewer';
 import UserSettings from 'sections/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
-import AppSearch from 'sections/AppSearch';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
 

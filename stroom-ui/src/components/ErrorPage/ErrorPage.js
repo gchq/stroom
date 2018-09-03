@@ -20,66 +20,36 @@ import { connect } from 'react-redux';
 
 import { Grid } from 'semantic-ui-react';
 
-import './ErrorPage.css';
+const enhance = connect(
+  ({ errorPage: { errorMessage, stackTrace, httpErrorCode } }) => ({
+    errorMessage,
+    stackTrace,
+    httpErrorCode,
+  }),
+  {},
+);
 
-class ErrorPage extends Component {
-  render() {
-    const { errorMessage, stackTrace, httpErrorCode } = this.props;
-    return (
-      <Grid className="ErrorPage-card">
-        <Grid.Row>
-          <h3>There has been an error!</h3>
-        </Grid.Row>
+const ErrorSection = ({ title, errorData }) => (
+  <Grid.Row>
+    <Grid.Column width={3}>
+      <strong>{title}: </strong>
+    </Grid.Column>
+    <Grid.Column width={13}>
+      <code>{errorData}</code>
+    </Grid.Column>
+  </Grid.Row>
+);
 
-        {errorMessage ? (
-          <Grid.Row>
-            <Grid.Column width={3}>
-              <strong>Error message: </strong>
-            </Grid.Column>
-            <Grid.Column width={13}>
-              <code>{errorMessage}</code>
-            </Grid.Column>
-          </Grid.Row>
-        ) : (
-          undefined
-        )}
+const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
+  <Grid className="ErrorPage-card">
+    <Grid.Row>
+      <h3>There has been an error!</h3>
+    </Grid.Row>
 
-        {httpErrorCode ? (
-          <Grid.Row>
-            <Grid.Column width={3}>
-              <strong>HTTP error code:</strong>
-            </Grid.Column>
-            <Grid.Column width={13}>
-              <code>{httpErrorCode}</code>
-            </Grid.Column>
-          </Grid.Row>
-        ) : (
-          undefined
-        )}
+    {errorMessage && <ErrorSection errorData={errorMessage} title="Error Message" />}
+    {httpErrorCode && <ErrorSection errorData={httpErrorCode} title="HTTP error code" />}
+    {stackTrace && <ErrorSection errorData={stackTrace} title="Stack trace" />}
+  </Grid>
+);
 
-        {stackTrace ? (
-          <Grid.Row>
-            <Grid.Column width={3}>
-              <strong>Stack trace:</strong>
-            </Grid.Column>
-            <Grid.Column width={13}>
-              <code>{stackTrace}</code>
-            </Grid.Column>
-          </Grid.Row>
-        ) : (
-          undefined
-        )}
-      </Grid>
-    );
-  }
-}
-
-const mapStateToProps = state => ({
-  errorMessage: state.errorPage.errorMessage,
-  stackTrace: state.errorPage.stackTrace,
-  httpErrorCode: state.errorPage.httpErrorCode,
-});
-
-const mapDispatchToProps = dispatch => bindActionCreators({}, dispatch);
-
-export default connect(mapStateToProps, mapDispatchToProps)(ErrorPage);
+export default enhance(ErrorPage);
