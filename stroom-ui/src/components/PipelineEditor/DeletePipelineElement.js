@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header } from 'semantic-ui-react';
 
 import ThemedConfirm from 'components/ThemedModal';
 import { actionCreators } from './redux';

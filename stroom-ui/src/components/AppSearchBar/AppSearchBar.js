@@ -131,6 +131,10 @@ const enhance = compose(
   withHandlers({
     onTextFocus: ({setTextFocus}) => e => setTextFocus(true),
     onTextBlur: ({setTextFocus}) => e => setTextFocus(false),
+    onSearchTermChange: ({pickerId, searchTermUpdated, searchApp}) => ({ target: { value } }) => {
+      searchTermUpdated(pickerId, value);
+      searchApp(pickerId, { term: value });
+    }
   }),
   withProps(({
     pickerId, searchMode, thisFolder, parentFolder, navigateToFolder, searchTerm
@@ -152,7 +156,7 @@ const enhance = compose(
       }
       case SEARCH_MODE.GLOBAL_SEARCH: {
         headerIcon = 'search';
-        headerTitle = `Search for \'${searchTerm}\'`;
+        headerTitle = `Search for '${searchTerm}'`;
         break;
       }
       case SEARCH_MODE.RECENT_ITEMS: {
@@ -176,9 +180,7 @@ const AppSearchBar = ({
   pickerId,
   docRefs,
   searchMode,
-  searchApp,
   navigateToFolder,
-  searchTermUpdated,
   onKeyDownWithShortcuts,
   headerTitle,
   headerIcon,
@@ -192,7 +194,8 @@ const AppSearchBar = ({
   valueToShow,
   searchTerm,
   onTextFocus,
-  onTextBlur
+  onTextBlur,
+  onSearchTermChange
 }) => (
   <div className="dropdown app-search-bar">
     <Input
@@ -202,10 +205,7 @@ const AppSearchBar = ({
       value={valueToShow}
       onFocus={onTextFocus}
       onBlur={onTextBlur}
-      onChange={({ target: { value } }) => {
-        searchTermUpdated(pickerId, value);
-        searchApp(pickerId, { term: value });
-      }}
+      onChange={onSearchTermChange}
     />
     <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts} className="dropdown__content">
       <div className="app-search-header">

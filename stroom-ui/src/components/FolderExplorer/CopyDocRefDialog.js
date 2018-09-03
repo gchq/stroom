@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import { compose, withProps } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 import { Header, Button, Form } from 'semantic-ui-react';
@@ -44,8 +43,7 @@ const enhance = compose(
         folderExplorer: {
           copyDocRef: { isCopying, uuids, destinationUuid },
         },
-      },
-      {},
+      }
     ) => {
       const initialDestination = findItem(documentTree, destinationUuid);
 

@@ -1,4 +1,4 @@
-import { createActions, combineActions, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import { updateIdSubstate } from 'lib/reduxFormUtils';
 
@@ -8,8 +8,6 @@ const actionCreators = createActions({
   SEARCH_TERM_UPDATED: (pickerId, searchTerm) => ({ pickerId, searchTerm }),
   SEARCH_RESULTS_RETURNED: (pickerId, searchResults) => ({ pickerId, searchResults }),
 });
-
-const { openDropdown, closeDropdown } = actionCreators;
 
 const SEARCH_MODE = {
   GLOBAL_SEARCH: 0,
