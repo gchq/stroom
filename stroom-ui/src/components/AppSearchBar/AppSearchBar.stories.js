@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
@@ -32,7 +32,12 @@ import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 const enhanceForm = compose(
-  connect(({ form }) => ({ thisForm: form.appSearchBarTest }), {}),
+  connect(
+    ({ form }) => ({
+      thisForm: form.appSearchBarTest,
+    }),
+    {},
+  ),
   reduxForm({
     form: 'appSearchBarTest',
   }),
@@ -40,10 +45,6 @@ const enhanceForm = compose(
 
 const RawAppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
   <Form>
-    <Form.Field>
-      <label>Simple Name Field</label>
-      <Field name="simpleName" component="input" type="text" />
-    </Form.Field>
     <Form.Field>
       <label>Chosen Doc Ref</label>
       <Field
@@ -61,10 +62,7 @@ const RawAppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
     {thisForm &&
       thisForm.values && (
         <div>
-          <div>Simple Name: {thisForm.values.simpleName}</div>
-          <div>
-            Chosen Doc Ref: {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
-          </div>
+          Chosen Doc Ref: {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
         </div>
       )}
   </Form>

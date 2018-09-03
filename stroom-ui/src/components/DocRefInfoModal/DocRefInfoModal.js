@@ -16,7 +16,7 @@
 import React from 'react';
 
 import { connect } from 'react-redux';
-import { compose, branch, renderNothing, renderComponent } from 'recompose';
+import { compose, branch, renderNothing, renderComponent, withProps } from 'recompose';
 
 import { Header, Button, Form, Loader } from 'semantic-ui-react';
 
@@ -38,9 +38,19 @@ const enhance = compose(
     ({ docRefInfo }) => !docRefInfo,
     renderComponent(() => <Loader active>Awaiting DocRef Info </Loader>),
   ),
+  withProps(({ docRefInfo: { createTime, updateTime } }) => ({
+    formattedCreateTime: new Date(createTime).toLocaleString('en-GB', { timeZone: 'UTC' }),
+    formattedUpdateTime: new Date(updateTime).toLocaleString('en-GB', { timeZone: 'UTC' }),
+  })),
 );
 
-const DocRefInfoModal = ({ isOpen, docRefInfo, docRefInfoClosed }) => (
+const DocRefInfoModal = ({
+  isOpen,
+  docRefInfo,
+  docRefInfoClosed,
+  formattedCreateTime,
+  formattedUpdateTime,
+}) => (
   <ThemedModal
     open={isOpen}
     onClose={docRefInfoClosed}
@@ -54,19 +64,11 @@ const DocRefInfoModal = ({ isOpen, docRefInfo, docRefInfoClosed }) => (
         </Form.Group>
         <Form.Group widths="equal">
           <Form.Input label="Created by" type="text" value={docRefInfo.createUser} />
-          <Form.Input
-            label="at"
-            type="text"
-            value={new Date(docRefInfo.createTime).toLocaleString('en-GB', { timeZone: 'UTC' })}
-          />
+          <Form.Input label="at" type="text" value={formattedCreateTime} />
         </Form.Group>
         <Form.Group widths="equal">
           <Form.Input label="Updated by" type="text" value={docRefInfo.updateUser} />
-          <Form.Input
-            label="at"
-            type="text"
-            value={new Date(docRefInfo.updateTime).toLocaleString('en-GB', { timeZone: 'UTC' })}
-          />
+          <Form.Input label="at" type="text" value={formattedUpdateTime} />
         </Form.Group>
         <Form.Input label="Other Info" type="text" value={docRefInfo.otherInfo} />
       </Form>

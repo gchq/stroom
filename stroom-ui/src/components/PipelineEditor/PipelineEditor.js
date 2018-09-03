@@ -32,6 +32,7 @@ import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
+import DocRefImage from 'components/DocRefImage';
 import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
@@ -138,11 +139,7 @@ const RawPipelineEditor = ({
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}><Header as="h3">
-        <img
-          className="stroom-icon--large"
-          alt="X"
-          src={require(`../../images/docRefTypes/${pipeline.docRef.type}.svg`)}
-        />
+        <DocRefImage docRefType={pipeline.docRef.type} />
         <Header.Content>{pipeline.docRef.name}</Header.Content>
         <Header.Subheader>
           <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown, Input } from 'semantic-ui-react';
 
+import DocRefImage from 'components/DocRefImage';
 import withDocRefTypes from './withDocRefTypes';
 
 const DocRefTypePicker = ({ onChange, value, docRefTypes }) => (
@@ -12,11 +13,7 @@ const DocRefTypePicker = ({ onChange, value, docRefTypes }) => (
     <Dropdown.Menu>
       {docRefTypes.map(docRefType => (
         <Dropdown.Item key={docRefType} onClick={() => onChange(docRefType)}>
-          <img
-            className="stroom-icon--small"
-            alt="X"
-            src={require(`../../images/docRefTypes/${docRefType}.svg`)}
-          />
+          <DocRefImage size="small" docRefType={docRefType} />
           {docRefType}
         </Dropdown.Item>
       ))}

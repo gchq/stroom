@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { compose, withHandlers, withProps } from 'recompose';
 import { Icon } from 'semantic-ui-react';
 
+import DocRefImage from 'components/DocRefImage';
 import DocRefPropType from 'lib/DocRefPropType';
 import { actionCreators as selectableItemActionCreators } from 'lib/withSelectableItemListing';
 
@@ -72,11 +73,7 @@ const RawDocRefListingEntry = ({
 }) => (
   <div className={className} onClick={onSelect}>
     <div>
-      <img
-        className="stroom-icon--large"
-        alt="X"
-        src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
-      />
+      <DocRefImage docRefType={docRef.type} />
       <span className="doc-ref-listing__name" onClick={onOpenDocRef}>
         {docRef.name}
       </span>

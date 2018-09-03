@@ -20,7 +20,9 @@ import withSelectableItemListing, {
 } from 'lib/withSelectableItemListing';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
-const { searchTermUpdated, navigateToFolder, switchMode } = appSearchBarActionCreators;
+import ModeOptionButtons from './ModeOptionButtons';
+
+const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
 
 const withTextFocus = withState('textFocus', 'setTextFocus', false);
 
@@ -32,7 +34,9 @@ const enhance = compose(
       {
         appSearch, recentItems, selectableItemListings, folderExplorer: { documentTree },
       },
-      { pickerId, typeFilters, value, textFocus },
+      {
+        pickerId, typeFilters, value, textFocus,
+      },
     ) => {
       const appSearchForPicker = appSearch[pickerId] || defaultPickerState;
       const selectableItemListing =
@@ -83,21 +87,6 @@ const enhance = compose(
           break;
       }
 
-      const modeOptions = [
-        {
-          mode: SEARCH_MODE.GLOBAL_SEARCH,
-          icon: 'search',
-        },
-        {
-          mode: SEARCH_MODE.NAVIGATION,
-          icon: 'folder',
-        },
-        {
-          mode: SEARCH_MODE.RECENT_ITEMS,
-          icon: 'history',
-        },
-      ];
-
       return {
         searchTerm,
         searchMode,
@@ -109,14 +98,12 @@ const enhance = compose(
         provideBreadcrumbs: searchMode !== SEARCH_MODE.NAVIGATION,
         thisFolder,
         parentFolder,
-        modeOptions,
       };
     },
     {
       searchApp,
       searchTermUpdated,
       navigateToFolder,
-      switchMode,
     },
   ),
   withSelectableItemListing(({
@@ -129,15 +116,16 @@ const enhance = compose(
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
   withHandlers({
-    onTextFocus: ({setTextFocus}) => e => setTextFocus(true),
-    onTextBlur: ({setTextFocus}) => e => setTextFocus(false),
-    onSearchTermChange: ({pickerId, searchTermUpdated, searchApp}) => ({ target: { value } }) => {
+    onTextFocus: ({ setTextFocus }) => e => setTextFocus(true),
+    onTextBlur: ({ setTextFocus }) => e => setTextFocus(false),
+    onSearchTermChange: ({ pickerId, searchTermUpdated, searchApp }) => ({ target: { value } }) => {
       searchTermUpdated(pickerId, value);
       searchApp(pickerId, { term: value });
-    }
+    },
+    thisNavigateToFolder: ({navigateToFolder, pickerId}) => d => navigateToFolder(pickerId, d)
   }),
   withProps(({
-    pickerId, searchMode, thisFolder, parentFolder, navigateToFolder, searchTerm
+    pickerId, searchMode, thisFolder, parentFolder, thisNavigateToFolder, searchTerm,
   }) => {
     let headerTitle;
     let headerIcon;
@@ -148,7 +136,7 @@ const enhance = compose(
         headerTitle = thisFolder.name;
         if (parentFolder) {
           headerIcon = 'arrow left';
-          headerAction = () => navigateToFolder(pickerId, parentFolder);
+          headerAction = () => thisNavigateToFolder(parentFolder);
         } else {
           headerIcon = 'folder';
         }
@@ -179,8 +167,7 @@ const enhance = compose(
 const AppSearchBar = ({
   pickerId,
   docRefs,
-  searchMode,
-  navigateToFolder,
+  thisNavigateToFolder,
   onKeyDownWithShortcuts,
   headerTitle,
   headerIcon,
@@ -188,14 +175,11 @@ const AppSearchBar = ({
   hasNoResults,
   noResultsText,
   provideBreadcrumbs,
-  switchMode,
-  modeOptions,
   onChange,
   valueToShow,
-  searchTerm,
   onTextFocus,
   onTextBlur,
-  onSearchTermChange
+  onSearchTermChange,
 }) => (
   <div className="dropdown app-search-bar">
     <Input
@@ -211,24 +195,7 @@ const AppSearchBar = ({
       <div className="app-search-header">
         <Icon name={headerIcon} size="large" onClick={headerAction} />
         {headerTitle}
-        <Button.Group floated="right">
-          {modeOptions.map(modeOption => (
-            <Button
-              key={modeOption.mode}
-              icon={modeOption.icon}
-              circular
-              className="icon-button"
-              onClick={e => switchMode(pickerId, modeOption.mode)}
-              onKeyDown={
-                e => {
-                  if (e.key === ' ') {
-                    switchMode(pickerId, modeOption.mode);
-                  }
-                }
-              }
-            />
-          ))}
-        </Button.Group>
+        <ModeOptionButtons pickerId={pickerId} />
       </div>
       <div className="app-search-listing">
         {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
@@ -239,12 +206,12 @@ const AppSearchBar = ({
             listingId={pickerId}
             docRef={searchResult}
             openDocRef={onChange}
-            enterFolder={d => navigateToFolder(pickerId, d)}
+            enterFolder={thisNavigateToFolder}
           >
             {provideBreadcrumbs && (
               <DocRefBreadcrumb
                 docRefUuid={searchResult.uuid}
-                openDocRef={d => navigateToFolder(pickerId, d)}
+                openDocRef={thisNavigateToFolder}
               />
             )}
           </DocRefListingEntry>

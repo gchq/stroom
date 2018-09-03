@@ -102,12 +102,13 @@ const enhance = compose(
     },
   ),
   withIsExpanded,
-  lifecycle({
-    componentDidMount() {
-      Mousetrap.bind('ctrl+shift+e', () => this.props.history.push('/s/recentItems'));
-      Mousetrap.bind('ctrl+shift+f', () => this.props.history.push('/s/search'));
-    },
-  }),
+  // We need to work out how to do these global shortcuts from scratch, now that we don't have dedicated pages
+  // lifecycle({
+  //   componentDidMount() {
+  //     Mousetrap.bind('ctrl+shift+e', () => this.props.history.push('/s/recentItems'));
+  //     Mousetrap.bind('ctrl+shift+f', () => this.props.history.push('/s/search'));
+  //   },
+  // }),
   withProps(({
     history, openDocRef, documentTree, areMenuItemsOpen, menuItemOpened,
   }) => {

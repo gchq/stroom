@@ -85,11 +85,6 @@ export default [
   },
   {
     exact: true,
-    path: '/s/search',
-    render: props => <AppChrome activeMenuItem="Search" content={<AppSearch />} />,
-  },
-  {
-    exact: true,
     path: '/s/doc/:type/:uuid',
     render: props => (
       <AppChrome
