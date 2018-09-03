@@ -129,11 +129,6 @@ const enhance = compose(
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
   withHandlers({
-    onClickChoose: ({selectableItemListing: {focussedItem}, onChange}) => e => {
-      if (focussedItem) {
-        onChange(focussedItem);
-      }
-    },
     onTextFocus: ({setTextFocus}) => e => setTextFocus(true),
     onTextBlur: ({setTextFocus}) => e => setTextFocus(false),
   }),
@@ -196,8 +191,6 @@ const AppSearchBar = ({
   onChange,
   valueToShow,
   searchTerm,
-  onCancel,
-  onClickChoose,
   onTextFocus,
   onTextBlur
 }) => (
@@ -225,7 +218,14 @@ const AppSearchBar = ({
               icon={modeOption.icon}
               circular
               className="icon-button"
-              onClick={() => switchMode(pickerId, modeOption.mode)}
+              onClick={e => switchMode(pickerId, modeOption.mode)}
+              onKeyDown={
+                e => {
+                  if (e.key === ' ') {
+                    switchMode(pickerId, modeOption.mode);
+                  }
+                }
+              }
             />
           ))}
         </Button.Group>
@@ -250,12 +250,6 @@ const AppSearchBar = ({
           </DocRefListingEntry>
         ))}
       </div>
-      <div className="app-search-footer">
-        <Button className="icon-button" onClick={onClickChoose}>Choose</Button>
-        {onCancel && <Button className="icon-button" onClick={onCancel}>
-          Cancel
-        </Button>}
-      </div>
     </div>
   </div>
 );
@@ -266,7 +260,6 @@ EnhancedAppSearchBar.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
-  onCancel: PropTypes.func,
   value: DocRefPropType,
 };
 

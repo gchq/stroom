@@ -42,10 +42,22 @@ const reducer = handleActions(
         payload: { listingId, items, selectionBehaviour },
       } = action;
 
+      // Attempt to rescue previous focus index
+      let focusIndex = -1;
+      let focussedItem;
+      if (state[listingId]) {
+        if (state[listingId].focusIndex < items.length) {
+          focusIndex = state[listingId].focusIndex;
+          focussedItem = items[focusIndex];
+        }
+      }
+
       return {
         ...state,
         [listingId]: {
           ...defaultSelectableItemListingState,
+          focusIndex,
+          focussedItem,
           items,
           selectionBehaviour,
         },
@@ -64,7 +76,7 @@ const reducer = handleActions(
       if (focusIndex !== -1) {
         nextIndex = (items.length + (focusIndex + direction)) % items.length;
       }
-      const focussedItem = items.find((item, i) => i === nextIndex);
+      const focussedItem = items[nextIndex];
 
       return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
         focusIndex: nextIndex,
@@ -83,7 +95,7 @@ const reducer = handleActions(
         items,
         selectionBehaviour,
       } = listingState;
-      const indexToUse = index !== undefined ? index : focusIndex;
+      const indexToUse = index !== undefined && index >= 0 ? index : focusIndex;
 
       if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
         const isCurrentlySelected = selectedItemIndexes.has(indexToUse);

@@ -76,7 +76,7 @@ const withSelectableItemListing = propsFunc =>
         openItem,
         enterItem,
         goBack,
-        selectableItemListing: { selectedItems, focussedItem, selectionBehaviour },
+        selectableItemListing,
         keyIsDown,
       }) => (e) => {
         if (e.key === 'ArrowUp' || e.key === 'k') {
@@ -86,18 +86,18 @@ const withSelectableItemListing = propsFunc =>
           focusDown(listingId);
           e.preventDefault();
         } else if (e.key === 'Enter') {
-          if (focussedItem) {
-            openItem(focussedItem);
+          if (selectableItemListing.focussedItem) {
+            openItem(selectableItemListing.focussedItem);
           }
           e.preventDefault();
         } else if (e.key === 'ArrowRight' || e.key === 'l') {
-          if (focussedItem) {
-            enterItem(focussedItem);
+          if (selectableItemListing.focussedItem) {
+            enterItem(selectableItemListing.focussedItem);
           }
         } else if (e.key === 'ArrowLeft' || e.key === 'h') {
-          goBack();
+          goBack(selectableItemListing.focussedItem);
         } else if (e.key === ' ') {
-          if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
+          if (selectableItemListing.selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
             selectFocussed(listingId, keyIsDown);
             e.preventDefault();
           }

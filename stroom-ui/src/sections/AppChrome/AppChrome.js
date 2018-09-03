@@ -22,6 +22,7 @@ import { withRouter } from 'react-router-dom';
 import { Button } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
+import { actionCreators as selectableItemListingActionCreators } from 'lib/withSelectableItemListing';
 import { actionCreators as appChromeActionCreators } from './redux';
 import withLocalStorage from 'lib/withLocalStorage';
 import MenuItem from './MenuItem';
@@ -36,6 +37,7 @@ import {
 import { actionCreators as userSettingsActionCreators } from 'sections/UserSettings';
 import withSelectableItemListing from 'lib/withSelectableItemListing';
 
+const { selectionToggled } = selectableItemListingActionCreators;
 const { menuItemOpened } = appChromeActionCreators;
 const { themeChanged } = userSettingsActionCreators;
 
@@ -44,7 +46,7 @@ const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 const LISTING_ID = 'app-chrome-menu';
 const pathPrefix = '/s';
 
-const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = false) => ({
+const getDocumentTreeMenuItems = (openDocRef, parentDocRef, treeNode, skipInContractedMenu = false) => ({
   key: treeNode.uuid,
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
@@ -52,12 +54,13 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
   style: skipInContractedMenu ? 'doc' : 'nav',
   skipInContractedMenu,
   docRef: treeNode,
+  parentDocRef,
   children:
     treeNode.children &&
     treeNode.children.length > 0 &&
     treeNode.children
       .filter(t => t.type === 'Folder')
-      .map(t => getDocumentTreeMenuItems(openDocRef, t, true)),
+      .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true)),
 });
 
 const getOpenMenuItems = (menuItems, areMenuItemsOpen, openMenuItems = []) => {
@@ -75,7 +78,7 @@ const enhance = compose(
   withDocumentTree,
   withRouter,
   withHandlers({
-    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
   }),
   connect(
     (
@@ -95,6 +98,7 @@ const enhance = compose(
     {
       menuItemOpened,
       themeChanged,
+      selectionToggled
     },
   ),
   withIsExpanded,
@@ -115,7 +119,7 @@ const enhance = compose(
         icon: 'home',
         style: 'nav',
       },
-      getDocumentTreeMenuItems(openDocRef, documentTree),
+      getDocumentTreeMenuItems(openDocRef, null, documentTree),
       {
         key: 'data',
         title: 'Data',
@@ -133,7 +137,7 @@ const enhance = compose(
       {
         key: 'admin',
         title: 'Admin',
-        onClick: () => menuItemOpened('admin', !areMenuItemsOpen['admin']),
+        onClick: () => menuItemOpened('admin', !areMenuItemsOpen.admin),
         icon: 'cogs',
         style: 'nav',
         skipInContractedMenu: true,
@@ -169,36 +173,27 @@ const enhance = compose(
       openMenuItems,
     };
   }),
-  withSelectableItemListing(({ openMenuItems }) => ({
+  withSelectableItemListing(({ openMenuItems, menuItemOpened, areMenuItemsOpen, selectionToggled }) => ({
     listingId: LISTING_ID,
     items: openMenuItems,
     openItem: m => m.onClick(),
-  })),
-  withHandlers({
-    onKeyDownWithNestingShortcuts: ({
-      onKeyDownWithShortcuts,
-      menuItemOpened,
-      selectableItemListing: { focussedItem },
-    }) => (e) => {
-      if (focussedItem) {
-        if (e.key === 'ArrowRight') {
-          menuItemOpened(focussedItem.key, true);
-        } else if (e.key === 'ArrowLeft') {
-          menuItemOpened(focussedItem.key, false);
+    enterItem: m => menuItemOpened(m.key, true),
+    goBack: m => {
+      if (m) {
+        if (areMenuItemsOpen[m.key]) {
+          menuItemOpened(m.key, false);
+        } else if (m.parentDocRef) {
+          // Can we bubble back up to the parent folder of the current selection?
+          let newSelection = openMenuItems.findIndex(({key}) => key === m.parentDocRef.uuid);
+          selectionToggled(LISTING_ID, newSelection);
+          menuItemOpened(m.parentDocRef.uuid, false);
         }
       }
-
-      // Pass up to the standard 'list of items' shortcut handler
-      onKeyDownWithShortcuts(e);
     },
-  }),
+  })),
 );
 
-const getExpandedMenuItems = (
-  menuItems,
-  areMenuItemsOpen,
-  depth = 0,
-) =>
+const getExpandedMenuItems = (menuItems, areMenuItemsOpen, depth = 0) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
@@ -210,11 +205,7 @@ const getExpandedMenuItems = (
       />
       {menuItem.children &&
         areMenuItemsOpen[menuItem.key] &&
-        getExpandedMenuItems(
-          menuItem.children,
-          areMenuItemsOpen,
-          depth + 1,
-        )}
+        getExpandedMenuItems(menuItem.children, areMenuItemsOpen, depth + 1)}
     </React.Fragment>
   ));
 
@@ -244,7 +235,7 @@ const AppChrome = ({
   setIsExpanded,
   theme,
   themeChanged,
-  onKeyDownWithNestingShortcuts,
+  onKeyDownWithShortcuts,
 }) => {
   if (theme === undefined) {
     theme = 'theme-dark';
@@ -271,12 +262,12 @@ const AppChrome = ({
                 <img
                   className="sidebar__logo"
                   alt="Stroom logo"
-                  src={require(`../../images/logo.svg`)}
-                /> 
+                  src={require('../../images/logo.svg')}
+                />
               </div>
               <div
                 tabIndex={0}
-                onKeyDown={onKeyDownWithNestingShortcuts}
+                onKeyDown={onKeyDownWithShortcuts}
                 className="app-chrome__sidebar-menu raised-high"
               >
                 {getExpandedMenuItems(menuItems, areMenuItemsOpen)}
