@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import { compose } from 'recompose';
+import { connect } from 'react-redux';
 
+import { Field, reduxForm } from 'redux-form';
+import { Form } from 'semantic-ui-react';
 import { storiesOf, addDecorator } from '@storybook/react';
 
-import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import {
   PermissionInheritancePicker,
@@ -28,6 +31,35 @@ import {
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
+const enhance = compose(
+  connect(({ form }) => ({ thisForm: form.permissionInheritanceTest }), {}),
+  reduxForm({
+    form: 'permissionInheritanceTest',
+  }),
+);
+
+let TestForm = ({ thisForm }) => (
+  <Form>
+    <Form.Field>
+      <label>Chosen Permission Inheritance</label>
+      <Field
+        name="permissionInheritance"
+        component={({ input: { onChange, value } }) => (
+          <PermissionInheritancePicker onChange={onChange} value={value} />
+        )}
+      />
+    </Form.Field>
+    {thisForm &&
+      thisForm.values && (
+        <div>
+          <div>Permission Inheritance: {thisForm.values.permissionInheritance}</div>
+        </div>
+      )}
+  </Form>
+);
+
+TestForm = enhance(TestForm);
+
 storiesOf('Permission Inheritance Picker', module)
-  .addDecorator(ControlledInputDecorator)
-  .add('Permission Inheritance Picker', () => <PermissionInheritancePicker />);
+  .addDecorator(ReduxDecorator)
+  .add('Permission Inheritance Picker', () => <TestForm />);

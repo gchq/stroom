@@ -14,35 +14,73 @@
  * limitations under the License.
  */
 import React from 'react';
+import { compose } from 'recompose';
+import { connect } from 'react-redux';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
-import { compose, withState } from 'recompose';
+import { Field, reduxForm } from 'redux-form';
+import { Form } from 'semantic-ui-react';
 
 import DocTypeFilters from './DocTypeFilters';
 import DocRefTypePicker from './DocRefTypePicker';
 import { actionCreators } from './redux';
 import { testDocRefsTypes } from './test';
 
-import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-storiesOf('Doc Type Filters', module)
-  .addDecorator(ControlledInputDecorator) // must be the 'first' one
-  .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
-  .addDecorator(ReduxDecorator)
-  .add('Doc Type Filter', ({ value, onChange }) => (
-    <DocTypeFilters value={value} onChange={onChange} />
-  ));
+const enhance = compose(
+  connect(
+    ({ form }) => ({
+      thisForm: form.docTypeFilterTest,
+      initialValues: {
+        docTypes: [],
+      },
+    }),
+    {},
+  ),
+  reduxForm({
+    form: 'docTypeFilterTest',
+  }),
+);
 
-storiesOf('Doc Type Picker', module)
-  .addDecorator(ControlledInputDecorator) // must be the 'first' one
+let TestForm = ({ thisForm }) => (
+  <Form>
+    <Form.Field>
+      <label>Chosen Doc Type</label>
+      <Field
+        name="docType"
+        component={({ input: { onChange, value } }) => (
+          <DocRefTypePicker onChange={onChange} value={value} />
+        )}
+      />
+    </Form.Field>
+    <Form.Field>
+      <label>Chosen Doc Types</label>
+      <Field
+        name="docTypes"
+        component={({ input: { onChange, value } }) => (
+          <DocTypeFilters onChange={onChange} value={value} />
+        )}
+      />
+    </Form.Field>
+    {thisForm &&
+      thisForm.values && (
+        <div>
+          <div>Doc Type: {thisForm.values.docType}</div>
+          <div>Doc Types: {thisForm.values.docTypes.join(',')}</div>
+        </div>
+      )}
+  </Form>
+);
+
+TestForm = enhance(TestForm);
+
+storiesOf('Doc Type Filters', module)
   .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
-  .add('Doc Type Picker', ({ value, onChange }) => (
-    <DocRefTypePicker value={value} onChange={onChange} />
-  ));
+  .add('Doc Type Filter', () => <TestForm />);
