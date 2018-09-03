@@ -4,9 +4,10 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { Modal, Button, Form, Header } from 'semantic-ui-react';
+import { Button, Form, Header } from 'semantic-ui-react';
 import { TextAreaField } from 'react-semantic-redux-form';
 
+import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
 const { pipelineSettingsClosed, pipelineSettingsUpdated } = actionCreators;
@@ -52,9 +53,13 @@ const enhance = compose(
 const PipelineSettings = ({
   pipelineId, onConfirm, onCancel, isOpen, invalid, submitting,
 }) => (
-  <Modal size="tiny" open={isOpen} onClose={onCancel} dimmer="inverted">
-    <Header content="Pipeline Settings" />
-    <Modal.Content>
+  <ThemedModal
+    open={isOpen}
+    onClose={onCancel}
+    size="tiny"
+    dimmer="inverted"
+    header={<Header className="header" content="Pipeline Settings" />}
+    content={
       <Form>
         <Form.Field>
           <label>Description</label>
@@ -67,18 +72,20 @@ const PipelineSettings = ({
           />
         </Form.Field>
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button
-        positive
-        content="Submit"
-        disabled={invalid || submitting}
-        onClick={onConfirm}
-        form="pipelineSettings"
-      />
-      <Button negative content="Cancel" onClick={onCancel} />
-    </Modal.Actions>
-  </Modal>
+    }
+    actions={
+      <React.Fragment>
+        <Button
+          positive
+          content="Submit"
+          disabled={invalid || submitting}
+          onClick={onConfirm}
+          form="pipelineSettings"
+        />
+        <Button negative content="Cancel" onClick={onCancel} />
+      </React.Fragment>
+    }
+  />
 );
 
 PipelineSettings.propTypes = {

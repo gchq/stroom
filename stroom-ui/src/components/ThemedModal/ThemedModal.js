@@ -17,7 +17,7 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Modal } from 'semantic-ui-react';
+import { Header, Modal, Button } from 'semantic-ui-react';
 
 const enhance = compose(
   connect(
@@ -38,7 +38,7 @@ const enhance = compose(
  * enough, and it gives us the opportunity to set the SUI dimmer
  * property, or not.
  */
-const ThemedModal = ({
+let ThemedModal = ({
   dimmer, theme, header, content, actions, ...rest
 }) => (
   <Modal dimmer={dimmer} className={theme} {...rest}>
@@ -47,4 +47,34 @@ const ThemedModal = ({
     <Modal.Actions className="raised-low">{actions}</Modal.Actions>
   </Modal>
 );
+
+ThemedModal = enhance(ThemedModal);
+
+let ThemedConfirm = ({
+  dimmer, theme, question, details, onCancel, onConfirm, ...rest
+}) => (
+  <Modal dimmer={dimmer} className={theme} {...rest}>
+    <div className="raised-low">
+      <Header className="header" content={question} />
+    </div>
+    {details && <Modal.Content className="raised-low">{details}</Modal.Content>}
+    <Modal.Actions className="raised-low">
+      <Button negative onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button
+        positive
+        onClick={onConfirm}
+        labelPosition="right"
+        icon="checkmark"
+        content="Confirm"
+      />
+    </Modal.Actions>
+  </Modal>
+);
+
+ThemedConfirm = enhance(ThemedConfirm);
+
 export default enhance(ThemedModal);
+
+export { ThemedModal, ThemedConfirm };

@@ -18,8 +18,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { compose, branch, renderNothing, renderComponent } from 'recompose';
 
-import { Modal, Button, Form, Loader } from 'semantic-ui-react';
+import { Header, Button, Form, Loader } from 'semantic-ui-react';
 
+import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
 const { docRefInfoClosed } = actionCreators;
@@ -40,10 +41,11 @@ const enhance = compose(
 );
 
 const DocRefInfoModal = ({ isOpen, docRefInfo, docRefInfoClosed }) => (
-  <Modal open={isOpen} onClose={docRefInfoClosed} size="small" dimmer="inverted">
-    {' '}
-    <Modal.Header>Doc Ref Info</Modal.Header>
-    <Modal.Content scrolling>
+  <ThemedModal
+    open={isOpen}
+    onClose={docRefInfoClosed}
+    header={<Header className="header" icon="info" content="Document Information" />}
+    content={
       <Form>
         <Form.Group widths="equal">
           <Form.Input label="Type" type="text" value={docRefInfo.docRef.type} />
@@ -68,13 +70,13 @@ const DocRefInfoModal = ({ isOpen, docRefInfo, docRefInfoClosed }) => (
         </Form.Group>
         <Form.Input label="Other Info" type="text" value={docRefInfo.otherInfo} />
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
+    }
+    actions={
       <Button negative onClick={docRefInfoClosed}>
         Close
       </Button>
-    </Modal.Actions>
-  </Modal>
+    }
+  />
 );
 
 export default enhance(DocRefInfoModal);
