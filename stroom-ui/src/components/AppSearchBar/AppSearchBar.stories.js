@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { compose, withState } from 'recompose';
+import { Field, reduxForm } from 'redux-form';
+import { Form } from 'semantic-ui-react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
@@ -21,28 +25,99 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
 
 import AppSearchBar from './AppSearchBar';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
+const enhanceForm = compose(
+  connect(({ form }) => ({ thisForm: form.appSearchBarTest }), {}),
+  reduxForm({
+    form: 'appSearchBarTest',
+  }),
+);
+
+const RawAppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
+  <Form>
+    <Form.Field>
+      <label>Simple Name Field</label>
+      <Field name="simpleName" component="input" type="text" />
+    </Form.Field>
+    <Form.Field>
+      <label>Chosen Doc Ref</label>
+      <Field
+        name="chosenDocRef"
+        component={({ input: { onChange, value } }) => (
+          <AppSearchBar
+            pickerId={pickerId}
+            typeFilters={typeFilters}
+            onChange={onChange}
+            value={value}
+          />
+        )}
+      />
+    </Form.Field>
+    {thisForm &&
+      thisForm.values && (
+        <div>
+          <div>Simple Name: {thisForm.values.simpleName}</div>
+          <div>
+            Chosen Doc Ref: {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
+          </div>
+        </div>
+      )}
+  </Form>
+);
+
+const AppSearchAsPickerForm = enhanceForm(RawAppSearchAsPickerForm);
+
+class AppSearchAsNavigator extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.displayRef = React.createRef();
+    this.state = {
+      chosenDocRef: undefined,
+    };
+  }
+  render() {
+    const { pickerId, chosenDocRef, setChosenDocRef } = this.props;
+
+    return (
+      <div>
+        <AppSearchBar
+          pickerId={pickerId}
+          onChange={(d) => {
+            this.setState({ chosenDocRef: d });
+            this.displayRef.current.focus();
+          }}
+          value={this.state.chosenDocRef}
+        />
+        <div tabIndex={0} ref={this.displayRef}>
+          {this.state.chosenDocRef
+            ? `Would be opening ${this.state.chosenDocRef.name}...`
+            : 'no doc ref chosen'}
+        </div>
+      </div>
+    );
+  }
+}
+
 storiesOf('App Search Bar', module)
-  .addDecorator(ControlledInputDecorator) // must be the 'first' one
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('Search Bar (global)', () => <AppSearchBar />)
-  .add('Doc Ref Picker', () => <AppSearchBar pickerId="docRefPicker1" />)
+  .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
+  .add('Doc Ref Picker', () => <AppSearchAsPickerForm pickerId="docRefPicker1" />)
   .add('Doc Ref Picker (filter to pipeline)', () => (
-    <AppSearchBar pickerId="docRefPicker2" typeFilters={['Pipeline']} />
+    <AppSearchAsPickerForm pickerId="docRefPicker2" typeFilters={['Pipeline']} />
   ))
   .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
-    <AppSearchBar pickerId="docRefPicker3" typeFilters={['Feed', 'Dictionary']} />
+    <AppSearchAsPickerForm pickerId="docRefPicker3" typeFilters={['Feed', 'Dictionary']} />
   ))
   .add('Doc Ref Picker (filter to Folders)', () => (
-    <AppSearchBar pickerId="docRefPicker4" typeFilters={['Folder']} />
+    <AppSearchAsPickerForm pickerId="docRefPicker4" typeFilters={['Folder']} />
   ));

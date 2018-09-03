@@ -25,8 +25,6 @@ const enhance = compose(
       const openedDocRefWithLineage = findItem(documentTree, uuid);
 
       docRefOpened(openedDocRefWithLineage.node);
-
-      console.log('Doc Editor Mounted', this.props.docRef);
     },
   }),
 );

@@ -1,7 +1,6 @@
 .dropdown {
   position: relative;
   display: inline-block;
-  width: 100%;
 }
 
 .dropdown__content {
@@ -13,7 +12,8 @@
   z-index: 1;
 }
 
-.dropdown__content.open {
+.dropdown:focus-within .dropdown__content {
   display: flex;
   flex-direction: column;
 }
+

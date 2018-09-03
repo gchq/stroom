@@ -3,8 +3,6 @@ import { createActions, combineActions, handleActions } from 'redux-actions';
 import { updateIdSubstate } from 'lib/reduxFormUtils';
 
 const actionCreators = createActions({
-  OPEN_DROPDOWN: pickerId => ({ pickerId, isOpen: true }),
-  CLOSE_DROPDOWN: pickerId => ({ pickerId, isOpen: false }),
   SWITCH_MODE: (pickerId, mode) => ({ pickerId, mode }),
   NAVIGATE_TO_FOLDER: (pickerId, navFolder) => ({ pickerId, navFolder }),
   SEARCH_TERM_UPDATED: (pickerId, searchTerm) => ({ pickerId, searchTerm }),
@@ -23,7 +21,6 @@ const defaultPickerState = {
   searchTerm: '',
   searchResults: [],
   navFolder: undefined,
-  isOpen: false,
   searchMode: SEARCH_MODE.NAVIGATION,
 };
 
@@ -31,10 +28,6 @@ const defaultState = {};
 
 const reducer = handleActions(
   {
-    [combineActions(openDropdown, closeDropdown)]: (state, { payload: { pickerId, isOpen } }) =>
-      updateIdSubstate(state, pickerId, defaultPickerState, {
-        isOpen,
-      }),
     SWITCH_MODE: (state, action) =>
       updateIdSubstate(state, action.payload.pickerId, defaultPickerState, {
         searchMode: action.payload.mode,

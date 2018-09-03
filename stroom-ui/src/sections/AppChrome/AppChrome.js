@@ -115,10 +115,7 @@ const enhance = compose(
         icon: 'home',
         style: 'nav',
       },
-      getDocumentTreeMenuItems((d) => {
-        menuItemOpened(d.uuid, true);
-        openDocRef(d);
-      }, documentTree),
+      getDocumentTreeMenuItems(openDocRef, documentTree),
       {
         key: 'data',
         title: 'Data',
