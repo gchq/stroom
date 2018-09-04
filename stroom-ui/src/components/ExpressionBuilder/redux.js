@@ -125,7 +125,7 @@ const getCurrentExpression = (state, action) =>
   (state[action.payload.expressionId] ? state[action.payload.expressionId].expression : {});
 
 const byExpressionId = createActionHandlerPerId(
-  ({ payload: expressionId }) => expressionId,
+  ({ payload }) => payload.expressionId,
   defaultStatePerExpression,
 );
 

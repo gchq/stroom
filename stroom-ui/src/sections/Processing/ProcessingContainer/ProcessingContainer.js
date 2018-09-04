@@ -27,8 +27,7 @@ import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
 import ProcessingDetails from '../ProcessingDetails/ProcessingDetails';
-import ProcessingPagination from '../ProcessingPagination/ProcessingPagination';
-import InfiniteProcessingList from '../InfiniteProcessingList/InfiniteProcessingList';
+import ProcessingList from '../ProcessingList/ProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
 const { updateTrackerSelection, resetPaging, updateSearchCriteria } = actionCreators;
@@ -171,12 +170,12 @@ const ProcessingContainer = ({
             } table__reactTable__container`}
           >
             {selectedTrackerId === undefined || selectedTrackerId === null ? (
-              <InfiniteProcessingList
+              <ProcessingList
                 onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
               />
             ) : (
               <PanelGroup direction="column">
-                <InfiniteProcessingList
+                <ProcessingList
                   onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
                 />
                 <ProcessingDetails />

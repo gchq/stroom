@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
+import { compose, lifecycle, branch, renderComponent, withHandlers, withProps } from 'recompose';
 import moment from 'moment';
 import { path } from 'ramda';
 
@@ -29,7 +29,7 @@ import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { Header, Loader, Icon, Grid } from 'semantic-ui-react';
+import { Header, Loader, Icon, Grid, Button } from 'semantic-ui-react';
 
 import SearchBar from 'components/SearchBar';
 import {
@@ -39,7 +39,6 @@ import {
   searchWithExpression,
 } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
-import MysteriousPagination from './MysteriousPagination';
 import DetailsTabs from './DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
 
@@ -83,6 +82,42 @@ const enhance = compose(
       getDetailsForSelectedRow,
     },
   ),
+  withHandlers({
+    onRowSelected: ({selectRow, getDataForSelectedRow, getDetailsForSelectedRow}) => (dataViewerId, selectedRow) => {
+      selectRow(dataViewerId, selectedRow);
+      getDataForSelectedRow(dataViewerId);
+      getDetailsForSelectedRow(dataViewerId);
+    },
+    onHandleLoadMoreRows: ({search, dataViewerId, pageOffset, pageSize}) => () => {
+      search(dataViewerId, pageOffset + 1, pageSize, true);
+    },   
+    onMoveSelection: ({
+      selectRow,
+      streamAttributeMaps,
+      selectedRow,
+      getDataForSelectedRow, 
+      getDetailsForSelectedRow,
+      search,
+      dataViewerId, pageOffset, pageSize
+    }) => (direction) => {
+      const isAtEndOfList = selectedRow === streamAttributeMaps.length - 1;
+      if (isAtEndOfList) {
+        search(dataViewerId, pageOffset + 1, pageSize, true);
+      } else {
+        if(direction === 'down'){
+          selectedRow = selectedRow + 1;
+        }
+        else if(direction === 'up'){
+          selectedRow = selectedRow - 1;
+        }
+
+        // TODO: stop repeating onRowSelected here
+        selectRow(dataViewerId, selectedRow);
+        getDataForSelectedRow(dataViewerId);
+        getDetailsForSelectedRow(dataViewerId);
+      }
+    }, 
+  }),
   lifecycle({
     componentDidMount() {
       const {
@@ -92,6 +127,7 @@ const enhance = compose(
         pageOffset,
         selectedRow,
         fetchDataSource,
+        onMoveSelection,
       } = this.props;
 
       fetchDataSource(dataViewerId);
@@ -100,6 +136,13 @@ const enhance = compose(
       if (!selectedRow) {
         search(dataViewerId, pageOffset, pageSize);
       }
+
+      Mousetrap.bind('up', () => onMoveSelection('up'));
+      Mousetrap.bind('down', () => onMoveSelection('down'));
+    },
+    componentWillUnmount() {
+      Mousetrap.unbind('up');
+      Mousetrap.unbind('down');
     },
   }),
   branch(
@@ -110,21 +153,95 @@ const enhance = compose(
     ({ dataSource }) => !dataSource,
     renderComponent(() => <Loader active>Loading data source</Loader>),
   ),
+  withProps(({
+    streamAttributeMaps, onHandleLoadMoreRows, listHeight, detailsHeight
+  }) => {
+    let tableData = streamAttributeMaps.map(streamAttributeMap => {
+      return ({
+        streamId: streamAttributeMap.data.id,
+        created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
+        type: streamAttributeMap.data.typeName,
+        feed: streamAttributeMap.data.feedName,
+        pipeline: streamAttributeMap.data.pipelineUuid,
+      })
+    });
+
+    // Just keep rows with data, more 'load more' rows
+    tableData = tableData.filter(row => row.streamId !== undefined);
+    tableData.push({});
+
+    return {
+      tableData,
+      tableColumns: [
+        {
+          Header: '',
+          accessor: 'type',
+          Cell: (row) => {
+            // This block of code is mostly about making a sensible looking popup.
+            const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
+    
+            const eventIcon = <Icon color="blue" name="file" />;
+            const warningIcon = <Icon color="orange" name="warning circle" />;
+    
+            let icon;
+            if(stream !== undefined){
+              if (stream.data.typeName === 'Error') {
+                icon = warningIcon;
+              }
+              else {
+                icon = eventIcon;
+              }  
+            }
+    
+            return icon;
+          },
+          width: 35,
+        },
+        {
+          Header: 'Type',
+          accessor: 'type',
+        },
+        {
+          Header: 'Created',
+          accessor: 'created',
+          Cell: row =>
+                (row.original.streamId ? (
+                  row.original.created
+                ) : (
+                  <Button
+                    size="tiny"
+                    compact
+                    className="button border hoverable load-more-button"
+                    onClick={() => onHandleLoadMoreRows()}
+                  >
+                    Load more rows
+                  </Button>
+                )),
+        },
+        {
+          Header: 'Feed',
+          accessor: 'feed',
+        },
+        {
+          Header: 'Pipeline',
+          accessor: 'pipeline',
+        },
+      ],
+      // We need to parse these because localstorage, which is
+      // where these come from, is always string.
+      listHeight: Number.parseInt(listHeight, 10),
+      detailsHeight: Number.parseInt(detailsHeight, 10),
+    }
+    
+  }),
 );
 
 const DataViewer = ({
   dataViewerId,
-  streamAttributeMaps,
   pageOffset,
   pageSize,
-  nextPage,
-  previousPage,
-  search,
-  selectRow,
   deselectRow,
   selectedRow,
-  getDataForSelectedRow,
-  getDetailsForSelectedRow,
   dataForSelectedRow,
   detailsForSelectedRow,
   listHeight,
@@ -133,109 +250,24 @@ const DataViewer = ({
   setDetailsHeight,
   dataSource,
   searchWithExpression,
+  onRowSelected,
+  tableColumns,
+  tableData,
 }) => {
-  // We need to parse these because localstorage, which is
-  // where these come from, is always string.
-  listHeight = Number.parseInt(listHeight, 10);
-  detailsHeight = Number.parseInt(detailsHeight, 10);
-
-  const onRowSelected = (dataViewerId, selectedRow) => {
-    selectRow(dataViewerId, selectedRow);
-    getDataForSelectedRow(dataViewerId);
-    getDetailsForSelectedRow(dataViewerId);
-  };
-
-  Mousetrap.bind(['k', 'up'], () => {
-    // If no row is selected and the user has tried to use a shortcut key then we'll try and
-    // select the first row.
-    if (selectedRow === undefined) {
-      onRowSelected(dataViewerId, 0);
-    }
-    // If the selected row isn't the first row then we'll allow the selection to go up
-    else if (selectedRow > 0) {
-      onRowSelected(dataViewerId, selectedRow - 1);
-    }
-  });
-  Mousetrap.bind(['j', 'down'], () => {
-    // If no row is selected and the user has tried to use a shortcut key then we'll try and
-    // select the first row.
-    if (selectedRow === undefined) {
-      onRowSelected(dataViewerId, 0);
-    }
-    // If the selected row isn't the last row then we'll allow the selection to go down
-    else if (selectedRow < pageSize - 1) {
-      onRowSelected(dataViewerId, selectedRow + 1);
-    }
-  });
-  Mousetrap.bind(['l', 'right'], () => search(dataViewerId, pageOffset + 1, pageSize));
-  Mousetrap.bind(
-    ['h', 'left'],
-    () => (pageOffset > 0 ? search(dataViewerId, pageOffset - 1, pageSize) : undefined),
-  );
-
-  const tableColumns = [
-    {
-      Header: '',
-      accessor: 'type',
-      Cell: (row) => {
-        // This block of code is mostly about making a sensible looking popup.
-        const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
-
-        const eventIcon = <Icon color="blue" name="file" />;
-        const warningIcon = <Icon color="orange" name="warning circle" />;
-
-        let icon;
-        if (stream.data.typeName === 'Error') {
-          icon = warningIcon;
-        }
-        else {
-          icon = eventIcon;
-        }  
-
-        return icon;
-      },
-      width: 35,
-    },
-    {
-      Header: 'Type',
-      accessor: 'type',
-    },
-    {
-      Header: 'Created',
-      accessor: 'created',
-    },
-    {
-      Header: 'Feed',
-      accessor: 'feed',
-    },
-    {
-      Header: 'Pipeline',
-      accessor: 'pipeline',
-    },
-  ];
-
-  const tableData = streamAttributeMaps.map(streamAttributeMap => {
-    console.log({streamAttributeMap});
-    return ({
-    streamId: streamAttributeMap.data.id,
-    created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
-    type: streamAttributeMap.data.typeName,
-    feed: streamAttributeMap.data.feedName,
-    pipeline: streamAttributeMap.data.pipelineUuid,
-  })
-});
 
   const table = (
     <ReactTable
+      manual
       sortable={false}
-      pageSize={pageSize}
       showPagination={false}
       className="table__reactTable"
       data={tableData}
       columns={tableColumns}
       getTdProps={(state, rowInfo, column, instance) => ({
         onClick: (e, handleOriginal) => {
-          onRowSelected(dataViewerId, rowInfo.index);
+          if(rowInfo.original.streamId !== undefined) {
+            onRowSelected(dataViewerId, rowInfo.index);
+          }
 
           // IMPORTANT! React-Table uses onClick internally to trigger
           // events like expanding SubComponents and pivots.
@@ -301,22 +333,6 @@ const DataViewer = ({
               }}
             />
           </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Grid.Column width={5} />
-          <Grid.Column width={8}>
-            <div className="MysteriousPagination__ActionBarItems__container">
-              <MysteriousPagination
-                pageOffset={pageOffset}
-                pageSize={pageSize}
-                onPageChange={(pageOffset, pageSize) => {
-                  // searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId)
-                  search(dataViewerId, pageOffset, pageSize);
-                }}
-              />
-            </div>
-          </Grid.Column>
-          <Grid.Column width={3} />
         </Grid.Row>
       </Grid>
       <div className="DataTable__container">

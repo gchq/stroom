@@ -1,7 +1,7 @@
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
-export const search = (dataViewerId, pageOffset, pageSize) => (dispatch, getState) => {
+export const search = (dataViewerId, pageOffset, pageSize, addResults) => (dispatch, getState) => {
   const state = getState();
 
   let url = `${state.config.streamAttributeMapServiceUrl}/?`;
@@ -14,13 +14,23 @@ export const search = (dataViewerId, pageOffset, pageSize) => (dispatch, getStat
     url,
     (response) => {
       response.json().then((data) => {
-        dispatch(actionCreators.updateStreamAttributeMaps(
-          dataViewerId,
-          data.streamAttributeMaps,
-          data.pageResponse.total,
-          pageSize,
-          pageOffset,
-        ));
+        if(addResults) {
+          dispatch(actionCreators.add(            
+            dataViewerId,
+            data.streamAttributeMaps,
+            data.pageResponse.total,
+            pageSize,
+            pageOffset,))
+        }
+        else {
+          dispatch(actionCreators.updateStreamAttributeMaps(
+            dataViewerId,
+            data.streamAttributeMaps,
+            data.pageResponse.total,
+            pageSize,
+            pageOffset,
+          ));
+        }
       });
     },
     null,

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { compose, withHandlers, withProps, withState } from 'recompose';
 import { connect } from 'react-redux';
-import { Input, Icon, Button } from 'semantic-ui-react';
+import { Input, Icon } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';

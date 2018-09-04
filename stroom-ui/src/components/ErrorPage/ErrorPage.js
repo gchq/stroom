@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
-import { bindActionCreators } from 'redux';
+import React from 'react';
 import { connect } from 'react-redux';
-
-import { Grid } from 'semantic-ui-react';
+import { Grid, Header, Icon } from 'semantic-ui-react';
 
 const enhance = connect(
   ({ errorPage: { errorMessage, stackTrace, httpErrorCode } }) => ({
@@ -41,15 +39,25 @@ const ErrorSection = ({ title, errorData }) => (
 );
 
 const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
-  <Grid className="ErrorPage-card">
-    <Grid.Row>
-      <h3>There has been an error!</h3>
-    </Grid.Row>
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Row>
+        <Grid.Column width={12}>
+          <Header as="h3">
+            <Icon name="exclamation circle" color="red" />
+            There has been an error!
+          </Header>
+        </Grid.Column>
+      </Grid.Row>
+    </Grid>
 
-    {errorMessage && <ErrorSection errorData={errorMessage} title="Error Message" />}
-    {httpErrorCode && <ErrorSection errorData={httpErrorCode} title="HTTP error code" />}
-    {stackTrace && <ErrorSection errorData={stackTrace} title="Stack trace" />}
-  </Grid>
+    <Grid className="error-page__details">
+      {errorMessage && <ErrorSection errorData={errorMessage} title="Error Message" />}
+      {httpErrorCode !== 0 &&
+        httpErrorCode && <ErrorSection errorData={httpErrorCode} title="HTTP error code" />}
+      {stackTrace && <ErrorSection errorData={stackTrace} title="Stack trace" />}
+    </Grid>
+  </React.Fragment>
 );
 
 export default enhance(ErrorPage);
