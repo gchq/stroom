@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, withHandlers } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
@@ -27,27 +27,39 @@ import ClickCounter from 'lib/ClickCounter';
 
 import { searchPipelines, actionCreators } from 'components/PipelineEditor';
 
+const { updateCriteria } = actionCreators;
+
 const contextTypes = {
   store: PropTypes.object.isRequired,
 };
 
 const enhance = compose(
   connect(
-    (state, props) => ({
-      totalPipelines: state.pipelineEditor.search.total,
-      searchResults: state.pipelineEditor.search.pipelines,
-      criteria: state.pipelineEditor.search.criteria,
+    (
+      {
+        pipelineEditor: {
+          search: { total, pipelines, criteria },
+        },
+      },
+      props,
+    ) => ({
+      totalPipelines,
+      searchResults,
+      criteria,
     }),
     {
       searchPipelines,
-      onPipelineSelected: uuid => (dispatch, getState) => dispatch(push(`/s/doc/Pipeline/${uuid}`)),
-      updateCriteria: criteria => (dispatch, getState) =>
-        dispatch(actionCreators.updateCriteria(criteria)),
+      push,
+      updateCriteria,
     },
   ),
+  withHandlers({
+    onPipelineSelected: ({ push }) => uuid => push(`/s/doc/Pipeline/${uuid}`),
+    onUpdateCriteria: ({ updateCriteria }) => criteria => updateCriteria(criteria),
+  }),
   lifecycle({
     componentDidMount() {
-      let { searchPipelines, criteria, updateCriteria } = this.props;
+      let { searchPipelines, criteria, onUpdateCriteria } = this.props;
 
       if (criteria === undefined) {
         criteria = {
@@ -57,7 +69,7 @@ const enhance = compose(
         };
       }
 
-      updateCriteria(criteria);
+      onUpdateCriteria(criteria);
       searchPipelines();
     },
   }),
@@ -68,7 +80,7 @@ const PipelineSearch = ({
   totalPipelines,
   onPipelineSelected,
   searchPipelines,
-  updateCriteria,
+  onUpdateCriteria,
   criteria,
 }) => {
   // these are required to tell the difference between single/double clicks
@@ -128,7 +140,7 @@ const PipelineSearch = ({
             icon="search"
             placeholder="Search..."
             onChange={(_, data) => {
-              updateCriteria({ pageSize, pageOffset, filter: data.value });
+              onUpdateCriteria({ pageSize, pageOffset, filter: data.value });
               searchPipelines();
             }}
           />
@@ -139,10 +151,10 @@ const PipelineSearch = ({
             onChange={(_, data) => {
               console.log({ data });
               if (data.value === 'all') {
-                updateCriteria({ pageSize: undefined, pageOffset, filter });
+                onUpdateCriteria({ pageSize: undefined, pageOffset, filter });
                 searchPipelines();
               } else {
-                updateCriteria({ pageSize: data.value, pageOffset, filter });
+                onUpdateCriteria({ pageSize: data.value, pageOffset, filter });
                 searchPipelines();
               }
             }}
@@ -152,7 +164,7 @@ const PipelineSearch = ({
             totalPages={totalPages}
             ellipsisItem={null}
             onPageChange={(_, pagination) => {
-              updateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
+              onUpdateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
               searchPipelines();
             }}
           />

@@ -1,6 +1,6 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
 
-import { actionCreators as pipelineActionCreators } from './pipelineReducer';
+import { actionCreators as pipelineActionCreators } from './pipelineStatesReducer';
 
 const { pipelineSettingsUpdated } = pipelineActionCreators;
 

@@ -14,11 +14,11 @@ const { pipelineSettingsClosed, pipelineSettingsUpdated } = actionCreators;
 
 const enhance = compose(
   connect(
-    ({ pipelineEditor: { settings, pipelines }, form: { pipelineSettings } }, { pipelineId }) => ({
+    ({ pipelineEditor: { settings, pipelineStates }, form: { pipelineSettings } }, { pipelineId }) => ({
       ...settings[pipelineId],
       pipelineSettingsForm: pipelineSettings,
       initialValues: {
-        description: pipelines[pipelineId].pipeline.description,
+        description: pipelineStates[pipelineId].pipeline.description,
       },
     }),
     {

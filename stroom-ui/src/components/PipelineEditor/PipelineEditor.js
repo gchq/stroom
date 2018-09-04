@@ -23,6 +23,7 @@ import { Grid, Header, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
+import AddElementModal from './AddElementModal';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import SavePipeline from './SavePipeline';
 import CreateChildPipeline from './CreateChildPipeline';
@@ -68,10 +69,10 @@ const enhance = compose(
   }),
   connect(
     (
-      { pipelineEditor: { pipelines, elements } },
+      { pipelineEditor: { pipelineStates, elements } },
       { pipelineId },
     ) => ({
-      pipeline: pipelines[pipelineId],
+      pipelineState: pipelineStates[pipelineId],
       elements,
     }),
     {
@@ -96,19 +97,11 @@ const enhance = compose(
     },
   }),
   branch(
-    ({ pipeline }) => !pipeline,
+    ({ pipelineState, elements: {elements} }) => !(pipelineState && pipelineState.pipeline && elements),
     renderComponent(() => <Loader active>Loading Pipeline</Loader>),
   ),
-  branch(
-    ({ pipeline: { pipeline } }) => !pipeline,
-    renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
-  ),
-  branch(
-    ({ elements: { elements } }) => !elements,
-    renderComponent(() => <Loader active>Loading Elements</Loader>),
-  ),
   withElementDetailsOpen,
-  withProps(({ pipelineId, pipeline: { asTree } }) => ({
+  withProps(({ pipelineId, pipelineState: { asTree } }) => ({
     elementStyles: mapObject(getPipelineLayoutInformation(asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
@@ -125,7 +118,7 @@ const enhance = compose(
 
 const RawPipelineEditor = ({
   pipelineId,
-  pipeline: { pipeline, isDirty, isSaving },
+  pipelineState: { pipeline, isDirty, isSaving },
   isElementDetailsOpen,
   setElementDetailsOpen,
   editorClassName,
@@ -157,6 +150,7 @@ const RawPipelineEditor = ({
         /></Grid.Column>
     </Grid>
     <div className="Pipeline-editor">
+      <AddElementModal pipelineId={pipelineId} />
       <DeletePipelineElement pipelineId={pipelineId} />
       <PipelineSettings pipelineId={pipelineId} />
       <div className="Pipeline-editor__element-palette">

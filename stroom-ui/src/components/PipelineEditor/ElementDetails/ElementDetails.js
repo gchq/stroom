@@ -17,21 +17,21 @@ import ElementField from './ElementField';
 
 const enhance = compose(
   connect(
-    (state, props) => {
-      const pipeline = state.pipelineEditor.pipelines[props.pipelineId];
+    ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
+      const pipelineState = pipelineStates[pipelineId];
       let initialValues;
       let selectedElementId;
-      if (pipeline) {
-        initialValues = pipeline.selectedElementInitialValues;
-        selectedElementId = pipeline.selectedElementId;
+      if (pipelineState) {
+        initialValues = pipelineState.selectedElementInitialValues;
+        selectedElementId = pipelineState.selectedElementId;
       }
-      const form = `${props.pipelineId}-elementDetails`;
+      const form = `${pipelineId}-elementDetails`;
 
       return {
         // for our component
-        elements: state.pipelineEditor.elements,
+        elements,
         selectedElementId,
-        pipeline,
+        pipelineState,
         // for redux-form
         form,
         initialValues,
@@ -55,19 +55,23 @@ const enhance = compose(
 );
 
 const ElementDetails = ({
-  pipelineId, pipeline, selectedElementId, elements, onClose,
+  pipelineId,
+  pipelineState: { pipeline },
+  selectedElementId,
+  elements,
+  onClose,
 }) => {
   // These next few lines involve extracting the relevant properties from the pipeline.
   // The types of the properties and their values are in different places.
-  const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
+  const element = pipeline.merged.elements.add.find(element => element.id === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
   const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
-  const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
+  const elementProperties = pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
 
-  const elementPropertiesInChild = pipeline.pipeline.configStack[
-    pipeline.pipeline.configStack.length - 1
+  const elementPropertiesInChild = pipeline.configStack[
+    pipeline.configStack.length - 1
   ].properties.add.filter(property => property.element === selectedElementId);
 
   const title = (
@@ -77,7 +81,9 @@ const ElementDetails = ({
         src={require(`../images/${elementType.icon}`)}
         className="element-details__icon"
       />
-      <div><strong>{element.id}</strong></div>
+      <div>
+        <strong>{element.id}</strong>
+      </div>
     </div>
   );
 
@@ -96,7 +102,7 @@ const ElementDetails = ({
               : undefined;
 
             const parentValue = getParentProperty(
-              pipeline.pipeline.configStack,
+              pipeline.configStack,
               element.id,
               elementTypeProperty.name,
             );
