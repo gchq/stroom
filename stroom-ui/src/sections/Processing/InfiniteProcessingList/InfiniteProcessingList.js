@@ -56,8 +56,21 @@ const enhance = compose(
     },
   ),
   withHandlers({
-    onMoveSelection: ({ moveSelection }) => (direction) => {
-      moveSelection(direction);
+    onMoveSelection: ({
+      moveSelection,
+      trackers,
+      selectedTrackerId,
+      totalTrackers,
+      fetchMore,
+    }) => (direction) => {
+      const currentIndex = trackers.findIndex(tracker => tracker.filterId === selectedTrackerId);
+      const isAtEndOfList = currentIndex === trackers.length - 1;
+      const isAtEndOfEverything = currentIndex === totalTrackers - 1;
+      if (isAtEndOfList && !isAtEndOfEverything) {
+        fetchMore();
+      } else {
+        moveSelection(direction);
+      }
     },
     onHandleSort: ({ updateSort, fetchTrackers }) => (sort) => {
       if (sort !== undefined) {
