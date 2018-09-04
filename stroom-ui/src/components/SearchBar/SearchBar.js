@@ -1,13 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Container,
-  Input,
-  Button,
-  Grid,
-  Message,
-} from 'semantic-ui-react';
-import { compose, withState } from 'recompose';
+import { Container, Input, Button, Grid, Message } from 'semantic-ui-react';
+import { compose, withState, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import Tooltip from 'components/Tooltip';
@@ -35,7 +29,7 @@ const withSearchStringValidationMessages = withState(
 
 const enhance = compose(
   connect(
-    ({expressionBuilder}, {expressionId}) => ({
+    ({ expressionBuilder }, { expressionId }) => ({
       expression: expressionBuilder[expressionId],
     }),
     { expressionChanged },
@@ -45,6 +39,9 @@ const enhance = compose(
   withExpression,
   withIsSearchStringValid,
   withSearchStringValidationMessages,
+  withProps(({ searchStringValidationMessages }) => ({
+    searchIsInvalid: searchStringValidationMessages.length > 0,
+  })),
 );
 
 const SearchBar = ({
@@ -62,8 +59,9 @@ const SearchBar = ({
   setSearchStringValidationMessages,
   searchStringValidationMessages,
   onSearch,
+  searchIsInvalid,
 }) => {
-  const searchIsInvalid = searchStringValidationMessages.length > 0;
+  console.log({ expressionId });
   const searchButton = (
     <Button
       disabled={searchIsInvalid}
@@ -94,7 +92,14 @@ const SearchBar = ({
                   }}
                 />
               }
-              content={<React.Fragment><p>Switch to using the expression builder.</p> <p>You won't be able to convert back to a text search and keep your expression.</p></React.Fragment>}
+              content={
+                <React.Fragment>
+                  <p>Switch to using the expression builder.</p>{' '}
+                  <p>
+                    You won't be able to convert back to a text search and keep your expression.
+                  </p>
+                </React.Fragment>
+              }
             />
           </Grid.Column>
           <Grid.Column width={12}>
@@ -145,34 +150,37 @@ const SearchBar = ({
     </React.Fragment>
   );
 
+  const visibilityClass = isExpression ? 'visible' : '';
   const expressionBuilder = (
-    <React.Fragment>
-      <Grid className="SearchBar__layoutGrid">
-        <Grid.Column width={1}>
-          <Tooltip
-            trigger={
-              <Button
-                circular
-                icon="text cursor"
-                className="SearchBar__modeButton icon-button"
-                onClick={() => setIsExpression(false)}
-              />
-            }
-            content="Switch to using text search. You'll lose the expression you've built here."
-          />
-        </Grid.Column>
-        <Grid.Column width={13}>
-          <ExpressionBuilder
-            className="SearchBar__expressionBuilder"
-            showModeToggle={false}
-            editMode
-            dataSource={dataSource}
-            expressionId={expressionId}
-          />
-        </Grid.Column>
-        <Grid.Column width={2}>{searchButton}</Grid.Column>
-      </Grid>
-    </React.Fragment>
+    <Grid className="SearchBar__layoutGrid">
+      <Grid.Column width={1}>
+        <Tooltip
+          trigger={
+            <Button
+              circular
+              icon="text cursor"
+              className="SearchBar__modeButton icon-button"
+              onClick={() => setIsExpression(false)}
+            />
+          }
+          content="Switch to using text search. You'll lose the expression you've built here."
+        />
+      </Grid.Column>
+      <Grid.Column width={12}>
+        <div className="dropdown SearchBar__expression">
+          <div tabIndex={0} className={`dropdown__content ${visibilityClass}`}>
+            <ExpressionBuilder
+              className="SearchBar__expressionBuilder"
+              showModeToggle={false}
+              editMode
+              dataSource={dataSource}
+              expressionId={expressionId}
+            />
+          </div>
+        </div>
+      </Grid.Column>
+      <Grid.Column width={2}>{searchButton}</Grid.Column>
+    </Grid>
   );
 
   return <div className="SearchBar flat">{isExpression ? expressionBuilder : searchInput}</div>;

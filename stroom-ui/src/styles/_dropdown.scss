@@ -12,8 +12,12 @@
   z-index: 1;
 }
 
-.dropdown:focus-within .dropdown__content {
+.dropdown__content.visible {
   display: flex;
   flex-direction: column;
 }
 
+.dropdown:focus-within .dropdown__content {
+  display: flex;
+  flex-direction: column;
+}

@@ -34,68 +34,69 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
     },
     {
       menuItem: 'Details',
-      render: () => (
-        <Tab.Pane>
-          <div className="StreamDetails__container">
-            <div className="StreamDetails__table__container">
-              <Table definition compact="very" className="StreamDetails__table">
-                <Table.Body>
-                  <Table.Row>
-                    <Table.Cell>Stream ID</Table.Cell>
-                    <Table.Cell>
-                      <code>{details.stream.id}</code>
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Status</Table.Cell>
-                    <Table.Cell>
-                      <code> {details.stream.status}</code>
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Status MS</Table.Cell>
-                    <Table.Cell>
-                      {moment(details.stream.statusMs).format('MMMM Do YYYY, h:mm:ss a')}
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Stream Task ID</Table.Cell>
-                    <Table.Cell>
-                      <code> {details.stream.streamTaskId}</code>
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Parent Stream ID</Table.Cell>
-                    <Table.Cell>
-                      <code>{details.stream.parentStreamId}</code>
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Created</Table.Cell>
-                    <Table.Cell>
-                      {moment(details.stream.createMs).format('MMMM Do YYYY, h:mm:ss a')}
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Effective</Table.Cell>
-                    <Table.Cell>
-                      {moment(details.stream.effectiveMs).format('MMMM Do YYYY, h:mm:ss a')}
-                    </Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Stream processor uuid</Table.Cell>
-                    <Table.Cell>{details.stream.streamProcessor.id}</Table.Cell>
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Files</Table.Cell>
-                    <Table.Cell>{details.fileNameList}</Table.Cell>
-                  </Table.Row>
-                </Table.Body>
-              </Table>
+      render: () => {
+        console.log({ details });
+        return (
+          <Tab.Pane>
+            <div className="StreamDetails__container">
+              <div className="StreamDetails__table__container">
+                <Table definition compact="very" className="StreamDetails__table">
+                  <Table.Body>
+                    <Table.Row>
+                      <Table.Cell>Stream ID</Table.Cell>
+                      <Table.Cell>
+                        <code>{details.data.id}</code>
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Status</Table.Cell>
+                      <Table.Cell>
+                        <code> {details.data.status}</code>
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Status MS</Table.Cell>
+                      <Table.Cell>
+                        {moment(details.data.statusMs).format('MMMM Do YYYY, h:mm:ss a')}
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Stream Task ID</Table.Cell>
+                      <Table.Cell>{/* <code> {details.data.processTaskId}</code> */}</Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Parent Stream ID</Table.Cell>
+                      <Table.Cell>{/* <code>{details.data.parentDataId}</code> */}</Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Created</Table.Cell>
+                      <Table.Cell>
+                        {moment(details.data.createMs).format('MMMM Do YYYY, h:mm:ss a')}
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Effective</Table.Cell>
+                      <Table.Cell>
+                        {moment(details.data.effectiveMs).format('MMMM Do YYYY, h:mm:ss a')}
+                      </Table.Cell>
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Stream processor uuid</Table.Cell>
+                      TODO
+                      {/* <Table.Cell>{details.stream.streamProcessor.id}</Table.Cell> */}
+                    </Table.Row>
+                    <Table.Row>
+                      <Table.Cell>Files</Table.Cell>
+                      TODO
+                      {/* <Table.Cell>{details.fileNameList}</Table.Cell> */}
+                    </Table.Row>
+                  </Table.Body>
+                </Table>
+              </div>
             </div>
-          </div>
-        </Tab.Pane>
-      ),
+          </Tab.Pane>
+        );
+      },
     },
     {
       menuItem: 'Attributes',
@@ -105,7 +106,8 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
             <div className="StreamDetails__table__container">
               <Table definition compact="very" className="StreamDetails__table">
                 <Table.Body>
-                  {Object.keys(details.nameValueMap).map((key, index) => {
+                  TODO
+                  {/* {Object.keys(details.nameValueMap).map((key, index) => {
                     if (key !== 'Until' && key !== 'Rule' && key !== 'Age') {
                       return (
                         <Table.Row>
@@ -117,7 +119,7 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
                       );
                     }
                     return undefined;
-                  })}
+                  })} */}
                 </Table.Body>
               </Table>
             </div>
@@ -135,15 +137,18 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
                 <Table.Body>
                   <Table.Row>
                     <Table.Cell>Age</Table.Cell>
-                    <Table.Cell>{details.nameValueMap.Age}</Table.Cell>
+                    TODO
+                    {/* <Table.Cell>{details.nameValueMap.Age}</Table.Cell> */}
                   </Table.Row>
                   <Table.Row>
                     <Table.Cell>Until</Table.Cell>
-                    <Table.Cell>{details.nameValueMap.Until}</Table.Cell>
+                    TODO
+                    {/* <Table.Cell>{details.nameValueMap.Until}</Table.Cell> */}
                   </Table.Row>
                   <Table.Row>
                     <Table.Cell>Rule</Table.Cell>
-                    <Table.Cell>{details.nameValueMap.Rule}</Table.Cell>
+                    TODO
+                    {/* <Table.Cell>{details.nameValueMap.Rule}</Table.Cell> */}
                   </Table.Row>
                 </Table.Body>
               </Table>

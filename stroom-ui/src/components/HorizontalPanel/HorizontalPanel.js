@@ -30,10 +30,10 @@ const HorizontalPanel = ({
 }) => (
   <div className="horizontal-panel__container">
     <Grid className="horizontal-panel_header-container flat">
-      <Grid.Column width={titleColumns || 4} className="HorizontalPanel_title__container">
+      <Grid.Column width={titleColumns || 6} className="HorizontalPanel_title__container">
         {title}
       </Grid.Column>
-      <Grid.Column width={menuColumns || 12}>
+      <Grid.Column width={menuColumns || 10}>
         <Menu secondary>
           <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
             {headerMenuItems}
