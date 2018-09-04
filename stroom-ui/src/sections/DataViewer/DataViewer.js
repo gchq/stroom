@@ -155,18 +155,24 @@ const enhance = compose(
     renderComponent(() => <Loader active>Loading data source</Loader>),
   ),
   withProps(({
-    streamAttributeMaps, onHandleLoadMoreRows
+    streamAttributeMaps, onHandleLoadMoreRows, listHeight, detailsHeight
   }) => {
+    let tableData = streamAttributeMaps.map(streamAttributeMap => {
+      return ({
+        streamId: streamAttributeMap.data.id,
+        created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
+        type: streamAttributeMap.data.typeName,
+        feed: streamAttributeMap.data.feedName,
+        pipeline: streamAttributeMap.data.pipelineUuid,
+      })
+    });
+
+    // Just keep rows with data, more 'load more' rows
+    tableData = tableData.filter(row => row.streamId !== undefined);
+    tableData.push({});
+
     return {
-      tableData: streamAttributeMaps.map(streamAttributeMap => {
-        return ({
-          streamId: streamAttributeMap.data.id,
-          created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
-          type: streamAttributeMap.data.typeName,
-          feed: streamAttributeMap.data.feedName,
-          pipeline: streamAttributeMap.data.pipelineUuid,
-        })
-      }),
+      tableData,
       tableColumns: [
         {
           Header: '',
@@ -222,6 +228,10 @@ const enhance = compose(
           accessor: 'pipeline',
         },
       ],
+      // We need to parse these because localstorage, which is
+      // where these come from, is always string.
+      listHeight: Number.parseInt(listHeight, 10),
+      detailsHeight: Number.parseInt(detailsHeight, 10),
     }
     
   }),
@@ -253,14 +263,6 @@ const DataViewer = ({
   tableColumns,
   tableData,
 }) => {
-  // We need to parse these because localstorage, which is
-  // where these come from, is always string.
-  listHeight = Number.parseInt(listHeight, 10);
-  detailsHeight = Number.parseInt(detailsHeight, 10);
-
-  // Just keep rows with data, more 'load more' rows
-  tableData = tableData.filter(row => row.streamId !== undefined);
-  tableData.push({});
 
   const table = (
     <ReactTable
