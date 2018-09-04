@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
-import { bindActionCreators } from 'redux';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Grid, Header, Icon } from 'semantic-ui-react';
 

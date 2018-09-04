@@ -27,10 +27,10 @@ import 'react-table/react-table.css';
 import { Button } from 'semantic-ui-react';
 
 import { actionCreators, Directions } from '../redux';
-import { fetchTrackers, fetchMore, TrackerSelection } from '../streamTasksResourceClient';
+import { fetchTrackers, fetchMore } from '../streamTasksResourceClient';
 
 const {
-  updateSort, moveSelection, updateSearchCriteria, pageRight, pageLeft,
+  updateSort, moveSelection, updateSearchCriteria,
 } = actionCreators;
 
 const enhance = compose(

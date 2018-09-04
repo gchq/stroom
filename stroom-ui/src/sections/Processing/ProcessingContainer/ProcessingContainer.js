@@ -27,7 +27,6 @@ import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
 import ProcessingDetails from '../ProcessingDetails/ProcessingDetails';
-import ProcessingPagination from '../ProcessingPagination/ProcessingPagination';
 import InfiniteProcessingList from '../InfiniteProcessingList/InfiniteProcessingList';
 
 const { expressionChanged } = expressionActionCreators;

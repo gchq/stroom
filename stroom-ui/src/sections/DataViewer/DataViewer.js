@@ -39,7 +39,6 @@ import {
   searchWithExpression,
 } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
-import MysteriousPagination from './MysteriousPagination';
 import DetailsTabs from './DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
 
@@ -105,7 +104,6 @@ const enhance = compose(
       if (isAtEndOfList) {
         search(dataViewerId, pageOffset + 1, pageSize, true);
       } else {
-        let newRow = selectedRow;
         if(direction === 'down'){
           selectedRow = selectedRow + 1;
         }
