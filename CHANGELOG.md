@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
+
 * Issue **829** : Stroom now logs event id when viewing individual events.
 
 * Added functionality to record actions against user defined activities.
