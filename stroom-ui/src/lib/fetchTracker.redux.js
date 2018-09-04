@@ -117,7 +117,7 @@ export const wrappedGet = (dispatch, state, url, successCallback, options, force
         dispatch(setErrorMessageAction(error.message));
         dispatch(setStackTraceAction(error.stack));
         dispatch(setHttpErrorCodeAction(error.status));
-        dispatch(push('/error'));
+        dispatch(push('/s/error'));
       });
   }
 
@@ -161,7 +161,7 @@ export const wrappedFetchWithBody = (dispatch, state, url, successCallback, opti
       dispatch(setErrorMessageAction(error.message));
       dispatch(setStackTraceAction(error.stack));
       dispatch(setHttpErrorCodeAction(error.status));
-      dispatch(push('/error'));
+      dispatch(push('/s/error'));
     });
 };
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-
 import { Header, Icon, Grid } from 'semantic-ui-react/dist/commonjs';
 
 import { AppChrome } from '.';
@@ -11,6 +10,7 @@ import DataViewer from 'sections/DataViewer';
 import UserSettings from 'sections/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
+import ErrorPage from 'components/ErrorPage';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
 
@@ -81,6 +81,11 @@ export default [
     exact: true,
     path: '/s/apikeys',
     render: props => <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrame />} />,
+  },
+  {
+    exact: true,
+    path: '/s/error',
+    render: props => <AppChrome activeMenuItem="Error" content={<ErrorPage />} />,
   },
   {
     exact: true,
