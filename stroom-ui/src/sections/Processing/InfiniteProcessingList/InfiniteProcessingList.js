@@ -133,12 +133,10 @@ const enhance = compose(
   }),
   lifecycle({
     componentDidMount() {
-      const { onMoveSelection, onHandlePageRight, onHandlePageLeft } = this.props;
+      const { onMoveSelection } = this.props;
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
-      Mousetrap.bind('right', () => onHandlePageRight());
-      Mousetrap.bind('left', () => onHandlePageLeft());
     },
   }),
 );
