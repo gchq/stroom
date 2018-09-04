@@ -41,7 +41,9 @@ import java.util.Date;
 
 @Component
 public class StroomEventLoggingService extends DefaultEventLoggingService implements EventLoggingService {
-    /** Logger - should not be used for event logs */
+    /**
+     * Logger - should not be used for event logs
+     */
     private static final StroomLogger LOG = StroomLogger.getLogger(StroomEventLoggingService.class);
 
     private static final String SYSTEM = "Stroom";
@@ -55,6 +57,8 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
     private transient HttpServletRequestHolder httpServletRequestHolder;
     @Resource
     private SecurityContext security;
+    @Resource
+    private CurrentActivity currentActivity;
 
     @Override
     public Event createEvent() {
@@ -100,6 +104,8 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
         final Event event = createEvent();
 
         final EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
+        eventDetail.setPurpose(PurposeUtil.create(currentActivity.getActivity()));
+
         event.setEventDetail(eventDetail);
 
         return event;

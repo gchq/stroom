@@ -33,15 +33,13 @@ public class AuthenticationEventLog {
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private CurrentActivity currentActivity;
 
     public void logon(final String userName) {
         logon(userName, true, null, null);
     }
 
     public void logon(final String userName, final boolean success, final String outcomeDescription,
-            final AuthenticateOutcomeReason reason) {
+                      final AuthenticateOutcomeReason reason) {
         authenticationEvent("Logon", "User is logging on", AuthenticateAction.LOGON, userName, success,
                 outcomeDescription, reason);
     }
@@ -51,7 +49,7 @@ public class AuthenticationEventLog {
     }
 
     public void logoff(final String userName, final boolean success, final String outcomeDescription,
-            final AuthenticateOutcomeReason reason) {
+                       final AuthenticateOutcomeReason reason) {
         authenticationEvent("Logoff", "User is logging off", AuthenticateAction.LOGOFF, userName, success,
                 outcomeDescription, reason);
     }
@@ -61,7 +59,7 @@ public class AuthenticationEventLog {
     }
 
     public void changePassword(final String userName, final boolean success, final String outcomeDescription,
-            final AuthenticateOutcomeReason reason) {
+                               final AuthenticateOutcomeReason reason) {
         authenticationEvent("ChangePassword", "User is changing password", AuthenticateAction.CHANGE_PASSWORD, userName,
                 success, outcomeDescription, reason);
     }
@@ -71,20 +69,19 @@ public class AuthenticationEventLog {
     }
 
     public void resetPassword(final String userName, final boolean email, final boolean success,
-            final String outcomeDescription, final AuthenticateOutcomeReason reason) {
+                              final String outcomeDescription, final AuthenticateOutcomeReason reason) {
         authenticationEvent("ResetPasswordEmail", "User is resetting password by email",
                 AuthenticateAction.RESET_PASSWORD, userName, success, outcomeDescription, reason);
     }
 
     private void authenticationEvent(final String typeId, final String description, final AuthenticateAction action,
-            final String userName, final boolean success, final String outcomeDescription,
-            final AuthenticateOutcomeReason reason) {
+                                     final String userName, final boolean success, final String outcomeDescription,
+                                     final AuthenticateOutcomeReason reason) {
         try {
             final Event event = eventLoggingService.createAction(typeId, description);
 
             final Authenticate authenticate = new Authenticate();
             authenticate.setAction(action);
-            currentActivity.decorate(authenticate::getData);
             event.getEventDetail().setAuthenticate(authenticate);
 
             final User user = new User();

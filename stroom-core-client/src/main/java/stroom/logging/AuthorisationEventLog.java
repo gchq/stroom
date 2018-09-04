@@ -32,8 +32,6 @@ public class AuthorisationEventLog {
 
     @Resource
     private StroomEventLoggingService eventLoggingService;
-    @Resource
-    private CurrentActivity currentActivity;
 
     public void addUserToGroup(final String userName, final String groupName, final boolean success, final String outcomeDescription) {
         final Event.EventDetail.Authorise.AddGroups addGroups = new Event.EventDetail.Authorise.AddGroups();
@@ -66,7 +64,6 @@ public class AuthorisationEventLog {
             authorise.setAction(Authorisation.MODIFY);
             authorise.setAddGroups(addGroups);
             authorise.setRemoveGroups(removeGroups);
-            currentActivity.decorate(authorise::getData);
             event.getEventDetail().setAuthorise(authorise);
 
             if (!success) {

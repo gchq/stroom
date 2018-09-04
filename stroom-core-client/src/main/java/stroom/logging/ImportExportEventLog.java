@@ -47,8 +47,6 @@ public class ImportExportEventLog {
     private StroomEventLoggingService eventLoggingService;
     @Resource
     private FolderService folderService;
-    @Resource
-    private CurrentActivity currentActivity;
 
     public void export(final ExportConfigAction exportDataAction) {
         try {
@@ -63,8 +61,6 @@ public class ImportExportEventLog {
 
             final Export exp = new Export();
             exp.setSource(multiObject);
-
-            currentActivity.decorate(exp::getData);
 
             event.getEventDetail().setExport(exp);
 
@@ -98,8 +94,6 @@ public class ImportExportEventLog {
 
                         final Import imp = new Import();
                         imp.setSource(multiObject);
-
-                        currentActivity.decorate(imp::getData);
 
                         event.getEventDetail().setImport(imp);
 

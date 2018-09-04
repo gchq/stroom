@@ -42,7 +42,7 @@ public class AcknowledgeSplashHandler extends AbstractTaskHandler<AcknowledgeSpl
     @Override
     public SharedBoolean exec(final AcknowledgeSplashAction action) {
         try {
-            final Event event = eventLoggingService.createAction("SplashScreen", "User has acknowledged the splash screen");
+            final Event event = eventLoggingService.createAction("Acknowledge Splash", "User has acknowledged the splash screen");
 
             final Banner banner = new Banner();
             banner.setMessage(action.getMessage());

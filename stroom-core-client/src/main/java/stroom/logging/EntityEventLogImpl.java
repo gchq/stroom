@@ -56,8 +56,6 @@ public class EntityEventLogImpl implements EntityEventLog {
     private StroomEventLoggingService eventLoggingService;
     @Resource
     private StroomBeanStore stroomBeanStore;
-    @Resource
-    private CurrentActivity currentActivity;
 
     private volatile Map<Class<?>, EventInfoProvider> entityInfoAppenders;
 
@@ -102,7 +100,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             final Object object = new Object();
             object.setType(entityType);
             object.setName(entityName);
-            currentActivity.decorate(object::getData);
 
             objectOutcome.getObjects().add(object);
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
@@ -124,7 +121,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setCreate(objectOutcome);
             final BaseObject baseObject = createBaseObject(entity);
-            currentActivity.decorate(baseObject);
             objectOutcome.getObjects().add(baseObject);
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
@@ -157,7 +153,6 @@ public class EntityEventLogImpl implements EntityEventLog {
                 aft.getObjects().add(createBaseObject(after));
             }
 
-            currentActivity.decorate(update::getData);
             update.setOutcome(EventLoggingUtil.createOutcome(ex));
 
             eventLoggingService.log(event);
@@ -190,8 +185,6 @@ public class EntityEventLogImpl implements EntityEventLog {
                 destination.getObjects().add(createBaseObject(after));
             }
 
-            currentActivity.decorate(move::getData);
-
             if (ex != null && ex.getMessage() != null) {
                 final CopyMoveOutcome outcome = new CopyMoveOutcome();
                 outcome.setSuccess(Boolean.FALSE);
@@ -217,7 +210,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setDelete(objectOutcome);
             final BaseObject baseObject = createBaseObject(entity);
-            currentActivity.decorate(baseObject);
             objectOutcome.getObjects().add(baseObject);
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
@@ -238,7 +230,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             event.getEventDetail().setView(objectOutcome);
             final BaseObject baseObject = createBaseObject(entity);
-            currentActivity.decorate(baseObject);
             objectOutcome.getObjects().add(baseObject);
             objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
             eventLoggingService.log(event);
@@ -267,7 +258,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             if (size != null) {
                 crit.setTotalResults(BigInteger.valueOf(size));
             }
-            currentActivity.decorate(crit::getData);
 
             final ObjectOutcome objectOutcome = new ObjectOutcome();
             objectOutcome.getObjects().add(crit);
@@ -291,7 +281,6 @@ public class EntityEventLogImpl implements EntityEventLog {
 
             final Export exp = new Export();
             exp.setSource(multiObject);
-            currentActivity.decorate(exp::getData);
             exp.setOutcome(EventLoggingUtil.createOutcome(ex));
 
             event.getEventDetail().setExport(exp);
@@ -320,8 +309,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             final Search search = new Search();
             event.getEventDetail().setSearch(search);
             search.setQuery(query);
-
-            currentActivity.decorate(search::getData);
 
             if (results != null && results.getPageResponse() != null) {
                 final PageResponse pageResponse = results.getPageResponse();
@@ -357,8 +344,6 @@ public class EntityEventLogImpl implements EntityEventLog {
             final Search search = new Search();
             event.getEventDetail().setSearch(search);
             search.setQuery(query);
-
-            currentActivity.decorate(search::getData);
 
             if (results != null && results.getPageResponse() != null) {
                 final PageResponse pageResponse = results.getPageResponse();
