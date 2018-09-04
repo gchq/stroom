@@ -32,7 +32,6 @@ import stroom.feed.shared.Feed;
 import stroom.security.Insecure;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.logging.StroomLogger;
 
@@ -75,13 +74,13 @@ public class StreamEventLog {
         }
     }
 
-    public void viewStream(final Stream stream, final Feed feed, final StreamType streamType, final Throwable th) {
+    public void viewStream(final String eventId, final Feed feed, final StreamType streamType, final Throwable th) {
         try {
-            if (stream != null) {
+            if (eventId != null) {
                 final Event event = eventLoggingService.createAction("View", "Viewing Stream");
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setView(objectOutcome);
-                objectOutcome.getObjects().add(createStreamObject(stream, feed, streamType));
+                objectOutcome.getObjects().add(createStreamObject(eventId, feed, streamType));
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
                 eventLoggingService.log(event);
             }
@@ -132,11 +131,11 @@ public class StreamEventLog {
         return null;
     }
 
-    private event.logging.Object createStreamObject(final Stream stream, final Feed feed,
+    private event.logging.Object createStreamObject(final String eventId, final Feed feed,
                                                     final StreamType streamType) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");
-        object.setId(String.valueOf(stream.getId()));
+        object.setId(eventId);
         if (feed != null) {
             object.getData().add(EventLoggingUtil.createData("Feed", feed.getName()));
         }
