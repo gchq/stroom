@@ -66,6 +66,7 @@ const enhance = compose(
       const currentIndex = trackers.findIndex(tracker => tracker.filterId === selectedTrackerId);
       const isAtEndOfList = currentIndex === trackers.length - 1;
       const isAtEndOfEverything = currentIndex === totalTrackers - 1;
+      fetchMore();
       if (isAtEndOfList && !isAtEndOfEverything) {
         fetchMore();
       } else {
@@ -150,6 +151,10 @@ const enhance = compose(
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
+    },
+    componentWillUnmount() {
+      Mousetrap.unbind('up');
+      Mousetrap.unbind('down');
     },
   }),
 );
