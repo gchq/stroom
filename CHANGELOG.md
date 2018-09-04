@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added functionality to record actions against user defined activities.
+
+* Added functionality to show a splash screen on login.
+
 ## [v5.4.6] - 2018-08-20
 
 * Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
