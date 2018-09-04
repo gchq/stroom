@@ -211,7 +211,7 @@ const enhance = compose(
                   <Button
                     size="tiny"
                     compact
-                    className="button border hoverable infinite-processing-list__load-more-button"
+                    className="button border hoverable load-more-button"
                     onClick={() => onHandleLoadMoreRows()}
                   >
                     Load more rows

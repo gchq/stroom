@@ -16,32 +16,28 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { path } from 'ramda';
-
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
-
 import { Progress } from 'react-sweet-progress';
 import 'react-sweet-progress/lib/style.css';
-
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
+import { Button } from 'semantic-ui-react';
 
 import { actionCreators, Directions } from '../redux';
-
-import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
+import { fetchTrackers, fetchMore } from '../streamTasksResourceClient';
 
 const {
-  updateSort, moveSelection, updateSearchCriteria, pageRight, pageLeft,
+  updateSort, moveSelection, updateSearchCriteria,
 } = actionCreators;
 
 const enhance = compose(
   connect(
     ({
       processing: {
-        trackers, sortBy, sortDirection, selectedTrackerId, pageSize,
+        trackers, sortBy, sortDirection, selectedTrackerId, pageSize, totalTrackers,
       },
     }) => ({
       trackers,
@@ -49,27 +45,32 @@ const enhance = compose(
       sortDirection,
       selectedTrackerId,
       pageSize,
+      totalTrackers,
     }),
     {
       fetchTrackers,
+      fetchMore,
       updateSort,
       moveSelection,
       updateSearchCriteria,
-      pageRight,
-      pageLeft,
     },
   ),
   withHandlers({
-    onMoveSelection: ({ moveSelection }) => (direction) => {
-      moveSelection(direction);
-    },
-    onHandlePageRight: ({ pageRight, fetchTrackers }) => () => {
-      pageRight();
-      fetchTrackers(TrackerSelection.first);
-    },
-    onHandlePageLeft: ({ pageLeft, fetchTrackers }) => () => {
-      pageLeft();
-      fetchTrackers(TrackerSelection.first);
+    onMoveSelection: ({
+      moveSelection,
+      trackers,
+      selectedTrackerId,
+      totalTrackers,
+      fetchMore,
+    }) => (direction) => {
+      const currentIndex = trackers.findIndex(tracker => tracker.filterId === selectedTrackerId);
+      const isAtEndOfList = currentIndex === trackers.length - 1;
+      const isAtEndOfEverything = currentIndex === totalTrackers - 1;
+      if (isAtEndOfList && !isAtEndOfEverything) {
+        fetchMore();
+      } else {
+        moveSelection(direction);
+      }
     },
     onHandleSort: ({ updateSort, fetchTrackers }) => (sort) => {
       if (sort !== undefined) {
@@ -79,16 +80,24 @@ const enhance = compose(
         fetchTrackers();
       }
     },
+    onHandleLoadMoreRows: ({ fetchMore }) => () => {
+      fetchMore();
+    },
   }),
-  withProps(({ trackers, selectedTrackerId }) => {
-    let tableData = trackers.map(({ filterId, priority, trackerPercent }) => ({
+  withProps(({
+    trackers, selectedTrackerId, onHandleLoadMoreRows, totalTrackers,
+  }) => {
+    // We add an empty 'load more' row, but we need to make sure it's not there when we re-render.
+    trackers = trackers.filter(tracker => tracker.filterId !== undefined);
+    const allRecordsRetrieved = totalTrackers === trackers.length;
+    trackers.push({});
+
+    const tableData = trackers.map(({ filterId, priority, trackerPercent }) => ({
       filterId,
       pipelineName: 'TODO: awaiting backend re-write. Sorting broken too.',
       priority,
       progress: trackerPercent,
     }));
-
-    // TODO add a row for loading more data
 
     return {
       selectedTracker: trackers.find(tracker => tracker.filterId === selectedTrackerId),
@@ -101,15 +110,35 @@ const enhance = compose(
         {
           Header: 'Pipeline name',
           accessor: 'pipelineName',
+          Cell: row => (row.original.filterId ? row.original.pipelineName : undefined),
         },
         {
           Header: 'Priority',
           accessor: 'priority',
+          Cell: row =>
+            (row.original.filterId ? (
+              row.original.priority
+            ) : (
+              <Button
+                disabled={allRecordsRetrieved}
+                size="tiny"
+                compact
+                className="button border hoverable processing-list__load-more-button"
+                onClick={() => onHandleLoadMoreRows()}
+              >
+                {allRecordsRetrieved ? <span>All rows loaded</span> : <span>Load more rows</span>}
+              </Button>
+            )),
         },
         {
           Header: 'Progress',
           accessor: 'progress',
-          Cell: row => <Progress percent={row.trackerPercent} symbolClassName="flat-text" />,
+          Cell: row =>
+            (row.original.filterId ? (
+              <Progress percent={row.original.progress} symbolClassName="flat-text" />
+            ) : (
+              undefined
+            )),
         },
       ],
       tableData,
@@ -117,12 +146,14 @@ const enhance = compose(
   }),
   lifecycle({
     componentDidMount() {
-      const { onMoveSelection, onHandlePageRight, onHandlePageLeft } = this.props;
+      const { onMoveSelection } = this.props;
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
-      Mousetrap.bind('right', () => onHandlePageRight());
-      Mousetrap.bind('left', () => onHandlePageLeft());
+    },
+    componentWillUnmount() {
+      Mousetrap.unbind('up');
+      Mousetrap.unbind('down');
     },
   }),
 );
@@ -137,13 +168,14 @@ const ProcessingList = ({
   pageSize,
   onHandleSort,
   onSelection,
+  onHandleLoadMoreRows,
 }) => (
   <ReactTable
     manual
     className="table__reactTable"
     sortable
     showPagination={false}
-    pageSize={pageSize}
+    pageSize={pageSize + 1}
     data={tableData}
     columns={tableColumns}
     onFetchData={(state, instance) => onHandleSort(state.sorted[0])}
