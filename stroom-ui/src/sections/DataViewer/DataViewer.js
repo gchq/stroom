@@ -113,6 +113,7 @@ const enhance = compose(
           selectedRow = selectedRow - 1;
         }
 
+        // TODO: stop repeating onRowSelected here
         selectRow(dataViewerId, selectedRow);
         getDataForSelectedRow(dataViewerId);
         getDetailsForSelectedRow(dataViewerId);
@@ -239,17 +240,10 @@ const enhance = compose(
 
 const DataViewer = ({
   dataViewerId,
-  streamAttributeMaps,
   pageOffset,
   pageSize,
-  nextPage,
-  previousPage,
-  search,
-  selectRow,
   deselectRow,
   selectedRow,
-  getDataForSelectedRow,
-  getDetailsForSelectedRow,
   dataForSelectedRow,
   detailsForSelectedRow,
   listHeight,
@@ -258,7 +252,6 @@ const DataViewer = ({
   setDetailsHeight,
   dataSource,
   searchWithExpression,
-  onHandleLoadMoreRows,
   onRowSelected,
   tableColumns,
   tableData,
