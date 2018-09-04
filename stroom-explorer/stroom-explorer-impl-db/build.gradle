@@ -3,24 +3,26 @@ ext.moduleName = 'stroom.data.meta.impl.db'
 dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-explorer:stroom-explorer-impl-db-gen')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
-    compile project(':stroom-util-shared')
-    compile project(':stroom-entity-shared')
+    //compile project(':stroom-security:stroom-security-api')
+    //compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    //compile project(':stroom-util-shared')
+    //compile project(':stroom-entity-shared')
 
-    compile libs.stroomQueryApi
+    //compile libs.stroomQueryApi
+    compile libs.stroomDocRef
 
     compile libs.flyway_core
     compile libs.guice4
     compile libs.hikari
-    compile libs.jooq
+    compile libs.jackson_annotations
     compile libs.javax_inject
+    compile libs.jooq
     compile libs.slf4j_api
 
     runtime libs.mysql_connector_java
 
-    testCompile libs.junit_jupiter
     testCompile libs.assertj_core
+    testCompile libs.junit_jupiter
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
 }
