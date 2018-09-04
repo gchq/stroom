@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withProps } from 'recompose';
+import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
@@ -14,19 +14,30 @@ import { actionCreators } from './redux';
 import { uniqueElementName } from './pipelineUtils';
 import { required, minLength2 } from 'lib/reduxFormUtils';
 
-const { pipelineElementAdded } = actionCreators;
+const { pipelineElementAddConfirmed, pipelineElementAddCancelled } = actionCreators;
 
 const enhance = compose(
   connect(
-    (state, props) => ({
-      // state
-      newElementForm: state.form.newElementName,
-      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
-      initialValues: props.newElementDefinition
-        ? { name: props.newElementDefinition.type }
-        : undefined,
-    }),
-    { pipelineElementAdded },
+    ({ form, pipelineEditor: { pipelineStates } }, { pipelineId }) => {
+      const pipelineState = pipelineStates[pipelineId];
+      let initialValues;
+
+      const { pendingNewElement } = pipelineState;
+      if (pendingNewElement) {
+        initialValues = {
+          name: pendingNewElement.elementDefinition.type,
+        };
+      }
+
+      return {
+        // state
+        newElementForm: form.newElementName,
+        pendingNewElement,
+        pipelineState,
+        initialValues,
+      };
+    },
+    { pipelineElementAddConfirmed, pipelineElementAddCancelled },
   ),
   reduxForm({
     form: 'newElementName',
@@ -35,34 +46,40 @@ const enhance = compose(
     touchOnChange: true,
   }),
   // Properties from owner
-  withProps(({ // Redux action
-    pipelineId, elementId, pipelineElementAdded, newElementDefinition, setNewElementDefinition, newElementForm, reset,
-  }) => ({
+  withHandlers({
     // from withNewElementDefinition in owner // Redux form
-    onConfirmNewElement: () => {
-      pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
-      setNewElementDefinition(undefined);
+    onConfirmNewElement: ({
+      pipelineElementAddConfirmed,
+      pipelineId,
+      newElementForm: {
+        values: { name },
+      },
+      reset,
+    }) => () => {
+      pipelineElementAddConfirmed(pipelineId, name);
       reset();
     },
-    onCancelNewElement: () => {
-      setNewElementDefinition(undefined);
+    onCancelNewElement: ({ pipelineElementAddCancelled, reset, pipelineId }) => () => {
+      pipelineElementAddCancelled(pipelineId);
       reset();
     },
+  }),
+  withProps(({ invalid, submitting, pendingNewElement }) => ({
+    submitDisabled: invalid || submitting,
+    isOpen: !!pendingNewElement,
   })),
 );
 
 const AddElementModal = ({
-  pipeline,
-  newElementDefinition,
-  setNewElementDefinition,
-  invalid,
-  submitting,
+  pipelineState: { pipeline },
+  isOpen,
+  submitDisabled,
   onConfirmNewElement,
   onCancelNewElement,
 }) => (
   <ThemedModal
     size="tiny"
-    open={!!newElementDefinition}
+    open={isOpen}
     onClose={onCancelNewElement}
     dimmer="inverted"
     header={<Header content="Add New Element" />}
@@ -75,7 +92,7 @@ const AddElementModal = ({
             component={InputField}
             type="text"
             placeholder="Name"
-            validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
+            validate={[required, minLength2, uniqueElementName(pipeline)]}
             autoFocus
           />
         </Form.Field>
@@ -86,7 +103,7 @@ const AddElementModal = ({
         <Button
           positive
           content="Submit"
-          disabled={invalid || submitting}
+          disabled={submitDisabled}
           onClick={onConfirmNewElement}
           form="newElementForm"
         />
@@ -98,9 +115,6 @@ const AddElementModal = ({
 
 AddElementModal.propTypes = {
   pipelineId: PropTypes.string.isRequired,
-  elementId: PropTypes.string.isRequired,
-  setNewElementDefinition: PropTypes.func.isRequired,
-  newElementDefinition: PropTypes.object,
 };
 
 export default enhance(AddElementModal);

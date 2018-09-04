@@ -34,7 +34,7 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
 
-  const { pipeline } = state.pipelineEditor.pipelines[pipelineId];
+  const { pipeline } = state.pipelineEditor.pipelineStates[pipelineId];
   const body = JSON.stringify(pipeline);
 
   dispatch(pipelineSaveRequested(pipelineId));

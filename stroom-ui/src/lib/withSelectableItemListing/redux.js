@@ -42,11 +42,7 @@ const byListingId = createActionHandlerPerId(
 
 const reducer = handleActions(
   {
-    SELECTABLE_LISTING_MOUNTED: byListingId((state, action, listingState) => {
-      const {
-        payload: { listingId, items, selectionBehaviour },
-      } = action;
-
+    SELECTABLE_LISTING_MOUNTED: byListingId((state, { payload: { items, selectionBehaviour } }, listingState) => {
       // Attempt to rescue previous focus index
       let focusIndex = -1;
       let focussedItem;
@@ -64,13 +60,7 @@ const reducer = handleActions(
         selectionBehaviour,
       };
     }),
-    [combineActions(focusUp, focusDown)]: byListingId((state, action, listingState) => {
-      const {
-        payload: { listingId, direction },
-      } = action;
-
-      const { items, focusIndex } = listingState;
-
+    [combineActions(focusUp, focusDown)]: byListingId((state, { payload: { direction } }, { items, focusIndex }) => {
       // Calculate the next index based on the selection change
       let nextIndex = 0;
       if (focusIndex !== -1) {
@@ -83,11 +73,7 @@ const reducer = handleActions(
         focussedItem,
       };
     }),
-    [combineActions(selectFocussed, selectionToggled)]: byListingId((state, action, listingState) => {
-      const {
-        payload: { listingId, index, keyIsDown },
-      } = action;
-
+    [combineActions(selectFocussed, selectionToggled)]: byListingId((state, { payload: { index, keyIsDown } }, listingState) => {
       let {
         selectedItemIndexes,
         focusIndex,

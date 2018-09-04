@@ -93,8 +93,9 @@ const PICKER_DELIM = '_';
  *      expressionId : the parsed expression ID. Will be populated if isExpressionBased === true
  *      termUuid : the parsed term UUID. Will be populated if isExpressionBased === true
  *  }
+ * TODO - do we need this?
  */
-const splitDictionaryTermId = (value) => {
+export const splitDictionaryTermId = (value) => {
   const p = value.split(PICKER_DELIM);
   let isExpressionBased = false;
   let expressionId = null;

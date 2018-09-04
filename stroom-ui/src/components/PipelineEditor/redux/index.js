@@ -17,8 +17,8 @@ import {
 
 import {
   actionCreators as pipelineActionCreators,
-  reducer as pipelineReducer,
-} from './pipelineReducer';
+  reducer as pipelineStatesReducer,
+} from './pipelineStatesReducer';
 
 import {
   actionCreators as pipelineSearchActionCreators,
@@ -35,7 +35,7 @@ const actionCreators = {
 
 const reducer = combineReducers({
   elements: elementReducer,
-  pipelines: pipelineReducer,
+  pipelineStates: pipelineStatesReducer,
   search: pipelineSearchReducer,
   settings: pipelineSettingsReducer,
   inheritPipeline: inheritPipelineReducer,

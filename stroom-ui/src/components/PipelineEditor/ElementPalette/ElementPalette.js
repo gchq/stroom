@@ -1,28 +1,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withProps } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import ElementCategory from './ElementCategory';
 import { getBinItems } from '../pipelineUtils';
 
-const enhance = compose(
-  connect(
-    (state, props) => ({
-      // state
-      elementsByCategory: state.pipelineEditor.elements.byCategory || {},
-      elementsByType: state.pipelineEditor.elements.byType || {},
-      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
-    }),
+const enhance = compose(connect(
+  (
     {
-      // actions
+      pipelineEditor: {
+        pipelineStates,
+        elements: { byCategory = {}, byType = {} },
+      },
     },
-  ),
-  withProps(({ pipeline, elementsByType }) => ({
-    recycleBinItems: pipeline ? getBinItems(pipeline.pipeline, elementsByType) : [],
-  })),
-);
+    { pipelineId },
+  ) => {
+    const pipelineState = pipelineStates[pipelineId];
+
+    return {
+      // state
+      elementsByCategory: byCategory,
+      recycleBinItems: pipelineState ? getBinItems(pipelineState.pipeline, byType) : [],
+    };
+  },
+  {
+    // actions
+  },
+));
 
 const ElementPalette = ({ elementsByCategory, recycleBinItems }) => (
   <div className="element-palette">

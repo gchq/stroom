@@ -38,15 +38,21 @@ const actionCreators = createActions({
     itemToMove,
     destination,
   }),
-  PIPELINE_ELEMENT_ADDED: (pipelineId, parentId, childDefinition, name) => ({
+  PIPELINE_ELEMENT_ADD_REQUESTED: (pipelineId, parentId, elementDefinition) => ({
     pipelineId,
     parentId,
-    childDefinition,
+    elementDefinition,
+  }),
+  PIPELINE_ELEMENT_ADD_CANCELLED: pipelineId => ({
+    pipelineId,
+  }),
+  PIPELINE_ELEMENT_ADD_CONFIRMED: (pipelineId, name) => ({
+    pipelineId,
     name,
   }),
   PIPELINE_ELEMENT_DELETE_REQUESTED: (pipelineId, elementId) => ({ pipelineId, elementId }),
   PIPELINE_ELEMENT_DELETE_CANCELLED: pipelineId => ({ pipelineId, elementId: undefined }),
-  PIPELINE_ELEMENT_DELETED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_DELETE_CONFIRMED: pipelineId => ({ pipelineId }),
   PIPELINE_ELEMENT_REINSTATED: (pipelineId, parentId, recycleData) => ({
     pipelineId,
     parentId,
@@ -79,7 +85,8 @@ const defaultState = {};
 const defaultPipelineState = {
   isDirty: false,
   isSaving: false,
-  pendingElementToDelete: undefined,
+  pendingNewElement: undefined,
+  pendingElementIdToDelete: undefined,
 };
 
 const updatePipeline = pipeline => ({
@@ -102,9 +109,9 @@ const reducer = handleActions(
       isDirty: false,
       isSaving: false,
     })),
-    PIPELINE_SETTINGS_UPDATED: byPipelineId((state, { payload: { description } }, currentPipelineState) => ({
+    PIPELINE_SETTINGS_UPDATED: byPipelineId((state, { payload: { description } }, { pipeline }) => ({
       pipeline: {
-        ...currentPipelineState.pipeline,
+        ...pipeline,
         description,
       },
       isDirty: true,
@@ -114,49 +121,53 @@ const reducer = handleActions(
       selectedElementInitialValues: initialValues,
     })),
     [combineActions(pipelineElementDeleteRequested, pipelineElementDeleteCancelled)]: byPipelineId((state, { payload: { elementId } }) => ({
-      pendingElementToDelete: elementId,
+      pendingElementIdToDelete: elementId,
     })),
-    PIPELINE_ELEMENT_DELETED: byPipelineId((state, { payload: { elementId } }, currentPipelineState) => ({
-      ...updatePipeline(removeElementFromPipeline(currentPipelineState, elementId)),
+    PIPELINE_ELEMENT_DELETE_CONFIRMED: byPipelineId((state, action, { pipeline, pendingElementIdToDelete }) => ({
+      ...updatePipeline(removeElementFromPipeline(pipeline, pendingElementIdToDelete)),
       isDirty: true,
-      pendingElementToDelete: undefined,
+      pendingElementIdToDelete: undefined,
     })),
-    PIPELINE_ELEMENT_REINSTATED: byPipelineId((state, { payload: { parentId, recycleData } }, currentPipelineState) => ({
-      ...updatePipeline(reinstateElementToPipeline(currentPipelineState, parentId, recycleData)),
-      isDirty: true,
-    })),
-    PIPELINE_ELEMENT_ADDED: byPipelineId((state, { payload: { parentId, childDefinition, name } }, currentPipelineState) => ({
-      ...updatePipeline(createNewElementInPipeline(currentPipelineState, parentId, childDefinition, name)),
+    PIPELINE_ELEMENT_REINSTATED: byPipelineId((state, { payload: { parentId, recycleData } }, { pipeline }) => ({
+      ...updatePipeline(reinstateElementToPipeline(pipeline, parentId, recycleData)),
       isDirty: true,
     })),
-    PIPELINE_ELEMENT_MOVED: byPipelineId((state, { payload: { itemToMove, destination } }, currentPipelineState) => ({
-      ...updatePipeline(moveElementInPipeline(currentPipelineState, itemToMove, destination)),
-      isDirty: true,
-    })),
-    PIPELINE_ELEMENT_PROPERTY_UPDATED: byPipelineId((
-      state,
-      {
-        payload: {
-          element, name, propertyType, propertyValue,
-        },
+    PIPELINE_ELEMENT_ADD_REQUESTED: byPipelineId((state, { payload: { parentId, elementDefinition } }) => ({
+      pendingNewElement: {
+        parentId,
+        elementDefinition,
       },
-      currentPipelineState,
+    })),
+    PIPELINE_ELEMENT_ADD_CANCELLED: byPipelineId((state, action, currentPipelineState) => ({
+      pendingNewElement: undefined,
+    })),
+    PIPELINE_ELEMENT_ADD_CONFIRMED: byPipelineId((
+      state,
+      { payload: { name } },
+      { pipeline, pendingNewElement: { parentId, elementDefinition } },
     ) => ({
-      ...updatePipeline(setElementPropertyValueInPipeline(
-        currentPipelineState,
-        element,
-        name,
-        propertyType,
-        propertyValue,
-      )),
+      ...updatePipeline(createNewElementInPipeline(pipeline, parentId, elementDefinition, name)),
+      pendingNewElement: undefined,
       isDirty: true,
     })),
-    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT: byPipelineId((state, { payload: { elementId, name } }, currentPipelineState) => ({
-      ...updatePipeline(revertPropertyToParent(currentPipelineState, elementId, name)),
+    PIPELINE_ELEMENT_MOVED: byPipelineId((state, { payload: { itemToMove, destination } }, { pipeline }) => ({
+      ...updatePipeline(moveElementInPipeline(pipeline, itemToMove, destination)),
       isDirty: true,
     })),
-    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT: byPipelineId((state, { elementId, name }, currentPipelineState) => ({
-      ...updatePipeline(revertPropertyToDefault(currentPipelineState, elementId, name)),
+    PIPELINE_ELEMENT_PROPERTY_UPDATED: byPipelineId((state, {
+      payload: {
+        element, name, propertyType, propertyValue,
+      },
+    }, { pipeline }) => ({
+      ...updatePipeline(setElementPropertyValueInPipeline(pipeline, element, name, propertyType, propertyValue)),
+      isDirty: true,
+    })),
+    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT: byPipelineId((state, { payload: { elementId, name } }, { pipeline }) => ({
+      ...updatePipeline(revertPropertyToParent(pipeline, elementId, name)),
+      isDirty: true,
+    })),
+    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT: byPipelineId((state, { elementId, name }, { pipeline }) => ({
+      ...updatePipeline(revertPropertyToDefault(pipeline, elementId, name)),
       isDirty: true,
     })),
   },

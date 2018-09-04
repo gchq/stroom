@@ -7,7 +7,7 @@
   @extend %element-shared__type;
 }
 
-.Pipeline-element.focus {
+.Pipeline-element:focus-within {
   @extend %element-shared--focus;
 }
 
