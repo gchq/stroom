@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **829** : Stroom now logs event id when viewing individual events.
+
 * Added functionality to record actions against user defined activities.
 
 * Added functionality to show a splash screen on login.
