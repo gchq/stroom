@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
+
 * Issue **774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
 
 * Issue **829** : Stroom now logs event id when viewing individual events.
