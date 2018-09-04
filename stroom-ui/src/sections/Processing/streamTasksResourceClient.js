@@ -17,10 +17,7 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     url += `&sortDirection=${state.processing.sortDirection}`;
   }
 
-  if (
-    state.processing.searchCriteria !== '' &&
-    state.processing.searchCriteria !== undefined
-  ) {
+  if (state.processing.searchCriteria !== '' && state.processing.searchCriteria !== undefined) {
     url += `&filter=${state.processing.searchCriteria}`;
   }
 
@@ -31,6 +28,55 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     (response) => {
       response.json().then((trackers) => {
         dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+        // dispatch(actionCreators.addTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+        switch (trackerSelection) {
+          case TrackerSelection.first:
+            dispatch(actionCreators.selectFirst());
+            break;
+          case TrackerSelection.last:
+            dispatch(actionCreators.selectLast());
+            break;
+          case TrackerSelection.none:
+            dispatch(actionCreators.selectNone());
+            break;
+          default:
+            break;
+        }
+      });
+    },
+    null,
+    true,
+  );
+};
+
+export const fetchMore = trackerSelection => (dispatch, getState) => {
+  const state = getState();
+
+  const rowsToFetch = state.processing.pageSize;
+  dispatch(actionCreators.updatePageSize(rowsToFetch));
+
+  const nextPageOffset = state.processing.pageOffset + 1;
+  dispatch(actionCreators.changePage(nextPageOffset));
+
+  let url = `${state.config.streamTaskServiceUrl}/?`;
+  url += `pageSize=${rowsToFetch}`;
+  url += `&offset=${nextPageOffset}`;
+  if (state.processing.sortBy !== undefined) {
+    url += `&sortBy=${state.processing.sortBy}`;
+    url += `&sortDirection=${state.processing.sortDirection}`;
+  }
+
+  if (state.processing.searchCriteria !== '' && state.processing.searchCriteria !== undefined) {
+    url += `&filter=${state.processing.searchCriteria}`;
+  }
+
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    (response) => {
+      response.json().then((trackers) => {
+        dispatch(actionCreators.addTrackers(trackers.streamTasks, trackers.totalStreamTasks));
         switch (trackerSelection) {
           case TrackerSelection.first:
             dispatch(actionCreators.selectFirst());

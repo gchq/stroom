@@ -33,7 +33,7 @@ storiesOf('Processing', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('basic', () => <Processing />);
+  .add('basic', () => <ProcessingContainer />);
 
 storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
@@ -41,9 +41,9 @@ storiesOf('Processing', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('No trackers', () => <Processing />);
+  .add('No trackers', () => <ProcessingContainer />);
 
-const lotsOfTrackers = [...Array(10).keys()].map(i => generateGenericTracker(i));
+const lotsOfTrackers = [...Array(1000).keys()].map(i => generateGenericTracker(i));
 
 storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
@@ -51,4 +51,4 @@ storiesOf('Processing', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('Lots of trackers', () => <Processing />);
+  .add('Lots of trackers', () => <ProcessingContainer />);
