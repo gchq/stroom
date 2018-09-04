@@ -16,8 +16,8 @@
 
 package stroom.logging;
 
-import event.logging.Data;
 import event.logging.Purpose;
+import event.logging.util.EventLoggingUtil;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 
@@ -28,10 +28,7 @@ public class PurposeUtil {
             final ActivityDetails activityDetails = activity.getDetails();
             activityDetails.getNames().forEach(name -> {
                 final String value = activityDetails.getProperties().get(name);
-                final Data data = new Data();
-                data.setName(name);
-                data.setValue(value);
-                purpose.getData().add(data);
+                purpose.getData().add(EventLoggingUtil.createData(name, value));
             });
             return purpose;
         }

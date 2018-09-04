@@ -151,7 +151,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, (long) 1);
                     final RowCount<Long> pageRowCount = new RowCount<>((long) 1, true);
 
-                    writeEventLog(eventId, feed, streamType, new IOException("Stream has been deleted"));
+                    writeEventLog(eventId, feed, streamType, pipeline, new IOException("Stream has been deleted"));
 
                     return new FetchDataResult(null, null, resultStreamsRange,
                             streamsRowCount, resultPageRange, pageRowCount, null,
@@ -194,11 +194,14 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
                 // Get the event id.
                 eventId = String.valueOf(streamSource.getStream().getId());
+                if (streamsTotal > 1) {
+                    eventId += ":" + streamsOffset;
+                }
                 if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
                     eventId += ":" + (pageRange.getOffset() + 1);
                 }
 
-                writeEventLog(eventId, feed, streamType, null);
+                writeEventLog(eventId, feed, streamType, pipeline, null);
 
                 // If this is an error stream and the UI is requesting markers then
                 // create a list of markers.
@@ -209,7 +212,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 return createDataResult(feed, streamType, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
 
             } catch (final Exception e) {
-                writeEventLog(eventId, feed, streamType, e);
+                writeEventLog(eventId, feed, streamType, pipeline, e);
 
                 if (StreamStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("You cannot view locked streams.");
@@ -338,10 +341,13 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
-    private void writeEventLog(final String eventId, final Feed feed, final StreamType streamType,
+    private void writeEventLog(final String eventId,
+                               final Feed feed,
+                               final StreamType streamType,
+                               final DocRef pipelineRef,
                                final Exception e) {
         try {
-            streamEventLog.viewStream(eventId, feed, streamType, e);
+            streamEventLog.viewStream(eventId, feed, streamType, pipelineRef, e);
         } catch (final Exception ex) {
             LOGGER.debug(ex.getMessage(), ex);
         }
