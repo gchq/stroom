@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent, withHandlers } from 'recompose';
+import { compose, lifecycle, branch, renderComponent, withHandlers, withProps } from 'recompose';
 import moment from 'moment';
 import { path } from 'ramda';
 
@@ -154,6 +154,77 @@ const enhance = compose(
     ({ dataSource }) => !dataSource,
     renderComponent(() => <Loader active>Loading data source</Loader>),
   ),
+  withProps(({
+    streamAttributeMaps, onHandleLoadMoreRows
+  }) => {
+    return {
+      tableData: streamAttributeMaps.map(streamAttributeMap => {
+        return ({
+          streamId: streamAttributeMap.data.id,
+          created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
+          type: streamAttributeMap.data.typeName,
+          feed: streamAttributeMap.data.feedName,
+          pipeline: streamAttributeMap.data.pipelineUuid,
+        })
+      }),
+      tableColumns: [
+        {
+          Header: '',
+          accessor: 'type',
+          Cell: (row) => {
+            // This block of code is mostly about making a sensible looking popup.
+            const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
+    
+            const eventIcon = <Icon color="blue" name="file" />;
+            const warningIcon = <Icon color="orange" name="warning circle" />;
+    
+            let icon;
+            if(stream !== undefined){
+              if (stream.data.typeName === 'Error') {
+                icon = warningIcon;
+              }
+              else {
+                icon = eventIcon;
+              }  
+            }
+    
+            return icon;
+          },
+          width: 35,
+        },
+        {
+          Header: 'Type',
+          accessor: 'type',
+        },
+        {
+          Header: 'Created',
+          accessor: 'created',
+          Cell: row =>
+                (row.original.streamId ? (
+                  row.original.created
+                ) : (
+                  <Button
+                    size="tiny"
+                    compact
+                    className="button border hoverable infinite-processing-list__load-more-button"
+                    onClick={() => onHandleLoadMoreRows()}
+                  >
+                    Load more rows
+                  </Button>
+                )),
+        },
+        {
+          Header: 'Feed',
+          accessor: 'feed',
+        },
+        {
+          Header: 'Pipeline',
+          accessor: 'pipeline',
+        },
+      ],
+    }
+    
+  }),
 );
 
 const DataViewer = ({
@@ -178,79 +249,14 @@ const DataViewer = ({
   dataSource,
   searchWithExpression,
   onHandleLoadMoreRows,
-  onRowSelected
+  onRowSelected,
+  tableColumns,
+  tableData,
 }) => {
   // We need to parse these because localstorage, which is
   // where these come from, is always string.
   listHeight = Number.parseInt(listHeight, 10);
   detailsHeight = Number.parseInt(detailsHeight, 10);
-
-  const tableColumns = [
-    {
-      Header: '',
-      accessor: 'type',
-      Cell: (row) => {
-        // This block of code is mostly about making a sensible looking popup.
-        const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
-
-        const eventIcon = <Icon color="blue" name="file" />;
-        const warningIcon = <Icon color="orange" name="warning circle" />;
-
-        let icon;
-        if(stream !== undefined){
-          if (stream.data.typeName === 'Error') {
-            icon = warningIcon;
-          }
-          else {
-            icon = eventIcon;
-          }  
-        }
-
-        return icon;
-      },
-      width: 35,
-    },
-    {
-      Header: 'Type',
-      accessor: 'type',
-    },
-    {
-      Header: 'Created',
-      accessor: 'created',
-      Cell: row =>
-            (row.original.streamId ? (
-              row.original.created
-            ) : (
-              <Button
-                size="tiny"
-                compact
-                className="button border hoverable infinite-processing-list__load-more-button"
-                onClick={() => onHandleLoadMoreRows()}
-              >
-                Load more rows
-              </Button>
-            )),
-    },
-    {
-      Header: 'Feed',
-      accessor: 'feed',
-    },
-    {
-      Header: 'Pipeline',
-      accessor: 'pipeline',
-    },
-  ];
-
-  let tableData = streamAttributeMaps.map(streamAttributeMap => {
-    return ({
-      streamId: streamAttributeMap.data.id,
-      created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
-      type: streamAttributeMap.data.typeName,
-      feed: streamAttributeMap.data.feedName,
-      pipeline: streamAttributeMap.data.pipelineUuid,
-    })
-  });
-
 
   // Just keep rows with data, more 'load more' rows
   tableData = tableData.filter(row => row.streamId !== undefined);
