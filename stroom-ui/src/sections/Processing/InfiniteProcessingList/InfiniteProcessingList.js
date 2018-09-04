@@ -110,7 +110,7 @@ const enhance = compose(
                 disabled={allRecordsRetrieved}
                 size="tiny"
                 compact
-                className="raised-low infinite-processing-list__load-more-button"
+                className="button border hoverable infinite-processing-list__load-more-button"
                 onClick={() => onHandleLoadMoreRows()}
               >
                 {allRecordsRetrieved ? <span>All rows loaded</span> : <span>Load more rows</span>}

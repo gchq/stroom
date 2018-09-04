@@ -28,7 +28,6 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     (response) => {
       response.json().then((trackers) => {
         dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
-        // dispatch(actionCreators.addTrackers(trackers.streamTasks, trackers.totalStreamTasks));
         switch (trackerSelection) {
           case TrackerSelection.first:
             dispatch(actionCreators.selectFirst());
