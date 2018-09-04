@@ -1,10 +1,10 @@
 export const noParent = {
   docRef: {
-    uuid: 'propertyInheritance',
-    name: 'Property Inheritance',
-    type: 'Pipeline'
+    uuid: 'noParent',
+    name: 'No Parent',
+    type: 'Pipeline',
   },
-  description: 'Demonstrates properties',
+  description: 'Demonstrates properties with no parent pipeline',
   configStack: [
     {
       elements: {
@@ -113,7 +113,13 @@ export const noParent = {
   },
 };
 
-export const parentNoProperty = {
+export const childNoProperty = {
+  docRef: {
+    uuid: 'childNoProperty',
+    name: 'Parent No Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties when parent has no property',
   configStack: [
     {
       elements: {
@@ -226,7 +232,13 @@ export const parentNoProperty = {
   },
 };
 
-export const parentWithProperty = {
+export const childWithProperty = {
+  docRef: {
+    uuid: 'childWithProperty',
+    name: 'Parent With Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties with parent that has properties',
   configStack: [
     {
       elements: {
@@ -350,7 +362,13 @@ export const parentWithProperty = {
   },
 };
 
-export const parentNoPropertyParentNoProperty = {
+export const childNoPropertyParentNoProperty = {
+  docRef: {
+    uuid: 'childNoPropertyParentNoProperty',
+    name: 'This No Property, Parent No Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties with no property, parent has no property either',
   configStack: [
     {
       elements: {
@@ -497,7 +515,13 @@ export const parentNoPropertyParentNoProperty = {
   },
 };
 
-export const parentNoPropertyParentWithProperty = {
+export const childNoPropertyParentWithProperty = {
+  docRef: {
+    uuid: 'childNoPropertyParentWithProperty',
+    name: 'This No Property, Parent Has Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties with no property, parent has the property either',
   configStack: [
     {
       elements: {
@@ -655,7 +679,13 @@ export const parentNoPropertyParentWithProperty = {
   },
 };
 
-export const parentWithPropertyParentNoProperty = {
+export const childWithPropertyParentNoProperty = {
+  docRef: {
+    uuid: 'childWithPropertyParentNoProperty',
+    name: 'This With Property, Parent No Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties with a property, parent has no property either',
   configStack: [
     {
       elements: {
@@ -824,7 +854,13 @@ export const parentWithPropertyParentNoProperty = {
   },
 };
 
-export const parentWithPropertyParentWithProperty = {
+export const childWithPropertyParentWithProperty = {
+  docRef: {
+    uuid: 'childWithPropertyParentWithProperty',
+    name: 'This With Property, Parent With Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties with a property, parent also has property',
   configStack: [
     {
       elements: {
@@ -993,7 +1029,13 @@ export const parentWithPropertyParentWithProperty = {
   },
 };
 
-export const parentWithRemoveforItsParentsAdd = {
+export const childWithRemoveForItsParentsAdd = {
+  docRef: {
+    uuid: 'childWithRemoveForItsParentsAdd',
+    name: 'This Removing Property from parent',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates property removal from a parent',
   configStack: [
     {
       elements: {
@@ -1175,6 +1217,12 @@ export const parentWithRemoveforItsParentsAdd = {
 };
 
 export const emptyChildParentWithProperty = {
+  docRef: {
+    uuid: 'emptyChildParentWithProperty',
+    name: 'Empty Child, Parent With Property',
+    type: 'Pipeline',
+  },
+  description: 'Demonstrates properties',
   configStack: [
     {
       elements: {
@@ -1273,4 +1321,4 @@ export const emptyChildParentWithProperty = {
       remove: [],
     },
   },
-}
+};

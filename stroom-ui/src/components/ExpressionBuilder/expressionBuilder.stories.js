@@ -18,8 +18,9 @@ import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import {
@@ -30,7 +31,6 @@ import {
 } from './index';
 
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer';
-import { testTree, testDocRefsTypes } from 'components/FolderExplorer/test';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
@@ -49,10 +49,8 @@ import {
 import { testDataSource } from './dataSource.testData';
 
 storiesOf('Expression Builder', module)
-  .addDecorator(PollyDecorator({
-    documentTree: testTree,
-    docRefTypes: testDocRefsTypes,
-  }))
+  .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));

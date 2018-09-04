@@ -1,6 +1,6 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
 
-import { updateIdSubstate } from 'lib/reduxFormUtils';
+import { createActionHandlerPerId } from 'lib/reduxFormUtils';
 
 const SELECTION_BEHAVIOUR = {
   NONE: 0,
@@ -35,9 +35,14 @@ const defaultSelectableItemListingState = {
 // There will be an entry for each listing ID registered
 const defaultState = {};
 
+const byListingId = createActionHandlerPerId(
+  ({ payload: { listingId } }) => listingId,
+  defaultSelectableItemListingState,
+);
+
 const reducer = handleActions(
   {
-    SELECTABLE_LISTING_MOUNTED: (state, action) => {
+    SELECTABLE_LISTING_MOUNTED: byListingId((state, action, listingState) => {
       const {
         payload: { listingId, items, selectionBehaviour },
       } = action;
@@ -45,30 +50,25 @@ const reducer = handleActions(
       // Attempt to rescue previous focus index
       let focusIndex = -1;
       let focussedItem;
-      if (state[listingId]) {
-        if (state[listingId].focusIndex < items.length) {
-          focusIndex = state[listingId].focusIndex;
+      if (listingState) {
+        if (listingState.focusIndex < items.length) {
+          focusIndex = listingState.focusIndex;
           focussedItem = items[focusIndex];
         }
       }
 
       return {
-        ...state,
-        [listingId]: {
-          ...defaultSelectableItemListingState,
-          focusIndex,
-          focussedItem,
-          items,
-          selectionBehaviour,
-        },
+        focusIndex,
+        focussedItem,
+        items,
+        selectionBehaviour,
       };
-    },
-    [combineActions(focusUp, focusDown)]: (state, action) => {
+    }),
+    [combineActions(focusUp, focusDown)]: byListingId((state, action, listingState) => {
       const {
         payload: { listingId, direction },
       } = action;
 
-      const listingState = state[listingId];
       const { items, focusIndex } = listingState;
 
       // Calculate the next index based on the selection change
@@ -78,16 +78,16 @@ const reducer = handleActions(
       }
       const focussedItem = items[nextIndex];
 
-      return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
+      return {
         focusIndex: nextIndex,
         focussedItem,
-      });
-    },
-    [combineActions(selectFocussed, selectionToggled)]: (state, action) => {
+      };
+    }),
+    [combineActions(selectFocussed, selectionToggled)]: byListingId((state, action, listingState) => {
       const {
         payload: { listingId, index, keyIsDown },
       } = action;
-      const listingState = state[listingId];
+
       let {
         selectedItemIndexes,
         focusIndex,
@@ -133,14 +133,14 @@ const reducer = handleActions(
       selectedItemIndexes.forEach(i => selectedItems.push(items[i]));
       const focussedItem = items.find((item, i) => i === indexToUse);
 
-      return updateIdSubstate(state, listingId, defaultSelectableItemListingState, {
+      return {
         focussedItem,
         selectedItems,
         selectedItemIndexes,
         focusIndex: indexToUse,
         lastSelectedIndex: indexToUse,
-      });
-    },
+      };
+    }),
   },
   defaultState,
 );

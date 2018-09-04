@@ -35,8 +35,8 @@ const withSearchStringValidationMessages = withState(
 
 const enhance = compose(
   connect(
-    (state, props) => ({
-      expression: state.expressionBuilder.expressions[props.expressionId],
+    ({expressionBuilder}, {expressionId}) => ({
+      expression: expressionBuilder[expressionId],
     }),
     { expressionChanged },
   ),

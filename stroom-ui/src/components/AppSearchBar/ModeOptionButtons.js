@@ -40,6 +40,7 @@ const ModeOptionButtons = ({ switchMode, pickerId }) => (
           if (e.key === ' ') {
             switchMode(pickerId, modeOption.mode);
           }
+          e.stopPropagation();
         }}
       />
     ))}

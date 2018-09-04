@@ -221,7 +221,7 @@ describe('Pipeline Utils', () => {
   describe('#revertPropertyToParent', () => {
     test('should remove an item from the add stack', () => {
       // Given
-      const testPipeline = testPipelines.parentWithProperty;
+      const testPipeline = testPipelines.childWithProperty;
       const elementName = "xsltFilter"
       const propertyName = "xsltNamePattern"
       const matchingProp = addItem => addItem.element === elementName && addItem.name === propertyName;
@@ -274,7 +274,7 @@ describe('Pipeline Utils', () => {
   describe('#revertPropertyToDefault', () => {
     test('should remove an item from the parent by adding a remove -- child has property', () => {
       // Given
-      const testPipeline = testPipelines.parentWithProperty;
+      const testPipeline = testPipelines.childWithProperty;
       const elementName = "xsltFilter"
       const propertyName = "xsltNamePattern"
       const matchingProp = addItem => addItem.element === elementName && addItem.name === propertyName;
@@ -529,7 +529,7 @@ describe('Pipeline Utils', () => {
 
     test('shouldn\'t find anything because there\'s nothing in the parent', () => {
       // Given
-      const pipeline = testPipelines.parentNoProperty;
+      const pipeline = testPipelines.childNoProperty;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'combinedParser', 'type');
       // Then
@@ -537,7 +537,7 @@ describe('Pipeline Utils', () => {
     });
     test('should find parent property', () => {
       // Given
-      const pipeline = testPipelines.parentWithProperty;
+      const pipeline = testPipelines.childWithProperty;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'combinedParser', 'type');
       const parentProperty2 = getParentProperty(pipeline.configStack, 'xsltFilter', 'xsltNamePattern');
@@ -552,7 +552,7 @@ describe('Pipeline Utils', () => {
 
     test('shouldn\' find a property in parent or parent\'s parent', () => {
       // Given
-      const pipeline = testPipelines.parentNoPropertyParentNoProperty;
+      const pipeline = testPipelines.childNoPropertyParentNoProperty;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'combinedParser', 'type');
       // Then
@@ -561,7 +561,7 @@ describe('Pipeline Utils', () => {
 
     test('should find a property, in the parent\'s parent', () => {
       // Given
-      const pipeline = testPipelines.parentNoPropertyParentWithProperty;
+      const pipeline = testPipelines.childNoPropertyParentWithProperty;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property1');
       // Then
@@ -572,7 +572,7 @@ describe('Pipeline Utils', () => {
 
     test('should find a property, in the parent but not their parent', () => {
       // Given
-      const pipeline = testPipelines.parentWithPropertyParentNoProperty;
+      const pipeline = testPipelines.childWithPropertyParentNoProperty;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property1');
       // Then
@@ -583,7 +583,7 @@ describe('Pipeline Utils', () => {
 
     test('should find a property in the parent and ignore a property in their parent', () => {
       // Given
-      const pipeline = testPipelines.parentWithPropertyParentWithProperty;
+      const pipeline = testPipelines.childWithPropertyParentWithProperty;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'xsltNamePattern');
       // Then
@@ -594,7 +594,7 @@ describe('Pipeline Utils', () => {
 
     test('shouldn\'t find a property in the parent because although it\'s there it also exists in \'remove\'', () => {
       // Given
-      const pipeline = testPipelines.parentWithRemoveforItsParentsAdd;
+      const pipeline = testPipelines.childWithRemoveForItsParentsAdd;
       // When
       const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property2');
       // Then

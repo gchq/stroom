@@ -46,8 +46,8 @@ ROExpressionBuilder.propTypes = {
 
 const enhance = compose(
   connect(
-    (state, props) => ({
-      expression: state.expressionBuilder.expressions[props.expressionId],
+    ({ expressionBuilder }, { expressionId }) => ({
+      expressionState: expressionBuilder[expressionId],
     }),
     {
       // actions
@@ -60,8 +60,8 @@ const enhance = compose(
     },
   }),
   branch(
-    ({ expression }) => !expression,
-    renderComponent(() => <Loader active>Loading Expression</Loader>),
+    ({ expressionState }) => !expressionState,
+    renderComponent(() => <Loader active>Loading Expression State</Loader>),
   ),
   withProps(({ showModeToggle, dataSource }) => ({
     showModeToggle: showModeToggle && !!dataSource,
@@ -71,45 +71,39 @@ const enhance = compose(
 const ExpressionBuilder = ({
   expressionId,
   dataSource,
-  expression,
+  expressionState: { expression },
   showModeToggle,
   inEditMode,
   setEditableByUser,
-}) => {
-  const roOperator = (
-    <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
-  );
-
-  const editOperator = (
-    <ExpressionOperator
-      dataSource={dataSource}
-      expressionId={expressionId}
-      isRoot
-      isEnabled
-      operator={expression}
-    />
-  );
-
-  return (
-    <LineContainer
-      className="Expression-editor__graph"
-      lineContextId={`expression-lines-${expressionId}`}
-      lineElementCreators={lineElementCreators}
-    >
-      {showModeToggle ? (
-        <Checkbox
-          label="Edit Mode"
-          toggle
-          checked={inEditMode}
-          onChange={() => setEditableByUser(!inEditMode)}
-        />
-      ) : (
-        undefined
-      )}
-      {inEditMode ? editOperator : roOperator}
-    </LineContainer>
-  );
-};
+}) => (
+  <LineContainer
+    className="Expression-editor__graph"
+    lineContextId={`expression-lines-${expressionId}`}
+    lineElementCreators={lineElementCreators}
+  >
+    {showModeToggle ? (
+      <Checkbox
+        label="Edit Mode"
+        toggle
+        checked={inEditMode}
+        onChange={() => setEditableByUser(!inEditMode)}
+      />
+    ) : (
+      undefined
+    )}
+    {inEditMode ? (
+      <ExpressionOperator
+        dataSource={dataSource}
+        expressionId={expressionId}
+        isRoot
+        isEnabled
+        operator={expression}
+      />
+    ) : (
+      <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
+    )}
+  </LineContainer>
+);
 
 const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
 

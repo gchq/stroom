@@ -6,6 +6,10 @@
   width: 100%;
 }
 
+.app-search-bar__dropdown-content {
+  min-width: 50rem;
+}
+
 .app-search-listing {
   max-height: 20rem;
   overflow-y: scroll;

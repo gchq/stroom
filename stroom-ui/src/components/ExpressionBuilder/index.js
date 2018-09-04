@@ -16,14 +16,6 @@
 import { combineReducers } from 'redux';
 import ExpressionBuilder from './ExpressionBuilder';
 
-import { reducer as expressionReducer, actionCreators as expressionActionCreators } from './redux';
-
-const actionCreators = {
-  ...expressionActionCreators,
-};
-
-const reducer = combineReducers({
-  expressions: expressionReducer,
-});
+import { reducer, actionCreators } from './redux';
 
 export { ExpressionBuilder, reducer, actionCreators };

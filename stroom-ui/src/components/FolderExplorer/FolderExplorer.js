@@ -124,7 +124,7 @@ const FolderExplorer = ({
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={16}>
-        <AppSearchBar onChange={openDocRef}/>
+        <AppSearchBar className='app-search-bar' onChange={openDocRef}/>
       </Grid.Column>
       <Grid.Column width={11}>
         <Header as="h3">
