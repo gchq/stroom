@@ -16,20 +16,20 @@
 
 package stroom.entity.server;
 
-import java.util.List;
-
-import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.IncludeExcludeEntityIdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Range;
-import stroom.util.date.DateUtil;
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator.Not;
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import stroom.entity.shared.CriteriaSet;
+import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.IncludeExcludeEntityIdSet;
+import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.Range;
+import stroom.util.date.DateUtil;
+
+import java.util.List;
 
 public final class CriteriaLoggingUtil {
     private CriteriaLoggingUtil() {
@@ -52,14 +52,14 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendStringTerm(final List<BaseAdvancedQueryItem> items, final String name,
-            final String value) {
+                                        final String value) {
         if (name != null && value != null) {
             items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value));
         }
     }
 
     public static void appendBooleanTerm(final List<BaseAdvancedQueryItem> items, final String name,
-            final Boolean value) {
+                                         final Boolean value) {
         if (name != null && value != null) {
             items.add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, value.toString()));
         }
@@ -85,7 +85,7 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendRangeTerm(final List<BaseAdvancedQueryItem> items, final String name,
-            final Range<?> range) {
+                                       final Range<?> range) {
         if (range != null) {
             if (range.getFrom() != null) {
                 items.add(EventLoggingUtil.createTerm(name, TermCondition.GREATER_THAN_EQUAL_TO,
@@ -98,7 +98,7 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendIncludeExcludeEntityIdSet(final List<BaseAdvancedQueryItem> items, final String name,
-            final IncludeExcludeEntityIdSet<?> includeExcludeEntityIdSet) {
+                                                       final IncludeExcludeEntityIdSet<?> includeExcludeEntityIdSet) {
         if (includeExcludeEntityIdSet != null) {
             if (includeExcludeEntityIdSet.getInclude() != null) {
                 appendEntityIdSet(items, name, includeExcludeEntityIdSet.getInclude());
@@ -115,33 +115,28 @@ public final class CriteriaLoggingUtil {
     }
 
     public static void appendEntityIdSet(final List<BaseAdvancedQueryItem> items, final String name,
-            final EntityIdSet<?> idSet) {
+                                         final EntityIdSet<?> idSet) {
         appendCriteriaSet(items, name, idSet);
     }
 
     public static void appendCriteriaSet(final List<BaseAdvancedQueryItem> items, final String name,
-            final CriteriaSet<?> set) {
+                                         final CriteriaSet<?> set) {
         if (set != null) {
             final Or or = new Or();
-
             for (final Object obj : set) {
                 if (obj != null) {
                     or.getAdvancedQueryItems()
                             .add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, obj.toString()));
                 }
             }
+            if (set.getMatchNull() != null && set.getMatchNull()) {
+                or.getAdvancedQueryItems().add((EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "NULL")));
+            }
 
-            if (or.getAdvancedQueryItems().size() == 0) {
-                if (set.getMatchNull() != null && set.getMatchNull()) {
-                    or.getAdvancedQueryItems().add((EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "NULL")));
-                }
-
+            if (or.getAdvancedQueryItems().size() == 1) {
+                items.add(or.getAdvancedQueryItems().get(0));
+            } else if (or.getAdvancedQueryItems().size() > 1) {
                 items.add(or);
-
-            } else {
-                if (set.getMatchNull() != null && set.getMatchNull()) {
-                    items.add((EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "NULL")));
-                }
             }
         }
     }

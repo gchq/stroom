@@ -1470,21 +1470,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamCriteria findStreamCriteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
-                findStreamCriteria.getStreamProcessorIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "folderIdSet", findStreamCriteria.getFolderIdSet());
-        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineIdSet", findStreamCriteria.getPipelineIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeIdSet", findStreamCriteria.getStreamTypeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", findStreamCriteria.getStreamIdSet());
-        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", findStreamCriteria.getStatusSet());
-        CriteriaLoggingUtil.appendRangeTerm(items, "streamIdRange", findStreamCriteria.getStreamIdRange());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamIdSet", findStreamCriteria.getParentStreamIdSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorId", findStreamCriteria.getStreamProcessorIdSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "folderId", findStreamCriteria.getFolderIdSet());
+        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feedId", findStreamCriteria.getFeeds());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "pipelineId", findStreamCriteria.getPipelineIdSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "streamTypeId", findStreamCriteria.getStreamTypeIdSet());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "streamId", findStreamCriteria.getStreamIdSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "status", findStreamCriteria.getStatusSet());
+        CriteriaLoggingUtil.appendRangeTerm(items, "streamId", findStreamCriteria.getStreamIdRange());
+        CriteriaLoggingUtil.appendEntityIdSet(items, "parentStreamId", findStreamCriteria.getParentStreamIdSet());
         CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", findStreamCriteria.getCreatePeriod());
         CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", findStreamCriteria.getEffectivePeriod());
         CriteriaLoggingUtil.appendRangeTerm(items, "statusPeriod", findStreamCriteria.getStatusPeriod());
-        appendStreamAttributeConditionList(items, "attributeConditionList",
-                findStreamCriteria.getAttributeConditionList());
+        appendStreamAttributeConditionList(items, "attributeConditionList", findStreamCriteria.getAttributeConditionList());
 
         if (findStreamCriteria.getQueryData() != null) {
             QueryDataLogUtil.appendExpressionItem(items, null, findStreamCriteria.getQueryData().getExpression());
