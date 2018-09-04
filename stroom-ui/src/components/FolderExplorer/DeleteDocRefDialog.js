@@ -18,10 +18,11 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Modal, Button } from 'semantic-ui-react';
+import { Button, Header } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 import { deleteDocuments } from 'components/FolderExplorer/explorerClient';
+import ThemedModal from 'components/ThemedModal';
 
 const { completeDocRefDelete } = actionCreators;
 
@@ -40,22 +41,31 @@ const enhance = compose(connect(
 const DeleteDocRefDialog = ({
   isDeleting, uuids, completeDocRefDelete, deleteDocuments,
 }) => (
-  <Modal open={isDeleting}>
-    <Modal.Header>Are you sure about deleting these Doc Refs?</Modal.Header>
-    <Modal.Content scrolling>{JSON.stringify(uuids)}</Modal.Content>
-    <Modal.Actions>
-      <Button negative onClick={completeDocRefDelete}>
-        Cancel
-      </Button>
-      <Button
-        positive
-        onClick={() => deleteDocuments(uuids)}
-        labelPosition="right"
-        icon="checkmark"
-        content="Choose"
+  <ThemedModal
+    open={isDeleting}
+    header={
+      <Header
+        className="header"
+        icon="trash"
+        content="Are you sure about deleting these Doc Refs?"
       />
-    </Modal.Actions>
-  </Modal>
+    }
+    content={JSON.stringify(uuids)}
+    actions={
+      <React.Fragment>
+        <Button negative onClick={completeDocRefDelete}>
+          Cancel
+        </Button>
+        <Button
+          positive
+          onClick={() => deleteDocuments(uuids)}
+          labelPosition="right"
+          icon="checkmark"
+          content="Choose"
+        />
+      </React.Fragment>
+    }
+  />
 );
 
 export default enhance(DeleteDocRefDialog);

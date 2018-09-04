@@ -19,6 +19,7 @@ import { connect } from 'react-redux';
 import { compose, withProps } from 'recompose';
 import { Form, Checkbox } from 'semantic-ui-react';
 
+import DocRefImage from 'components/DocRefImage';
 import withDocRefTypes from './withDocRefTypes';
 
 const ALL_SELECT_STATE = {
@@ -52,11 +53,7 @@ const DocTypeFilters = ({
 }) => (
   <React.Fragment>
     <Form.Field>
-      <img
-        className="stroom-icon--small"
-        alt="X"
-        src={require('../../images/docRefTypes/System.svg')}
-      />
+      <DocRefImage size='small' docRefType='System' />
       <Checkbox
         label="All"
         indeterminate={allSelectState === ALL_SELECT_STATE.INDETERMINATE}
@@ -74,11 +71,7 @@ const DocTypeFilters = ({
       .map(docRefType => ({ docRefType, isSelected: value.includes(docRefType) }))
       .map(({ docRefType, isSelected }) => (
         <Form.Field key={docRefType}>
-          <img
-            className="stroom-icon--small"
-            alt="X"
-            src={require(`../../images/docRefTypes/${docRefType}.svg`)}
-          />
+          <DocRefImage size='small' docRefType={docRefType} />
           <Checkbox
             label={docRefType}
             checked={isSelected}

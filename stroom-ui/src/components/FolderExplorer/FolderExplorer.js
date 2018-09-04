@@ -48,11 +48,16 @@ const enhance = compose(
     },
   ),
   branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
-  withSelectableItemListing(({ openDocRef, folder: { node: { children } } }) => ({
+  withSelectableItemListing(({ openDocRef, folder: { lineage, node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
     selectionBehaviour: SELECTION_BEHAVIOUR.MULTIPLE,
     openItem: openDocRef,
+    goBack: () => {
+      if (lineage.length > 0) {
+        openDocRef(lineage[lineage.length - 1])
+      }
+    }
   })),
   withProps(({
     folder,

@@ -17,10 +17,11 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 
-import { Modal, Form, Button } from 'semantic-ui-react';
+import { Header, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 import { renameDocument } from 'components/FolderExplorer/explorerClient';
+import ThemedModal from 'components/ThemedModal';
 
 const { completeDocRefRename, renameUpdated } = actionCreators;
 
@@ -48,9 +49,10 @@ const RenameDocRefDialog = ({
   completeDocRefRename,
   renameDocument,
 }) => (
-  <Modal open={isRenaming}>
-    <Modal.Header>Enter New Name for Doc Ref</Modal.Header>
-    <Modal.Content scrolling>
+  <ThemedModal
+    open={isRenaming}
+    header={<Header className="header" icon="pencil" content="Enter New Name for Doc Ref" />}
+    content={
       <Form>
         <Form.Input
           label="Type"
@@ -59,20 +61,22 @@ const RenameDocRefDialog = ({
           value={name || (docRef ? docRef.name : '')}
         />
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button negative onClick={completeDocRefRename}>
-        Cancel
-      </Button>
-      <Button
-        positive
-        onClick={() => renameDocument(docRef, name)}
-        labelPosition="right"
-        icon="checkmark"
-        content="Choose"
-      />
-    </Modal.Actions>
-  </Modal>
+    }
+    actions={
+      <React.Fragment>
+        <Button negative onClick={completeDocRefRename}>
+          Cancel
+        </Button>
+        <Button
+          positive
+          onClick={() => renameDocument(docRef, name)}
+          labelPosition="right"
+          icon="checkmark"
+          content="Choose"
+        />
+      </React.Fragment>
+    }
+  />
 );
 
 export default enhance(RenameDocRefDialog);

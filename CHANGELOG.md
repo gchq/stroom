@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#722** : Change pipeline reference data loader to store its reference data in an off-heap disk backed LMDB store to reduce Java heap usage. See the `stroom.refloader.*` properties for configuration of the off-heap store.
+
 * Issue **#794** : Automatically suggest a pipeline element name when creating it
 
 * Issue **#792** : Preferred order of properties for Pipeline Elements

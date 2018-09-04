@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withHandlers, withProps } from 'recompose';
+import { compose, withHandlers, withProps, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Icon, Button } from 'semantic-ui-react';
 
@@ -20,20 +20,29 @@ import withSelectableItemListing, {
 } from 'lib/withSelectableItemListing';
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 
-const { searchTermUpdated, navigateToFolder, openDropdown, closeDropdown, switchMode } = appSearchBarActionCreators;
+import ModeOptionButtons from './ModeOptionButtons';
+
+const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
+
+const withTextFocus = withState('textFocus', 'setTextFocus', false);
 
 const enhance = compose(
   withDocumentTree,
+  withTextFocus,
   connect(
     (
-      { appSearch, recentItems, selectableItemListings, folderExplorer: { documentTree } },
-      { pickerId, typeFilters, value },
+      {
+        appSearch, recentItems, selectableItemListings, folderExplorer: { documentTree },
+      },
+      {
+        pickerId, typeFilters, value, textFocus,
+      },
     ) => {
       const appSearchForPicker = appSearch[pickerId] || defaultPickerState;
       const selectableItemListing =
         selectableItemListings[pickerId] || defaultSelectableItemListingState;
       const {
-        searchTerm, navFolder, searchResults, searchMode, isOpen
+        searchTerm, navFolder, searchResults, searchMode,
       } = appSearchForPicker;
       const documentTreeToUse =
         typeFilters.length > 0
@@ -45,7 +54,7 @@ const enhance = compose(
       let parentFolder;
       let valueToShow;
 
-      if (isOpen) {
+      if (textFocus) {
         valueToShow = searchTerm;
       } else if (value) {
         valueToShow = value.name;
@@ -54,7 +63,7 @@ const enhance = compose(
       }
 
       switch (searchMode) {
-        case (SEARCH_MODE.NAVIGATION): {
+        case SEARCH_MODE.NAVIGATION: {
           const navFolderToUse = navFolder || documentTreeToUse;
           const navFolderWithLineage = findItem(documentTreeToUse, navFolderToUse.uuid);
           docRefs = navFolderWithLineage.node.children;
@@ -65,11 +74,11 @@ const enhance = compose(
           }
           break;
         }
-        case (SEARCH_MODE.GLOBAL_SEARCH): {
+        case SEARCH_MODE.GLOBAL_SEARCH: {
           docRefs = searchResults;
           break;
         }
-        case (SEARCH_MODE.RECENT_ITEMS): {
+        case SEARCH_MODE.RECENT_ITEMS: {
           docRefs = recentItems;
           break;
         }
@@ -78,22 +87,8 @@ const enhance = compose(
           break;
       }
 
-      const modeOptions = [
-        {
-          mode: SEARCH_MODE.GLOBAL_SEARCH,
-          icon: 'search'
-        },
-        {
-          mode: SEARCH_MODE.NAVIGATION,
-          icon: 'folder'
-        },
-        {
-          mode: SEARCH_MODE.RECENT_ITEMS,
-          icon: 'history'
-        }
-      ]
-
       return {
+        searchTerm,
         searchMode,
         valueToShow,
         selectableItemListing,
@@ -103,27 +98,16 @@ const enhance = compose(
         provideBreadcrumbs: searchMode !== SEARCH_MODE.NAVIGATION,
         thisFolder,
         parentFolder,
-        isOpen,
-        modeOptions,
       };
     },
     {
       searchApp,
       searchTermUpdated,
       navigateToFolder,
-      openDropdown,
-      closeDropdown,
-      switchMode
     },
   ),
-  withHandlers({
-    onChange: ({pickerId, onChange, closeDropdown}) => d => {
-      onChange(d);
-      closeDropdown(pickerId);
-    }
-  }),
   withSelectableItemListing(({
-    pickerId, docRefs, navigateToFolder, parentFolder, onChange
+    pickerId, docRefs, navigateToFolder, parentFolder, onChange,
   }) => ({
     listingId: pickerId,
     items: docRefs,
@@ -131,28 +115,39 @@ const enhance = compose(
     enterItem: d => navigateToFolder(pickerId, d),
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
-  withProps(({pickerId, searchMode, thisFolder, parentFolder, navigateToFolder}) => {
+  withHandlers({
+    onTextFocus: ({ setTextFocus }) => e => setTextFocus(true),
+    onTextBlur: ({ setTextFocus }) => e => setTextFocus(false),
+    onSearchTermChange: ({ pickerId, searchTermUpdated, searchApp }) => ({ target: { value } }) => {
+      searchTermUpdated(pickerId, value);
+      searchApp(pickerId, { term: value });
+    },
+    thisNavigateToFolder: ({navigateToFolder, pickerId}) => d => navigateToFolder(pickerId, d)
+  }),
+  withProps(({
+    pickerId, searchMode, thisFolder, parentFolder, thisNavigateToFolder, searchTerm,
+  }) => {
     let headerTitle;
     let headerIcon;
     let headerAction = () => {};
 
     switch (searchMode) {
-      case (SEARCH_MODE.NAVIGATION): {
+      case SEARCH_MODE.NAVIGATION: {
         headerTitle = thisFolder.name;
         if (parentFolder) {
           headerIcon = 'arrow left';
-          headerAction = () => navigateToFolder(pickerId, parentFolder);
+          headerAction = () => thisNavigateToFolder(parentFolder);
         } else {
           headerIcon = 'folder';
         }
         break;
       }
-      case (SEARCH_MODE.GLOBAL_SEARCH): {
+      case SEARCH_MODE.GLOBAL_SEARCH: {
         headerIcon = 'search';
-        headerTitle = 'Search';
+        headerTitle = `Search for '${searchTerm}'`;
         break;
       }
-      case (SEARCH_MODE.RECENT_ITEMS): {
+      case SEARCH_MODE.RECENT_ITEMS: {
         headerTitle = 'Recent Items';
         headerIcon = 'history';
         break;
@@ -165,59 +160,42 @@ const enhance = compose(
       headerTitle,
       headerIcon,
       headerAction,
-    }
-  })
+    };
+  }),
 );
 
 const AppSearchBar = ({
   pickerId,
   docRefs,
-  searchMode,
-  searchApp,
-  navigateToFolder,
-  valueToShow,
-  searchTermUpdated,
+  thisNavigateToFolder,
   onKeyDownWithShortcuts,
-  isOpen,
-  openDropdown,
-  closeDropdown,
   headerTitle,
   headerIcon,
   headerAction,
   hasNoResults,
   noResultsText,
   provideBreadcrumbs,
-  switchMode,
-  modeOptions,
-  onChange
+  onChange,
+  valueToShow,
+  onTextFocus,
+  onTextBlur,
+  onSearchTermChange,
 }) => (
-  <div
-    className="dropdown"
-    tabIndex={0}
-    onFocus={() => openDropdown(pickerId)}
-    onKeyDown={onKeyDownWithShortcuts}
-  >
+  <div className="dropdown app-search-bar">
     <Input
-      onFocus={() => openDropdown(pickerId)}
-      fluid
-      className="border flat"
+      className="border flat app-search-bar__input"
       icon="search"
       placeholder="Search..."
       value={valueToShow}
-      onChange={({ target: { value } }) => {
-        searchTermUpdated(pickerId, value);
-        searchApp(pickerId, { term: value });
-      }}
+      onFocus={onTextFocus}
+      onBlur={onTextBlur}
+      onChange={onSearchTermChange}
     />
-    <div className={`dropdown__content ${isOpen ? 'open' : ''}`}>
+    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts} className="dropdown__content">
       <div className="app-search-header">
         <Icon name={headerIcon} size="large" onClick={headerAction} />
         {headerTitle}
-        <Button.Group floated='right'>
-          {modeOptions.map(modeOption =>
-            <Button key={modeOption.mode} icon={modeOption.icon} onClick={() => switchMode(pickerId, modeOption.mode)} />
-          )}
-        </Button.Group>
+        <ModeOptionButtons pickerId={pickerId} />
       </div>
       <div className="app-search-listing">
         {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
@@ -228,17 +206,16 @@ const AppSearchBar = ({
             listingId={pickerId}
             docRef={searchResult}
             openDocRef={onChange}
-            enterFolder={d => navigateToFolder(pickerId, d)}
+            enterFolder={thisNavigateToFolder}
           >
             {provideBreadcrumbs && (
-              <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={d => navigateToFolder(pickerId, d)} />
+              <DocRefBreadcrumb
+                docRefUuid={searchResult.uuid}
+                openDocRef={thisNavigateToFolder}
+              />
             )}
           </DocRefListingEntry>
         ))}
-      </div>
-      <div className="app-search-footer">
-        <Button primary>Choose</Button>
-        <Button secondary onClick={() => closeDropdown(pickerId)}>Cancel</Button>
       </div>
     </div>
   </div>

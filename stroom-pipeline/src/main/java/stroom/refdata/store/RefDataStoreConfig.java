@@ -19,7 +19,9 @@ public class RefDataStoreConfig {
     private String purgeAge = "30d";
     private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
 
-    @JsonPropertyDescription("The full directory path  to use for storing the reference data store. It MUST be on local disk, NOT network storage, due to use of memory mapped files. The directory will be created if it doesn't exist.")
+    @JsonPropertyDescription("The full directory path to use for storing the reference data store. It MUST be on " +
+            "local disk, NOT network storage, due to use of memory mapped files. The directory will be created " +
+            "if it doesn't exist.")
     public String getLocalDir() {
         return localDir;
     }
@@ -28,7 +30,8 @@ public class RefDataStoreConfig {
         this.localDir = localDir;
     }
 
-    @JsonPropertyDescription("The maximum number of puts into the store before the transaction is committed. There is only one write transaction available long running transactions are not desirable.")
+    @JsonPropertyDescription("The maximum number of puts into the store before the transaction is committed. " +
+            "There is only one write transaction available and long running transactions are not desirable.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }
@@ -37,7 +40,7 @@ public class RefDataStoreConfig {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
     }
 
-    @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the offheapstore.")
+    @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
     public int getMaxReaders() {
         return maxReaders;
     }
@@ -46,7 +49,8 @@ public class RefDataStoreConfig {
         this.maxReaders = maxReaders;
     }
 
-    @JsonPropertyDescription("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
+    @JsonPropertyDescription("The maximum size in bytes for the ref loader off heap store. There must be " +
+            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
     public String getMaxStoreSize() {
         return maxStoreSize;
     }
@@ -55,16 +59,25 @@ public class RefDataStoreConfig {
         this.maxStoreSize = maxStoreSize;
     }
 
-    @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken from the time that the reference stream was last accessed, e.g. a lookup was made against it.")
+    @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
+            "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
+            "The age can be expressed with suffixes of ms/s/m/h/d, e.g. 10d, defaulting to millis if no suffix " +
+            "is provided")
     public String getPurgeAge() {
         return purgeAge;
+    }
+
+    @JsonIgnore
+    public long getPurgeAgeMs() {
+        return ModelStringUtil.parseDurationString(purgeAge);
     }
 
     public void setPurgeAge(final String purgeAge) {
         this.purgeAge = purgeAge;
     }
 
-    @JsonPropertyDescription("The size in bytes allocated to the value buffers used in the offheapstore. This should be large enough to accommodate reference data values.")
+    @JsonPropertyDescription("The size in bytes allocated to the value buffers used in the off-heap store. " +
+            "This should be large enough to accommodate reference data values.")
     public int getValueBufferCapacity() {
         return valueBufferCapacity;
     }

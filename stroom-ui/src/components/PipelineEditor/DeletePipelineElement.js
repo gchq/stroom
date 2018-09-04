@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Confirm } from 'semantic-ui-react';
 
+import ThemedConfirm from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
 const { pipelineElementDeleteCancelled, pipelineElementDeleted } = actionCreators;
@@ -33,9 +33,9 @@ const enhance = compose(
 );
 
 const DeletePipelineElement = ({ pendingElementToDelete, onConfirmDelete, onCancelDelete }) => (
-  <Confirm
+  <ThemedConfirm
     open={!!pendingElementToDelete}
-    content={`Delete ${pendingElementToDelete} from pipeline?`}
+    question={`Delete ${pendingElementToDelete} from pipeline?`}
     onCancel={onCancelDelete}
     onConfirm={onConfirmDelete}
   />

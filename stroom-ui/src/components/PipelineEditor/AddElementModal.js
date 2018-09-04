@@ -5,9 +5,10 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { Modal, Header, Form, Button } from 'semantic-ui-react';
+import { Header, Form, Button } from 'semantic-ui-react';
 import { InputField } from 'react-semantic-redux-form';
 
+import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
 import { uniqueElementName } from './pipelineUtils';
@@ -36,7 +37,8 @@ const enhance = compose(
   // Properties from owner
   withProps(({ // Redux action
     pipelineId, elementId, pipelineElementAdded, newElementDefinition, setNewElementDefinition, newElementForm, reset,
-  }) => ({ // from withNewElementDefinition in owner // Redux form
+  }) => ({
+    // from withNewElementDefinition in owner // Redux form
     onConfirmNewElement: () => {
       pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
       setNewElementDefinition(undefined);
@@ -58,9 +60,13 @@ const AddElementModal = ({
   onConfirmNewElement,
   onCancelNewElement,
 }) => (
-  <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
-    <Header content="Add New Element" />
-    <Modal.Content>
+  <ThemedModal
+    size="tiny"
+    open={!!newElementDefinition}
+    onClose={onCancelNewElement}
+    dimmer="inverted"
+    header={<Header content="Add New Element" />}
+    content={
       <Form id="newElementForm">
         <Form.Field>
           <label>Name</label>
@@ -74,18 +80,20 @@ const AddElementModal = ({
           />
         </Form.Field>
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button
-        positive
-        content="Submit"
-        disabled={invalid || submitting}
-        onClick={onConfirmNewElement}
-        form="newElementForm"
-      />
-      <Button negative content="Cancel" onClick={onCancelNewElement} />
-    </Modal.Actions>
-  </Modal>
+    }
+    actions={
+      <React.Fragment>
+        <Button
+          positive
+          content="Submit"
+          disabled={invalid || submitting}
+          onClick={onConfirmNewElement}
+          form="newElementForm"
+        />
+        <Button negative content="Cancel" onClick={onCancelNewElement} />
+      </React.Fragment>
+    }
+  />
 );
 
 AddElementModal.propTypes = {

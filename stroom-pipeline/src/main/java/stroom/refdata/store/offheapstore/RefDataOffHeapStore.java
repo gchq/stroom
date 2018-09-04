@@ -697,13 +697,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      */
     @Override
     public void logAllContents(Consumer<String> logEntryConsumer) {
-//        processingInfoDb.logDatabaseContents(logEntryConsumer);
-//        mapUidForwardDb.logDatabaseContents(logEntryConsumer);
-//        mapUidReverseDb.logDatabaseContents(logEntryConsumer);
-//        keyValueStoreDb.logDatabaseContents(logEntryConsumer);
-//        rangeStoreDb.logDatabaseContents(logEntryConsumer);
-//        valueStoreDb.logDatabaseContents(logEntryConsumer);
-//        valueReferenceCountDb.logDatabaseContents();
         databaseMap.entrySet().stream()
                 .sorted(Comparator.comparing(Map.Entry::getKey))
                 .map(Map.Entry::getValue)
@@ -726,13 +719,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
     void logAllRawContents(Consumer<String> logEntryConsumer) {
-//        processingInfoDb.logRawDatabaseContents();
-//        mapUidForwardDb.logRawDatabaseContents();
-//        mapUidReverseDb.logRawDatabaseContents();
-//        keyValueStoreDb.logRawDatabaseContents();
-//        rangeStoreDb.logRawDatabaseContents();
-//        valueStoreDb.logRawDatabaseContents();
-//        valueReferenceCountDb.logRawDatabaseContents();
         databaseMap.entrySet().stream()
                 .sorted(Comparator.comparing(Map.Entry::getKey))
                 .map(Map.Entry::getValue)
@@ -751,18 +737,23 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return lmdbDb.getEntryCount();
     }
 
-    private String getDataRetentionAgeString() {
-        return refDataStoreConfig.getPurgeAge();
+    private long getPurgeCutOffEpochMs(final long purgeAgeMs) {
+        return System.currentTimeMillis() - purgeAgeMs;
     }
 
-    private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowMs) {
-        long purgeAge = ModelStringUtil.parseDurationString(getDataRetentionAgeString());
-        long purgeCutOff = nowMs - purgeAge;
+    private long getPurgeCutOffEpochMs(final long nowEpochMs, final long purgeAgeMs) {
+        return nowEpochMs - purgeAgeMs;
+    }
+
+    private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowEpocMs) {
+
+        long purgeAgeMs = refDataStoreConfig.getPurgeAgeMs();
+        long purgeCutOff = getPurgeCutOffEpochMs(nowEpocMs, purgeAgeMs);
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
-                Duration.ofMillis(purgeAge),
+                Duration.ofMillis(purgeAgeMs),
                 Instant.ofEpochMilli(purgeCutOff),
-                Instant.ofEpochMilli(nowMs));
+                Instant.ofEpochMilli(nowEpocMs));
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES);
         pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
@@ -781,7 +772,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withDetail("Path", dbDir.toAbsolutePath().toString())
                     .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
-                    .withDetail("Purge age", getDataRetentionAgeString())
+                    .withDetail("Purge age", refDataStoreConfig.getPurgeAge())
+                    .withDetail("Purge cut off", Instant.ofEpochMilli(
+                            getPurgeCutOffEpochMs(refDataStoreConfig.getPurgeAgeMs())).toString())
                     .withDetail("Max readers", maxReaders)
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())

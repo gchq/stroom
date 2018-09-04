@@ -21,6 +21,7 @@ import ErrorPage from './ErrorPage';
 
 import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
 
+import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 const errorMessage = 'Everything is a disaster';

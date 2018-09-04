@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import { compose, withProps } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-import { Modal, Button, Form } from 'semantic-ui-react';
+import { Header, Button, Form } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { copyDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
 
+import ThemedModal from 'components/ThemedModal';
 import AppSearchBar from 'components/AppSearchBar';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
@@ -43,8 +43,7 @@ const enhance = compose(
         folderExplorer: {
           copyDocRef: { isCopying, uuids, destinationUuid },
         },
-      },
-      {},
+      }
     ) => {
       const initialDestination = findItem(documentTree, destinationUuid);
 
@@ -74,9 +73,12 @@ const CopyDocRefDialog = ({
   copyDocuments,
   copyDocRefDialogForm,
 }) => (
-  <Modal open={isCopying}>
-    <Modal.Header>Select a Destination Folder for the Copy</Modal.Header>
-    <Modal.Content scrolling>
+  <ThemedModal
+    open={isCopying}
+    header={
+      <Header className="header" icon="copy" content="Select a Destination Folder for the Copy" />
+    }
+    content={
       <Form>
         <Form.Field>
           <label>Destination</label>
@@ -97,26 +99,28 @@ const CopyDocRefDialog = ({
           />
         </Form.Field>
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button negative onClick={completeDocRefCopy}>
-        Cancel
-      </Button>
-      <Button
-        positive
-        onClick={() =>
-          copyDocuments(
-            uuids,
-            copyDocRefDialogForm.values.destination.uuid,
-            copyDocRefDialogForm.values.permissionInheritance,
-          )
-        }
-        labelPosition="right"
-        icon="checkmark"
-        content="Choose"
-      />
-    </Modal.Actions>
-  </Modal>
+    }
+    actions={
+      <React.Fragment>
+        <Button negative onClick={completeDocRefCopy}>
+          Cancel
+        </Button>
+        <Button
+          positive
+          onClick={() =>
+            copyDocuments(
+              uuids,
+              copyDocRefDialogForm.values.destination.uuid,
+              copyDocRefDialogForm.values.permissionInheritance,
+            )
+          }
+          labelPosition="right"
+          icon="checkmark"
+          content="Choose"
+        />
+      </React.Fragment>
+    }
+  />
 );
 
 export default enhance(CopyDocRefDialog);

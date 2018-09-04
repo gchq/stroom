@@ -21,6 +21,7 @@ import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { Loader, Header, Grid } from 'semantic-ui-react';
 
+import DocRefImage from 'components/DocRefImage';
 import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
@@ -61,11 +62,7 @@ const XsltEditor = ({
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <img
-            className="stroom-icon--large"
-            alt="X"
-            src={require('../../images/docRefTypes/XSLT.svg')}
-          />
+          <DocRefImage docRefType='XSLT' />
           <Header.Content>{xsltId}</Header.Content>
           <Header.Subheader>
             <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={openDocRef} />

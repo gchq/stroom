@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import { compose, withProps } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-import { Modal, Button, Form } from 'semantic-ui-react';
+import { Header, Button, Form } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
@@ -27,6 +26,7 @@ import { moveDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
 
 import AppSearchBar from 'components/AppSearchBar';
+import ThemedModal from 'components/ThemedModal';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefMove } = actionCreators;
@@ -71,9 +71,12 @@ const MoveDocRefDialog = ({
   moveDocuments,
   moveDocRefDialogForm,
 }) => (
-  <Modal open={isMoving}>
-    <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
-    <Modal.Content scrolling>
+  <ThemedModal
+    open={isMoving}
+    header={
+      <Header className="header" icon="move" content="Select a Destination Folder for the Move?" />
+    }
+    content={
       <Form>
         <Form.Field>
           <label>Destination</label>
@@ -94,26 +97,28 @@ const MoveDocRefDialog = ({
           />
         </Form.Field>
       </Form>
-    </Modal.Content>
-    <Modal.Actions>
-      <Button negative onClick={completeDocRefMove}>
-        Cancel
-      </Button>
-      <Button
-        positive
-        onClick={() => {
-          moveDocuments(
-            uuids,
-            moveDocRefDialogForm.values.destination.uuid,
-            moveDocRefDialogForm.values.permissionInheritance,
-          );
-        }}
-        labelPosition="right"
-        icon="checkmark"
-        content="Choose"
-      />
-    </Modal.Actions>
-  </Modal>
+    }
+    actions={
+      <React.Fragment>
+        <Button negative onClick={completeDocRefMove}>
+          Cancel
+        </Button>
+        <Button
+          positive
+          onClick={() => {
+            moveDocuments(
+              uuids,
+              moveDocRefDialogForm.values.destination.uuid,
+              moveDocRefDialogForm.values.permissionInheritance,
+            );
+          }}
+          labelPosition="right"
+          icon="checkmark"
+          content="Choose"
+        />
+      </React.Fragment>
+    }
+  />
 );
 
 export default enhance(MoveDocRefDialog);
