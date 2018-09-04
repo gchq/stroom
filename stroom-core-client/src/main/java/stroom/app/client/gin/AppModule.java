@@ -55,7 +55,10 @@ import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
+import stroom.activity.client.SplashPresenter;
+import stroom.activity.client.SplashPresenter.SplashView;
 import stroom.main.client.view.MainViewImpl;
+import stroom.activity.client.SplashViewImpl;
 import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarProxy;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
@@ -92,6 +95,7 @@ public class AppModule extends AbstractPresenterModule {
         // Presenters
         bindPresenter(AppPresenter.class, AppPresenter.AppView.class, AppViewImpl.class, AppPresenter.AppProxy.class);
 
+        bindPresenterWidget(SplashPresenter.class, SplashView.class, SplashViewImpl.class);
         bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainProxy.class);
         bindPresenter(MenubarPresenter.class, MenubarView.class, MenubarViewImpl.class, MenubarProxy.class);
         bindPresenter(ExplorerTabPanePresenter.class, ExplorerTabPaneProxy.class);

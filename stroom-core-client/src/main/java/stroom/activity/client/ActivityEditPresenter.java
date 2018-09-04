@@ -42,6 +42,7 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     private static final String DEFAULT_ACTIVITY_EDITOR_TITLE = "Edit Activity";
@@ -82,7 +83,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 .onFailure(caught -> AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
     }
 
-    public void show(final Activity activity, final PopupUiHandlers popupUiHandlers) {
+    public void show(final Activity activity, final Consumer<Activity> consumer) {
         this.activity = activity;
         if (activityRecordingEnabled) {
             getView().getHtml().setHTML(activityEditorBody);
@@ -96,17 +97,15 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
-                        write(true);
+                        write(consumer);
                     } else {
+                        consumer.accept(null);
                         hide();
                     }
-
-                    popupUiHandlers.onHideRequest(autoClose, ok);
                 }
 
                 @Override
                 public void onHide(final boolean autoClose, final boolean ok) {
-                    popupUiHandlers.onHide(autoClose, ok);
                 }
             };
 
@@ -170,7 +169,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         }
     }
 
-    protected void write(final boolean hideOnSave) {
+    protected void write(final Consumer<Activity> consumer) {
         final ActivityDetails details = new ActivityDetails();
         final NodeList<Node> nodes = getView().getHtml().getElement().getChildNodes();
         for (int i = 0; i < nodes.getLength(); i++) {
@@ -198,9 +197,8 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         // Save the activity.
         dispatcher.exec(new EntityServiceSaveAction<Activity>(activity)).onSuccess(result -> {
             activity = result;
-            if (hideOnSave) {
-                hide();
-            }
+            consumer.accept(result);
+            hide();
         });
     }
 

@@ -913,8 +913,22 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.chooseOnStartup")
+                .value("true")
+                .description("Set toi true if users should be prompted to choose an activity on login.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.managerTitle")
+                .value("Choose an activity or create a new one")
+                .description("The title of the activity manager popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.editorTitle")
-                .value("Edit Activity Info")
+                .value("Choose Activity")
                 .description("The title of the activity editor popup.")
                 .editable(true)
                 .requireUiRestart(true)
@@ -931,6 +945,28 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
+        // Splash screen
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.enabled")
+                .value("true")
+                .description("If you would like users to see a splash screen on login.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.title")
+                .value("Splash Screen")
+                .description("The title of the splash screen popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.body")
+                .value("<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>")
+                .description("The HTML to display in the splash screen.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
 
         // Common statistics store properties
         list.add(new GlobalProperty.Builder()

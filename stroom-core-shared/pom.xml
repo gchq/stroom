@@ -71,6 +71,11 @@
       <artifactId>validation-api</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+    </dependency>
+
     <!-- Event Logging -->
     <dependency>
       <groupId>event-logging</groupId>

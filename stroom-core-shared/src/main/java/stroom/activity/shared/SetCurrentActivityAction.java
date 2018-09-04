@@ -27,6 +27,10 @@ public class SetCurrentActivityAction extends Action<Activity> {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public SetCurrentActivityAction(final Activity activity) {
+        this.activity = activity;
+    }
+
     public Activity getActivity() {
         return activity;
     }

@@ -31,14 +31,20 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.entity.shared.StringCriteria.MatchStyle;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import javax.inject.Inject;
+import java.util.function.Consumer;
 
 
 public class ManageActivityPresenter extends
@@ -48,6 +54,7 @@ public class ManageActivityPresenter extends
     private final ActivityListPresenter listPresenter;
     private final Provider<ActivityEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;
+    private final ClientPropertyCache clientPropertyCache;
     private FindActivityCriteria criteria = new FindActivityCriteria();
     private ButtonView newButton;
     private ButtonView openButton;
@@ -58,11 +65,13 @@ public class ManageActivityPresenter extends
                                    final ManageActivityView view,
                                    final ActivityListPresenter listPresenter,
                                    final Provider<ActivityEditPresenter> editProvider,
-                                   final ClientDispatchAsync dispatcher) {
+                                   final ClientDispatchAsync dispatcher,
+                                   final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         this.dispatcher = dispatcher;
+        this.clientPropertyCache = clientPropertyCache;
 
         getView().setUiHandlers(this);
 
@@ -80,7 +89,8 @@ public class ManageActivityPresenter extends
         registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onOpen();
+                hide();
+//                onOpen();
             }
         }));
         if (newButton != null) {
@@ -108,14 +118,49 @@ public class ManageActivityPresenter extends
         super.onBind();
     }
 
+    public void showInitial(final Consumer<Activity> consumer) {
+        clientPropertyCache.get().onSuccess(clientProperties -> {
+            final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false);
+            if (show) {
+                show(consumer);
+            } else {
+                consumer.accept(null);
+            }
+        });
+    }
+
+    public void show(final Consumer<Activity> consumer) {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                hide();
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                consumer.accept(getSelected());
+            }
+        };
+        clientPropertyCache.get().onSuccess(clientProperties -> {
+            final String title = clientProperties.get(ClientProperties.ACTIVITY_EDITOR_TITLE);
+            final PopupSize popupSize = new PopupSize(1000, 600, true);
+            ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
+                    PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);
+        });
+    }
+
+    public void hide() {
+        HidePopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this);
+    }
+
     private void enableButtons() {
-        final boolean enabled = listPresenter.getSelectedItem() != null;
+        final boolean enabled = getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
     }
 
     private void onOpen() {
-        final Activity e = listPresenter.getSelectedItem();
+        final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
             dispatcher.exec(new EntityServiceLoadAction<Activity>(DocRef.create(e), null)).onSuccess(this::onEdit);
@@ -125,22 +170,18 @@ public class ManageActivityPresenter extends
     @SuppressWarnings("unchecked")
     private void onEdit(final Activity e) {
         if (e != null) {
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    listPresenter.refresh();
-                }
-            };
-
             if (editProvider != null) {
                 final ActivityEditPresenter editor = editProvider.get();
-                editor.show(e, popupUiHandlers);
+                editor.show(e, activity -> {
+                    listPresenter.refresh();
+                    setSelected(activity);
+                });
             }
         }
     }
 
     private void onDelete() {
-        final Activity entity = listPresenter.getSelectedItem();
+        final Activity entity = getSelected();
         if (entity != null) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
                     result -> {
@@ -202,8 +243,15 @@ public class ManageActivityPresenter extends
         onEdit(new Activity());
     }
 
-    public Activity getSelected() {
-        return listPresenter.getSelectedItem();
+    void setSelected(final Activity activity) {
+        listPresenter.getSelectionModel().clear();
+        if (activity != null) {
+            listPresenter.getSelectionModel().setSelected(activity);
+        }
+    }
+
+    Activity getSelected() {
+        return listPresenter.getSelectionModel().getSelected();
     }
 
     interface ManageActivityView extends View, HasUiHandlers<ManageActivityUiHandlers> {

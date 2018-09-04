@@ -21,7 +21,6 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -29,10 +28,10 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.activity.client.ManageActivityPresenter;
+import stroom.activity.client.ActivityChangedEvent;
+import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
-import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -46,12 +45,8 @@ import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHa
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
@@ -63,11 +58,10 @@ public class ExplorerTreePresenter
 
     private static final String EXPLORER = "Explorer";
 
-    private final ClientDispatchAsync dispatcher;
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
+    private final CurrentActivity currentActivity;
     private final ExplorerTree explorerTree;
-    private final Provider<ManageActivityPresenter> manageActivityPresenterProvider;
 
     @Inject
     public ExplorerTreePresenter(final EventBus eventBus,
@@ -76,12 +70,11 @@ public class ExplorerTreePresenter
                                  final ClientDispatchAsync dispatcher,
                                  final DocumentTypeCache documentTypeCache,
                                  final TypeFilterPresenter typeFilterPresenter,
-                                 final Provider<ManageActivityPresenter> manageActivityPresenterProvider) {
+                                 final CurrentActivity currentActivity) {
         super(eventBus, view, proxy);
-        this.dispatcher = dispatcher;
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
-        this.manageActivityPresenterProvider = manageActivityPresenterProvider;
+        this.currentActivity = currentActivity;
 
         view.setUiHandlers(this);
 
@@ -96,17 +89,30 @@ public class ExplorerTreePresenter
         // Add views.
         view.setCellTree(explorerTree);
 
-        updateActivitySummary(null);
+        updateActivitySummary(currentActivity.getActivity());
     }
 
-//    private Activity createTestActivity() {
-//        final Activity activity = new Activity();
-//        activity.setUserId("test");
-//        final ActivityDetails details = activity.getDetails();
-//        details.addProperty("code", "My Test Code");
-//        details.addProperty("description", "My Test Description");
-//        return activity;
-//    }
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        // Register for refresh events.
+        registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
+
+        // Register for changes to the current activity.
+        registerHandler(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary(event.getActivity())));
+
+        // Register for highlight events.
+        registerHandler(getEventBus().addHandler(HighlightExplorerItemEvent.getType(), this));
+
+        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
+
+        // Fire events from the explorer tree globally.
+        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(explorerTree.getSelectionModel(), event.getSelectionType()))));
+        registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
+
+        registerHandler(getView().getActivityContainer().addClickHandler(event -> currentActivity.showActivityChooser()));
+    }
 
     private void updateActivitySummary(final Activity activity) {
         final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
@@ -127,44 +133,6 @@ public class ExplorerTreePresenter
         }
 
         getView().getActivityContainer().setHTML(sb.toString());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // Register for refresh events.
-        registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
-
-        // Register for highlight events.
-        registerHandler(getEventBus().addHandler(HighlightExplorerItemEvent.getType(), this));
-
-        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(typeFilterPresenter.getIncludedTypes())));
-
-        // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(explorerTree.getSelectionModel(), event.getSelectionType()))));
-        registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
-
-        registerHandler(getView().getActivityContainer().addClickHandler(event -> {
-            final ManageActivityPresenter manageActivityPresenter = manageActivityPresenterProvider.get();
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    HidePopupEvent.fire(ExplorerTreePresenter.this, manageActivityPresenter);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    final Activity activity = manageActivityPresenter.getSelected();
-                    final SetCurrentActivityAction action = new SetCurrentActivityAction();
-                    action.setActivity(activity);
-                    dispatcher.exec(action).onSuccess(res -> updateActivitySummary(res));
-                }
-            };
-            final PopupSize popupSize = new PopupSize(1000, 600, true);
-            ShowPopupEvent.fire(ExplorerTreePresenter.this, manageActivityPresenter,
-                    PopupType.CLOSE_DIALOG, null, popupSize, "Manage Activities", popupUiHandlers, null);
-        }));
     }
 
     @Override

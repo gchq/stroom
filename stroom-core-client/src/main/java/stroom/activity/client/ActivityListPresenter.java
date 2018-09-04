@@ -31,6 +31,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.MultiSelectionModel;
 
 public class ActivityListPresenter
         extends MyPresenterWidget<DataGridView<Activity>>
@@ -71,12 +72,8 @@ public class ActivityListPresenter
         dataProvider.refresh();
     }
 
-    Activity getSelectedItem() {
-        return getView().getSelectionModel().getSelected();
-    }
-
-    void setSelectedItem(final Activity row) {
-        getView().getSelectionModel().setSelected(row);
+    MultiSelectionModel<Activity> getSelectionModel() {
+        return getView().getSelectionModel();
     }
 
     void setCriteria(final FindActivityCriteria criteria) {
