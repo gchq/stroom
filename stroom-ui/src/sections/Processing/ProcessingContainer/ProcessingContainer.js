@@ -28,7 +28,7 @@ import { actionCreators as expressionActionCreators } from 'components/Expressio
 import { fetchTrackers } from '../streamTasksResourceClient';
 import ProcessingDetails from '../ProcessingDetails/ProcessingDetails';
 import ProcessingPagination from '../ProcessingPagination/ProcessingPagination';
-import ProcessingList from '../ProcessingList/ProcessingList';
+import InfiniteProcessingList from '../InfiniteProcessingList/InfiniteProcessingList';
 
 const { expressionChanged } = expressionActionCreators;
 const { updateTrackerSelection, resetPaging, updateSearchCriteria } = actionCreators;
@@ -160,7 +160,6 @@ const ProcessingContainer = ({
           </div>}
         />
       </div>
-      <ProcessingPagination />
     </div>
     <div className="tracker-container">
       <div className="tracker">
@@ -172,12 +171,12 @@ const ProcessingContainer = ({
             } table__reactTable__container`}
           >
             {selectedTrackerId === undefined || selectedTrackerId === null ? (
-              <ProcessingList
+              <InfiniteProcessingList
                 onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
               />
             ) : (
               <PanelGroup direction="column">
-                <ProcessingList
+                <InfiniteProcessingList
                   onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
                 />
                 <ProcessingDetails />

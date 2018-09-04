@@ -38,6 +38,10 @@ export const SortByOptions = {
 };
 
 export const actionCreators = createActions({
+  ADD_TRACKERS: (streamTasks, totalStreamTasks) => ({
+    streamTasks,
+    totalStreamTasks,
+  }),
   UPDATE_SORT: (sortBy, sortDirection) => ({ sortBy, sortDirection }),
   UPDATE_TRACKERS: (streamTasks, totalStreamTasks) => ({
     streamTasks,
@@ -59,6 +63,12 @@ export const actionCreators = createActions({
 
 const reducers = handleActions(
   {
+    ADD_TRACKERS: (state, { payload }) => ({
+      ...state,
+      trackers: state.trackers.concat(payload.streamTasks),
+      totalTrackers: payload.totalStreamTasks,
+      numberOfPages: Math.ceil(payload.totalStreamTasks / state.pageSize),
+    }),
     UPDATE_SORT: (state, { payload }) => ({
       ...state,
       sortBy: payload.sortBy,
