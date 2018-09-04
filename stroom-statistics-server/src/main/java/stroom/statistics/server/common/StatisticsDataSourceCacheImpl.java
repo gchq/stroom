@@ -107,7 +107,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     private <K, V> LoadingCache<K, V> createCache(final String name, final CacheLoader<K, V> cacheLoader) {
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(100)
-                .expireAfterAccess(10, TimeUnit.MINUTES);
+                .expireAfterWrite(10, TimeUnit.MINUTES);
         final LoadingCache<K, V> cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache(name, cacheBuilder, cache);
         return cache;
