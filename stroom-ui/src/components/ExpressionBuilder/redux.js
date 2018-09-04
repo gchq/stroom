@@ -20,12 +20,9 @@ import {
   updateItemInTree,
   addItemsToTree,
   deleteItemFromTree,
-  moveItemsInTree
+  moveItemsInTree,
 } from 'lib/treeUtils';
-
-import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
-
-const { docRefPicked } = folderExplorerActionCreators;
+import { createActionHandlerPerId } from 'lib/reduxFormUtils';
 
 // Expression Editors
 const actionCreators = createActions({
@@ -57,9 +54,6 @@ const actionCreators = createActions({
   }),
 });
 
-// expressions, keyed on ID, there may be several expressions on a page
-const defaultExpressionState = {};
-
 const NEW_TERM = {
   type: 'term',
   condition: 'EQUALS',
@@ -72,6 +66,14 @@ const NEW_OPERATOR = {
   enabled: true,
   children: [],
 };
+
+const defaultStatePerExpression = {
+  pendingDeletionOperatorId: undefined,
+  expression: NEW_OPERATOR,
+};
+
+// expressions, keyed on ID, there may be several expressions on a page
+const defaultState = {};
 
 /**
  * These constants and functions are used to generate Doc Ref pickerId values
@@ -119,80 +121,57 @@ const splitDictionaryTermId = (value) => {
 const joinDictionaryTermId = (expressionId, termUuid) =>
   EXPRESSION_PREFIX + PICKER_DELIM + expressionId + PICKER_DELIM + termUuid;
 
+const getCurrentExpression = (state, action) =>
+  (state[action.payload.expressionId] ? state[action.payload.expressionId].expression : {});
+
+const byExpressionId = createActionHandlerPerId(
+  ({ payload: expressionId }) => expressionId,
+  defaultStatePerExpression,
+);
+
 const reducer = handleActions(
   {
     // Expression Changed
-    EXPRESSION_CHANGED: (state, action) => ({
-      ...state,
-      [action.payload.expressionId]: assignRandomUuids(action.payload.expression),
-    }),
+    EXPRESSION_CHANGED: byExpressionId((state, action) => ({
+      expression: assignRandomUuids(action.payload.expression),
+    })),
 
     // Expression Term Added
-    EXPRESSION_TERM_ADDED: (state, action) => ({
-      ...state,
-      [action.payload.expressionId]: addItemsToTree(
-        state[action.payload.expressionId],
-        action.payload.operatorId,
-        [NEW_TERM],
-      ),
-    }),
+    EXPRESSION_TERM_ADDED: byExpressionId((state, action) => ({
+      expression: addItemsToTree(getCurrentExpression(state, action), action.payload.operatorId, [
+        NEW_TERM,
+      ]),
+    })),
 
     // Expression Operator Added
-    EXPRESSION_OPERATOR_ADDED: (state, action) => ({
-      ...state,
-      [action.payload.expressionId]: addItemsToTree(
-        state[action.payload.expressionId],
-        action.payload.operatorId,
-        [NEW_OPERATOR],
-      ),
-    }),
+    EXPRESSION_OPERATOR_ADDED: byExpressionId((state, action) => ({
+      expression: addItemsToTree(getCurrentExpression(state, action), action.payload.operatorId, [
+        NEW_OPERATOR,
+      ]),
+    })),
 
     // Expression Term Updated
-    EXPRESSION_ITEM_UPDATED: (state, action) => ({
-      ...state,
-      [action.payload.expressionId]: updateItemInTree(
-        state[action.payload.expressionId],
+    EXPRESSION_ITEM_UPDATED: byExpressionId((state, action) => ({
+      expression: updateItemInTree(
+        getCurrentExpression(state, action),
         action.payload.itemId,
         action.payload.updates,
       ),
-    }),
+    })),
 
     // Expression Item Deleted
-    EXPRESSION_ITEM_DELETED: (state, action) => ({
-      ...state,
-      [action.payload.expressionId]: deleteItemFromTree(
-        state[action.payload.expressionId],
-        action.payload.itemId,
-      ),
-    }),
+    EXPRESSION_ITEM_DELETED: byExpressionId((state, action) => ({
+      expression: deleteItemFromTree(getCurrentExpression(state, action), action.payload.itemId),
+    })),
 
     // Expression Item Moved
-    EXPRESSION_ITEM_MOVED: (state, action) => ({
-      ...state,
-      [action.payload.expressionId]: moveItemsInTree(
-        state[action.payload.expressionId],
-        action.payload.destination,
-        [action.payload.itemToMove],
-      ),
-    }),
-
-    // Doc Ref Picked
-    [docRefPicked]: (state, action) => {
-      const { isExpressionBased, expressionId, termUuid } = splitDictionaryTermId(action.payload.pickerId);
-
-      if (isExpressionBased) {
-        return {
-          ...state,
-          [expressionId]: updateItemInTree(state[expressionId], termUuid, {
-            value: undefined,
-            dictionary: action.payload.docRef,
-          }),
-        };
-      }
-      return state;
-    },
+    EXPRESSION_ITEM_MOVED: byExpressionId((state, action) => ({
+      expression: moveItemsInTree(getCurrentExpression(state, action), action.payload.destination, [
+        action.payload.itemToMove,
+      ]),
+    })),
   },
-  defaultExpressionState,
+  defaultState,
 );
 
 export { actionCreators, reducer, joinDictionaryTermId };

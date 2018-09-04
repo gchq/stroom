@@ -43,9 +43,9 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
   getState,
 ) => {
   const state = getState();
-  let expression = state.expressionBuilder.expressions[expressionId];
+  let expressionState = state.expressionBuilder[expressionId];
 
-  expression = cleanExpression(expression);
+  const expression = cleanExpression(expressionState.expression);
 
   let url = `${state.config.streamAttributeMapServiceUrl}/?`;
   url += `pageSize=${pageSize}`;

@@ -165,6 +165,7 @@ const enhance = compose(
 );
 
 const AppSearchBar = ({
+  className,
   pickerId,
   docRefs,
   thisNavigateToFolder,
@@ -181,7 +182,7 @@ const AppSearchBar = ({
   onTextBlur,
   onSearchTermChange,
 }) => (
-  <div className="dropdown app-search-bar">
+  <div className={`dropdown ${className}`}>
     <Input
       className="border flat app-search-bar__input"
       icon="search"
@@ -191,7 +192,7 @@ const AppSearchBar = ({
       onBlur={onTextBlur}
       onChange={onSearchTermChange}
     />
-    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts} className="dropdown__content">
+    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts} className="dropdown__content app-search-bar__dropdown-content">
       <div className="app-search-header">
         <Icon name={headerIcon} size="large" onClick={headerAction} />
         {headerTitle}
@@ -228,6 +229,7 @@ EnhancedAppSearchBar.propTypes = {
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
   value: DocRefPropType,
+  className: PropTypes.string
 };
 
 EnhancedAppSearchBar.defaultProps = {

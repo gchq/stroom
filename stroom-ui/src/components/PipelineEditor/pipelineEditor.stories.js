@@ -22,8 +22,9 @@ import StoryRouter from 'storybook-react-router';
 import { compose } from 'recompose';
 
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
 import PipelineEditor from './index';
 
@@ -37,9 +38,6 @@ import { actionCreators as folderExplorerActionCreators } from 'components/Folde
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-import { testTree, testPipelines, elements, elementProperties } from './test';
-import { testDocRefsTypes } from 'components/FolderExplorer/test';
-
 const {
   pipelineReceived,
   elementsReceived,
@@ -47,16 +45,11 @@ const {
   pipelineElementSelected,
 } = pipelineActionCreators;
 
-const PollyDecoratorWithTestData = PollyDecorator({
-  documentTree: testTree,
-  docRefTypes: testDocRefsTypes,
-  elements,
-  elementProperties,
-  pipelines: testPipelines,
-});
+import { testPipelines } from './test';
 
 const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter());
@@ -67,12 +60,14 @@ Object.keys(testPipelines).forEach((k) => {
 
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
 
 storiesOf('Element Details', module)
   .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
   }))
