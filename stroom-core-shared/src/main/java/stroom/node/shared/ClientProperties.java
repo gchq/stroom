@@ -51,6 +51,7 @@ public class ClientProperties implements SharedObject {
     public static final String SPLASH_ENABLED = "stroom.splash.enabled";
     public static final String SPLASH_TITLE = "stroom.splash.title";
     public static final String SPLASH_BODY = "stroom.splash.body";
+    public static final String SPLASH_VERSION = "stroom.splash.version";
 
     private HashMap<String, String> map;
 

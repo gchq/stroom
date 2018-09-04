@@ -967,6 +967,13 @@ public class DefaultProperties {
                 .editable(true)
                 .requireUiRestart(true)
                 .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.version")
+                .value("v0.1")
+                .description("The version of the splash screen message.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
 
         // Common statistics store properties
         list.add(new GlobalProperty.Builder()

@@ -55,6 +55,7 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.SPLASH_ENABLED);
         addProperty(props, ClientProperties.SPLASH_TITLE);
         addProperty(props, ClientProperties.SPLASH_BODY);
+        addProperty(props, ClientProperties.SPLASH_VERSION);
 
         return props;
     }

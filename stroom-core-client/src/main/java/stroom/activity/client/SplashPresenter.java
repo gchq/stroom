@@ -20,6 +20,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.activity.shared.AcknowledgeSplashAction;
+import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -32,11 +34,16 @@ import java.util.function.Consumer;
 
 public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
     private final ClientPropertyCache clientPropertyCache;
+    private final ClientDispatchAsync dispatcher;
 
     @Inject
-    public SplashPresenter(final EventBus eventBus, final SplashView view, final ClientPropertyCache clientPropertyCache) {
+    public SplashPresenter(final EventBus eventBus,
+                           final SplashView view,
+                           final ClientPropertyCache clientPropertyCache,
+                           final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.clientPropertyCache = clientPropertyCache;
+        this.dispatcher = dispatcher;
     }
 
     public void show(final Consumer<Boolean> consumer) {
@@ -45,11 +52,12 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
             if (enableSplashScreen) {
                 final String title = clientProperties.get(ClientProperties.SPLASH_TITLE);
                 final String body = clientProperties.get(ClientProperties.SPLASH_BODY);
+                final String version = clientProperties.get(ClientProperties.SPLASH_VERSION);
                 setHtml(body);
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        HidePopupEvent.fire(SplashPresenter.this, SplashPresenter.this);
+                        dispatcher.exec(new AcknowledgeSplashAction(body, version)).onSuccess(result -> HidePopupEvent.fire(SplashPresenter.this, SplashPresenter.this));
                     }
 
                     @Override
