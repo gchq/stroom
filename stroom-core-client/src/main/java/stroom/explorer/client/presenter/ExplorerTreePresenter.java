@@ -17,8 +17,11 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -40,6 +43,8 @@ import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.ExplorerData;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
@@ -62,6 +67,7 @@ public class ExplorerTreePresenter
     private final TypeFilterPresenter typeFilterPresenter;
     private final CurrentActivity currentActivity;
     private final ExplorerTree explorerTree;
+    private final Button activityContainer = new Button();
 
     @Inject
     public ExplorerTreePresenter(final EventBus eventBus,
@@ -70,7 +76,8 @@ public class ExplorerTreePresenter
                                  final ClientDispatchAsync dispatcher,
                                  final DocumentTypeCache documentTypeCache,
                                  final TypeFilterPresenter typeFilterPresenter,
-                                 final CurrentActivity currentActivity) {
+                                 final CurrentActivity currentActivity,
+                                 final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view, proxy);
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
@@ -87,9 +94,31 @@ public class ExplorerTreePresenter
         };
 
         // Add views.
-        view.setCellTree(explorerTree);
+        clientPropertyCache.get().onSuccess(clientProperties -> {
+            if (clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false)) {
+                activityContainer.setStyleName("activityContainer");
 
-        updateActivitySummary(currentActivity.getActivity());
+                final SimplePanel activityOuter = new SimplePanel();
+                activityOuter.setStyleName("activityOuter");
+                activityOuter.setWidget(activityContainer);
+
+                final SimplePanel treeContainer = new SimplePanel();
+                treeContainer.setStyleName("stroom-content");
+                treeContainer.setWidget(explorerTree);
+
+                final DockLayoutPanel dockLayoutPanel = new DockLayoutPanel(Unit.PX);
+                dockLayoutPanel.setStyleName("explorerWrapper");
+                dockLayoutPanel.addSouth(activityOuter, 100);
+                dockLayoutPanel.add(treeContainer);
+
+                view.setCellTree(dockLayoutPanel);
+
+                updateActivitySummary(currentActivity.getActivity());
+
+            } else {
+                view.setCellTree(explorerTree);
+            }
+        });
     }
 
     @Override
@@ -111,7 +140,7 @@ public class ExplorerTreePresenter
         registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(explorerTree.getSelectionModel(), event.getSelectionType()))));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
 
-        registerHandler(getView().getActivityContainer().addClickHandler(event -> currentActivity.showActivityChooser()));
+        registerHandler(activityContainer.addClickHandler(event -> currentActivity.showActivityChooser()));
     }
 
     private void updateActivitySummary(final Activity activity) {
@@ -132,7 +161,7 @@ public class ExplorerTreePresenter
             sb.append("none");
         }
 
-        getView().getActivityContainer().setHTML(sb.toString());
+        activityContainer.setHTML(sb.toString());
     }
 
     @Override
@@ -220,8 +249,6 @@ public class ExplorerTreePresenter
         void setCellTree(Widget widget);
 
         void setDeleteEnabled(boolean enable);
-
-        Button getActivityContainer();
     }
 
     @ProxyCodeSplit

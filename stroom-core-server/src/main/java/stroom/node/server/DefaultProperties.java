@@ -907,14 +907,14 @@ public class DefaultProperties {
         // Activity Recording
         list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.enabled")
-                .value("true")
+                .value("false")
                 .description("If you would like users to be able to record some info about the activity they are performing set this property to true.")
                 .editable(true)
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.chooseOnStartup")
-                .value("true")
+                .value("false")
                 .description("Set toi true if users should be prompted to choose an activity on login.")
                 .editable(true)
                 .requireUiRestart(true)
@@ -948,7 +948,7 @@ public class DefaultProperties {
         // Splash screen
         list.add(new GlobalProperty.Builder()
                 .name("stroom.splash.enabled")
-                .value("true")
+                .value("false")
                 .description("If you would like users to see a splash screen on login.")
                 .editable(true)
                 .requireUiRestart(true)

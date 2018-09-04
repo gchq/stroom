@@ -51,8 +51,6 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     SimplePanel treeContainer;
     @UiField(provided = true)
     SvgButton typeFilter;
-    @UiField
-    Button activityContainer;
 
     @Inject
     public ExplorerTreeViewImpl(final Binder binder) {
@@ -70,11 +68,6 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     @Override
     public void setDeleteEnabled(final boolean enabled) {
         deleteItem.setEnabled(enabled);
-    }
-
-    @Override
-    public Button getActivityContainer() {
-        return activityContainer;
     }
 
     @UiHandler("newItem")
