@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, renderComponent, branch, withProps, withHandlers, withState } from 'recompose';
+import { compose, renderComponent, branch, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
@@ -204,16 +204,17 @@ const enhance = compose(
       element,
       elements: { elementProperties },
       pipelineState: { pipeline },
-      getInitialValues,
       pipelineElementSelected,
+      pipelineId,
+      elementId,
     }) => (e) => {
       onClick();
       // We need to get the initial values for this element and make sure they go into the state,
       // ready for redux-form to populate the new form.
-      const elementTypeProperties = elementProperties[element.type];
-      const elementProperties = pipeline.merged.properties.add.filter(property => property.element === element.id);
-      const initalValues = getInitialValues(elementTypeProperties, elementProperties);
-      return pipelineElementSelected(pipelineId, elementId, initalValues);
+      const thisElementTypeProperties = elementProperties[element.type];
+      const thisElementProperties = pipeline.merged.properties.add.filter(property => property.element === element.id);
+      const initialValues = getInitialValues(thisElementTypeProperties, thisElementProperties);
+      return pipelineElementSelected(pipelineId, elementId, initialValues);
     },
   }),
 );
