@@ -51,7 +51,8 @@ dependencies {
     compile libs.javassist
 
     compile libs.jaxb_api
-    compile libs.jaxb_core
+    //compile libs.jaxb_core
+    compile libs.jaxb_runtime
     compile libs.jaxb_impl
 
     compile libs.slf4j_api

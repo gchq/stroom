@@ -95,7 +95,8 @@ dependencies {
     compile libs.javax_activation
     compile libs.javax_activation_impl
     compile libs.jaxb_api
-    compile libs.jaxb_core
+    //compile libs.jaxb_core
+    compile libs.jaxb_runtime
     compile libs.jaxb_impl
     compile libs.jcommander
     compile libs.jetty_servlet
