@@ -14,15 +14,15 @@ export const search = (dataViewerId, pageOffset, pageSize, addResults) => (dispa
     url,
     (response) => {
       response.json().then((data) => {
-        if(addResults) {
-          dispatch(actionCreators.add(            
+        if (addResults) {
+          dispatch(actionCreators.add(
             dataViewerId,
             data.streamAttributeMaps,
             data.pageResponse.total,
             pageSize,
-            pageOffset,))
-        }
-        else {
+            pageOffset,
+          ));
+        } else {
           dispatch(actionCreators.updateStreamAttributeMaps(
             dataViewerId,
             data.streamAttributeMaps,
@@ -43,7 +43,7 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
   getState,
 ) => {
   const state = getState();
-  let expressionState = state.expressionBuilder[expressionId];
+  const expressionState = state.expressionBuilder[expressionId];
 
   const expression = cleanExpression(expressionState.expression);
 
@@ -75,7 +75,8 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
 
 /**
  * TODO: shouldn't actually have to use this -- ideally the ExpressionBuilder would
- * generate Jackson-compatible JSON.
+ * generate JSON compatible with the resource's endpoints. I.e. jackson binding
+ * fails if we have these uuids.
  */
 const cleanExpression = (expression) => {
   // UUIDs are not part of Expression

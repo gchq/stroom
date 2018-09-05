@@ -1,52 +1,18 @@
 .SearchBar {
   width: 100%;
+  display: block;
+}
+
+.SearchBar__header {
+  display: inline-flex;
+  width:100%;
 }
 
 .SearchBar__input {
-  display: contents !important;
+  flex-grow: 1;
 }
 
-.SearchBar__input input {
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  border-left: 0 !important;
-}
-
-.SearchBar__expressionBuilder {
-  width: calc(100% - 131px) !important;
-}
-
-.SearchBar__layoutGrid {
-  margin: 0 !important;
-  width: 100%;
-  display: inline-flex;
-}
-
-.SearchBar__validationMessages {
-  width: 100%;
-}
-
-.SearchBar__expression {
-  width: 100%;
-  border: 0 !important;
-}
-
-.SearchBar__expression .dropdown__content {
-  padding-bottom: 10px;
-}
-
-.SearchBar__expression-container {
-  width: 100%;
-}
-
-.SearchBar__modeButton {
-  margin-right: 0px !important;
-  border-bottom-right-radius: 0 !important;
-  border-top-right-radius: 0 !important;
-  height: 100%;
-}
-
-.SearchBar__hide-expression-button {
-  margin-right: 0px !important;
-  border-radius: 0 !important;
+.SearchBar__content {
+  top: 40px;
+  padding: 10px;
 }

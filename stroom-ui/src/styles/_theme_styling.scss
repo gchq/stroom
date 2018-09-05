@@ -143,6 +143,13 @@ input {
   }
 }
 
+.button.positive {
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
+    color: themed("text__color") !important;
+  }
+}
+
 .hoverable:hover {
   @include themify($themes) {
     background-color: themed("hover-color") !important;

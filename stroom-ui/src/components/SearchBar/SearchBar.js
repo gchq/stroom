@@ -65,66 +65,10 @@ const SearchBar = ({
   isExpressionVisible,
   setIsExpressionVisible,
 }) => (
-  <div className="SearchBar flat">
-    <div className="SearchBar__layoutGrid">
-      {isExpression ? (
-        <React.Fragment>
-          <Tooltip
-            trigger={
-          <Button
-            icon="text cursor"
-            className="SearchBar__modeButton raised-low bordered hoverable"
-            onClick={() => {
-              setIsExpression(false);
-              setIsExpressionVisible(false);
-            }}
-          />
-          }
-             content="Switch to using text search. You'll lose the expression you've built here."
-           />
-          <Button
-            disabled={searchIsInvalid}
-            className="SearchBar__hide-expression-button raised-low bordered hoverable"
-            icon={showHideExpressionIcon}
-            onClick={() => setIsExpressionVisible(!isExpressionVisible)}
-          />
-        </React.Fragment>
-      ) : (
-        <Tooltip
-          trigger={
-        <Button
-          disabled={searchIsInvalid}
-          className="SearchBar__modeButton raised-low bordered hoverable"
-          icon="edit"
-          onClick={() => {
-            const parsedExpression = processSearchString(dataSource, searchString);
-            expressionChanged(expressionId, parsedExpression.expression);
-            setIsExpression(true);
-            setIsExpressionVisible(true);
-          }}
-        />
-          }
-          content={
-            <React.Fragment>
-              <p>Switch to using the expression builder.</p>{' '}
-              <p>You won't be able to convert back to a text search and keep your expression.</p>
-            </React.Fragment>
-          }
-        />
-      )}
+  <div className="dropdown SearchBar borderless">
+    <div className="SearchBar__header">
       <Input
         placeholder="I.e. field1=value1 field2=value2"
-        disabled={isExpression}
-        action={
-          <Button
-            disabled={searchIsInvalid}
-            className="icon-button"
-            icon="search"
-            onClick={() => {
-              onSearch(expressionId);
-            }}
-          />
-        }
         value={searchString}
         className="SearchBar__input"
         onChange={(_, data) => {
@@ -146,25 +90,41 @@ const SearchBar = ({
           expressionChanged(expressionId, parsedExpression.expression);
         }}
       />
-      {searchIsInvalid ? (
-        <Grid.Row>
-          <Grid.Column width={1} />
-          <Grid.Column width={15}>
-            <Container>
-              <Message warning className="SearchBar__validationMessages">
-                {searchStringValidationMessages.map((message, i) => (
-                  <p key={i}>{message}</p>
-                ))}
-              </Message>
-            </Container>
-          </Grid.Column>
-        </Grid.Row>
-      ) : (
-        undefined
-      )}
+      <Button
+        disabled={searchIsInvalid}
+        className="icon-button"
+        icon="search"
+        onClick={() => {
+          onSearch(expressionId);
+        }}
+      />
     </div>
-    <div className="dropdown SearchBar__expression">
-      <div tabIndex={0} className={`dropdown__content ${visibilityClass}`}>
+    <div tabIndex={0} className="dropdown__content SearchBar__content">
+      <Button.Group>
+        <Button
+          positive={!isExpression}
+          icon="text cursor"
+          className="SearchBar__modeButton raised-low bordered hoverable"
+          onClick={() => {
+            setIsExpression(false);
+            setIsExpressionVisible(false);
+          }}
+        />
+        <Button.Or />
+        <Button
+          positive={isExpression}
+          disabled={searchIsInvalid}
+          className="SearchBar__modeButton raised-low bordered hoverable"
+          icon="edit"
+          onClick={() => {
+            const parsedExpression = processSearchString(dataSource, searchString);
+            expressionChanged(expressionId, parsedExpression.expression);
+            setIsExpression(true);
+            setIsExpressionVisible(true);
+          }}
+        />
+      </Button.Group>
+      {isExpression ? (
         <ExpressionBuilder
           className="SearchBar__expressionBuilder"
           showModeToggle={false}
@@ -172,7 +132,9 @@ const SearchBar = ({
           dataSource={dataSource}
           expressionId={expressionId}
         />
-      </div>
+      ) : (
+        <div>TODO: Help text for string search, or prompts</div>
+      )}
     </div>
   </div>
 );
