@@ -38,7 +38,6 @@ import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import DeletePipelineElement from './DeletePipelineElement';
-import Bin from './Bin';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
@@ -174,9 +173,6 @@ const RawPipelineEditor = ({
             lineContextId={`pipeline-lines-${pipelineId}`}
             lineElementCreators={lineElementCreators}
           >
-            <div className="Pipeline-editor__bin">
-              <Bin />
-            </div>
             <div className="Pipeline-editor__elements">
               {Object.keys(elementStyles)
                 .map(es => pipeline.merged.elements.add.find(e => e.id === es))
