@@ -611,7 +611,6 @@ configure(projectsToBeModularised) {
             doFirst {
                 options.compilerArgs = [
                         '--module-path', classpath.asPath
-                        //'--add-modules', 'java.xml.bind' // required for stroom.util module
                 ]
                 classpath = files()
             }
