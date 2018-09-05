@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.1] - 2018-09-05
+
 * Issue **828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
 
 * Issue **774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
@@ -858,7 +860,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.1...HEAD
+[v5.5.0-beta.1]: https://github.com/gchq/stroom/compare/v5.4.6...v5.5.0-beta.1
 [v5.4.6]: https://github.com/gchq/stroom/compare/v5.4.5...v5.4.6
 [v5.4.5]: https://github.com/gchq/stroom/compare/v5.4.4...v5.4.5
 [v5.4.4]: https://github.com/gchq/stroom/compare/v5.4.3...v5.4.4
