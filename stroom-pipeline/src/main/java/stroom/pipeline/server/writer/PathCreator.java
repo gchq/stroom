@@ -38,6 +38,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
