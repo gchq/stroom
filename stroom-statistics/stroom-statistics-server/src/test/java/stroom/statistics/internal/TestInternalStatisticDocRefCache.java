@@ -1,8 +1,6 @@
 package stroom.statistics.internal;
 
-import org.junit.Ignore;
-
-@Ignore
+//@Ignore
 public class TestInternalStatisticDocRefCache {
 
 //    private static final String statKey = "myStatKey";

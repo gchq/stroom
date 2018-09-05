@@ -4,16 +4,17 @@ ext.moduleName = 'stroom.explorer.impl.db.gen'
 
 dependencies {
     compile libs.javax_annotation
+    permitUnusedDeclared libs.javax_annotation // Not obvious why it thinks it is not used.
     compile libs.jooq
 
     jooqRuntime libs.mysql_connector_java
 
     // The following are required to put JAXB on the JOOQ classpath for the purpose of JOOQ code generation in J9+.
     // Later versions of the JOOQ Gradle plugin should make this unnecessary.
-    jooqRuntime 'javax.activation:activation:1.1.1'
-    jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
     jooqRuntime 'com.sun.xml.bind:jaxb-core:2.3.0.1'
     jooqRuntime 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
+    jooqRuntime 'javax.activation:activation:1.1.1'
+    jooqRuntime 'javax.xml.bind:jaxb-api:2.3.0'
 }
 
 def propNameJooqGeneration = 'jooqGeneration'

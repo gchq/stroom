@@ -2,9 +2,14 @@ buildscript {
     repositories {
         mavenLocal()
         jcenter()
+        // used for 
+        maven { url "https://dl.bintray.com/stroom/stroom" }
     }
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+
+        // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
+        classpath 'stroom:gradle-dependency-analyze:v2.2.2'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -33,6 +38,7 @@ task wrapper(type: Wrapper) {
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'ca.cutterslade.analyze'
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
@@ -283,6 +289,7 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'ca.cutterslade.analyze'
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
