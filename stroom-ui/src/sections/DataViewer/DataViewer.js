@@ -265,7 +265,9 @@ const DataViewer = ({
       columns={tableColumns}
       getTdProps={(state, rowInfo, column, instance) => ({
         onClick: (e, handleOriginal) => {
-          if(rowInfo.original.streamId !== undefined) {
+          const index = path(['index'], rowInfo);
+          const streamId = path(['original', 'streamId'], rowInfo);
+          if(index !== undefined && streamId !== undefined) {
             onRowSelected(dataViewerId, rowInfo.index);
           }
 
