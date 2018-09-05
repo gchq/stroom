@@ -98,7 +98,7 @@ input {
   @include themify($themes) {
     background-color: themed("dropdown__background-color") !important;
     color: themed("text__color") !important;
-    border: themed("dropdown__border") !important;
+    border: themed("dropdown__border") ;
   }
   // This styles the actual drop-down bit.
   .menu {

@@ -3,7 +3,13 @@
 }
 
 .SearchBar__input {
-  width: 100%;
+  display: contents !important;
+}
+
+.SearchBar__input input {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: 0 !important;
 }
 
 .SearchBar__expressionBuilder {
@@ -13,6 +19,7 @@
 .SearchBar__layoutGrid {
   margin: 0 !important;
   width: 100%;
+  display: inline-flex;
 }
 
 .SearchBar__validationMessages {
@@ -21,4 +28,21 @@
 
 .SearchBar__expression {
   width: 100%;
+  border: 0 !important;
+}
+
+.SearchBar__expression-container {
+  width: 100%;
+}
+
+.SearchBar__modeButton {
+  margin-right: 0px !important;
+  border-bottom-right-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  height: 100%;
+}
+
+.SearchBar__hide-expression-button {
+  margin-right: 0px !important;
+  border-radius: 0 !important;
 }
