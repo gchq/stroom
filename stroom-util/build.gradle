@@ -30,6 +30,16 @@ dependencies {
     testRuntime libs.javax_activation
 }
 
+//compileJava {
+    //doLast {
+        //options.compilerArgs += [
+                //'--add-modules', 'java.xml.bind'
+        //]
+        //classpath = files()
+    //}
+//}
+
+
 task writeBuildProperties {
     def propertyFile = file "${project.rootDir}/stroom-util/src/main/resources/META-INF/stroom-util-build.properties"
     def props = new Properties()

@@ -269,7 +269,9 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
 def projectsToBeModularised = subprojects.findAll { project ->
     project.path in [
             ':stroom-config:stroom-config-common',
-            ':stroom-util-shared'
+            ':stroom-util',
+            ':stroom-util-shared',
+            'zzDUMMYzz to ease sorting'
     ]
 }
 
@@ -608,7 +610,8 @@ configure(projectsToBeModularised) {
             inputs.property("moduleName", moduleName)
             doFirst {
                 options.compilerArgs = [
-                        '--module-path', classpath.asPath,
+                        '--module-path', classpath.asPath
+                        //'--add-modules', 'java.xml.bind' // required for stroom.util module
                 ]
                 classpath = files()
             }
