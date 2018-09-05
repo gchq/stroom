@@ -65,7 +65,7 @@ dependencies {
     compile project(':stroom-proxy')
     compile project(':stroom-config:stroom-config-app')
     compile project(':stroom-config:stroom-config-global-impl-db')
-    compile project(':stroom-explorer:stroom-explorer-api')
+    //compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-impl')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-security:stroom-security-server')
@@ -85,18 +85,17 @@ dependencies {
     compile project(':stroom-kafka:stroom-kafka-pipeline')
 
     compile libs.stroomDocRef
-//    compile libs.stroomQueryApi
 
     compile libs.dropwizard_lifecycle
     compile libs.guava
     compile libs.guice3
-    compile libs.jackson_annotations
+    //compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.javax_activation
-    compile libs.javax_activation_impl
-    compile libs.jaxb_api
-    compile libs.jaxb_core
-    compile libs.jaxb_impl
+    //compile libs.javax_activation
+    //compile libs.javax_activation_impl
+    //compile libs.jaxb_api
+    //compile libs.jaxb_core
+    //compile libs.jaxb_impl
     compile libs.jcommander
     compile libs.jetty_servlet
 
@@ -114,10 +113,7 @@ dependencies {
     compile libs.dropwizard_configuration
     compile libs.flyway_core
     compile libs.guava
-//    compile libs.jackson_annotations
     compile libs.javax_inject
-    compile libs.javax_servlet_api
-//    compile libs.javax_validation
     compile libs.javax_servlet_api
     compile libs.jetty_server
     compile libs.jetty_servlets

@@ -37,7 +37,6 @@ dependencies {
     compile libs.commons_compress
     compile libs.commons_io
     compile libs.jackson_annotations
-    compile libs.javax_activation_impl
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.validation_api
@@ -51,8 +50,6 @@ dependencies {
     compile libs.javassist
 
     compile libs.jaxb_api
-    compile libs.jaxb_core
-    compile libs.jaxb_impl
 
     compile libs.slf4j_api
     compile libs.xml_apis

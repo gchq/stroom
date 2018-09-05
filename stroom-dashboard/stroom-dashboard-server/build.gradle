@@ -1,36 +1,35 @@
 ext.moduleName = 'stroom.dashboard.server'
 
 dependencies {
-    compile project(':stroom-dashboard:stroom-dashboard-shared')
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-dashboard:stroom-dashboard-shared')
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
-    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
-    compile libs.stroomExpression
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
     compile libs.eventLogging
+    //compile libs.flyway_core
     compile libs.guava
+    compile libs.guice4
+    compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
     compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.javax_servlet_api
-
     compile libs.jaxb_api
-
     compile libs.poi
     compile libs.poi_ooxml
     compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomExpression
+    compile libs.stroomQueryApi
     compile libs.ws_rs_api
-    compile libs.guice4
-//    compile libs.flyway_core
-    compile libs.hibernate_jpa_api
 
 //    testCompile project(':stroom-test-common')
 

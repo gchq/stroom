@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.elastic.impl'
 dependencies {
     compile project(':stroom-elastic:stroom-elastic-api')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-core-server')
+    //compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-pipeline')
@@ -13,9 +13,10 @@ dependencies {
 
     compile libs.guava
     compile libs.guice4
+    compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jetty_http
-    compile libs.slf4j_api
+    //compile libs.slf4j_api
     compile libs.stroomDocRef
     compile libs.stroomQueryAudit
     compile libs.stroomQueryAuthorisation
