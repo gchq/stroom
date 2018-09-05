@@ -1,32 +1,33 @@
 ext.moduleName = 'stroom.data.store.impl.fs'
 
 dependencies {
-    compile project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
-    compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
+    compile project(':stroom-entity-shared')
     compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     compile project(':stroom-util-shared')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.eventLogging
 
-    compile libs.guice4
-
     compile libs.flyway_core
     compile libs.guava
+    compile libs.guice4
     compile libs.hikari
-    compile libs.jooq
+    compile libs.jackson_annotations
     compile libs.javax_inject
+    compile libs.jooq
     compile libs.slf4j_api
 
-    testCompile libs.junit_jupiter
     testCompile libs.assertj_core
+    testCompile libs.junit_jupiter
     testCompile libs.mockito_core
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 }
