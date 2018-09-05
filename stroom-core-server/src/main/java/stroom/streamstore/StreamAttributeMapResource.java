@@ -125,9 +125,9 @@ public class StreamAttributeMapResource implements HasHealthCheck {
 
             //TODO disbale this and have it as a default field
             // Set status to unlocked
-            // ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
-            // ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
-            // criteria.getFindStreamCriteria().setExpression(expressionOperator);
+             ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
+             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
+             criteria.setExpression(expressionOperator);
 
             criteria.setExpression(expression);
 

@@ -38,7 +38,7 @@ export const search = (dataViewerId, pageOffset, pageSize, addResults) => (dispa
   );
 };
 
-export const searchWithExpression = (dataViewerId, pageOffset, pageSize, expressionId) => (
+export const searchWithExpression = (dataViewerId, pageOffset, pageSize, expressionId, addResults) => (
   dispatch,
   getState,
 ) => {
@@ -57,13 +57,23 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
     url,
     (response) => {
       response.json().then((data) => {
-        dispatch(actionCreators.updateStreamAttributeMaps(
-          dataViewerId,
-          data.streamAttributeMaps,
-          data.pageResponse.total,
-          pageSize,
-          pageOffset,
-        ));
+        if (addResults) {
+          dispatch(actionCreators.add(
+            dataViewerId,
+            data.streamAttributeMaps,
+            data.pageResponse.total,
+            pageSize,
+            pageOffset,
+          ));
+        } else {
+          dispatch(actionCreators.updateStreamAttributeMaps(
+            dataViewerId,
+            data.streamAttributeMaps,
+            data.pageResponse.total,
+            pageSize,
+            pageOffset,
+          ));
+        }
       });
     },
     {

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Container, Input, Button, Grid, Message } from 'semantic-ui-react';
-import { compose, withState, withProps } from 'recompose';
+import { compose, withState, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
 import Tooltip from 'components/Tooltip';
@@ -37,6 +37,23 @@ const enhance = compose(
   withSearchString,
   withIsSearchStringValid,
   withSearchStringValidationMessages,
+  lifecycle({
+    componentDidMount() {
+      // We need to set up an expression so we've got something to search with,
+      // even though it'll be empty.
+      const { expressionChanged, expressionId, dataSource } = this.props;
+      const parsedExpression = processSearchString(dataSource, '');
+      expressionChanged(expressionId, parsedExpression.expression);
+
+      // if (!selectedRow) {
+      const { onSearch } = this.props;
+      console.log({ onSearch });
+      // console.log({dataViewerId, pageOffset, pageSize, onSearch});
+      onSearch(expressionId);
+      // search(dataViewerId, pageOffset, pageSize);
+      // }
+    },
+  }),
   withProps(({ searchStringValidationMessages, isExpressionVisible }) => ({
     searchIsInvalid: searchStringValidationMessages.length > 0,
     visibilityClass: isExpressionVisible ? 'visible' : '',
@@ -100,8 +117,10 @@ const SearchBar = ({
       />
     </div>
     <div tabIndex={0} className="dropdown__content SearchBar__content">
-      <Button.Group>
+      <Button.Group size="mini">
         <Button
+          content="Text search"
+          size="mini"
           positive={!isExpression}
           icon="text cursor"
           className="SearchBar__modeButton raised-low bordered hoverable"
@@ -112,6 +131,8 @@ const SearchBar = ({
         />
         <Button.Or />
         <Button
+          content="Expression search"
+          size="mini"
           positive={isExpression}
           disabled={searchIsInvalid}
           className="SearchBar__modeButton raised-low bordered hoverable"
