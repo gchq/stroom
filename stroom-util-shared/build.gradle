@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.util.shared'
 
 dependencies {
     compile libs.stroomDocRef
+    compile libs.lucene_core
 
     testCompile libs.hamcrest_core
     testCompile libs.junit

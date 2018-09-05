@@ -69,7 +69,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v0.1-alpha.3',
         stroomExpression  : 'v1.4.3',
-        stroomQuery       : 'v4.0-beta.6', //same version for both stroom-query-api and stroom-query-common
+        stroomQuery       : 'SNAPSHOT', //same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
@@ -265,6 +265,13 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
     ]
 }
 
+def projectsToBeModularised = subprojects.findAll { project ->
+    project.path in [
+            ':stroom-config:stroom-config-common',
+            ':stroom-util-shared'
+    ]
+}
+
 //list to hold details of any failed test classes
 def failedTestReportFiles = []
 
@@ -409,62 +416,62 @@ subprojects {
     tasks.check.dependsOn integrationTest
     tasks.integrationTest.mustRunAfter test
 
-    afterEvaluate {
-        repositories {
-            jcenter()
-        }
-
-        compileJava {
-            inputs.property("moduleName", moduleName)
-            doFirst {
-                options.compilerArgs = [
-                        '--module-path', classpath.asPath,
-                ]
-                classpath = files()
-            }
-        }
-
-        compileTestJava {
-            inputs.property("moduleName", moduleName)
-            doFirst {
-                options.compilerArgs = [
-                        '--module-path', classpath.asPath,
-//                        '--add-modules', 'junit',
-//                        '--add-reads', "$moduleName=junit",
-                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
-                ]
-                classpath = files()
-            }
-        }
-
-        test {
-            inputs.property("moduleName", moduleName)
-            doFirst {
-                jvmArgs = [
-                        '--module-path', classpath.asPath,
-                        '--add-modules', 'ALL-MODULE-PATH',
-//                        '--add-reads', "$moduleName=junit",
-                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
-                ]
-                classpath = files()
-            }
-        }
-
-        javadoc {
-            options.addStringOption('-module-path', classpath.asPath)
-            options.addStringOption('Xdoclint:all,-missing', '-html5')
-        }
-
-        jar {
-            inputs.property("moduleName", moduleName)
-            manifest {
-                attributes(
-                        "Automatic-Module-Name": moduleName,
-                )
-            }
-            version versions.stroomQuery
-        }
-    }
+//    afterEvaluate {
+//        repositories {
+//            jcenter()
+//        }
+//
+//        compileJava {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                options.compilerArgs = [
+//                        '--module-path', classpath.asPath,
+//                ]
+//                classpath = files()
+//            }
+//        }
+//
+//        compileTestJava {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                options.compilerArgs = [
+//                        '--module-path', classpath.asPath,
+////                        '--add-modules', 'junit',
+////                        '--add-reads', "$moduleName=junit",
+//                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
+//                ]
+//                classpath = files()
+//            }
+//        }
+//
+//        test {
+//            inputs.property("moduleName", moduleName)
+//            doFirst {
+//                jvmArgs = [
+//                        '--module-path', classpath.asPath,
+//                        '--add-modules', 'ALL-MODULE-PATH',
+////                        '--add-reads', "$moduleName=junit",
+//                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+//                ]
+//                classpath = files()
+//            }
+//        }
+//
+//        javadoc {
+//            options.addStringOption('-module-path', classpath.asPath)
+//            options.addStringOption('Xdoclint:all,-missing', '-html5')
+//        }
+//
+//        jar {
+//            inputs.property("moduleName", moduleName)
+//            manifest {
+//                attributes(
+//                        "Automatic-Module-Name": moduleName,
+//                )
+//            }
+//            version versions.stroomQuery
+//        }
+//    }
 }
 
 //configures only those projects in publishedProjectsPaths
@@ -587,6 +594,67 @@ configure(projectsWithSharedTestJars) {
     }
 
     artifacts.archives packageTests
+}
+
+configure(projectsToBeModularised) {
+
+    afterEvaluate {
+        repositories {
+            jcenter()
+        }
+
+        compileJava {
+            inputs.property("moduleName", moduleName)
+            doFirst {
+                options.compilerArgs = [
+                        '--module-path', classpath.asPath,
+                ]
+                classpath = files()
+            }
+        }
+
+        compileTestJava {
+            inputs.property("moduleName", moduleName)
+            doFirst {
+                options.compilerArgs = [
+                        '--module-path', classpath.asPath,
+//                        '--add-modules', 'junit',
+//                        '--add-reads', "$moduleName=junit",
+                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
+                ]
+                classpath = files()
+            }
+        }
+
+        test {
+            inputs.property("moduleName", moduleName)
+            doFirst {
+                jvmArgs = [
+                        '--module-path', classpath.asPath,
+                        '--add-modules', 'ALL-MODULE-PATH',
+//                        '--add-reads', "$moduleName=junit",
+                        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+                ]
+                classpath = files()
+            }
+        }
+
+        javadoc {
+            options.addStringOption('-module-path', classpath.asPath)
+            options.addStringOption('Xdoclint:all,-missing', '-html5')
+        }
+
+        jar {
+            inputs.property("moduleName", moduleName)
+            manifest {
+                attributes(
+                        "Automatic-Module-Name": moduleName,
+                )
+            }
+            version versions.stroomQuery
+        }
+    }
+
 }
 
 // NOT SURE IF WE NEED THIS NOW
