@@ -70,6 +70,7 @@ ext.versions = [
         stroomAuth        : 'v0.1-alpha.3',
         stroomExpression  : 'v1.4.3',
         stroomQuery       : 'SNAPSHOT', //same version for both stroom-query-api and stroom-query-common
+        //stroomQuery       : 'v4.0-beta.6', //same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
