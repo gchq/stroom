@@ -36,6 +36,8 @@ import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.DisablePopupEvent;
+import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -146,6 +148,7 @@ public class ManageActivityPresenter extends
             final PopupSize popupSize = new PopupSize(1000, 600, true);
             ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
                     PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);
+            enableButtons();
         });
     }
 
@@ -157,6 +160,11 @@ public class ManageActivityPresenter extends
         final boolean enabled = getSelected() != null;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
+        if (enabled) {
+            EnablePopupEvent.fire(this, this);
+        } else {
+            DisablePopupEvent.fire(this, this);
+        }
     }
 
     private void onOpen() {
