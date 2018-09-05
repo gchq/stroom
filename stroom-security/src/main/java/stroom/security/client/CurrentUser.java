@@ -133,6 +133,10 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     private void showSplash() {
-        splashPresenterProvider.get().show(ok -> currentActivity.showInitialActivityChooser(activity -> CurrentUserChangedEvent.fire(CurrentUser.this)));
+        splashPresenterProvider.get().show(ok -> {
+            if (ok) {
+                currentActivity.showInitialActivityChooser(activity -> CurrentUserChangedEvent.fire(CurrentUser.this));
+            }
+        });
     }
 }

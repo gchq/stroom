@@ -24,7 +24,7 @@ import java.util.List;
 
 public interface PopupView extends View, HasUiHandlers<PopupUiHandlers> {
     enum PopupType {
-        POPUP, DIALOG, CLOSE_DIALOG, OK_CANCEL_DIALOG
+        POPUP, DIALOG, CLOSE_DIALOG, OK_CANCEL_DIALOG, ACCEPT_REJECT_DIALOG
     }
 
     void setCaption(String caption);

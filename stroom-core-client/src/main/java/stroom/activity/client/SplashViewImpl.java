@@ -48,4 +48,9 @@ public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashVi
     public void setHtml(final String html) {
         this.html.setHTML(html);
     }
+
+    @Override
+    public MaxScrollPanel getScrollPanel() {
+        return scrollPanel;
+    }
 }
