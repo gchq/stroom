@@ -4,6 +4,7 @@ ext.moduleName = 'stroom.data.meta.impl.db.gen'
 
 dependencies {
     compile libs.javax_annotation
+    permitUnusedDeclared libs.javax_annotation // Not obvious why it thinks it is not used.
     compile libs.jooq
 
     jooqRuntime libs.mysql_connector_java

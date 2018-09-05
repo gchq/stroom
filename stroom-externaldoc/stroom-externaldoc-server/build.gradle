@@ -1,10 +1,11 @@
 ext.moduleName = 'stroom.externaldoc.server'
 
 dependencies {
-    compile project(':stroom-core-server')
+    //compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-docstore:stroom-docstore-shared')
-    compile project(':stroom-entity-shared')
+    //compile project(':stroom-entity-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-security:stroom-security-api')

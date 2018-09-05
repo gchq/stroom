@@ -18,27 +18,27 @@ dependencies {
     compile project(':stroom-security:stroom-security-client')
 
     compile "${libs.stroomDocRef}:sources"
-    // permitUnusedDeclared libs.stroomDocRef
-    // permitUnusedDeclared "${libs.stroomDocRef}:sources"
+    permitUnusedDeclared libs.stroomDocRef
+    permitUnusedDeclared "${libs.stroomDocRef}:sources"
     compile "${libs.stroomQueryApi}:sources"
-    // permitUnusedDeclared libs.stroomQueryApi
-    // permitUnusedDeclared "${libs.stroomQueryApi}:sources"
+    permitUnusedDeclared libs.stroomQueryApi
+    permitUnusedDeclared "${libs.stroomQueryApi}:sources"
     compile "${libs.stroomQueryCommon}:sources"
-    // permitUnusedDeclared libs.stroomQueryCommon
-    // permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
+    permitUnusedDeclared libs.stroomQueryCommon
+    permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
 
     compile libs.gin
     compile libs.guice3
     compile libs.gwt_dev
-    // permitUnusedDeclared libs.gwt_dev
+    permitUnusedDeclared libs.gwt_dev
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
 
     // needed so gwt can compile the stroom-query code that contains swagger annotations
-    compile "${libs.swagger_annotations}"
-    // permitUnusedDeclared "${libs.swagger_annotations}"
+    compile libs.swagger_annotations
+    permitUnusedDeclared libs.swagger_annotations
     compile "${libs.swagger_annotations}:sources"
-    // permitUnusedDeclared "${libs.swagger_annotations}:sources"
+    permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }
 
 def gwtSourceDirs = []
