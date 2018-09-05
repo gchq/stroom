@@ -38,7 +38,7 @@ import java.util.Map;
 @Ignore
 public class TestMySQLCharacterSets {
     @BeforeClass
-    public void setup() throws SQLException {
+    public static void setup() throws SQLException {
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE IF EXISTS CHAR_SET_TEST")) {
                 preparedStatement.execute();
@@ -176,7 +176,7 @@ public class TestMySQLCharacterSets {
         }
     }
 
-    private Connection getConnection() throws SQLException {
+    private static Connection getConnection() throws SQLException {
         final String driverClassname = "com.mysql.jdbc.Driver";
         final String driverUrl = "jdbc:mysql://localhost/stroom";
         final String driverUsername = System.getProperty("user.name");
