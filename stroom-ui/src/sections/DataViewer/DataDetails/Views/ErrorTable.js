@@ -17,7 +17,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Icon } from 'semantic-ui-react';
-import { connect } from 'react-redux';
 import { splitAt } from 'ramda';
 import { compose, withProps } from 'recompose';
 // eslint-disable-next-line
@@ -32,10 +31,6 @@ import 'react-table/react-table.css';
 import Tooltip from 'components/Tooltip';
 
 const enhance = compose(
-  connect(
-    () => ({}),
-    {},
-  ),
   withProps(({ errors }) => ({
     tableColumns: [
       {
@@ -99,95 +94,31 @@ const enhance = compose(
     ],
     metaAndErrors: splitAt(1, errors),
   })),
+  withProps(({ metaAndErrors }) => ({
+    tableData: metaAndErrors[1].map(error => ({
+      elementId: error.elementId,
+      stream: error.location.streamNo,
+      line: error.location.lineNo,
+      col: error.location.colNo,
+      message: error.message,
+      severity: error.severity,
+    })),
+  })),
 );
 
-const ErrorTable = ({ tableColumns, errors }) => {
-  // const tableColumns = [
-  //   {
-  //     Header: '',
-  //     accessor: 'severity',
-  //     Cell: (row) => {
-  //       const location = (
-  //         <React.Fragment>
-  //           <p>Stream: {row.original.stream}</p>
-  //           <p>Line: {row.original.line}</p>
-  //           <p>Column: {row.original.col}</p>
-  //         </React.Fragment>
-  //       );
-
-  //       const position = 'right center';
-  //       if (row.value === 'INFO') {
-  //         return (
-  //           <Tooltip
-  //             trigger={<Icon color="blue" name="info circle" />}
-  //             content={location}
-  //             position={position}
-  //           />
-  //         );
-  //       } else if (row.value === 'WARNING') {
-  //         return (
-  //           <Tooltip
-  //             trigger={<Icon color="orange" name="warning circle" />}
-  //             content={location}
-  //             position={position}
-  //           />
-  //         );
-  //       } else if (row.value === 'ERROR') {
-  //         return (
-  //           <Tooltip
-  //             trigger={<Icon color="red" name="warning circle" />}
-  //             content={location}
-  //             position={position}
-  //           />
-  //         );
-  //       } else if (row.value === 'FATAL') {
-  //         return (
-  //           <Tooltip
-  //             trigger={<Icon color="red" name="bomb" />}
-  //             content={location}
-  //             position={position}
-  //           />
-  //         );
-  //       }
-  //     },
-  //     width: 35,
-  //   },
-  //   {
-  //     Header: 'Element',
-  //     accessor: 'elementId',
-  //     maxWidth: 120,
-  //   },
-  //   {
-  //     Header: 'Message',
-  //     accessor: 'message',
-  //   },
-  // ];
-
-  // const metaAndErrors = splitAt(1, errors);
-
-  const tableData = metaAndErrors[1].map(error => ({
-    elementId: error.elementId,
-    stream: error.location.streamNo,
-    line: error.location.lineNo,
-    col: error.location.colNo,
-    message: error.message,
-    severity: error.severity,
-  }));
-
-  return (
-    <div className="ErrorTable__container">
-      <div className="ErrorTable__reactTable__container">
-        <ReactTable
-          sortable={false}
-          showPagination={false}
-          className="ErrorTable__reactTable"
-          data={tableData}
-          columns={tableColumns}
-        />
-      </div>
+const ErrorTable = ({ tableColumns, tableData, errors, metaAndErrors }) => (
+  <div className="ErrorTable__container">
+    <div className="ErrorTable__reactTable__container">
+      <ReactTable
+        sortable={false}
+        showPagination={false}
+        className="ErrorTable__reactTable"
+        data={tableData}
+        columns={tableColumns}
+      />
     </div>
-  );
-};
+  </div>
+);
 
 ErrorTable.propTypes = {
   errors: PropTypes.array.isRequired,
