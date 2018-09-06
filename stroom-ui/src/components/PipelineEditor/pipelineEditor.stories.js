@@ -64,12 +64,3 @@ storiesOf('Element Palette', module)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
-
-storiesOf('Element Details', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
-  }))
-  .addDecorator(DragDropDecorator)
-  .add('Simple element details page', () => <ElementDetails pipelineId="longPipeline" />);
