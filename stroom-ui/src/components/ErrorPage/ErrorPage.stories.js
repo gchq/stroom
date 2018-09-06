@@ -17,12 +17,12 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import ErrorPage from './ErrorPage';
-
-import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
-
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
+
+import ErrorPage from './ErrorPage';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
 
 const errorMessage = 'Everything is a disaster';
 const stackTrace = `Invariant Violation: Objects are not valid as a React child (found: object with keys {sdfs}). If you meant to render a collection of children, use an array instead.
@@ -50,49 +50,45 @@ at renderRoot (http://localhost:9001/static/preview.bundle.js:40027:9)`;
 const httpErrorStatus = 501;
 
 storiesOf('ErrorPage', module)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction());
     store.dispatch(setStackTraceAction());
     store.dispatch(setHttpErrorCodeAction());
   }))
   .add('No details', () => (
-    <div className="container">
-      <ErrorPage />
-    </div>
+    <ErrorPage />
   ));
 
 storiesOf('ErrorPage', module)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction(errorMessage));
     store.dispatch(setStackTraceAction());
     store.dispatch(setHttpErrorCodeAction());
   }))
   .add('Just error message', () => (
-    <div className="container">
-      <ErrorPage />
-    </div>
+    <ErrorPage />
   ));
 
 storiesOf('ErrorPage', module)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction(errorMessage));
     store.dispatch(setStackTraceAction(stackTrace));
     store.dispatch(setHttpErrorCodeAction());
   }))
   .add('Error message and stack trace', () => (
-    <div className="container">
-      <ErrorPage />
-    </div>
+    <ErrorPage />
   ));
 
 storiesOf('ErrorPage', module)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction(errorMessage));
     store.dispatch(setStackTraceAction(stackTrace));
     store.dispatch(setHttpErrorCodeAction(httpErrorStatus));
   }))
   .add('Everything', () => (
-    <div className="container">
-      <ErrorPage />
-    </div>
+    <ErrorPage />
   ));
