@@ -16,15 +16,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-
-import ThemedAceEditor from 'components/ThemedAceEditor';
-
 // eslint-disable-next-line
 import brace from 'brace';
 import 'brace/mode/xml';
 import 'brace/theme/github';
 import 'brace/theme/ambiance';
 import 'brace/keybinding/vim';
+
+import ThemedAceEditor from 'components/ThemedAceEditor';
 
 const EventView = ({ events }) => (
   <div className="EventView__container">
