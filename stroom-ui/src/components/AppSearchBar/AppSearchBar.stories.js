@@ -45,7 +45,7 @@ const enhanceForm = compose(
   }),
 );
 
-let AppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
+let AppSearchAsForm = ({ pickerId, typeFilters, thisForm }) => (
   <Form>
     <Form.Field>
       <label htmlFor="someName">Some Name</label>
@@ -74,7 +74,25 @@ let AppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
   </Form>
 );
 
-AppSearchAsPickerForm = enhanceForm(AppSearchAsPickerForm);
+AppSearchAsForm = enhanceForm(AppSearchAsForm);
+
+const enhancePicker = withState('pickedDocRef', 'setPickedDocRef', undefined);
+
+let AppSearchAsPicker = ({
+  pickerId, typeFilters, pickedDocRef, setPickedDocRef,
+}) => (
+  <div>
+    <AppSearchBar
+      pickerId={pickerId}
+      typeFilters={typeFilters}
+      onChange={setPickedDocRef}
+      value={pickedDocRef}
+    />
+    <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
+  </div>
+);
+
+AppSearchAsPicker = enhancePicker(AppSearchAsPicker);
 
 class AppSearchAsNavigator extends React.Component {
   constructor(props) {
@@ -116,13 +134,14 @@ storiesOf('App Search Bar', module)
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
-  .add('Doc Ref Picker', () => <AppSearchAsPickerForm pickerId="docRefPicker1" />)
-  .add('Doc Ref Picker (filter to pipeline)', () => (
-    <AppSearchAsPickerForm pickerId="docRefPicker2" typeFilters={['Pipeline']} />
+  .add('Doc Ref Form', () => <AppSearchAsForm pickerId="docRefForm1" />)
+  .add('Doc Ref Picker', () => <AppSearchAsPicker pickerId="docRefPicker2" />)
+  .add('Doc Ref Form (Pipeline)', () => (
+    <AppSearchAsForm pickerId="docRefForm3" typeFilters={['Pipeline']} />
   ))
-  .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
-    <AppSearchAsPickerForm pickerId="docRefPicker3" typeFilters={['Feed', 'Dictionary']} />
+  .add('Doc Ref Picker (Feed AND Dictionary)', () => (
+    <AppSearchAsPicker pickerId="docRefPicker4" typeFilters={['Feed', 'Dictionary']} />
   ))
-  .add('Doc Ref Picker (filter to Folders)', () => (
-    <AppSearchAsPickerForm pickerId="docRefPicker4" typeFilters={['Folder']} />
+  .add('Doc Ref Form (Folders)', () => (
+    <AppSearchAsForm pickerId="docRefForm5" typeFilters={['Folder']} />
   ));
