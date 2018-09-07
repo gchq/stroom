@@ -29,6 +29,7 @@ import { testDocRefsTypes } from './test';
 
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
@@ -55,7 +56,7 @@ let TestForm = ({ thisForm }) => (
       <Field
         name="docType"
         component={({ input: { onChange, value } }) => (
-          <DocRefTypePicker onChange={onChange} value={value} />
+          <DocRefTypePicker pickerId="test1" onChange={onChange} value={value} />
         )}
       />
     </Form.Field>
@@ -82,5 +83,6 @@ TestForm = enhance(TestForm);
 
 storiesOf('Doc Type Filters', module)
   .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
   .add('Doc Type Filter', () => <TestForm />);

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withHandlers, withProps, withState } from 'recompose';
+import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Icon } from 'semantic-ui-react';
 
@@ -24,11 +24,21 @@ import ModeOptionButtons from './ModeOptionButtons';
 
 const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
 
-const withTextFocus = withState('textFocus', 'setTextFocus', false);
-
 const enhance = compose(
   withDocumentTree,
-  withTextFocus,
+  withStateHandlers(
+    ({ initialTextFocus = false }) => ({
+      textFocus: initialTextFocus
+    }),
+    {
+      onSearchFocus: () => e => ({
+        textFocus: true
+      }),
+      onSearchBlur: () => e => ({
+        textFocus: false
+      }),
+    }
+  ),
   connect(
     (
       {
@@ -132,8 +142,6 @@ const enhance = compose(
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
   withHandlers({
-    onTextFocus: ({ setTextFocus }) => e => setTextFocus(true),
-    onTextBlur: ({ setTextFocus }) => e => setTextFocus(false),
     onSearchTermChange: ({ pickerId, searchTermUpdated, searchApp }) => ({ target: { value } }) => {
       searchTermUpdated(pickerId, value);
       searchApp(pickerId, { term: value });
@@ -194,8 +202,8 @@ const AppSearchBar = ({
   provideBreadcrumbs,
   onChange,
   valueToShow,
-  onTextFocus,
-  onTextBlur,
+  onSearchFocus,
+  onSearchBlur,
   onSearchTermChange,
 }) => (
   <div className={`dropdown ${className}`}>
@@ -204,8 +212,8 @@ const AppSearchBar = ({
       icon="search"
       placeholder="Search..."
       value={valueToShow}
-      onFocus={onTextFocus}
-      onBlur={onTextBlur}
+      onFocus={onSearchFocus}
+      onBlur={onSearchBlur}
       onChange={onSearchTermChange}
     />
     <div
