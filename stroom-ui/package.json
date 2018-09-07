@@ -22,7 +22,7 @@
     "react-redux": "^5.0.7",
     "react-router-dom": "^4.2.2",
     "react-router-redux": "^5.0.0-alpha.9",
-    "react-scripts": "1.1.4",
+    "react-scripts": "^1.1.5",
     "react-semantic-redux-form": "^1.2.6",
     "react-sweet-progress": "^1.1.2",
     "react-table": "^6.8.6",

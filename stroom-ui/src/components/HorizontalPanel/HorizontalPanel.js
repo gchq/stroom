@@ -24,39 +24,40 @@ const HorizontalPanel = ({
   activeItem,
   setActiveItem,
   onClose,
-  titleColumns,
-  menuColumns,
   headerSize,
 }) => (
-  <div className="horizontal-panel__container">
-    <Grid className="horizontal-panel_header-container flat">
-      <Grid.Column width={titleColumns || 6} className="HorizontalPanel_title__container">
-        {title}
-      </Grid.Column>
-      <Grid.Column width={menuColumns || 10}>
-        <Menu secondary>
-          <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
-            {headerMenuItems}
-            <Menu.Item className="horizontal-panel_close-button ">
-              <Button className="icon-button" icon="close" onClick={() => onClose()} />
-            </Menu.Item>
-          </Menu.Menu>
-        </Menu>
-      </Grid.Column>
-    </Grid>
-    <div className="horizontal-panel__content__container">
-      <div className="horizontal-panel__content">{content}</div>
+    <div className="horizontal-panel__container">
+      <div className="horizontal-panel_header-container flat">
+        <div className="HorizontalPanel_title__container">
+          {title}
+        </div>
+        <div>
+
+          <div>
+            <Menu secondary>
+              <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
+                {headerMenuItems}
+                <Menu.Item className="horizontal-panel_close-button ">
+                  <Button className="icon-button" icon="close" onClick={() => onClose()} />
+                </Menu.Item>
+              </Menu.Menu>
+            </Menu>
+          </div>
+        </div>
+      </div>
+      <div className="horizontal-panel__content__container">
+        <div className="horizontal-panel__content">
+          {content}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
 
 HorizontalPanel.propTypes = {
   content: PropTypes.object.isRequired,
   title: PropTypes.object.isRequired,
   headerMenuItems: PropTypes.array,
   onClose: PropTypes.func.isRequired,
-  titleColumns: PropTypes.number,
-  menuColumns: PropTypes.number,
   headerSize: PropTypes.string,
 };
 

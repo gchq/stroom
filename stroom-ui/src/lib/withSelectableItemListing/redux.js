@@ -1,6 +1,6 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
 
-import { createActionHandlerPerId } from 'lib/reduxFormUtils';
+import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 const SELECTION_BEHAVIOUR = {
   NONE: 0,
@@ -35,14 +35,18 @@ const defaultSelectableItemListingState = {
 // There will be an entry for each listing ID registered
 const defaultState = {};
 
-const byListingId = createActionHandlerPerId(
+const byListingId = createActionHandlersPerId(
   ({ payload: { listingId } }) => listingId,
   defaultSelectableItemListingState,
 );
 
 const reducer = handleActions(
-  {
-    SELECTABLE_LISTING_MOUNTED: byListingId((state, { payload: { items, selectionBehaviour } }, listingState) => {
+  byListingId({
+    SELECTABLE_LISTING_MOUNTED: (
+      state,
+      { payload: { items, selectionBehaviour } },
+      listingState,
+    ) => {
       // Attempt to rescue previous focus index
       let focusIndex = -1;
       let focussedItem;
@@ -59,8 +63,12 @@ const reducer = handleActions(
         items,
         selectionBehaviour,
       };
-    }),
-    [combineActions(focusUp, focusDown)]: byListingId((state, { payload: { direction } }, { items, focusIndex }) => {
+    },
+    [combineActions(focusUp, focusDown)]: (
+      state,
+      { payload: { direction } },
+      { items, focusIndex },
+    ) => {
       // Calculate the next index based on the selection change
       let nextIndex = 0;
       if (focusIndex !== -1) {
@@ -72,8 +80,12 @@ const reducer = handleActions(
         focusIndex: nextIndex,
         focussedItem,
       };
-    }),
-    [combineActions(selectFocussed, selectionToggled)]: byListingId((state, { payload: { index, keyIsDown } }, listingState) => {
+    },
+    [combineActions(selectFocussed, selectionToggled)]: (
+      state,
+      { payload: { index, keyIsDown } },
+      listingState,
+    ) => {
       let {
         selectedItemIndexes,
         focusIndex,
@@ -126,8 +138,8 @@ const reducer = handleActions(
         focusIndex: indexToUse,
         lastSelectedIndex: indexToUse,
       };
-    }),
-  },
+    },
+  }),
   defaultState,
 );
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, lifecycle } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Form, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
@@ -9,10 +9,7 @@ import { Form, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
 import { actionCreators } from '../redux';
 
 import Tooltip from 'components/Tooltip';
-
 import AppSearchBar from 'components/AppSearchBar';
-import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
-
 import NumericInput from 'components/NumericInput';
 
 const {
@@ -20,8 +17,6 @@ const {
   pipelineElementPropertyRevertToParent,
   pipelineElementPropertyRevertToDefault,
 } = actionCreators;
-
-const { docRefPicked } = folderExplorerActionCreators;
 
 const getPickerName = settingName => `${settingName}_docRefModalPicker`;
 
@@ -31,19 +26,11 @@ const enhance = compose(
       // state
     }),
     {
-      docRefPicked,
       pipelineElementPropertyUpdated,
       pipelineElementPropertyRevertToParent,
       pipelineElementPropertyRevertToDefault,
     },
   ),
-  lifecycle({
-    componentDidMount() {
-      if (this.props.value) {
-        this.props.docRefPicked(getPickerName(this.props.name), this.props.value.value.entity);
-      }
-    },
-  }),
 );
 
 /**
@@ -253,7 +240,7 @@ const getDetails = ({
  * @param {string} type The type of the element
  * @param {array} docRefTypes The docref types to filter by
  */
-const getField = (
+const FieldValue = ({
   pipelineElementPropertyUpdated,
   value,
   name,
@@ -261,7 +248,7 @@ const getField = (
   elementId,
   type,
   docRefTypes,
-) => {
+}) => {
   let elementField;
   switch (type) {
     case 'boolean':
@@ -291,7 +278,8 @@ const getField = (
         <AppSearchBar
           pickerId={getPickerName(name)}
           typeFilter={docRefTypes}
-          onChange={({node, lineage}) => {
+          onChange={(node) => {
+            console.log('Doc Ref Picked', node);
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', node);
           }}
         />
@@ -359,15 +347,14 @@ const ElementField = ({
     pipelineId,
     childValue,
   });
-  const field = getField(
-    pipelineElementPropertyUpdated,
-    details.actualValue,
+  const field = <FieldValue {...{pipelineElementPropertyUpdated,
+    value: details.actualValue,
     name,
     pipelineId,
     elementId,
     type,
-    docRefTypes,
-  );
+    docRefTypes,}}
+    />
 
   const popOverContent = (
     <div>

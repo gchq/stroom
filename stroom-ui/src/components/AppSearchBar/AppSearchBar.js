@@ -106,6 +106,20 @@ const enhance = compose(
       navigateToFolder,
     },
   ),
+  withHandlers({
+    // Prevent folders being selected if they aren't actually valid selections
+    onChange: ({onChange, typeFilters, pickerId, navigateToFolder}) => docRef => {
+      if (docRef.type === 'Folder') {
+        if (typeFilters.length === 0 || typeFilters.includes('Folder')) {
+          onChange(docRef);
+        } else {
+          navigateToFolder(pickerId, docRef);
+        }
+      } else {
+        onChange(docRef);
+      }
+    }
+  }),
   withSelectableItemListing(({
     pickerId, docRefs, navigateToFolder, parentFolder, onChange,
   }) => ({

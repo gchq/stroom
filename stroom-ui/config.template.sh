@@ -14,7 +14,7 @@ if [ ! -z $ip ]; then
 else
     if [ "$(uname)" == "Darwin" ]; then
         # Code required to find IP address is different in MacOS
-        ip=$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk '{print $2}')
+        ip=$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk 'NR==1{print $2}')
     else
         ip=$(ip route get 1 |awk 'match($0,"src [0-9\\.]+") {print substr($0,RSTART+4,RLENGTH-4)}')
     fi

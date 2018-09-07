@@ -5,9 +5,16 @@ ext.moduleName = 'stroom.elastic.impl.http'
 dependencies {
     compile project(':stroom-elastic:stroom-elastic-api')
     compile project(':stroom-elastic:stroom-elastic-impl')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-server')
 
-    compile libs.slf4j_api
+    compile libs.stroomDocRef
+
+    compile libs.guice4
     compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.slf4j_api
 
     testCompile libs.junit
 }

@@ -1,4 +1,5 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 import { actionCreators as pipelineActionCreators } from './pipelineStatesReducer';
 
@@ -12,27 +13,27 @@ const actionCreators = createActions({
 const { pipelineSettingsOpened, pipelineSettingsClosed } = actionCreators;
 
 const defaultState = {};
+const defaultStatePerPipeline = {
+  isOpen: false,
+};
+
+const byPipelineId = createActionHandlersPerId(
+  ({ payload: pipelineId }) => pipelineId,
+  defaultStatePerPipeline,
+);
 
 const reducer = handleActions(
-  {
+  byPipelineId({
     [combineActions(pipelineSettingsOpened, pipelineSettingsClosed)]: (
       state,
       { payload: { pipelineId, isOpen } },
     ) => ({
-      ...state,
-      [pipelineId]: {
-        ...state[pipelineId],
-        isOpen,
-      },
+      isOpen,
     }),
-    [pipelineSettingsUpdated]: (state, action) => ({
-      ...state,
-      [action.payload.pipelineId]: {
-        ...state[action.payload.pipelineId],
-        isOpen: false,
-      },
+    [pipelineSettingsUpdated]: (state, { payload: { pipelineId } }) => ({
+      isOpen: false,
     }),
-  },
+  }),
   defaultState,
 );
 

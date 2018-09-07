@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { groupByCategory, isValidChildType } from '../elementUtils';
+import { groupByCategory, isValidChildType, keyByType } from '../elementUtils';
 import { ElementCategories } from '../ElementCategories';
 import { elements, elementProperties } from './index';
 
@@ -42,6 +42,17 @@ describe('Element Utils', () => {
       const filters = byCategory.FILTER;
       expect(filters.length).toBe(13);
       expect(filters.map(f => f.type)).toContain('RecordCountFilter');
+    });
+  });
+
+  describe('#keyByType', () => {
+    test('should map by category', () => {
+      // When
+      const byType = keyByType(elements);
+
+      // Then
+      const expectedTypes = ['JSONWriter', 'XMLFragmentParser', 'TextWriter', 'XMLWriter'];
+      expectedTypes.forEach(c => expect(byType).toHaveProperty(c));
     });
   });
 

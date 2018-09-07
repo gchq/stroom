@@ -16,7 +16,6 @@ public class TestFlowable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFlowable.class);
 
-    @Ignore //manual test
     @Test
     public void testFlowable() {
 
