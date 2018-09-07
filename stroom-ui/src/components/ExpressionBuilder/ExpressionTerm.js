@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Icon, Dropdown } from 'semantic-ui-react';
+import { Button, Icon } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 

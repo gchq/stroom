@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, withProps, withStateHandlers, withState, withHandlers } from 'recompose';
+import { compose, withStateHandlers, withState, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
 import withDocRefTypes from './withDocRefTypes';

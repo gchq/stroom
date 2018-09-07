@@ -1,10 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Container, Input, Button, Grid, Message } from 'semantic-ui-react';
+import { Input, Button } from 'semantic-ui-react';
 import { compose, withState, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
-import Tooltip from 'components/Tooltip';
 import {
   ExpressionBuilder,
   actionCreators as expressionBuilderActionCreators,

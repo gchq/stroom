@@ -37,4 +37,13 @@ const ValueWidget = ({ term: { uuid, value, condition }, onChange, valueType }) 
   }
 };
 
+ValueWidget.propTypes = {
+  term: PropTypes.shape({
+    uuid: PropTypes.string.isRequired,
+    condition: PropTypes.string.isRequired
+  }),
+  onChange: PropTypes.func.isRequired,
+  valueType: PropTypes.string.isRequired
+}
+
 export default ValueWidget;
