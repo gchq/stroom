@@ -23,8 +23,6 @@ import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import AppChrome, { appChromeRoutes } from '.';
 
-import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
-
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
@@ -32,8 +30,6 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
-
-const { docTreeReceived, docRefPicked } = folderExplorerActionCreators;
 
 // This basically replicates the 'Routes' implementation, but for test
 const AppChromeWithRouter = () => (
