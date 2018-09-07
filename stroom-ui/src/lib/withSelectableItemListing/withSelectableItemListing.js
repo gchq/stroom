@@ -10,6 +10,16 @@ const {
   selectableListingMounted, selectFocussed, focusUp, focusDown,
 } = actionCreators;
 
+const isArraysEqual = (a, b) => {
+  if (a && !b) return false;
+  if (!a && b) return false;
+  if (!a && !b) return true;
+
+  if (a.length !== b.length) return false;
+
+  return a.filter(aItem => !b.includes(aItem)).length === 0;
+};
+
 const withSelectableItemListing = propsFunc =>
   compose(
     withProps((props) => {
@@ -49,9 +59,10 @@ const withSelectableItemListing = propsFunc =>
           items, listingId, selectableListingMounted, selectionBehaviour,
         } = this.props;
 
-        const itemsChanged = JSON.stringify(items) !== JSON.stringify(prevProps.items);
+        const itemUuids = items ? items.map(d => d.uuid) : [];
+        const prevUuids = prevProps.items ? prevProps.items.map(d => d.uuid) : [];
 
-        if (itemsChanged) {
+        if (!isArraysEqual(itemUuids, prevUuids)) {
           selectableListingMounted(listingId, items, selectionBehaviour);
         }
       },

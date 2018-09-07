@@ -108,7 +108,9 @@ const enhance = compose(
   ),
   withHandlers({
     // Prevent folders being selected if they aren't actually valid selections
-    onChange: ({onChange, typeFilters, pickerId, navigateToFolder}) => docRef => {
+    onChange: ({
+      onChange, typeFilters, pickerId, navigateToFolder,
+    }) => (docRef) => {
       if (docRef.type === 'Folder') {
         if (typeFilters.length === 0 || typeFilters.includes('Folder')) {
           onChange(docRef);
@@ -118,7 +120,7 @@ const enhance = compose(
       } else {
         onChange(docRef);
       }
-    }
+    },
   }),
   withSelectableItemListing(({
     pickerId, docRefs, navigateToFolder, parentFolder, onChange,
@@ -136,7 +138,7 @@ const enhance = compose(
       searchTermUpdated(pickerId, value);
       searchApp(pickerId, { term: value });
     },
-    thisNavigateToFolder: ({navigateToFolder, pickerId}) => d => navigateToFolder(pickerId, d)
+    thisNavigateToFolder: ({ navigateToFolder, pickerId }) => d => navigateToFolder(pickerId, d),
   }),
   withProps(({
     pickerId, searchMode, thisFolder, parentFolder, thisNavigateToFolder, searchTerm,
@@ -206,7 +208,11 @@ const AppSearchBar = ({
       onBlur={onTextBlur}
       onChange={onSearchTermChange}
     />
-    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts} className="dropdown__content app-search-bar__dropdown-content">
+    <div
+      tabIndex={0}
+      onKeyDown={onKeyDownWithShortcuts}
+      className="dropdown__content app-search-bar__dropdown-content"
+    >
       <div className="app-search-header">
         <Icon name={headerIcon} size="large" onClick={headerAction} />
         {headerTitle}
@@ -224,10 +230,7 @@ const AppSearchBar = ({
             enterFolder={thisNavigateToFolder}
           >
             {provideBreadcrumbs && (
-              <DocRefBreadcrumb
-                docRefUuid={searchResult.uuid}
-                openDocRef={thisNavigateToFolder}
-              />
+              <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={thisNavigateToFolder} />
             )}
           </DocRefListingEntry>
         ))}
@@ -243,7 +246,7 @@ EnhancedAppSearchBar.propTypes = {
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
   value: DocRefPropType,
-  className: PropTypes.string
+  className: PropTypes.string,
 };
 
 EnhancedAppSearchBar.defaultProps = {
@@ -252,4 +255,27 @@ EnhancedAppSearchBar.defaultProps = {
   onChange: () => console.log('onChange not provided for app search bar'),
 };
 
-export default EnhancedAppSearchBar;
+// This component is used to throw focus away from the dropdown when a value is picked
+class AppSearchWithFocus extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.dummyFocusRef = React.createRef();
+  }
+  render() {
+    return (
+      <span>
+        <span tabIndex={0} ref={this.dummyFocusRef} onFocus={() => this.dummyFocusRef.current.blur()} />
+        <EnhancedAppSearchBar
+          {...this.props}
+          onChange={(d) => {
+            this.dummyFocusRef.current.focus();
+            this.props.onChange(d);
+          }}
+        />
+      </span>
+    );
+  }
+}
+
+export default AppSearchWithFocus;

@@ -33,10 +33,14 @@ const enhance = compose(
     },
   }),
   withProps(({ term }) => {
-    const splitValues = term.value.split(',');
-    const fromValue = splitValues.length === 2 ? splitValues[0] : undefined;
-    const toValue = splitValues.length === 2 ? splitValues[1] : undefined;
-
+    let fromValue='';
+    let toValue='';
+    if (term.value) {
+      const splitValues = term.value.split(',');
+      fromValue = splitValues.length === 2 ? splitValues[0] : undefined;
+      toValue = splitValues.length === 2 ? splitValues[1] : undefined;
+    }
+    
     return {
       fromValue,
       toValue,
