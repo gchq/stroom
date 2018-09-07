@@ -23,6 +23,7 @@ import { Button, Icon, Dropdown } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 
+import SelectBox from 'components/SelectBox';
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
 import ValueWidget from './ValueWidget';
@@ -71,7 +72,7 @@ const enhance = compose(
       });
     },
 
-    onFieldChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (e, { value }) => {
+    onFieldChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (value) => {
       expressionItemUpdated(expressionId, uuid, {
         field: value,
       });
@@ -137,13 +138,14 @@ const ExpressionTerm = ({
     {connectDragSource(<span>
       <Icon name="bars" />
     </span>)}
-    <Dropdown
+    <SelectBox value={term.field} onChange={onFieldChange} options={fieldOptions} />
+    {/* <Dropdown
       placeholder="field"
       selection
       options={fieldOptions}
       onChange={onFieldChange}
       value={term.field}
-    />
+    /> */}
     <Dropdown
       placeholder="condition"
       selection

@@ -40,11 +40,17 @@ const enhanceForm = compose(
   ),
   reduxForm({
     form: 'appSearchBarTest',
+    enableReinitialize: true,
+    touchOnChange: true,
   }),
 );
 
 let AppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
   <Form>
+    <Form.Field>
+      <label htmlFor="someName">Some Name</label>
+      <Field name="someName" component="input" type="text" />
+    </Form.Field>
     <Form.Field>
       <label>Chosen Doc Ref</label>
       <Field
@@ -87,6 +93,7 @@ class AppSearchAsNavigator extends React.Component {
         <AppSearchBar
           pickerId={pickerId}
           onChange={(d) => {
+            console.log('App Search Bar Chose a Value', d);
             this.setState({ chosenDocRef: d });
             this.displayRef.current.focus();
           }}

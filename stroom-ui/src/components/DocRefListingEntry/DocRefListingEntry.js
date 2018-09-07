@@ -32,11 +32,12 @@ const enhance = compose(
     }) => (e) => {
       selectionToggled(listingId, index, keyIsDown);
       e.preventDefault();
+      e.stopPropagation();
     },
     onOpenDocRef: ({ openDocRef, docRef }) => (e) => {
       openDocRef(docRef);
-      e.stopPropagation();
       e.preventDefault();
+      e.stopPropagation();
     },
     onEnterFolder: ({ openDocRef, enterFolder, docRef }) => (e) => {
       if (enterFolder) {
