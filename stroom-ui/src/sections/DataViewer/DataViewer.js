@@ -141,8 +141,6 @@ const enhance = compose(
         processSearchString,
       } = this.props;
 
-      console.log('WAT');
-      console.log({ pageSize, pageOffset });
       fetchDataSource(dataViewerId);
 
       // // We need to set up an expression so we've got something to search with,
@@ -153,10 +151,10 @@ const enhance = compose(
 
       // // If we're got a selectedRow that means the user has already been to this page.
       // // Re-doing the search will wipe out their previous location, and we want to remember it.
-      // if (!selectedRow) {
-      //   searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
-      //   // search(dataViewerId, pageOffset, pageSize);
-      // }
+      if (!selectedRow) {
+        // searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
+        search(dataViewerId, 0, 400);
+      }
 
       Mousetrap.bind('up', () => onMoveSelection('up'));
       Mousetrap.bind('down', () => onMoveSelection('down'));
@@ -190,8 +188,6 @@ const DataViewer = ({
   tableColumns,
   tableData,
 }) => {
-  console.log('ERR');
-  console.log({ pageSize, pageOffset });
 
   const table = <DataList dataViewerId={dataViewerId} />;
 

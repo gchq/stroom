@@ -82,12 +82,13 @@ const SearchBar = ({
   isExpressionVisible,
   setIsExpressionVisible,
 }) => (
-  <div className="dropdown SearchBar borderless">
-    <div className="SearchBar__header">
+  <div className="search-bar__dropdown search-bar borderless">
+    <div className="search-bar__header">
       <Input
         placeholder="I.e. field1=value1 field2=value2"
         value={searchString}
-        className="SearchBar__input"
+        className="search-bar__input"
+        onFocus={() => setIsExpressionVisible(true)}
         onChange={(_, data) => {
           const expression = processSearchString(dataSource, data.value);
           const invalidFields = expression.fields.filter(field => !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid);
@@ -113,41 +114,53 @@ const SearchBar = ({
         icon="search"
         onClick={() => {
           onSearch(expressionId);
+          setIsExpressionVisible(false);
         }}
       />
     </div>
-    <div tabIndex={0} className="dropdown__content SearchBar__content">
-      <Button.Group size="mini">
+    <div
+      tabIndex={0}
+      className={`search-bar__dropdown__content search-bar__content ${visibilityClass}`}
+    >
+      <div className="search-bar__content__header">
+        <Button.Group size="mini">
+          <Button
+            content="Text search"
+            size="mini"
+            positive={!isExpression}
+            icon="text cursor"
+            className="search-bar__modeButton raised-low bordered hoverable"
+            onClick={() => {
+              setIsExpression(false);
+              setIsExpressionVisible(false);
+            }}
+          />
+          <Button.Or />
+          <Button
+            content="Expression search"
+            size="mini"
+            positive={isExpression}
+            disabled={searchIsInvalid}
+            className="search-bar__modeButton raised-low bordered hoverable"
+            icon="edit"
+            onClick={() => {
+              const parsedExpression = processSearchString(dataSource, searchString);
+              expressionChanged(expressionId, parsedExpression.expression);
+              setIsExpression(true);
+              setIsExpressionVisible(true);
+            }}
+          />
+        </Button.Group>
         <Button
-          content="Text search"
+          icon="close"
           size="mini"
-          positive={!isExpression}
-          icon="text cursor"
-          className="SearchBar__modeButton raised-low bordered hoverable"
-          onClick={() => {
-            setIsExpression(false);
-            setIsExpressionVisible(false);
-          }}
+          onClick={() => setIsExpressionVisible(false)}
+          className="raised-low bordered hoverable search-bar__close-button"
         />
-        <Button.Or />
-        <Button
-          content="Expression search"
-          size="mini"
-          positive={isExpression}
-          disabled={searchIsInvalid}
-          className="SearchBar__modeButton raised-low bordered hoverable"
-          icon="edit"
-          onClick={() => {
-            const parsedExpression = processSearchString(dataSource, searchString);
-            expressionChanged(expressionId, parsedExpression.expression);
-            setIsExpression(true);
-            setIsExpressionVisible(true);
-          }}
-        />
-      </Button.Group>
+      </div>
       {isExpression ? (
         <ExpressionBuilder
-          className="SearchBar__expressionBuilder"
+          className="search-bar__expressionBuilder"
           showModeToggle={false}
           editMode
           dataSource={dataSource}
