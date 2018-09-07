@@ -194,47 +194,6 @@ const DataViewer = ({
   console.log({ pageSize, pageOffset });
 
   const table = <DataList dataViewerId={dataViewerId} />;
-  //   <ReactTable
-  //     manual
-  //     sortable={false}
-  //     showPagination={false}
-  //     className="table__reactTable"
-  //     data={tableData}
-  //     columns={tableColumns}
-  //     getTdProps={(state, rowInfo, column, instance) => ({
-  //       onClick: (e, handleOriginal) => {
-  //         const index = path(['index'], rowInfo);
-  //         const streamId = path(['original', 'streamId'], rowInfo);
-  //         if(index !== undefined && streamId !== undefined) {
-  //           onRowSelected(dataViewerId, rowInfo.index);
-  //         }
-
-  //         // IMPORTANT! React-Table uses onClick internally to trigger
-  //         // events like expanding SubComponents and pivots.
-  //         // By default a custom 'onClick' handler will override this functionality.
-  //         // If you want to fire the original onClick handler, call the
-  //         // 'handleOriginal' function.
-  //         if (handleOriginal) {
-  //           handleOriginal();
-  //         }
-  //       },
-  //     })}
-  //     getTrProps={(state, rowInfo, column) => {
-  //       // We don't want to see a hover on a row without data.
-  //       // If a row is selected we want to see the selected color.
-  //       const isSelected = selectedRow !== undefined &&
-  //                          path(['index'], rowInfo) === selectedRow;
-  //       const hasData = path(['original', 'created'], rowInfo) !== undefined;
-  //       let className;
-  //       if (hasData) {
-  //         className = isSelected ? 'selected hoverable' : 'hoverable';
-  //       }
-  //       return {
-  //         className,
-  //       };
-  //     }}
-  //   />
-  // );
 
   const details = (
     <HorizontalPanel
