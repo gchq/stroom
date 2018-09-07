@@ -915,7 +915,7 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.chooseOnStartup")
                 .value("false")
-                .description("Set toi true if users should be prompted to choose an activity on login.")
+                .description("Set to true if users should be prompted to choose an activity on login.")
                 .editable(true)
                 .requireUiRestart(true)
                 .build());
