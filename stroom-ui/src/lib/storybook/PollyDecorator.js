@@ -43,6 +43,7 @@ const testConfig = {
   xsltServiceUrl: '/api/xslt/v1',
   explorerServiceUrl: '/api/explorer/v1',
   elementServiceUrl: '/api/elements/v1',
+  streamAttributeMapServiceUrl: '/api/streamattributemap/v1',
   authUsersUiUrl:
     'auth/users/because/they/are/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests',
   authTokensUiUrl:
@@ -108,7 +109,7 @@ server.get(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
 
       searchResults = search.search(searchTerm);
     }
-    
+
     if (docRefTypeValid) {
       searchResults = searchResults.filter(d => d.type === docRefType);
     }
@@ -265,10 +266,28 @@ server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
     totalStreamTasks: testCache.data.trackers ? testCache.data.trackers.length : 0,
   }));
 
+/**
+ * The StreamAttributeMap resource supports expression-based search.
+ * This responds with the datasource for this expression.
+ */
+server
+  .get(`${testConfig.streamAttributeMapServiceUrl}/dataSource`)
+  .intercept((req, res) => res.json(testCache.data.dataSource));
+
+/**
+ * This responds with a list of streamAttributeMaps
+ */
+server
+  .get(`${testConfig.streamAttributeMapServiceUrl}`)
+  .intercept((req, res) => res.json(testCache.data.dataList));
+
 const enhanceLocal = compose(
-  connect(({ config }) => ({ config }), {
-    resetAllUrls,
-  }),
+  connect(
+    ({ config }) => ({ config }),
+    {
+      resetAllUrls,
+    },
+  ),
   lifecycle({
     componentDidMount() {
       // must be done before any children have mounted, but the docs say this function is unsafe...
@@ -287,6 +306,8 @@ const enhanceLocal = compose(
         elementProperties: { ...this.props.elementProperties },
         xslt: { ...this.props.xslt },
         trackers: [...this.props.trackers],
+        dataList: { ...this.props.dataList },
+        dataSource: { ...this.props.dataSource },
       };
     },
   }),
@@ -303,6 +324,8 @@ PollyComponent.propTypes = {
   elementProperties: PropTypes.object.isRequired,
   xslt: PropTypes.object.isRequired,
   trackers: PropTypes.array.isRequired,
+  dataList: PropTypes.object.isRequired,
+  dataSource: PropTypes.object.isRequired,
 };
 
 PollyComponent.defaultProps = {
@@ -313,6 +336,8 @@ PollyComponent.defaultProps = {
   elementProperties: {},
   xslt: {},
   trackers: [],
+  dataList: {},
+  dataSource: {},
 };
 
 export const PollyDecorator = props => storyFn => (

@@ -35,8 +35,4 @@ const stories = storiesOf('DataViewer', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
-  // TODO Set up Polly with test data.
-  // .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-  //   store.dispatch(updateStreamAttributeMaps(testData));
-  // }))
   .add('basic', () => <DataViewer dataViewerId="test" />);
