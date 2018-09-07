@@ -5,7 +5,7 @@ import { testPipelines, elements, elementProperties } from 'components/PipelineE
 import { testDocRefsTypes } from 'components/DocRefTypes/test';
 import { testXslt } from 'components/XsltEditor/test';
 import { generateGenericTracker } from 'sections/Processing/tracker.testData';
-import { dataList } from 'sections/DataViewer/test';
+import { dataList, dataSource } from 'sections/DataViewer/test';
 
 export const PollyDecoratorWithTestData = PollyDecorator({
   documentTree: fromSetupSampleData,
@@ -15,5 +15,6 @@ export const PollyDecoratorWithTestData = PollyDecorator({
   pipelines: testPipelines,
   xslt: testXslt,
   dataList,
+  dataSource,
   trackers: [...Array(10).keys()].map(i => generateGenericTracker(i)),
 });

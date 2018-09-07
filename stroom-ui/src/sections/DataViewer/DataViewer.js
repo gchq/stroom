@@ -52,24 +52,25 @@ const enhance = compose(
   withDetailsHeight,
   connect(
     (state, props) => {
+      let dataSource, streamAttributeMaps, pageSize, pageOffset,selectedRow, dataForSelectedRow, detailsForSelectedRow;
+
       if(state.dataViewers[props.dataViewerId] !== undefined) {
-        const { dataSource, streamAttributeMaps, pageSize, pageOffset,selectedRow, dataForSelectedRow, detailsForSelectedRow} = state.dataViewers[props.dataViewerId];
+        let { dataSource, streamAttributeMaps, pageSize, pageOffset,selectedRow, dataForSelectedRow, detailsForSelectedRow} = state.dataViewers[props.dataViewerId];
         // const dataView = state.dataViewers[props.dataViewerId];
 
         // if (dataView !== undefined) {
         //   return dataView;
         // }
-
-        return {
-          streamAttributeMaps: streamAttributeMaps || [],
-          pageSize: pageSize || 0,
-          pageOffset: pageOffset || 20,
-          selectedRow,
-          dataForSelectedRow,
-          detailsForSelectedRow,
-          dataSource,
-        };
       }
+      return {
+        streamAttributeMaps: streamAttributeMaps || [],
+        pageSize: pageSize || 0,
+        pageOffset: pageOffset || 20,
+        selectedRow,
+        dataForSelectedRow,
+        detailsForSelectedRow,
+        dataSource,
+      };
     },
     {
       search,
