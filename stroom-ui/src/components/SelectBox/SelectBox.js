@@ -1,8 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const SelectBox = ({ options, value, onChange }) => (
-  <select value={value} onChange={({ target: { value } }) => onChange(value)}>
+const SelectBox = ({
+  options, value, onChange, placeholder, ...rest
+}) => (
+  <select {...rest} value={value} onChange={({ target: { value } }) => onChange(value)}>
+    <option value="" disabled selected>
+      {placeholder}
+    </option>
     {options.map(f => (
       <option key={f.value} value={f.value}>
         {f.text}
@@ -12,12 +17,17 @@ const SelectBox = ({ options, value, onChange }) => (
 );
 
 SelectBox.propTypes = {
+  placeholder: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(PropTypes.shape({
     text: PropTypes.string.isRequired,
     value: PropTypes.string.isRequired,
   })),
   onChange: PropTypes.func.isRequired,
   value: PropTypes.string,
+};
+
+SelectBox.defaultProps = {
+  placeholder: 'Select an option',
 };
 
 export default SelectBox;

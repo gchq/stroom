@@ -79,8 +79,7 @@ const enhance = compose(
     },
 
     onConditionChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (
-      event,
-      { value },
+      value,
     ) => {
       expressionItemUpdated(expressionId, uuid, {
         condition: value,
@@ -138,21 +137,9 @@ const ExpressionTerm = ({
     {connectDragSource(<span>
       <Icon name="bars" />
     </span>)}
-    <SelectBox value={term.field} onChange={onFieldChange} options={fieldOptions} />
-    {/* <Dropdown
-      placeholder="field"
-      selection
-      options={fieldOptions}
-      onChange={onFieldChange}
-      value={term.field}
-    /> */}
-    <Dropdown
-      placeholder="condition"
-      selection
-      options={conditionOptions}
-      onChange={onConditionChange}
-      value={term.condition}
-    />
+    <SelectBox placeholder='Field' value={term.field} onChange={onFieldChange} options={fieldOptions} />
+    <SelectBox placeholder='Condition' value={term.condition} onChange={onConditionChange} options={conditionOptions} />
+
     <ValueWidget dataSource={dataSource} expressionId={expressionId} term={term} />
     <Button.Group floated="right">
       <Button icon="checkmark" compact color={enabledButtonColour} onClick={onEnabledToggled} />
