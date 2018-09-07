@@ -22,14 +22,14 @@ const defaultPipelineSearchState = {
 
 const reducer = handleActions(
   {
-    PIPELINES_RECEIVED: (state, action) => ({
+    PIPELINES_RECEIVED: (state, { payload: { total, pipelines } }) => ({
       ...state,
-      total: action.payload.total,
-      pipelines: action.payload.pipelines,
+      total,
+      pipelines,
     }),
-    UPDATE_CRITERIA: (state, action) => ({
+    UPDATE_CRITERIA: (state, { payload: { criteria } }) => ({
       ...state,
-      criteria: action.payload.criteria,
+      criteria,
     }),
   },
   defaultPipelineSearchState,

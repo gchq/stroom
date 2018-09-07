@@ -10,9 +10,9 @@ const defaultState = {
 
 const reducer = handleActions(
   {
-    START_INHERITED_PIPELINE: (state, action) => ({
+    START_INHERITED_PIPELINE: (state, { payload: { pipelineId } }) => ({
       ...state,
-      pipelineId: action.payload.pipelineId,
+      pipelineId,
     }),
   },
   defaultState,
