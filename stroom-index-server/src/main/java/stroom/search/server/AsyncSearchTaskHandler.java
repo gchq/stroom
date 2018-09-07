@@ -58,9 +58,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 @Scope(value = StroomScope.TASK)
@@ -150,7 +150,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     }
 
                     // Start remote cluster search execution.
-                    int expectedNodeResultCount = 0;
+                    AtomicInteger expectedNodeResultCount = new AtomicInteger(0);
                     for (final Entry<Node, List<Long>> entry : shardMap.entrySet()) {
                         final Node node = entry.getKey();
                         final List<Long> shards = entry.getValue();
@@ -161,7 +161,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                             LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
                             dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
                                     Collections.singleton(node));
-                            expectedNodeResultCount++;
+                            expectedNodeResultCount.incrementAndGet();
 
                         } else {
                             resultCollector.getErrorSet(node)
@@ -170,22 +170,42 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     }
                     taskMonitor.info(task.getSearchName() + " - searching...");
 
-                    ReentrantLock reentrantLock = new ReentrantLock();
-                    Condition condition = reentrantLock.newCondition();
+                    final CountDownLatch completionCountDownLatch = new CountDownLatch(1);
 
-                    final Runnable signalCondition = () -> {
-                        try {
-                            reentrantLock.lock();
-                            condition.signalAll();
-                        } finally {
-                            reentrantLock.unlock();
+                    final Runnable collectorChangeListener = () -> {
+                        // something has changed so recheck all the states to see if we can release
+                        // the latch to release any waiters
+                        if (task.isTerminated() ||
+                                resultHandler.shouldTerminateSearch() ||
+                                resultHandler.isComplete()) {
+                            LOGGER.trace("Change listener counting down completion latch");
+                            completionCountDownLatch.countDown();
+                        } else if (resultCollector.getCompletedNodes().size() >= expectedNodeResultCount.get()) {
+                            LOGGER.trace("Change listener setting SearchResultHandler to complete");
+                            // all the expected nodes have provided results
+                            resultHandler.setComplete(true);
+                        } else {
+                            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Change listener condition not met, " +
+                                            "isTerminated={}, shouldTerminatSearch={}, isComplete={}, " +
+                                            "completed node count: {}, expected node count: {}",
+                                    task.isTerminated(),
+                                    resultHandler.shouldTerminateSearch(),
+                                    resultHandler.isComplete(),
+                                    resultCollector.getCompletedNodes().size(),
+                                    expectedNodeResultCount.get()));
                         }
                     };
 
                     //if it has completed or something has changed on the resultCollector then
                     //test the conditions, else sleep
-                    resultHandler.registerCompletionListener(signalCondition::run);
-                    resultCollector.registerChangeListner(signalCondition);
+
+                    LOGGER.trace("Registering listeners");
+
+                    resultHandler.registerCompletionListener(() -> {
+                        LOGGER.trace("Counting down completionCountDownLatch");
+                        completionCountDownLatch.countDown();
+                    });
+                    resultCollector.registerChangeListner(collectorChangeListener);
 
                     while (!task.isTerminated() &&
                             !resultHandler.shouldTerminateSearch() &&
@@ -194,23 +214,17 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
                                 () -> {
                                     try {
-                                        reentrantLock.lock();
-                                        return condition.await(30, TimeUnit.SECONDS);
+                                        // block and wait for up to 10s for our search to be completed/terminated
+                                        return completionCountDownLatch.await(10, TimeUnit.SECONDS);
                                     } catch (InterruptedException e) {
                                         //Don't reset the interrupt status as we are at the top level of
                                         //the task execution
                                         throw new RuntimeException("Thread interrupted");
-                                    } finally {
-                                        reentrantLock.unlock();
                                     }
                                 },
                                 "waiting for completion condition");
 
                         LOGGER.trace("await finished with result {}", awaitResult);
-                        final boolean complete = resultCollector.getCompletedNodes().size() >= expectedNodeResultCount;
-
-                        //TODO why call setComplete if false?
-                        resultHandler.setComplete(complete);
 
                         // If the collector is no longer in the cache then terminate
                         // this search task.
