@@ -1,8 +1,19 @@
 ext.moduleName = 'stroom.kafka.api'
 
 dependencies {
+    compile project(':stroom-core-shared')
     compile project(':stroom-kafka:stroom-kafka-shared')
+    permitUnusedDeclared project(':stroom-kafka:stroom-kafka-shared')
     compile project(':stroom-pipeline')
+    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
+    compile libs.stroomDocRef
+
+    compile libs.guava
+    compile libs.javax_inject
+    compile libs.javax_inject
     compile libs.slf4j_api
+    compile libs.xml_apis
 }

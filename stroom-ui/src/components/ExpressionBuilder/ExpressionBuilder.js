@@ -18,13 +18,12 @@ import PropTypes from 'prop-types';
 
 import { compose, withState, branch, renderComponent, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader } from 'semantic-ui-react';
+import { Loader, Checkbox } from 'semantic-ui-react';
 
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
-
-import { Checkbox } from 'semantic-ui-react';
+import DeleteExpressionItem from './DeleteExpressionItem';
 
 import lineElementCreators from './expressionLineCreators';
 
@@ -81,6 +80,7 @@ const ExpressionBuilder = ({
     lineContextId={`expression-lines-${expressionId}`}
     lineElementCreators={lineElementCreators}
   >
+    <DeleteExpressionItem expressionId={expressionId} />
     {showModeToggle ? (
       <Checkbox
         label="Edit Mode"

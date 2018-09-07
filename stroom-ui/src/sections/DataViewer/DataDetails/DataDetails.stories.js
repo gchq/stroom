@@ -15,13 +15,14 @@
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-
 import { storiesOf, addDecorator } from '@storybook/react';
-import DataDetails from 'sections/DataViewer/DataDetails';
-
 import 'semantic/dist/semantic.min.css';
+
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import DataDetails from 'sections/DataViewer/DataDetails';
 import { errorData, eventData } from './DataDetails.testData';
 
 storiesOf('DataDetails', module)
+  .addDecorator(ReduxDecorator)
   .add('Showing errors', props => <DataDetails data={errorData} />)
   .add('Showing events', props => <DataDetails data={eventData} />);

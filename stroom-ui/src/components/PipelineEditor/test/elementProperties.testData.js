@@ -13,6 +13,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     encoding: {
       elementType: {
@@ -27,6 +28,7 @@ export default {
       defaultValue: 'UTF-8',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
   },
   BadTextXMLFilterReader: {
@@ -44,6 +46,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
   XMLFragmentParser: {
@@ -60,6 +63,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['TextConverter'],
+      displayPriority: 1,
     },
   },
   ElasticIndexingFilter: {
@@ -72,10 +76,11 @@ export default {
       },
       name: 'index',
       type: 'DocRef',
-      description: 'The elastic index to send records to.',
+      description: 'The elastic index to write records to.',
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['ElasticIndex'],
+      displayPriority: 1,
     },
     idFieldName: {
       elementType: {
@@ -90,6 +95,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
   },
   RecordCountFilter: {
@@ -106,79 +112,7 @@ export default {
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
-    },
-  },
-  RollingFileAppender: {
-    fileName: {
-      elementType: {
-        type: 'RollingFileAppender',
-        category: 'DESTINATION',
-        roles: ['destination', 'stepping', 'target'],
-        icon: 'files.svg',
-      },
-      name: 'fileName',
-      type: 'String',
-      description: 'Choose the name of the file to write.',
-      defaultValue: '',
-      pipelineReference: false,
-      docRefTypes: null,
-    },
-    rolledFileName: {
-      elementType: {
-        type: 'RollingFileAppender',
-        category: 'DESTINATION',
-        roles: ['destination', 'stepping', 'target'],
-        icon: 'files.svg',
-      },
-      name: 'rolledFileName',
-      type: 'String',
-      description: 'Choose the name that files will be renamed to when they are rolled.',
-      defaultValue: '',
-      pipelineReference: false,
-      docRefTypes: null,
-    },
-    maxSize: {
-      elementType: {
-        type: 'RollingFileAppender',
-        category: 'DESTINATION',
-        roles: ['destination', 'stepping', 'target'],
-        icon: 'files.svg',
-      },
-      name: 'maxSize',
-      type: 'String',
-      description: 'Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.',
-      defaultValue: '100M',
-      pipelineReference: false,
-      docRefTypes: null,
-    },
-    outputPaths: {
-      elementType: {
-        type: 'RollingFileAppender',
-        category: 'DESTINATION',
-        roles: ['destination', 'stepping', 'target'],
-        icon: 'files.svg',
-      },
-      name: 'outputPaths',
-      type: 'String',
-      description:
-        'One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.',
-      defaultValue: '',
-      pipelineReference: false,
-      docRefTypes: null,
-    },
-    frequency: {
-      elementType: {
-        type: 'RollingFileAppender',
-        category: 'DESTINATION',
-        roles: ['destination', 'stepping', 'target'],
-        icon: 'files.svg',
-      },
-      name: 'frequency',
-      type: 'String',
-      description: 'Choose how frequently files are rolled.',
-      defaultValue: '1h',
-      pipelineReference: false,
-      docRefTypes: null,
+      displayPriority: 1,
     },
   },
   TextWriter: {
@@ -195,6 +129,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     header: {
       elementType: {
@@ -209,6 +144,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     encoding: {
       elementType: {
@@ -223,9 +159,103 @@ export default {
       defaultValue: 'UTF-8',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
+    },
+  },
+  RollingFileAppender: {
+    fileName: {
+      elementType: {
+        type: 'RollingFileAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'files.svg',
+      },
+      name: 'fileName',
+      type: 'String',
+      description: 'Choose the name of the file to write.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: null,
+      displayPriority: 2,
+    },
+    rolledFileName: {
+      elementType: {
+        type: 'RollingFileAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'files.svg',
+      },
+      name: 'rolledFileName',
+      type: 'String',
+      description: 'Choose the name that files will be renamed to when they are rolled.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: null,
+      displayPriority: 3,
+    },
+    maxSize: {
+      elementType: {
+        type: 'RollingFileAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'files.svg',
+      },
+      name: 'maxSize',
+      type: 'String',
+      description: 'Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.',
+      defaultValue: '100M',
+      pipelineReference: false,
+      docRefTypes: null,
+      displayPriority: 5,
+    },
+    outputPaths: {
+      elementType: {
+        type: 'RollingFileAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'files.svg',
+      },
+      name: 'outputPaths',
+      type: 'String',
+      description:
+        'One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: null,
+      displayPriority: 1,
+    },
+    frequency: {
+      elementType: {
+        type: 'RollingFileAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'files.svg',
+      },
+      name: 'frequency',
+      type: 'String',
+      description: 'Choose how frequently files are rolled.',
+      defaultValue: '1h',
+      pipelineReference: false,
+      docRefTypes: null,
+      displayPriority: 4,
     },
   },
   StroomStatsFilter: {
+    kafkaConfig: {
+      elementType: {
+        type: 'StroomStatsFilter',
+        category: 'FILTER',
+        roles: ['simple', 'hasTargets', 'target'],
+        icon: 'StroomStatsStore.svg',
+      },
+      name: 'kafkaConfig',
+      type: 'DocRef',
+      description: 'The Kafka config to use.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: ['KAFKA_CONFIG'],
+      displayPriority: 1,
+    },
     statisticsDataSource: {
       elementType: {
         type: 'StroomStatsFilter',
@@ -239,6 +269,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['StroomStatsStore'],
+      displayPriority: 1,
     },
     flushOnSend: {
       elementType: {
@@ -254,6 +285,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
   },
   Reader: {},
@@ -272,6 +304,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['TextConverter'],
+      displayPriority: 1,
     },
   },
   CombinedParser: {
@@ -288,20 +321,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['TextConverter'],
-    },
-    fixInvalidChars: {
-      elementType: {
-        type: 'CombinedParser',
-        category: 'PARSER',
-        roles: ['parser', 'hasCode', 'simple', 'hasTargets', 'stepping', 'mutator'],
-        icon: 'text.svg',
-      },
-      name: 'fixInvalidChars',
-      type: 'boolean',
-      description: 'Fix invalid XML characters from the input stream.',
-      defaultValue: 'false',
-      pipelineReference: false,
-      docRefTypes: null,
+      displayPriority: 2,
     },
     type: {
       elementType: {
@@ -316,6 +336,22 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
+    },
+    fixInvalidChars: {
+      elementType: {
+        type: 'CombinedParser',
+        category: 'PARSER',
+        roles: ['parser', 'hasCode', 'simple', 'hasTargets', 'stepping', 'mutator'],
+        icon: 'text.svg',
+      },
+      name: 'fixInvalidChars',
+      type: 'boolean',
+      description: 'Fix invalid XML characters from the input stream.',
+      defaultValue: 'false',
+      pipelineReference: false,
+      docRefTypes: null,
+      displayPriority: 3,
     },
   },
   XMLWriter: {
@@ -332,6 +368,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     encoding: {
       elementType: {
@@ -346,9 +383,11 @@ export default {
       defaultValue: 'UTF-8',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
   },
   Source: {},
+  InvalidCharFilterReader: {},
   SplitFilter: {
     splitDepth: {
       elementType: {
@@ -363,6 +402,7 @@ export default {
       defaultValue: '1',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     splitCount: {
       elementType: {
@@ -377,9 +417,9 @@ export default {
       defaultValue: '10000',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
   },
-  InvalidCharFilterReader: {},
   HttpPostFilter: {
     receivingApiUrl: {
       elementType: {
@@ -394,9 +434,25 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
   RollingKafkaAppender: {
+    kafkaConfig: {
+      elementType: {
+        type: 'RollingKafkaAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'apache_kafka-icon.svg',
+      },
+      name: 'kafkaConfig',
+      type: 'DocRef',
+      description: 'The Kafka config to use.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: ['KAFKA_CONFIG'],
+      displayPriority: 1,
+    },
     recordKey: {
       elementType: {
         type: 'RollingKafkaAppender',
@@ -411,6 +467,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     topic: {
       elementType: {
@@ -426,6 +483,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     maxSize: {
       elementType: {
@@ -440,6 +498,7 @@ export default {
       defaultValue: '100M',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 5,
     },
     flushOnSend: {
       elementType: {
@@ -455,6 +514,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 6,
     },
     frequency: {
       elementType: {
@@ -469,10 +529,26 @@ export default {
       defaultValue: '1h',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
   },
   TestAppender: {},
   KafkaAppender: {
+    kafkaConfig: {
+      elementType: {
+        type: 'KafkaAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'apache_kafka-icon.svg',
+      },
+      name: 'kafkaConfig',
+      type: 'DocRef',
+      description: 'The Kafka config to use.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: ['KAFKA_CONFIG'],
+      displayPriority: 1,
+    },
     recordKey: {
       elementType: {
         type: 'KafkaAppender',
@@ -486,6 +562,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     maxRecordCount: {
       elementType: {
@@ -500,6 +577,7 @@ export default {
       defaultValue: '1',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     topic: {
       elementType: {
@@ -514,6 +592,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     flushOnSend: {
       elementType: {
@@ -529,6 +608,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
   },
   XSLTFilter: {
@@ -545,6 +625,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     usePool: {
       elementType: {
@@ -560,6 +641,7 @@ export default {
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
     pipelineReference: {
       elementType: {
@@ -574,6 +656,7 @@ export default {
       defaultValue: '',
       pipelineReference: true,
       docRefTypes: null,
+      displayPriority: 5,
     },
     xslt: {
       elementType: {
@@ -588,6 +671,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['XSLT'],
+      displayPriority: 1,
     },
     xsltNamePattern: {
       elementType: {
@@ -602,6 +686,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
   },
   StreamAppender: {
@@ -619,6 +704,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['Feed'],
+      displayPriority: 2,
     },
     segmentOutput: {
       elementType: {
@@ -634,6 +720,7 @@ export default {
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     streamType: {
       elementType: {
@@ -649,10 +736,11 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
-  RecordOutputFilter: {},
   XMLParser: {},
+  RecordOutputFilter: {},
   HDFSFileAppender: {
     runAsUser: {
       elementType: {
@@ -667,6 +755,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     fileSystemUri: {
       elementType: {
@@ -682,6 +771,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     outputPaths: {
       elementType: {
@@ -697,6 +787,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
   SearchResultOutputFilter: {},
@@ -715,6 +806,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
   ReferenceDataFilter: {
@@ -731,6 +823,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     overrideExistingValues: {
       elementType: {
@@ -745,6 +838,7 @@ export default {
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
   },
   InvalidXMLCharFilterReader: {
@@ -761,6 +855,7 @@ export default {
       defaultValue: '1.1',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
   IdEnrichmentFilter: {},
@@ -778,6 +873,7 @@ export default {
       defaultValue: 'guid,feed,system,environment,remotehost,remoteaddress',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 5,
     },
     forwardChunkSize: {
       elementType: {
@@ -792,6 +888,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
     forwardUrl: {
       elementType: {
@@ -806,6 +903,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     useCompression: {
       elementType: {
@@ -820,6 +918,7 @@ export default {
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     connectionTimeout: {
       elementType: {
@@ -834,6 +933,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
   },
   SchemaFilter: {
@@ -851,6 +951,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     schemaValidation: {
       elementType: {
@@ -865,6 +966,7 @@ export default {
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 5,
     },
     namespaceURI: {
       elementType: {
@@ -880,6 +982,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     schemaLanguage: {
       elementType: {
@@ -894,6 +997,7 @@ export default {
       defaultValue: 'http://www.w3.org/2001/XMLSchema',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
     schemaGroup: {
       elementType: {
@@ -909,6 +1013,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
   },
   IndexingFilter: {
@@ -925,10 +1030,26 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['Index'],
+      displayPriority: 1,
     },
   },
   BOMRemovalFilterInput: {},
   StroomStatsAppender: {
+    kafkaConfig: {
+      elementType: {
+        type: 'StroomStatsAppender',
+        category: 'DESTINATION',
+        roles: ['destination', 'stepping', 'target'],
+        icon: 'StroomStatsStore.svg',
+      },
+      name: 'kafkaConfig',
+      type: 'DocRef',
+      description: 'The Kafka config to use.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: ['KAFKA_CONFIG'],
+      displayPriority: 1,
+    },
     maxRecordCount: {
       elementType: {
         type: 'StroomStatsAppender',
@@ -942,6 +1063,7 @@ export default {
       defaultValue: '1',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
     statisticsDataSource: {
       elementType: {
@@ -956,6 +1078,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['StroomStatsStore'],
+      displayPriority: 1,
     },
     flushOnSend: {
       elementType: {
@@ -971,6 +1094,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
   },
   RollingStreamAppender: {
@@ -988,6 +1112,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: ['Feed'],
+      displayPriority: 2,
     },
     segmentOutput: {
       elementType: {
@@ -999,10 +1124,11 @@ export default {
       name: 'segmentOutput',
       type: 'boolean',
       description:
-        'Shoud the output stream be marked with indexed segments to allow fast access to individual records?',
+        'Should the output stream be marked with indexed segments to allow fast access to individual records?',
       defaultValue: 'true',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 6,
     },
     streamType: {
       elementType: {
@@ -1018,6 +1144,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     maxSize: {
       elementType: {
@@ -1032,6 +1159,7 @@ export default {
       defaultValue: '100M',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 5,
     },
     frequency: {
       elementType: {
@@ -1046,10 +1174,26 @@ export default {
       defaultValue: '1h',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 4,
     },
   },
   JSONParser: {},
   GenericKafkaProducerFilter: {
+    kafkaConfig: {
+      elementType: {
+        type: 'GenericKafkaProducerFilter',
+        category: 'FILTER',
+        roles: ['simple', 'hasTargets', 'target'],
+        icon: 'apache_kafka-icon.svg',
+      },
+      name: 'kafkaConfig',
+      type: 'DocRef',
+      description: 'The Kafka config to use.',
+      defaultValue: '',
+      pipelineReference: false,
+      docRefTypes: ['KAFKA_CONFIG'],
+      displayPriority: 1,
+    },
     recordKey: {
       elementType: {
         type: 'GenericKafkaProducerFilter',
@@ -1063,6 +1207,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 2,
     },
     topic: {
       elementType: {
@@ -1077,6 +1222,7 @@ export default {
       defaultValue: '',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 1,
     },
     flushOnSend: {
       elementType: {
@@ -1092,6 +1238,7 @@ export default {
       defaultValue: 'false',
       pipelineReference: false,
       docRefTypes: null,
+      displayPriority: 3,
     },
   },
 };

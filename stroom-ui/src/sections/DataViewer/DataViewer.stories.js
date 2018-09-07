@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import 'semantic/dist/semantic.min.css';
+import { storiesOf, addDecorator } from '@storybook/react';
 
-package stroom.statistics.test;
+import DataViewer from 'sections/DataViewer/DataViewer';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
-import org.junit.Ignore;
-import org.junit.Test;
-import stroom.util.date.DateUtil;
-
-/**
- * Utility to convert unix timestamps to something sensible
- */
-@Ignore
-public class TimestampConverter {
-    @Test
-    public void longToString() {
-        final long timeMs = 1423478243377L;
-        final String output = DateUtil.createNormalDateTimeString(timeMs);
-        System.out.println(output);
-    }
-}
+storiesOf('DataViewer', module)
+  .addDecorator(ReduxDecorator)
+  .add('basic', props => <DataViewer />);

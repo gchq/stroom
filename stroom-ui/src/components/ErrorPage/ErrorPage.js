@@ -39,17 +39,11 @@ const ErrorSection = ({ title, errorData }) => (
 );
 
 const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Row>
-        <Grid.Column width={12}>
-          <Header as="h3">
-            <Icon name="exclamation circle" color="red" />
-            There has been an error!
-          </Header>
-        </Grid.Column>
-      </Grid.Row>
-    </Grid>
+  <div>
+    <Header as="h3">
+      <Icon name="exclamation circle" color="red" />
+      There has been an error!
+    </Header>
 
     <Grid className="error-page__details">
       {errorMessage && <ErrorSection errorData={errorMessage} title="Error Message" />}
@@ -57,7 +51,7 @@ const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
         httpErrorCode && <ErrorSection errorData={httpErrorCode} title="HTTP error code" />}
       {stackTrace && <ErrorSection errorData={stackTrace} title="Stack trace" />}
     </Grid>
-  </React.Fragment>
+  </div >
 );
 
 export default enhance(ErrorPage);

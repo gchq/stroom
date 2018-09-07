@@ -51,6 +51,7 @@ storiesOf('SearchBar', module)
   .addDecorator(DragDropDecorator)
   .add('Basic', props => (
     <SearchBar
+      onSearch={() => console.log('Search called')}
       expressionId="simplestEx"
       searchString="foo1=bar1 foo2=bar2 foo3=bar3 someOtherKey=sometOtherValue"
       dataSource={testDataSource}

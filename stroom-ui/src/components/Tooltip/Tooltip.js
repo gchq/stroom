@@ -31,14 +31,14 @@ const enhance = compose(
 const Tooltip = ({
   trigger, content, className, uuid, ...rest
 }) => (
-  <div className={className}>
+  <React.Fragment>
     <a data-tip data-for={uuid}>
       {trigger}
     </a>
-    <ReactTooltip id={uuid} className="tooltip-popup raised-low" effect="solid">
+    <ReactTooltip id={uuid} delayShow={1000} className="tooltip-popup raised-low" effect="solid">
       {content}
     </ReactTooltip>
-  </div>
+  </React.Fragment>
 );
 
 export default enhance(Tooltip);

@@ -2,9 +2,14 @@ buildscript {
     repositories {
         mavenLocal()
         jcenter()
+        // used for 
+        maven { url "https://dl.bintray.com/stroom/stroom" }
     }
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+
+        // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
+        classpath 'stroom:gradle-dependency-analyze:v2.2.2'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -28,11 +33,12 @@ plugins {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.9'
+    gradleVersion = '4.10'
 }
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'ca.cutterslade.analyze'
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
@@ -64,13 +70,12 @@ ext.versions = [
 
         //------Stroom-repos---------------
         //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : 'v3.2.4_schema-v3.2.4',
+        eventLogging      : 'v4.0.5_schema-v3.2.4',
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v0.1-alpha.3',
-        stroomExpression  : 'v1.4.3',
-        stroomQuery       : 'SNAPSHOT', //same version for both stroom-query-api and stroom-query-common
-        //stroomQuery       : 'v4.0-beta.6', //same version for both stroom-query-api and stroom-query-common
+        stroomExpression  : 'v1.4.10',
+        stroomQuery       : 'v4.0-beta.11', //same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
@@ -160,6 +165,7 @@ ext.libs = [
         hibernate_validator            : "org.hibernate:hibernate-validator:5.3.4.Final",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
         hsqldb                         : "org.hsqldb:hsqldb:2.3.4",
+        istack                         : "com.sun.istack:istack-commons-runtime:3.0.6",
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson",
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core:$versions.jackson",
@@ -297,6 +303,7 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'ca.cutterslade.analyze'
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10

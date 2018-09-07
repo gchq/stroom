@@ -11,16 +11,16 @@ const actionCreators = createActions({
 
 const reducer = handleActions(
   {
-    ELEMENTS_RECEIVED: (state, action) => ({
+    ELEMENTS_RECEIVED: (state, { payload: { elements } }) => ({
       ...state,
-      elements: action.payload.elements,
-      byCategory: groupByCategory(action.payload.elements),
-      byType: keyByType(action.payload.elements)
+      elements,
+      byCategory: groupByCategory(elements),
+      byType: keyByType(elements),
     }),
 
-    ELEMENT_PROPERTIES_RECEIVED: (state, action) => ({
+    ELEMENT_PROPERTIES_RECEIVED: (state, { payload: { elementProperties } }) => ({
       ...state,
-      elementProperties: action.payload.elementProperties,
+      elementProperties,
     }),
   },
   defaultElementState,

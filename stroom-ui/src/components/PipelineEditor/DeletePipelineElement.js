@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, withProps } from 'recompose';
+import { compose, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
-import ThemedConfirm from 'components/ThemedModal';
+import { ThemedConfirm } from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
 const { pipelineElementDeleteCancelled, pipelineElementDeleteConfirmed } = actionCreators;
@@ -11,7 +11,7 @@ const { pipelineElementDeleteCancelled, pipelineElementDeleteConfirmed } = actio
 const enhance = compose(
   connect(
     ({ pipelineEditor: { elements, pipelineStates } }, { pipelineId }) => ({
-      pipeline: pipelineStates[pipelineId],
+      pipelineState: pipelineStates[pipelineId],
       elements,
     }),
     {
@@ -19,20 +19,19 @@ const enhance = compose(
       pipelineElementDeleteConfirmed,
     },
   ),
-  withProps(({
-    pipelineId,
-    pipeline: { pendingElementIdToDelete },
-    pipelineElementDeleteCancelled,
-    pipelineElementDeleteConfirmed,
-  }) => ({
-    onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
-    onConfirmDelete: () => {
-      pipelineElementDeleteConfirmed(pipelineId, pendingElementIdToDelete);
-    },
-  })),
+  withHandlers({
+    onCancelDelete: ({ pipelineElementDeleteCancelled, pipelineId }) => () =>
+      pipelineElementDeleteCancelled(pipelineId),
+    onConfirmDelete: ({ pipelineElementDeleteConfirmed, pipelineId }) => () =>
+      pipelineElementDeleteConfirmed(pipelineId),
+  }),
 );
 
-const DeletePipelineElement = ({ pendingElementIdToDelete, onConfirmDelete, onCancelDelete }) => (
+const DeletePipelineElement = ({
+  pipelineState: { pendingElementIdToDelete },
+  onConfirmDelete,
+  onCancelDelete,
+}) => (
   <ThemedConfirm
     open={!!pendingElementIdToDelete}
     question={`Delete ${pendingElementIdToDelete} from pipeline?`}

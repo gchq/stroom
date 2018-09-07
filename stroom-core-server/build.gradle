@@ -37,7 +37,6 @@ dependencies {
     compile libs.commons_compress
     compile libs.commons_io
     compile libs.jackson_annotations
-    compile libs.javax_activation_impl
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.validation_api
@@ -52,8 +51,8 @@ dependencies {
 
     compile libs.jaxb_api
     //compile libs.jaxb_core
-    compile libs.jaxb_runtime
-    compile libs.jaxb_impl
+    //compile libs.jaxb_runtime
+    //compile libs.jaxb_impl
 
     compile libs.slf4j_api
     compile libs.xml_apis
@@ -92,6 +91,9 @@ dependencies {
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
+
     testRuntime libs.jaxb_runtime
+    testRuntime libs.istack // needed by jaxb_runtime it seems
+    testRuntime libs.fast_infoset // needed by jaxb_runtime it seems
     testRuntime libs.javax_activation
 }

@@ -32,9 +32,7 @@ storiesOf('ProcessingDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_undefinedLastPollAge]));
   }))
   .add('Minimal tracker with undefined last poll age', () => (
-    <div>
-      <ProcessingDetails />
-    </div>
+    <ProcessingDetails />
   ));
 
 storiesOf('ProcessingDetails', module)
@@ -43,9 +41,7 @@ storiesOf('ProcessingDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_nullLastPollAge]));
   }))
   .add('Minimal tracker with null last poll age', () => (
-    <div>
-      <ProcessingDetails />
-    </div>
+    <ProcessingDetails />
   ));
 
 storiesOf('ProcessingDetails', module)
@@ -54,9 +50,7 @@ storiesOf('ProcessingDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_emptyLastPollAge]));
   }))
   .add('Minimal tracker with empty last poll age', () => (
-    <div>
-      <ProcessingDetails />
-    </div>
+    <ProcessingDetails />
   ));
 
 storiesOf('ProcessingDetails', module)
@@ -65,9 +59,7 @@ storiesOf('ProcessingDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker]));
   }))
   .add('Maximal tracker', () => (
-    <div>
-      <ProcessingDetails />
-    </div>
+    <ProcessingDetails />
   ));
 
 storiesOf('ProcessingDetails', module)
@@ -76,7 +68,5 @@ storiesOf('ProcessingDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker_withLongName]));
   }))
   .add('Maximal tracker with a long name', () => (
-    <div>
-      <ProcessingDetails />
-    </div>
+    <ProcessingDetails />
   ));

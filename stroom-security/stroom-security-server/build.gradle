@@ -1,22 +1,22 @@
 ext.moduleName = 'stroom.security.server'
 
 dependencies {
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    //compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-shared')
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomAuthApi
     compile libs.stroomDocRef
 
-    compile libs.eventLogging
     compile libs.commons_lang
+    compile libs.eventLogging
     compile libs.guava
     compile libs.guice4
     compile libs.hibernate_jpa_api
@@ -24,9 +24,8 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.javax_validation
-    compile libs.slf4j_api
     compile libs.jose4j
-    compile libs.ws_rs_api
+    compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 

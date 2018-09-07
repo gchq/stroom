@@ -43,7 +43,7 @@ const enhanceForm = compose(
   }),
 );
 
-const RawAppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
+let AppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
   <Form>
     <Form.Field>
       <label>Chosen Doc Ref</label>
@@ -68,7 +68,7 @@ const RawAppSearchAsPickerForm = ({ pickerId, typeFilters, thisForm }) => (
   </Form>
 );
 
-const AppSearchAsPickerForm = enhanceForm(RawAppSearchAsPickerForm);
+AppSearchAsPickerForm = enhanceForm(AppSearchAsPickerForm);
 
 class AppSearchAsNavigator extends React.Component {
   constructor(props) {

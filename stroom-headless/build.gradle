@@ -8,9 +8,9 @@ dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-explorer:stroom-explorer-api')
+    //compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-impl')
-    compile project(':stroom-importexport:stroom-importexport-api')
+    //compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-pipeline')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-impl-mock')
@@ -22,17 +22,17 @@ dependencies {
     compile libs.stroomDocRef
 
     compile libs.guice4
-    compile libs.hibernate_core
+    //compile libs.hibernate_core
     compile libs.javax_inject
     compile libs.slf4j_api
     compile libs.xml_apis
 
     compile libs.javax_el
-    // permitUnusedDeclared libs.javax_el
+    permitUnusedDeclared libs.javax_el
     compile libs.javax_el_api
-    // permitUnusedDeclared libs.javax_el_api
-    compile libs.logback_classic
-    // permitUnusedDeclared libs.logback_classic
+    permitUnusedDeclared libs.javax_el_api
+    runtime libs.logback_classic
+    //permitUnusedDeclared libs.logback_classic
 }
 
 def fatJarName = "stroom-headless-all.jar"
