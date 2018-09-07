@@ -1,18 +1,50 @@
-.SearchBar {
+
+.search-bar {
   width: 100%;
   display: block;
 }
 
-.SearchBar__header {
+.search-bar__dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.search-bar__dropdown__content {
+  width: 100%;
+  display: none;
+  position: absolute;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+.search-bar__dropdown__content.visible {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar__header {
   display: inline-flex;
   width:100%;
 }
 
-.SearchBar__input {
+.search-bar__input {
   flex-grow: 1;
 }
 
-.SearchBar__content {
+.search-bar__content {
   top: 40px;
   padding: 10px;
+}
+
+.search-bar__close-button {
+  margin-left: 10px !important;
+}
+
+.search-bar__content__header {
+  width: 100%;
+  display: inline-flex;
+}
+
+.search-bar__content__header .buttons {
+  flex-grow: 1;
 }

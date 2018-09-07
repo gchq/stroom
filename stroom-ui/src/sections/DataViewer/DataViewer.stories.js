@@ -13,14 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import 'semantic/dist/semantic.min.css';
-import { storiesOf, addDecorator } from '@storybook/react';
 
-import DataViewer from 'sections/DataViewer/DataViewer';
+import React from 'react';
+import { storiesOf, addDecorator } from '@storybook/react';
+import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
+
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
-storiesOf('DataViewer', module)
+import DataViewer from 'sections/DataViewer/DataViewer';
+import { actionCreators } from './redux';
+import { testData } from './test';
+
+const { updateStreamAttributeMaps } = actionCreators;
+
+const stories = storiesOf('DataViewer', module)
+  .addDecorator(PollyDecoratorWithTestData)
+  .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
-  .add('basic', props => <DataViewer />);
+  // TODO Set up Polly with test data.
+  // .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+  //   store.dispatch(updateStreamAttributeMaps(testData));
+  // }))
+  .add('basic', () => <DataViewer dataViewerId="test" />);
