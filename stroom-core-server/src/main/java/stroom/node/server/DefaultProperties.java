@@ -921,14 +921,14 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.managerTitle")
-                .value("Choose an activity or create a new one")
+                .value("Choose Activity")
                 .description("The title of the activity manager popup.")
                 .editable(true)
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.editorTitle")
-                .value("Choose Activity")
+                .value("Edit Activity")
                 .description("The title of the activity editor popup.")
                 .editable(true)
                 .requireUiRestart(true)
@@ -936,9 +936,9 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.activity.editorBody")
                 .value("Activity Code:</br>" +
-                        "<input type=\"text\" name=\"code\">Code</input></br></br>" +
+                        "<input type=\"text\" name=\"code\"></input></br></br>" +
                         "Activity Description:</br>" +
-                        "<textarea rows=\"4\">Description</textarea></br>" +
+                        "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\"></textarea>" +
                         "Explain what the activity is")
                 .description("The HTML to display in the activity editor popup.")
                 .editable(true)

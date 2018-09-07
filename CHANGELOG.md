@@ -8,11 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v5.5.0-beta.1] - 2018-09-05
 
-* Issue **828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
+* Issue **#828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
 
-* Issue **774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
+* Issue **#774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
 
-* Issue **829** : Stroom now logs event id when viewing individual events.
+* Issue **#829** : Stroom now logs event id when viewing individual events.
 
 * Added functionality to record actions against user defined activities.
 
@@ -20,13 +20,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v5.4.6] - 2018-08-20
 
-* Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
+* Issue **#824** : Fix for replace method in PathCreator also found in stroom proxy.
 
-* Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+* Issue **#820** : Fix updating index shards so that they are loaded, updated and saved under lock.
 
-* Issue **819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
+* Issue **#819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
 
-* Issue **817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
+* Issue **#817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
 
 ## [v5.4.5] - 2018-07-13
 

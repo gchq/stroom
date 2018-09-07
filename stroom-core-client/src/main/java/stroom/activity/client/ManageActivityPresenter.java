@@ -144,7 +144,7 @@ public class ManageActivityPresenter extends
             }
         };
         clientPropertyCache.get().onSuccess(clientProperties -> {
-            final String title = clientProperties.get(ClientProperties.ACTIVITY_EDITOR_TITLE);
+            final String title = clientProperties.get(ClientProperties.ACTIVITY_MANAGER_TITLE);
             final PopupSize popupSize = new PopupSize(1000, 600, true);
             ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
                     PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);

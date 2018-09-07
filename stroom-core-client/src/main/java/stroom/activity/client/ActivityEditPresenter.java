@@ -77,7 +77,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 .onSuccess(result -> {
                     activityRecordingEnabled = result.getBoolean(ClientProperties.ACTIVITY_ENABLED, true);
                     activityEditorTitle = result.get(ClientProperties.ACTIVITY_EDITOR_TITLE, DEFAULT_ACTIVITY_EDITOR_TITLE);
-//                    activityEditorBody = result.get(ClientProperties.ACTIVITY_EDITOR_BODY, DEFAULT_ACTIVITY_EDITOR_BODY);
+                    activityEditorBody = result.get(ClientProperties.ACTIVITY_EDITOR_BODY, DEFAULT_ACTIVITY_EDITOR_BODY);
 //                    queryInfoPopupValidationRegex = result.get(ClientProperties.QUERY_INFO_POPUP_VALIDATION_REGEX, DEFAULT_QUERY_INFO_VALIDATION_REGEX);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
@@ -99,7 +99,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     if (ok) {
                         write(consumer);
                     } else {
-                        consumer.accept(null);
+                        consumer.accept(activity);
                         hide();
                     }
                 }
@@ -141,7 +141,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                         element.focus();
                     }
 
-                    final String name = element.getAttribute("name");
+                    final String name = getName(element);
                     if (name != null) {
                         final String value = getValue(activity, name);
                         if (value != null) {
@@ -156,7 +156,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                         element.focus();
                     }
 
-                    final String name = element.getAttribute("name");
+                    final String name = getName(element);
                     if (name != null) {
                         final String value = getValue(activity, name);
                         if (value != null) {
@@ -178,13 +178,13 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 final Element element = (Element) node;
                 final String tagName = element.getTagName();
                 if ("text".equalsIgnoreCase(tagName) || "input".equalsIgnoreCase(tagName)) {
-                    final String name = element.getAttribute("name");
+                    final String name = getName(element);
                     if (name != null) {
                         final InputElement inputElement = element.cast();
                         details.addProperty(name, inputElement.getValue());
                     }
                 } else if ("textarea".equalsIgnoreCase(tagName)) {
-                    final String name = element.getAttribute("name");
+                    final String name = getName(element);
                     if (name != null) {
                         final TextAreaElement inputElement = element.cast();
                         details.addProperty(name, inputElement.getValue());
@@ -200,6 +200,17 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             consumer.accept(result);
             hide();
         });
+    }
+
+    private String getName(final Element element) {
+        final String name = element.getAttribute("name");
+        if (name != null) {
+            final String trimmed = name.trim();
+            if (trimmed.length() > 0) {
+                return trimmed;
+            }
+        }
+        return null;
     }
 
     private String getValue(final Activity activity, final String name) {
