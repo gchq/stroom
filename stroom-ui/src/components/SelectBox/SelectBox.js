@@ -4,16 +4,18 @@ import PropTypes from 'prop-types';
 const SelectBox = ({
   options, value, onChange, placeholder, ...rest
 }) => (
-  <select {...rest} value={value} onChange={({ target: { value } }) => onChange(value)}>
-    <option value="" disabled selected>
-      {placeholder}
-    </option>
-    {options.map(f => (
-      <option key={f.value} value={f.value}>
-        {f.text}
+  <span className="styled-select">
+    <select {...rest} value={value} onChange={({ target: { value } }) => onChange(value)}>
+      <option value="" disabled selected>
+        {placeholder}
       </option>
-    ))}
-  </select>
+      {options.map(f => (
+        <option key={f.value} value={f.value}>
+          {f.text}
+        </option>
+      ))}
+    </select>
+  </span>
 );
 
 SelectBox.propTypes = {
