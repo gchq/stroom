@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import 'styles/main.css';
@@ -24,7 +25,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import ElementDetails from './ElementDetails';
 import { actionCreators as pipelineActionCreators } from '../redux';
-import { testPipelines, elements } from '../test';
+import { testPipelines, elements, elementProperties } from '../test';
 import { fetchPipeline } from '../pipelineResourceClient';
 
 const {
@@ -38,7 +39,7 @@ const stories = storiesOf('Element Details', module)
   .addDecorator(ThemedDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(elements))
+    store.dispatch(elementsReceived(elementProperties))
     store.dispatch(pipelineReceived("longPipeline", testPipelines.longPipeline))
     store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
   }))
