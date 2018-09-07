@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { createActions, handleActions } from 'redux-actions';
+import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 const actionCreators = createActions({
   XSLT_RECEIVED: (xsltId, xsltData) => ({ xsltId, xsltData }),
@@ -22,31 +23,28 @@ const actionCreators = createActions({
 });
 
 const defaultState = {};
+const defaultStatePerId = {
+  isDirty: false,
+  xsltData: undefined,
+};
+
+const byXsltId = createActionHandlersPerId(({ payload: { xsltId } }) => xsltId, defaultStatePerId);
 
 const reducer = handleActions(
-  {
-    XSLT_RECEIVED: (state, action) => ({
-      ...state,
-      [action.payload.xsltId]: {
-        xsltData: action.payload.xsltData,
-        isDirty: false,
-      },
+  byXsltId({
+    XSLT_RECEIVED: (state, { payload: { xsltData } }) => ({
+      xsltData,
+      isDirty: false,
     }),
-    XSLT_UPDATED: (state, action) => ({
-      ...state,
-      [action.payload.xsltId]: {
-        xsltData: action.payload.xsltData,
-        isDirty: true,
-      },
+    XSLT_UPDATED: (state, { payload: { xsltData } }) => ({
+      xsltData,
+      isDirty: true,
     }),
-    XSLT_SAVED: (state, action) => ({
-      ...state,
-      [action.payload.xsltId]: {
-        ...state[action.payload.xsltId],
-        isDirty: false,
-      },
+    XSLT_SAVED: (state, { payload: { xsltData } }, currentState) => ({
+      currentState,
+      isDirty: false,
     }),
-  },
+  }),
   defaultState,
 );
 

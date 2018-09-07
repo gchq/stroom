@@ -35,7 +35,7 @@ export const actionCreators = createActions({
     docRefs,
     updatedTree,
   }),
-  DOC_REF_CREATED: (updatedTree) => ({
+  DOC_REF_CREATED: updatedTree => ({
     updatedTree,
   }),
   DOC_REF_RENAMED: (docRef, name, resultDocRef) => ({
@@ -61,12 +61,8 @@ export const reducer = handleActions(
     // Receive the current state of the explorer tree
     DOC_TREE_RECEIVED: (state, { payload: { documentTree } }) => documentTree,
 
-    DOC_REF_RENAMED: (state, action) => {
-      const { docRef, resultDocRef } = action.payload;
-
-      const documentTree = updateItemInTree(state, docRef.uuid, resultDocRef);
-      return documentTree;
-    },
+    DOC_REF_RENAMED: (state, { payload: { docRef, resultDocRef } }) =>
+      updateItemInTree(state, docRef.uuid, resultDocRef),
 
     [combineActions(docRefsMoved, docRefsCopied, docRefsDeleted, docRefCreated)]: (
       state,

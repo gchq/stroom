@@ -16,21 +16,19 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Button, Icon, Dropdown, Confirm } from 'semantic-ui-react';
+import { Button, Icon, Dropdown } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
-import AppSearchBar from 'components/AppSearchBar';
-import { actionCreators, joinDictionaryTermId } from './redux';
+import ValueWidget from './ValueWidget';
+import { actionCreators } from './redux';
 
-const { expressionItemUpdated, expressionItemDeleted } = actionCreators;
-
-const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
+const { expressionItemUpdated, expressionItemDeleteRequested } = actionCreators;
 
 const dragSource = {
   beginDrag(props) {
@@ -54,222 +52,91 @@ const enhance = compose(
     }),
     {
       expressionItemUpdated,
-      expressionItemDeleted,
+      expressionItemDeleteRequested,
     },
   ),
   DragSource(ItemTypes.TERM, dragSource, dragCollect),
-  withPendingDeletion,
+  withHandlers({
+    onRequestDeleteTerm: ({
+      expressionItemDeleteRequested,
+      expressionId,
+      term: { uuid },
+    }) => () => {
+      expressionItemDeleteRequested(expressionId, uuid);
+    },
+
+    onEnabledToggled: ({ expressionItemUpdated, expressionId, term: { uuid, enabled } }) => () => {
+      expressionItemUpdated(expressionId, uuid, {
+        enabled: !enabled,
+      });
+    },
+
+    onFieldChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (e, { value }) => {
+      expressionItemUpdated(expressionId, uuid, {
+        field: value,
+      });
+    },
+
+    onConditionChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (
+      event,
+      { value },
+    ) => {
+      expressionItemUpdated(expressionId, uuid, {
+        condition: value,
+      });
+    },
+  }),
+  withProps(({ isEnabled, term, dataSource }) => {
+    const classNames = ['expression-item'];
+
+    if (!isEnabled) {
+      classNames.push('expression-item--disabled');
+    }
+
+    const fieldOptions = dataSource.fields.map(f => ({
+      value: f.name,
+      text: f.name,
+    }));
+
+    const thisField = dataSource.fields.find(f => f.name === term.field);
+
+    let conditionOptions = [];
+    if (thisField) {
+      conditionOptions = thisField.conditions.map(c => ({
+        value: c,
+        text: displayValues[c],
+      }));
+    }
+
+    return {
+      conditionOptions,
+      fieldOptions,
+      className: classNames.join(' '),
+      enabledButtonColour: term.enabled ? 'blue' : 'grey',
+    };
+  }),
 );
 
 const ExpressionTerm = ({
   connectDragSource,
-  isDragging,
   term,
-  isEnabled,
+  enabledButtonColour,
   dataSource,
   expressionId,
+  className,
 
-  pendingDeletion,
-  setPendingDeletion,
+  onRequestDeleteTerm,
+  onEnabledToggled,
+  onFieldChange,
+  onConditionChange,
 
-  expressionItemDeleted,
-  expressionItemUpdated,
-}) => {
-  const pickerId = joinDictionaryTermId(expressionId, term.uuid);
-
-  const onTermUpdated = (updates) => {
-    expressionItemUpdated(expressionId, term.uuid, updates);
-  };
-
-  const onDeleteTerm = () => {
-    expressionItemDeleted(expressionId, term.uuid);
-    setPendingDeletion(false);
-  };
-
-  const onCancelDeleteTerm = () => {
-    setPendingDeletion(false);
-  };
-
-  const onRequestDeleteTerm = () => {
-    setPendingDeletion(true);
-  };
-
-  const onEnabledChange = () => {
-    onTermUpdated({
-      enabled: !term.enabled,
-    });
-  };
-
-  const onFieldChange = (event, data) => {
-    onTermUpdated({
-      field: data.value,
-    });
-  };
-
-  const onConditionChange = (event, data) => {
-    onTermUpdated({
-      condition: data.value,
-    });
-  };
-
-  const onFromValueChange = (event, data) => {
-    const parts = term.value.split(',');
-    const existingToValue = parts.length === 2 ? parts[1] : undefined;
-    const newValue = `${data.value},${existingToValue}`;
-
-    onTermUpdated({
-      value: newValue,
-    });
-  };
-
-  const onToValueChange = (event, data) => {
-    const parts = term.value.split(',');
-    const existingFromValue = parts.length === 2 ? parts[0] : undefined;
-    const newValue = `${existingFromValue},${data.value}`;
-
-    onTermUpdated({
-      value: newValue,
-    });
-  };
-
-  const onSingleValueChange = (event, data) => {
-    onTermUpdated({
-      value: data.value,
-    });
-  };
-
-  const onDictionaryValueChange = (docRef) => {
-    onTermUpdated({
-      value: docRef,
-    });
-  };
-
-  const onMultipleValueChange = (event, data) => {
-    onTermUpdated({
-      value: data.value.join(),
-    });
-  };
-
-  let className = 'expression-item';
-  if (!isEnabled) {
-    className += ' expression-item--disabled';
-  }
-
-  let enabledButton;
-  if (term.enabled) {
-    enabledButton = <Button icon="checkmark" compact color="blue" onClick={onEnabledChange} />;
-  } else {
-    enabledButton = <Button icon="checkmark" compact color="grey" onClick={onEnabledChange} />;
-  }
-
-  const fieldOptions = dataSource.fields.map(f => ({
-    value: f.name,
-    text: f.name,
-  }));
-
-  const field = dataSource.fields.find(f => f.name === term.field);
-  let conditionOptions = [];
-  let valueType = 'text';
-  if (field) {
-    conditionOptions = field.conditions.map(c => ({
-      value: c,
-      text: displayValues[c],
-    }));
-
-    switch (field.type) {
-      case 'FIELD':
-      case 'ID':
-        valueType = 'text';
-        break;
-      case 'NUMERIC_FIELD':
-        valueType = 'number';
-        break;
-      case 'DATE_FIELD':
-        valueType = 'datetime-local';
-        break;
-      default:
-        throw new Error(`Invalid field type: ${field.type}`);
-    }
-  }
-
-  let valueWidget;
-  switch (term.condition) {
-    case 'CONTAINS':
-    case 'EQUALS':
-    case 'GREATER_THAN':
-    case 'GREATER_THAN_OR_EQUAL_TO':
-    case 'LESS_THAN':
-    case 'LESS_THAN_OR_EQUAL_TO': {
-      valueWidget = (
-        <Input
-          placeholder="value"
-          type={valueType}
-          value={term.value || ''}
-          onChange={onSingleValueChange}
-        />
-      ); // some single selection
-      break;
-    }
-    case 'BETWEEN': {
-      const splitValues = term.value.split(',');
-      const fromValue = splitValues.length === 2 ? splitValues[0] : undefined;
-      const toValue = splitValues.length === 2 ? splitValues[1] : undefined;
-      valueWidget = (
-        <span>
-          <Input
-            placeholder="from"
-            type={valueType}
-            value={fromValue}
-            onChange={onFromValueChange}
-          />
-          <span className="input-between__divider">to</span>
-          <Input placeholder="to" type={valueType} value={toValue} onChange={onToValueChange} />
-        </span>
-      ); // some between selection
-      break;
-    }
-    case 'IN': {
-      const hasValues = !!term.value && term.value.length > 0;
-      const splitValues = hasValues ? term.value.split(',') : [];
-      const keyedValues = hasValues ? splitValues.map(s => ({ key: s, value: s, text: s })) : [];
-      valueWidget = (
-        <Dropdown
-          options={keyedValues}
-          multiple
-          value={splitValues}
-          placeholder="type multiple values"
-          search={(options, query) => [{ key: query, value: query, text: query }]}
-          selection
-          onChange={onMultipleValueChange}
-        />
-      );
-      break;
-    }
-    case 'IN_DICTIONARY': {
-      valueWidget = (
-        <AppSearchBar
-          pickerId={pickerId}
-          typeFilters={['Dictionary']}
-          onChange={onDictionaryValueChange}
-          value={term.value}
-        />
-      );
-      break;
-    }
-    default:
-      throw new Error(`Invalid condition: ${term.condition}`);
-  }
-
-  return connectDragSource(<div className={className}>
-    <span>
+  fieldOptions,
+  conditionOptions,
+}) => (
+  <div className={className}>
+    {connectDragSource(<span>
       <Icon name="bars" />
-    </span>
-    <Confirm
-      open={!!pendingDeletion}
-      content="This will delete the term, are you sure?"
-      onCancel={onCancelDeleteTerm}
-      onConfirm={onDeleteTerm}
-    />
+    </span>)}
     <Dropdown
       placeholder="field"
       selection
@@ -284,13 +151,13 @@ const ExpressionTerm = ({
       onChange={onConditionChange}
       value={term.condition}
     />
-    {valueWidget}
+    <ValueWidget dataSource={dataSource} expressionId={expressionId} term={term} />
     <Button.Group floated="right">
-      {enabledButton}
+      <Button icon="checkmark" compact color={enabledButtonColour} onClick={onEnabledToggled} />
       <Button compact icon="trash" onClick={onRequestDeleteTerm} />
     </Button.Group>
-                           </div>);
-};
+  </div>
+);
 
 ExpressionTerm.propTypes = {
   dataSource: PropTypes.object.isRequired, // complete definition of the data source

@@ -16,5 +16,4 @@
 export default {
   ELEMENT: 'element',
   PALLETE_ELEMENT: 'paletteElement',
-  RECYCLE_BIN: 'recycleBin',
 };

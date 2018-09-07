@@ -42,34 +42,35 @@ const defaultState = {};
 
 const reducer = handleActions(
   {
-    LINE_CONTAINER_CREATED: (state, action) => ({
+    LINE_CONTAINER_CREATED: (state, { payload: { lineContextId } }) => ({
       ...state,
-      [action.payload.lineContextId]: {},
+      [lineContextId]: {},
     }),
 
-    LINE_CONTAINER_DESTROYED: (state, action) =>
-      deleteItemFromObject(state, action.payload.lineContextId),
+    LINE_CONTAINER_DESTROYED: (state, { payload: { lineContextId } }) =>
+      deleteItemFromObject(state, lineContextId),
 
-    LINE_CREATED: (state, action) => ({
+    LINE_CREATED: (state, {
+      payload: {
+        lineContextId, lineId, lineType, fromId, toId,
+      },
+    }) => ({
       ...state,
-      [action.payload.lineContextId]: {
-        ...state[action.payload.lineContextId],
-        [action.payload.lineId]: {
-          lineType: action.payload.lineType,
-          fromId: action.payload.fromId,
-          toId: action.payload.toId,
+      [lineContextId]: {
+        ...state[lineContextId],
+        [lineId]: {
+          lineType,
+          fromId,
+          toId,
         },
       },
     }),
 
-    LINE_DESTROYED: (state, action) => {
-      if (state[action.payload.lineContextId]) {
+    LINE_DESTROYED: (state, { payload: { lineContextId, lineId } }) => {
+      if (state[lineContextId]) {
         return {
           ...state,
-          [action.payload.lineContextId]: deleteItemFromObject(
-            state[action.payload.lineContextId],
-            action.payload.lineId,
-          ),
+          [lineContextId]: deleteItemFromObject(state[lineContextId], lineId),
         };
       }
       // May have already deleted the container

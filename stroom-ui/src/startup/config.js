@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  createActions,
-  handleActions,
-} from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import { wrappedGet } from 'lib/fetchTracker.redux';
 
@@ -29,9 +26,9 @@ const actionCreators = createActions({
 
 const reducer = handleActions(
   {
-    UPDATE_CONFIG: (state, action) => ({
+    UPDATE_CONFIG: (state, { payload: { config } }) => ({
       ...state,
-      ...action.payload.config,
+      ...config,
       isReady: true,
     }),
     CLEAR_CONFIG: (state, action) => ({

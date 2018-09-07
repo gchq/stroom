@@ -1,9 +1,9 @@
 import { createActions, handleActions } from 'redux-actions';
 
-import { createActionHandlerPerId } from 'lib/reduxFormUtils';
+import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 const actionCreators = createActions({
-  SWITCH_MODE: (pickerId, mode) => ({ pickerId, mode }),
+  SWITCH_MODE: (pickerId, searchMode) => ({ pickerId, searchMode }),
   NAVIGATE_TO_FOLDER: (pickerId, navFolder) => ({ pickerId, navFolder }),
   SEARCH_TERM_UPDATED: (pickerId, searchTerm) => ({ pickerId, searchTerm }),
   SEARCH_RESULTS_RETURNED: (pickerId, searchResults) => ({ pickerId, searchResults }),
@@ -24,29 +24,28 @@ const defaultPickerState = {
 
 const defaultState = {};
 
-const byPickerId = createActionHandlerPerId(
-  ({ payload: pickerId }) => pickerId,
+const byPickerId = createActionHandlersPerId(
+  ({ payload: { pickerId } }) => pickerId,
   defaultPickerState,
 );
 
 const reducer = handleActions(
-  {
-    SWITCH_MODE: byPickerId((state, action, currentStateForId) => ({
-      searchMode: action.payload.mode,
-    })),
-    NAVIGATE_TO_FOLDER: byPickerId((state, action, currentStateForId) => ({
-      navFolder: action.payload.navFolder,
+  byPickerId({
+    SWITCH_MODE: (state, { payload: { searchMode } }, current) => ({
+      searchMode,
+    }),
+    NAVIGATE_TO_FOLDER: (state, { payload: { navFolder } }, current) => ({
+      navFolder,
       searchMode: SEARCH_MODE.NAVIGATION,
-    })),
-    SEARCH_TERM_UPDATED: byPickerId((state, action, currentStateForId) => ({
-      searchTerm: action.payload.searchTerm,
-      searchMode:
-        action.payload.searchTerm.length > 0 ? SEARCH_MODE.GLOBAL_SEARCH : SEARCH_MODE.NAVIGATION,
-    })),
-    SEARCH_RESULTS_RETURNED: byPickerId((state, action, currentStateForId) => ({
-      searchResults: action.payload.searchResults,
-    })),
-  },
+    }),
+    SEARCH_TERM_UPDATED: (state, { payload: { searchTerm } }, current) => ({
+      searchTerm,
+      searchMode: searchTerm.length > 0 ? SEARCH_MODE.GLOBAL_SEARCH : SEARCH_MODE.NAVIGATION,
+    }),
+    SEARCH_RESULTS_RETURNED: (state, { payload: { searchResults } }, current) => ({
+      searchResults,
+    }),
+  }),
   defaultState,
 );
 
