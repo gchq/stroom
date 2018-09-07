@@ -82,7 +82,7 @@ const SearchBar = ({
   isExpressionVisible,
   setIsExpressionVisible,
 }) => (
-  <div className="search-bar__dropdown search-bar borderless">
+  <div className="dropdown search-bar borderless">
     <div className="search-bar__header">
       <Input
         placeholder="I.e. field1=value1 field2=value2"
@@ -118,10 +118,7 @@ const SearchBar = ({
         }}
       />
     </div>
-    <div
-      tabIndex={0}
-      className={`search-bar__dropdown__content search-bar__content ${visibilityClass}`}
-    >
+    <div tabIndex={0} className={`dropdown__content search-bar__content ${visibilityClass}`}>
       <div className="search-bar__content__header">
         <Button.Group size="mini">
           <Button
@@ -154,7 +151,10 @@ const SearchBar = ({
         <Button
           icon="close"
           size="mini"
-          onClick={() => setIsExpressionVisible(false)}
+          onClick={() => {
+            console.log('TODO how to blur?');
+            setIsExpressionVisible(false);
+          }}
           className="raised-low bordered hoverable search-bar__close-button"
         />
       </div>
