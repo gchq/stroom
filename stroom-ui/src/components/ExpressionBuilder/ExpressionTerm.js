@@ -28,6 +28,7 @@ import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
 import ValueWidget from './ValueWidget';
 import { actionCreators } from './redux';
+import withValueType from './withValueType';
 
 const { expressionItemUpdated, expressionItemDeleteRequested } = actionCreators;
 
@@ -53,7 +54,7 @@ const enhance = compose(
     }),
     {
       expressionItemUpdated,
-      expressionItemDeleteRequested,
+      expressionItemDeleteRequested
     },
   ),
   DragSource(ItemTypes.TERM, dragSource, dragCollect),
@@ -78,13 +79,14 @@ const enhance = compose(
       });
     },
 
-    onConditionChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (
-      value,
-    ) => {
+    onConditionChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => (value) => {
       expressionItemUpdated(expressionId, uuid, {
         condition: value,
       });
     },
+
+    onValueChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => value => 
+      expressionItemUpdated(expressionId, uuid, { value })
   }),
   withProps(({ isEnabled, term, dataSource }) => {
     const classNames = ['expression-item'];
@@ -115,6 +117,7 @@ const enhance = compose(
       enabledButtonColour: term.enabled ? 'blue' : 'grey',
     };
   }),
+  withValueType
 );
 
 const ExpressionTerm = ({
@@ -129,18 +132,34 @@ const ExpressionTerm = ({
   onEnabledToggled,
   onFieldChange,
   onConditionChange,
+  onValueChange,
 
   fieldOptions,
   conditionOptions,
+  valueType
 }) => (
   <div className={className}>
     {connectDragSource(<span>
       <Icon name="bars" />
-    </span>)}
-    <SelectBox placeholder='Field' value={term.field} onChange={onFieldChange} options={fieldOptions} />
-    <SelectBox placeholder='Condition' value={term.condition} onChange={onConditionChange} options={conditionOptions} />
+                       </span>)}
+    <SelectBox
+      placeholder="Field"
+      value={term.field}
+      onChange={onFieldChange}
+      options={fieldOptions}
+    />
+    <SelectBox
+      placeholder="Condition"
+      value={term.condition}
+      onChange={onConditionChange}
+      options={conditionOptions}
+    />
 
-    <ValueWidget dataSource={dataSource} expressionId={expressionId} term={term} />
+    <ValueWidget
+      valueType={valueType}
+      term={term}
+      onChange={onValueChange}
+    />
     <Button.Group floated="right">
       <Button icon="checkmark" compact color={enabledButtonColour} onClick={onEnabledToggled} />
       <Button compact icon="trash" onClick={onRequestDeleteTerm} />

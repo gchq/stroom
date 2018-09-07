@@ -4,36 +4,37 @@ import PropTypes from 'prop-types';
 import SingleValueWidget from './SingleValueWidget';
 import BetweenValueWidget from './BetweenValueWidget';
 import InValueWidget from './InValueWidget';
-import DictionaryWidget from './DictionaryWidget';
+import AppSearchBar from 'components/AppSearchBar';
 
-const ValueWidget = (props) => {
-  switch (props.term.condition) {
+const ValueWidget = ({ term: { uuid, value, condition }, onChange, valueType }) => {
+  switch (condition) {
     case 'CONTAINS':
     case 'EQUALS':
     case 'GREATER_THAN':
     case 'GREATER_THAN_OR_EQUAL_TO':
     case 'LESS_THAN':
     case 'LESS_THAN_OR_EQUAL_TO': {
-      return <SingleValueWidget {...props} />;
+      return <SingleValueWidget value={value} valueType={valueType} onChange={onChange} />;
     }
     case 'BETWEEN': {
-      return <BetweenValueWidget {...props} />;
+      return <BetweenValueWidget value={value} valueType={valueType} onChange={onChange} />;
     }
     case 'IN': {
-      return <InValueWidget {...props} />;
+      return <InValueWidget value={value} onChange={onChange} />;
     }
     case 'IN_DICTIONARY': {
-      return <DictionaryWidget {...props} />;
+      return (
+        <AppSearchBar
+          pickerId={uuid}
+          typeFilters={['Dictionary']}
+          onChange={onChange}
+          value={value}
+        />
+      );
     }
     default:
-      throw new Error(`Invalid condition: ${props.term.condition}`);
+      throw new Error(`Invalid condition: ${condition}`);
   }
-};
-
-ValueWidget.propTypes = {
-  dataSource: PropTypes.object.isRequired,
-  term: PropTypes.object.isRequired,
-  expressionId: PropTypes.string.isRequired,
 };
 
 export default ValueWidget;
