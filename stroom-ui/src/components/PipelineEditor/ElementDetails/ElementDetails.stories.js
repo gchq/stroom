@@ -31,6 +31,7 @@ import { fetchPipeline } from '../pipelineResourceClient';
 const {
   pipelineReceived,
   elementsReceived,
+  elementPropertiesReceived,
   pipelineElementSelected,
 } = pipelineActionCreators;
 
@@ -39,7 +40,8 @@ const stories = storiesOf('Element Details', module)
   .addDecorator(ThemedDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(elementProperties))
+    store.dispatch(elementsReceived(elements))
+    store.dispatch(elementPropertiesReceived(elementProperties))
     store.dispatch(pipelineReceived("longPipeline", testPipelines.longPipeline))
     store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
   }))
