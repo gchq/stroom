@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.2] - 2018-09-07
+
+* Fixed some issues in the activity manager.
+
 ## [v5.5.0-beta.1] - 2018-09-05
 
 * Issue **#828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
