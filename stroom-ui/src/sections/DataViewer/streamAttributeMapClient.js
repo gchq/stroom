@@ -4,7 +4,7 @@ import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 export const search = (dataViewerId, pageOffset, pageSize, addResults) => (dispatch, getState) => {
   const state = getState();
 
-  let url = `${state.config.streamAttributeMapServiceUrl}/?`;
+  let url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/?`;
   url += `pageSize=${pageSize}`;
   url += `&pageOffset=${pageOffset}`;
 
@@ -47,7 +47,7 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
 
   const expression = cleanExpression(expressionState.expression);
 
-  let url = `${state.config.streamAttributeMapServiceUrl}/?`;
+  let url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/?`;
   url += `pageSize=${pageSize}`;
   url += `&pageOffset=${pageOffset}`;
 
@@ -103,7 +103,7 @@ const cleanExpression = (expression) => {
 
 export const fetchDataSource = dataViewerId => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.streamAttributeMapServiceUrl}/dataSource`;
+  const url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/dataSource`;
 
   wrappedGet(
     dispatch,
@@ -123,7 +123,7 @@ export const getDetailsForSelectedRow = dataViewerId => (dispatch, getState) => 
   const state = getState();
   const dataView = state.dataViewers[dataViewerId];
   const streamId = dataView.streamAttributeMaps[dataView.selectedRow].data.id;
-  const url = `${state.config.streamAttributeMapServiceUrl}/${streamId}`;
+  const url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/${streamId}`;
 
   wrappedGet(
     dispatch,

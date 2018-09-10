@@ -5,14 +5,14 @@ const { elementsReceived, elementPropertiesReceived } = actionCreators;
 
 export const fetchElements = () => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.elementServiceUrl}/elements`;
+  const url = `${state.config.stroomBaseServiceUrl}/elements/v1/elements`;
   wrappedGet(dispatch, state, url, response =>
     response.json().then(elements => dispatch(elementsReceived(elements))));
 };
 
 export const fetchElementProperties = () => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.elementServiceUrl}/elementProperties`;
+  const url = `${state.config.stroomBaseServiceUrl}/elements/v1/elementProperties`;
   wrappedGet(dispatch, state, url, response =>
     response
       .json()

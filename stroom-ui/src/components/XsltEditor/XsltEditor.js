@@ -19,14 +19,15 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Loader, Header, Grid } from 'semantic-ui-react';
+import { Loader, Header, Grid, Button } from 'semantic-ui-react';
+
+import Tooltip from 'components/Tooltip';
 
 import DocRefImage from 'components/DocRefImage';
-import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
-import ThemedAceEditor from 'components/ThemedAceEditor'
+import ThemedAceEditor from 'components/ThemedAceEditor';
 
 import { actionCreators } from './redux';
 
@@ -35,53 +36,74 @@ const { xsltUpdated } = actionCreators;
 const enhance = compose(
   withRouter,
   withHandlers({
-    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
   }),
   connect(
-    ({ xslt }, { xsltId }) => ({
-      xslt: xslt[xsltId],
+    ({ xsltEditor }, { xsltUuid }) => ({
+      xsltState: xsltEditor[xsltUuid],
     }),
     {
-      fetchXslt, xsltUpdated, saveXslt,
+      fetchXslt,
+      xsltUpdated,
+      saveXslt,
     },
   ),
   lifecycle({
     componentDidMount() {
-      const { fetchXslt, xsltId } = this.props;
+      const { fetchXslt, xsltUuid } = this.props;
 
-      fetchXslt(xsltId);
+      fetchXslt(xsltUuid);
     },
   }),
-  branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
+  branch(({ xsltState }) => !xsltState, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
 const XsltEditor = ({
-  xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history,
+  xsltUuid,
+  xsltState: { isDirty, isSaving, xsltData },
+  xsltUpdated,
+  saveXslt,
+  openDocRef,
+  history,
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <DocRefImage docRefType='XSLT' />
-          <Header.Content>{xsltId}</Header.Content>
+          <DocRefImage docRefType="XSLT" />
+          <Header.Content>{xsltUuid}</Header.Content>
           <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={openDocRef} />
+            <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
           </Header.Subheader>
         </Header>
       </Grid.Column>
       <Grid.Column width={4}>
-        <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
+        <Tooltip
+          trigger={
+            <Button
+              floated="right"
+              circular
+              icon="save"
+              color={isDirty ? 'blue' : undefined}
+              loading={isSaving}
+              onClick={() => {
+                if (xsltUuid) saveXslt(xsltUuid);
+              }}
+            />
+          }
+          content={isDirty ? 'Save changes' : 'Changes saved'}
+        />
       </Grid.Column>
     </Grid>
     <div className="xslt-editor">
       <div className="xslt-editor__ace-container">
         <ThemedAceEditor
           style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-          name={`${xsltId}-ace-editor`}
+          name={`${xsltUuid}-ace-editor`}
           mode="xml"
-          value={xslt.xsltData}
+          value={xsltData}
           onChange={(newValue) => {
-            if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
+            if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
           }}
         />
       </div>
@@ -90,7 +112,7 @@ const XsltEditor = ({
 );
 
 XsltEditor.propTypes = {
-  xsltId: PropTypes.string.isRequired,
+  xsltUuid: PropTypes.string.isRequired,
 };
 
 export default enhance(XsltEditor);

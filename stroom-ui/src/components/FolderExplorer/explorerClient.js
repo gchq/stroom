@@ -29,7 +29,7 @@ const stripDocRef = docRef => ({
 export const searchApp = (pickerId, {term='', docRefType='', pageOffset=0, pageSize=10}) => (dispatch, getState) => {
   const state = getState();
   const params = `searchTerm=${term}&docRefType=${docRefType}&pageOffset=${pageOffset}&pageSize=${pageSize}`;
-  const url = `${state.config.explorerServiceUrl}/search?${params}`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/search?${params}`;
   wrappedGet(
     dispatch, 
     state, 
@@ -41,14 +41,14 @@ export const searchApp = (pickerId, {term='', docRefType='', pageOffset=0, pageS
 
 export const fetchDocTree = () => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/all`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/all`;
   wrappedGet(dispatch, state, url, response =>
     response.json().then(documentTree => dispatch(docTreeReceived(documentTree))));
 };
 
 export const fetchDocRefTypes = () => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/docRefTypes`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/docRefTypes`;
   wrappedGet(dispatch, state, url, response =>
     response.json().then(docRefTypes => dispatch(docRefTypesReceived(docRefTypes))));
 };
@@ -56,7 +56,7 @@ export const fetchDocRefTypes = () => (dispatch, getState) => {
 export const fetchDocInfo = docRef => (dispatch, getState) => {
   dispatch(docRefInfoOpened(docRef));
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/info/${docRef.type}/${docRef.uuid}`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/info/${docRef.type}/${docRef.uuid}`;
   wrappedGet(dispatch, state, url, response =>
     response.json().then(docRefInfo => dispatch(docRefInfoReceived(docRefInfo))));
 };
@@ -68,7 +68,7 @@ export const createDocument = (
   permissionInheritance,
 ) => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/create`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/create`;
   wrappedPost(
     dispatch,
     state,
@@ -90,7 +90,7 @@ export const createDocument = (
 
 export const renameDocument = (docRef, name) => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/rename`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/rename`;
 
   wrappedPut(
     dispatch,
@@ -113,10 +113,10 @@ export const copyDocuments = (uuids, destinationUuid, permissionInheritance) => 
 ) => {
   const state = getState();
   const {
-    config: { explorerServiceUrl },
+    config: { stroomBaseServiceUrl },
     folderExplorer: { documentTree },
   } = state;
-  const url = `${explorerServiceUrl}/copy`;
+  const url = `${stroomBaseServiceUrl}/explorer/v1/copy`;
   const docRefs = findByUuids(documentTree, uuids);
   const destination = findItem(documentTree, destinationUuid);
 
@@ -144,11 +144,11 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
 ) => {
   const state = getState();
   const {
-    config: { explorerServiceUrl },
+    config: { stroomBaseServiceUrl },
     folderExplorer: { documentTree },
   } = state;
 
-  const url = `${explorerServiceUrl}/move`;
+  const url = `${stroomBaseServiceUrl}/explorer/v1/move`;
   const docRefs = findByUuids(documentTree, uuids);
   const destination = findItem(documentTree, destinationUuid);
   wrappedPut(
@@ -171,7 +171,7 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
 
 export const deleteDocuments = uuids => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/delete`;
+  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/delete`;
   const docRefs = findByUuids(state.folderExplorer.documentTree, uuids);
   wrappedPost(
     dispatch,

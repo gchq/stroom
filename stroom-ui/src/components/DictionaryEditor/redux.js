@@ -17,30 +17,30 @@ import { createActions, handleActions } from 'redux-actions';
 import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 const actionCreators = createActions({
-  XSLT_RECEIVED: (xsltUuid, xsltData) => ({ xsltUuid, xsltData }),
-  XSLT_UPDATED: (xsltUuid, xsltData) => ({ xsltUuid, xsltData }),
-  XSLT_SAVED: xsltUuid => ({ xsltUuid }),
+  DICTIONARY_RECEIVED: (dictionaryUuid, dictionary) => ({ dictionaryUuid, dictionary }),
+  DICTIONARY_UPDATED: (dictionaryUuid, dictionary) => ({ dictionaryUuid, dictionary }),
+  DICTIONARY_SAVED: dictionaryUuid => ({ dictionaryUuid }),
 });
 
 const defaultState = {};
 const defaultStatePerId = {
   isDirty: false,
-  xsltData: undefined,
+  dictionary: undefined,
 };
 
-const byXsltId = createActionHandlersPerId(({ payload: { xsltUuid } }) => xsltUuid, defaultStatePerId);
+const byXsltId = createActionHandlersPerId(({ payload: { dictionaryUuid } }) => dictionaryUuid, defaultStatePerId);
 
 const reducer = handleActions(
   byXsltId({
-    XSLT_RECEIVED: (state, { payload: { xsltData } }) => ({
-      xsltData,
+    DICTIONARY_RECEIVED: (state, { payload: { dictionary } }) => ({
+      dictionary,
       isDirty: false,
     }),
-    XSLT_UPDATED: (state, { payload: { xsltData } }) => ({
-      xsltData,
+    DICTIONARY_UPDATED: (state, { payload: { dictionary } }) => ({
+      dictionary,
       isDirty: true,
     }),
-    XSLT_SAVED: (state, { payload: { xsltData } }, currentState) => ({
+    DICTIONARY_SAVED: (state, { payload: { dictionary } }, currentState) => ({
       currentState,
       isDirty: false,
     }),

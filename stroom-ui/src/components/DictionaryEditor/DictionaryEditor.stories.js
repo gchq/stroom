@@ -22,22 +22,23 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import 'semantic/dist/semantic.min.css';
 
-import { testXslt } from './test';
+import { testDictionaries } from './test';
 
-import XsltEditor from './XsltEditor';
+import DictionaryEditor from './DictionaryEditor';
 
 const PollyDecoratorWithTestData = PollyDecorator({
-  xslt: testXslt,
+  dictionaries: testDictionaries,
 });
 
-const stories = storiesOf('XSLT Editor', module)
+const stories = storiesOf('Dictionary Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter());
 
-Object.entries(testXslt)
+Object.entries(testDictionaries)
   .map(k => ({
     name: k[0],
     data: k[1],
   }))
-  .forEach(xslt => stories.add(xslt.name, () => <XsltEditor xsltUuid={xslt.name} />));
+  .forEach(dictionary =>
+    stories.add(dictionary.name, () => <DictionaryEditor dictionaryUuid={dictionary.name} />));

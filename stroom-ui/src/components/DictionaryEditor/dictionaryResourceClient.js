@@ -17,42 +17,28 @@
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
-const { xsltReceived, xsltSaved } = actionCreators;
+const { dictionaryReceived, dictionarySaved } = actionCreators;
 
-export const fetchXslt = xsltUuid => (dispatch, getState) => {
+export const fetchDictionary = dictionaryUuid => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/xslt/v1/${xsltUuid}`;
-  wrappedGet(
-    dispatch,
-    state,
-    url,
-    response => response.text().then(xslt => dispatch(xsltReceived(xsltUuid, xslt))),
-    {
-      headers: {
-        Accept: 'application/xml',
-        'Content-Type': 'application/xml',
-      },
-    },
-  );
+  const url = `${state.config.stroomBaseServiceUrl}/dictionary/v1/${dictionaryUuid}`;
+  wrappedGet(dispatch, state, url, response =>
+    response.json().then(dictionary => dispatch(dictionaryReceived(dictionaryUuid, dictionary))));
 };
 
-export const saveXslt = xsltUuid => (dispatch, getState) => {
+export const saveDictionary = dictionaryUuid => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/xslt/v1/${xsltUuid}`;
+  const url = `${state.config.stroomBaseServiceUrl}/dictionary/v1/${dictionaryUuid}`;
 
-  const body = state.xslt[xsltUuid].xsltData;
+  const body = JSON.stringify(state.dictionaryEditor[dictionaryUuid].dictionary);
 
   wrappedPost(
     dispatch,
     state,
     url,
-    response => response.text().then(response => dispatch(xsltSaved(xsltUuid))),
+    response => response.text().then(response => dispatch(dictionarySaved(dictionaryUuid))),
     {
       body,
-      headers: {
-        Accept: 'application/xml',
-        'Content-Type': 'application/xml',
-      },
     },
   );
 };

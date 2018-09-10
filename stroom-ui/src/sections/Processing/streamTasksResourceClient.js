@@ -9,7 +9,7 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
   const rowsToFetch = state.processing.pageSize;
   dispatch(actionCreators.updatePageSize(rowsToFetch));
 
-  let url = `${state.config.streamTaskServiceUrl}/?`;
+  let url = `${state.config.stroomBaseServiceUrl}/streamtasks/v1/?`;
   url += `pageSize=${rowsToFetch}`;
   url += `&offset=${state.processing.pageOffset}`;
   if (state.processing.sortBy !== undefined) {
@@ -57,7 +57,7 @@ export const fetchMore = trackerSelection => (dispatch, getState) => {
   const nextPageOffset = state.processing.pageOffset + 1;
   dispatch(actionCreators.changePage(nextPageOffset));
 
-  let url = `${state.config.streamTaskServiceUrl}/?`;
+  let url = `${state.config.stroomBaseServiceUrl}/streamtasks/v1/?`;
   url += `pageSize=${rowsToFetch}`;
   url += `&offset=${nextPageOffset}`;
   if (state.processing.sortBy !== undefined) {
@@ -98,7 +98,7 @@ export const fetchMore = trackerSelection => (dispatch, getState) => {
 
 export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.streamTaskServiceUrl}/${filterId}`;
+  const url = `${state.config.stroomBaseServiceUrl}/streamtasks/v1/${filterId}`;
   const body = JSON.stringify({ op: 'replace', path: 'enabled', value: !isCurrentlyEnabled });
 
   wrappedPatch(dispatch, state, url, body, r =>

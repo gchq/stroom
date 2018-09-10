@@ -24,13 +24,14 @@ import {
 import { reducer as appSearch } from 'components/AppSearchBar/redux';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as docRefTypes } from 'components/DocRefTypes';
+import { reducer as dictionaryEditor } from 'components/DictionaryEditor';
 import { reducer as lineContainer } from 'components/LineTo';
 import { reducer as docRefInfo } from 'components/DocRefInfoModal/redux';
 import { reducer as folderExplorer } from 'components/FolderExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
 import { reducer as recentItems } from 'components/DocEditor/redux';
-import { reducer as xslt } from 'components/XsltEditor';
+import { reducer as xsltEditor } from 'components/XsltEditor';
 import { reducer as processing } from 'sections/Processing';
 import { reducer as errorPage } from 'components/ErrorPage';
 import { reducer as config } from './config';
@@ -50,7 +51,7 @@ export default combineReducers({
   folderExplorer,
   expressionBuilder,
   pipelineEditor,
-  xslt,
+  xsltEditor,
   errorPage,
   lineContainer,
   fetch,
@@ -62,5 +63,6 @@ export default combineReducers({
   userSettings,
   docRefInfo,
   appSearch,
+  dictionaryEditor,
   selectableItemListings
 });

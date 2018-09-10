@@ -38,12 +38,7 @@ export const DevServerDecorator = storyFn => <DevServerComponent>{storyFn()}</De
 const testConfig = {
   authenticationServiceUrl: '/authService/authentication/v1',
   authorisationServiceUrl: '/api/authorisation/v1',
-  streamTaskServiceUrl: '/api/streamtasks/v1',
-  pipelineServiceUrl: '/api/pipelines/v1',
-  xsltServiceUrl: '/api/xslt/v1',
-  explorerServiceUrl: '/api/explorer/v1',
-  elementServiceUrl: '/api/elements/v1',
-  streamAttributeMapServiceUrl: '/api/streamattributemap/v1',
+  stroomBaseServiceUrl: '/api',
   authUsersUiUrl:
     'auth/users/because/they/are/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests',
   authTokensUiUrl:
@@ -77,11 +72,11 @@ server.get('/config.json').intercept((req, res) => {
 
 // Explorer Resource
 // // Get Explorer Tree
-server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
 // Search
-server.get(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/search`).intercept((req, res) => {
   const {
     searchTerm, docRefType, pageOffset, pageSize,
   } = req.query;
@@ -125,7 +120,7 @@ server.get(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
 });
 // // Get Info
 server
-  .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
+  .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/info/:docRefType/:docRefUuid`)
   .intercept((req, res) => {
     const { node: docRef } = findItem(testCache.data.documentTree, req.params.docRefUuid);
     const info = {
@@ -139,11 +134,11 @@ server
     res.json(info);
   });
 // // Get Document Types
-server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/docRefTypes`).intercept((req, res) => {
   res.json(testCache.data.docRefTypes);
 });
 // // Create Document
-server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
+server.post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/create`).intercept((req, res) => {
   const {
     docRefType, docRefName, destinationFolderRef, permissionInheritance,
   } = JSON.parse(req.body);
@@ -172,7 +167,7 @@ const copyDocRef = docRef => ({
 });
 
 // Copy Document
-server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
+server.post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/copy`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
   const copies = docRefs
@@ -188,7 +183,7 @@ server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
 // Move Document
-server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
+server.put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/move`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
   const docRefUuidsToDelete = docRefs.map(d => d.uuid);
@@ -206,26 +201,26 @@ server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
 // Rename Document
-server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
+server.put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/rename`).intercept((req, res) => {
   const { docRef, name } = JSON.parse(req.body);
   res.json({ ...docRef, name });
 });
 // Delete Document
-server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
+server.delete(`${testConfig.stroomBaseServiceUrl}/explorer/v1/delete`).intercept((req, res) => {
   const docRefs = JSON.parse(req.body);
   res.json(testCache.data.documentTree);
 });
 
 // Elements Resource
-server.get(`${testConfig.elementServiceUrl}/elements`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elements`).intercept((req, res) => {
   res.json(testCache.data.elements);
 });
-server.get(`${testConfig.elementServiceUrl}/elementProperties`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elementProperties`).intercept((req, res) => {
   res.json(testCache.data.elementProperties);
 });
 
 // Pipeline Resource
-server.get(`${testConfig.pipelineServiceUrl}/:pipelineId`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`).intercept((req, res) => {
   const pipeline = testCache.data.pipelines[req.params.pipelineId];
   if (pipeline) {
     res.json(pipeline);
@@ -233,7 +228,7 @@ server.get(`${testConfig.pipelineServiceUrl}/:pipelineId`).intercept((req, res) 
     res.sendStatus(404);
   }
 });
-server.get(`${testConfig.pipelineServiceUrl}/`).intercept((req, res) => {
+server.get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/`).intercept((req, res) => {
   res.json({
     total: Object.keys(testCache.data.pipelines).length,
     pipelines: Object.keys(testCache.data.pipelines).map(p => ({
@@ -244,12 +239,12 @@ server.get(`${testConfig.pipelineServiceUrl}/`).intercept((req, res) => {
   });
 });
 server
-  .post(`${testConfig.pipelineServiceUrl}/:pipelineId`)
+  .post(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
   .intercept((req, res) => res.sendStatus(200));
 
 // XSLT Resource
-server.get(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => {
-  const xslt = testCache.data.xslt[req.params.xsltId];
+server.get(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`).intercept((req, res) => {
+  const xslt = testCache.data.xslt[req.params.xsltUuid];
   if (xslt) {
     res.setHeader('Content-Type', 'application/xml');
     res.send(xslt);
@@ -257,10 +252,21 @@ server.get(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => {
     res.sendStatus(404);
   }
 });
-server.post(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => res.sendStatus(200));
+server.post(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`).intercept((req, res) => res.sendStatus(200));
+
+// Dictionary Resource
+server.get(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`).intercept((req, res) => {
+  const dict = testCache.data.dictionaries[req.params.dictionaryUuid];
+  if (dict) {
+    res.json(dict);
+  } else {
+    res.sendStatus(404);
+  }
+});
+server.post(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`).intercept((req, res) => res.sendStatus(200));
 
 // Stream Task Resource (for Tracker Dashboard)
-server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
+server.get(`${testConfig.stroomBaseServiceUrl}/streamTasks/v1/`).intercept((req, res) =>
   res.json({
     streamTasks: testCache.data.trackers || [],
     totalStreamTasks: testCache.data.trackers ? testCache.data.trackers.length : 0,
@@ -271,14 +277,14 @@ server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
  * This responds with the datasource for this expression.
  */
 server
-  .get(`${testConfig.streamAttributeMapServiceUrl}/dataSource`)
+  .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/dataSource`)
   .intercept((req, res) => res.json(testCache.data.dataSource));
 
 /**
  * This responds with a list of streamAttributeMaps
  */
 server
-  .get(`${testConfig.streamAttributeMapServiceUrl}/`)
+  .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/`)
   .intercept((req, res) => res.json(testCache.data.dataList));
 
 const enhanceLocal = compose(
@@ -305,6 +311,7 @@ const enhanceLocal = compose(
         elements: [...this.props.elements],
         elementProperties: { ...this.props.elementProperties },
         xslt: { ...this.props.xslt },
+        dictionaries: { ...this.props.dictionaries },
         trackers: [...this.props.trackers],
         dataList: { ...this.props.dataList },
         dataSource: { ...this.props.dataSource },
@@ -323,6 +330,7 @@ PollyComponent.propTypes = {
   elements: PropTypes.array.isRequired,
   elementProperties: PropTypes.object.isRequired,
   xslt: PropTypes.object.isRequired,
+  dictionaries: PropTypes.object.isRequired,
   trackers: PropTypes.array.isRequired,
   dataList: PropTypes.object.isRequired,
   dataSource: PropTypes.object.isRequired,
@@ -335,6 +343,7 @@ PollyComponent.defaultProps = {
   elements: [],
   elementProperties: {},
   xslt: {},
+  dictionaries: {},
   trackers: [],
   dataList: {},
   dataSource: {},
