@@ -36,7 +36,7 @@ import {
   emptyDataSource,
 } from 'components/ExpressionBuilder/queryExpression.testData';
 
-import SearchBar from './SearchBar';
+import ExpressionSearchBar from './ExpressionSearchBar';
 import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData';
 
 import 'styles/main.css';
@@ -44,13 +44,13 @@ import 'semantic/dist/semantic.min.css';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
-storiesOf('SearchBar', module)
+storiesOf('ExpressionSearchBar', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   }))
   .addDecorator(DragDropDecorator)
   .add('Basic', props => (
-    <SearchBar
+    <ExpressionSearchBar
       onSearch={() => console.log('Search called')}
       expressionId="simplestEx"
       searchString="foo1=bar1 foo2=bar2 foo3=bar3 someOtherKey=sometOtherValue"

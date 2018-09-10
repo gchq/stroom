@@ -9,7 +9,7 @@ import {
   expressionToString,
   actionCreators as expressionBuilderActionCreators,
 } from 'components/ExpressionBuilder';
-import { processSearchString } from './searchBarUtils';
+import { processSearchString } from './expressionSearchBarUtils';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
@@ -53,7 +53,7 @@ const enhance = compose(
   })),
 );
 
-const SearchBar = ({
+const ExpressionSearchBar = ({
   dataSource,
   expressionId,
   expressionChanged,
@@ -155,11 +155,11 @@ const SearchBar = ({
     </div>
   );
 
-SearchBar.propTypes = {
+ExpressionSearchBar.propTypes = {
   dataSource: PropTypes.object.isRequired,
   expressionId: PropTypes.string.isRequired,
   searchString: PropTypes.string,
   onSearch: PropTypes.func.isRequired,
 };
 
-export default enhance(SearchBar);
+export default enhance(ExpressionSearchBar);

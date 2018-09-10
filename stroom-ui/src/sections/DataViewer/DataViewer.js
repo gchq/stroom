@@ -27,7 +27,7 @@ import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { Header, Loader, Icon, Button } from 'semantic-ui-react';
 
-import SearchBar from 'components/SearchBar';
+import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
   search,
   getDetailsForSelectedRow,
@@ -215,7 +215,7 @@ const DataViewer = ({
             <Icon name="database" />
             Data
             </Header>
-          <SearchBar
+          <ExpressionSearchBar
             className="data-viewer__search-bar"
             dataSource={dataSource}
             expressionId={dataViewerId}
