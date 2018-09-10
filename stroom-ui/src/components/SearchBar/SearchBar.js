@@ -6,13 +6,13 @@ import { connect } from 'react-redux';
 
 import {
   ExpressionBuilder,
+  expressionToString,
   actionCreators as expressionBuilderActionCreators,
 } from 'components/ExpressionBuilder';
 import { processSearchString } from './searchBarUtils';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
-const withExpression = withState('expression', 'setExpression', '');
 const withIsExpression = withState('isExpression', 'setIsExpression', false);
 const withIsExpressionVisible = withState('isExpressionVisible', 'setIsExpressionVisible', false);
 const withSearchString = withState('searchString', 'setSearchString', '');
@@ -26,11 +26,10 @@ const withSearchStringValidationMessages = withState(
 const enhance = compose(
   connect(
     ({ expressionBuilder }, { expressionId }) => ({
-      expression: expressionBuilder[expressionId],
+      expressionState: expressionBuilder[expressionId],
     }),
     { expressionChanged },
   ),
-  withExpression,
   withIsExpression,
   withIsExpressionVisible,
   withSearchString,
@@ -48,8 +47,9 @@ const enhance = compose(
       onSearch(expressionId);
     },
   }),
-  withProps(({ searchStringValidationMessages, isExpressionVisible }) => ({
-    searchIsInvalid: searchStringValidationMessages.length > 0
+  withProps(({ searchStringValidationMessages, isExpression, expression, setSearchString, isExpressionVisible }) => ({
+    searchIsInvalid: searchStringValidationMessages.length > 0,
+
   })),
 );
 
@@ -62,6 +62,7 @@ const SearchBar = ({
   setIsExpression,
   setSearchString,
   expression,
+  expressionState,
   setExpression,
   setIsSearchStringValid,
   isSearchStringValid,
@@ -78,7 +79,7 @@ const SearchBar = ({
       <div className="search-bar__header">
         <Input
           placeholder="I.e. field1=value1 field2=value2"
-          value={searchString}
+          value={isExpression ? expressionState.expressionAsString : searchString}
           className="search-bar__input"
           onChange={(_, data) => {
             const expression = processSearchString(dataSource, data.value);

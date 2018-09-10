@@ -17,4 +17,6 @@ import ExpressionBuilder from './ExpressionBuilder';
 
 import { reducer, actionCreators } from './redux';
 
-export { ExpressionBuilder, reducer, actionCreators };
+import { toString as expressionToString } from './expressionBuilderUtils'
+
+export { ExpressionBuilder, reducer, actionCreators, expressionToString };

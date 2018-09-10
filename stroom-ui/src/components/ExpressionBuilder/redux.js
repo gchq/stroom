@@ -98,16 +98,19 @@ const reducer = handleActions(
     // Expression Term Added
     EXPRESSION_TERM_ADDED: (state, { payload: { operatorId } }, { expression }) => ({
       expression: addItemsToTree(expression, operatorId, [NEW_TERM]),
+      expressionAsString: toString(expression),
     }),
 
     // Expression Operator Added
     EXPRESSION_OPERATOR_ADDED: (state, { payload: { operatorId } }, { expression }) => ({
       expression: addItemsToTree(expression, operatorId, [NEW_OPERATOR]),
+      expressionAsString: toString(expression),
     }),
 
     // Expression Term Updated
     EXPRESSION_ITEM_UPDATED: (state, { payload: { itemId, updates } }, { expression }) => ({
       expression: updateItemInTree(expression, itemId, updates),
+      expressionAsString: toString(expression),
     }),
 
     EXPRESSION_ITEM_DELETE_REQUESTED: (state, { payload: { pendingDeletionOperatorId } }) => ({
@@ -126,11 +129,13 @@ const reducer = handleActions(
     ) => ({
       expression: deleteItemFromTree(expression, pendingDeletionOperatorId),
       pendingDeletionOperatorId: undefined,
+      expressionAsString: toString(expression),
     }),
 
     // Expression Item Moved
     EXPRESSION_ITEM_MOVED: (state, { payload: { destination, itemToMove } }, { expression }) => ({
       expression: moveItemsInTree(expression, destination, [itemToMove]),
+      expressionAsString: toString(expression),
     }),
   }),
   defaultState,
