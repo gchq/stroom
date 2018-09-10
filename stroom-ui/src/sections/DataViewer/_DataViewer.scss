@@ -55,3 +55,13 @@
 .load-more-button {
   width: 100%;
 }
+
+
+.data-viewer__header {
+  width: 100%;
+  display: inline-flex;
+}
+
+.data-viewer__search-bar {
+  flex-grow: 1;
+}

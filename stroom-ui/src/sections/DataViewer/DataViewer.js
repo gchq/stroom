@@ -25,7 +25,7 @@ import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Loader, Icon, Grid, Button } from 'semantic-ui-react';
+import { Header, Loader, Icon, Button } from 'semantic-ui-react';
 
 import SearchBar from 'components/SearchBar';
 import {
@@ -209,25 +209,22 @@ const DataViewer = ({
 
   return (
     <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Row>
-          <Grid.Column width={2}>
-            <Header as="h3">
-              <Icon name="database" />
-              Data
+      <div className="content-tabs__grid">
+        <div className="data-viewer__header">
+          <Header as="h3">
+            <Icon name="database" />
+            Data
             </Header>
-          </Grid.Column>
-          <Grid.Column width={14}>
-            <SearchBar
-              dataSource={dataSource}
-              expressionId={dataViewerId}
-              onSearch={() => {
-                searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
-              }}
-            />
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
+          <SearchBar
+            className="data-viewer__search-bar"
+            dataSource={dataSource}
+            expressionId={dataViewerId}
+            onSearch={() => {
+              searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
+            }}
+          />
+        </div>
+      </div>
       <div className="DataTable__container">
         <div className="DataTable__reactTable__container">
           {selectedRow === undefined ? (
