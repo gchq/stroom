@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Now logs activity change correctly.
+
 * Add support for checkbox and selection control types to activity descriptions.
 
 * Issue **#833** : The global property edit dialog can now be made larger.
