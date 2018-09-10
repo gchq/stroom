@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.inject.Inject;
@@ -134,7 +135,31 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             if (node instanceof Element) {
                 final Element element = (Element) node;
                 final String tagName = element.getTagName();
-                if ("text".equalsIgnoreCase(tagName) || "input".equalsIgnoreCase(tagName)) {
+                if ("input".equalsIgnoreCase(tagName)) {
+                    // Focus the first input.
+                    if (!doneFocus) {
+                        doneFocus = true;
+                        element.focus();
+                    }
+
+                    final String name = getName(element);
+                    if (name != null) {
+                        final String value = getValue(activity, name);
+                        if (value != null) {
+                            final InputElement inputElement = element.cast();
+
+                            if ("checkbox".equalsIgnoreCase(inputElement.getType()) || "radio".equalsIgnoreCase(inputElement.getType())) {
+                                try {
+                                    inputElement.setChecked(Boolean.valueOf(value));
+                                } catch (final RuntimeException e) {
+                                    // Ignore.
+                                }
+                            } else {
+                                inputElement.setValue(value);
+                            }
+                        }
+                    }
+                } else if ("text".equalsIgnoreCase(tagName)) {
                     // Focus the first input.
                     if (!doneFocus) {
                         doneFocus = true;
@@ -164,6 +189,21 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                             inputElement.setValue(value);
                         }
                     }
+                } else if ("select".equalsIgnoreCase(tagName)) {
+                    // Focus the first input.
+                    if (!doneFocus) {
+                        doneFocus = true;
+                        element.focus();
+                    }
+
+                    final String name = getName(element);
+                    if (name != null) {
+                        final String value = getValue(activity, name);
+                        if (value != null) {
+                            final SelectElement selectElement = element.cast();
+                            selectElement.setValue(value);
+                        }
+                    }
                 }
             }
         }
@@ -177,7 +217,18 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             if (node instanceof Element) {
                 final Element element = (Element) node;
                 final String tagName = element.getTagName();
-                if ("text".equalsIgnoreCase(tagName) || "input".equalsIgnoreCase(tagName)) {
+                if ("input".equalsIgnoreCase(tagName)) {
+                    final String name = getName(element);
+                    if (name != null) {
+                        final InputElement inputElement = element.cast();
+
+                        if ("checkbox".equalsIgnoreCase(inputElement.getType()) || "radio".equalsIgnoreCase(inputElement.getType())) {
+                            details.addProperty(name, Boolean.toString(inputElement.isChecked()));
+                        } else {
+                            details.addProperty(name, inputElement.getValue());
+                        }
+                    }
+                } else if ("text".equalsIgnoreCase(tagName)) {
                     final String name = getName(element);
                     if (name != null) {
                         final InputElement inputElement = element.cast();
@@ -188,6 +239,12 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     if (name != null) {
                         final TextAreaElement inputElement = element.cast();
                         details.addProperty(name, inputElement.getValue());
+                    }
+                } else if ("select".equalsIgnoreCase(tagName)) {
+                    final String name = getName(element);
+                    if (name != null) {
+                        final SelectElement selectElement = element.cast();
+                        details.addProperty(name, selectElement.getValue());
                     }
                 }
             }

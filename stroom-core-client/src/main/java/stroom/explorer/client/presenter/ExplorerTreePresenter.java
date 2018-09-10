@@ -108,7 +108,7 @@ public class ExplorerTreePresenter
 
                 final DockLayoutPanel dockLayoutPanel = new DockLayoutPanel(Unit.PX);
                 dockLayoutPanel.setStyleName("explorerWrapper");
-                dockLayoutPanel.addSouth(activityOuter, 100);
+                dockLayoutPanel.addSouth(activityOuter, 107);
                 dockLayoutPanel.add(treeContainer);
 
                 view.setCellTree(dockLayoutPanel);
