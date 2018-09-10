@@ -15,19 +15,16 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, renderComponent, branch, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
-
 import { DragSource, DropTarget } from 'react-dnd';
+import { Image } from 'semantic-ui-react';
 
-import { Image, Loader } from 'semantic-ui-react';
-
+import Loader from 'components/Loader'
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
 import ItemTypes from './dragDropTypes';
 import { isValidChildType } from './elementUtils';
-
 import { getInitialValues } from './ElementDetails';
 
 const {
@@ -159,7 +156,7 @@ const enhance = compose(
   ),
   branch(
     ({ pipelineState, element }) => !(pipelineState && element),
-    renderComponent(() => <Loader active>Loading Pipeline/Element</Loader>),
+    renderComponent(() => <Loader message="Loading pipeline/element..." />),
   ),
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),

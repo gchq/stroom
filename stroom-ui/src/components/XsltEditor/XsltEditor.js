@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Loader, Header, Grid } from 'semantic-ui-react';
+import { Header, Grid } from 'semantic-ui-react';
 
+import Loader from 'components/Loader'
 import DocRefImage from 'components/DocRefImage';
 import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
@@ -35,7 +36,7 @@ const { xsltUpdated } = actionCreators;
 const enhance = compose(
   withRouter,
   withHandlers({
-    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
   connect(
     ({ xslt }, { xsltId }) => ({
@@ -52,42 +53,42 @@ const enhance = compose(
       fetchXslt(xsltId);
     },
   }),
-  branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
+  branch(({ xslt }) => !xslt, renderComponent(() => <Loader message="Loading XSLT..." />)),
 );
 
 const XsltEditor = ({
   xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history,
 }) => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <Header as="h3">
-          <DocRefImage docRefType='XSLT' />
-          <Header.Content>{xsltId}</Header.Content>
-          <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={openDocRef} />
-          </Header.Subheader>
-        </Header>
-      </Grid.Column>
-      <Grid.Column width={4}>
-        <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
-      </Grid.Column>
-    </Grid>
-    <div className="xslt-editor">
-      <div className="xslt-editor__ace-container">
-        <ThemedAceEditor
-          style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-          name={`${xsltId}-ace-editor`}
-          mode="xml"
-          value={xslt.xsltData}
-          onChange={(newValue) => {
-            if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
-          }}
-        />
+    <React.Fragment>
+      <Grid className="content-tabs__grid">
+        <Grid.Column width={12}>
+          <Header as="h3">
+            <DocRefImage docRefType='XSLT' />
+            <Header.Content>{xsltId}</Header.Content>
+            <Header.Subheader>
+              <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={openDocRef} />
+            </Header.Subheader>
+          </Header>
+        </Grid.Column>
+        <Grid.Column width={4}>
+          <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
+        </Grid.Column>
+      </Grid>
+      <div className="xslt-editor">
+        <div className="xslt-editor__ace-container">
+          <ThemedAceEditor
+            style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+            name={`${xsltId}-ace-editor`}
+            mode="xml"
+            value={xslt.xsltData}
+            onChange={(newValue) => {
+              if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
+            }}
+          />
+        </div>
       </div>
-    </div>
-  </React.Fragment>
-);
+    </React.Fragment>
+  );
 
 XsltEditor.propTypes = {
   xsltId: PropTypes.string.isRequired,

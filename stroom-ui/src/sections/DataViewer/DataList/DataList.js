@@ -25,7 +25,7 @@ import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Loader, Icon, Grid, Button } from 'semantic-ui-react';
+import { Header, Icon, Grid, Button } from 'semantic-ui-react';
 
 import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
@@ -38,6 +38,7 @@ import { getDataForSelectedRow } from '../dataResourceClient';
 import DetailsTabs from '../DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
 import { actionCreators } from '../redux';
+import Loader from 'components/Loader';
 
 const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
 const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
@@ -158,11 +159,11 @@ const enhance = compose(
   }),
   branch(
     ({ streamAttributeMaps }) => !streamAttributeMaps,
-    renderComponent(() => <Loader active>Loading data</Loader>),
+    renderComponent(() => <Loader message="Loading data..." />),
   ),
   branch(
     ({ dataSource }) => !dataSource,
-    renderComponent(() => <Loader active>Loading data source</Loader>),
+    renderComponent(() => <Loader message="Loading data source..." />),
   ),
   withProps(({
     streamAttributeMaps, onHandleLoadMoreRows, listHeight, detailsHeight

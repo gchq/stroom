@@ -1,8 +1,8 @@
 import React from 'react';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader } from 'semantic-ui-react';
 
+import Loader from 'components/Loader';
 import { fetchConfig } from './config';
 
 /**
@@ -26,6 +26,6 @@ export default compose(
   }),
   branch(
     ({ config: { isReady } }) => !isReady,
-    renderComponent(() => <Loader active>Awaiting Config</Loader>),
+    renderComponent(() => <Loader message="Awaiting config..." />),
   ),
 );
