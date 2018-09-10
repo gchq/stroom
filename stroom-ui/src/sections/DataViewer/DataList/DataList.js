@@ -158,7 +158,7 @@ const enhance = compose(
     },
   }),
   branch(
-    ({ streamAttributeMaps }) => !streamAttributeMaps,
+    ({ streamAttributeMaps }) => streamAttributeMaps,
     renderComponent(() => <Loader message="Loading data..." />),
   ),
   branch(

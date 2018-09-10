@@ -21,14 +21,13 @@ import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { Header, Grid } from 'semantic-ui-react';
 
-import Loader from 'components/Loader'
+import Loader from 'components/Loader';
 import DocRefImage from 'components/DocRefImage';
 import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
 import ThemedAceEditor from 'components/ThemedAceEditor'
-
 import { actionCreators } from './redux';
 
 const { xsltUpdated } = actionCreators;
