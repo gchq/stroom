@@ -2,9 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent, withHandlers } from 'recompose';
-import { Loader, Grid, Header, Icon, Button } from 'semantic-ui-react';
+import { Grid, Header, Icon, Button } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
+import Loader from 'components/Loader'
 import Tooltip from 'components/Tooltip';
 import AppSearchBar from 'components/AppSearchBar';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
@@ -31,7 +32,7 @@ const enhance = compose(
   withDocumentTree,
   withRouter,
   withHandlers({
-    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
   connect(
     ({ folderExplorer: { documentTree }, selectableItemListings }, { folderUuid }) => ({
@@ -47,7 +48,7 @@ const enhance = compose(
       fetchDocInfo,
     },
   ),
-  branch(({ folder }) => !folder, renderComponent(() => <Loader active>Loading folder</Loader>)),
+  branch(({ folder }) => !folder, renderComponent(() => <Loader message="Loading folder..." />)),
   withSelectableItemListing(({ openDocRef, folder: { lineage, node: { children } } }) => ({
     listingId: LISTING_ID,
     items: children,
@@ -121,56 +122,56 @@ const FolderExplorer = ({
   openDocRef,
   onKeyDownWithShortcuts,
 }) => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={16}>
-        <AppSearchBar className='app-search-bar' onChange={openDocRef}/>
-      </Grid.Column>
-      <Grid.Column width={11}>
-        <Header as="h3">
-          <Icon name="folder" />
-          <Header.Content className="header">{node.name}</Header.Content>
-          <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
-          </Header.Subheader>
-        </Header>
-      </Grid.Column>
-      <Grid.Column width={5}>
-        <span className="doc-ref-listing-entry__action-bar">
-          {actionBarItems.map(({onClick, icon, tooltip}, i) => (
-            <Tooltip
-              key={i}
-              trigger={
-                <Button
-                  className="icon-button"
-                  circular
-                  onClick={onClick}
-                  icon={icon}
-                />
-              }
-              content={tooltip}
-            />
-          ))}
-        </span>
-      </Grid.Column>
-    </Grid>
-    <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-      {node.children.map((docRef, index) => (
-        <DndDocRefListingEntry
-          key={docRef.uuid}
-          index={index}
-          listingId={LISTING_ID}
-          docRefUuid={docRef.uuid}
-          onNameClick={openDocRef}
-          openDocRef={openDocRef}
-        />
-      ))}
-    </div>
+    <React.Fragment>
+      <Grid className="content-tabs__grid">
+        <Grid.Column width={16}>
+          <AppSearchBar className='app-search-bar' onChange={openDocRef} />
+        </Grid.Column>
+        <Grid.Column width={11}>
+          <Header as="h3">
+            <Icon name="folder" />
+            <Header.Content className="header">{node.name}</Header.Content>
+            <Header.Subheader>
+              <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
+            </Header.Subheader>
+          </Header>
+        </Grid.Column>
+        <Grid.Column width={5}>
+          <span className="doc-ref-listing-entry__action-bar">
+            {actionBarItems.map(({ onClick, icon, tooltip }, i) => (
+              <Tooltip
+                key={i}
+                trigger={
+                  <Button
+                    className="icon-button"
+                    circular
+                    onClick={onClick}
+                    icon={icon}
+                  />
+                }
+                content={tooltip}
+              />
+            ))}
+          </span>
+        </Grid.Column>
+      </Grid>
+      <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+        {node.children.map((docRef, index) => (
+          <DndDocRefListingEntry
+            key={docRef.uuid}
+            index={index}
+            listingId={LISTING_ID}
+            docRefUuid={docRef.uuid}
+            onNameClick={openDocRef}
+            openDocRef={openDocRef}
+          />
+        ))}
+      </div>
 
-    <DocRefInfoModal />
-    <NewDocDialog />
-  </React.Fragment>
-);
+      <DocRefInfoModal />
+      <NewDocDialog />
+    </React.Fragment>
+  );
 
 const EnhanceFolderExplorer = enhance(FolderExplorer);
 
