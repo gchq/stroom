@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#833** : The global property edit dialog can now be made larger.
+
 ## [v5.5.0-beta.2] - 2018-09-07
 
 * Fixed some issues in the activity manager.
