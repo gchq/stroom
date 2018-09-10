@@ -21,6 +21,7 @@ import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
+import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 import { testDictionaries } from './test';

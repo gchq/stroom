@@ -22,8 +22,6 @@ import { compose, withState } from 'recompose';
 
 import Tooltip from 'components/Tooltip';
 
-import './NumericInput.css';
-
 const enhance = compose(
   withState('isDownDisabled', 'setDownDisabled', false),
   withState('isUpDisabled', 'setUpDisabled', false),

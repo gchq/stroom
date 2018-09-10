@@ -18,8 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Header, Icon } from 'semantic-ui-react';
 
-import './PathNotFound.css';
-
 const PathNotFound = ({ message }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">

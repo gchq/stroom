@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
+import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Loader, Button, Grid, Header } from 'semantic-ui-react';
 
 import Tooltip from 'components/Tooltip';
 
+import Loader from 'components/Loader';
 import DocRefImage from 'components/DocRefImage';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchDictionary } from './dictionaryResourceClient';
@@ -40,54 +40,47 @@ const enhance = compose(
     ({ dictionaryState }) => !dictionaryState,
     renderComponent(() => <Loader active>Loading Dictionary</Loader>),
   ),
+  withProps(({ dictionaryState: { isDirty, isSaving } }) => ({
+    saveDisabled: !isDirty,
+    saveCaption: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
+  })),
   withHandlers({
     openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
     onDataChange: ({ dictionaryUuid, dictionaryUpdated }) => ({ target: { value } }) =>
       dictionaryUpdated(dictionaryUuid, { data: value }),
+    onClickSave: ({ saveDictionary, dictionaryUuid }) => e => saveDictionary(dictionaryUuid),
   }),
 );
 
 const DictionaryEditor = ({
   dictionaryUuid,
-  dictionaryState: { isDirty, isSaving, dictionary },
+  dictionaryState: { dictionary },
   dictionaryUpdated,
   saveDictionary,
   openDocRef,
   onDataChange,
+  onClickSave,
+  saveDisabled,
+  saveCaption,
 }) => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <Header as="h3">
-          <DocRefImage docRefType="XSLT" />
-          <Header.Content>{dictionaryUuid}</Header.Content>
-          <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={dictionaryUuid} openDocRef={openDocRef} />
-          </Header.Subheader>
-        </Header>
-      </Grid.Column>
-      <Grid.Column width={4}>
-        <Tooltip
-          trigger={
-            <Button
-              floated="right"
-              circular
-              icon="save"
-              color={isDirty ? 'blue' : undefined}
-              loading={isSaving}
-              onClick={() => {
-                if (dictionaryUuid) saveDictionary(dictionaryUuid);
-              }}
-            />
-          }
-          content={isDirty ? 'Save changes' : 'Changes saved'}
-        />
-      </Grid.Column>
-    </Grid>
-    <div className="dictionary-editor">
+  <div className="dictionaryEditor">
+    <div className="dictionaryEditor__headerBar">
+      <header>
+        <DocRefImage docRefType="XSLT" />
+        <h3>{dictionaryUuid}</h3>
+
+        <DocRefBreadcrumb docRefUuid={dictionaryUuid} openDocRef={openDocRef} />
+      </header>
+      <div>
+        <button disabled={saveDisabled} title="Save Dictionary" onClick={onClickSave}>
+          {saveCaption}
+        </button>
+      </div>
+    </div>
+    <div className="dictionaryEditor__main">
       <textarea value={dictionary.data} onChange={onDataChange} />
     </div>
-  </React.Fragment>
+  </div>
 );
 
 export default enhance(DictionaryEditor);

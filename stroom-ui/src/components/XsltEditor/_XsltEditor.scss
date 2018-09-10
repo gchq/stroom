@@ -1,18 +1,7 @@
-.xslt-editor {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
+.xsltEditor {
 }
 
-// I don't particularly like having to specify this value
-$header-size: 4rem;
-
-.xslt-editor__header {
-  height: auto;
-}
-
-.xslt-editor__ace-container {
+.xsltEditor__ace-container {
   flex-grow: 1;
   width: auto;
   height: inherit;
