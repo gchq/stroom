@@ -30,8 +30,10 @@ import stroom.dashboard.shared.SearchResponse;
 import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.TableResult;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
@@ -161,6 +163,24 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
             stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
+
+            if (LOGGER.isTraceEnabled()) {
+                if (searchResponse != null) {
+                    searchResponse.getResults().forEach(searchResult -> {
+                        long resultCount;
+                        if (searchResult instanceof FlatResult) {
+                            resultCount = ((FlatResult) searchResult).getSize();
+                        } else if (searchResult instanceof TableResult) {
+                            Integer totalResults = ((stroom.query.api.v2.TableResult) searchResult).getTotalResults();
+                            resultCount = totalResults != null ? totalResults : -1;
+                        } else {
+                            resultCount = -1;
+                        }
+                        LOGGER.trace("Query found a total of {} results", resultCount);
+                    });
+                }
+            }
+
             result = new SearchResponseMapper().mapResponse(searchResponse);
 
             if (newSearch) {
