@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { processSearchString } from './searchBarUtils';
+import { processSearchString } from './expressionSearchBarUtils';
 
 import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData';
 
-describe('SearchBarUtils', () => {
+describe('ExpressionSearchBarUtils', () => {
   describe('#processSearchString', () => {
     // ///////////////
     // Field tests //

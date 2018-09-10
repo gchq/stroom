@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, branch, renderComponent } from 'recompose';
 
-import { Loader } from 'semantic-ui-react';
-
+import Loader from 'components/Loader'
 import LineContext from './LineContext';
-
 import { actionCreators } from './redux';
 
 const { lineContainerCreated, lineContainerDestroyed } = actionCreators;
@@ -93,7 +91,7 @@ const enhance = compose(
   }),
   branch(
     ({ lineContainer }) => !lineContainer,
-    renderComponent(() => <Loader active>Loading Pipeline</Loader>),
+    renderComponent(() => <Loader message="Loading pipeline..." />),
   ),
   withProps(({ lineContextId, lineContainer }) => {
     let lines = [];

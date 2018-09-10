@@ -25,9 +25,10 @@ import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Loader, Icon, Button } from 'semantic-ui-react';
+import { Header, Icon, Button } from 'semantic-ui-react';
+import Loader from 'components/Loader';
 
-import SearchBar from 'components/SearchBar';
+import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
   search,
   getDetailsForSelectedRow,
@@ -164,7 +165,7 @@ const enhance = compose(
   }),
   branch(
     ({ dataSource }) => !dataSource,
-    renderComponent(() => <Loader active>Loading data source</Loader>),
+    renderComponent(() => <Loader message="Loading data source" />),
   ),
 );
 
@@ -215,7 +216,7 @@ const DataViewer = ({
             <Icon name="database" />
             Data
             </Header>
-          <SearchBar
+          <ExpressionSearchBar
             className="data-viewer__search-bar"
             dataSource={dataSource}
             expressionId={dataViewerId}

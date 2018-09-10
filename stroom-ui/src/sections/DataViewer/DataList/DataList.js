@@ -25,9 +25,9 @@ import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Loader, Icon, Grid, Button } from 'semantic-ui-react';
+import { Header, Icon, Grid, Button } from 'semantic-ui-react';
 
-import SearchBar from 'components/SearchBar';
+import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
   search,
   getDetailsForSelectedRow,
@@ -38,6 +38,7 @@ import { getDataForSelectedRow } from '../dataResourceClient';
 import DetailsTabs from '../DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
 import { actionCreators } from '../redux';
+import Loader from 'components/Loader';
 
 const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
 const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
@@ -78,21 +79,21 @@ const enhance = compose(
     },
   ),
   withHandlers({
-    onRowSelected: ({selectRow, getDataForSelectedRow, getDetailsForSelectedRow}) => (dataViewerId, selectedRow) => {
+    onRowSelected: ({ selectRow, getDataForSelectedRow, getDetailsForSelectedRow }) => (dataViewerId, selectedRow) => {
       selectRow(dataViewerId, selectedRow);
       getDataForSelectedRow(dataViewerId);
       getDetailsForSelectedRow(dataViewerId);
     },
-    onHandleLoadMoreRows: ({searchWithExpression, dataViewerId, pageOffset, pageSize}) => () => {
+    onHandleLoadMoreRows: ({ searchWithExpression, dataViewerId, pageOffset, pageSize }) => () => {
       searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
       // TODO: need to search with expression too
       // search(dataViewerId, pageOffset + 1, pageSize, true);
-    },   
+    },
     onMoveSelection: ({
       selectRow,
       streamAttributeMaps,
       selectedRow,
-      getDataForSelectedRow, 
+      getDataForSelectedRow,
       getDetailsForSelectedRow,
       search,
       dataViewerId, pageOffset, pageSize,
@@ -103,10 +104,10 @@ const enhance = compose(
         searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId, true);
         // search(dataViewerId, pageOffset + 1, pageSize, dataViewerId, true);
       } else {
-        if(direction === 'down'){
+        if (direction === 'down') {
           selectedRow = selectedRow + 1;
         }
-        else if(direction === 'up'){
+        else if (direction === 'up') {
           selectedRow = selectedRow - 1;
         }
 
@@ -115,7 +116,7 @@ const enhance = compose(
         getDataForSelectedRow(dataViewerId);
         getDetailsForSelectedRow(dataViewerId);
       }
-    }, 
+    },
   }),
   lifecycle({
     componentDidMount() {
@@ -157,25 +158,25 @@ const enhance = compose(
     },
   }),
   branch(
-    ({ streamAttributeMaps }) => !streamAttributeMaps,
-    renderComponent(() => <Loader active>Loading data</Loader>),
+    ({ streamAttributeMaps }) => streamAttributeMaps,
+    renderComponent(() => <Loader message="Loading data..." />),
   ),
   branch(
     ({ dataSource }) => !dataSource,
-    renderComponent(() => <Loader active>Loading data source</Loader>),
+    renderComponent(() => <Loader message="Loading data source..." />),
   ),
   withProps(({
     streamAttributeMaps, onHandleLoadMoreRows, listHeight, detailsHeight
   }) => {
     let tableData = streamAttributeMaps.map(streamAttributeMap => {
-        return ({
-          streamId: streamAttributeMap.data.id,
-          created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
-          type: streamAttributeMap.data.typeName,
-          feed: streamAttributeMap.data.feedName,
-          pipeline: streamAttributeMap.data.pipelineUuid,
-        })
-      });
+      return ({
+        streamId: streamAttributeMap.data.id,
+        created: moment(streamAttributeMap.data.createMs).format('MMMM Do YYYY, h:mm:ss a'),
+        type: streamAttributeMap.data.typeName,
+        feed: streamAttributeMap.data.feedName,
+        pipeline: streamAttributeMap.data.pipelineUuid,
+      })
+    });
 
     // Just keep rows with data, more 'load more' rows
     tableData = tableData.filter(row => row.streamId !== undefined);
@@ -190,20 +191,20 @@ const enhance = compose(
           Cell: (row) => {
             // This block of code is mostly about making a sensible looking popup.
             const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
-    
+
             const eventIcon = <Icon color="blue" name="file" />;
             const warningIcon = <Icon color="orange" name="warning circle" />;
-    
+
             let icon;
-            if(stream !== undefined){
+            if (stream !== undefined) {
               if (stream.data.typeName === 'Error') {
                 icon = warningIcon;
               }
               else {
                 icon = eventIcon;
-              }  
+              }
             }
-    
+
             return icon;
           },
           width: 35,
@@ -216,18 +217,18 @@ const enhance = compose(
           Header: 'Created',
           accessor: 'created',
           Cell: row =>
-                (row.original.streamId ? (
-                  row.original.created
-                ) : (
-                  <Button
-                    size="tiny"
-                    compact
-                    className="button border hoverable load-more-button"
-                    onClick={() => onHandleLoadMoreRows()}
-                  >
-                    Load more rows
+            (row.original.streamId ? (
+              row.original.created
+            ) : (
+                <Button
+                  size="tiny"
+                  compact
+                  className="button border hoverable load-more-button"
+                  onClick={() => onHandleLoadMoreRows()}
+                >
+                  Load more rows
                   </Button>
-                )),
+              )),
         },
         {
           Header: 'Feed',
@@ -243,7 +244,7 @@ const enhance = compose(
       listHeight: Number.parseInt(listHeight, 10),
       detailsHeight: Number.parseInt(detailsHeight, 10),
     }
-    
+
   }),
 );
 
@@ -278,7 +279,7 @@ const DataList = ({
         onClick: (e, handleOriginal) => {
           const index = path(['index'], rowInfo);
           const streamId = path(['original', 'streamId'], rowInfo);
-          if(index !== undefined && streamId !== undefined) {
+          if (index !== undefined && streamId !== undefined) {
             onRowSelected(dataViewerId, rowInfo.index);
           }
 
@@ -295,8 +296,8 @@ const DataList = ({
       getTrProps={(state, rowInfo, column) => {
         // We don't want to see a hover on a row without data.
         // If a row is selected we want to see the selected color.
-        const isSelected = selectedRow !== undefined && 
-                           path(['index'], rowInfo) === selectedRow;
+        const isSelected = selectedRow !== undefined &&
+          path(['index'], rowInfo) === selectedRow;
         const hasData = path(['original', 'created'], rowInfo) !== undefined;
         let className;
         if (hasData) {

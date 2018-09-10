@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Loader, Header, Grid, Button } from 'semantic-ui-react';
+import { Header, Grid, Button } from 'semantic-ui-react';
 
 import Tooltip from 'components/Tooltip';
 
+import Loader from 'components/Loader';
 import DocRefImage from 'components/DocRefImage';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
 import ThemedAceEditor from 'components/ThemedAceEditor';
-
 import { actionCreators } from './redux';
 
 const { xsltUpdated } = actionCreators;
@@ -55,7 +55,10 @@ const enhance = compose(
       fetchXslt(xsltUuid);
     },
   }),
-  branch(({ xsltState }) => !xsltState, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
+  branch(
+    ({ xsltState }) => !xsltState,
+    renderComponent(() => <Loader message="Loading XSLT..." />),
+  ),
 );
 
 const XsltEditor = ({

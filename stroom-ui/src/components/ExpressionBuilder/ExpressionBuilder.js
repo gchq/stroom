@@ -15,16 +15,15 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, withState, branch, renderComponent, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader, Checkbox } from 'semantic-ui-react';
+import { Checkbox } from 'semantic-ui-react';
 
+import Loader from 'components/Loader'
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
 import DeleteExpressionItem from './DeleteExpressionItem';
-
 import lineElementCreators from './expressionLineCreators';
 
 const withSetEditableByUser = withState('inEditMode', 'setEditableByUser', false);
@@ -60,7 +59,7 @@ const enhance = compose(
   }),
   branch(
     ({ expressionState }) => !expressionState,
-    renderComponent(() => <Loader active>Loading Expression State</Loader>),
+    renderComponent(() => <Loader message="Loading expression state..." />),
   ),
   withProps(({ showModeToggle, dataSource }) => ({
     showModeToggle: showModeToggle && !!dataSource,
@@ -75,35 +74,35 @@ const ExpressionBuilder = ({
   inEditMode,
   setEditableByUser,
 }) => (
-  <LineContainer
-    className="Expression-editor__graph"
-    lineContextId={`expression-lines-${expressionId}`}
-    lineElementCreators={lineElementCreators}
-  >
-    <DeleteExpressionItem expressionId={expressionId} />
-    {showModeToggle ? (
-      <Checkbox
-        label="Edit Mode"
-        toggle
-        checked={inEditMode}
-        onChange={() => setEditableByUser(!inEditMode)}
-      />
-    ) : (
-      undefined
-    )}
-    {inEditMode ? (
-      <ExpressionOperator
-        dataSource={dataSource}
-        expressionId={expressionId}
-        isRoot
-        isEnabled
-        operator={expression}
-      />
-    ) : (
-      <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
-    )}
-  </LineContainer>
-);
+    <LineContainer
+      className="Expression-editor__graph"
+      lineContextId={`expression-lines-${expressionId}`}
+      lineElementCreators={lineElementCreators}
+    >
+      <DeleteExpressionItem expressionId={expressionId} />
+      {showModeToggle ? (
+        <Checkbox
+          label="Edit Mode"
+          toggle
+          checked={inEditMode}
+          onChange={() => setEditableByUser(!inEditMode)}
+        />
+      ) : (
+          undefined
+        )}
+      {inEditMode ? (
+        <ExpressionOperator
+          dataSource={dataSource}
+          expressionId={expressionId}
+          isRoot
+          isEnabled
+          operator={expression}
+        />
+      ) : (
+          <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
+        )}
+    </LineContainer>
+  );
 
 const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
 

@@ -10,7 +10,7 @@ const enhanceLocal = connect(
 
 class WrappedComponent extends Component {
   render() {
-    return <div className={this.props.theme}>{this.props.children}</div>;
+    return <div className={`app-container ${this.props.theme}`}>{this.props.children}</div>;
   }
 }
 

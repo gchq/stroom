@@ -1,8 +1,8 @@
 import React from 'react';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader } from 'semantic-ui-react';
 
+import Loader from 'components/Loader'
 import { fetchDocTree } from 'components/FolderExplorer/explorerClient';
 
 /**
@@ -21,6 +21,6 @@ export default compose(
   }),
   branch(
     ({ documentTree }) => documentTree.waitingForTree,
-    renderComponent(() => <Loader active>Loading document tree</Loader>),
+    renderComponent(() => <Loader message="Loading document tree..." />),
   ),
 );

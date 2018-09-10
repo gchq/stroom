@@ -15,33 +15,28 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, lifecycle, withState, branch, renderComponent, withProps, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Grid, Header, Loader } from 'semantic-ui-react';
-
+import { Grid, Header } from 'semantic-ui-react';
 import PanelGroup from 'react-panelgroup';
 
+import Loader from 'components/Loader'
 import AddElementModal from './AddElementModal';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import SavePipeline from './SavePipeline';
 import CreateChildPipeline from './CreateChildPipeline';
 import OpenPipelineSettings from './OpenPipelineSettings';
-
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
-
 import DocRefImage from 'components/DocRefImage';
 import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import DeletePipelineElement from './DeletePipelineElement';
-
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
-
 import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { actionCreators } from './redux';
@@ -64,7 +59,7 @@ const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDeta
 const enhance = compose(
   withRouter,
   withHandlers({
-    openDocRef: ({history}) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
   connect(
     (
@@ -96,8 +91,8 @@ const enhance = compose(
     },
   }),
   branch(
-    ({ pipelineState, elements: {elements} }) => !(pipelineState && pipelineState.pipeline && elements),
-    renderComponent(() => <Loader active>Loading Pipeline</Loader>),
+    ({ pipelineState, elements: { elements } }) => !(pipelineState && pipelineState.pipeline && elements),
+    renderComponent(() => <Loader message="Loading pipeline..." />),
   ),
   withElementDetailsOpen,
   withProps(({ pipelineId, pipelineState: { asTree } }) => ({
@@ -128,94 +123,94 @@ const RawPipelineEditor = ({
   startInheritedPipeline,
   pipelineSettingsOpened
 }) => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}><Header as="h3">
-        <DocRefImage docRefType={pipeline.docRef.type} />
-        <Header.Content>{pipeline.docRef.name}</Header.Content>
-        <Header.Subheader>
-          <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
-        </Header.Subheader>
-      </Header></Grid.Column>
-      <Grid.Column width={4}>
-        <SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
-        <CreateChildPipeline
-          pipelineId={pipelineId}
-          startInheritedPipeline={startInheritedPipeline}
-        />
-        <OpenPipelineSettings
-          pipelineId={pipelineId}
-          pipelineSettingsOpened={pipelineSettingsOpened}
-        /></Grid.Column>
-    </Grid>
-    <div className="Pipeline-editor">
-      <AddElementModal pipelineId={pipelineId} />
-      <DeletePipelineElement pipelineId={pipelineId} />
-      <PipelineSettings pipelineId={pipelineId} />
-      <div className="Pipeline-editor__element-palette">
-        <ElementPalette pipelineId={pipelineId} />
-      </div>
-
-      <PanelGroup
-        direction="column"
-        className="Pipeline-editor__content"
-        panelWidths={[
-          {},
-          {
-            resize: 'dynamic',
-            size: isElementDetailsOpen ? '50%' : 0,
-          },
-        ]}
-      >
-        <div className="Pipeline-editor__topPanel">
-          <LineContainer
-            className="Pipeline-editor__graph flat"
-            lineContextId={`pipeline-lines-${pipelineId}`}
-            lineElementCreators={lineElementCreators}
-          >
-            <div className="Pipeline-editor__elements">
-              {Object.keys(elementStyles)
-                .map(es => pipeline.merged.elements.add.find(e => e.id === es))
-                .map(e => (
-                  <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                    <PipelineElement
-                      pipelineId={pipelineId}
-                      elementId={e.id}
-                      onClick={() => setElementDetailsOpen(true)}
-                    />
-                  </div>
-                ))}
-            </div>
-            <div className="Pipeline-editor__lines">
-              {pipeline.merged.links.add
-                .filter(l => elementStyles[l.from] && elementStyles[l.to])
-                .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-                .map(l => (
-                  <LineTo
-                    lineId={l.lineId}
-                    key={l.lineId}
-                    fromId={l.from}
-                    toId={l.to}
-                    lineType="curve"
-                  />
-                ))}
-            </div>
-          </LineContainer>
-        </div>
-        {isElementDetailsOpen ? (
-          <ElementDetails
+    <React.Fragment>
+      <Grid className="content-tabs__grid">
+        <Grid.Column width={12}><Header as="h3">
+          <DocRefImage docRefType={pipeline.docRef.type} />
+          <Header.Content>{pipeline.docRef.name}</Header.Content>
+          <Header.Subheader>
+            <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
+          </Header.Subheader>
+        </Header></Grid.Column>
+        <Grid.Column width={4}>
+          <SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
+          <CreateChildPipeline
             pipelineId={pipelineId}
-            className="Pipeline-editor__details"
-            onClose={() => setElementDetailsOpen(false)}
+            startInheritedPipeline={startInheritedPipeline}
           />
-        ) : (
-          <div />
-        )}
-      </PanelGroup>
-    </div>
-  </React.Fragment>
+          <OpenPipelineSettings
+            pipelineId={pipelineId}
+            pipelineSettingsOpened={pipelineSettingsOpened}
+          /></Grid.Column>
+      </Grid>
+      <div className="Pipeline-editor">
+        <AddElementModal pipelineId={pipelineId} />
+        <DeletePipelineElement pipelineId={pipelineId} />
+        <PipelineSettings pipelineId={pipelineId} />
+        <div className="Pipeline-editor__element-palette">
+          <ElementPalette pipelineId={pipelineId} />
+        </div>
 
-);
+        <PanelGroup
+          direction="column"
+          className="Pipeline-editor__content"
+          panelWidths={[
+            {},
+            {
+              resize: 'dynamic',
+              size: isElementDetailsOpen ? '50%' : 0,
+            },
+          ]}
+        >
+          <div className="Pipeline-editor__topPanel">
+            <LineContainer
+              className="Pipeline-editor__graph flat"
+              lineContextId={`pipeline-lines-${pipelineId}`}
+              lineElementCreators={lineElementCreators}
+            >
+              <div className="Pipeline-editor__elements">
+                {Object.keys(elementStyles)
+                  .map(es => pipeline.merged.elements.add.find(e => e.id === es))
+                  .map(e => (
+                    <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                      <PipelineElement
+                        pipelineId={pipelineId}
+                        elementId={e.id}
+                        onClick={() => setElementDetailsOpen(true)}
+                      />
+                    </div>
+                  ))}
+              </div>
+              <div className="Pipeline-editor__lines">
+                {pipeline.merged.links.add
+                  .filter(l => elementStyles[l.from] && elementStyles[l.to])
+                  .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+                  .map(l => (
+                    <LineTo
+                      lineId={l.lineId}
+                      key={l.lineId}
+                      fromId={l.from}
+                      toId={l.to}
+                      lineType="curve"
+                    />
+                  ))}
+              </div>
+            </LineContainer>
+          </div>
+          {isElementDetailsOpen ? (
+            <ElementDetails
+              pipelineId={pipelineId}
+              className="Pipeline-editor__details"
+              onClose={() => setElementDetailsOpen(false)}
+            />
+          ) : (
+              <div />
+            )}
+        </PanelGroup>
+      </div>
+    </React.Fragment>
+
+  );
 
 const PipelineEditor = enhance(RawPipelineEditor);
 
