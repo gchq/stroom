@@ -18,12 +18,15 @@ package stroom.activity.server;
 
 import event.logging.Event;
 import event.logging.Event.EventDetail.Update;
+import event.logging.MultiObject;
+import event.logging.Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.logging.CurrentActivity;
+import stroom.logging.PurposeUtil;
 import stroom.logging.StroomEventLoggingService;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -44,10 +47,18 @@ public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentAct
     @Override
     public Activity exec(final SetCurrentActivityAction action) {
         try {
-            currentActivity.setActivity(action.getActivity());
+            final Activity beforeActivity = currentActivity.getActivity();
+            final Activity afterActivity = action.getActivity();
+
+            currentActivity.setActivity(afterActivity);
 
             final Event event = eventLoggingService.createAction("Set Activity", "User has changed activity");
-            event.getEventDetail().setUpdate(new Update());
+
+            final Update update = new Update();
+            update.setBefore(convertActivity(beforeActivity));
+            update.setAfter(convertActivity(afterActivity));
+
+            event.getEventDetail().setUpdate(update);
             eventLoggingService.log(event);
 
         } catch (final Exception e) {
@@ -55,5 +66,23 @@ public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentAct
         }
 
         return action.getActivity();
+    }
+
+    private MultiObject convertActivity(final Activity activity) {
+        if (activity == null ||
+                activity.getDetails() == null ||
+                activity.getDetails().getProperties() == null ||
+                activity.getDetails().getProperties().size() == 0) {
+            return null;
+        }
+
+        final Object object = new Object();
+        object.setType("Activity");
+        PurposeUtil.addData(object.getData(), activity);
+
+        final MultiObject multiObject = new MultiObject();
+        multiObject.getObjects().add(object);
+
+        return multiObject;
     }
 }

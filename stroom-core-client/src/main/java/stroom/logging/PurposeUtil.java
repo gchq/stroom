@@ -16,22 +16,31 @@
 
 package stroom.logging;
 
+import event.logging.Data;
 import event.logging.Purpose;
 import event.logging.util.EventLoggingUtil;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 
+import java.util.List;
+
 public class PurposeUtil {
     public static Purpose create(final Activity activity) {
         if (activity != null && activity.getDetails() != null) {
             final Purpose purpose = new Purpose();
-            final ActivityDetails activityDetails = activity.getDetails();
-            activityDetails.getNames().forEach(name -> {
-                final String value = activityDetails.getProperties().get(name);
-                purpose.getData().add(EventLoggingUtil.createData(name, value));
-            });
+            addData(purpose.getData(), activity);
             return purpose;
         }
         return null;
+    }
+
+    public static void addData(final List<Data> list, final Activity activity) {
+        if (activity != null && activity.getDetails() != null) {
+            final ActivityDetails activityDetails = activity.getDetails();
+            activityDetails.getNames().forEach(name -> {
+                final String value = activityDetails.getProperties().get(name);
+                list.add(EventLoggingUtil.createData(name, value));
+            });
+        }
     }
 }
