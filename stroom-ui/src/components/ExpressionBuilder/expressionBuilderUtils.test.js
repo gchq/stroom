@@ -25,7 +25,9 @@ import {
   simpleOrExpression,
   nestedExpression,
   deeplyNestedExpression,
-  partlyDisabledExpression,
+  partlyDisabledExpression01,
+  partlyDisabledExpression02,
+  partlyDisabledExpression03,
 } from './expressionBuilderUtils.testData';
 
 describe('ExpressionBuilter Utils', () => {
@@ -72,12 +74,26 @@ describe('ExpressionBuilter Utils', () => {
       // Then
       expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me AND (id CONTAINS bob OR updateTime BETWEEN me))')
     });
-    // test('can convert a partly disabled expression', () => {
-    //   // When
-    //   const asString = toString(partlyDisabledExpression);
+    test('can convert a partly disabled expression 01', () => {
+      // When
+      const asString = toString(partlyDisabledExpression01);
 
-    //   // Then
-    //   expect(asString).toBe('colour LIKE red');
-    // });
+      // Then
+      expect(asString).toBe('colour LIKE red');
+    });
+    test('can convert a partly disabled expression 02', () => {
+      // When
+      const asString = toString(partlyDisabledExpression02);
+
+      // Then
+      expect(asString).toBe('colour = blue');
+    });
+    test('can convert a partly disabled expression 03', () => {
+      // When
+      const asString = toString(partlyDisabledExpression03);
+
+      // Then
+      expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5)')
+    });
   });
 });

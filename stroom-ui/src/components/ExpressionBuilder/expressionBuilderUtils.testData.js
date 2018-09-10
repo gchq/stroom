@@ -177,7 +177,7 @@ const deeplyNestedExpression = {
         {
           type: 'operator',
           op: 'OR',
-          enabled: false,
+          enabled: true,
           children: [
             {
               type: 'term',
@@ -185,7 +185,7 @@ const deeplyNestedExpression = {
               condition: 'CONTAINS',
               value: 'bob',
               dictionary: null,
-              enabled: false,
+              enabled: true,
             },
             {
               type: 'term',
@@ -203,11 +203,109 @@ const deeplyNestedExpression = {
   enabled: true,
 };
 
+const partlyDisabledExpression01 = {
+  type: 'operator',
+  op: 'OR',
+  children: [
+    {
+      type: 'term',
+      field: 'colour',
+      condition: 'LIKE',
+      value: 'red',
+      dictionary: null,
+      enabled: true,
+    },
+    {
+      type: 'term',
+      field: 'colour',
+      condition: '=',
+      value: 'blue',
+      dictionary: null,
+      enabled: false,
+    },
+  ],
+  enabled: true,
+};
+
+const partlyDisabledExpression02 = {
+  type: 'operator',
+  op: 'OR',
+  children: [
+    {
+      type: 'term',
+      field: 'colour',
+      condition: 'LIKE',
+      value: 'red',
+      dictionary: null,
+      enabled: false,
+    },
+    {
+      type: 'term',
+      field: 'colour',
+      condition: '=',
+      value: 'blue',
+      dictionary: null,
+      enabled: true,
+    },
+  ],
+  enabled: true,
+};
+
+const partlyDisabledExpression03 = {
+  type: 'operator',
+  op: 'OR',
+  children: [
+    {
+      type: 'term',
+      field: 'colour',
+      condition: 'CONTAINS',
+      value: 'red',
+      dictionary: null,
+      enabled: true,
+    },
+    {
+      type: 'term',
+      field: 'colour',
+      condition: 'IN',
+      value: 'blue',
+      dictionary: null,
+      enabled: true,
+    },
+    {
+      type: 'operator',
+      op: 'AND',
+      enabled: true,
+      children: [
+        {
+          type: 'term',
+          field: 'numberOfDoors',
+          condition: 'BETWEEN',
+          value: '1,5',
+          dictionary: null,
+          enabled: true,
+        },
+        {
+          type: 'term',
+          field: 'createUser',
+          condition: 'EQUALS',
+          value: 'me',
+          dictionary: null,
+          enabled: false,
+        },
+      ],
+    },
+  ],
+  enabled: true,
+};
+
 export {
   emptyExpression,
   singleTermExpression,
   simpleAndExpression,
   simpleOrExpression,
   nestedExpression,
-  deeplyNestedExpression
+  deeplyNestedExpression,
+  partlyDisabledExpression01,
+  partlyDisabledExpression02,
+  partlyDisabledExpression03,
 };
