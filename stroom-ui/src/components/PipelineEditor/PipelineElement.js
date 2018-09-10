@@ -154,10 +154,6 @@ const enhance = compose(
       pipelineElementReinstated,
     },
   ),
-  branch(
-    ({ pipelineState, element }) => !(pipelineState && element),
-    renderComponent(() => <Loader message="Loading pipeline/element..." />),
-  ),
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
   withProps(({
