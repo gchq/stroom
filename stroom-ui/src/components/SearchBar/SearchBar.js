@@ -44,19 +44,12 @@ const enhance = compose(
       const parsedExpression = processSearchString(dataSource, '');
       expressionChanged(expressionId, parsedExpression.expression);
 
-      // if (!selectedRow) {
       const { onSearch } = this.props;
-      console.log({ onSearch });
-      // console.log({dataViewerId, pageOffset, pageSize, onSearch});
       onSearch(expressionId);
-      // search(dataViewerId, pageOffset, pageSize);
-      // }
     },
   }),
   withProps(({ searchStringValidationMessages, isExpressionVisible }) => ({
-    searchIsInvalid: searchStringValidationMessages.length > 0,
-    visibilityClass: isExpressionVisible ? 'visible' : '',
-    showHideExpressionIcon: isExpressionVisible ? 'angle up' : 'angle down',
+    searchIsInvalid: searchStringValidationMessages.length > 0
   })),
 );
 
@@ -81,96 +74,85 @@ const SearchBar = ({
   isExpressionVisible,
   setIsExpressionVisible,
 }) => (
-  <div className="dropdown search-bar borderless">
-    <div className="search-bar__header">
-      <Input
-        placeholder="I.e. field1=value1 field2=value2"
-        value={searchString}
-        className="search-bar__input"
-        onFocus={() => setIsExpressionVisible(true)}
-        onChange={(_, data) => {
-          const expression = processSearchString(dataSource, data.value);
-          const invalidFields = expression.fields.filter(field => !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid);
+    <div className="dropdown search-bar borderless">
+      <div className="search-bar__header">
+        <Input
+          placeholder="I.e. field1=value1 field2=value2"
+          value={searchString}
+          className="search-bar__input"
+          onChange={(_, data) => {
+            const expression = processSearchString(dataSource, data.value);
+            const invalidFields = expression.fields.filter(field => !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid);
 
-          const searchStringValidationMessages = [];
-          if (invalidFields.length > 0) {
-            invalidFields.forEach((invalidField) => {
-              searchStringValidationMessages.push(`'${invalidField.original}' is not a valid search term`);
-            });
-          }
+            const searchStringValidationMessages = [];
+            if (invalidFields.length > 0) {
+              invalidFields.forEach((invalidField) => {
+                searchStringValidationMessages.push(`'${invalidField.original}' is not a valid search term`);
+              });
+            }
 
-          setIsSearchStringValid(invalidFields.length === 0);
-          setSearchStringValidationMessages(searchStringValidationMessages);
-          setSearchString(data.value);
+            setIsSearchStringValid(invalidFields.length === 0);
+            setSearchStringValidationMessages(searchStringValidationMessages);
+            setSearchString(data.value);
 
-          const parsedExpression = processSearchString(dataSource, searchString);
-          expressionChanged(expressionId, parsedExpression.expression);
-        }}
-      />
-      <Button
-        disabled={searchIsInvalid}
-        className="icon-button"
-        icon="search"
-        onClick={() => {
-          onSearch(expressionId);
-          setIsExpressionVisible(false);
-        }}
-      />
-    </div>
-    <div tabIndex={0} className={`dropdown__content search-bar__content ${visibilityClass}`}>
-      <div className="search-bar__content__header">
-        <Button.Group size="mini">
-          <Button
-            content="Text search"
-            size="mini"
-            positive={!isExpression}
-            icon="text cursor"
-            className="search-bar__modeButton raised-low bordered hoverable"
-            onClick={() => {
-              setIsExpression(false);
-              setIsExpressionVisible(false);
-            }}
-          />
-          <Button.Or />
-          <Button
-            content="Expression search"
-            size="mini"
-            positive={isExpression}
-            disabled={searchIsInvalid}
-            className="search-bar__modeButton raised-low bordered hoverable"
-            icon="edit"
-            onClick={() => {
-              const parsedExpression = processSearchString(dataSource, searchString);
-              expressionChanged(expressionId, parsedExpression.expression);
-              setIsExpression(true);
-              setIsExpressionVisible(true);
-            }}
-          />
-        </Button.Group>
-        <Button
-          icon="close"
-          size="mini"
-          onClick={() => {
-            console.log('TODO how to blur?');
-            setIsExpressionVisible(false);
+            const parsedExpression = processSearchString(dataSource, searchString);
+            expressionChanged(expressionId, parsedExpression.expression);
           }}
-          className="raised-low bordered hoverable search-bar__close-button"
+        />
+        <Button
+          disabled={searchIsInvalid}
+          className="icon-button"
+          icon="search"
+          onClick={() => {
+            onSearch(expressionId);
+          }}
         />
       </div>
-      {isExpression ? (
-        <ExpressionBuilder
-          className="search-bar__expressionBuilder"
-          showModeToggle={false}
-          editMode
-          dataSource={dataSource}
-          expressionId={expressionId}
-        />
-      ) : (
-        <div>TODO: Help text for string search, or prompts</div>
-      )}
+      <div tabIndex={0} className={`dropdown__content search-bar__content ${visibilityClass}`}>
+        <div className="search-bar__content__header">
+          <Button.Group size="mini">
+            <Button
+              content="Text search"
+              size="mini"
+              positive={!isExpression}
+              icon="text cursor"
+              className="search-bar__modeButton raised-low bordered hoverable"
+              onClick={() => {
+                setIsExpression(false);
+              }}
+            />
+            <Button.Or />
+            <Button
+              content="Expression search"
+              size="mini"
+              positive={isExpression}
+              disabled={searchIsInvalid}
+              className="search-bar__modeButton raised-low bordered hoverable"
+              icon="edit"
+              onClick={() => {
+                if (!isExpression) {
+                  const parsedExpression = processSearchString(dataSource, searchString);
+                  expressionChanged(expressionId, parsedExpression.expression);
+                  setIsExpression(true);
+                }
+              }}
+            />
+          </Button.Group>
+        </div>
+        {isExpression ? (
+          <ExpressionBuilder
+            className="search-bar__expressionBuilder"
+            showModeToggle={false}
+            editMode
+            dataSource={dataSource}
+            expressionId={expressionId}
+          />
+        ) : (
+            <div>TODO: Help text for string search, or prompts</div>
+          )}
+      </div>
     </div>
-  </div>
-);
+  );
 
 SearchBar.propTypes = {
   dataSource: PropTypes.object.isRequired,
