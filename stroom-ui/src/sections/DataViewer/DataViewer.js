@@ -52,16 +52,13 @@ const enhance = compose(
   withDetailsHeight,
   connect(
     (state, props) => {
-      let dataSource, streamAttributeMaps, pageSize, pageOffset,selectedRow, dataForSelectedRow, detailsForSelectedRow;
+      let dataSource, streamAttributeMaps, pageSize, pageOffset, selectedRow, dataForSelectedRow, detailsForSelectedRow;
 
-      if(state.dataViewers[props.dataViewerId] !== undefined) {
-        let { dataSource, streamAttributeMaps, pageSize, pageOffset,selectedRow, dataForSelectedRow, detailsForSelectedRow} = state.dataViewers[props.dataViewerId];
-        // const dataView = state.dataViewers[props.dataViewerId];
-
-        // if (dataView !== undefined) {
-        //   return dataView;
-        // }
+      if (state.dataViewers[props.dataViewerId] !== undefined) {
+        // Parentheses required when destructuring separatly from declaration.
+        ({ dataSource, streamAttributeMaps, pageSize, pageOffset, selectedRow, dataForSelectedRow, detailsForSelectedRow } = state.dataViewers[props.dataViewerId]);
       }
+
       return {
         streamAttributeMaps: streamAttributeMaps || [],
         pageSize: pageSize || 0,
@@ -236,29 +233,29 @@ const DataViewer = ({
           {selectedRow === undefined ? (
             table
           ) : (
-            <PanelGroup
-              direction="column"
-              panelWidths={[
-                {
-                  resize: 'dynamic',
-                  minSize: 100,
-                  size: listHeight,
-                },
-                {
-                  resize: 'dynamic',
-                  minSize: 100,
-                  size: detailsHeight,
-                },
-              ]}
-              onUpdate={(panelWidths) => {
-                setListHeight(panelWidths[0].size);
-                setDetailsHeight(panelWidths[1].size);
-              }}
-            >
-              {table}
-              {details}
-            </PanelGroup>
-          )}
+              <PanelGroup
+                direction="column"
+                panelWidths={[
+                  {
+                    resize: 'dynamic',
+                    minSize: 100,
+                    size: listHeight,
+                  },
+                  {
+                    resize: 'dynamic',
+                    minSize: 100,
+                    size: detailsHeight,
+                  },
+                ]}
+                onUpdate={(panelWidths) => {
+                  setListHeight(panelWidths[0].size);
+                  setDetailsHeight(panelWidths[1].size);
+                }}
+              >
+                {table}
+                {details}
+              </PanelGroup>
+            )}
         </div>
       </div>
     </React.Fragment>

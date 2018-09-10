@@ -278,7 +278,7 @@ server
  * This responds with a list of streamAttributeMaps
  */
 server
-  .get(`${testConfig.streamAttributeMapServiceUrl}`)
+  .get(`${testConfig.streamAttributeMapServiceUrl}/`)
   .intercept((req, res) => res.json(testCache.data.dataList));
 
 const enhanceLocal = compose(

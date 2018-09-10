@@ -34,5 +34,6 @@ const { updateStreamAttributeMaps } = actionCreators;
 const stories = storiesOf('DataViewer', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
+  .addDecorator(DragDropDecorator)
   .addDecorator(ReduxDecorator)
   .add('basic', () => <DataViewer dataViewerId="test" />);
