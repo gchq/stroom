@@ -22,6 +22,8 @@ import {
   deleteItemFromTree,
   moveItemsInTree,
 } from 'lib/treeUtils';
+
+import { toString } from './expressionBuilderUtils';
 import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 // Expression Editors
@@ -90,6 +92,7 @@ const reducer = handleActions(
     // Expression Changed
     EXPRESSION_CHANGED: (state, { payload: { expression } }) => ({
       expression: assignRandomUuids(expression),
+      expressionAsString: toString(expression)
     }),
 
     // Expression Term Added

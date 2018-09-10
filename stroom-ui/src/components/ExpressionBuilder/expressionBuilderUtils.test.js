@@ -23,6 +23,9 @@ import {
   singleTermExpression,
   simpleAndExpression,
   simpleOrExpression,
+  nestedExpression,
+  deeplyNestedExpression,
+  partlyDisabledExpression,
 } from './expressionBuilderUtils.testData';
 
 describe('ExpressionBuilter Utils', () => {
@@ -55,6 +58,26 @@ describe('ExpressionBuilter Utils', () => {
       // Then
       expect(asString).toBe('colour LIKE red OR colour = blue');
     });
+    test('can convert a nested expression', () => {
+      // When
+      const asString = toString(nestedExpression);
 
+      // Then
+      expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me)')
+    });
+    test('can convert a deeply nested expression', () => {
+      // When
+      const asString = toString(deeplyNestedExpression);
+
+      // Then
+      expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me AND (id CONTAINS bob OR updateTime BETWEEN me))')
+    });
+    // test('can convert a partly disabled expression', () => {
+    //   // When
+    //   const asString = toString(partlyDisabledExpression);
+
+    //   // Then
+    //   expect(asString).toBe('colour LIKE red');
+    // });
   });
 });

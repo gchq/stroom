@@ -13,18 +13,17 @@ export function toString(expression) {
 }
 
 function childrenToString(expression, string) {
-  if (expression.children) {
-    expression.children.forEach((child, i) => {
-      if (child.type === 'term') {
-        string += `${child.field} ${child.condition} ${child.value}`;
-        if (expression.children.length > i + 1) {
-          string += ` ${expression.op} `;
-        }
+  expression.children.forEach((child, i) => {
+    if (child.type === 'term') {
+      string += `${child.field} ${child.condition} ${child.value}`;
+      if (expression.children.length > i + 1) {
+        string += ` ${expression.op} `;
       }
-      else if (child.type === 'operator') {
-        return childrenToString(child.children, string)
-      }
-    });
-  }
+    }
+    else if (child.type === 'operator') {
+      let childTerms = ''
+      string += `(${childrenToString(child, childTerms)})`
+    }
+  });
   return string;
 }
