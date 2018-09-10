@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.3] - 2018-09-10
+
 * Now logs activity change correctly.
 
 * Add support for checkbox and selection control types to activity descriptions.
@@ -870,7 +872,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.3...HEAD
+[v5.5.0-beta.3]: https://github.com/gchq/stroom/compare/v5.5.0-beta.2...v5.5.0-beta.3
 [v5.5.0-beta.2]: https://github.com/gchq/stroom/compare/v5.5.0-beta.1...v5.5.0-beta.2
 [v5.5.0-beta.1]: https://github.com/gchq/stroom/compare/v5.4.6...v5.5.0-beta.1
 [v5.4.6]: https://github.com/gchq/stroom/compare/v5.4.5...v5.4.6
