@@ -298,6 +298,76 @@ const partlyDisabledExpression03 = {
   enabled: true,
 };
 
+const hugeExpression = {
+  type: 'operator',
+  op: 'OR',
+  children: [
+    {
+      type: 'term',
+      field: 'colour',
+      condition: 'CONTAINS',
+      value: 'red',
+      dictionary: null,
+      enabled: true,
+    },
+    {
+      type: 'term',
+      field: 'colour',
+      condition: 'IN',
+      value: 'blue',
+      dictionary: null,
+      enabled: true,
+    },
+    {
+      type: 'operator',
+      op: 'AND',
+      enabled: true,
+      children: [
+        {
+          type: 'term',
+          field: 'numberOfDoors',
+          condition: 'BETWEEN',
+          value: '1,5',
+          dictionary: null,
+          enabled: true,
+        },
+        {
+          type: 'term',
+          field: 'createUser',
+          condition: 'EQUALS',
+          value: 'me',
+          dictionary: null,
+          enabled: true,
+        },
+      ],
+    },
+    {
+      type: 'operator',
+      op: 'OR',
+      enabled: false,
+      children: [
+        {
+          type: 'term',
+          field: 'id',
+          condition: 'CONTAINS',
+          value: 'bob',
+          dictionary: null,
+          enabled: false,
+        },
+        {
+          type: 'term',
+          field: 'updateTime',
+          condition: 'BETWEEN',
+          value: 'me',
+          dictionary: null,
+          enabled: true,
+        },
+      ],
+    },
+  ],
+  enabled: true,
+};
+
 export {
   emptyExpression,
   singleTermExpression,
@@ -308,4 +378,5 @@ export {
   partlyDisabledExpression01,
   partlyDisabledExpression02,
   partlyDisabledExpression03,
+  hugeExpression,
 };

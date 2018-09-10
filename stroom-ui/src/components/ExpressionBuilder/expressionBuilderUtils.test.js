@@ -28,6 +28,7 @@ import {
   partlyDisabledExpression01,
   partlyDisabledExpression02,
   partlyDisabledExpression03,
+  hugeExpression,
 } from './expressionBuilderUtils.testData';
 
 describe('ExpressionBuilter Utils', () => {
@@ -94,6 +95,13 @@ describe('ExpressionBuilter Utils', () => {
 
       // Then
       expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5)')
+    });
+    test('can convert a huge expression', () => {
+      // When
+      const asString = toString(hugeExpression);
+
+      // Then
+      expect(asString).toBe("colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me)")
     });
   });
 });
