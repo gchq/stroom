@@ -149,7 +149,7 @@ const ExpressionSearchBar = ({
             expressionId={expressionId}
           />
         ) : (
-            <div>TODO: Help text for string search, or prompts</div>
+            <div>{searchStringValidationMessages}</div>
           )}
       </div>
     </div>
