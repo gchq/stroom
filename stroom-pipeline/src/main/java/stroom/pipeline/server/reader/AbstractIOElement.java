@@ -188,7 +188,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                         writer.flush();
 
                         // If the writer is a piped writer then we must close it
-                        // or it will block other up stream processors.
+                        // or it will block other upstream processors.
                         if (writer instanceof PipedWriter) {
                             writer.close();
                         }
