@@ -17,14 +17,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { Switch, Route } from 'react-router-dom';
 import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import AppChrome, { appChromeRoutes } from '.';
 
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
@@ -40,10 +37,7 @@ const AppChromeWithRouter = () => (
 storiesOf('App Chrome', module)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
-  .addDecorator(FontAwesomeDecorator)
-  .addDecorator(StoryRouter())
   .add('Just the chrome', props => (
     <AppChrome
       activeMenuItem="welcome"

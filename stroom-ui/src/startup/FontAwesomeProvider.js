@@ -31,6 +31,7 @@ import {
   faPlus,
   faTimes,
   faCogs,
+  faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 
 export default lifecycle({
@@ -64,6 +65,7 @@ export default lifecycle({
       faDatabase,
       faPlay,
       faQuestionCircle,
+      faQuestion,
     );
   },
 });

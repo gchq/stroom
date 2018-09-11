@@ -21,7 +21,6 @@ import { Checkbox, Header, Form } from 'semantic-ui-react';
 import 'semantic/dist/semantic.min.css';
 
 import KeyIsDown from './KeyIsDown';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 
 const TestComponent = ({ keyIsDown }) => (
@@ -49,11 +48,9 @@ const TestComponentB = compose(connect(({ keyIsDown }) => ({ keyIsDown })), KeyI
 const TestComponentC = connect(({ keyIsDown }) => ({ keyIsDown }))(TestComponent);
 
 storiesOf('Key Is Down', module)
-  .addDecorator(ReduxDecorator)
   .add('Test Component', () => <TestComponentA />)
   .add('Test Component (only detect Control)', () => <TestComponentB />);
 
 storiesOf('Key Is Down (decorated, ctrl, alt)', module)
   .addDecorator(KeyIsDownDecorator(['Control', 'Alt']))
-  .addDecorator(ReduxDecorator)
   .add('Test Component', () => <TestComponentC />);

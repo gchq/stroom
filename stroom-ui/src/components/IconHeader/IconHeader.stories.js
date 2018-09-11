@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
+import { storiesOf } from '@storybook/react';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import IconHeader from './IconHeader';
 
-import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
-
-import { testXslt } from './test';
-
-import XsltEditor from './XsltEditor';
-
-const PollyDecoratorWithTestData = PollyDecorator({
-  xslt: testXslt,
-});
-
-const stories = storiesOf('XSLT Editor', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator);
-
-Object.entries(testXslt)
-  .map(k => ({
-    name: k[0],
-    data: k[1],
-  }))
-  .forEach(xslt => stories.add(xslt.name, () => <XsltEditor xsltUuid={xslt.name} />));
+storiesOf('IconHeader', module)
+  .addDecorator(ThemedDecorator)
+  .add('basic', () => (
+    <IconHeader icon='angle-up' text='Good morrow fellow human' />
+  ))

@@ -16,11 +16,8 @@
 import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 
 import 'styles/main.css';
 
@@ -30,10 +27,7 @@ import DictionaryEditor from './DictionaryEditor';
 
 const stories = storiesOf('Dictionary Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecorator)
-  .addDecorator(FontAwesomeDecorator)
-  .addDecorator(StoryRouter());
+  .addDecorator(ThemedDecorator);
 
 Object.entries(testDictionaries)
   .map(k => ({

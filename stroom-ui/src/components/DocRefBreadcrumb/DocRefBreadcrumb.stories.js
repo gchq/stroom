@@ -17,13 +17,10 @@ import React, { Component } from 'react';
 import { withState } from 'recompose';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { Switch, Route } from 'react-router-dom';
 
 import DocRefBreadcrumb from './DocRefBreadcrumb';
 
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
@@ -47,8 +44,5 @@ const testPipelineUuid = Object.keys(testPipelines)[0];
 storiesOf('Doc Ref Breadcrumb', module)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
-  .addDecorator(FontAwesomeDecorator)
-  .addDecorator(StoryRouter())
   .add('first pipeline', props => <BreadcrumbOpen docRefUuid={testPipelineUuid} />);

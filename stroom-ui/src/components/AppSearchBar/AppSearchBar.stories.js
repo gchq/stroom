@@ -19,10 +19,7 @@ import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 
@@ -84,16 +81,16 @@ const enhancePicker = withState('pickedDocRef', 'setPickedDocRef', undefined);
 let AppSearchAsPicker = ({
   pickerId, typeFilters, pickedDocRef, setPickedDocRef,
 }) => (
-  <div>
-    <AppSearchBar
-      pickerId={pickerId}
-      typeFilters={typeFilters}
-      onChange={setPickedDocRef}
-      value={pickedDocRef}
-    />
-    <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
-  </div>
-);
+    <div>
+      <AppSearchBar
+        pickerId={pickerId}
+        typeFilters={typeFilters}
+        onChange={setPickedDocRef}
+        value={pickedDocRef}
+      />
+      <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
+    </div>
+  );
 
 AppSearchAsPicker = enhancePicker(AppSearchAsPicker);
 
@@ -134,9 +131,6 @@ storiesOf('App Search Bar', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
   .addDecorator(KeyIsDownDecorator())
-  .addDecorator(ReduxDecorator)
-  .addDecorator(FontAwesomeDecorator)
-  .addDecorator(StoryRouter())
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
   .add('Doc Ref Form', () => <AppSearchAsForm pickerId="docRefForm1" />)
   .add('Doc Ref Picker', () => <AppSearchAsPicker pickerId="docRefPicker2" />)

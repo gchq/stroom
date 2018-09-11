@@ -20,6 +20,8 @@ import { connect } from 'react-redux';
 import { Button } from 'semantic-ui-react';
 import ReactModal from 'react-modal';
 
+import IconHeader from 'components/IconHeader';
+
 const enhance = compose(
   connect(
     ({ userSettings: { theme } }) => ({
@@ -69,7 +71,7 @@ let ThemedModal = ({
 }) => (
     <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
       <div className="raised-low themed-modal">
-        <div className="raised-low themed-modal__header">{header}</div>
+        <header className="raised-low themed-modal__header">{header}</header>
         <div className="raised-low themed-modal__content">{content}</div>
         <div className="raised-low themed-modal__footer__actions">
           {actions}
@@ -85,9 +87,9 @@ let ThemedConfirm = ({
 }) => (
     <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
       <div className="raised-low themed-modal">
-        <div className="raised-low themed-modal__header">
-          <h3>{question} </h3>
-        </div>
+        <header className="raised-low themed-modal__header">
+          <IconHeader text={question} icon='question-circle' />
+        </header>
         {details && <div className="raised-low themed-modal__content">{details}</div>}
         <div className="raised-low themed-modal__footer__actions">
           <Button negative onClick={onCancel}>

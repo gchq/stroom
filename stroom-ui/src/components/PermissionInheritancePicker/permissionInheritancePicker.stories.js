@@ -16,18 +16,15 @@
 import React, { Component } from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-
 import { Field, reduxForm } from 'redux-form';
 import { Form } from 'semantic-ui-react';
 import { storiesOf, addDecorator } from '@storybook/react';
 
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import {
   PermissionInheritancePicker,
   permissionInheritanceValues,
 } from 'components/PermissionInheritancePicker';
-
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
@@ -61,5 +58,4 @@ let TestForm = ({ thisForm }) => (
 TestForm = enhance(TestForm);
 
 storiesOf('Permission Inheritance Picker', module)
-  .addDecorator(ReduxDecorator)
   .add('Permission Inheritance Picker', () => <TestForm />);

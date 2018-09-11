@@ -3,7 +3,6 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import PanelGroup from 'react-panelgroup';
 import loremIpsum from 'lorem-ipsum';
 

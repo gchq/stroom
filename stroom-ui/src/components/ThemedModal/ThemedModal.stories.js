@@ -19,7 +19,7 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { compose, withState } from 'recompose';
 import { Header, Button } from 'semantic-ui-react';
 
-import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { ThemedModal, ThemedConfirm } from '.';
 
 import 'styles/main.css';
@@ -82,6 +82,5 @@ let TestConfirm = ({
 TestConfirm = enhanceConfirm(TestConfirm);
 
 storiesOf('Themed Modal', module)
-  .addDecorator(ReduxDecorator)
   .add('Test Modal', () => <TestModal />)
   .add('Test Confirm', () => <TestConfirm />);

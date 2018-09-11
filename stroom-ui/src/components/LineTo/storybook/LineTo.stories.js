@@ -15,63 +15,60 @@
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-
 import { storiesOf } from '@storybook/react';
 
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-
 import { LineContainer, LineTo } from '../index';
-
 import 'semantic/dist/semantic.min.css';
 
 let testBlockStyle = {
     position: 'absolute',
-    width:'50px',
+    width: '50px',
     backgroundColor: 'red',
     borderStyle: 'thin',
     color: 'white'
 }
 
 storiesOf('Line To SVG', module)
-    .addDecorator(ReduxDecorator)
     .add('Single Line', () => {
         return (
             <div>
                 <LineContainer lineContextId='testLines1'>
                     <div id='myFirst' style={{
                         ...testBlockStyle,
-                        top: '50px', 
-                        left: '50px'}}>From</div>
+                        top: '50px',
+                        left: '50px'
+                    }}>From</div>
                     <div id='mySecond' style={{
                         ...testBlockStyle,
-                        top: '250px', 
-                        left: '150px'}}>To</div>
-                    <LineTo 
+                        top: '250px',
+                        left: '150px'
+                    }}>To</div>
+                    <LineTo
                         lineId='myLine1'
                         fromId='myFirst'
-                        toId='mySecond' 
-                        />
+                        toId='mySecond'
+                    />
                 </LineContainer>
             </div>
         )
     })
     .add('Custom Curve', () => {
-        const curve = ({lineId, fromRect, toRect}) => {
+        const curve = ({ lineId, fromRect, toRect }) => {
             let from = {
-                x : fromRect.left + (fromRect.width / 2),
-                y : fromRect.bottom
+                x: fromRect.left + (fromRect.width / 2),
+                y: fromRect.bottom
             };
             let to = {
-                x : toRect.left,
-                y : toRect.top + (toRect.height / 2)
+                x: toRect.left,
+                y: toRect.top + (toRect.height / 2)
             };
             let pathSpec = 'M ' + from.x + ' ' + from.y
-                        + ' C ' + from.x + ' ' + from.y + ' '
-                                + from.x + ' ' + to.y + ' '
-                                + to.x + ' ' + to.y;
+                + ' C ' + from.x + ' ' + from.y + ' '
+                + from.x + ' ' + to.y + ' '
+                + to.x + ' ' + to.y;
             return (
-                <path key={lineId}  d={pathSpec} style={{
-                    stroke:'black',
+                <path key={lineId} d={pathSpec} style={{
+                    stroke: 'black',
                     strokeWidth: 2,
                     fill: 'none'
                 }} />
@@ -87,59 +84,62 @@ storiesOf('Line To SVG', module)
                 <LineContainer lineContextId='testLines2' lineElementCreators={lineCreators}>
                     <div id='myFirst' style={{
                         ...testBlockStyle,
-                        top: '50px', 
-                        left: '150px'}}>From</div>
+                        top: '50px',
+                        left: '150px'
+                    }}>From</div>
                     <div id='mySecond' style={{
                         ...testBlockStyle,
-                        top: '250px', 
-                        left: '50px'}}>Mid1</div>
+                        top: '250px',
+                        left: '50px'
+                    }}>Mid1</div>
                     <div id='myThird' style={{
                         ...testBlockStyle,
-                        top: '150px', 
-                        left: '350px'}}>End</div>
-                    <LineTo 
+                        top: '150px',
+                        left: '350px'
+                    }}>End</div>
+                    <LineTo
                         lineId='myLine2'
                         lineType='curve'
                         fromId='myFirst'
-                        toId='mySecond' 
-                        />
-                    <LineTo 
+                        toId='mySecond'
+                    />
+                    <LineTo
                         lineId='myLine3'
                         lineType='curve'
                         fromId='mySecond'
-                        toId='myThird' 
-                        />
+                        toId='myThird'
+                    />
                 </LineContainer>
             </div>
         )
     })
 
     .add('Mixed Line Types', () => {
-        const straightLineDown = ({lineId, fromRect, toRect}) => {
+        const straightLineDown = ({ lineId, fromRect, toRect }) => {
             return (
-                <line key={lineId} 
+                <line key={lineId}
                     x1={fromRect.left + (fromRect.width / 2)} y1={fromRect.bottom}
                     x2={toRect.left + (toRect.width / 2)} y2={toRect.top}
                     style={{
-                        stroke:'black',
+                        stroke: 'black',
                         strokeWidth: 2,
                         fill: 'none'
                     }}
-                    />
+                />
             )
         }
-        
-        const straightLineLeftToRight = ({lineId, fromRect, toRect}) => {
+
+        const straightLineLeftToRight = ({ lineId, fromRect, toRect }) => {
             return (
-                <line key={lineId} 
+                <line key={lineId}
                     x1={fromRect.right} y1={fromRect.top + (fromRect.height / 2)}
                     x2={toRect.left} y2={toRect.top + (toRect.height / 2)}
                     style={{
-                        stroke:'black',
+                        stroke: 'black',
                         strokeWidth: 2,
                         fill: 'none'
                     }}
-                    />
+                />
             )
         }
 
@@ -153,58 +153,64 @@ storiesOf('Line To SVG', module)
                 <LineContainer lineContextId='testLines2' lineElementCreators={lineCreators}>
                     <div id='myFirst' style={{
                         ...testBlockStyle,
-                        top: '50px', 
-                        left: '50px'}}>First</div>
+                        top: '50px',
+                        left: '50px'
+                    }}>First</div>
                     <div id='myFirstDetails' style={{
                         ...testBlockStyle,
-                        top: '250px', 
-                        left: '50px'}}>First Details</div>
+                        top: '250px',
+                        left: '50px'
+                    }}>First Details</div>
                     <div id='mySecond' style={{
                         ...testBlockStyle,
-                        top: '50px', 
-                        left: '150px'}}>Second</div>
+                        top: '50px',
+                        left: '150px'
+                    }}>Second</div>
                     <div id='mySecondDetails' style={{
                         ...testBlockStyle,
-                        top: '250px', 
-                        left: '150px'}}>Second Details</div>
+                        top: '250px',
+                        left: '150px'
+                    }}>Second Details</div>
                     <div id='myThird' style={{
                         ...testBlockStyle,
-                        top: '50px', 
-                        left: '250px'}}>Third</div>
+                        top: '50px',
+                        left: '250px'
+                    }}>Third</div>
                     <div id='myThirdDetails' style={{
                         ...testBlockStyle,
-                        top: '250px', 
-                        left: '250px'}}>Third Details</div>
-                    <LineTo 
+                        top: '250px',
+                        left: '250px'
+                    }}>Third Details</div>
+                    <LineTo
                         lineId='myFirstDetailsLine'
                         lineType='straight-down'
                         fromId='myFirst'
-                        toId='myFirstDetails' 
-                        />
-                    <LineTo 
+                        toId='myFirstDetails'
+                    />
+                    <LineTo
                         lineId='mySecondDetailsLine'
                         lineType='straight-down'
                         fromId='mySecond'
-                        toId='mySecondDetails' 
-                        />
-                    <LineTo 
+                        toId='mySecondDetails'
+                    />
+                    <LineTo
                         lineId='myThirdDetailsLine'
                         lineType='straight-down'
                         fromId='myThird'
-                        toId='myThirdDetails' 
-                        />
-                    <LineTo 
+                        toId='myThirdDetails'
+                    />
+                    <LineTo
                         lineId='myLine2'
                         lineType='straight-left-to-right'
                         fromId='myFirst'
-                        toId='mySecond' 
-                        />
-                    <LineTo 
+                        toId='mySecond'
+                    />
+                    <LineTo
                         lineId='myLine3'
                         lineType='straight-left-to-right'
                         fromId='mySecond'
-                        toId='myThird' 
-                        />
+                        toId='myThird'
+                    />
                 </LineContainer>
             </div>
         )

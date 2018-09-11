@@ -3,8 +3,6 @@ import { withState } from 'recompose';
 import { storiesOf, addDecorator } from '@storybook/react';
 
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import SingleValueWidget from './SingleValueWidget';
 import InValueWidget from './InValueWidget';
@@ -19,9 +17,7 @@ const CInValueWidget = withControlledValue(InValueWidget);
 const CBetweenValueWidget = withControlledValue(BetweenValueWidget);
 
 const stories = storiesOf('Expression Value Widgets', module)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(FontAwesomeDecorator)
-  .addDecorator(ReduxDecorator);
+  .addDecorator(ThemedDecorator);
 
 ['text', 'number', 'datetime-local'].forEach((valueType) => {
   stories
