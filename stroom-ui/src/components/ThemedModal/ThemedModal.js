@@ -17,7 +17,7 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Button, Modal } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
 import ReactModal from 'react-modal';
 
 const enhance = compose(
@@ -86,20 +86,21 @@ let ThemedConfirm = ({
     <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
       <div className="raised-low themed-modal">
         <div className="raised-low themed-modal__header">
-          <Header className="header" content={question} />
+          <h3>{question} </h3>
         </div>
         {details && <div className="raised-low themed-modal__content">{details}</div>}
         <div className="raised-low themed-modal__footer__actions">
           <Button negative onClick={onCancel}>
             Cancel
-      </Button>
+          </Button>
           <Button
             positive
             onClick={onConfirm}
             labelPosition="right"
             icon="checkmark"
             content="Confirm"
-          />
+          >
+          </Button>
         </div>
       </div>
     </ReactModal>
