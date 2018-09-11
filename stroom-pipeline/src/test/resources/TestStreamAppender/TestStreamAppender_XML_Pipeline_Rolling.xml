@@ -146,7 +146,7 @@
       </property>
       <property>
         <element>streamAppender</element>
-        <name>newWhenBiggerThan</name>
+        <name>splitWhenBiggerThan</name>
         <value>
           <string>1K</string>
         </value>

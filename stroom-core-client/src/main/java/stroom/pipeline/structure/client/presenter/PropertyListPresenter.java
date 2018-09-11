@@ -143,7 +143,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtmlWithState(property, property.getName(), false);
             }
-        }, "Property Name", 100);
+        }, "Property Name", 150);
     }
 
     private void addValueColumn() {
