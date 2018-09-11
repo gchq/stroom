@@ -8,7 +8,6 @@
 @import "../components/DictionaryEditor/DictionaryEditor";
 @import "../components/PipelineEditor/PipelineEditor";
 @import "../components/PipelineSearch/PipelineSearch";
-@import "../sections/DataViewer/DataViewer";
 @import "../components/ExpressionSearchBar/ExpressionSearchBar";
 @import "../components/DocRefListingEntry/DocRefListing";
 @import "../components/XsltEditor/XsltEditor";
@@ -20,7 +19,10 @@
 @import "../components/SelectBox/SelectBox";
 @import "../components/Loader/Loader";
 @import "../components/ThemedModal/ThemedModal";
+@import "../components/NumericInput/NumericInput";
+@import "../components/PathNotFound/PathNotFound";
 
+@import "../sections/DataViewer/DataViewer";
 @import "../sections/AppChrome/AppChrome";
 @import "../sections/Welcome/Welcome";
 @import "../sections/DataViewer/DataViewer";

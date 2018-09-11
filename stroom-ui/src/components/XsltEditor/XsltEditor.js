@@ -16,10 +16,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
+import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Header, Grid, Button } from 'semantic-ui-react';
 
 import Tooltip from 'components/Tooltip';
 
@@ -35,9 +34,6 @@ const { xsltUpdated } = actionCreators;
 
 const enhance = compose(
   withRouter,
-  withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
-  }),
   connect(
     ({ xsltEditor }, { xsltUuid }) => ({
       xsltState: xsltEditor[xsltUuid],
@@ -59,6 +55,13 @@ const enhance = compose(
     ({ xsltState }) => !xsltState,
     renderComponent(() => <Loader message="Loading XSLT..." />),
   ),
+  withProps(({ xsltState: { isDirty, isSaving } }) => ({
+    saveDisabled: !isDirty,
+    saveCaption: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
+  })),
+  withHandlers({
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
+  }),
 );
 
 const XsltEditor = ({
@@ -67,51 +70,36 @@ const XsltEditor = ({
   xsltUpdated,
   saveXslt,
   openDocRef,
-  history,
+  onClickSave,
+  saveDisabled,
+  saveCaption,
 }) => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <Header as="h3">
-          <DocRefImage docRefType="XSLT" />
-          <Header.Content>{xsltUuid}</Header.Content>
-          <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
-          </Header.Subheader>
-        </Header>
-      </Grid.Column>
-      <Grid.Column width={4}>
-        <Tooltip
-          trigger={
-            <Button
-              floated="right"
-              circular
-              icon="save"
-              color={isDirty ? 'blue' : undefined}
-              loading={isSaving}
-              onClick={() => {
-                if (xsltUuid) saveXslt(xsltUuid);
-              }}
-            />
-          }
-          content={isDirty ? 'Save changes' : 'Changes saved'}
-        />
-      </Grid.Column>
-    </Grid>
-    <div className="xslt-editor">
-      <div className="xslt-editor__ace-container">
-        <ThemedAceEditor
-          style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-          name={`${xsltUuid}-ace-editor`}
-          mode="xml"
-          value={xsltData}
-          onChange={(newValue) => {
-            if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
-          }}
-        />
+  <div className="xsltEditor">
+    <div className="dictionaryEditor__headerBar">
+      <header>
+        <DocRefImage docRefType="XSLT" />
+        <h3>{xsltUuid}</h3>
+
+        <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
+      </header>
+      <div>
+        <button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave}>
+          {saveCaption}
+        </button>
       </div>
     </div>
-  </React.Fragment>
+    <div className="xsltEditor__ace-container">
+      <ThemedAceEditor
+        style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+        name={`${xsltUuid}-ace-editor`}
+        mode="xml"
+        value={xsltData}
+        onChange={(newValue) => {
+          if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+        }}
+      />
+    </div>
+  </div>
 );
 
 XsltEditor.propTypes = {
