@@ -52,14 +52,16 @@ public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentAct
 
             currentActivity.setActivity(afterActivity);
 
-            final Event event = eventLoggingService.createAction("Set Activity", "User has changed activity");
+            if (beforeActivity != null && afterActivity != null) {
+                final Event event = eventLoggingService.createAction("Set Activity", "User has changed activity");
 
-            final Update update = new Update();
-            update.setBefore(convertActivity(beforeActivity));
-            update.setAfter(convertActivity(afterActivity));
+                final Update update = new Update();
+                update.setBefore(convertActivity(beforeActivity));
+                update.setAfter(convertActivity(afterActivity));
 
-            event.getEventDetail().setUpdate(update);
-            eventLoggingService.log(event);
+                event.getEventDetail().setUpdate(update);
+                eventLoggingService.log(event);
+            }
 
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -69,13 +71,6 @@ public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentAct
     }
 
     private MultiObject convertActivity(final Activity activity) {
-        if (activity == null ||
-                activity.getDetails() == null ||
-                activity.getDetails().getProperties() == null ||
-                activity.getDetails().getProperties().size() == 0) {
-            return null;
-        }
-
         final Object object = new Object();
         object.setType("Activity");
         PurposeUtil.addData(object.getData(), activity);
