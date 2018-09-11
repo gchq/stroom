@@ -146,7 +146,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
             sizeBytes = -1L;
 
             // Set the maximum number of bytes to write before creating a new stream.
-            if (size != null && !"unlimited".equals(size.trim())) {
+            if (size != null && size.trim().length() > 0) {
                 try {
                     sizeBytes = ModelStringUtil.parseIECByteSizeString(size);
                 } catch (final RuntimeException e) {
@@ -158,7 +158,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "The size of the output stream that will cause a new stream to be created", defaultValue = "unlimited")
+    @PipelineProperty(description = "The size of the output stream that will cause a new stream to be created")
     public void setSplitWhenBiggerThan(final String size) {
         this.size = size;
     }
