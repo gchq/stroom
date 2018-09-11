@@ -6,13 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
+* Issue **#791** : Fixed broken equals method so query total row count gets updated correctly.
 
-* Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+* Issue **#830** : Fix for API queries not returning before timing out.
 
-* Issue **819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
+* Issue **#824** : Fix for replace method in PathCreator also found in stroom proxy.
 
-* Issue **817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
+* Issue **#820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+
+* Issue **#819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
+
+* Issue **#817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
 
 * Issue **#697** : Fix for reference data sometimes failing to find the appropriate effective stream due to the incorrect use of the effective stream cache. It was incorrectly configured to use a time to idle (TTI) expiry rather than a time to live (TTL) expiry meaning that heavy use of the cache would prevent the cached effective streams being refreshed.
 
