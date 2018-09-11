@@ -31,13 +31,13 @@ const DeleteExpressionItem = ({
   onConfirmDelete,
   onCancelDelete,
 }) => (
-  <ThemedConfirm
-    open={!!pendingDeletionOperatorId}
-    question={`Delete ${pendingDeletionOperatorId} from expression?`}
-    onCancel={onCancelDelete}
-    onConfirm={onConfirmDelete}
-  />
-);
+    <ThemedConfirm
+      isOpen={!!pendingDeletionOperatorId}
+      question={`Delete ${pendingDeletionOperatorId} from expression?`}
+      onCancel={onCancelDelete}
+      onConfirm={onConfirmDelete}
+    />
+  );
 
 DeleteExpressionItem.propTypes = {
   expressionId: PropTypes.string.isRequired,

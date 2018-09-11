@@ -59,25 +59,25 @@ const enhanceConfirm = compose(withModalOpen, withWasConfirmed);
 let TestConfirm = ({
   modalIsOpen, setModalIsOpen, isConfirmed, setIsConfirmed,
 }) => (
-  <React.Fragment>
-    <ThemedConfirm
-      open={modalIsOpen}
-      question="Are you sure about this?"
-      details="Because...nothing will really happen anyway"
-      onConfirm={() => {
-        setIsConfirmed(CONFIRM_STATE.CONFIRMED);
-        setModalIsOpen(false);
-      }}
-      onCancel={() => {
-        setIsConfirmed(CONFIRM_STATE.CANCELLED);
-        setModalIsOpen(false);
-      }}
-      onClose={() => setModalIsOpen(false)}
-    />
-    <Button onClick={() => setModalIsOpen(!modalIsOpen)} content="Check" />
-    <div>Current State: {isConfirmed}</div>
-  </React.Fragment>
-);
+    <React.Fragment>
+      <ThemedConfirm
+        isOpen={modalIsOpen}
+        question="Are you sure about this?"
+        details="Because...nothing will really happen anyway"
+        onConfirm={() => {
+          setIsConfirmed(CONFIRM_STATE.CONFIRMED);
+          setModalIsOpen(false);
+        }}
+        onCancel={() => {
+          setIsConfirmed(CONFIRM_STATE.CANCELLED);
+          setModalIsOpen(false);
+        }}
+        onClose={() => setModalIsOpen(false)}
+      />
+      <Button onClick={() => setModalIsOpen(!modalIsOpen)} content="Check" />
+      <div>Current State: {isConfirmed}</div>
+    </React.Fragment>
+  );
 
 TestConfirm = enhanceConfirm(TestConfirm);
 

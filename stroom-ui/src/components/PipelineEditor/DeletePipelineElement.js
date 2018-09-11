@@ -32,13 +32,13 @@ const DeletePipelineElement = ({
   onConfirmDelete,
   onCancelDelete,
 }) => (
-  <ThemedConfirm
-    open={!!pendingElementIdToDelete}
-    question={`Delete ${pendingElementIdToDelete} from pipeline?`}
-    onCancel={onCancelDelete}
-    onConfirm={onConfirmDelete}
-  />
-);
+    <ThemedConfirm
+      isOpen={!!pendingElementIdToDelete}
+      question={`Delete ${pendingElementIdToDelete} from pipeline?`}
+      onCancel={onCancelDelete}
+      onConfirm={onConfirmDelete}
+    />
+  );
 
 DeletePipelineElement.propTypes = {
   pipelineId: PropTypes.string.isRequired,
