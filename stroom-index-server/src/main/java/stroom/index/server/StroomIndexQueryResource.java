@@ -143,11 +143,11 @@ public class StroomIndexQueryResource implements HasHealthCheck {
                     })
                     .collect(Collectors.joining("\n"));
         } else {
-            resultInfo = "";
+            resultInfo = "null";
         }
 
         return LambdaLogger.buildMessage("Return search response, key: {}, result sets: {}, " +
-                        "complete: {}, errors: {}, results:{}",
+                        "complete: {}, errors: {}, results: {}",
                 request.getKey().toString(),
                 searchResponse.getResults(),
                 searchResponse.complete(),
