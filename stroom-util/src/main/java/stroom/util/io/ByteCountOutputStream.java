@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,37 @@
 
 package stroom.util.io;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ByteCountOutputStream extends WrappedOutputStream {
-    private long byteCount;
+public class ByteCountOutputStream extends FilterOutputStream {
+    private final AtomicLong count = new AtomicLong();
 
-    public ByteCountOutputStream(OutputStream outputStream) {
+    public ByteCountOutputStream(final OutputStream outputStream) {
         super(outputStream);
     }
 
-    public long getByteCount() {
-        return byteCount;
-    }
-
     @Override
-    public void write(final int b) throws IOException {
-        byteCount++;
+    public synchronized void write(final int b) throws IOException {
+        count.incrementAndGet();
         super.write(b);
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
-        byteCount += b.length;
+        count.addAndGet(b.length);
         super.write(b);
     }
 
     @Override
-    public void write(final byte[] b, final int off, final int len) throws IOException {
-        byteCount += len;
+    public synchronized void write(final byte[] b, final int off, final int len) throws IOException {
+        count.addAndGet(len);
         super.write(b, off, len);
+    }
+
+    public long getCount() {
+        return count.get();
     }
 }

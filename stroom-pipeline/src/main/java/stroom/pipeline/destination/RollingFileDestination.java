@@ -16,6 +16,11 @@
 
 package stroom.pipeline.destination;
 
+import org.apache.commons.lang.StringUtils;
+import stroom.pipeline.server.writer.PathCreator;
+import stroom.util.io.ByteCountOutputStream;
+import stroom.util.logging.StroomLogger;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,11 +28,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import stroom.util.logging.StroomLogger;
-import org.apache.commons.lang.StringUtils;
-
-import stroom.pipeline.server.writer.PathCreator;
 
 public class RollingFileDestination extends RollingDestination {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(RollingFileDestination.class);
@@ -53,8 +53,8 @@ public class RollingFileDestination extends RollingDestination {
     private volatile boolean rolled;
 
     public RollingFileDestination(final String key, final String fileName, final String rolledFileName,
-            final long frequency, final long maxSize, final File dir, final File file, final long creationTime)
-                    throws IOException {
+                                  final long frequency, final long maxSize, final File dir, final File file, final long creationTime)
+            throws IOException {
         this.key = key;
 
         this.fileName = fileName;
@@ -110,7 +110,7 @@ public class RollingFileDestination extends RollingDestination {
 
                 // If we haven't written yet then create the output stream and
                 // write a header if we have one.
-                if (header != null && outputStream != null && outputStream.getBytesWritten() == 0) {
+                if (header != null && outputStream != null && outputStream.getCount() == 0) {
                     // Write the header.
                     write(header);
                 }
@@ -166,7 +166,7 @@ public class RollingFileDestination extends RollingDestination {
 
     private boolean shouldRoll(final long currentTime) {
         final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getBytesWritten() > maxSize;
+        return creationTime < oldestAllowed || outputStream.getCount() > maxSize;
     }
 
     private void roll() throws IOException {
@@ -176,7 +176,7 @@ public class RollingFileDestination extends RollingDestination {
         IOException exception = null;
 
         // If we have written then write a footer if we have one.
-        if (footer != null && outputStream != null && outputStream.getBytesWritten() > 0) {
+        if (footer != null && outputStream != null && outputStream.getCount() > 0) {
             // Write the footer.
             try {
                 write(footer);
@@ -329,7 +329,7 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     private IOException handleRollException(final File sourceFile, final File destFile,
-            final IOException existingException, final Throwable newException) {
+                                            final IOException existingException, final Throwable newException) {
         final StringBuilder sb = new StringBuilder();
         sb.append("Failed to roll file '");
         sb.append(getFullPath(sourceFile));

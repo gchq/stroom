@@ -16,12 +16,13 @@
 
 package stroom.pipeline.destination;
 
+import stroom.feed.MetaMap;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.logging.StroomLogger;
-import stroom.feed.MetaMap;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -94,7 +95,7 @@ public class RollingStreamDestination extends RollingDestination {
 
                 // If we haven't written yet then create the output stream and
                 // write a header if we have one.
-                if (header != null && header.length > 0 && outputStream.getBytesWritten() == 0) {
+                if (header != null && header.length > 0 && outputStream.getCount() == 0) {
                     // Write the header.
                     write(header);
                 }
@@ -162,7 +163,7 @@ public class RollingStreamDestination extends RollingDestination {
 
     private boolean shouldRoll(final long currentTime) {
         final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getBytesWritten() > maxSize;
+        return creationTime < oldestAllowed || outputStream.getCount() > maxSize;
     }
 
     private void roll() throws IOException {

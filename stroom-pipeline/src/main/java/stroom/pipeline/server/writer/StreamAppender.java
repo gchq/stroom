@@ -163,7 +163,7 @@ public class StreamAppender extends AbstractAppender {
             return wrappedSegmentOutputStream.getPosition();
         }
         if (byteCountOutputStream != null) {
-            return byteCountOutputStream.getByteCount();
+            return byteCountOutputStream.getCount();
         }
         return 0;
     }
@@ -178,7 +178,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamType = streamType;
     }
 
-    @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
+    @PipelineProperty(description = "Should the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }

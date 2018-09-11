@@ -340,7 +340,7 @@ public class StroomStreamProcessor {
         }
 
         if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
-            if (byteCountInputStream.getByteCount() > 22) {
+            if (byteCountInputStream.getCount() > 22) {
                 throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, "No Zip Entries");
             } else {
                 LOGGER.warn("processZipStream() - Zip stream with no entries ! %s", globalMetaMap);

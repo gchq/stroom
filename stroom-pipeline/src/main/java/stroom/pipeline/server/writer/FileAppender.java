@@ -18,7 +18,6 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -26,6 +25,7 @@ import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -112,7 +112,7 @@ public class FileAppender extends AbstractAppender {
         if (byteCountOutputStream == null) {
             return 0;
         }
-        return byteCountOutputStream.getBytesWritten();
+        return byteCountOutputStream.getCount();
     }
 
     /**

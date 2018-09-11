@@ -22,7 +22,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -30,6 +29,7 @@ import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
 
@@ -85,13 +85,18 @@ public class HDFSFileAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() throws IOException {
+        byteCountOutputStream = new ByteCountOutputStream(createHDFSLockedOutputStream());
+        return byteCountOutputStream;
+    }
+
+    HDFSLockedOutputStream createHDFSLockedOutputStream() throws IOException {
         try {
             if (outputPaths == null || outputPaths.length == 0) {
                 throw new IOException("No output paths have been set");
             }
 
             // Get a path to use.
-            String path = null;
+            String path;
             if (outputPaths.length == 1) {
                 path = outputPaths[0];
             } else {
@@ -105,8 +110,7 @@ public class HDFSFileAppender extends AbstractAppender {
             // Make sure we can create this path.
             final Path file = createCleanPath(path);
 
-            byteCountOutputStream = new ByteCountOutputStream(getHDFSLockedOutputStream(file));
-            return byteCountOutputStream;
+            return getHDFSLockedOutputStream(file);
 
         } catch (final IOException e) {
             throw e;
@@ -118,7 +122,7 @@ public class HDFSFileAppender extends AbstractAppender {
     @Override
     long getCurrentOutputSize() {
         if (byteCountOutputStream != null) {
-            return byteCountOutputStream.getBytesWritten();
+            return byteCountOutputStream.getCount();
         }
         return 0;
     }
@@ -134,7 +138,7 @@ public class HDFSFileAppender extends AbstractAppender {
         return new Path(path.replaceAll(":", "-"));
     }
 
-    public static Configuration buildConfiguration(final String hdfsUri) {
+    static Configuration buildConfiguration(final String hdfsUri) {
         final Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hdfsUri);
         conf.set("fs.automatic.close", "true");
@@ -156,7 +160,7 @@ public class HDFSFileAppender extends AbstractAppender {
         return getHDFS(conf);
     }
 
-    public static FileSystem getHDFS(final Configuration conf) {
+    private static FileSystem getHDFS(final Configuration conf) {
         final FileSystem hdfs;
 
         try {
@@ -171,7 +175,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
     }
 
-    public static UserGroupInformation buildRemoteUser(final Optional<String> runAsUser) {
+    static UserGroupInformation buildRemoteUser(final Optional<String> runAsUser) {
         final String user = runAsUser.orElseGet(() -> {
             try {
                 return UserGroupInformation.getCurrentUser().getUserName();
@@ -187,7 +191,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
     }
 
-    private UserGroupInformation getUserGroupInformation() throws IOException {
+    private UserGroupInformation getUserGroupInformation() {
         if (userGroupInformation == null) {
             userGroupInformation = buildRemoteUser(Optional.ofNullable(runAsUser));
         }
@@ -195,19 +199,16 @@ public class HDFSFileAppender extends AbstractAppender {
         return userGroupInformation;
     }
 
-    public static void runOnHDFS(final UserGroupInformation userGroupInformation, final Configuration conf,
-                                 final Consumer<FileSystem> func) {
+    static void runOnHDFS(final UserGroupInformation userGroupInformation, final Configuration conf,
+                          final Consumer<FileSystem> func) {
         try {
-            userGroupInformation.doAs(new PrivilegedExceptionAction<Void>() {
-                @Override
-                public Void run() throws Exception {
-                    final FileSystem hdfs = getHDFS(conf);
+            userGroupInformation.doAs((PrivilegedExceptionAction<Void>) () -> {
+                final FileSystem hdfs = getHDFS(conf);
 
-                    // run the passed lambda
-                    func.accept(hdfs);
+                // run the passed lambda
+                func.accept(hdfs);
 
-                    return null;
-                }
+                return null;
             });
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -259,7 +260,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
         if (hdfsLockedOutputStream == null) {
             throw new RuntimeException(String.format(
-                    "Something went wrong creating the HDFSLockedOutputStream, lockFile %s, outFile %s, hdfs uri %s",
+                    "Something went wrong creating the HDFSLockedOutputStream, outFile %s, hdfs uri %s",
                     filePath, hdfsUri));
         }
 
