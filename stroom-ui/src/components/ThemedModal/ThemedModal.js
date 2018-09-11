@@ -70,13 +70,8 @@ let ThemedModal = ({
       <div className="raised-low themed-modal">
         <div className="raised-low themed-modal__header">{header}</div>
         <div className="raised-low themed-modal__content">{content}</div>
-        <div className="raised-low themed-modal__footer">
-          <hr />
-          <div className="raised-low themed-modal__footer__actions">
-            <div className="raised-low themed-modal__footer__actions-content">
-              {actions}
-            </div>
-          </div>
+        <div className="raised-low themed-modal__footer__actions">
+          {actions}
         </div>
       </div>
     </ReactModal>
