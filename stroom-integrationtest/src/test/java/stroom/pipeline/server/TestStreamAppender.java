@@ -94,7 +94,19 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender.xsl", "TestStreamAppender");
         final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_XML_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.xml.out", null, false);
+        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.xml.out", null, false, 1);
+    }
+
+    @Test
+    public void testXMLRolling() throws Exception {
+        final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
+        final String dir = "TestStreamAppender/";
+        final TextConverter textConverter = createTextConverter(dir + "TestStreamAppender.ds3.xml",
+                "TestStreamAppender", TextConverterType.DATA_SPLITTER);
+        final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender.xsl", "TestStreamAppender");
+        final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_XML_Pipeline_Rolling.xml",
+                textConverter, filteredXSLT);
+        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.xml.out", null, false, 141);
     }
 
     @Test
@@ -106,7 +118,7 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender_Text.xsl", "TestStreamAppender");
         final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_Text_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.txt.out", null, true);
+        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.txt.out", null, true, 1);
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
@@ -149,8 +161,13 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
 
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
-    private void test(final PipelineEntity pipelineEntity, final String inputPath, final String inputStem,
-                      final String outputReference, final String encoding, final boolean text) throws Exception {
+    private void test(final PipelineEntity pipelineEntity,
+                      final String inputPath,
+                      final String inputStem,
+                      final String outputReference,
+                      final String encoding,
+                      final boolean text,
+                      final int outputCount) throws Exception {
         String fileName = inputStem;
         if (text) {
             fileName += ".txt";
@@ -215,12 +232,15 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
 
         final List<Stream> streams = streamStore.find(new FindStreamCriteria());
-        Assert.assertEquals(1, streams.size());
-        final StreamSource streamSource = streamStore.openStreamSource(streams.get(0).getId());
+        Assert.assertEquals(outputCount, streams.size());
 
-        final long streamId = streams.get(0).getId();
-        checkHeaderFooterOnly(streamId, text);
-        checkFull(streamId, outputReference);
+        if (outputCount == 1) {
+            final StreamSource streamSource = streamStore.openStreamSource(streams.get(0).getId());
+
+            final long streamId = streams.get(0).getId();
+            checkHeaderFooterOnly(streamId, text);
+            checkFull(streamId, outputReference);
+        }
     }
 
     private void checkHeaderFooterOnly(final long streamId, final boolean text) throws Exception {

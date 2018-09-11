@@ -18,6 +18,7 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FeedService;
 import stroom.io.StreamCloser;
@@ -37,10 +38,9 @@ import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
-import stroom.util.io.WrappedOutputStream;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import stroom.feed.MetaMap;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -65,16 +65,18 @@ public class StreamAppender extends AbstractAppender {
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
+    private WrappedSegmentOutputStream wrappedSegmentOutputStream;
+    private ByteCountOutputStream byteCountOutputStream;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                   final StreamStore streamStore,
-                   final StreamHolder streamHolder,
-                   final FeedService feedService,
-                   final StreamTypeService streamTypeService,
-                   final StreamProcessorHolder streamProcessorHolder,
-                   final MetaData metaData,
-                   final StreamCloser streamCloser) {
+                          final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final MetaData metaData,
+                          final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -113,13 +115,13 @@ public class StreamAppender extends AbstractAppender {
                 streamProcessorHolder.getStreamProcessor(), streamProcessorHolder.getStreamTask());
 
         streamTarget = streamStore.openStreamTarget(stream);
-        OutputStream targetOutputStream = null;
+        OutputStream targetOutputStream;
 
         // Let the stream closer handle closing it
         streamCloser.add(streamTarget);
 
         if (segmentOutput) {
-            targetOutputStream = new WrappedSegmentOutputStream(new RASegmentOutputStream(streamTarget)) {
+            wrappedSegmentOutputStream = new WrappedSegmentOutputStream(new RASegmentOutputStream(streamTarget)) {
                 @Override
                 public void close() throws IOException {
                     super.flush();
@@ -127,9 +129,10 @@ public class StreamAppender extends AbstractAppender {
                     StreamAppender.this.close();
                 }
             };
+            targetOutputStream = wrappedSegmentOutputStream;
 
         } else {
-            targetOutputStream = new WrappedOutputStream(streamTarget.getOutputStream()) {
+            byteCountOutputStream = new ByteCountOutputStream(streamTarget.getOutputStream()) {
                 @Override
                 public void close() throws IOException {
                     super.flush();
@@ -137,6 +140,7 @@ public class StreamAppender extends AbstractAppender {
                     StreamAppender.this.close();
                 }
             };
+            targetOutputStream = byteCountOutputStream;
         }
 
         return targetOutputStream;
@@ -151,6 +155,17 @@ public class StreamAppender extends AbstractAppender {
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (wrappedSegmentOutputStream != null) {
+            return wrappedSegmentOutputStream.getPosition();
+        }
+        if (byteCountOutputStream != null) {
+            return byteCountOutputStream.getByteCount();
+        }
+        return 0;
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")

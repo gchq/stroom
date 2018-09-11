@@ -16,39 +16,37 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
-import javax.annotation.Resource;
-import javax.inject.Inject;
-
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
+import stroom.pipeline.destination.ByteCountOutputStream;
+import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.spring.StroomScope;
+
+import javax.inject.Inject;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Joins text instances into a single text instance.
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "FileAppender", category = Category.DESTINATION, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_DESTINATION, PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "FileAppender", category = Category.DESTINATION, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_DESTINATION, PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
-
+    private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
 
     @Inject
@@ -66,7 +64,7 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a path to use.
-            String path = null;
+            String path;
             if (outputPaths.length == 1) {
                 path = outputPaths[0];
             } else {
@@ -99,8 +97,8 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a writer for the new lock file.
-            final OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(lockFile));
-            return new LockedOutputStream(outputStream, lockFile, outFile);
+            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(lockFile)));
+            return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
             throw e;
@@ -109,9 +107,16 @@ public class FileAppender extends AbstractAppender {
         }
     }
 
+    @Override
+    long getCurrentOutputSize() {
+        if (byteCountOutputStream == null) {
+            return 0;
+        }
+        return byteCountOutputStream.getBytesWritten();
+    }
+
     /**
-     * @param outputPaths
-     *            the outputPaths to set
+     * @param outputPaths the outputPaths to set
      */
     @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.")
     public void setOutputPaths(final String outputPaths) {

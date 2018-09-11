@@ -18,7 +18,9 @@ package stroom.pipeline.server.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;
@@ -30,6 +32,8 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     private OutputStream outputStream;
     private SegmentOutputStream segmentOutputStream;
     private byte[] footer;
+    private String size;
+    private Long sizeBytes = null;
 
     AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;
@@ -37,25 +41,12 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void endProcessing() {
-        if (outputStream != null) {
-            try {
-                writeFooter();
-            } catch (final IOException e) {
-                error(e.getMessage(), e);
-            }
-
-            try {
-                outputStream.close();
-            } catch (final IOException e) {
-                error(e.getMessage(), e);
-            }
-        }
-
+        closeCurrentOutputStream();
         super.endProcessing();
     }
 
     @Override
-    public Destination borrowDestination() throws IOException {
+    public Destination borrowDestination() {
         return this;
     }
 
@@ -68,6 +59,29 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
         // whether a footer is actually written. We do this because we always make an allowance for a footer for data
         // display purposes.
         insertSegmentMarker();
+
+        final Long sizeBytes = getSizeBytes();
+        if (sizeBytes > 0 && sizeBytes <= getCurrentOutputSize()) {
+            closeCurrentOutputStream();
+        }
+    }
+
+    private void closeCurrentOutputStream() {
+        if (outputStream != null) {
+            try {
+                writeFooter();
+            } catch (final IOException e) {
+                error(e.getMessage(), e);
+            }
+
+            try {
+                outputStream.close();
+            } catch (final IOException e) {
+                error(e.getMessage(), e);
+            }
+
+            outputStream = null;
+        }
     }
 
     @Override
@@ -81,7 +95,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
         if (outputStream == null) {
             outputStream = createOutputStream();
-            if (outputStream != null && outputStream instanceof SegmentOutputStream) {
+            if (outputStream instanceof SegmentOutputStream) {
                 segmentOutputStream = (SegmentOutputStream) outputStream;
             }
 
@@ -123,5 +137,29 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     protected void error(final String message, final Exception e) {
         errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
+    }
+
+    abstract long getCurrentOutputSize();
+
+    private Long getSizeBytes() {
+        if (sizeBytes == null) {
+            sizeBytes = -1L;
+
+            // Set the maximum number of bytes to write before creating a new stream.
+            if (size != null && !"unlimited".equals(size.trim())) {
+                try {
+                    sizeBytes = ModelStringUtil.parseIECByteSizeString(size);
+                } catch (final RuntimeException e) {
+                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(), "Unable to parse size: " + size, null);
+                }
+            }
+        }
+        return sizeBytes;
+    }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "The size of the output stream that will cause a new stream to be created", defaultValue = "unlimited")
+    public void setNewWhenBiggerThan(final String size) {
+        this.size = size;
     }
 }

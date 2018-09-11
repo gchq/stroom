@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -63,6 +64,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
+    private ByteCountOutputStream byteCountOutputStream;
 
     @Inject
     HDFSFileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -103,13 +105,22 @@ public class HDFSFileAppender extends AbstractAppender {
             // Make sure we can create this path.
             final Path file = createCleanPath(path);
 
-            return getHDFSLockedOutputStream(file);
+            byteCountOutputStream = new ByteCountOutputStream(getHDFSLockedOutputStream(file));
+            return byteCountOutputStream;
 
         } catch (final IOException e) {
             throw e;
         } catch (final Exception e) {
             throw new IOException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (byteCountOutputStream != null) {
+            return byteCountOutputStream.getBytesWritten();
+        }
+        return 0;
     }
 
     /**
