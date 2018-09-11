@@ -139,10 +139,10 @@ const MenuItem = ({
     {menuItem.children && menuItem.children.length > 0 ? (
       <FontAwesomeIcon
         onClick={onCaretClick}
-        name={`caret ${areMenuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
+        icon={`caret-${areMenuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
       />
         ) : menuItem.key !== 'stroom' ? (
-          <FontAwesomeIcon />
+          <div className='AppChrome__MenuItemIcon' />
         ) : (
           undefined
         )}

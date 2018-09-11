@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Input } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
@@ -208,8 +207,8 @@ const AppSearchBar = ({
   onSearchTermChange,
 }) => (
   <div className={`dropdown ${className}`}>
-    <Input
-      className="border flat app-search-bar__input"
+    <input
+      className="app-search-bar__input"
       icon="search"
       placeholder="Search..."
       value={valueToShow}

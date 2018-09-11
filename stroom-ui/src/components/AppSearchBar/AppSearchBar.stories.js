@@ -17,7 +17,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
-import { Form } from 'semantic-ui-react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
@@ -47,12 +46,12 @@ const enhanceForm = compose(
 );
 
 let AppSearchAsForm = ({ pickerId, typeFilters, thisForm }) => (
-  <Form>
-    <Form.Field>
+  <form>
+    <div>
       <label htmlFor="someName">Some Name</label>
       <Field name="someName" component="input" type="text" />
-    </Form.Field>
-    <Form.Field>
+    </div>
+    <div>
       <label>Chosen Doc Ref</label>
       <Field
         name="chosenDocRef"
@@ -65,14 +64,17 @@ let AppSearchAsForm = ({ pickerId, typeFilters, thisForm }) => (
           />
         )}
       />
-    </Form.Field>
+    </div>
     {thisForm &&
       thisForm.values && (
         <div>
+          <h3>Form Values Observed</h3>
+          Name: {thisForm.values.someName}
+          <br />
           Chosen Doc Ref: {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
         </div>
       )}
-  </Form>
+  </form>
 );
 
 AppSearchAsForm = enhanceForm(AppSearchAsForm);
