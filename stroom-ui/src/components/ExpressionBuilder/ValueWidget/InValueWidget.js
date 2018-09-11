@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
-import { Dropdown } from 'semantic-ui-react';
 
 const enhance = compose(
   withProps(({ value }) => {
