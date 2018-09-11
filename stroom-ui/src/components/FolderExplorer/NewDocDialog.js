@@ -53,7 +53,7 @@ const NewDocDialog = ({
   theme,
 }) => (
   <ThemedModal
-    open={isOpen}
+    isOpen={isOpen}
     onClose={completeDocRefCreation}
     size="small"
     closeOnDimmerClick={false}

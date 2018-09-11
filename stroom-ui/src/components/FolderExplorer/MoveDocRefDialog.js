@@ -72,7 +72,7 @@ const MoveDocRefDialog = ({
   moveDocRefDialogForm,
 }) => (
   <ThemedModal
-    open={isMoving}
+    isOpen={isMoving}
     header={
       <Header className="header" icon="move" content="Select a Destination Folder for the Move?" />
     }

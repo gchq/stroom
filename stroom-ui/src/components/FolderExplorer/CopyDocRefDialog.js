@@ -74,7 +74,7 @@ const CopyDocRefDialog = ({
   copyDocRefDialogForm,
 }) => (
   <ThemedModal
-    open={isCopying}
+    isOpen={isCopying}
     header={
       <Header className="header" icon="copy" content="Select a Destination Folder for the Copy" />
     }

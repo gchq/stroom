@@ -79,7 +79,7 @@ const AddElementModal = ({
 }) => (
   <ThemedModal
     size="tiny"
-    open={isOpen}
+    isOpen={isOpen}
     onClose={onCancelNewElement}
     dimmer="inverted"
     header={<Header content="Add New Element" />}

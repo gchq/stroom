@@ -42,7 +42,7 @@ const DeleteDocRefDialog = ({
   isDeleting, uuids, completeDocRefDelete, deleteDocuments,
 }) => (
   <ThemedModal
-    open={isDeleting}
+    isOpen={isDeleting}
     header={
       <Header
         className="header"

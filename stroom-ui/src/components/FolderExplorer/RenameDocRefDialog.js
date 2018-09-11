@@ -50,7 +50,7 @@ const RenameDocRefDialog = ({
   renameDocument,
 }) => (
   <ThemedModal
-    open={isRenaming}
+    isOpen={isRenaming}
     header={<Header className="header" icon="pencil" content="Enter New Name for Doc Ref" />}
     content={
       <Form>

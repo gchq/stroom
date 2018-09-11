@@ -1,0 +1,28 @@
+.themed-modal {
+  position: relative;
+  height:100%;
+}
+
+.themed-modal__header {
+  padding: 10px;
+}
+
+.themed-modal__content {
+  padding: 0 20px 0 20px;
+}
+
+.themed-modal__footer {
+  width: 100%;
+  min-height: 60px;
+  position: absolute;
+  bottom: 0;
+}
+
+.themed-modal__footer__actions {
+  position:relative;
+}
+
+.themed-modal__footer__actions-content {
+  position:absolute;
+  right: 0;
+}

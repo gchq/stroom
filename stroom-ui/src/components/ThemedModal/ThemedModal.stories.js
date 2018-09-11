@@ -30,7 +30,7 @@ const withModalOpen = withState('modalIsOpen', 'setModalIsOpen', false);
 let TestModal = ({ modalIsOpen, setModalIsOpen }) => (
   <React.Fragment>
     <ThemedModal
-      open={modalIsOpen}
+      isOpen={modalIsOpen}
       header={<Header className="header" content="This is the header" />}
       content={<div>Maybe put something helpful in here</div>}
       actions={

@@ -51,7 +51,7 @@ const DocRefInfoModal = ({
   formattedUpdateTime,
 }) => (
     <ThemedModal
-      open={isOpen}
+      isOpen={isOpen}
       onClose={docRefInfoClosed}
       header={<Header className="header" icon="info" content="Document Information" />}
       content={

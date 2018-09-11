@@ -54,7 +54,7 @@ const PipelineSettings = ({
   pipelineId, onConfirm, onCancel, isOpen, invalid, submitting,
 }) => (
   <ThemedModal
-    open={isOpen}
+    isOpen={isOpen}
     onClose={onCancel}
     size="tiny"
     dimmer="inverted"

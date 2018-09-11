@@ -17,7 +17,8 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Modal, Button } from 'semantic-ui-react';
+import { Header, Button, Modal } from 'semantic-ui-react';
+import ReactModal from 'react-modal';
 
 const enhance = compose(
   connect(
@@ -41,37 +42,71 @@ const enhance = compose(
 let ThemedModal = ({
   dimmer, theme, header, content, actions, ...rest
 }) => (
-  <Modal dimmer={dimmer} className={theme} {...rest}>
-    <div className="raised-low">{header}</div>
-    <Modal.Content className="raised-low">{content}</Modal.Content>
-    <Modal.Actions className="raised-low">{actions}</Modal.Actions>
-  </Modal>
-);
+    <ReactModal {...rest} style={{
+      overlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.75)'
+      },
+      content: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        // right: '40px',
+        // bottom: '40px',
+        border: '1px solid #ccc',
+        background: '#fff',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        borderRadius: '4px',
+        outline: 'none',
+        padding: '0'
+      }
+    }}>
+      <div className="raised-low themed-modal">
+        <div className="raised-low themed-modal__header">{header}</div>
+        <div className="raised-low themed-modal__content">{content}</div>
+        <div className="raised-low themed-modal__footer">
+          <hr />
+          <div className="raised-low themed-modal__footer__actions">
+            <div className="raised-low themed-modal__footer__actions-content">
+              {actions}
+            </div>
+          </div>
+        </div>
+      </div>
+    </ReactModal>
+
+  );
 
 ThemedModal = enhance(ThemedModal);
 
 let ThemedConfirm = ({
   dimmer, theme, question, details, onCancel, onConfirm, ...rest
 }) => (
-  <Modal dimmer={dimmer} className={theme} {...rest}>
-    <div className="raised-low">
-      <Header className="header" content={question} />
-    </div>
-    {details && <Modal.Content className="raised-low">{details}</Modal.Content>}
-    <Modal.Actions className="raised-low">
-      <Button negative onClick={onCancel}>
-        Cancel
+    <Modal dimmer={dimmer} className={theme} {...rest}>
+      <div className="raised-low">
+        <Header className="header" content={question} />
+      </div>
+      {details && <Modal.Content className="raised-low">{details}</Modal.Content>}
+      <Modal.Actions className="raised-low">
+        <Button negative onClick={onCancel}>
+          Cancel
       </Button>
-      <Button
-        positive
-        onClick={onConfirm}
-        labelPosition="right"
-        icon="checkmark"
-        content="Confirm"
-      />
-    </Modal.Actions>
-  </Modal>
-);
+        <Button
+          positive
+          onClick={onConfirm}
+          labelPosition="right"
+          icon="checkmark"
+          content="Confirm"
+        />
+      </Modal.Actions>
+    </Modal>
+  );
 
 ThemedConfirm = enhance(ThemedConfirm);
 
