@@ -222,7 +222,7 @@ const AppSearchBar = ({
       className="dropdown__content app-search-bar__dropdown-content"
     >
       <div className="app-search-header">
-        <FontAwesomeIcon icon={headerIcon} size="large" onClick={headerAction} />
+        <FontAwesomeIcon icon={headerIcon} size="lg" onClick={headerAction} />
         {headerTitle}
         <ModeOptionButtons pickerId={pickerId} />
       </div>

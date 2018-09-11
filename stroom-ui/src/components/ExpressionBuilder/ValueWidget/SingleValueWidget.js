@@ -1,9 +1,7 @@
 import React from 'react';
 
-import { Input } from 'semantic-ui-react';
-
 const SingleValueWidget = ({ value, onChange, valueType }) => (
-  <Input
+  <input
     placeholder="value"
     type={valueType}
     value={value || ''}

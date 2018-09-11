@@ -1,34 +1,80 @@
 import React from 'react';
 
-import { compose, withHandlers, withProps } from 'recompose';
+import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
 import { Dropdown } from 'semantic-ui-react';
 
 const enhance = compose(
-  withHandlers({
-    onMultipleValueChange: ({ onChange }) => (event, { value }) => onChange(value.join()),
-  }),
   withProps(({ value }) => {
     const hasValues = !!value && value.length > 0;
     const splitValues = hasValues ? value.split(',') : [];
-    const keyedValues = hasValues ? splitValues.map(s => ({ key: s, value: s, text: s })) : [];
 
     return {
       splitValues,
-      keyedValues,
     };
   }),
+  withStateHandlers(
+    ({ composingValue = '', inputHasFocus = false }) => ({
+      composingValue,
+      inputHasFocus,
+    }),
+    {
+      onInputFocus: () => () => ({ inputHasFocus: true }),
+      onInputBlur: () => () => ({ inputHasFocus: false }),
+      onInputChange: () => ({ target: { value } }) => ({ composingValue: value }),
+      onInputSubmit: ({ composingValue }, { splitValues, onChange }) => () => {
+        const newValue = splitValues
+          .filter(s => s !== composingValue)
+          .concat([composingValue])
+          .join();
+        onChange(newValue);
+
+        return { composingValue: '' };
+      },
+    },
+  ),
+  withHandlers({
+    onInputKeyDown: ({ onInputSubmit }) => (e) => {
+      if (e.key === 'Enter') {
+        onInputSubmit();
+      }
+    },
+    onTermDelete: ({ splitValues, onChange }) => (term) => {
+      const newValue = splitValues.filter(s => s !== term).join();
+      onChange(newValue);
+    },
+  }),
+  withProps(({ value, composingValue, inputHasFocus }) => ({
+    valueToShow: inputHasFocus ? composingValue : value,
+  })),
 );
 
-const InValueWidget = ({ splitValues, keyedValues, onMultipleValueChange }) => (
-  <Dropdown
-    options={keyedValues}
-    multiple
-    value={splitValues}
-    placeholder="type multiple values"
-    search={(options, query) => [{ key: query, value: query, text: query }]}
-    selection
-    onChange={onMultipleValueChange}
-  />
+const InValueWidget = ({
+  onInputFocus,
+  onInputBlur,
+  onInputChange,
+  onInputKeyDown,
+  splitValues,
+  valueToShow,
+  onTermDelete,
+}) => (
+  <div className="dropdown">
+    <input
+      placeholder="Type and hit 'Enter'"
+      value={valueToShow}
+      onFocus={onInputFocus}
+      onBlur={onInputBlur}
+      onChange={onInputChange}
+      onKeyDown={onInputKeyDown}
+    />
+    <div className="dropdown__content">
+      {splitValues.map(k => (
+        <div key={k}>
+          {k}
+          <button onClick={e => onTermDelete(k)}>X</button>
+        </div>
+      ))}
+    </div>
+  </div>
 );
 
 export default enhance(InValueWidget);

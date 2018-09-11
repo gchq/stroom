@@ -83,7 +83,7 @@ const RawDocRefListingEntry = ({
           (docRef.type === 'Folder' && (
             <FontAwesomeIcon
               className="doc-ref-listing__icon"
-              size="large"
+              size="lg"
               icon="angle-right"
               onClick={onEnterFolder}
             />
