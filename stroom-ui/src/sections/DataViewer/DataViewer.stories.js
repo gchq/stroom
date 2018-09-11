@@ -24,7 +24,6 @@ import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTest
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import DataViewer from 'sections/DataViewer/DataViewer';
 import { actionCreators } from './redux';
@@ -37,5 +36,4 @@ const stories = storiesOf('DataViewer', module)
   .addDecorator(ThemedDecorator)
   .addDecorator(FontAwesomeDecorator)
   .addDecorator(DragDropDecorator)
-  .addDecorator(ReduxDecorator)
   .add('basic', () => <DataViewer dataViewerId="test" />);

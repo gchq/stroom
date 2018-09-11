@@ -18,7 +18,6 @@ import React from 'react';
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 
@@ -37,7 +36,6 @@ const stories = storiesOf('XSLT Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
   .addDecorator(FontAwesomeDecorator)
-  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter());
 
 Object.entries(testXslt)

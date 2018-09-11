@@ -18,7 +18,6 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import ProcessingContainer from './ProcessingContainer';
 import StoryRouter from 'storybook-react-router';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 
 import { trackers, generateGenericTracker } from '../tracker.testData';
@@ -31,7 +30,6 @@ storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
     trackers: [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
   }))
-  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('basic', () => <ProcessingContainer />);
 
@@ -39,7 +37,6 @@ storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
     trackers: undefined,
   }))
-  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('No trackers', () => <ProcessingContainer />);
 
@@ -49,6 +46,5 @@ storiesOf('Processing', module)
   .addDecorator(PollyDecorator({
     trackers: lotsOfTrackers,
   }))
-  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add('Lots of trackers', () => <ProcessingContainer />);

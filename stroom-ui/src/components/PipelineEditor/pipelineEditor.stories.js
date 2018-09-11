@@ -21,7 +21,7 @@ import StoryRouter from 'storybook-react-router';
 
 import { compose } from 'recompose';
 
-import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
@@ -52,7 +52,6 @@ const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
   .addDecorator(FontAwesomeDecorator)
-  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter());
 
@@ -64,6 +63,5 @@ storiesOf('Element Palette', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
   .addDecorator(FontAwesomeDecorator)
-  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
