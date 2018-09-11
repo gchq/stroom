@@ -158,7 +158,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "The size of the output stream that will cause a new stream to be created")
+    @PipelineProperty(description = "The size of the output stream that will cause a new stream to be created.")
     public void setSplitWhenBiggerThan(final String size) {
         this.size = size;
     }
