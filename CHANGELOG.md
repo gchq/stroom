@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.4] - 2018-09-11
+
 * Issue **#837** : Fix bug to no longer try and record set activity events for null activities.
 
-* Issue **#595** : Added stream appender and file appender property to limit the size of output streams.
+* Issue **#595** : Added stream appender and file appender property `splitWhenBiggerThan` to limit the size of output streams.
 
 ## [v5.5.0-beta.3] - 2018-09-10
 
@@ -876,7 +878,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.4...HEAD
+[v5.5.0-beta.4]: https://github.com/gchq/stroom/compare/v5.5.0-beta.3...v5.5.0-beta.4
 [v5.5.0-beta.3]: https://github.com/gchq/stroom/compare/v5.5.0-beta.2...v5.5.0-beta.3
 [v5.5.0-beta.2]: https://github.com/gchq/stroom/compare/v5.5.0-beta.1...v5.5.0-beta.2
 [v5.5.0-beta.1]: https://github.com/gchq/stroom/compare/v5.4.6...v5.5.0-beta.1
