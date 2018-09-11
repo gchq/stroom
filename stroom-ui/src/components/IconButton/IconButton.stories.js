@@ -17,10 +17,17 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { addThemedStories } from 'lib/themedStoryGenerator';
 import IconButton from './IconButton';
 
-import { addThemedStories } from 'lib/themedStoryGenerator';
-
 const stories = storiesOf('IconButton', module);
-
+stories.addDecorator(ThemedDecorator);
+stories.add('button group', () => (
+  <div>
+    <IconButton className='raised-low' icon='angle-up' groupPosition='left' />
+    <IconButton className='raised-low' icon='angle-up' groupPosition='middle' />
+    <IconButton className='raised-low' icon='angle-up' groupPosition='right' />
+  </div>
+));
 addThemedStories(stories, <IconButton className='raised-low' icon='angle-up' />);
