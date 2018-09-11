@@ -18,8 +18,8 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-const IconButton = ({ text, icon, groupPosition }) => (
-  <button className={`icon-button ${groupPosition}`}>
+const IconButton = ({ text, icon, groupPosition, ...rest }) => (
+  <button className={`icon-button ${groupPosition}`} {...rest}>
     <FontAwesomeIcon className='icon-button__icon' icon={icon} />
   </button>
 );
