@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#595** : Added stream appender and file appender property to limit the size of output streams.
+
 ## [v5.5.0-beta.3] - 2018-09-10
 
 * Now logs activity change correctly.
