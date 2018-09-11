@@ -15,13 +15,10 @@
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { compose, lifecycle } from 'recompose';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+import { storiesOf } from '@storybook/react';
 
 import {
   ExpressionTerm,
@@ -48,18 +45,22 @@ import {
 
 import { testDataSource } from './dataSource.testData';
 
+const enhance = compose(
+  connect(undefined, { expressionChanged }),
+  lifecycle({
+    componentDidMount() {
+      const { expressionChanged, expressionId, testExpression } = this.props;
+      expressionChanged(expressionId, testExpression);
+    },
+  }),
+);
+
+const TestExpressionBuilder = enhance(ExpressionBuilder);
+
 storiesOf('Expression Builder', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(expressionChanged('populatedExEdit', testExpression));
-    store.dispatch(expressionChanged('populatedExRO', testExpression));
-    store.dispatch(expressionChanged('populatedExNoDs', testExpression));
-    store.dispatch(expressionChanged('simplestEx', simplestExpression));
-  })) // must be recorder after/outside of the test initialisation decorators
-  .addDecorator(DragDropDecorator)
   .add('Populated Editable', () => (
-    <ExpressionBuilder
+    <TestExpressionBuilder
+      testExpression={testExpression}
       showModeToggle
       dataSourceUuid="testDs"
       expressionId="populatedExEdit"
@@ -67,14 +68,16 @@ storiesOf('Expression Builder', module)
     />
   ))
   .add('Populated ReadOnly', () => (
-    <ExpressionBuilder
+    <TestExpressionBuilder
+      testExpression={testExpression}
       dataSourceUuid="testDs"
       expressionId="populatedExRO"
       dataSource={testDataSource}
     />
   ))
   .add('Simplest Editable', () => (
-    <ExpressionBuilder
+    <TestExpressionBuilder
+      testExpression={simplestExpression}
       showModeToggle
       dataSourceUuid="testDs"
       expressionId="simplestEx"
@@ -82,7 +85,8 @@ storiesOf('Expression Builder', module)
     />
   ))
   .add('Missing Data Source (read only)', () => (
-    <ExpressionBuilder
+    <TestExpressionBuilder
+      testExpression={testExpression}
       dataSourceUuid="missingDs"
       expressionId="populatedExNoDs"
       dataSource={testDataSource}
@@ -96,7 +100,8 @@ storiesOf('Expression Builder', module)
     />
   ))
   .add('Hide mode toggle', () => (
-    <ExpressionBuilder
+    <TestExpressionBuilder
+      testExpression={testExpression}
       showModeToggle={false}
       dataSourceUuid="testDs"
       expressionId="simplestEx"
@@ -104,7 +109,8 @@ storiesOf('Expression Builder', module)
     />
   ))
   .add('Hide mode toggle but be in edit mode', () => (
-    <ExpressionBuilder
+    <TestExpressionBuilder
+      testExpression={testExpression}
       showModeToggle={false}
       editMode
       dataSourceUuid="testDs"

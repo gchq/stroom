@@ -20,6 +20,10 @@ import StoryRouter from 'storybook-react-router';
 
 import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
+import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
 const req = require.context('../src', true, /\.stories\.js$/);
 
@@ -36,37 +40,37 @@ setOptions({
   name: 'Stroom storybook',
   /**
    * URL for name in top left corner to link to
- * @type {String}
-  */
+   * @type {String}
+   */
   url: '#',
   /**
    * show story component as full screen
-  * @type {Boolean}
+   * @type {Boolean}
    */
   goFullScreen: false,
   /**
    * display panel that shows a list of stories
-  * @type {Boolean}
+   * @type {Boolean}
    */
   showStoriesPanel: true,
   /**
    * display panel that shows addon configurations
-  * @type {Boolean}
+   * @type {Boolean}
    */
   showAddonPanel: false,
   /**
    * display floating search box to search through stories
-  * @type {Boolean}
+   * @type {Boolean}
    */
   showSearchBox: false,
   /**
    * show addon panel as a vertical panel on the right
-  * @type {Boolean}
+   * @type {Boolean}
    */
   addonPanelInRight: false,
   /**
    * sorts stories
-  * @type {Boolean}
+   * @type {Boolean}
    */
   sortStoriesByKind: false,
   /**
@@ -76,7 +80,7 @@ setOptions({
    *   /\// - split by `/`
    *   /\./ - split by `.`
    *   /\/|\./ - split by `/` or `.`
-  * @type {Regex}
+   * @type {Regex}
    */
   hierarchySeparator: null,
   /**
@@ -84,28 +88,32 @@ setOptions({
    * @example:
    *   null - turn off multiple hierarchy roots
    *   /\|/ - split by `|`
-  * @type {Regex}
+   * @type {Regex}
    */
   hierarchyRootSeparator: null,
   /**
    * sidebar tree animations
-  * @type {Boolean}
+   * @type {Boolean}
    */
   sidebarAnimations: true,
   /**
    * id to select an addon panel
-  * @type {String}
+   * @type {String}
    */
   selectedAddonPanel: undefined, // The order of addons in the "Addon panel" is the same as you import them in 'addons.js'. The first panel will be opened by default as you run Storybook
   /**
    * enable/disable shortcuts
-  * @type {Boolean}
+   * @type {Boolean}
    */
   enableShortcuts: false, // true by default
 });
 
+storybook.addDecorator(ThemedDecorator);
+storybook.addDecorator(KeyIsDownDecorator());
+storybook.addDecorator(PollyDecoratorWithTestData);
+storybook.addDecorator(DragDropDecorator);
 storybook.addDecorator(ReduxDecorator);
 storybook.addDecorator(FontAwesomeDecorator);
-storybook.addDecorator(StoryRouter())
+storybook.addDecorator(StoryRouter());
 
 storybook.configure(loadStories, module);

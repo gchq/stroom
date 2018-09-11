@@ -18,10 +18,7 @@ import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+import { storiesOf } from '@storybook/react';
 
 import AppSearchBar from './AppSearchBar';
 
@@ -128,9 +125,6 @@ class AppSearchAsNavigator extends React.Component {
 }
 
 storiesOf('App Search Bar', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(KeyIsDownDecorator())
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
   .add('Doc Ref Form', () => <AppSearchAsForm pickerId="docRefForm1" />)
   .add('Doc Ref Picker', () => <AppSearchAsPicker pickerId="docRefPicker2" />)

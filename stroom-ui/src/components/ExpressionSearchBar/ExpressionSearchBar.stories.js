@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { connect } from 'react-redux';
+import { compose, lifecycle } from 'recompose';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { storiesOf, addDecorator } from '@storybook/react';
@@ -44,16 +44,24 @@ import 'semantic/dist/semantic.min.css';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
-storiesOf('ExpressionSearchBar', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(expressionChanged('simplestEx', simplestExpression));
-  }))
-  .addDecorator(DragDropDecorator)
-  .add('Basic', props => (
-    <ExpressionSearchBar
-      onSearch={() => console.log('Search called')}
-      expressionId="simplestEx"
-      searchString="foo1=bar1 foo2=bar2 foo3=bar3 someOtherKey=sometOtherValue"
-      dataSource={testDataSource}
-    />
-  ));
+const enhance = compose(
+  connect(undefined, { expressionChanged }),
+  lifecycle({
+    componentDidMount() {
+      const { expressionChanged, expressionId, testExpression } = this.props;
+      expressionChanged(expressionId, testExpression);
+    },
+  }),
+);
+
+const TestExpressionSearchBar = enhance(ExpressionSearchBar);
+
+storiesOf('ExpressionSearchBar', module).add('Basic', props => (
+  <TestExpressionSearchBar
+    testExpression={simplestExpression}
+    onSearch={() => console.log('Search called')}
+    expressionId="simplestEx"
+    searchString="foo1=bar1 foo2=bar2 foo3=bar3 someOtherKey=sometOtherValue"
+    dataSource={testDataSource}
+  />
+));

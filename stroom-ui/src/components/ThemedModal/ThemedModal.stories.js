@@ -15,11 +15,10 @@
  */
 import React from 'react';
 
-import { storiesOf, addDecorator } from '@storybook/react';
+import { storiesOf } from '@storybook/react';
 import { compose, withState } from 'recompose';
 import { Header, Button } from 'semantic-ui-react';
 
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { ThemedModal, ThemedConfirm } from '.';
 
 import 'styles/main.css';

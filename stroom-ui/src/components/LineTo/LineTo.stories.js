@@ -17,7 +17,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { storiesOf } from '@storybook/react';
 
-import { LineContainer, LineTo } from '../index';
+import { LineContainer, LineTo } from './index';
 import 'semantic/dist/semantic.min.css';
 
 let testBlockStyle = {

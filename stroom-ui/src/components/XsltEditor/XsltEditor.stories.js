@@ -15,9 +15,7 @@
  */
 import React from 'react';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { storiesOf } from '@storybook/react';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
@@ -26,13 +24,7 @@ import { testXslt } from './test';
 
 import XsltEditor from './XsltEditor';
 
-const PollyDecoratorWithTestData = PollyDecorator({
-  xslt: testXslt,
-});
-
-const stories = storiesOf('XSLT Editor', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator);
+const stories = storiesOf('XSLT Editor', module);
 
 Object.entries(testXslt)
   .map(k => ({
