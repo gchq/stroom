@@ -19,7 +19,7 @@ import { storiesOf } from '@storybook/react';
 
 import IconButton from './IconButton';
 
-import { addThemedStories } from 'lib/ThemedStoryGenerator';
+import { addThemedStories } from 'lib/themedStoryGenerator';
 
 const stories = storiesOf('IconButton', module);
 

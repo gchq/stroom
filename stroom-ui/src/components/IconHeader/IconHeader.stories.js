@@ -17,7 +17,7 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 
-import { addThemedStories } from 'lib/ThemedStoryGenerator';
+import { addThemedStories } from 'lib/themedStoryGenerator';
 import IconHeader from './IconHeader';
 
 const stories = storiesOf('IconHeader', module);
