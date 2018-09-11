@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import ROExpressionTerm from './ROExpressionTerm';
 
-import { Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { LineTo } from 'components/LineTo';
 
@@ -25,7 +25,7 @@ const ROExpressionOperator = ({
     <div className={className}>
       <div>
         <span id={`expression-item${operator.uuid}`}>
-          <Icon name="circle" />
+          <FontAwesomeIcon name="circle" />
         </span>
         <span>{operator.op}</span>
       </div>

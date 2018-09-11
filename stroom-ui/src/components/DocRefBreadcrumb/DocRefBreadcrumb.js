@@ -9,15 +9,12 @@ import { findItem } from 'lib/treeUtils';
 
 const enhance = compose(
   withDocumentTree,
-  connect(
-    ({ folderExplorer: { documentTree } }, { docRefUuid }) => {
-      const docRefWithLineage = findItem(documentTree, docRefUuid);
-      return {
-        docRefWithLineage,
-      };
-    },
-    {},
-  ),
+  connect(({ folderExplorer: { documentTree } }, { docRefUuid }) => {
+    const docRefWithLineage = findItem(documentTree, docRefUuid);
+    return {
+      docRefWithLineage,
+    };
+  }, {}),
   branch(({ docRefWithLineage }) => !docRefWithLineage || !docRefWithLineage.node, renderNothing),
 );
 
@@ -27,8 +24,9 @@ const DocRefBreadcrumb = ({
     node: { name },
   },
   openDocRef,
+  className = '',
 }) => (
-  <Breadcrumb className="breadcrumb">
+  <Breadcrumb className={`breadcrumb ${className}`}>
     {lineage.map(l => (
       <React.Fragment key={l.uuid}>
         <Breadcrumb.Divider className="breadcrumb__divider" />

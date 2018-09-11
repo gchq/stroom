@@ -25,7 +25,8 @@ import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Icon, Button } from 'semantic-ui-react';
+import { Header, Button } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Loader from 'components/Loader';
 
 import ExpressionSearchBar from 'components/ExpressionSearchBar';
@@ -213,7 +214,7 @@ const DataViewer = ({
       <div className="content-tabs__grid">
         <div className="data-viewer__header">
           <Header as="h3">
-            <Icon name="database" />
+            <FontAwesomeIcon icon="database" />
             Data
             </Header>
           <ExpressionSearchBar

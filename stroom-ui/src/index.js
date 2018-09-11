@@ -26,6 +26,7 @@ import HTML5Backend from 'react-dnd-html5-backend';
 import KeyIsDown from 'lib/KeyIsDown';
 import Routes from 'startup/Routes';
 import store from 'startup/store';
+import FontAwesomeProvider from 'startup/FontAwesomeProvider';
 import { history } from 'startup/middleware';
 
 import './styles/main.css';
@@ -37,7 +38,7 @@ import 'typeface-open-sans-condensed';
 import 'typeface-aleo';
 import 'typeface-varela';
 
-const DndRoutes = compose(KeyIsDown(), DragDropContext(HTML5Backend), toClass)(Routes);
+const DndRoutes = compose(FontAwesomeProvider, KeyIsDown(), DragDropContext(HTML5Backend), toClass)(Routes);
 
 ReactDOM.render(
   <Provider store={store}>

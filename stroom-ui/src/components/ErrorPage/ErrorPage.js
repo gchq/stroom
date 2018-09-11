@@ -16,7 +16,8 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { Grid, Header, Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Grid, Header } from 'semantic-ui-react';
 
 const enhance = connect(
   ({ errorPage: { errorMessage, stackTrace, httpErrorCode } }) => ({
@@ -41,7 +42,7 @@ const ErrorSection = ({ title, errorData }) => (
 const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
   <div>
     <Header as="h3">
-      <Icon name="exclamation circle" color="red" />
+      <FontAwesomeIcon icon="exclamation circle" color="red" />
       There has been an error!
     </Header>
 

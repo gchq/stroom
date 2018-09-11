@@ -19,7 +19,8 @@ import PropTypes from 'prop-types';
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Button } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 
@@ -140,7 +141,7 @@ const ExpressionTerm = ({
 }) => (
   <div className={className}>
     {connectDragSource(<span>
-      <Icon name="bars" />
+      <FontAwesomeIcon icon="bars" />
                        </span>)}
     <SelectBox
       placeholder="Field"

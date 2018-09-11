@@ -25,7 +25,8 @@ import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Icon, Grid, Button } from 'semantic-ui-react';
+import { Header, Grid, Button } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
@@ -192,8 +193,8 @@ const enhance = compose(
             // This block of code is mostly about making a sensible looking popup.
             const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
 
-            const eventIcon = <Icon color="blue" name="file" />;
-            const warningIcon = <Icon color="orange" name="warning circle" />;
+            const eventIcon = <FontAwesomeIcon color="blue" icon="file" />;
+            const warningIcon = <FontAwesomeIcon color="orange" icon="exclamation circle" />;
 
             let icon;
             if (stream !== undefined) {

@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 
 import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
 import { connect } from 'react-redux';
-import { Input, Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Input } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
@@ -222,7 +223,7 @@ const AppSearchBar = ({
       className="dropdown__content app-search-bar__dropdown-content"
     >
       <div className="app-search-header">
-        <Icon name={headerIcon} size="large" onClick={headerAction} />
+        <FontAwesomeIcon icon={headerIcon} size="large" onClick={headerAction} />
         {headerTitle}
         <ModeOptionButtons pickerId={pickerId} />
       </div>

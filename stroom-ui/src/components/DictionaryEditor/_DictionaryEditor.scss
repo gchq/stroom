@@ -1,12 +1,35 @@
-.dictionaryEditor {
-  display: inline-flex;
-  flex-direction: column;
+.DictionaryEditor {
+  display: grid;
+
+  grid-template-columns: 2rem auto 100px;
+  grid-template-rows: auto 2rem auto;
+  grid-template-areas:
+    "icon title actionButtons"
+    "breadcrumb breadcrumb actionButtons"
+    "main main main";
 }
 
-.dictionaryEditor__headerBar {
-  display: inline-flex;
-  flex-direction: row;
+.DictionaryEditor__headerIcon {
+  grid-area: icon;
+  background-color: red;
 }
 
-.dictionaryEditor__main {
+.DictionaryEditor__headerTitle {
+  grid-area: title;
+  background-color: magenta;
+}
+
+.DictionaryEditor__breadcrumb {
+  grid-area: breadcrumb;
+  background-color: green;
+}
+
+.DictionaryEditor__actionButtons {
+  grid-area: actionButtons;
+  background-color: blue;
+}
+
+.DictionaryEditor__main {
+  grid-area: main;
+  background-color: orange;
 }

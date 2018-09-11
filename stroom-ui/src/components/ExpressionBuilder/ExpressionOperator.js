@@ -19,7 +19,8 @@ import PropTypes from 'prop-types';
 import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Icon, Button } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Button } from 'semantic-ui-react';
 
 import { DragSource, DropTarget } from 'react-dnd';
 
@@ -193,7 +194,7 @@ const ExpressionOperator = ({
   <div className={className}>
     {connectDropTarget(<div>
       {connectDragSource(<span id={`expression-item${operator.uuid}`}>
-        <Icon color={dndBarColour} name="bars" />
+        <FontAwesomeIcon color={dndBarColour} icon="bars" />
       </span>)}
 
       <Button.Group>
@@ -211,11 +212,11 @@ const ExpressionOperator = ({
 
       <Button.Group floated="right">
         <Button compact onClick={onAddTerm}>
-          <Icon name="add" />
+          <FontAwesomeIcon icon="plus" />
             Term
         </Button>
         <Button compact onClick={onAddOperator}>
-          <Icon name="add" />
+          <FontAwesomeIcon icon="plus" />
             Group
         </Button>
         <Button icon={enabledIcon} compact color={enabledColour} onClick={onEnabledToggled} />

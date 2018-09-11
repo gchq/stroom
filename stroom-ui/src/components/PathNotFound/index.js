@@ -16,14 +16,15 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Grid, Header, Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Grid, Header } from 'semantic-ui-react';
 
 const PathNotFound = ({ message }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <Icon name="exclamation triangle" />
+          <FontAwesomeIcon icon="exclamation triangle" />
           <Header.Content>Not Found</Header.Content>
         </Header>
       </Grid.Column>

@@ -23,6 +23,7 @@ import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import ElementDetails from './ElementDetails';
 import { actionCreators as pipelineActionCreators } from '../redux';
 import { testPipelines, elements, elementProperties } from '../test';
@@ -38,6 +39,7 @@ const {
 const stories = storiesOf('Element Details', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
+  .addDecorator(FontAwesomeDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(elementsReceived(elements))

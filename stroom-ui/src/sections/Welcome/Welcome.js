@@ -16,14 +16,15 @@
 
 import React from 'react';
 
-import { Table, Header, Icon, Grid } from 'semantic-ui-react';
+import { Table, Header, Grid } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const Welcome = props => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <Icon name="home" />
+          <FontAwesomeIcon icon="home" />
           <Header.Content>Welcome</Header.Content>
         </Header>
       </Grid.Column>
