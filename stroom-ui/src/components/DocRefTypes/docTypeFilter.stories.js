@@ -20,7 +20,6 @@ import { connect } from 'react-redux';
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { Field, reduxForm } from 'redux-form';
-import { Form } from 'semantic-ui-react';
 
 import DocTypeFilters from './DocTypeFilters';
 import DocRefTypePicker from './DocRefTypePicker';
@@ -51,8 +50,8 @@ const enhance = compose(
 );
 
 let TestForm = ({ thisForm }) => (
-  <Form>
-    <Form.Field>
+  <form>
+    <div>
       <label>Chosen Doc Type</label>
       <Field
         name="docType"
@@ -60,8 +59,8 @@ let TestForm = ({ thisForm }) => (
           <DocRefTypePicker pickerId="test1" onChange={onChange} value={value} />
         )}
       />
-    </Form.Field>
-    <Form.Field>
+    </div>
+    <div>
       <label>Chosen Doc Types</label>
       <Field
         name="docTypes"
@@ -69,7 +68,7 @@ let TestForm = ({ thisForm }) => (
           <DocTypeFilters onChange={onChange} value={value} />
         )}
       />
-    </Form.Field>
+    </div>
     {thisForm &&
       thisForm.values && (
         <div>
@@ -77,7 +76,7 @@ let TestForm = ({ thisForm }) => (
           <div>Doc Types: {thisForm.values.docTypes.join(',')}</div>
         </div>
       )}
-  </Form>
+  </form>
 );
 
 TestForm = enhance(TestForm);
