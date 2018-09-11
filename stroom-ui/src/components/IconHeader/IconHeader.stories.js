@@ -17,11 +17,9 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { addThemedStories } from 'lib/ThemedStoryGenerator';
 import IconHeader from './IconHeader';
 
-storiesOf('IconHeader', module)
-  .addDecorator(ThemedDecorator)
-  .add('basic', () => (
-    <IconHeader icon='angle-up' text='Good morrow fellow human' />
-  ))
+const stories = storiesOf('IconHeader', module);
+
+addThemedStories(stories, <IconHeader icon='angle-up' text='Good morrow fellow human' />);
