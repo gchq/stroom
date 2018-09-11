@@ -21,7 +21,6 @@ import { Field, reduxForm } from 'redux-form';
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 

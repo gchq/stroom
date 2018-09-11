@@ -22,7 +22,6 @@ import { Switch, Route } from 'react-router-dom';
 
 import DocRefBreadcrumb from './DocRefBreadcrumb';
 
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
@@ -47,6 +46,5 @@ storiesOf('Doc Ref Breadcrumb', module)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(DragDropDecorator)
-  .addDecorator(FontAwesomeDecorator)
   .addDecorator(StoryRouter())
   .add('first pipeline', props => <BreadcrumbOpen docRefUuid={testPipelineUuid} />);

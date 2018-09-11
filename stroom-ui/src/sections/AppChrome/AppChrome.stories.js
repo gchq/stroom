@@ -23,7 +23,6 @@ import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import AppChrome, { appChromeRoutes } from '.';
 
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
@@ -40,7 +39,6 @@ storiesOf('App Chrome', module)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(DragDropDecorator)
-  .addDecorator(FontAwesomeDecorator)
   .addDecorator(StoryRouter())
   .add('Just the chrome', props => (
     <AppChrome

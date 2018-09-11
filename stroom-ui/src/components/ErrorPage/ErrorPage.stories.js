@@ -22,7 +22,6 @@ import 'semantic/dist/semantic.min.css';
 
 import ErrorPage from './ErrorPage';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
 
 const errorMessage = 'Everything is a disaster';
@@ -52,7 +51,6 @@ const httpErrorStatus = 501;
 
 storiesOf('ErrorPage', module)
   .addDecorator(ThemedDecorator)
-  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction());
     store.dispatch(setStackTraceAction());
@@ -64,7 +62,6 @@ storiesOf('ErrorPage', module)
 
 storiesOf('ErrorPage', module)
   .addDecorator(ThemedDecorator)
-  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction(errorMessage));
     store.dispatch(setStackTraceAction());
@@ -76,7 +73,6 @@ storiesOf('ErrorPage', module)
 
 storiesOf('ErrorPage', module)
   .addDecorator(ThemedDecorator)
-  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction(errorMessage));
     store.dispatch(setStackTraceAction(stackTrace));
@@ -88,7 +84,6 @@ storiesOf('ErrorPage', module)
 
 storiesOf('ErrorPage', module)
   .addDecorator(ThemedDecorator)
-  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(setErrorMessageAction(errorMessage));
     store.dispatch(setStackTraceAction(stackTrace));
