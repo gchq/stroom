@@ -138,8 +138,8 @@ const FolderExplorer = ({
     </header>
 
     <div className="doc-ref-listing-entry__action-bar">
-      {actionBarItems.map(({ onClick, icon, tooltip, title }, i) => (
-        <button title={tooltip} onClick={onClick}>{title}</button>
+      {actionBarItems.map(({ onClick, icon, tooltip, title }) => (
+        <button key={title} title={tooltip} onClick={onClick}>{title}</button>
       ))}
     </div>
     <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>

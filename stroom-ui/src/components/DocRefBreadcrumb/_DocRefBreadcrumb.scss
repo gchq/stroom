@@ -1,5 +1,15 @@
 .DocRefBreadcrumb {
-  display: inline-flex;
-  flex-direction: row;
-  cursor: pointer;
+}
+
+.DocRefBreadcrumb__link {
+  display: inline-block;
+  //border: none;
+}
+
+.DocRefBreadcrumb__divider {
+  display: inline-block;
+}
+
+.DocRefBreadcrumb__name {
+  display: inline-block;
 }
