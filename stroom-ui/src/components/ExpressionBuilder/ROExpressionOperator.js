@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import ROExpressionTerm from './ROExpressionTerm';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { LineTo } from 'components/LineTo';
 
@@ -25,7 +25,7 @@ const ROExpressionOperator = ({
     <div className={className}>
       <div>
         <span id={`expression-item${operator.uuid}`}>
-          <FontAwesomeIcon name="circle" />
+          <FontAwesomeIcon icon="circle" />
         </span>
         <span>{operator.op}</span>
       </div>

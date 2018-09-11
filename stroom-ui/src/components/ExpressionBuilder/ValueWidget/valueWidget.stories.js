@@ -8,6 +8,8 @@ import SingleValueWidget from './SingleValueWidget';
 import InValueWidget from './InValueWidget';
 import BetweenValueWidget from './BetweenValueWidget';
 
+import 'styles/main.css';
+
 const withControlledValue = withState('value', 'onChange', undefined);
 
 const CSingleValueWidget = withControlledValue(SingleValueWidget);
@@ -19,7 +21,19 @@ const stories = storiesOf('Expression Value Widgets', module)
 
 ['text', 'number', 'datetime-local'].forEach((valueType) => {
   stories
-    .add(`Single ${valueType}`, () => <CSingleValueWidget valueType={valueType} />)
-    .add(`In ${valueType}`, () => <CInValueWidget valueType={valueType} />)
-    .add(`Between ${valueType}`, () => <CBetweenValueWidget valueType={valueType} />);
+    .add(`Single ${valueType}`, () => (
+      <div>
+        <CSingleValueWidget valueType={valueType} />
+      </div>
+    ))
+    .add(`In ${valueType}`, () => (
+      <div>
+        <CInValueWidget valueType={valueType} />
+      </div>
+    ))
+    .add(`Between ${valueType}`, () => (
+      <div>
+        <CBetweenValueWidget valueType={valueType} />
+      </div>
+    ));
 });

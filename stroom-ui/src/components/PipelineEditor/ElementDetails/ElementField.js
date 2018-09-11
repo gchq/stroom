@@ -5,7 +5,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Form, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
+import { Form, Checkbox, Button, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 
@@ -290,7 +290,7 @@ const FieldValue = ({
 
     case 'string':
       elementField = (
-        <Input
+        <input
           value={value}
           name={name}
           onChange={(_, event) => {
@@ -304,7 +304,7 @@ const FieldValue = ({
       break;
     default:
       elementField = (
-        <Input
+        <input
           value={value}
           name={name}
           onChange={(_, event) => {

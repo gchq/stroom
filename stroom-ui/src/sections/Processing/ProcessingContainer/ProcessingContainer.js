@@ -130,7 +130,7 @@ const ProcessingContainer = ({
 
         <div className="processing__search__help">
           <Tooltip
-            trigger={<FontAwesomeIcon icon="question-circle" size="large" />}
+            trigger={<FontAwesomeIcon icon="question-circle" size="lg" />}
             content={<div>
               <p>You may search for a tracker by part or all of a pipeline name. </p>
               <p> You may also use the following key words to filter the results:</p>
