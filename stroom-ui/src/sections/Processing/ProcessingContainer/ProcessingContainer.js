@@ -20,7 +20,8 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 import PanelGroup from 'react-panelgroup';
-import { Header, Icon, Input } from 'semantic-ui-react';
+import { Header, Input } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import Tooltip from 'components/Tooltip';
 import { actionCreators } from '../redux';
@@ -115,7 +116,7 @@ const ProcessingContainer = ({
   <React.Fragment>
     <div className="processing__header-container">
       <Header as="h3">
-        <Icon name="play" />
+        <FontAwesomeIcon icon="play" />
         <Header.Content className="header">Processing</Header.Content>
       </Header>
       <Input
@@ -129,7 +130,7 @@ const ProcessingContainer = ({
 
       <div className="processing__search__help">
         <Tooltip
-          trigger={<Icon name="question circle" size="large" />}
+          trigger={<FontAwesomeIcon icon="question circle" size="large" />}
           content={<div>
             <p>You may search for a tracker by part or all of a pipeline name. </p>
             <p> You may also use the following key words to filter the results:</p>

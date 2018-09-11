@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Header, Icon, Grid } from 'semantic-ui-react/dist/commonjs';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Header, Grid } from 'semantic-ui-react/dist/commonjs';
 
 import { AppChrome } from '.';
 import { Processing } from 'sections/Processing';
@@ -21,7 +22,7 @@ const UsersIFrame = withConfig(({ config: { authUsersUiUrl } }) => (
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <Icon name="users" />
+          <FontAwesomeIcon icon="users" />
           <Header.Content>Users</Header.Content>
         </Header>
       </Grid.Column>
@@ -35,7 +36,7 @@ const ApiTokensIFrame = withConfig(({ config: { authTokensUiUrl } }) => (
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <Icon name="key" />
+          <FontAwesomeIcon icon="key" />
           <Header.Content>API Keys</Header.Content>
         </Header>
       </Grid.Column>

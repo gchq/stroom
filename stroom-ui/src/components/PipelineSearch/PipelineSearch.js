@@ -21,7 +21,8 @@ import { compose, lifecycle, withHandlers } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
-import { Header, Card, Input, Pagination, Dropdown, Icon, Grid } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Header, Card, Input, Pagination, Dropdown, Grid } from 'semantic-ui-react';
 
 import ClickCounter from 'lib/ClickCounter';
 
@@ -128,7 +129,7 @@ const PipelineSearch = ({
       <Grid className="content-tabs__grid">
         <Grid.Column width={12}>
           <Header as="h3">
-            <Icon name="tasks" />
+            <FontAwesomeIcon icon="tasks" />
             Pipelines
           </Header>
         </Grid.Column>

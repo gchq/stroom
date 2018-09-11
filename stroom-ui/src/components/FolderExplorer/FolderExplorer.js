@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent, withHandlers } from 'recompose';
-import { Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { withRouter } from 'react-router-dom';
 
 import Loader from 'components/Loader';
@@ -132,7 +132,7 @@ const FolderExplorer = ({
     <AppSearchBar className="app-search-bar" onChange={openDocRef} />
 
     <header>
-      <Icon name="folder" />
+      <FontAwesomeIcon icon="folder" />
       <h3 className="header">{node.name}</h3>
       <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
     </header>

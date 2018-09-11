@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 import { compose, withHandlers, withProps } from 'recompose';
-import { Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import DocRefImage from 'components/DocRefImage';
 import DocRefPropType from 'lib/DocRefPropType';
@@ -81,10 +81,10 @@ const RawDocRefListingEntry = ({
       <span className="doc-ref-listing__space">&nbsp;</span>
       {docRef.type === 'System' ||
         (docRef.type === 'Folder' && (
-          <Icon
+          <FontAwesomeIcon
             className="doc-ref-listing__icon"
             size="large"
-            name="angle right"
+            icon="angle right"
             onClick={onEnterFolder}
           />
         ))}

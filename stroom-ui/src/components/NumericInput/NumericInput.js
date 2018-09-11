@@ -17,7 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Input, Button, Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Input, Button } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
 import Tooltip from 'components/Tooltip';
@@ -95,7 +96,7 @@ const NumericInput = ({
                       }}
                       disabled={isUpDisabled}
                     >
-                      <Icon name="angle up" />
+                      <FontAwesomeIcon icon="angle up" />
                     </Button>
                     <Button
                       className="button-bottom"
@@ -107,7 +108,7 @@ const NumericInput = ({
                       }}
                       disabled={isDownDisabled}
                     >
-                      <Icon name="angle down" />
+                      <FontAwesomeIcon icon="angle down" />
                     </Button>
                   </div>
                 }

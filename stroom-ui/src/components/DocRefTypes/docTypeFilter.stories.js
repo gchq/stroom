@@ -30,6 +30,7 @@ import { testDocRefsTypes } from './test';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
@@ -85,4 +86,5 @@ storiesOf('Doc Type Filters', module)
   .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
   .addDecorator(ThemedDecorator)
   .addDecorator(ReduxDecorator)
+  .addDecorator(FontAwesomeDecorator)
   .add('Doc Type Filter', () => <TestForm />);

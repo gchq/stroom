@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { compose, withHandlers } from 'recompose';
 import { DropTarget } from 'react-dnd';
 import { DragSource } from 'react-dnd';
-import { Icon } from 'semantic-ui-react/dist/commonjs';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { canMove } from 'lib/treeUtils';
@@ -137,16 +137,16 @@ const MenuItem = ({
 
   return connectDragSource(connectDropTarget(<div className={className} style={{ paddingLeft: `${depth * 0.7}rem` }}>
     {menuItem.children && menuItem.children.length > 0 ? (
-      <Icon
+      <FontAwesomeIcon
         onClick={onCaretClick}
         name={`caret ${areMenuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
       />
         ) : menuItem.key !== 'stroom' ? (
-          <Icon />
+          <FontAwesomeIcon />
         ) : (
           undefined
         )}
-    <Icon name={menuItem.icon} />
+    <FontAwesomeIcon icon={menuItem.icon} />
     <span
       onClick={onTitleClick}
     >

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import ElementCategory from './ElementCategory';
 import { getBinItems } from '../pipelineUtils';
@@ -67,7 +67,7 @@ const ElementPalette = ({
   connectDropTarget(<div className="element-palette">
     {dndIsHappening ? (
       <div className="Pipeline-editor__bin">
-        <Icon name="trash" size="huge" color={binColour} />
+        <FontAwesomeIcon icon="trash" size="huge" color={binColour} />
       </div>
       ) : (
         <React.Fragment>

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { splitAt } from 'ramda';
 import { compose, withProps } from 'recompose';
 // eslint-disable-next-line
@@ -49,7 +49,7 @@ const enhance = compose(
           if (row.value === 'INFO') {
             return (
               <Tooltip
-                trigger={<Icon color="blue" name="info circle" />}
+                trigger={<FontAwesomeIcon color="blue" icon="info circle" />}
                 content={location}
                 position={position}
               />
@@ -57,7 +57,7 @@ const enhance = compose(
           } else if (row.value === 'WARNING') {
             return (
               <Tooltip
-                trigger={<Icon color="orange" name="warning circle" />}
+                trigger={<FontAwesomeIcon color="orange" icon="exclamation circle" />}
                 content={location}
                 position={position}
               />
@@ -65,7 +65,7 @@ const enhance = compose(
           } else if (row.value === 'ERROR') {
             return (
               <Tooltip
-                trigger={<Icon color="red" name="warning circle" />}
+                trigger={<FontAwesomeIcon color="red" icon="exclamation circle" />}
                 content={location}
                 position={position}
               />
@@ -73,7 +73,7 @@ const enhance = compose(
           } else if (row.value === 'FATAL') {
             return (
               <Tooltip
-                trigger={<Icon color="red" name="bomb" />}
+                trigger={<FontAwesomeIcon color="red" icon="bomb" />}
                 content={location}
                 position={position}
               />
@@ -106,7 +106,9 @@ const enhance = compose(
   })),
 );
 
-const ErrorTable = ({ tableColumns, tableData, errors, metaAndErrors }) => (
+const ErrorTable = ({
+  tableColumns, tableData, errors, metaAndErrors,
+}) => (
   <div className="ErrorTable__container">
     <div className="ErrorTable__reactTable__container">
       <ReactTable

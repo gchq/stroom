@@ -63,21 +63,22 @@ const DictionaryEditor = ({
   saveDisabled,
   saveCaption,
 }) => (
-  <div className="dictionaryEditor">
-    <div className="dictionaryEditor__headerBar">
-      <header>
-        <DocRefImage docRefType="XSLT" />
-        <h3>{dictionaryUuid}</h3>
+  <div className="DictionaryEditor">
+    <DocRefImage docRefType="XSLT" className="DictionaryEditor__headerIcon" />
+    <h3 className="DictionaryEditor__headerTitle">{dictionaryUuid}</h3>
 
-        <DocRefBreadcrumb docRefUuid={dictionaryUuid} openDocRef={openDocRef} />
-      </header>
-      <div>
-        <button disabled={saveDisabled} title="Save Dictionary" onClick={onClickSave}>
-          {saveCaption}
-        </button>
-      </div>
+    <DocRefBreadcrumb
+      className="DictionaryEditor__breadcrumb"
+      docRefUuid={dictionaryUuid}
+      openDocRef={openDocRef}
+    />
+
+    <div className="DictionaryEditor__actionButtons">
+      <button disabled={saveDisabled} title="Save Dictionary" onClick={onClickSave}>
+        {saveCaption}
+      </button>
     </div>
-    <div className="dictionaryEditor__main">
+    <div className="DictionaryEditor__main">
       <textarea value={dictionary.data} onChange={onDataChange} />
     </div>
   </div>

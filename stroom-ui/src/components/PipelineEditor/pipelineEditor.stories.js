@@ -25,6 +25,7 @@ import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 
 import PipelineEditor from './index';
 
@@ -50,6 +51,7 @@ import { testPipelines } from './test';
 const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
+  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter());
@@ -61,6 +63,7 @@ Object.keys(testPipelines).forEach((k) => {
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
+  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);

@@ -17,7 +17,8 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Header, Icon, Dropdown, Grid } from 'semantic-ui-react';
+import { Header, Dropdown, Grid } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { actionCreators } from './redux';
 
@@ -45,7 +46,7 @@ const UserSettings = ({ theme, themeChanged }) => (
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <Icon name="user" />
+          <FontAwesomeIcon icon="user" />
           <Header.Content className="header">Me</Header.Content>
         </Header>
       </Grid.Column>

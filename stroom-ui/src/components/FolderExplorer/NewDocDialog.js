@@ -3,7 +3,8 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { reduxForm, Field } from 'redux-form';
 
-import { Header, Button, Icon, Form } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Header, Button, Form } from 'semantic-ui-react';
 import { InputField } from 'react-semantic-redux-form';
 
 import ThemedModal from 'components/ThemedModal';
@@ -100,7 +101,7 @@ const NewDocDialog = ({
     actions={
       <React.Fragment>
         <Button negative onClick={completeDocRefCreation}>
-          <Icon name="close" /> Cancel
+          <FontAwesomeIcon icon="times" /> Cancel
         </Button>
         <Button
           positive

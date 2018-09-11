@@ -21,6 +21,7 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import {
@@ -51,6 +52,7 @@ import { testDataSource } from './dataSource.testData';
 storiesOf('Expression Builder', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
+  .addDecorator(FontAwesomeDecorator)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
