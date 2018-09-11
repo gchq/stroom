@@ -15,19 +15,12 @@
  */
 
 import React from 'react';
-import { PropTypes } from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { storiesOf } from '@storybook/react';
 
-const IconHeader = ({ text, icon }) => (
-  <div className="icon-header">
-    <FontAwesomeIcon className='icon-header__icon' icon={icon} size='lg' />
-    <p className="icon-header__text">{text}</p>
-  </div>
-);
+import IconButton from './IconButton';
 
-IconHeader.propTypes = {
-  text: PropTypes.string.isRequired,
-  icon: PropTypes.string.isRequired
-}
+import { addThemedStories } from 'lib/ThemedStoryGenerator';
 
-export default IconHeader;
+const stories = storiesOf('IconButton', module);
+
+addThemedStories(stories, <IconButton className='raised-low' icon='angle-up' />);

@@ -18,16 +18,14 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-const IconHeader = ({ text, icon }) => (
-  <div className="icon-header">
-    <FontAwesomeIcon className='icon-header__icon' icon={icon} size='lg' />
-    <p className="icon-header__text">{text}</p>
-  </div>
+const IconButton = ({ text, icon }) => (
+  <button className="icon-button">
+    <FontAwesomeIcon className='icon-button__icon' icon={icon} />
+  </button>
 );
 
-IconHeader.propTypes = {
-  text: PropTypes.string.isRequired,
+IconButton.propTypes = {
   icon: PropTypes.string.isRequired
 }
 
-export default IconHeader;
+export default IconButton;
