@@ -15,9 +15,7 @@
  */
 import React from 'react';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
+import { storiesOf } from '@storybook/react';
 
 import 'styles/main.css';
 
@@ -25,9 +23,7 @@ import { testDictionaries } from './test';
 
 import DictionaryEditor from './DictionaryEditor';
 
-const stories = storiesOf('Dictionary Editor', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator);
+const stories = storiesOf('Dictionary Editor', module);
 
 Object.entries(testDictionaries)
   .map(k => ({

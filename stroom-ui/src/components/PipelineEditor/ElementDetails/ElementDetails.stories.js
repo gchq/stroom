@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 import React from 'react';
+import { compose, lifecycle } from 'recompose';
+import { connect } from 'react-redux';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import ElementDetails from './ElementDetails';
 import { actionCreators as pipelineActionCreators } from '../redux';
 import { testPipelines, elements, elementProperties } from '../test';
@@ -35,14 +33,47 @@ const {
   pipelineElementSelected,
 } = pipelineActionCreators;
 
-const stories = storiesOf('Element Details', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(DragDropDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(elements))
-    store.dispatch(elementPropertiesReceived(elementProperties))
-    store.dispatch(pipelineReceived("longPipeline", testPipelines.longPipeline))
-    store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
-  }))
-  .add('longPipeline', () => <ElementDetails pipelineId="longPipeline" />);
+const enhance = compose(
+  connect(undefined, {
+    elementsReceived,
+    elementPropertiesReceived,
+    pipelineReceived,
+    pipelineElementSelected,
+  }),
+  lifecycle({
+    componentDidMount() {
+      const {
+        elementsReceived,
+        elementPropertiesReceived,
+        pipelineReceived,
+        pipelineElementSelected,
+
+        testElements,
+        testElementProperties,
+        testPipelineId,
+        testPipeline,
+        testElementId,
+        testElementConfig,
+      } = this.props;
+
+      elementsReceived(testElements);
+      elementPropertiesReceived(testElementProperties);
+      pipelineReceived(testPipelineId, testPipeline);
+      pipelineElementSelected(testPipelineId, testElementId, testElementConfig);
+    },
+  }),
+);
+
+const TestElementDetails = enhance(ElementDetails);
+
+const stories = storiesOf('Element Details', module).add('longPipeline', () => (
+  <TestElementDetails
+    testElements={elements}
+    testElementProperties={elementProperties}
+    testPipelineId="longPipeline"
+    testPipeline={testPipelines.longPipeline}
+    testElementId="splitFilter"
+    testElementConfig={{ splitDepth: 10, splitCount: 10 }}
+    pipelineId="longPipeline"
+  />
+));

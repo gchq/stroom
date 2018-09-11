@@ -15,15 +15,12 @@
  */
 import React from 'react';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import { compose, withState } from 'recompose';
+import { storiesOf } from '@storybook/react';
+import { connect } from 'react-redux';
+import { compose, lifecycle } from 'recompose';
 
 import { DocRefInfoModal } from '.';
 import { actionCreators } from './redux';
-
-import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
@@ -32,21 +29,35 @@ const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
 
 const timeCreated = Date.now();
 
-storiesOf('Doc Ref Info Modal', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    const docRef = {
-      type: 'Animal',
-      name: 'Tiger',
-      uuid: '1234456789',
-    };
-    store.dispatch(docRefInfoOpened(docRef));
-    store.dispatch(docRefInfoReceived({
-      docRef,
+const enhance = compose(
+  connect(undefined, {
+    docRefInfoOpened,
+    docRefInfoReceived,
+  }),
+  lifecycle({
+    componentDidMount() {
+      const { docRefInfoOpened, docRefInfoReceived, testDocRefWithInfo } = this.props;
+      docRefInfoReceived(testDocRefWithInfo);
+      docRefInfoOpened(testDocRefWithInfo.docRef);
+    },
+  }),
+);
+
+const TestDocRefInfoModal = enhance(DocRefInfoModal);
+
+storiesOf('Doc Ref Info Modal', module).add('Doc Ref Info Modal', () => (
+  <TestDocRefInfoModal
+    testDocRefWithInfo={{
+      docRef: {
+        type: 'Animal',
+        name: 'Tiger',
+        uuid: '1234456789',
+      },
       createTime: timeCreated,
       updateTime: Date.now(),
       createUser: 'me',
       updateUser: 'you',
       otherInfo: 'I am test data',
-    }));
-  }))
-  .add('Doc Ref Info Modal', () => <DocRefInfoModal />);
+    }}
+  />
+));

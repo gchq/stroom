@@ -18,8 +18,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 import { Form } from 'semantic-ui-react';
-import { storiesOf, addDecorator } from '@storybook/react';
-
+import { storiesOf } from '@storybook/react';
 
 import {
   PermissionInheritancePicker,

@@ -18,12 +18,9 @@ import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { addThemedStories } from 'lib/themedStoryGenerator';
+import { storiesOf } from '@storybook/react';
 
+import { addThemedStories } from 'lib/themedStoryGenerator';
 import AppSearchBar from './AppSearchBar';
 
 import 'styles/main.css';
@@ -128,10 +125,7 @@ class AppSearchAsNavigator extends React.Component {
   }
 }
 
-const stories = storiesOf('App Search Bar', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(KeyIsDownDecorator());
+const stories = storiesOf('App Search Bar', module);
 
 stories
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)

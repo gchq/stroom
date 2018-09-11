@@ -15,8 +15,9 @@
  */
 
 import React from 'react';
+import { compose, lifecycle } from 'recompose';
+import { connect } from 'react-redux';
 import { storiesOf } from '@storybook/react';
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
@@ -49,46 +50,42 @@ at workLoop (http://localhost:9001/static/preview.bundle.js:39996:26)
 at renderRoot (http://localhost:9001/static/preview.bundle.js:40027:9)`;
 const httpErrorStatus = 501;
 
-storiesOf('ErrorPage', module)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction());
-    store.dispatch(setStackTraceAction());
-    store.dispatch(setHttpErrorCodeAction());
-  }))
-  .add('No details', () => (
-    <ErrorPage />
-  ));
+const enhance = compose(
+  connect(undefined, { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction }),
+  lifecycle({
+    componentDidMount() {
+      const {
+        setErrorMessageAction,
+        setStackTraceAction,
+        setHttpErrorCodeAction,
+        errorMessage,
+        stackTrace,
+        httpErrorStatus,
+      } = this.props;
 
-storiesOf('ErrorPage', module)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction(errorMessage));
-    store.dispatch(setStackTraceAction());
-    store.dispatch(setHttpErrorCodeAction());
-  }))
-  .add('Just error message', () => (
-    <ErrorPage />
-  ));
+      setErrorMessageAction(errorMessage);
+      setStackTraceAction(stackTrace);
+      setHttpErrorCodeAction(httpErrorStatus);
+    },
+  }),
+);
 
-storiesOf('ErrorPage', module)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction(errorMessage));
-    store.dispatch(setStackTraceAction(stackTrace));
-    store.dispatch(setHttpErrorCodeAction());
-  }))
-  .add('Error message and stack trace', () => (
-    <ErrorPage />
-  ));
+const TestErrorPage = enhance(ErrorPage);
 
-storiesOf('ErrorPage', module)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction(errorMessage));
-    store.dispatch(setStackTraceAction(stackTrace));
-    store.dispatch(setHttpErrorCodeAction(httpErrorStatus));
-  }))
-  .add('Everything', () => (
-    <ErrorPage />
-  ));
+storiesOf('ErrorPage', module).add('No details', () => <TestErrorPage />);
+
+storiesOf('ErrorPage', module).add('Just error message', () => (
+  <TestErrorPage errorMessage={errorMessage} />
+));
+
+storiesOf('ErrorPage', module).add('Error message and stack trace', () => (
+  <TestErrorPage errorMessage={errorMessage} stackTrace={stackTrace} />
+));
+
+storiesOf('ErrorPage', module).add('Everything', () => (
+  <TestErrorPage
+    errorMessage={errorMessage}
+    stackTrace={stackTrace}
+    httpErrorStatus={httpErrorStatus}
+  />
+));

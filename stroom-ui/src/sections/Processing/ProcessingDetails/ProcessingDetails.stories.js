@@ -15,9 +15,10 @@
  */
 
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { storiesOf } from '@storybook/react';
+import { compose, lifecycle } from 'recompose';
+import { connect } from 'react-redux';
 
 import ProcessingDetails from './ProcessingDetails';
 import { actionCreators } from '../redux';
@@ -25,47 +26,49 @@ import { trackers } from '../tracker.testData';
 
 import 'semantic/dist/semantic.min.css';
 
+const { updateTrackerSelection, updateTrackers } = actionCreators;
+
+const enhance = compose(
+  connect(undefined, {
+    updateTrackers,
+    updateTrackerSelection
+  }),
+  lifecycle({
+    componentDidMount() {
+      const { updateTrackers,
+        updateTrackerSelection,
+      testTrackers,
+    testTrackerSelection} = this.props;
+
+    updateTrackerSelection(testTrackerSelection);
+    updateTrackers(testTrackers);
+    }
+  })
+);
+
+const TestProcessingDetails = enhance(ProcessingDetails);
+
 storiesOf('ProcessingDetails', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackerSelection(1));
-    store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_undefinedLastPollAge]));
-  }))
   .add('Minimal tracker with undefined last poll age', () => (
-    <ProcessingDetails />
+    <TestProcessingDetails testTrackers={[trackers.minimalTracker_undefinedLastPollAge]} testTrackerSelection={1} />
   ));
 
 storiesOf('ProcessingDetails', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackerSelection(2));
-    store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_nullLastPollAge]));
-  }))
   .add('Minimal tracker with null last poll age', () => (
-    <ProcessingDetails />
+    <TestProcessingDetails testTrackers={[trackers.minimalTracker_nullLastPollAge]} testTrackerSelection={2} />
   ));
 
 storiesOf('ProcessingDetails', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackerSelection(3));
-    store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_emptyLastPollAge]));
-  }))
   .add('Minimal tracker with empty last poll age', () => (
-    <ProcessingDetails />
+    <TestProcessingDetails testTrackers={[trackers.minimalTracker_emptyLastPollAge]} testTrackerSelection={3} />
   ));
 
 storiesOf('ProcessingDetails', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackerSelection(4));
-    store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker]));
-  }))
   .add('Maximal tracker', () => (
-    <ProcessingDetails />
+    <TestProcessingDetails testTrackers={[trackers.maximalTracker]} testTrackerSelection={4} />
   ));
 
 storiesOf('ProcessingDetails', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackerSelection(5));
-    store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker_withLongName]));
-  }))
   .add('Maximal tracker with a long name', () => (
-    <ProcessingDetails />
+    <TestProcessingDetails testTrackers={[trackers.maximalTracker_withLongName]} testTrackerSelection={5} />
   ));

@@ -15,10 +15,15 @@
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { lifecycle } from 'recompose';
-import { Provider } from 'react-redux';
 
-import store from 'startup/store';
+import { storiesOf, addDecorator } from '@storybook/react';
+import { Header } from 'semantic-ui-react/dist/commonjs';
 
-export const ReduxDecorator = storyFn => <Provider store={store}>{storyFn()}</Provider>;
+import FolderExplorer from './FolderExplorer';
 
+import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
+
+storiesOf('Folder Explorer', module).add('Folder explorer', props => (
+  <FolderExplorer folderUuid="pipelines1234567890" />
+));

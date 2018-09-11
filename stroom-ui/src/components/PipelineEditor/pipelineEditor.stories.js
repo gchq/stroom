@@ -16,14 +16,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { storiesOf, addDecorator } from '@storybook/react';
+import { storiesOf } from '@storybook/react';
 
 import { compose } from 'recompose';
-
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
 import PipelineEditor from './index';
 
@@ -46,17 +41,12 @@ const {
 
 import { testPipelines } from './test';
 
-const pipelineStories = storiesOf('Pipeline Editor', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(DragDropDecorator);
+const pipelineStories = storiesOf('Pipeline Editor', module);
 
 Object.keys(testPipelines).forEach((k) => {
   pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />);
 });
 
-storiesOf('Element Palette', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(DragDropDecorator)
-  .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
+storiesOf('Element Palette', module).add('Element Palette', () => (
+  <ElementPalette pipelineId="longPipeline" />
+));
