@@ -17,7 +17,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { Switch, Route } from 'react-router-dom';
 import { Header } from 'semantic-ui-react/dist/commonjs';
 
@@ -39,7 +38,6 @@ storiesOf('App Chrome', module)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(DragDropDecorator)
-  .addDecorator(StoryRouter())
   .add('Just the chrome', props => (
     <AppChrome
       activeMenuItem="welcome"

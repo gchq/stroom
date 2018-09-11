@@ -19,7 +19,6 @@ import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';

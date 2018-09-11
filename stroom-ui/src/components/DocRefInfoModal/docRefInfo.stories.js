@@ -16,7 +16,6 @@
 import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { compose, withState } from 'recompose';
 
 import { DocRefInfoModal } from '.';

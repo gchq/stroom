@@ -17,7 +17,6 @@ import React, { Component } from 'react';
 import { withState } from 'recompose';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { Switch, Route } from 'react-router-dom';
 
 import DocRefBreadcrumb from './DocRefBreadcrumb';
@@ -46,5 +45,4 @@ storiesOf('Doc Ref Breadcrumb', module)
   .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(DragDropDecorator)
-  .addDecorator(StoryRouter())
   .add('first pipeline', props => <BreadcrumbOpen docRefUuid={testPipelineUuid} />);

@@ -18,7 +18,6 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { Field, reduxForm } from 'redux-form';
 import { Form } from 'semantic-ui-react';
 

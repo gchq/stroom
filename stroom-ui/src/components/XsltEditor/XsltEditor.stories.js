@@ -16,7 +16,6 @@
 import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
@@ -33,8 +32,7 @@ const PollyDecoratorWithTestData = PollyDecorator({
 
 const stories = storiesOf('XSLT Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(StoryRouter());
+  .addDecorator(ThemedDecorator);
 
 Object.entries(testXslt)
   .map(k => ({

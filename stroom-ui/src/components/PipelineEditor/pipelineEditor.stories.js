@@ -17,7 +17,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
 
 import { compose } from 'recompose';
 
@@ -50,8 +49,7 @@ import { testPipelines } from './test';
 const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
-  .addDecorator(DragDropDecorator)
-  .addDecorator(StoryRouter());
+  .addDecorator(DragDropDecorator);
 
 Object.keys(testPipelines).forEach((k) => {
   pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />);

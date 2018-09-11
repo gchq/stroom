@@ -15,7 +15,7 @@ const CInValueWidget = withControlledValue(InValueWidget);
 const CBetweenValueWidget = withControlledValue(BetweenValueWidget);
 
 const stories = storiesOf('Expression Value Widgets', module)
-  .addDecorator(ThemedDecorator)
+  .addDecorator(ThemedDecorator);
 
 ['text', 'number', 'datetime-local'].forEach((valueType) => {
   stories
