@@ -72,26 +72,26 @@ const RawDocRefListingEntry = ({
   onEnterFolder,
   children,
 }) => (
-  <div className={className} onClick={onSelect}>
-    <div>
-      <DocRefImage docRefType={docRef.type} />
-      <span className="doc-ref-listing__name" onClick={onOpenDocRef}>
-        {docRef.name}
-      </span>
-      <span className="doc-ref-listing__space">&nbsp;</span>
-      {docRef.type === 'System' ||
-        (docRef.type === 'Folder' && (
-          <FontAwesomeIcon
-            className="doc-ref-listing__icon"
-            size="large"
-            icon="angle right"
-            onClick={onEnterFolder}
-          />
-        ))}
+    <div className={className} onClick={onSelect}>
+      <div>
+        <DocRefImage docRefType={docRef.type} />
+        <span className="doc-ref-listing__name" onClick={onOpenDocRef}>
+          {docRef.name}
+        </span>
+        <span className="doc-ref-listing__space">&nbsp;</span>
+        {docRef.type === 'System' ||
+          (docRef.type === 'Folder' && (
+            <FontAwesomeIcon
+              className="doc-ref-listing__icon"
+              size="large"
+              icon="angle-right"
+              onClick={onEnterFolder}
+            />
+          ))}
+      </div>
+      {children}
     </div>
-    {children}
-  </div>
-);
+  );
 
 const DocRefListingEntry = enhance(RawDocRefListingEntry);
 

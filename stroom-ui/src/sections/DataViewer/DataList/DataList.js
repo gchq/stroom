@@ -194,7 +194,7 @@ const enhance = compose(
             const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.data.id === row.original.streamId);
 
             const eventIcon = <FontAwesomeIcon color="blue" icon="file" />;
-            const warningIcon = <FontAwesomeIcon color="orange" icon="exclamation circle" />;
+            const warningIcon = <FontAwesomeIcon color="orange" icon="exclamation-circle" />;
 
             let icon;
             if (stream !== undefined) {

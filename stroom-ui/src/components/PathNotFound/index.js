@@ -24,7 +24,7 @@ const PathNotFound = ({ message }) => (
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>
         <Header as="h3">
-          <FontAwesomeIcon icon="exclamation triangle" />
+          <FontAwesomeIcon icon="exclamation-triangle" />
           <Header.Content>Not Found</Header.Content>
         </Header>
       </Grid.Column>

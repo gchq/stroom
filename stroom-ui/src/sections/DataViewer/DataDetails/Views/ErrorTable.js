@@ -49,7 +49,7 @@ const enhance = compose(
           if (row.value === 'INFO') {
             return (
               <Tooltip
-                trigger={<FontAwesomeIcon color="blue" icon="info circle" />}
+                trigger={<FontAwesomeIcon color="blue" icon="info-circle" />}
                 content={location}
                 position={position}
               />
@@ -57,7 +57,7 @@ const enhance = compose(
           } else if (row.value === 'WARNING') {
             return (
               <Tooltip
-                trigger={<FontAwesomeIcon color="orange" icon="exclamation circle" />}
+                trigger={<FontAwesomeIcon color="orange" icon="exclamation-circle" />}
                 content={location}
                 position={position}
               />
@@ -65,7 +65,7 @@ const enhance = compose(
           } else if (row.value === 'ERROR') {
             return (
               <Tooltip
-                trigger={<FontAwesomeIcon color="red" icon="exclamation circle" />}
+                trigger={<FontAwesomeIcon color="red" icon="exclamation-circle" />}
                 content={location}
                 position={position}
               />
@@ -109,18 +109,18 @@ const enhance = compose(
 const ErrorTable = ({
   tableColumns, tableData, errors, metaAndErrors,
 }) => (
-  <div className="ErrorTable__container">
-    <div className="ErrorTable__reactTable__container">
-      <ReactTable
-        sortable={false}
-        showPagination={false}
-        className="ErrorTable__reactTable"
-        data={tableData}
-        columns={tableColumns}
-      />
+    <div className="ErrorTable__container">
+      <div className="ErrorTable__reactTable__container">
+        <ReactTable
+          sortable={false}
+          showPagination={false}
+          className="ErrorTable__reactTable"
+          data={tableData}
+          columns={tableColumns}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
 
 ErrorTable.propTypes = {
   errors: PropTypes.array.isRequired,

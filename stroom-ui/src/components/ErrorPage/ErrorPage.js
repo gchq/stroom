@@ -42,7 +42,7 @@ const ErrorSection = ({ title, errorData }) => (
 const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
   <div>
     <Header as="h3">
-      <FontAwesomeIcon icon="exclamation circle" color="red" />
+      <FontAwesomeIcon icon="exclamation-circle" color='red' />
       There has been an error!
     </Header>
 

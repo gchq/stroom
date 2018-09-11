@@ -96,7 +96,7 @@ const NumericInput = ({
                       }}
                       disabled={isUpDisabled}
                     >
-                      <FontAwesomeIcon icon="angle up" />
+                      <FontAwesomeIcon icon="angle-up" />
                     </Button>
                     <Button
                       className="button-bottom"
@@ -108,7 +108,7 @@ const NumericInput = ({
                       }}
                       disabled={isDownDisabled}
                     >
-                      <FontAwesomeIcon icon="angle down" />
+                      <FontAwesomeIcon icon="angle-down" />
                     </Button>
                   </div>
                 }
