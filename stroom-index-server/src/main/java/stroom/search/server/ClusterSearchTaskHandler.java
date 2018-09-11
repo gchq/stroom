@@ -269,6 +269,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         task.terminate();
                     }
                 } finally {
+                    LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
+                            "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
                     searchComplete.set(true);
                     //countDown the latch so sendData knows we are complete
