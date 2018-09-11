@@ -22,4 +22,4 @@ import IconHeader from './IconHeader';
 
 const stories = storiesOf('IconHeader', module);
 
-addThemedStories(stories, <IconHeader icon='angle-up' text='Good morrow fellow human' />);
+addThemedStories(stories, <IconHeader icon='angle-up' text='Good morrow fellow human' />, true);

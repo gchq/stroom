@@ -22,6 +22,7 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+import { addThemedStories } from 'lib/themedStoryGenerator';
 
 import AppSearchBar from './AppSearchBar';
 
@@ -127,10 +128,12 @@ class AppSearchAsNavigator extends React.Component {
   }
 }
 
-storiesOf('App Search Bar', module)
+const stories = storiesOf('App Search Bar', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ThemedDecorator)
-  .addDecorator(KeyIsDownDecorator())
+  .addDecorator(KeyIsDownDecorator());
+
+stories
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
   .add('Doc Ref Form', () => <AppSearchAsForm pickerId="docRefForm1" />)
   .add('Doc Ref Picker', () => <AppSearchAsPicker pickerId="docRefPicker2" />)
@@ -143,3 +146,5 @@ storiesOf('App Search Bar', module)
   .add('Doc Ref Form (Folders)', () => (
     <AppSearchAsForm pickerId="docRefForm5" typeFilters={['Folder']} />
   ));
+
+addThemedStories(stories, <AppSearchAsNavigator pickerId="global-search" />);

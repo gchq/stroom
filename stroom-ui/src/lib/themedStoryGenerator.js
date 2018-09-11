@@ -17,29 +17,36 @@
 import React from 'react';
 
 const styles = {
-  biglyStyles: {
+  fullScreen: {
     width: '100%',
     height: '100%'
   },
-  containerStyles: {
+  center: {
     width: '100%',
     height: '100%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center'
   },
+
 }
 
 const themes = ['theme-light', 'theme-dark'];
 
-const ThemedContainer = ({ theme, component }) => (
-  <div className={`app-container ${theme} raised-low`} style={styles.biglyStyles}>
-    <div className='flat' style={styles.containerStyles}>
+const ThemedContainer = ({ theme, component, centerComponent }) => (
+  <div className={`app-container ${theme} raised-low`} style={styles.fullScreen}>
+    {centerComponent ? (
+      <div className='flat' style={styles.center}>
       {component}
     </div>
+    )
+  : (<React.Fragment>{component}</React.Fragment>)}
+    
   </div>
 );
 
-export const addThemedStories = (stories, component) => {
-  themes.forEach(theme => stories.add(theme, () => <ThemedContainer theme={theme} component={component} />));
+export const addThemedStories = (stories, component, centerComponent) => {
+  themes.forEach(theme => stories.add(theme, () => 
+    <ThemedContainer theme={theme} component={component} centerComponent={centerComponent}/>
+  ));
 }

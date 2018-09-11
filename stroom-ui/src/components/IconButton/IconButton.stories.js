@@ -30,4 +30,4 @@ stories.add('button group', () => (
     <IconButton className='raised-low' icon='angle-up' groupPosition='right' />
   </div>
 ));
-addThemedStories(stories, <IconButton className='raised-low' icon='angle-up' />);
+addThemedStories(stories, <IconButton className='raised-low' icon='angle-up' />, true);
