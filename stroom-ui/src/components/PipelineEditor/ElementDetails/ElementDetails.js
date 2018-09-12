@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Container, Message, Image, Form } from 'semantic-ui-react';
+import { Image, Form } from 'semantic-ui-react';
 import { reduxForm } from 'redux-form';
 
 import { getParentProperty } from '../pipelineUtils';
@@ -55,11 +55,9 @@ const enhance = compose(
   branch(
     ({ selectedElementId }) => !selectedElementId,
     renderComponent(() => (
-      <Container className="element-details">
-        <Message>
-          <Message.Header>Please select an element</Message.Header>
-        </Message>
-      </Container>
+      <div className="element-details__nothing-selected">
+        <h3>Please select an element</h3>
+      </div>
     )),
   ),
   withProps(({ pipelineState: { pipeline }, elements, selectedElementId }) => {

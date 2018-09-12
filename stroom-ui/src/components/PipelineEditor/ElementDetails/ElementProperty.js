@@ -19,13 +19,11 @@ import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Form, Checkbox, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { getDetails } from './elementDetailsUtils';
 import ElementPropertyField from './ElementPropertyField';
 import Tooltip from 'components/Tooltip';
-import AppSearchBar from 'components/AppSearchBar';
 
 const {
   pipelineElementPropertyUpdated,
