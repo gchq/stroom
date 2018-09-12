@@ -72,4 +72,28 @@ stories.add('selected - icon and text', () => (
   <Button className='raised-low' selected icon='angle-up' text='Button text' />
 ));
 
+stories.add('many buttons', () => (
+  <div>
+    <Button className='raised-low' text='Button 1' groupPosition='left' />
+    <Button className='raised-low' text='Button 2' groupPosition='middle' />
+    <Button className='raised-low' text='Button 3' groupPosition='right' />
+
+    <Button className='raised-low' circular icon='trash' />
+
+    <Button className='raised-low' selected icon='angle-up' text='A selected button' />
+
+    <Button className='raised-low' icon='angle-up' groupPosition='left' />
+    <Button className='raised-low' icon='angle-up' groupPosition='middle' />
+    <Button className='raised-low' icon='angle-up' groupPosition='right' />
+
+    <Button className='raised-low' icon='angle-up' groupPosition='left' />
+    <Button className='raised-low' icon='angle-up' groupPosition='middle' />
+    <Button className='raised-low' icon='angle-up' groupPosition='right' />
+
+    <Button className='raised-low' icon='trash' />
+
+    <Button className='raised-low' icon='trash' />
+  </div>
+));
+
 addThemedStories(stories, <Button className='raised-low' icon='angle-up' />, true);
