@@ -49,6 +49,9 @@ import {
   faCogs,
   faCog,
   faQuestion,
+  faRecycle,
+  faBan,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 
 export default lifecycle({
@@ -85,6 +88,9 @@ export default lifecycle({
       faPlay,
       faQuestionCircle,
       faQuestion,
+      faRecycle,
+      faBan,
+      faCheck,
     );
   },
 });

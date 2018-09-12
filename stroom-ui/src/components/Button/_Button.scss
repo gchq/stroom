@@ -1,0 +1,31 @@
+.button {
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+}
+
+.button.left {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.button.middle {
+  border-radius: 0;
+}
+
+.button.right {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.button.circular {
+  border-radius: 25px;
+}
+
+.button.has-text {
+  width: auto;
+}
+
+.button.selected {
+  // Selected is indicated by a colour and is configured as part of the theme.
+}

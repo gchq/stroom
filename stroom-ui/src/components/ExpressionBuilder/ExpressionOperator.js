@@ -15,25 +15,18 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Button } from 'semantic-ui-react';
-
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { canMove } from 'lib/treeUtils';
 import ItemTypes from './dragDropTypes';
-
 import ExpressionTerm from './ExpressionTerm';
-
 import { actionCreators } from './redux';
-
 import { LineTo } from 'components/LineTo';
-
 import { LOGICAL_OPERATORS } from './logicalOperators';
+import Button from 'components/Button';
 
 const {
   expressionTermAdded,
@@ -149,10 +142,10 @@ const enhance = compose(
       classNames.push('expression-item--disabled');
     }
 
-    let enabledIcon = 'checkmark';
+    let enabledIcon = 'check';
     let enabledColour = 'grey';
     if (isRoot) {
-      enabledIcon = 'dont';
+      enabledIcon = 'ban';
     } else if (operator.enabled) {
       enabledColour = 'blue';
     }
@@ -191,93 +184,83 @@ const ExpressionOperator = ({
   enabledIcon,
   enabledColour,
 }) => (
-  <div className={className}>
-    {connectDropTarget(<div>
-      {connectDragSource(<span id={`expression-item${operator.uuid}`}>
-        <FontAwesomeIcon color={dndBarColour} icon="bars" />
-      </span>)}
+    <div className={className}>
+      {connectDropTarget(<div>
+        {connectDragSource(<span id={`expression-item${operator.uuid}`}>
+          <FontAwesomeIcon color={dndBarColour} icon="bars" />
+        </span>)}
 
-      <Button.Group>
-        {LOGICAL_OPERATORS.map(l => (
+        {LOGICAL_OPERATORS.map((l, i) => (
           <Button
-            color={operator.op === l ? 'blue' : undefined}
+            selected={operator.op === l}
             key={l}
-            compact
+            groupPosition={i === 0 ? 'left' : (LOGICAL_OPERATORS.length - 1 === i ? 'right' : 'middle')}
             onClick={() => onOpChange(l)}
-          >
-            {l}
-          </Button>
-          ))}
-      </Button.Group>
+            text={l}
+          />
+        ))}
 
-      <Button.Group floated="right">
-        <Button compact onClick={onAddTerm}>
-          <FontAwesomeIcon icon="plus" />
-            Term
-        </Button>
-        <Button compact onClick={onAddOperator}>
-          <FontAwesomeIcon icon="plus" />
-            Group
-        </Button>
-        <Button icon={enabledIcon} compact color={enabledColour} onClick={onEnabledToggled} />
-        {!isRoot ? (
-          <Button icon="trash" compact onClick={onRequestDeleteOperator} />
-          ) : (
-            <Button disabled icon="dont" compact />
-          )}
-      </Button.Group>
-    </div>)}
+        <Button icon="plus" text="Term" groupPosition='left' onClick={onAddTerm} />
+        <Button icon="plus" text="Group" groupPosition='middle' onClick={onAddOperator} />
+        <Button icon={enabledIcon} groupPosition='middle' color={enabledColour} onClick={onEnabledToggled} />
+        {!isRoot ?
+          (<Button icon="trash" groupPosition='right' onClick={onRequestDeleteOperator} />)
+          :
+          (<Button disabled icon="ban" groupPosition='right' />)
+        }
 
-    <div className="operator__children">
-      {isOver && dropTarget.canDrop && <div className="operator__placeholder" />}
-      {operator.children
-        .map((c) => {
-          let itemElement;
-          switch (c.type) {
-            case 'term':
-              itemElement = (
-                <div key={c.uuid} id={`expression-item${c.uuid}`}>
-                  <ExpressionTerm
+      </div>)}
+
+      <div className="operator__children">
+        {isOver && dropTarget.canDrop && <div className="operator__placeholder" />}
+        {operator.children
+          .map((c) => {
+            let itemElement;
+            switch (c.type) {
+              case 'term':
+                itemElement = (
+                  <div key={c.uuid} id={`expression-item${c.uuid}`}>
+                    <ExpressionTerm
+                      dataSource={dataSource}
+                      expressionId={expressionId}
+                      isEnabled={isEnabled && c.enabled}
+                      term={c}
+                    />
+                  </div>
+                );
+                break;
+              case 'operator':
+                itemElement = (
+                  <EnhancedExpressionOperator
                     dataSource={dataSource}
                     expressionId={expressionId}
                     isEnabled={isEnabled && c.enabled}
-                    term={c}
+                    operator={c}
                   />
-                </div>
-              );
-              break;
-            case 'operator':
-              itemElement = (
-                <EnhancedExpressionOperator
-                  dataSource={dataSource}
-                  expressionId={expressionId}
-                  isEnabled={isEnabled && c.enabled}
-                  operator={c}
-                />
-              );
-              break;
-            default:
-              throw new Error(`Invalid operator type: ${c.type}`);
-          }
+                );
+                break;
+              default:
+                throw new Error(`Invalid operator type: ${c.type}`);
+            }
 
-          // Wrap it with a line to
-          return (
-            <div key={c.uuid}>
-              <LineTo
-                lineId={c.uuid}
-                lineType="downRightElbow"
-                fromId={`expression-item${operator.uuid}`}
-                toId={`expression-item${c.uuid}`}
-              />
-              {itemElement}
-            </div>
-          );
-        })
-        .filter(c => !!c) // null filter
-      }
+            // Wrap it with a line to
+            return (
+              <div key={c.uuid}>
+                <LineTo
+                  lineId={c.uuid}
+                  lineType="downRightElbow"
+                  fromId={`expression-item${operator.uuid}`}
+                  toId={`expression-item${c.uuid}`}
+                />
+                {itemElement}
+              </div>
+            );
+          })
+          .filter(c => !!c) // null filter
+        }
+      </div>
     </div>
-  </div>
-);
+  );
 
 const EnhancedExpressionOperator = enhance(ExpressionOperator);
 
