@@ -17,7 +17,7 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Button } from 'semantic-ui-react';
+import Button from 'components/Button';
 import ReactModal from 'react-modal';
 
 import IconHeader from 'components/IconHeader';
@@ -92,17 +92,12 @@ let ThemedConfirm = ({
         </header>
         {details && <div className="raised-low themed-modal__content">{details}</div>}
         <div className="raised-low themed-modal__footer__actions">
-          <Button negative onClick={onCancel}>
-            Cancel
-          </Button>
+          <Button text="Cancel" onClick={onCancel} />
           <Button
-            positive
             onClick={onConfirm}
-            labelPosition="right"
-            icon="checkmark"
-            content="Confirm"
-          >
-          </Button>
+            icon="check"
+            text="Confirm"
+          />
         </div>
       </div>
     </ReactModal>

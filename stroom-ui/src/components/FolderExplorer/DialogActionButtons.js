@@ -14,5 +14,26 @@
  * limitations under the License.
  */
 
-import NumericInput from './NumericInput'
-export default NumericInput
+import React from 'react';
+import PropTypes from 'prop-types';
+
+import Button from 'components/Button';
+
+const DialogActionButtons = ({ onCancel, onChoose }) => (
+  <React.Fragment>
+    <Button text="Cancel" onClick={onCancel} negative />
+    <Button
+      positive
+      onClick={onChoose}
+      icon="check"
+      text="Choose"
+    />
+  </React.Fragment>
+)
+
+DialogActionButtons.propTypes = {
+  onCancel: PropTypes.func.isRequired,
+  onChoose: PropTypes.func.isRequired
+}
+
+export default DialogActionButtons;

@@ -18,6 +18,11 @@
 .app-search-header {
   padding: 0.7rem;
   font-size: 1.1rem;
+  display: flex;
+}
+
+.app-search-header__text {
+  flex-grow: 1;
 }
 
 .app-search-header__buttons {

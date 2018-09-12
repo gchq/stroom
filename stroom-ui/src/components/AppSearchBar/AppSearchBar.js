@@ -153,13 +153,13 @@ const enhance = compose(
   }) => {
     let headerTitle;
     let headerIcon;
-    let headerAction = () => {};
+    let headerAction = () => { };
 
     switch (searchMode) {
       case SEARCH_MODE.NAVIGATION: {
         headerTitle = thisFolder.name;
         if (parentFolder) {
-          headerIcon = 'arrow left';
+          headerIcon = 'arrow-left';
           headerAction = () => thisNavigateToFolder(parentFolder);
         } else {
           headerIcon = 'folder';
@@ -206,46 +206,46 @@ const AppSearchBar = ({
   onSearchBlur,
   onSearchTermChange,
 }) => (
-  <div className={`dropdown ${className}`}>
-    <input
-      className="app-search-bar__input"
-      icon="search"
-      placeholder="Search..."
-      value={valueToShow}
-      onFocus={onSearchFocus}
-      onBlur={onSearchBlur}
-      onChange={onSearchTermChange}
-    />
-    <div
-      tabIndex={0}
-      onKeyDown={onKeyDownWithShortcuts}
-      className="dropdown__content app-search-bar__dropdown-content"
-    >
-      <div className="app-search-header">
-        <FontAwesomeIcon icon={headerIcon} size="lg" onClick={headerAction} />
-        {headerTitle}
-        <ModeOptionButtons pickerId={pickerId} />
-      </div>
-      <div className="app-search-listing">
-        {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
-        {docRefs.map((searchResult, index) => (
-          <DocRefListingEntry
-            key={searchResult.uuid}
-            index={index}
-            listingId={pickerId}
-            docRef={searchResult}
-            openDocRef={onChange}
-            enterFolder={thisNavigateToFolder}
-          >
-            {provideBreadcrumbs && (
-              <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={thisNavigateToFolder} />
-            )}
-          </DocRefListingEntry>
-        ))}
+    <div className={`dropdown ${className}`}>
+      <input
+        className="app-search-bar__input"
+        icon="search"
+        placeholder="Search..."
+        value={valueToShow}
+        onFocus={onSearchFocus}
+        onBlur={onSearchBlur}
+        onChange={onSearchTermChange}
+      />
+      <div
+        tabIndex={0}
+        onKeyDown={onKeyDownWithShortcuts}
+        className="dropdown__content app-search-bar__dropdown-content"
+      >
+        <div className="app-search-header">
+          <FontAwesomeIcon icon={headerIcon} size="lg" onClick={headerAction} />
+          <div className="app-search-header__text">{headerTitle}</div>
+          <ModeOptionButtons pickerId={pickerId} />
+        </div>
+        <div className="app-search-listing">
+          {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
+          {docRefs.map((searchResult, index) => (
+            <DocRefListingEntry
+              key={searchResult.uuid}
+              index={index}
+              listingId={pickerId}
+              docRef={searchResult}
+              openDocRef={onChange}
+              enterFolder={thisNavigateToFolder}
+            >
+              {provideBreadcrumbs && (
+                <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={thisNavigateToFolder} />
+              )}
+            </DocRefListingEntry>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
 const EnhancedAppSearchBar = enhance(AppSearchBar);
 

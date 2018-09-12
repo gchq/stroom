@@ -16,8 +16,7 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Grid, Header } from 'semantic-ui-react';
+import IconHeader from 'components/IconHeader';
 
 const enhance = connect(
   ({ errorPage: { errorMessage, stackTrace, httpErrorCode } }) => ({
@@ -29,30 +28,23 @@ const enhance = connect(
 );
 
 const ErrorSection = ({ title, errorData }) => (
-  <Grid.Row>
-    <Grid.Column width={3}>
-      <strong>{title}: </strong>
-    </Grid.Column>
-    <Grid.Column width={13}>
-      <code>{errorData}</code>
-    </Grid.Column>
-  </Grid.Row>
+  <div className="ErrorPage__section">
+    <strong>{title}: </strong>
+    <code>{errorData}</code>
+  </div>
 );
 
 const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
   <div>
-    <Header as="h3">
-      <FontAwesomeIcon icon="exclamation-circle" color='red' />
-      There has been an error!
-    </Header>
+    <IconHeader icon="exclamation-circle" color="red" text="There has been an error!" />
 
-    <Grid className="error-page__details">
+    <div className="ErrorPage__details">
       {errorMessage && <ErrorSection errorData={errorMessage} title="Error Message" />}
       {httpErrorCode !== 0 &&
         httpErrorCode && <ErrorSection errorData={httpErrorCode} title="HTTP error code" />}
       {stackTrace && <ErrorSection errorData={stackTrace} title="Stack trace" />}
-    </Grid>
-  </div >
+    </div>
+  </div>
 );
 
 export default enhance(ErrorPage);

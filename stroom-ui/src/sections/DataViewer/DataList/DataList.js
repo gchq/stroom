@@ -20,15 +20,11 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, branch, renderComponent, withHandlers, withProps } from 'recompose';
 import moment from 'moment';
 import { path } from 'ramda';
-import PanelGroup from 'react-panelgroup';
-import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Grid, Button } from 'semantic-ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
   search,
   getDetailsForSelectedRow,
@@ -36,10 +32,10 @@ import {
   searchWithExpression,
 } from '../streamAttributeMapClient';
 import { getDataForSelectedRow } from '../dataResourceClient';
-import DetailsTabs from '../DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
 import { actionCreators } from '../redux';
 import Loader from 'components/Loader';
+import Button from 'components/Button';
 
 const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
 const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
@@ -122,15 +118,15 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        search,
+        // search,
         dataViewerId,
-        pageSize,
-        pageOffset,
-        selectedRow,
+        // pageSize,
+        // pageOffset,
+        // selectedRow,
         fetchDataSource,
         onMoveSelection,
-        searchWithExpression,
-        processSearchString,
+        // searchWithExpression,
+        // processSearchString,
       } = this.props;
 
       fetchDataSource(dataViewerId);
@@ -222,13 +218,10 @@ const enhance = compose(
               row.original.created
             ) : (
                 <Button
-                  size="tiny"
-                  compact
-                  className="button border hoverable load-more-button"
+                  className="border hoverable load-more-button"
                   onClick={() => onHandleLoadMoreRows()}
-                >
-                  Load more rows
-                  </Button>
+                  text="Load more rows"
+                />
               )),
         },
         {

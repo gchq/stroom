@@ -30,7 +30,6 @@ import { actionCreators as pipelineActionCreators } from './redux';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const {
   pipelineReceived,

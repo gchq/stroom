@@ -1,0 +1,41 @@
+$button-margin: 3px;;
+
+.button {
+  width: 30px;
+  height: 30px;
+  border-radius: 3px;
+  margin-left: $button-margin;
+  margin-right: $button-margin;
+}
+
+.button.left {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-left: $button-margin;
+  margin-right: 0;
+}
+
+.button.middle {
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: 0;
+}
+
+.button.right {
+  margin-left: 0;
+  margin-right: $button-margin;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.button.circular {
+  border-radius: 25px;
+}
+
+.button.has-text {
+  width: auto;
+}
+
+.button.selected {
+  // Selected is indicated by a colour and is configured as part of the theme.
+}

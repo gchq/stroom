@@ -1,6 +1,23 @@
-import React from 'react';
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+import React from 'react';
 import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
+
+import Button from 'components/Button';
 
 const enhance = compose(
   withProps(({ value }) => {
@@ -56,24 +73,24 @@ const InValueWidget = ({
   valueToShow,
   onTermDelete,
 }) => (
-  <div className="dropdown">
-    <input
-      placeholder="Type and hit 'Enter'"
-      value={valueToShow}
-      onFocus={onInputFocus}
-      onBlur={onInputBlur}
-      onChange={onInputChange}
-      onKeyDown={onInputKeyDown}
-    />
-    <div className="dropdown__content">
-      {splitValues.map(k => (
-        <div key={k}>
-          {k}
-          <button onClick={e => onTermDelete(k)}>X</button>
-        </div>
-      ))}
+    <div className="dropdown">
+      <input
+        placeholder="Type and hit 'Enter'"
+        value={valueToShow}
+        onFocus={onInputFocus}
+        onBlur={onInputBlur}
+        onChange={onInputChange}
+        onKeyDown={onInputKeyDown}
+      />
+      <div className="dropdown__content">
+        {splitValues.map(k => (
+          <div key={k}>
+            {k}
+            <Button onClick={e => onTermDelete(k)} text='X' />
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
 
 export default enhance(InValueWidget);

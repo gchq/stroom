@@ -16,7 +16,7 @@
 
 import React from 'react';
 import loremIpsum from 'lorem-ipsum';
-import { Segment, Menu, Input, Checkbox, Button, Container } from 'semantic-ui-react';
+import { Segment, Menu, Input, Checkbox, Container } from 'semantic-ui-react';
 import { storiesOf } from '@storybook/react';
 import HorizontalPanel from './HorizontalPanel';
 

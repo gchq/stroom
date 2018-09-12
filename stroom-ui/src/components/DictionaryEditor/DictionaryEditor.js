@@ -1,19 +1,15 @@
 import React from 'react';
-
 import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-
-import Tooltip from 'components/Tooltip';
 
 import Loader from 'components/Loader';
 import DocRefImage from 'components/DocRefImage';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchDictionary } from './dictionaryResourceClient';
 import { saveDictionary } from './dictionaryResourceClient';
-import ThemedAceEditor from 'components/ThemedAceEditor';
-
 import { actionCreators } from './redux';
+import Button from 'components/Button';
 
 const { dictionaryUpdated } = actionCreators;
 
@@ -63,25 +59,27 @@ const DictionaryEditor = ({
   saveDisabled,
   saveCaption,
 }) => (
-  <div className="DictionaryEditor">
-    <DocRefImage docRefType="XSLT" className="DictionaryEditor__headerIcon" />
-    <h3 className="DictionaryEditor__headerTitle">{dictionaryUuid}</h3>
+    <div className="DictionaryEditor">
+      <DocRefImage docRefType="XSLT" className="DictionaryEditor__headerIcon" />
+      <h3 className="DictionaryEditor__headerTitle">{dictionaryUuid}</h3>
 
-    <DocRefBreadcrumb
-      className="DictionaryEditor__breadcrumb"
-      docRefUuid={dictionaryUuid}
-      openDocRef={openDocRef}
-    />
+      <DocRefBreadcrumb
+        className="DictionaryEditor__breadcrumb"
+        docRefUuid={dictionaryUuid}
+        openDocRef={openDocRef}
+      />
 
-    <div className="DictionaryEditor__actionButtons">
-      <button disabled={saveDisabled} title="Save Dictionary" onClick={onClickSave}>
-        {saveCaption}
-      </button>
+      <div className="DictionaryEditor__actionButtons">
+        <Button
+          disabled={saveDisabled}
+          title="Save Dictionary"
+          onClick={onClickSave}
+          text={saveCaption} />
+      </div>
+      <div className="DictionaryEditor__main">
+        <textarea value={dictionary.data} onChange={onDataChange} />
+      </div>
     </div>
-    <div className="DictionaryEditor__main">
-      <textarea value={dictionary.data} onChange={onDataChange} />
-    </div>
-  </div>
-);
+  );
 
 export default enhance(DictionaryEditor);

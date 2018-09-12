@@ -19,7 +19,6 @@ import { connect } from 'react-redux';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 import ElementDetails from './ElementDetails';
 import { actionCreators as pipelineActionCreators } from '../redux';
@@ -43,6 +42,8 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
+        pipelineId,
+
         elementsReceived,
         elementPropertiesReceived,
         pipelineReceived,
@@ -50,7 +51,6 @@ const enhance = compose(
 
         testElements,
         testElementProperties,
-        testPipelineId,
         testPipeline,
         testElementId,
         testElementConfig,
@@ -58,22 +58,41 @@ const enhance = compose(
 
       elementsReceived(testElements);
       elementPropertiesReceived(testElementProperties);
-      pipelineReceived(testPipelineId, testPipeline);
-      pipelineElementSelected(testPipelineId, testElementId, testElementConfig);
+      pipelineReceived(pipelineId, testPipeline);
+      pipelineElementSelected(pipelineId, testElementId, testElementConfig);
     },
   }),
 );
 
 const TestElementDetails = enhance(ElementDetails);
 
-const stories = storiesOf('Element Details', module).add('longPipeline', () => (
-  <TestElementDetails
-    testElements={elements}
-    testElementProperties={elementProperties}
-    testPipelineId="longPipeline"
-    testPipeline={testPipelines.longPipeline}
-    testElementId="splitFilter"
-    testElementConfig={{ splitDepth: 10, splitCount: 10 }}
-    pipelineId="longPipeline"
-  />
-));
+const stories = storiesOf('Element Details', module)
+  .add('longPipeline - splitFilter', () => (
+    <TestElementDetails
+      testElements={elements}
+      testElementProperties={elementProperties}
+      testPipeline={testPipelines.longPipeline}
+      testElementId="splitFilter"
+      testElementConfig={{ splitDepth: 10, splitCount: 10 }}
+      pipelineId="longPipeline"
+    />
+  ))
+  .add('longPipeline - xsltFilter', () => (
+    <TestElementDetails
+      testElements={elements}
+      testElementProperties={elementProperties}
+      testPipeline={testPipelines.longPipeline}
+      testElementId="xsltFilter"
+      testElementConfig={{}}
+      pipelineId="longPipeline"
+    />
+  ))
+  .add('nothing selected', () => (
+    <TestElementDetails
+      testElements={elements}
+      testElementProperties={elementProperties}
+      testPipeline={testPipelines.longPipeline}
+      testElementConfig={{ splitDepth: 10, splitCount: 10 }}
+      pipelineId="longPipeline"
+    />
+  ));

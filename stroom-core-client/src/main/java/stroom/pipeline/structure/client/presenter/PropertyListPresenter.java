@@ -422,8 +422,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             propertyList.add(property);
 
             // If the property is a doc ref then we will have to look it up on the server to get the current name for the entity.
-            if (property.getValue() != null && property.getValue().getEntity() != null) {
-                docRefs.add(property.getValue().getEntity());
+            if (property.getValue() != null && property.getValue().getDocRef() != null) {
+                docRefs.add(property.getValue().getDocRef());
             }
         }
 
@@ -435,11 +435,11 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                         .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
                 for (final PipelineProperty property : propertyList) {
-                    final DocRef docRef = property.getValue().getEntity();
+                    final DocRef docRef = property.getValue().getDocRef();
                     if (docRef != null) {
                         final DocRef fetchedDocRef = fetchedDocRefs.get(docRef);
                         if (fetchedDocRef != null) {
-                            property.getValue().setEntity(fetchedDocRef);
+                            property.getValue().setDocRef(fetchedDocRef);
                         }
                     }
                 }

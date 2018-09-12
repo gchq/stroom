@@ -15,17 +15,17 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, renderComponent, branch, withProps, withHandlers } from 'recompose';
+import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { DragSource, DropTarget } from 'react-dnd';
 import { Image } from 'semantic-ui-react';
 
-import Loader from 'components/Loader'
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
 import ItemTypes from './dragDropTypes';
 import { isValidChildType } from './elementUtils';
 import { getInitialValues } from './ElementDetails';
+import Button from 'components/Button';
 
 const {
   pipelineElementAddRequested,
@@ -231,7 +231,7 @@ const PipelineElement = ({
       disabled={isIconDisabled}
       size="mini"
     />
-    <button className="Pipeline-element__type">{elementId}</button>
+    <Button className="Pipeline-element__type" text={elementId} />
   </div>);
 
 PipelineElement.propTypes = {

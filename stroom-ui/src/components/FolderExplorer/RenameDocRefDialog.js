@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
-
 import { connect } from 'react-redux';
-
-import { Header, Form, Button } from 'semantic-ui-react';
+import { Header, Form } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
+import DialogActionButtons from './DialogActionButtons';
 import { renameDocument } from 'components/FolderExplorer/explorerClient';
 import ThemedModal from 'components/ThemedModal';
 
@@ -49,34 +49,26 @@ const RenameDocRefDialog = ({
   completeDocRefRename,
   renameDocument,
 }) => (
-  <ThemedModal
-    isOpen={isRenaming}
-    header={<Header className="header" icon="pencil" content="Enter New Name for Doc Ref" />}
-    content={
-      <Form>
-        <Form.Input
-          label="Type"
-          type="text"
-          onChange={(e, { value }) => renameUpdated(value)}
-          value={name || (docRef ? docRef.name : '')}
+    <ThemedModal
+      isOpen={isRenaming}
+      header={<Header className="header" icon="pencil" content="Enter New Name for Doc Ref" />}
+      content={
+        <Form>
+          <Form.Input
+            label="Type"
+            type="text"
+            onChange={(e, { value }) => renameUpdated(value)}
+            value={name || (docRef ? docRef.name : '')}
+          />
+        </Form>
+      }
+      actions={
+        <DialogActionButtons
+          onCancel={completeDocRefRename}
+          onChoose={() => renameDocument(docRef, name)}
         />
-      </Form>
-    }
-    actions={
-      <React.Fragment>
-        <Button negative onClick={completeDocRefRename}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() => renameDocument(docRef, name)}
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
-        />
-      </React.Fragment>
-    }
-  />
-);
+      }
+    />
+  );
 
 export default enhance(RenameDocRefDialog);

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
 
+import React from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Header, Dropdown, Grid } from 'semantic-ui-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Dropdown, Grid } from 'semantic-ui-react';
 import IconHeader from 'components/IconHeader';
 
 import { actionCreators } from './redux';

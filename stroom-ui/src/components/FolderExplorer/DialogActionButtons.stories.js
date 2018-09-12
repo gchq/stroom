@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { storiesOf, addDecorator } from '@storybook/react';
 
-import React from 'react';
-import { storiesOf } from '@storybook/react';
+import DialogActionButtons from './DialogActionButtons';
 
-import IconButton from './IconButton';
-
-import { addThemedStories } from 'lib/themedStoryGenerator';
-
-const stories = storiesOf('IconButton', module);
-
-addThemedStories(stories, <IconButton className='raised-low' icon='angle-up' />);
+storiesOf('DialogActionButtons', module)
+  .add('basic', props => (
+    <DialogActionButtons
+      onCancel={() => console.log('Cancel clicked')}
+      onChoose={() => console.log('Choose clicked')}
+    />
+  ));

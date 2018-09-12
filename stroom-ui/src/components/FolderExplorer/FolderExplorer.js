@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -6,9 +22,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { withRouter } from 'react-router-dom';
 
 import Loader from 'components/Loader';
-import Tooltip from 'components/Tooltip';
 import AppSearchBar from 'components/AppSearchBar';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
+import Button from 'components/Button';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
@@ -128,37 +144,37 @@ const FolderExplorer = ({
   openDocRef,
   onKeyDownWithShortcuts,
 }) => (
-  <div>
-    <AppSearchBar className="app-search-bar" onChange={openDocRef} />
+    <div>
+      <AppSearchBar className="app-search-bar" onChange={openDocRef} />
 
-    <header>
-      <FontAwesomeIcon icon="folder" />
-      <h3 className="header">{node.name}</h3>
-      <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
-    </header>
+      <header>
+        <FontAwesomeIcon icon="folder" />
+        <h3 className="header">{node.name}</h3>
+        <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
+      </header>
 
-    <div className="doc-ref-listing-entry__action-bar">
-      {actionBarItems.map(({ onClick, icon, tooltip, title }) => (
-        <button key={title} title={tooltip} onClick={onClick}>{title}</button>
-      ))}
+      <div className="doc-ref-listing-entry__action-bar">
+        {actionBarItems.map(({ onClick, icon, tooltip, title }) => (
+          <Button key={title} title={tooltip} onClick={onClick} text={title} />
+        ))}
+      </div>
+      <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+        {node.children.map((docRef, index) => (
+          <DndDocRefListingEntry
+            key={docRef.uuid}
+            index={index}
+            listingId={LISTING_ID}
+            docRefUuid={docRef.uuid}
+            onNameClick={openDocRef}
+            openDocRef={openDocRef}
+          />
+        ))}
+      </div>
+
+      <DocRefInfoModal />
+      <NewDocDialog />
     </div>
-    <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-      {node.children.map((docRef, index) => (
-        <DndDocRefListingEntry
-          key={docRef.uuid}
-          index={index}
-          listingId={LISTING_ID}
-          docRefUuid={docRef.uuid}
-          onNameClick={openDocRef}
-          openDocRef={openDocRef}
-        />
-      ))}
-    </div>
-
-    <DocRefInfoModal />
-    <NewDocDialog />
-  </div>
-);
+  );
 
 const EnhanceFolderExplorer = enhance(FolderExplorer);
 

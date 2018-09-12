@@ -1,8 +1,25 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, withState, withProps } from 'recompose';
 import { DragSource } from 'react-dnd';
+
+import Button from 'components/Button';
 import ItemTypes from '../dragDropTypes';
 
 const withFocus = withState('hasFocus', 'setHasFocus', false);
@@ -44,15 +61,14 @@ const NewElement = ({
   connectDragSource(<div className={`element-palette-element raised-low borderless ${hasFocus ? 'focus' : 'no-focus'}`}>
     <div className="element-palette-element__button-contents">
       <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
-      <button
+      <Button
         className="element-palette__type"
         onFocus={() => setHasFocus(true)}
         onBlur={() => setHasFocus(false)}
-      >
-        {recycleData ? recycleData.id : element.type}
-      </button>
+        text={recycleData ? recycleData.id : element.type}
+      />
     </div>
-                    </div>);
+  </div>);
 
 NewElement.propTypes = {
   elementWithData: PropTypes.object.isRequired,

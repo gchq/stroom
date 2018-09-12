@@ -20,6 +20,7 @@ import { Field, reduxForm } from 'redux-form';
 
 import { storiesOf } from '@storybook/react';
 
+import { addThemedStories } from 'lib/themedStoryGenerator';
 import AppSearchBar from './AppSearchBar';
 
 import 'styles/main.css';
@@ -124,7 +125,9 @@ class AppSearchAsNavigator extends React.Component {
   }
 }
 
-storiesOf('App Search Bar', module)
+const stories = storiesOf('App Search Bar', module);
+
+stories
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
   .add('Doc Ref Form', () => <AppSearchAsForm pickerId="docRefForm1" />)
   .add('Doc Ref Picker', () => <AppSearchAsPicker pickerId="docRefPicker2" />)
@@ -137,3 +140,5 @@ storiesOf('App Search Bar', module)
   .add('Doc Ref Form (Folders)', () => (
     <AppSearchAsForm pickerId="docRefForm5" typeFilters={['Folder']} />
   ));
+
+addThemedStories(stories, <AppSearchAsNavigator pickerId="global-search" />);
