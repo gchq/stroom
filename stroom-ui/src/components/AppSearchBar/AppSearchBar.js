@@ -159,7 +159,7 @@ const enhance = compose(
       case SEARCH_MODE.NAVIGATION: {
         headerTitle = thisFolder.name;
         if (parentFolder) {
-          headerIcon = 'arrow left';
+          headerIcon = 'arrow-left';
           headerAction = () => thisNavigateToFolder(parentFolder);
         } else {
           headerIcon = 'folder';

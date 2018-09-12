@@ -156,8 +156,8 @@ describe('Pipeline Utils', () => {
       const testPipeline = Object.assign(testPipelines.simple, {});
       const elementName = 'xsltFilter'
       const propertyName = 'xslt'
-      const propertyType = 'entity'
-      const propertyEntityValue = {
+      const propertyType = 'docRef'
+      const propertyDocRefValue = {
         type: 'some type',
         uuid: 'some uuid',
         name: 'some name',
@@ -169,13 +169,13 @@ describe('Pipeline Utils', () => {
         elementName,
         propertyName,
         propertyType,
-        propertyEntityValue,
+        propertyDocRefValue,
       );
 
       // Then
       const propertyValue = {
         boolean: null,
-        entity: propertyEntityValue,
+        docRef: propertyDocRefValue,
         integer: null,
         long: null,
         string: null
@@ -192,7 +192,7 @@ describe('Pipeline Utils', () => {
       const elementName = 'xsltFilter'
       const propertyName = 'xsltNamePattern'
       const propertyType = 'string'
-      const propertyEntityValue = 'New value'
+      const propertyDocRefValue = 'New value'
 
       // When
       const updatedPipeline = setElementPropertyValueInPipeline(
@@ -200,16 +200,16 @@ describe('Pipeline Utils', () => {
         elementName,
         propertyName,
         propertyType,
-        propertyEntityValue,
+        propertyDocRefValue,
       );
 
       // Then
       const propertyValue = {
         boolean: null,
-        entity: null,
+        docRef: null,
         integer: null,
         long: null,
-        string: propertyEntityValue
+        string: propertyDocRefValue
       }
       const stackAdd = updatedPipeline.configStack[0].properties.add;
       expectsForNewProperties(stackAdd, 3, elementName, propertyName, propertyValue);

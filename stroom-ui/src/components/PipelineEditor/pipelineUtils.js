@@ -249,8 +249,8 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
  * @param {pipeline} pipeline The current definition of the pipeline.
  * @param {string} element The name of the element to update.
  * @param {string} name The name of the property on the element to update
- * @param {string} propertyType The type of the property to update, one of boolean, entity, integer, long, or string.
- * @param {boolean|entity|integer|long|string} propertyValue The value to add or update
+ * @param {string} propertyType The type of the property to update, one of boolean, docref, integer, long, or string.
+ * @param {boolean|docref|integer|long|string} propertyValue The value to add or update
  */
 export function setElementPropertyValueInPipeline(
   pipeline,
@@ -259,10 +259,11 @@ export function setElementPropertyValueInPipeline(
   propertyType,
   propertyValue,
 ) {
-
   // Create the 'value' property.
-  let value = {boolean: null, entity: null, integer: null, long: null, string: null}
-  value[propertyType.toLowerCase()] = propertyValue
+  const value = {
+    boolean: null, docref: null, integer: null, long: null, string: null,
+  };
+  value[propertyType.toLowerCase()] = propertyValue;
 
   const property = {
     element,
@@ -270,57 +271,38 @@ export function setElementPropertyValueInPipeline(
     value,
   };
 
-
-  const stackAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
-  addToProperties(stackAdd, property)
-
-  const mergeAdd = pipeline.merged.properties.add;
-  addToProperties(mergeAdd, property)
-
   return {
     ...pipeline,
-    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
-      elements: stackItem.elements,
-      links: stackItem.links,
-      properties: {
-        ...stackItem.properties,
-        add: stackAdd,
-      },
-    })),
-    merged: {
-      elements: pipeline.merged.elements,
-      links: pipeline.merged.links,
-      properties: {
-        ...pipeline.merged.properties,
-        add: mergeAdd,
-      }
-    }
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => addPropertyToStackItem(stackItem, property)),
+    merged: addPropertyToStackItem(pipeline.merged, property)
   };
 }
 
-function addToProperties(properties, property){
-  let index = properties.findIndex(item => item.element === property.element && item.name === property.name);
-  let addOrReplace; // The deleteCount param for splice, i.e. 0 for insert, 1 for replace
-
-  if (index === -1) {
-    addOrReplace = 0;
-    index = properties.length; // Insert at the end
-  } else {
-    addOrReplace = 1;
+function addPropertyToStackItem(stackItem, property) {
+  const result = {
+    ...stackItem,
+    elements: stackItem.elements,
+    links: stackItem.links,
+    properties: {
+      ...stackItem.properties,
+      add: stackItem.properties.add
+        .filter(p => !((p.element === property.element) && (p.name === property.name)))
+        .concat([property]),
+    },
   }
 
-  properties.splice(index, addOrReplace, property);
+  return result;
 }
 
-export function revertPropertyToParent(pipeline, element, name){
-  if(pipeline.configStack.length < 2) throw new Error('This function requires a configStack with a parent');
-  if(element === undefined) throw new Error('This function requires an element name');
-  if(name === undefined) throw new Error('This function requires a property name');
+export function revertPropertyToParent(pipeline, element, name) {
+  if (pipeline.configStack.length < 2) { throw new Error('This function requires a configStack with a parent'); }
+  if (element === undefined) throw new Error('This function requires an element name');
+  if (name === undefined) throw new Error('This function requires a property name');
 
-  const childAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add
-  const parentAdd = pipeline.configStack[pipeline.configStack.length - 2].properties.add
-  const mergedAdd = pipeline.merged.properties.add
-  
+  const childAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
+  const parentAdd = pipeline.configStack[pipeline.configStack.length - 2].properties.add;
+  const mergedAdd = pipeline.merged.properties.add;
+
   const indexToRemove = childAdd.findIndex(addItem => addItem.name === name);
   const parentProperty = parentAdd.find(addItem => addItem.name === name);
   const indexToRemoveFromMerged = mergedAdd.findIndex(addItem => addItem.name === name);
@@ -344,31 +326,31 @@ export function revertPropertyToParent(pipeline, element, name){
       links: pipeline.merged.links,
       properties: {
         ...pipeline.merged.properties,
-        add:[
+        add: [
           // We want to remove the property from the merged stack...
           ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
           ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1),
-          //... and replace it with the paren'ts property
-          parentProperty
-        ]
-      }
-    }
+          // ... and replace it with the paren'ts property
+          parentProperty,
+        ],
+      },
+    },
   };
 }
 
-export function revertPropertyToDefault(pipeline, element, name){
-  if(pipeline.configStack.length < 2) throw new Error('This function requires a configStack with a parent');
-  if(element === undefined) throw new Error('This function requires an element name');
-  if(name === undefined) throw new Error('This function requires a property name');
+export function revertPropertyToDefault(pipeline, element, name) {
+  if (pipeline.configStack.length < 2) { throw new Error('This function requires a configStack with a parent'); }
+  if (element === undefined) throw new Error('This function requires an element name');
+  if (name === undefined) throw new Error('This function requires a property name');
 
-  const childAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add
-  const mergedAdd = pipeline.merged.properties.add
+  const childAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
+  const mergedAdd = pipeline.merged.properties.add;
   const indexToRemoveFromMerged = mergedAdd.findIndex(addItem => addItem.name === name);
 
-  // We might be removing something that has an override on a child, in which case we 
+  // We might be removing something that has an override on a child, in which case we
   // need to make sure we remove the child add too.
   const indexToRemove = childAdd.findIndex(addItem => addItem.name === name);
-  if( indexToRemove !== -1) {
+  if (indexToRemove !== -1) {
     const propertyForRemove = childAdd.find(addItem => addItem.name === name);
     return {
       ...pipeline,
@@ -384,8 +366,8 @@ export function revertPropertyToDefault(pipeline, element, name){
           ],
           remove: [
             ...stackItem.properties.remove,
-            propertyForRemove // We add the property we found on the parent
-          ]
+            propertyForRemove, // We add the property we found on the parent
+          ],
         },
       })),
       merged: {
@@ -397,42 +379,41 @@ export function revertPropertyToDefault(pipeline, element, name){
             // Merged shouldn't have this property at all, and it doesn't need a remove either
             ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
             ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1),
-          ]
-        }
-      }
-    };
-  } else {
-    // If we don't have this property in the child then we need to get it from the parent:
-    const propertyForRemove = getParentProperty(pipeline.configStack, element, name);
-    return {
-      ...pipeline,
-      configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
-        elements: stackItem.elements, 
-        links: stackItem.links, 
-        properties: {
-          ...stackItem.properties,
-          add: stackItem.properties.add, // We don't have anything to change here
-          remove: [
-            ...stackItem.properties.remove,
-            propertyForRemove // We add the property we found on the parent
-          ]
+          ],
         },
-      })),
-      // Just copy them over
-      merged: {
-        elements: pipeline.merged.elements,
-        links: pipeline.merged.links,
-        properties: {
-          ...pipeline.merged.properties,
-          add: [
-            // Merged shouldn't have this property at all, and it doesn't need a remove either
-            ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
-            ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1),
-          ]
-        }
-      }
+      },
     };
   }
+  // If we don't have this property in the child then we need to get it from the parent:
+  const propertyForRemove = getParentProperty(pipeline.configStack, element, name);
+  return {
+    ...pipeline,
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      elements: stackItem.elements,
+      links: stackItem.links,
+      properties: {
+        ...stackItem.properties,
+        add: stackItem.properties.add, // We don't have anything to change here
+        remove: [
+          ...stackItem.properties.remove,
+          propertyForRemove, // We add the property we found on the parent
+        ],
+      },
+    })),
+    // Just copy them over
+    merged: {
+      elements: pipeline.merged.elements,
+      links: pipeline.merged.links,
+      properties: {
+        ...pipeline.merged.properties,
+        add: [
+          // Merged shouldn't have this property at all, and it doesn't need a remove either
+          ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
+          ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1),
+        ],
+      },
+    },
+  };
 }
 
 /**
@@ -543,10 +524,11 @@ export function removeElementFromPipeline(pipeline, itemToDelete) {
  * @param {string} itemToMove ID of the item to move
  * @param {string} destination ID of the destination
  * @return {boolean} Indicate if the move is valid.
- */ 
+ */
+
 export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, destination) {
-  const {node: itemToMoveNode } = findItem(pipelineAsTree, itemToMove);
-  const {node: destinationNode } = findItem(pipelineAsTree, destination);
+  const { node: itemToMoveNode } = findItem(pipelineAsTree, itemToMove);
+  const { node: destinationNode } = findItem(pipelineAsTree, destination);
 
   // If either node cannot be found...bad times
   if (!itemToMoveNode || !destinationNode) {
@@ -622,13 +604,12 @@ export function getAllChildren(pipeline, parent) {
   return allChildren;
 }
 
-
 /**
  * Looks through the parents in the stack until it finds the first time this property has been set.
- * It'll return that value but if it's never been set it'll return undefined. It won't return a value 
+ * It'll return that value but if it's never been set it'll return undefined. It won't return a value
  * if the property exists in 'remove'.
- * 
- * @param {configStack} stack The config stack for the pipeline 
+ *
+ * @param {configStack} stack The config stack for the pipeline
  * @param {string} elementId The elementId of the
  * @param {string} propertyName The name of the property to search for
  */
@@ -636,19 +617,17 @@ export function getParentProperty(stack, elementId, propertyName) {
   const getFromParent = (index) => {
     const property = stack[index].properties.add.find(element => element.element === elementId && element.name === propertyName);
     const removeProperty = stack[index].properties.remove.find(element => element.element === elementId && element.name === propertyName);
-    if(property !== undefined){
+    if (property !== undefined) {
       // We return the first matching property we find.
       return property;
-    } else {
-      // If we haven't found one we might need to continue looking up the stack
-      // We won't continue looking up the stack if we have a matching 'remove' property.
-      if( index -1 >= 0 && removeProperty === undefined){
-        return getFromParent(index - 1)
-      }
-      else return undefined;
     }
-  }
+    // If we haven't found one we might need to continue looking up the stack
+    // We won't continue looking up the stack if we have a matching 'remove' property.
+    if (index - 1 >= 0 && removeProperty === undefined) {
+      return getFromParent(index - 1);
+    } return undefined;
+  };
 
-  if(stack.length < 2) return undefined;
-  else return getFromParent(stack.length - 2);
+  if (stack.length < 2) return undefined;
+  return getFromParent(stack.length - 2);
 }

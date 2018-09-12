@@ -51,7 +51,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
+@XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "docref"})
 public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePropertyValue> {
     private static final long serialVersionUID = 1247638056133627349L;
 
@@ -61,8 +61,8 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
     protected Long _long;
     @XmlElement(name = "boolean")
     protected Boolean _boolean;
-    @XmlElement(name = "entity")
-    protected DocRef entity;
+    @XmlElement(name = "docref")
+    protected DocRef docRef;
 
     public PipelinePropertyValue() {
         // Default constructor necessary for GWT serialisation.
@@ -84,8 +84,8 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         this._boolean = _boolean;
     }
 
-    public PipelinePropertyValue(final DocRef entity) {
-        this.entity = entity;
+    public PipelinePropertyValue(final DocRef docRef) {
+        this.docRef = docRef;
     }
 
     public String getString() {
@@ -120,12 +120,12 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         this._boolean = value;
     }
 
-    public DocRef getEntity() {
-        return entity;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
-    public void setEntity(final DocRef value) {
-        this.entity = value;
+    public void setDocRef(final DocRef value) {
+        this.docRef = value;
     }
 
     @Override
@@ -142,7 +142,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         builder.append(integer, pipelinePropertyValue.integer);
         builder.append(_long, pipelinePropertyValue._long);
         builder.append(_boolean, pipelinePropertyValue._boolean);
-        builder.append(entity, pipelinePropertyValue.entity);
+        builder.append(docRef, pipelinePropertyValue.docRef);
         return builder.isEquals();
     }
 
@@ -153,7 +153,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         builder.append(integer);
         builder.append(_long);
         builder.append(_boolean);
-        builder.append(entity);
+        builder.append(docRef);
         return builder.toHashCode();
     }
 
@@ -167,12 +167,12 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
             return _long.toString();
         } else if (_boolean != null) {
             return _boolean.toString();
-        } else if (entity != null) {
-            if (entity.getName() != null) {
-                return entity.getName();
+        } else if (docRef != null) {
+            if (docRef.getName() != null) {
+                return docRef.getName();
             }
 
-            return entity.toString();
+            return docRef.toString();
         }
         return "";
     }
@@ -183,6 +183,6 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         this.integer = from.integer;
         this._long = from._long;
         this._boolean = from._boolean;
-        this.entity = from.entity;
+        this.docRef = from.docRef;
     }
 }
