@@ -167,8 +167,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             if (properties != null && properties.size() > 0) {
                 for (final PipelineProperty property : properties) {
                     if (property.getValue() != null) {
-                        if (property.getValue().getEntity() != null) {
-                            docRef = property.getValue().getEntity();
+                        if (property.getValue().getDocRef() != null) {
+                            docRef = property.getValue().getDocRef();
                         } else if (property.getName().toLowerCase().contains("pattern") && stream != null) {
                             String value = property.getValue().getString();
                             value = replace(value, "feed", stream.getFeedName());

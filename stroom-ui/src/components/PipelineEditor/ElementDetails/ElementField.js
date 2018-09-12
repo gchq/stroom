@@ -4,8 +4,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Form, Checkbox, Button, Grid } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { actionCreators } from '../redux';
 
@@ -20,18 +19,16 @@ const {
 
 const getPickerName = settingName => `${settingName}_docRefModalPicker`;
 
-const enhance = compose(
-  connect(
-    (state, props) => ({
-      // state
-    }),
-    {
-      pipelineElementPropertyUpdated,
-      pipelineElementPropertyRevertToParent,
-      pipelineElementPropertyRevertToDefault,
-    },
-  ),
-);
+const enhance = compose(connect(
+  (state, props) => ({
+    // state
+  }),
+  {
+    pipelineElementPropertyUpdated,
+    pipelineElementPropertyRevertToParent,
+    pipelineElementPropertyRevertToDefault,
+  },
+));
 
 /**
  * Gets a value for display from the property.
@@ -73,14 +70,14 @@ const getDetails = ({
   pipelineElementPropertyRevertToDefault,
 }) => {
   const RevertToDefaultButton = (
-    <Button onClick={() => pipelineElementPropertyRevertToDefault(pipelineId, elementId, name)}>
+    <button onClick={() => pipelineElementPropertyRevertToDefault(pipelineId, elementId, name)}>
       Revert to default
-    </Button>
+    </button>
   );
   const RevertToParentButton = (
-    <Button onClick={() => pipelineElementPropertyRevertToParent(pipelineId, elementId, name)}>
+    <button onClick={() => pipelineElementPropertyRevertToParent(pipelineId, elementId, name)}>
       Revert to parent
-    </Button>
+    </button>
   );
 
   // Parse the value if it's a boolean.
@@ -154,10 +151,10 @@ const getDetails = ({
           </p>
 
           <p>You may revert it to the default or you may revert to the parent's value</p>
-          <Grid divided columns="equal">
-            <Grid.Column>{RevertToDefaultButton}</Grid.Column>
-            <Grid.Column>{RevertToParentButton}</Grid.Column>
-          </Grid>
+          <div>
+            {RevertToDefaultButton}
+            {RevertToParentButton}
+          </div>
         </div>
       );
     } else {
@@ -170,9 +167,7 @@ const getDetails = ({
           <p>This property is using an inherited value.</p>
 
           <p>You may revert it to the default if you wish.</p>
-          <Grid divided columns="equal">
-            <Grid.Column>{RevertToDefaultButton}</Grid.Column>
-          </Grid>
+          <div>{RevertToDefaultButton}</div>
         </div>
       );
     }
@@ -253,12 +248,12 @@ const FieldValue = ({
   switch (type) {
     case 'boolean':
       elementField = (
-        <Checkbox
-          toggle
+        <input
+          type="checkbox"
           checked={value}
           name={name}
-          onChange={(_, event) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'boolean', event.checked);
+          onChange={() => {
+            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'boolean', !value);
           }}
         />
       );
@@ -266,11 +261,17 @@ const FieldValue = ({
     case 'int':
       elementField = (
         <input
-          type='number'
+          type="number"
           name={name}
           value={parseInt(value, 10)}
-          onChange={(newValue) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'integer', newValue);
+          onChange={({ target: { value } }) => {
+            pipelineElementPropertyUpdated(
+              pipelineId,
+              elementId,
+              name,
+              'integer',
+              parseInt(value, 10),
+            );
           }}
         />
       );
@@ -279,10 +280,10 @@ const FieldValue = ({
       elementField = (
         <AppSearchBar
           pickerId={getPickerName(name)}
-          typeFilter={docRefTypes}
+          typeFilters={docRefTypes}
+          value={value}
           onChange={(node) => {
-            console.log('Doc Ref Picked', node);
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', node);
+            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'docref', node);
           }}
         />
       );
@@ -294,8 +295,8 @@ const FieldValue = ({
         <input
           value={value}
           name={name}
-          onChange={(_, event) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, type, event.value);
+          onChange={({ target: { value } }) => {
+            pipelineElementPropertyUpdated(pipelineId, elementId, name, type, value);
           }}
         />
       );
@@ -308,8 +309,8 @@ const FieldValue = ({
         <input
           value={value}
           name={name}
-          onChange={(_, event) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, type, event.value);
+          onChange={({ target: { value } }) => {
+            pipelineElementPropertyUpdated(pipelineId, elementId, name, type, value);
           }}
         />
       );
@@ -349,14 +350,19 @@ const ElementField = ({
     pipelineId,
     childValue,
   });
-  const field = <FieldValue {...{pipelineElementPropertyUpdated,
-    value: details.actualValue,
-    name,
-    pipelineId,
-    elementId,
-    type,
-    docRefTypes,}}
+  const field = (
+    <FieldValue
+      {...{
+        pipelineElementPropertyUpdated,
+        value: details.actualValue,
+        name,
+        pipelineId,
+        elementId,
+        type,
+        docRefTypes,
+      }}
     />
+  );
 
   const popOverContent = (
     <div>
@@ -371,17 +377,17 @@ const ElementField = ({
   );
 
   return (
-    <Form.Group>
-      <Form.Field className="element-details__field">
+    <div>
+      <div className="element-details__field">
         <label>{description}</label>
         {field}
-      </Form.Field>
+      </div>
       <Tooltip
         hoverable
         trigger={<FontAwesomeIcon icon="cog" color="blue" size="lg" />}
         content={popOverContent}
       />
-    </Form.Group>
+    </div>
   );
 };
 

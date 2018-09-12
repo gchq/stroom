@@ -32,7 +32,7 @@ export const noParent = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -85,7 +85,7 @@ export const noParent = {
           value: {
             string: 'DSD',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -138,7 +138,7 @@ export const childNoProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -165,7 +165,7 @@ export const childNoProperty = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -176,7 +176,7 @@ export const childNoProperty = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -205,7 +205,7 @@ export const childNoProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -216,7 +216,7 @@ export const childNoProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -257,7 +257,7 @@ export const childWithProperty = {
             value: {
               string: 'JS',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -268,7 +268,7 @@ export const childWithProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -295,7 +295,7 @@ export const childWithProperty = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -306,7 +306,7 @@ export const childWithProperty = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -335,7 +335,7 @@ export const childWithProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -346,7 +346,7 @@ export const childWithProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -387,7 +387,7 @@ export const childNoPropertyParentNoProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -421,7 +421,7 @@ export const childNoPropertyParentNoProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -448,7 +448,7 @@ export const childNoPropertyParentNoProperty = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -459,7 +459,7 @@ export const childNoPropertyParentNoProperty = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -488,7 +488,7 @@ export const childNoPropertyParentNoProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -499,7 +499,7 @@ export const childNoPropertyParentNoProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -540,7 +540,7 @@ export const childNoPropertyParentWithProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -551,7 +551,7 @@ export const childNoPropertyParentWithProperty = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -585,7 +585,7 @@ export const childNoPropertyParentWithProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -612,7 +612,7 @@ export const childNoPropertyParentWithProperty = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -623,7 +623,7 @@ export const childNoPropertyParentWithProperty = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -652,7 +652,7 @@ export const childNoPropertyParentWithProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -663,7 +663,7 @@ export const childNoPropertyParentWithProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -704,7 +704,7 @@ export const childWithPropertyParentNoProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -715,7 +715,7 @@ export const childWithPropertyParentNoProperty = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -749,7 +749,7 @@ export const childWithPropertyParentNoProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -760,7 +760,7 @@ export const childWithPropertyParentNoProperty = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -787,7 +787,7 @@ export const childWithPropertyParentNoProperty = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -798,7 +798,7 @@ export const childWithPropertyParentNoProperty = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -827,7 +827,7 @@ export const childWithPropertyParentNoProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -838,7 +838,7 @@ export const childWithPropertyParentNoProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -879,7 +879,7 @@ export const childWithPropertyParentWithProperty = {
             value: {
               string: 'DSD123',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -890,7 +890,7 @@ export const childWithPropertyParentWithProperty = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -924,7 +924,7 @@ export const childWithPropertyParentWithProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -935,7 +935,7 @@ export const childWithPropertyParentWithProperty = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -962,7 +962,7 @@ export const childWithPropertyParentWithProperty = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -973,7 +973,7 @@ export const childWithPropertyParentWithProperty = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1002,7 +1002,7 @@ export const childWithPropertyParentWithProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -1013,7 +1013,7 @@ export const childWithPropertyParentWithProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -1054,7 +1054,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: 'DSD123',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1065,7 +1065,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -1099,7 +1099,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1110,7 +1110,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -1123,7 +1123,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: null,
               integer: null,
-              entity: null,
+              docref: null,
               boolean: false,
               long: null,
             },
@@ -1149,7 +1149,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: 'JSON',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1160,7 +1160,7 @@ export const childWithRemoveForItsParentsAdd = {
             value: {
               string: 'D',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1189,7 +1189,7 @@ export const childWithRemoveForItsParentsAdd = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -1200,7 +1200,7 @@ export const childWithRemoveForItsParentsAdd = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -1241,7 +1241,7 @@ export const emptyChildParentWithProperty = {
             value: {
               string: 'JS',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1252,7 +1252,7 @@ export const emptyChildParentWithProperty = {
             value: {
               string: 'DSD',
               integer: null,
-              entity: null,
+              docref: null,
               boolean: null,
               long: null,
             },
@@ -1296,7 +1296,7 @@ export const emptyChildParentWithProperty = {
           value: {
             string: 'D',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },
@@ -1307,7 +1307,7 @@ export const emptyChildParentWithProperty = {
           value: {
             string: 'JSON',
             integer: null,
-            entity: null,
+            docref: null,
             boolean: null,
             long: null,
           },

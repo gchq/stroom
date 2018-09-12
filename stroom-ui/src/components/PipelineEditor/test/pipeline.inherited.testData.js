@@ -109,7 +109,7 @@ export default {
             value: {
               string: null,
               integer: null,
-              entity: {
+              docref: {
                 type: 'TextConverter',
                 uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
                 name: 'My CSV Splitter',
@@ -124,7 +124,7 @@ export default {
             value: {
               string: null,
               integer: null,
-              entity: {
+              docref: {
                 type: 'XSLT',
                 uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
                 name: 'MyXSLT',
@@ -139,7 +139,7 @@ export default {
             value: {
               string: null,
               integer: null,
-              entity: {
+              docref: {
                 type: 'Feed',
                 uuid: 'c65aa827-d10b-4aea-8bf0-3e361e0ee4dd',
                 name: 'MY_FEED',
@@ -154,7 +154,7 @@ export default {
             value: {
               string: 'Events',
               integer: null,
-              entity: null,
+              docref: null,
               long: null,
               boolean: null,
             },
@@ -219,7 +219,7 @@ export default {
           value: {
             string: null,
             integer: null,
-            entity: {
+            docref: {
               type: 'XSLT',
               uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
               name: 'MyXSLT',
@@ -234,7 +234,7 @@ export default {
           value: {
             string: null,
             integer: null,
-            entity: {
+            docref: {
               type: 'Feed',
               uuid: 'c65aa827-d10b-4aea-8bf0-3e361e0ee4dd',
               name: 'MY_FEED',
@@ -249,7 +249,7 @@ export default {
           value: {
             string: 'Events',
             integer: null,
-            entity: null,
+            docref: null,
             long: null,
             boolean: null,
           },
@@ -260,7 +260,7 @@ export default {
           value: {
             string: null,
             integer: null,
-            entity: {
+            docref: {
               type: 'TextConverter',
               uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
               name: 'My CSV Splitter',
