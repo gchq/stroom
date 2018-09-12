@@ -52,7 +52,7 @@ public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
-
+    private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
 
     @Inject
@@ -70,7 +70,7 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a path to use.
-            String path = null;
+            String path;
             if (outputPaths.length == 1) {
                 path = outputPaths[0];
             } else {
@@ -105,14 +105,22 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a writer for the new lock file.
-            final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(lockFile));
-            return new LockedOutputStream(outputStream, lockFile, outFile);
+            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(lockFile)));
+            return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
             throw e;
         } catch (final Exception e) {
             throw new IOException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (byteCountOutputStream == null) {
+            return 0;
+        }
+        return byteCountOutputStream.getCount();
     }
 
     /**

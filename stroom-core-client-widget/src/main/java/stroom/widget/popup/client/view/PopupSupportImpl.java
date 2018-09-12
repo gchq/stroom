@@ -312,6 +312,13 @@ public class PopupSupportImpl implements PopupSupport {
                     okCancelContent.setContent(view.asWidget());
                     popup.setContent(okCancelContent);
                     break;
+                case ACCEPT_REJECT_DIALOG:
+                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(popupUiHandlers);
+                    controls = acceptRejectContent;
+                    acceptRejectContent.setContent(view.asWidget());
+                    popup.setContent(acceptRejectContent);
+                    break;
             }
         } else {
             switch (popupType) {
@@ -336,6 +343,13 @@ public class PopupSupportImpl implements PopupSupport {
                     controls = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
                     popup.setContent(okCancelContent);
+                    break;
+                case ACCEPT_REJECT_DIALOG:
+                    popup = new Dialog(popupUiHandlers);
+                    final AcceptRejectContent acceptRejectContent = new AcceptRejectContent(popupUiHandlers);
+                    controls = acceptRejectContent;
+                    acceptRejectContent.setContent(view.asWidget());
+                    popup.setContent(acceptRejectContent);
                     break;
             }
         }

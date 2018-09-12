@@ -33,7 +33,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Optional;
 
 public class TestHDFSFileAppender extends StroomUnitTest {
@@ -105,8 +104,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
 
         for (int i = 0; i < 100; i++) {
             provider.startProcessing();
-            final OutputStream outputStream = provider.createOutputStream();
-            final HDFSLockedOutputStream lockedOutputStream = (HDFSLockedOutputStream) outputStream;
+            final HDFSLockedOutputStream lockedOutputStream = provider.createHDFSLockedOutputStream();
             final Path file = lockedOutputStream.getLockFile();
             final String path = file.toString();
 

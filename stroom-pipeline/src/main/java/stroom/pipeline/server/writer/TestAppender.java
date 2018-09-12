@@ -25,7 +25,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.io.OutputStream;
 
 @Component
@@ -43,11 +42,16 @@ public class TestAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected OutputStream createOutputStream() {
         return outputStream;
     }
 
     public void setOutputStream(final OutputStream os) {
         outputStream = os;
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        return 0;
     }
 }

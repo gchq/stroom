@@ -16,25 +16,23 @@
 
 package stroom.util.io;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ByteCountInputStream extends WrappedInputStream {
-    private long byteCount;
+public class ByteCountInputStream extends FilterInputStream {
+    private final AtomicLong count = new AtomicLong();
 
     public ByteCountInputStream(InputStream inputStream) {
         super(inputStream);
-    }
-
-    public long getByteCount() {
-        return byteCount;
     }
 
     @Override
     public int read() throws IOException {
         int r = super.read();
         if (r >= 0) {
-            byteCount++;
+            count.incrementAndGet();
         }
         return r;
     }
@@ -43,7 +41,7 @@ public class ByteCountInputStream extends WrappedInputStream {
     public int read(byte[] b) throws IOException {
         int r = super.read(b);
         if (r >= 0) {
-            byteCount += r;
+            count.addAndGet(r);
         }
         return r;
 
@@ -53,9 +51,12 @@ public class ByteCountInputStream extends WrappedInputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         int r = super.read(b, off, len);
         if (r >= 0) {
-            byteCount += r;
+            count.addAndGet(r);
         }
         return r;
     }
 
+    public long getCount() {
+        return count.get();
+    }
 }

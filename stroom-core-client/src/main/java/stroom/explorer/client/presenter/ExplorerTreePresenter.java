@@ -17,7 +17,11 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,6 +31,10 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.activity.client.ActivityChangedEvent;
+import stroom.activity.client.CurrentActivity;
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -55,15 +63,23 @@ public class ExplorerTreePresenter
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
+    private final CurrentActivity currentActivity;
     private final ExplorerTree explorerTree;
+    private final Button activityContainer = new Button();
 
     @Inject
-    public ExplorerTreePresenter(final EventBus eventBus, final ExplorerTreeView view, final ExplorerTreeProxy proxy,
-                                 final ClientDispatchAsync dispatcher, final DocumentTypeCache documentTypeCache,
-                                 final TypeFilterPresenter typeFilterPresenter) {
+    public ExplorerTreePresenter(final EventBus eventBus,
+                                 final ExplorerTreeView view,
+                                 final ExplorerTreeProxy proxy,
+                                 final ClientDispatchAsync dispatcher,
+                                 final DocumentTypeCache documentTypeCache,
+                                 final TypeFilterPresenter typeFilterPresenter,
+                                 final CurrentActivity currentActivity,
+                                 final ClientPropertyCache clientPropertyCache) {
         super(eventBus, view, proxy);
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
+        this.currentActivity = currentActivity;
 
         view.setUiHandlers(this);
 
@@ -76,7 +92,31 @@ public class ExplorerTreePresenter
         };
 
         // Add views.
-        view.setCellTree(explorerTree);
+        clientPropertyCache.get().onSuccess(clientProperties -> {
+            if (clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false)) {
+                activityContainer.setStyleName("activityContainer");
+
+                final SimplePanel activityOuter = new SimplePanel();
+                activityOuter.setStyleName("activityOuter");
+                activityOuter.setWidget(activityContainer);
+
+                final SimplePanel treeContainer = new SimplePanel();
+                treeContainer.setStyleName("stroom-content");
+                treeContainer.setWidget(explorerTree);
+
+                final DockLayoutPanel dockLayoutPanel = new DockLayoutPanel(Unit.PX);
+                dockLayoutPanel.setStyleName("explorerWrapper");
+                dockLayoutPanel.addSouth(activityOuter, 107);
+                dockLayoutPanel.add(treeContainer);
+
+                view.setCellTree(dockLayoutPanel);
+
+                updateActivitySummary(currentActivity.getActivity());
+
+            } else {
+                view.setCellTree(explorerTree);
+            }
+        });
     }
 
     @Override
@@ -86,6 +126,9 @@ public class ExplorerTreePresenter
         // Register for refresh events.
         registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
 
+        // Register for changes to the current activity.
+        registerHandler(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary(event.getActivity())));
+
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
@@ -94,6 +137,29 @@ public class ExplorerTreePresenter
         // Fire events from the explorer tree globally.
         registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> getEventBus().fireEvent(new ExplorerTreeSelectEvent(explorerTree.getSelectionModel(), event.getSelectionType()))));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
+
+        registerHandler(activityContainer.addClickHandler(event -> currentActivity.showActivityChooser()));
+    }
+
+    private void updateActivitySummary(final Activity activity) {
+        final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
+
+        if (activity != null) {
+            final ActivityDetails details = activity.getDetails();
+            for (final String name : details.getNames()) {
+                final String value = details.getProperties().get(name);
+                sb.append("<b>");
+                sb.append(name);
+                sb.append(": </b>");
+                sb.append(value);
+                sb.append("</br>");
+            }
+        } else {
+            sb.append("<b>");
+            sb.append("none");
+        }
+
+        activityContainer.setHTML(sb.toString());
     }
 
     @Override

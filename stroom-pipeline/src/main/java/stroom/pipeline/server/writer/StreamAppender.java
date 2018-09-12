@@ -41,6 +41,7 @@ import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
@@ -68,6 +69,8 @@ public class StreamAppender extends AbstractAppender {
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
+    private WrappedSegmentOutputStream wrappedSegmentOutputStream;
+    private ByteCountOutputStream byteCountOutputStream;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -125,7 +128,7 @@ public class StreamAppender extends AbstractAppender {
         streamCloser.add(streamTarget);
 
         if (segmentOutput) {
-            targetOutputStream = new WrappedSegmentOutputStream(new RASegmentOutputStream(streamTarget)) {
+            wrappedSegmentOutputStream = new WrappedSegmentOutputStream(new RASegmentOutputStream(streamTarget)) {
                 @Override
                 public void close() throws IOException {
                     super.flush();
@@ -133,9 +136,10 @@ public class StreamAppender extends AbstractAppender {
                     StreamAppender.this.close();
                 }
             };
+            targetOutputStream = wrappedSegmentOutputStream;
 
         } else {
-            targetOutputStream = new WrappedOutputStream(streamTarget.getOutputStream()) {
+            byteCountOutputStream = new ByteCountOutputStream(streamTarget.getOutputStream()) {
                 @Override
                 public void close() throws IOException {
                     super.flush();
@@ -143,6 +147,7 @@ public class StreamAppender extends AbstractAppender {
                     StreamAppender.this.close();
                 }
             };
+            targetOutputStream = byteCountOutputStream;
         }
 
         return targetOutputStream;
@@ -157,6 +162,17 @@ public class StreamAppender extends AbstractAppender {
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (wrappedSegmentOutputStream != null) {
+            return wrappedSegmentOutputStream.getPosition();
+        }
+        if (byteCountOutputStream != null) {
+            return byteCountOutputStream.getCount();
+        }
+        return 0;
     }
 
     @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)

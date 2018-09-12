@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#837** : Fix bug to no longer try and record set activity events for null activities.
+
+* Issue **#595** : Added stream appender and file appender property `splitWhenBiggerThan` to limit the size of output streams.
+
+* Now logs activity change correctly.
+
+* Add support for checkbox and selection control types to activity descriptions.
+
+* Issue **#833** : The global property edit dialog can now be made larger.
+
+* Fixed some issues in the activity manager.
+
+* Issue **#828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
+
+* Issue **#774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
+
+* Issue **#829** : Stroom now logs event id when viewing individual events.
+
+* Added functionality to record actions against user defined activities.
+
+* Added functionality to show a splash screen on login.
+
 * Issue **#791** : Fixed broken equals method so query total row count gets updated correctly.
 
 * Issue **#830** : Fix for API queries not returning before timing out.

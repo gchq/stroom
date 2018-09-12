@@ -86,7 +86,7 @@ public final class ManageGlobalPropertyEditPresenter
 
     @Override
     protected PopupSize getPopupSize() {
-        return new PopupSize(550, 340, 550, 340, 1024, 340, true);
+        return new PopupSize(550, 340, 550, 340, true);
     }
 
     public interface GlobalPropertyEditView extends View {

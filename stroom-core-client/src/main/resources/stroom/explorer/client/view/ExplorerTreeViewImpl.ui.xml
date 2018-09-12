@@ -27,8 +27,8 @@
             <g:DockLayoutPanel unit="PX" styleName="{style.bar} stroom-border">
                 <g:west size="38">
                     <g:FlowPanel styleName="{style.buttonContainer}">
-                        <p:SvgButton ui:field="newItem" />
-                        <p:SvgButton ui:field="deleteItem" />
+                        <p:SvgButton ui:field="newItem"/>
+                        <p:SvgButton ui:field="deleteItem"/>
                     </g:FlowPanel>
                 </g:west>
                 <g:center>
@@ -36,13 +36,13 @@
                 </g:center>
                 <g:east size="18">
                     <g:FlowPanel>
-                        <p:SvgButton ui:field="typeFilter" />
+                        <p:SvgButton ui:field="typeFilter"/>
                     </g:FlowPanel>
                 </g:east>
             </g:DockLayoutPanel>
         </g:north>
         <g:center>
-            <g:SimplePanel styleName="stroom-content" ui:field="treeContainer" />
+            <g:SimplePanel styleName="stroom-content" ui:field="treeContainer"/>
         </g:center>
     </g:DockLayoutPanel>
 </ui:UiBinder> 

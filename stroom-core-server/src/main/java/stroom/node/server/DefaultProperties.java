@@ -798,7 +798,7 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Query info popup 
+        // Query info popup
         list.add(new GlobalProperty.Builder()
                 .name("stroom.query.infoPopup.enabled")
                 .value("false")
@@ -819,6 +819,94 @@ public class DefaultProperties {
                 .description("A regex used to validate query info.")
                 .editable(true)
                 .requireUiRestart(true)
+                .build());
+
+        // Activity Recording
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.enabled")
+                .value("false")
+                .description("If you would like users to be able to record some info about the activity they are performing set this property to true.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.chooseOnStartup")
+                .value("false")
+                .description("Set to true if users should be prompted to choose an activity on login.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.managerTitle")
+                .value("Choose Activity")
+                .description("The title of the activity manager popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.editorTitle")
+                .value("Edit Activity")
+                .description("The title of the activity editor popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.activity.editorBody")
+                .value("Activity Code:</br>" +
+                        "<input type=\"text\" name=\"code\"></input></br></br>" +
+                        "Activity Description:</br>" +
+                        "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\"></textarea>" +
+                        "Explain what the activity is")
+                .description("The HTML to display in the activity editor popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // Splash screen
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.enabled")
+                .value("false")
+                .description("If you would like users to see a splash screen on login.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.title")
+                .value("Splash Screen")
+                .description("The title of the splash screen popup.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.body")
+                .value("<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>")
+                .description("The HTML to display in the splash screen.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.splash.version")
+                .value("v0.1")
+                .description("The version of the splash screen message.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // Common statistics store properties
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.statistics.common.statisticEngines")
+                .value("sql")
+                .description("Comma delimited list of enabled engines that implement Statistic Event Store (currently 'sql')")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        // Legacy statistics store properties
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.statistics.legacy.statisticAggregationBatchSize")
+                .value("1000000")
+                .description("Number of STAT_VAL_SRC records to merge into STAT_VAL in one batch")
+                .editable(true)
                 .build());
 
         // SQL statistics store properties 
@@ -874,7 +962,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.node.status.heapHistogram.classNameReplacementRegex")
-                // This is XML so XML escaping rules apply, not java's 
+                // This is XML so XML escaping rules apply, not java's
                 .value("((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)")
                 .description("A single regex that will be used to replace all matches in the class name with '--REPLACED--'. This is to prevent ids for anonymous inner classes and lambdas from being included in the class name. E.g '....DocRefResourceHttpClient$$Lambda$46/1402766141' becomes '....DocRefResourceHttpClient$$Lambda$--REPLACED--'. ")
                 .editable(true)
@@ -887,9 +975,9 @@ public class DefaultProperties {
 
 
         // External Service properties, including DocRef.type name mappings
-        // ========================================START=========================================== 
+        // ========================================START===========================================
 
-        // Stroom-Index 
+        // Stroom-Index
         list.add(new GlobalProperty.Builder()
                 .name("stroom.services.stroomIndex.name")
                 .value("stroom-index")
@@ -912,7 +1000,7 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Authentication 
+        // Authentication
         list.add(new GlobalProperty.Builder()
                 .name("stroom.services.authentication.name")
                 .value("authentication")
@@ -988,7 +1076,7 @@ public class DefaultProperties {
                 .description("Choose whether Stroom requires authenticated access")
                 .build());
 
-        // Authorisation 
+        // Authorisation
         list.add(new GlobalProperty.Builder()
                 .name("stroom.services.authorisation.name")
                 .value("authorisation")
@@ -1011,7 +1099,7 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // Stroom-Stats 
+        // Stroom-Stats
         list.add(new GlobalProperty.Builder()
                 .name("stroom.services.stroomStats.name")
                 .value("stroom-stats")
@@ -1054,7 +1142,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SQL Statistics 
+        // SQL Statistics
         list.add(new GlobalProperty.Builder()
                 .name("stroom.services.sqlStatistics.name")
                 .value("sql_statistics")
@@ -1077,11 +1165,11 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // ========================================END=========================================== 
+        // ========================================END===========================================
 
 
-        // Kafka properties 
-        // ========================================START=========================================== 
+        // Kafka properties
+        // ========================================START===========================================
         list.add(new GlobalProperty.Builder()
                 .name("stroom.kafka.bootstrap.servers")
                 .value("localhost:9092")
@@ -1091,11 +1179,11 @@ public class DefaultProperties {
                 .build());
 
 
-        // ========================================END=========================================== 
+        // ========================================END===========================================
 
 
-        // Service discovery properties 
-        // ========================================START=========================================== 
+        // Service discovery properties
+        // ========================================START===========================================
         list.add(new GlobalProperty.Builder()
                 .name("stroom.serviceDiscovery.enabled")
                 .value("true")
@@ -1168,7 +1256,7 @@ public class DefaultProperties {
                 .editable(true)
                 .requireUiRestart(true)
                 .build());
-        // ========================================END=========================================== 
+        // ========================================END===========================================
 
 
         // Internal statistics definitions
@@ -1179,7 +1267,7 @@ public class DefaultProperties {
         // If an internal statistic docRefs property has an empty value then the statistic events will be silently
         // ignored.
 
-        // ========================================START=========================================== 
+        // ========================================START===========================================
         list.add(new GlobalProperty.Builder()
                 .name("stroom.internalstatistics.benchmarkCluster.docRefs")
                 .value("docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test),docRef(StroomStatsStore,2503f703-5ce0-4432-b9d4-e3272178f47e,Benchmark-Cluster Test)")
@@ -1268,9 +1356,9 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
-        // ========================================END=========================================== 
+        // ========================================END===========================================
 
-        // Stroom Proxy Store for Pipeline Use 
+        // Stroom Proxy Store for Pipeline Use
         list.add(new GlobalProperty.Builder()
                 .name("stroom.proxy.store.dir")
                 .value("${stroom.temp}/stroom-proxy")
