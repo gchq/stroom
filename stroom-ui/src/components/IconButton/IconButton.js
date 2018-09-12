@@ -20,9 +20,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const IconButton = ({ text, icon, groupPosition, className, circular, ...rest }) => (
   <button
-    className={`icon-button ${groupPosition || ''} ${className || ''} ${circular ? 'circular' : ''}`}
+    className={`icon-button ${groupPosition || ''} ${className || ''} ${circular ? 'circular' : ''} ${text ? 'has-text' : ''}`}
     {...rest}>
     <FontAwesomeIcon className='icon-button__icon' icon={icon} />
+    {text}
   </button>
 );
 
@@ -30,6 +31,7 @@ IconButton.propTypes = {
   icon: PropTypes.string.isRequired,
   groupPosition: PropTypes.string,
   circular: PropTypes.bool,
+  text: PropTypes.string,
 }
 
 export default IconButton;
