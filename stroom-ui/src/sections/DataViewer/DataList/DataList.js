@@ -23,7 +23,6 @@ import { path } from 'ramda';
 import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Button } from 'semantic-ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import {
@@ -36,6 +35,7 @@ import { getDataForSelectedRow } from '../dataResourceClient';
 import withLocalStorage from 'lib/withLocalStorage';
 import { actionCreators } from '../redux';
 import Loader from 'components/Loader';
+import Button from 'components/Button';
 
 const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
 const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
@@ -218,13 +218,10 @@ const enhance = compose(
               row.original.created
             ) : (
                 <Button
-                  size="tiny"
-                  compact
-                  className="button border hoverable load-more-button"
+                  className="border hoverable load-more-button"
                   onClick={() => onHandleLoadMoreRows()}
-                >
-                  Load more rows
-                  </Button>
+                  text="Load more rows"
+                />
               )),
         },
         {

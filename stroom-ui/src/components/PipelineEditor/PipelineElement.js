@@ -25,6 +25,7 @@ import { canMovePipelineElement } from './pipelineUtils';
 import ItemTypes from './dragDropTypes';
 import { isValidChildType } from './elementUtils';
 import { getInitialValues } from './ElementDetails';
+import Button from 'components/Button';
 
 const {
   pipelineElementAddRequested,
@@ -230,7 +231,7 @@ const PipelineElement = ({
       disabled={isIconDisabled}
       size="mini"
     />
-    <button className="Pipeline-element__type">{elementId}</button>
+    <Button className="Pipeline-element__type" text={elementId} />
   </div>);
 
 PipelineElement.propTypes = {

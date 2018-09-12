@@ -4,8 +4,6 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { TextAreaField } from 'react-semantic-redux-form';
-
 import Button from 'components/Button';
 import IconHeader from 'components/IconHeader';
 import ThemedModal from 'components/ThemedModal';
@@ -66,7 +64,7 @@ const PipelineSettings = ({
           <label>Description</label>
           <Field
             name="description"
-            component={TextAreaField}
+            component='textarea'
             type="text"
             placeholder="Description"
             autoFocus

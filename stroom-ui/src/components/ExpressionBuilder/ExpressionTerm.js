@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { DragSource } from 'react-dnd';
 
-import Button from 'components/Button';
 import SelectBox from 'components/SelectBox';
+import Button from 'components/Button';
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
 import ValueWidget from './ValueWidget';
@@ -84,7 +84,7 @@ const enhance = compose(
       });
     },
 
-    onValueChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => value => 
+    onValueChange: ({ expressionItemUpdated, expressionId, term: { uuid } }) => value =>
       expressionItemUpdated(expressionId, uuid, { value })
   }),
   withProps(({ isEnabled, term, dataSource }) => {
@@ -112,8 +112,7 @@ const enhance = compose(
     return {
       conditionOptions,
       fieldOptions,
-      className: classNames.join(' '),
-      enabledButtonColour: term.enabled ? 'blue' : 'grey',
+      className: classNames.join(' ')
     };
   }),
   withValueType
@@ -137,34 +136,35 @@ const ExpressionTerm = ({
   conditionOptions,
   valueType
 }) => (
-  <div className={className}>
-    {connectDragSource(<span>
-      <FontAwesomeIcon icon="bars" />
-                       </span>)}
-    <SelectBox
-      placeholder="Field"
-      value={term.field}
-      onChange={onFieldChange}
-      options={fieldOptions}
-    />
-    <SelectBox
-      placeholder="Condition"
-      value={term.condition}
-      onChange={onConditionChange}
-      options={conditionOptions}
-    />
+    <div className={`expression-term ${className}`}>
+      {connectDragSource(<span>
+        <FontAwesomeIcon icon="bars" />
+      </span>)}
+      <SelectBox
+        placeholder="Field"
+        value={term.field}
+        onChange={onFieldChange}
+        options={fieldOptions}
+      />
+      <SelectBox
+        placeholder="Condition"
+        value={term.condition}
+        onChange={onConditionChange}
+        options={conditionOptions}
+      />
 
-    <ValueWidget
-      valueType={valueType}
-      term={term}
-      onChange={onValueChange}
-    />
-    <div className='ExpressionItem__buttons'>
-      <Button icon="check" groupPosition='left' color={enabledButtonColour} onClick={onEnabledToggled} />
-      <Button icon="trash" groupPosition='right' onClick={onRequestDeleteTerm} />
+      <ValueWidget
+        valueType={valueType}
+        term={term}
+        onChange={onValueChange}
+      />
+      <div className="expression-term__spacer" />
+      <div className="expression-term__actions">
+        <Button icon="check" groupPosition='left' disabled={term.enabled} onClick={onEnabledToggled} />
+        <Button icon="trash" groupPosition='right' onClick={onRequestDeleteTerm} />
+      </div>
     </div>
-  </div>
-);
+  );
 
 ExpressionTerm.propTypes = {
   dataSource: PropTypes.object.isRequired, // complete definition of the data source

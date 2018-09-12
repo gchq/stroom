@@ -86,4 +86,13 @@ const stories = storiesOf('Element Details', module)
       testElementConfig={{}}
       pipelineId="longPipeline"
     />
+  ))
+  .add('nothing selected', () => (
+    <TestElementDetails
+      testElements={elements}
+      testElementProperties={elementProperties}
+      testPipeline={testPipelines.longPipeline}
+      testElementConfig={{ splitDepth: 10, splitCount: 10 }}
+      pipelineId="longPipeline"
+    />
   ));

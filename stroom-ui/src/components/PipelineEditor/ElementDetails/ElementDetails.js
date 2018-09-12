@@ -1,13 +1,28 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Container, Message, Image, Form } from 'semantic-ui-react';
+import { Image, Form } from 'semantic-ui-react';
 import { reduxForm } from 'redux-form';
 
-import { getParentProperty } from '../pipelineUtils';
 import HorizontalPanel from 'components/HorizontalPanel';
-import ElementField from './ElementField';
+import ElementProperty from './ElementProperty';
 
 const enhance = compose(
   connect(
@@ -22,28 +37,22 @@ const enhance = compose(
       const form = `${pipelineId}-elementDetails`;
 
       return {
-        // for our component
         elements,
         selectedElementId,
         pipelineState,
-        // for redux-form
         form,
         initialValues,
       };
     },
-    {
-      // actions
-    },
+    {},
   ),
   reduxForm(),
   branch(
     ({ selectedElementId }) => !selectedElementId,
     renderComponent(() => (
-      <Container className="element-details">
-        <Message>
-          <Message.Header>Please select an element</Message.Header>
-        </Message>
-      </Container>
+      <div className="element-details__nothing-selected">
+        <h3>Please select an element</h3>
+      </div>
     )),
   ),
   withProps(({ pipelineState: { pipeline }, elements, selectedElementId }) => {
@@ -54,19 +63,11 @@ const enhance = compose(
     const elementTypeProperties = elements.elementProperties[element.type];
     const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
-    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
-
-    const elementPropertiesInChild = pipeline.configStack[
-      pipeline.configStack.length - 1
-    ].properties.add.filter(property => property.element === selectedElementId);
-
     return {
       element,
       elementType,
-      elementTypeProperties,
-      sortedElementTypeProperties,
-      elementProperties,
-      elementPropertiesInChild,
+      elementTypeProperties: sortedElementTypeProperties,
+      selectedElementId
     };
   }),
 );
@@ -78,9 +79,9 @@ const ElementDetails = ({
   element,
   elementType,
   elementTypeProperties,
-  sortedElementTypeProperties,
   elementProperties,
   elementPropertiesInChild,
+  selectedElementId,
 }) => {
   const title = (
     <div className="element-details__title">
@@ -104,36 +105,20 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-          sortedElementTypeProperties.map((elementTypeProperty) => {
-            const docRefTypes = elementTypeProperty.docRefTypes
-              ? elementTypeProperty.docRefTypes
-              : undefined;
-
-            const parentValue = getParentProperty(
-              pipeline.configStack,
-              element.id,
-              elementTypeProperty.name,
-            );
-            const defaultValue = elementTypeProperty.defaultValue;
-            const property = elementProperties.find(element => element.name === elementTypeProperty.name);
-            const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
-            return (
-              <ElementField
+            elementTypeProperties.map((elementTypeProperty) => (
+              <ElementProperty
                 pipelineId={pipelineId}
                 elementId={element.id}
                 key={elementTypeProperty.name}
                 name={elementTypeProperty.name}
                 type={elementTypeProperty.type}
-                docRefTypes={docRefTypes}
+                elementTypeProperty={elementTypeProperty}
                 description={elementTypeProperty.description}
-                defaultValue={defaultValue}
-                parentValue={parentValue}
-                childValue={childProperty}
-                value={property}
+                selectedElementId={selectedElementId}
               />
-            );
-          })
-        )}
+            )
+            )
+          )}
       </Form>
     </React.Fragment>
   );

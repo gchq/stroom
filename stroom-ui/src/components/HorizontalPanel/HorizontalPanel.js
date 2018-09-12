@@ -1,8 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Menu } from 'semantic-ui-react';
+import { Menu } from 'semantic-ui-react';
 import { compose, withState, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
+
+import Button from 'components/Button';
 
 const enhance = compose(
   withState('activeItem', 'setActiveItem', 'home'),
@@ -38,7 +40,7 @@ const HorizontalPanel = ({
               <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
                 {headerMenuItems}
                 <Menu.Item className="horizontal-panel_close-button ">
-                  <Button className="icon-button" icon="close" onClick={() => onClose()} />
+                  <Button icon="times" onClick={() => onClose()} />
                 </Menu.Item>
               </Menu.Menu>
             </Menu>

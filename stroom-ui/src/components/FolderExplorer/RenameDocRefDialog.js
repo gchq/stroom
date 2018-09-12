@@ -20,7 +20,7 @@ import { connect } from 'react-redux';
 import { compose, withHandlers } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
 
-import Button from 'components/Button';
+import DialogActionButtons from './DialogActionButtons';
 import IconHeader from 'components/IconHeader';
 import { actionCreators, defaultListingState } from './redux/renameDocRefReducer';
 import { renameDocument } from 'components/FolderExplorer/explorerClient';
@@ -47,18 +47,18 @@ const enhance = compose(
     touchOnChange: true,
   }),
   withHandlers({
-    onClickConfirm: ({
+    onConfirm: ({
       renameDocument,
       docRef,
       renameDocRefForm: {
         values: { docRefName },
       },
     }) => () => renameDocument(docRef, docRefName),
-    onClickCancel: ({ completeDocRefRename, listingId }) => () => completeDocRefRename(listingId),
+    onCancel: ({ completeDocRefRename, listingId }) => () => completeDocRefRename(listingId),
   }),
 );
 
-let RenameDocRefDialog = ({ isRenaming, onClickConfirm, onClickCancel }) => (
+let RenameDocRefDialog = ({ isRenaming, onConfirm, onCancel }) => (
   <ThemedModal
     isOpen={isRenaming}
     header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
@@ -74,12 +74,7 @@ let RenameDocRefDialog = ({ isRenaming, onClickConfirm, onClickCancel }) => (
         />
       </form>
     }
-    actions={
-      <React.Fragment>
-        <Button onClick={onClickCancel} icon="times" text="Cancel" />
-        <Button onClick={onClickConfirm} icon="check" text="Choose" />
-      </React.Fragment>
-    }
+    actions={<DialogActionButtons onCancel={onCancel} onConfirm={onConfirm} />}
   />
 );
 

@@ -20,13 +20,12 @@ import { compose, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import Button from 'components/Button';
 import IconHeader from 'components/IconHeader';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators, defaultListingState } from './redux/copyDocRefReducer';
 import { copyDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
-
+import DialogActionButtons from './DialogActionButtons';
 import ThemedModal from 'components/ThemedModal';
 import AppSearchBar from 'components/AppSearchBar';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
@@ -100,10 +99,7 @@ let CopyDocRefDialog = ({ isCopying, onCancel, onConfirm }) => (
       </form>
     }
     actions={
-      <React.Fragment>
-        <Button onClick={onCancel} icon="times" text="Cancel" />
-        <Button onClick={onConfirm} icon="check" text="Choose" />
-      </React.Fragment>
+      <DialogActionButtons onCancel={onCancel} onConfirm={onConfirm} />
     }
   />
 );

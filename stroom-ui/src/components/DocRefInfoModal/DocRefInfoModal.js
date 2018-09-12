@@ -21,6 +21,7 @@ import Loader from 'components/Loader';
 import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
 import IconHeader from 'components/IconHeader';
+import Button from 'components/Button';
 
 const { docRefInfoClosed } = actionCreators;
 
@@ -43,7 +44,7 @@ const enhance = compose(
   })),
 );
 
-const doNothing = () => {};
+const doNothing = () => { };
 
 const DocRefInfoModal = ({
   isOpen,
@@ -52,61 +53,61 @@ const DocRefInfoModal = ({
   formattedCreateTime,
   formattedUpdateTime,
 }) => (
-  <ThemedModal
-    isOpen={isOpen}
-    onClose={docRefInfoClosed}
-    header={<IconHeader icon="info" text="Document Information" />}
-    content={
-      <form>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Type</label>
-            <input type="text" value={docRefInfo.docRef.type} onChange={doNothing} />
-          </span>
-          <span>
-            <label>UUID</label>
-            <input type="text" value={docRefInfo.docRef.uuid} onChange={doNothing} />
-          </span>
-          <span>
-            <label>Name</label>
-            <input type="text" value={docRefInfo.docRef.name} onChange={doNothing} />
-          </span>
-        </div>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Created by</label>
-            <input type="text" value={docRefInfo.createUser} onChange={doNothing} />
-          </span>
-          <span>
-            <label>at</label>
-            <input type="text" value={formattedCreateTime} onChange={doNothing} />
-          </span>
-        </div>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Updated by</label>
-            <input type="text" value={docRefInfo.updateUser} onChange={doNothing} />
-          </span>
-          <span>
-            <label>at</label>
-            <input type="text" value={formattedUpdateTime} onChange={doNothing} />
-          </span>
-        </div>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Other Info</label>
-            <input
-              label="Other Info"
-              type="text"
-              value={docRefInfo.otherInfo}
-              onChange={doNothing}
-            />
-          </span>
-        </div>
-      </form>
-    }
-    actions={<button onClick={docRefInfoClosed}>Close</button>}
-  />
-);
+    <ThemedModal
+      isOpen={isOpen}
+      onClose={docRefInfoClosed}
+      header={<IconHeader icon="info" text="Document Information" />}
+      content={
+        <form>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Type</label>
+              <input type="text" value={docRefInfo.docRef.type} onChange={doNothing} />
+            </span>
+            <span>
+              <label>UUID</label>
+              <input type="text" value={docRefInfo.docRef.uuid} onChange={doNothing} />
+            </span>
+            <span>
+              <label>Name</label>
+              <input type="text" value={docRefInfo.docRef.name} onChange={doNothing} />
+            </span>
+          </div>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Created by</label>
+              <input type="text" value={docRefInfo.createUser} onChange={doNothing} />
+            </span>
+            <span>
+              <label>at</label>
+              <input type="text" value={formattedCreateTime} onChange={doNothing} />
+            </span>
+          </div>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Updated by</label>
+              <input type="text" value={docRefInfo.updateUser} onChange={doNothing} />
+            </span>
+            <span>
+              <label>at</label>
+              <input type="text" value={formattedUpdateTime} onChange={doNothing} />
+            </span>
+          </div>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Other Info</label>
+              <input
+                label="Other Info"
+                type="text"
+                value={docRefInfo.otherInfo}
+                onChange={doNothing}
+              />
+            </span>
+          </div>
+        </form>
+      }
+      actions={<Button onClick={docRefInfoClosed} text='Close' />}
+    />
+  );
 
 export default enhance(DocRefInfoModal);
