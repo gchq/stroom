@@ -73,17 +73,10 @@ const ElementProperty = ({
   name,
   description,
   type,
-  defaultValue,
-  value,
-  childValue,
-  parentValue,
   docRefTypes,
   pipelineId,
   pipelineElementPropertyUpdated,
-  pipelineElementPropertyRevertToParent,
-  pipelineElementPropertyRevertToDefault,
   elementId,
-  revertToDefault,
   details,
 }) => (
     <div>

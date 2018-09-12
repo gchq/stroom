@@ -38,18 +38,14 @@ const enhance = compose(
       const form = `${pipelineId}-elementDetails`;
 
       return {
-        // for our component
         elements,
         selectedElementId,
         pipelineState,
-        // for redux-form
         form,
         initialValues,
       };
     },
-    {
-      // actions
-    },
+    {},
   ),
   reduxForm(),
   branch(
