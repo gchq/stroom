@@ -22,19 +22,27 @@ import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
-import stroom.util.shared.HasTerminate;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class EventSearchResultHandler implements ResultHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchResultHandler.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(EventSearchResultHandler.class);
 
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();
     private final AtomicBoolean merging = new AtomicBoolean();
     private volatile EventRefs streamReferences;
+
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
 
     @Override
     public void handle(final Map<CoprocessorKey, Payload> payloadMap) {
@@ -92,6 +100,12 @@ class EventSearchResultHandler implements ResultHandler {
 
                 } else {
                     EventRefs eventRefs = pendingMerges.poll();
+
+                    boolean didMergeItems = false;
+                    if (eventRefs != null) {
+                        didMergeItems = true;
+                    }
+
                     while (eventRefs != null) {
                         try {
                             mergeRefs(eventRefs);
@@ -105,6 +119,17 @@ class EventSearchResultHandler implements ResultHandler {
                         }
 
                         eventRefs = pendingMerges.poll();
+                    }
+
+                    if (didMergeItems) {
+                        lock.lock();
+                        try {
+                            // signal any thread waiting on the condition to check the busy state
+                            LOGGER.trace("Signal all threads to check busy state");
+                            condition.signalAll();
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
             } finally {
@@ -121,6 +146,8 @@ class EventSearchResultHandler implements ResultHandler {
             if (pendingMerges.peek() != null) {
                 mergePending();
             }
+        } else {
+            LOGGER.trace("Another thread is busy merging, so will let it merge my items");
         }
     }
 
@@ -139,5 +166,40 @@ class EventSearchResultHandler implements ResultHandler {
     @Override
     public Data getResultStore(final String componentId) {
         return null;
+    }
+
+    public boolean busy() {
+        boolean isBusy = pendingMerges.size() > 0 || merging.get();
+        LAMBDA_LOGGER.trace(() ->
+                LambdaLogger.buildMessage("busy() called, pendingMerges: {}, merging: {}, returning {}",
+                        pendingMerges.size(), merging.get(), isBusy));
+        return isBusy;
+    }
+
+    /**
+     * Will block until all pending work that the {@link ResultHandler} has is complete.
+     */
+    @Override
+    public void waitForPendingWork() throws InterruptedException {
+        // this assumes that when this method has been called, all calls to addQueue
+        // have been made, thus we will wait for the queue to empty and an marge activity
+        // to finish.
+
+        lock.lock();
+        try {
+
+            while (busy()) {
+                try {
+                    // we have been signalled to wake up and check the busy state
+                    condition.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOGGER.debug("Thread interrupted");
+                    throw e;
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 }
