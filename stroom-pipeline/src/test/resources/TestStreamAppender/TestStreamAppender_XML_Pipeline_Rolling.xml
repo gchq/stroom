@@ -146,7 +146,7 @@
       </property>
       <property>
         <element>streamAppender</element>
-        <name>splitWhenBiggerThan</name>
+        <name>rollSize</name>
         <value>
           <string>1K</string>
         </value>

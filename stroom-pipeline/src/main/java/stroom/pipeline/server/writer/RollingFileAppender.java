@@ -46,7 +46,7 @@ import stroom.util.spring.StroomScope;
         PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
 public class RollingFileAppender extends AbstractRollingAppender {
     private static final int MB = 1024 * 1024;
-    private static final int DEFAULT_MAX_SIZE = 100 * MB;
+    private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
     private static final int SECOND = 1000;
     private static final int MINUTE = 60 * SECOND;
@@ -59,7 +59,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String fileNamePattern;
     private String rolledFileNamePattern;
     private long frequency = HOUR;
-    private long maxSize = DEFAULT_MAX_SIZE;
+    private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
 
@@ -91,7 +91,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
 
         final RollingFileDestination dest = new RollingFileDestination(key, fileName, rolledFileName, frequency,
-                maxSize, parentDir, file, System.currentTimeMillis());
+                rollSize, parentDir, file, System.currentTimeMillis());
 
         return dest;
     }
@@ -166,8 +166,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 throw new ProcessException("Rolling frequency must be greater than 0");
             }
 
-            if (maxSize <= 0) {
-                throw new ProcessException("Max size must be greater than 0");
+            if (rollSize <= 0) {
+                throw new ProcessException("Roll size must be greater than 0");
             }
         }
     }
@@ -203,18 +203,18 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
     }
 
-    @PipelineProperty(description = "Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.", defaultValue = "100M")
-    public void setMaxSize(final String maxSize) {
-        if (maxSize != null && maxSize.trim().length() > 0) {
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.", defaultValue = "100M")
+    public void setRollSize(final String rollSize) {
+        if (rollSize != null && rollSize.trim().length() > 0) {
             try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(maxSize);
+                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
                 if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
+                    throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
                 }
 
-                this.maxSize = value;
+                this.rollSize = value;
             } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
+                throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
             }
         }
     }

@@ -36,7 +36,7 @@ public class RollingStreamDestination extends RollingDestination {
     private final StreamKey key;
 
     private final long frequency;
-    private final long maxSize;
+    private final long rollSize;
     private final StreamStore streamStore;
     private final StreamTarget streamTarget;
     private final String nodeName;
@@ -53,7 +53,7 @@ public class RollingStreamDestination extends RollingDestination {
 
     public RollingStreamDestination(final StreamKey key,
                                     final long frequency,
-                                    final long maxSize,
+                                    final long rollSize,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
                                     final String nodeName,
@@ -61,7 +61,7 @@ public class RollingStreamDestination extends RollingDestination {
         this.key = key;
 
         this.frequency = frequency;
-        this.maxSize = maxSize;
+        this.rollSize = rollSize;
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
         this.nodeName = nodeName;
@@ -163,7 +163,7 @@ public class RollingStreamDestination extends RollingDestination {
 
     private boolean shouldRoll(final long currentTime) {
         final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getCount() > maxSize;
+        return creationTime < oldestAllowed || outputStream.getCount() > rollSize;
     }
 
     private void roll() throws IOException {

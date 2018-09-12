@@ -285,6 +285,12 @@ public class HDFSFileAppender extends AbstractAppender {
         this.runAsUser = runAsUser;
     }
 
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.")
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
+    }
+
     /**
      * Used for injecting a configuration in testing
      */
