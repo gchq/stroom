@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderComponent, withProps } from 'recompose';
@@ -104,36 +120,36 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-          sortedElementTypeProperties.map((elementTypeProperty) => {
-            const docRefTypes = elementTypeProperty.docRefTypes
-              ? elementTypeProperty.docRefTypes
-              : undefined;
+            sortedElementTypeProperties.map((elementTypeProperty) => {
+              const docRefTypes = elementTypeProperty.docRefTypes
+                ? elementTypeProperty.docRefTypes
+                : undefined;
 
-            const parentValue = getParentProperty(
-              pipeline.configStack,
-              element.id,
-              elementTypeProperty.name,
-            );
-            const defaultValue = elementTypeProperty.defaultValue;
-            const property = elementProperties.find(element => element.name === elementTypeProperty.name);
-            const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
-            return (
-              <ElementField
-                pipelineId={pipelineId}
-                elementId={element.id}
-                key={elementTypeProperty.name}
-                name={elementTypeProperty.name}
-                type={elementTypeProperty.type}
-                docRefTypes={docRefTypes}
-                description={elementTypeProperty.description}
-                defaultValue={defaultValue}
-                parentValue={parentValue}
-                childValue={childProperty}
-                value={property}
-              />
-            );
-          })
-        )}
+              const parentValue = getParentProperty(
+                pipeline.configStack,
+                element.id,
+                elementTypeProperty.name,
+              );
+              const defaultValue = elementTypeProperty.defaultValue;
+              const property = elementProperties.find(element => element.name === elementTypeProperty.name);
+              const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
+              return (
+                <ElementField
+                  pipelineId={pipelineId}
+                  elementId={element.id}
+                  key={elementTypeProperty.name}
+                  name={elementTypeProperty.name}
+                  type={elementTypeProperty.type}
+                  docRefTypes={docRefTypes}
+                  description={elementTypeProperty.description}
+                  defaultValue={defaultValue}
+                  parentValue={parentValue}
+                  childValue={childProperty}
+                  value={property}
+                />
+              );
+            })
+          )}
       </Form>
     </React.Fragment>
   );
