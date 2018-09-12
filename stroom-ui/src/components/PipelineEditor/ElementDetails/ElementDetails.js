@@ -21,7 +21,6 @@ import { connect } from 'react-redux';
 import { Image, Form } from 'semantic-ui-react';
 import { reduxForm } from 'redux-form';
 
-import { getParentProperty } from '../pipelineUtils';
 import HorizontalPanel from 'components/HorizontalPanel';
 import ElementProperty from './ElementProperty';
 
@@ -115,16 +114,7 @@ const ElementDetails = ({
           <p>There is nothing to configure for this element </p>
         ) : (
             sortedElementTypeProperties.map((elementTypeProperty) => {
-              const docRefTypes = elementTypeProperty.docRefTypes
-                ? elementTypeProperty.docRefTypes
-                : undefined;
 
-              const parentValue = getParentProperty(
-                pipeline.configStack,
-                element.id,
-                elementTypeProperty.name,
-              );
-              const defaultValue = elementTypeProperty.defaultValue;
               const property = elementProperties.find(element => element.name === elementTypeProperty.name);
               const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
               return (
@@ -134,10 +124,8 @@ const ElementDetails = ({
                   key={elementTypeProperty.name}
                   name={elementTypeProperty.name}
                   type={elementTypeProperty.type}
-                  docRefTypes={docRefTypes}
+                  elementTypeProperty={elementTypeProperty}
                   description={elementTypeProperty.description}
-                  defaultValue={defaultValue}
-                  parentValue={parentValue}
                   childValue={childProperty}
                   value={property}
                 />
