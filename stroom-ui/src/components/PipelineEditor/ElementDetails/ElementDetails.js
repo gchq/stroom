@@ -66,8 +66,7 @@ const enhance = compose(
     return {
       element,
       elementType,
-      elementTypeProperties,
-      sortedElementTypeProperties,
+      elementTypeProperties: sortedElementTypeProperties,
       selectedElementId
     };
   }),
@@ -80,7 +79,6 @@ const ElementDetails = ({
   element,
   elementType,
   elementTypeProperties,
-  sortedElementTypeProperties,
   elementProperties,
   elementPropertiesInChild,
   selectedElementId,
@@ -107,7 +105,7 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-            sortedElementTypeProperties.map((elementTypeProperty) => (
+            elementTypeProperties.map((elementTypeProperty) => (
               <ElementProperty
                 pipelineId={pipelineId}
                 elementId={element.id}

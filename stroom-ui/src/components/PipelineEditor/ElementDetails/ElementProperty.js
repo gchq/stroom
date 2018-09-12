@@ -46,7 +46,6 @@ const enhance = compose(connect(
   },
 ),
   withProps(({
-    defaultValue,
     type,
     pipelineElementPropertyRevertToParent,
     pipelineElementPropertyRevertToDefault,
