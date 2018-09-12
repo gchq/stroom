@@ -55,6 +55,8 @@ const enhance = compose(
         case ALL_SELECT_STATE.NONE:
           onChange(docRefTypes);
           break;
+        default:
+          break;
       }
     },
   }),

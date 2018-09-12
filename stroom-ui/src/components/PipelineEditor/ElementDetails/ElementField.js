@@ -11,7 +11,6 @@ import { actionCreators } from '../redux';
 
 import Tooltip from 'components/Tooltip';
 import AppSearchBar from 'components/AppSearchBar';
-import NumericInput from 'components/NumericInput';
 
 const {
   pipelineElementPropertyUpdated,
@@ -266,7 +265,9 @@ const FieldValue = ({
       break;
     case 'int':
       elementField = (
-        <NumericInput
+        <input
+          type='number'
+          name={name}
           value={parseInt(value, 10)}
           onChange={(newValue) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'integer', newValue);
@@ -377,7 +378,7 @@ const ElementField = ({
       </Form.Field>
       <Tooltip
         hoverable
-        trigger={<FontAwesomeIcon icon="setting" color="blue" size="large" />}
+        trigger={<FontAwesomeIcon icon="cog" color="blue" size="lg" />}
         content={popOverContent}
       />
     </Form.Group>
