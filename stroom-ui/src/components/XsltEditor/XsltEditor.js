@@ -21,6 +21,7 @@ import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 import Loader from 'components/Loader';
+import Button from 'components/Button';
 import DocRefImage from 'components/DocRefImage';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
@@ -81,9 +82,7 @@ const XsltEditor = ({
           <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
         </header>
         <div>
-          <button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave}>
-            {saveCaption}
-          </button>
+          <Button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave} text={saveCaption} />
         </div>
       </div>
       <div className="xsltEditor__ace-container">

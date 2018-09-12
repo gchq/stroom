@@ -4,11 +4,13 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Form, Checkbox, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 
 import Tooltip from 'components/Tooltip';
+import Button from 'components/Button';
 import AppSearchBar from 'components/AppSearchBar';
 
 const {
@@ -70,14 +72,14 @@ const getDetails = ({
   pipelineElementPropertyRevertToDefault,
 }) => {
   const RevertToDefaultButton = (
-    <button onClick={() => pipelineElementPropertyRevertToDefault(pipelineId, elementId, name)}>
-      Revert to default
-    </button>
+    <Button
+      text="Revert to default"
+      onClick={() => pipelineElementPropertyRevertToDefault(pipelineId, elementId, name)} />
   );
   const RevertToParentButton = (
-    <button onClick={() => pipelineElementPropertyRevertToParent(pipelineId, elementId, name)}>
-      Revert to parent
-    </button>
+    <Button
+      text="Revert to parent"
+      onClick={() => pipelineElementPropertyRevertToParent(pipelineId, elementId, name)} />
   );
 
   // Parse the value if it's a boolean.

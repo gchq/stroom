@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-
-import { Button, Form, Header } from 'semantic-ui-react';
+import { Form, Header } from 'semantic-ui-react';
 import { TextAreaField } from 'react-semantic-redux-form';
 
+import Button from 'components/Button';
 import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
@@ -53,40 +53,39 @@ const enhance = compose(
 const PipelineSettings = ({
   pipelineId, onConfirm, onCancel, isOpen, invalid, submitting,
 }) => (
-  <ThemedModal
-    isOpen={isOpen}
-    onClose={onCancel}
-    size="tiny"
-    dimmer="inverted"
-    header={<Header className="header" content="Pipeline Settings" />}
-    content={
-      <Form>
-        <Form.Field>
-          <label>Description</label>
-          <Field
-            name="description"
-            component={TextAreaField}
-            type="text"
-            placeholder="Description"
-            autoFocus
+    <ThemedModal
+      isOpen={isOpen}
+      onClose={onCancel}
+      size="tiny"
+      dimmer="inverted"
+      header={<Header className="header" content="Pipeline Settings" />}
+      content={
+        <Form>
+          <Form.Field>
+            <label>Description</label>
+            <Field
+              name="description"
+              component={TextAreaField}
+              type="text"
+              placeholder="Description"
+              autoFocus
+            />
+          </Form.Field>
+        </Form>
+      }
+      actions={
+        <React.Fragment>
+          <Button
+            content="Submit"
+            disabled={invalid || submitting}
+            onClick={onConfirm}
+            form="pipelineSettings"
           />
-        </Form.Field>
-      </Form>
-    }
-    actions={
-      <React.Fragment>
-        <Button
-          positive
-          content="Submit"
-          disabled={invalid || submitting}
-          onClick={onConfirm}
-          form="pipelineSettings"
-        />
-        <Button negative content="Cancel" onClick={onCancel} />
-      </React.Fragment>
-    }
-  />
-);
+          <Button content="Cancel" onClick={onCancel} />
+        </React.Fragment>
+      }
+    />
+  );
 
 PipelineSettings.propTypes = {
   pipelineId: PropTypes.string.isRequired,

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
 
+import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { compose, withState } from 'recompose';
-import { Header, Button } from 'semantic-ui-react';
-
-import { ThemedModal, ThemedConfirm } from '.';
-
+import { Header } from 'semantic-ui-react';
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
+
+import Button from 'components/Button';
+import { ThemedModal, ThemedConfirm } from '.';
 
 const withModalOpen = withState('modalIsOpen', 'setModalIsOpen', false);
 
@@ -34,13 +34,13 @@ let TestModal = ({ modalIsOpen, setModalIsOpen }) => (
       content={<div>Maybe put something helpful in here</div>}
       actions={
         <React.Fragment>
-          <Button content="Nothing" onClick={() => setModalIsOpen(false)} />
-          <Button content="Something" onClick={() => setModalIsOpen(false)} />
+          <Button text="Nothing" onClick={() => setModalIsOpen(false)} />
+          <Button text="Something" onClick={() => setModalIsOpen(false)} />
         </React.Fragment>
       }
       onClose={() => setModalIsOpen(false)}
     />
-    <Button onClick={() => setModalIsOpen(!modalIsOpen)} content="Open" />
+    <Button onClick={() => setModalIsOpen(!modalIsOpen)} text="Open" />
   </React.Fragment>
 );
 
@@ -73,7 +73,7 @@ let TestConfirm = ({
         }}
         onClose={() => setModalIsOpen(false)}
       />
-      <Button onClick={() => setModalIsOpen(!modalIsOpen)} content="Check" />
+      <Button onClick={() => setModalIsOpen(!modalIsOpen)} text="Check" />
       <div>Current State: {isConfirmed}</div>
     </React.Fragment>
   );

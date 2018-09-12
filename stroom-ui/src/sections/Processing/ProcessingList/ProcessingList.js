@@ -24,8 +24,8 @@ import { Progress } from 'react-sweet-progress';
 import 'react-sweet-progress/lib/style.css';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Button } from 'semantic-ui-react';
 
+import Button from 'components/Button';
 import { actionCreators, Directions } from '../redux';
 import { fetchTrackers, fetchMore } from '../streamTasksResourceClient';
 
@@ -119,16 +119,13 @@ const enhance = compose(
             (row.original.filterId ? (
               row.original.priority
             ) : (
-              <Button
-                disabled={allRecordsRetrieved}
-                size="tiny"
-                compact
-                className="button border hoverable processing-list__load-more-button"
-                onClick={() => onHandleLoadMoreRows()}
-              >
-                {allRecordsRetrieved ? <span>All rows loaded</span> : <span>Load more rows</span>}
-              </Button>
-            )),
+                <Button
+                  disabled={allRecordsRetrieved}
+                  className="border hoverable processing-list__load-more-button"
+                  onClick={() => onHandleLoadMoreRows()}
+                  text={allRecordsRetrieved ? <span>All rows loaded</span> : <span>Load more rows</span>}
+                />
+              )),
         },
         {
           Header: 'Progress',
@@ -137,8 +134,8 @@ const enhance = compose(
             (row.original.filterId ? (
               <Progress percent={row.original.progress} symbolClassName="flat-text" />
             ) : (
-              undefined
-            )),
+                undefined
+              )),
         },
       ],
       tableData,
@@ -170,48 +167,48 @@ const ProcessingList = ({
   onSelection,
   onHandleLoadMoreRows,
 }) => (
-  <ReactTable
-    manual
-    className="table__reactTable"
-    sortable
-    showPagination={false}
-    pageSize={pageSize + 1}
-    data={tableData}
-    columns={tableColumns}
-    onFetchData={(state, instance) => onHandleSort(state.sorted[0])}
-    getTdProps={(state, rowInfo, column, instance) => ({
-      onClick: (e, handleOriginal) => {
-        if (rowInfo !== undefined) {
-          onSelection(rowInfo.original.filterId, trackers);
-        }
+    <ReactTable
+      manual
+      className="table__reactTable"
+      sortable
+      showPagination={false}
+      pageSize={pageSize + 1}
+      data={tableData}
+      columns={tableColumns}
+      onFetchData={(state, instance) => onHandleSort(state.sorted[0])}
+      getTdProps={(state, rowInfo, column, instance) => ({
+        onClick: (e, handleOriginal) => {
+          if (rowInfo !== undefined) {
+            onSelection(rowInfo.original.filterId, trackers);
+          }
 
-        // IMPORTANT! React-Table uses onClick internally to trigger
-        // events like expanding SubComponents and pivots.
-        // By default a custom 'onClick' handler will override this functionality.
-        // If you want to fire the original onClick handler, call the
-        // 'handleOriginal' function.
-        if (handleOriginal) {
-          handleOriginal();
+          // IMPORTANT! React-Table uses onClick internally to trigger
+          // events like expanding SubComponents and pivots.
+          // By default a custom 'onClick' handler will override this functionality.
+          // If you want to fire the original onClick handler, call the
+          // 'handleOriginal' function.
+          if (handleOriginal) {
+            handleOriginal();
+          }
+        },
+      })}
+      getTrProps={(state, rowInfo, column) => {
+        // We don't want to see a hover on a row without data.
+        // If a row is selected we want to see the selected color.
+        const isSelected =
+          selectedTrackerId !== undefined &&
+          path(['original', 'filterId'], rowInfo) === selectedTrackerId;
+        const hasData = path(['original', 'filterId'], rowInfo) !== undefined;
+        let className;
+        if (hasData) {
+          className = isSelected ? 'selected hoverable' : 'hoverable';
         }
-      },
-    })}
-    getTrProps={(state, rowInfo, column) => {
-      // We don't want to see a hover on a row without data.
-      // If a row is selected we want to see the selected color.
-      const isSelected =
-        selectedTrackerId !== undefined &&
-        path(['original', 'filterId'], rowInfo) === selectedTrackerId;
-      const hasData = path(['original', 'filterId'], rowInfo) !== undefined;
-      let className;
-      if (hasData) {
-        className = isSelected ? 'selected hoverable' : 'hoverable';
-      }
-      return {
-        className,
-      };
-    }}
-  />
-);
+        return {
+          className,
+        };
+      }}
+    />
+  );
 
 ProcessingList.propTypes = {
   onSelection: PropTypes.func.isRequired,
