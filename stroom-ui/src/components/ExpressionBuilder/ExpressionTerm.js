@@ -18,12 +18,10 @@ import PropTypes from 'prop-types';
 
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Button } from 'semantic-ui-react';
-
 import { DragSource } from 'react-dnd';
 
+import Button from 'components/Button';
 import SelectBox from 'components/SelectBox';
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
@@ -161,10 +159,10 @@ const ExpressionTerm = ({
       term={term}
       onChange={onValueChange}
     />
-    <Button.Group floated="right">
-      <Button icon="checkmark" compact color={enabledButtonColour} onClick={onEnabledToggled} />
-      <Button compact icon="trash" onClick={onRequestDeleteTerm} />
-    </Button.Group>
+    <div className='ExpressionItem__buttons'>
+      <Button icon="check" groupPosition='left' color={enabledButtonColour} onClick={onEnabledToggled} />
+      <Button icon="trash" groupPosition='right' onClick={onRequestDeleteTerm} />
+    </div>
   </div>
 );
 
