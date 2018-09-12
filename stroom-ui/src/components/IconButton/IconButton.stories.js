@@ -23,11 +23,49 @@ import IconButton from './IconButton';
 
 const stories = storiesOf('IconButton', module);
 stories.addDecorator(ThemedDecorator);
-stories.add('button group', () => (
+
+stories.add('button group - icon only', () => (
   <div>
     <IconButton className='raised-low' icon='angle-up' groupPosition='left' />
     <IconButton className='raised-low' icon='angle-up' groupPosition='middle' />
     <IconButton className='raised-low' icon='angle-up' groupPosition='right' />
   </div>
 ));
+
+stories.add('button group - icon and text', () => (
+  <div>
+    <IconButton className='raised-low' icon='angle-up' text='Button 1' groupPosition='left' />
+    <IconButton className='raised-low' icon='angle-up' text='Button 2' groupPosition='middle' />
+    <IconButton className='raised-low' icon='angle-up' text='Button 3' groupPosition='right' />
+  </div>
+));
+
+stories.add('button group - text only', () => (
+  <div>
+    <IconButton className='raised-low' text='Button 1' groupPosition='left' />
+    <IconButton className='raised-low' text='Button 2' groupPosition='middle' />
+    <IconButton className='raised-low' text='Button 3' groupPosition='right' />
+  </div>
+));
+
+stories.add('icon and text', () => (
+  <IconButton className='raised-low' icon='angle-up' text='Button text' />
+));
+
+stories.add('just text', () => (
+  <IconButton className='raised-low' text='Button text' />
+));
+
+stories.add('just icon', () => (
+  <IconButton className='raised-low' icon='trash' />
+));
+
+stories.add('circular icon', () => (
+  <IconButton className='raised-low' circular icon='trash' />
+));
+
+stories.add('circular icon and text - should be weird', () => (
+  <IconButton className='raised-low' circular icon='trash' text='Madness' />
+));
+
 addThemedStories(stories, <IconButton className='raised-low' icon='angle-up' />, true);
