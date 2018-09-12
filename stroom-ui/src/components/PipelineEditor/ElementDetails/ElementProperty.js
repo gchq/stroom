@@ -21,6 +21,7 @@ import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { actionCreators } from '../redux';
+import { getParentProperty } from '../pipelineUtils';
 import { getDetails } from './elementDetailsUtils';
 import ElementPropertyField from './ElementPropertyField';
 import Tooltip from 'components/Tooltip';
@@ -32,9 +33,12 @@ const {
 } = actionCreators;
 
 const enhance = compose(connect(
-  (state, props) => ({
-    // state
-  }),
+  ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
+    const pipelineState = pipelineStates[pipelineId];
+    return {
+      pipelineState,
+    };
+  },
   {
     pipelineElementPropertyUpdated,
     pipelineElementPropertyRevertToParent,
@@ -42,21 +46,33 @@ const enhance = compose(connect(
   },
 ),
   withProps(({ value,
-    parentValue,
     defaultValue,
     type,
     pipelineElementPropertyRevertToParent,
     pipelineElementPropertyRevertToDefault,
+    pipelineState: { pipeline },
     elementId,
     name,
     pipelineId,
-    childValue, }) => {
+    childValue,
+    elementTypeProperty }) => {
+
+    const docRefTypes = elementTypeProperty.docRefTypes
+      ? elementTypeProperty.docRefTypes
+      : undefined;
+
+    const parentValue = getParentProperty(
+      pipeline.configStack,
+      elementId,
+      elementTypeProperty.name,
+    );
+
     return {
       type: type.toLowerCase(),
       details: getDetails({
         value,
         parentValue,
-        defaultValue,
+        defaultValue: elementTypeProperty.defaultValue,
         type,
         pipelineElementPropertyRevertToParent,
         pipelineElementPropertyRevertToDefault,
@@ -65,6 +81,7 @@ const enhance = compose(connect(
         pipelineId,
         childValue,
       }),
+      docRefTypes,
     };
   }),
 );
@@ -115,12 +132,10 @@ ElementProperty.propTypes = {
   elementId: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
-  docRefTypes: PropTypes.array,
-  defaultValue: PropTypes.string.isRequired,
   value: PropTypes.object,
   childValue: PropTypes.object,
-  parentValue: PropTypes.object,
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
+  elementTypeProperty: PropTypes.any,
 };
 
 export default enhance(ElementProperty);
