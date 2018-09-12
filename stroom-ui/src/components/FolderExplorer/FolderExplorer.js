@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { withRouter } from 'react-router-dom';
 
 import Loader from 'components/Loader';
-import Tooltip from 'components/Tooltip';
 import AppSearchBar from 'components/AppSearchBar';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { findItem } from 'lib/treeUtils';
@@ -128,37 +127,37 @@ const FolderExplorer = ({
   openDocRef,
   onKeyDownWithShortcuts,
 }) => (
-  <div>
-    <AppSearchBar className="app-search-bar" onChange={openDocRef} />
+    <div>
+      <AppSearchBar className="app-search-bar" onChange={openDocRef} />
 
-    <header>
-      <FontAwesomeIcon icon="folder" />
-      <h3 className="header">{node.name}</h3>
-      <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
-    </header>
+      <header>
+        <FontAwesomeIcon icon="folder" />
+        <h3 className="header">{node.name}</h3>
+        <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
+      </header>
 
-    <div className="doc-ref-listing-entry__action-bar">
-      {actionBarItems.map(({ onClick, icon, tooltip, title }) => (
-        <button key={title} title={tooltip} onClick={onClick}>{title}</button>
-      ))}
+      <div className="doc-ref-listing-entry__action-bar">
+        {actionBarItems.map(({ onClick, icon, tooltip, title }) => (
+          <button key={title} title={tooltip} onClick={onClick}>{title}</button>
+        ))}
+      </div>
+      <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+        {node.children.map((docRef, index) => (
+          <DndDocRefListingEntry
+            key={docRef.uuid}
+            index={index}
+            listingId={LISTING_ID}
+            docRefUuid={docRef.uuid}
+            onNameClick={openDocRef}
+            openDocRef={openDocRef}
+          />
+        ))}
+      </div>
+
+      <DocRefInfoModal />
+      <NewDocDialog />
     </div>
-    <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-      {node.children.map((docRef, index) => (
-        <DndDocRefListingEntry
-          key={docRef.uuid}
-          index={index}
-          listingId={LISTING_ID}
-          docRefUuid={docRef.uuid}
-          onNameClick={openDocRef}
-          openDocRef={openDocRef}
-        />
-      ))}
-    </div>
-
-    <DocRefInfoModal />
-    <NewDocDialog />
-  </div>
-);
+  );
 
 const EnhanceFolderExplorer = enhance(FolderExplorer);
 

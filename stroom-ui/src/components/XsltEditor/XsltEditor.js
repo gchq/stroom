@@ -20,8 +20,6 @@ import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } 
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import Tooltip from 'components/Tooltip';
-
 import Loader from 'components/Loader';
 import DocRefImage from 'components/DocRefImage';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
@@ -74,33 +72,33 @@ const XsltEditor = ({
   saveDisabled,
   saveCaption,
 }) => (
-  <div className="xsltEditor">
-    <div className="dictionaryEditor__headerBar">
-      <header>
-        <DocRefImage docRefType="XSLT" />
-        <h3>{xsltUuid}</h3>
+    <div className="xsltEditor">
+      <div className="dictionaryEditor__headerBar">
+        <header>
+          <DocRefImage docRefType="XSLT" />
+          <h3>{xsltUuid}</h3>
 
-        <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
-      </header>
-      <div>
-        <button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave}>
-          {saveCaption}
-        </button>
+          <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
+        </header>
+        <div>
+          <button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave}>
+            {saveCaption}
+          </button>
+        </div>
+      </div>
+      <div className="xsltEditor__ace-container">
+        <ThemedAceEditor
+          style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+          name={`${xsltUuid}-ace-editor`}
+          mode="xml"
+          value={xsltData}
+          onChange={(newValue) => {
+            if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+          }}
+        />
       </div>
     </div>
-    <div className="xsltEditor__ace-container">
-      <ThemedAceEditor
-        style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-        name={`${xsltUuid}-ace-editor`}
-        mode="xml"
-        value={xsltData}
-        onChange={(newValue) => {
-          if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
-        }}
-      />
-    </div>
-  </div>
-);
+  );
 
 XsltEditor.propTypes = {
   xsltUuid: PropTypes.string.isRequired,

@@ -17,15 +17,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent, withHandlers, withProps } from 'recompose';
-import moment from 'moment';
-import { path } from 'ramda';
+import { compose, lifecycle, branch, renderComponent, withHandlers } from 'recompose';
 import PanelGroup from 'react-panelgroup';
 import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
-import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { Header, Button } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Loader from 'components/Loader';
 
@@ -46,8 +43,6 @@ const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
 const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
 
 const { selectRow, deselectRow } = actionCreators;
-const startPage = 0;
-const defaultPageSize = 20;
 
 const enhance = compose(
   withListHeight,
@@ -132,13 +127,13 @@ const enhance = compose(
       const {
         search,
         dataViewerId,
-        pageSize,
-        pageOffset,
+        // pageSize,
+        // pageOffset,
         selectedRow,
         fetchDataSource,
         onMoveSelection,
-        searchWithExpression,
-        processSearchString,
+        // searchWithExpression,
+        // processSearchString,
       } = this.props;
 
       fetchDataSource(dataViewerId);
