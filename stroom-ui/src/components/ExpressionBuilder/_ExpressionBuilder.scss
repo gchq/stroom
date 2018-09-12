@@ -48,3 +48,11 @@
   height: 2.5rem;
   border-radius: 5px;
 }
+
+.expression-term {
+  display: flex;
+
+}
+.expression-term__spacer {
+  flex-grow:1;
+}
