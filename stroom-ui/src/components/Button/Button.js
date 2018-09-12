@@ -22,13 +22,13 @@ const Button = ({ text, icon, groupPosition, className, circular, selected, ...r
   <button
     className={`button ${groupPosition || ''} ${className || ''} ${circular ? 'circular' : ''} ${text ? 'has-text' : ''} ${selected ? 'selected' : ''}`}
     {...rest}>
-    <FontAwesomeIcon className='button__icon' icon={icon} />
+    {icon ? <FontAwesomeIcon className='button__icon' icon={icon} /> : undefined}
     {text}
   </button>
 );
 
 Button.propTypes = {
-  icon: PropTypes.string.isRequired,
+  icon: PropTypes.string,
   groupPosition: PropTypes.string,
   circular: PropTypes.bool,
   text: PropTypes.string,
