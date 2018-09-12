@@ -72,6 +72,15 @@ stories.add('selected - icon and text', () => (
   <Button className='raised-low' selected icon='angle-up' text='Button text' />
 ));
 
+stories.add('disabled', () => (
+  <div>
+    <Button className='raised-low' disabled icon='trash' />
+    <Button className='raised-low' disabled circular icon='trash' />
+    <Button className='raised-low' disabled text='Button text' />
+    <Button className='raised-low' disabled selected icon='angle-up' text='Button text' />
+  </div>
+));
+
 stories.add('many buttons', () => (
   <div>
     <Button className='raised-low' text='Button 1' groupPosition='left' />

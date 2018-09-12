@@ -247,13 +247,20 @@ input {
   }
 }
 
-.button:hover,
-.button:focus {
+.button:hover:enabled,
+.button:focus:enabled {
   @include themify($themes) {
     color: themed("icon-button__color--hover") !important;
     background-color: themed("icon-button__background-color--hover") !important;
   }
 }
+
+.button:disabled,
+.button[disabled]{
+  background-color: #cccccc !important;
+  color: #666666 !important;
+}
+
 
 /////////////////////
 // Specific styles //

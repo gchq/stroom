@@ -9,6 +9,7 @@ import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchDictionary } from './dictionaryResourceClient';
 import { saveDictionary } from './dictionaryResourceClient';
 import { actionCreators } from './redux';
+import Button from 'components/Button';
 
 const { dictionaryUpdated } = actionCreators;
 
@@ -69,9 +70,11 @@ const DictionaryEditor = ({
       />
 
       <div className="DictionaryEditor__actionButtons">
-        <button disabled={saveDisabled} title="Save Dictionary" onClick={onClickSave}>
-          {saveCaption}
-        </button>
+        <Button
+          disabled={saveDisabled}
+          title="Save Dictionary"
+          onClick={onClickSave}
+          text={saveCaption} />
       </div>
       <div className="DictionaryEditor__main">
         <textarea value={dictionary.data} onChange={onDataChange} />
