@@ -43,6 +43,8 @@ import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.node.client.ClientPropertyCache;
+import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;

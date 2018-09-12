@@ -16,7 +16,7 @@
 
 package stroom.activity.shared;
 
-import stroom.dispatch.shared.Action;
+import stroom.entity.shared.Action;
 
 public class SetCurrentActivityAction extends Action<Activity> {
     private static final long serialVersionUID = 1451964889275627717L;

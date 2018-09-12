@@ -59,10 +59,13 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
 
     private BeanFactory beanFactory;
     private final SecurityContext security;
+    private final CurrentActivity currentActivity;
 
     @Inject
-    StroomEventLoggingService(final SecurityContext security) {
+    StroomEventLoggingService(final SecurityContext security,
+                              final CurrentActivity currentActivity) {
         this.security = security;
+        this.currentActivity = currentActivity;
     }
 
     @Override
@@ -108,6 +111,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
         final Event event = createEvent();
 
         final EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
+        eventDetail.setPurpose(PurposeUtil.create(currentActivity.getActivity()));
         event.setEventDetail(eventDetail);
 
         return event;

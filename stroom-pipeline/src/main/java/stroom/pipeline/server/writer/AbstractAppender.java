@@ -46,7 +46,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     }
 
     @Override
-    public Destination borrowDestination() {
+    public Destination borrowDestination() throws IOException {
         return this;
     }
 

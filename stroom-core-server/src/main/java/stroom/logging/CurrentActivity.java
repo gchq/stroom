@@ -18,25 +18,45 @@ package stroom.logging;
 
 import org.springframework.stereotype.Component;
 import stroom.activity.shared.Activity;
+import stroom.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 @Component
 public class CurrentActivity {
-    private final Provider<CurrentActivitySession> currentActivitySessionProvider;
+    private static final String NAME = "SESSION_ACTIVITY";
+    private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    public CurrentActivity(final Provider<CurrentActivitySession> currentActivitySessionProvider) {
-        this.currentActivitySessionProvider = currentActivitySessionProvider;
+    public CurrentActivity(final HttpServletRequestHolder httpServletRequestHolder) {
+        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     public Activity getActivity() {
-        return currentActivitySessionProvider.get().getActivity();
+        final HttpServletRequest request = httpServletRequestHolder.get();
+        if (request == null) {
+            throw new NullPointerException("Request holder has no current request");
+        }
+
+        final HttpSession session = request.getSession();
+        final Object object = session.getAttribute(NAME);
+        if (!(object instanceof Activity)) {
+            return null;
+        }
+
+        return (Activity) object;
     }
 
     public void setActivity(final Activity activity) {
-        currentActivitySessionProvider.get().setActivity(activity);
+        final HttpServletRequest request = httpServletRequestHolder.get();
+        if (request == null) {
+            throw new NullPointerException("Request holder has no current request");
+        }
+
+        final HttpSession session = request.getSession();
+        session.setAttribute(NAME, activity);
     }
 }
 

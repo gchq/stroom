@@ -22,6 +22,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import stroom.activity.shared.Activity;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
@@ -90,6 +91,7 @@ public class DatabaseCommonTestControl implements CommonTestControl, Application
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
+            Activity.TABLE_NAME,
             AppPermission.TABLE_NAME,
             ClusterLock.TABLE_NAME,
             Dashboard.TABLE_NAME,

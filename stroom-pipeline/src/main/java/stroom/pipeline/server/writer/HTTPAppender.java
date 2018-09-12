@@ -8,7 +8,6 @@ import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
-import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -17,6 +16,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
@@ -155,6 +155,14 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
+    @Override
+    long getCurrentOutputSize() {
+        if (byteCountOutputStream == null) {
+            return 0;
+        }
+        return byteCountOutputStream.getCount();
+    }
+
     private void nextEntry() throws IOException {
         if (zipOutputStream != null) {
             count++;
@@ -186,7 +194,7 @@ public class HTTPAppender extends AbstractAppender {
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 final MetaMap metaMap = metaDataHolder.getMetaData();
-                log(SEND_LOG, metaMap, "SEND", forwardUrl, responseCode, byteCountOutputStream.getBytesWritten(), duration);
+                log(SEND_LOG, metaMap, "SEND", forwardUrl, responseCode, byteCountOutputStream.getCount(), duration);
 
                 connection.disconnect();
                 connection = null;

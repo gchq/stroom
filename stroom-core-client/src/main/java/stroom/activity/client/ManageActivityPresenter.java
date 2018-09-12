@@ -28,7 +28,6 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRef;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.StringCriteria.MatchStyle;
@@ -171,7 +170,7 @@ public class ManageActivityPresenter extends
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            dispatcher.exec(new EntityServiceLoadAction<Activity>(DocRef.create(e), null)).onSuccess(this::onEdit);
+            dispatcher.exec(new EntityServiceLoadAction<Activity>(e)).onSuccess(this::onEdit);
         }
     }
 
@@ -195,10 +194,10 @@ public class ManageActivityPresenter extends
                     result -> {
                         if (result) {
                             // Load the activity.
-                            dispatcher.exec(new EntityServiceLoadAction<Activity>(DocRef.create(entity), null)).onSuccess(e -> {
+                            dispatcher.exec(new EntityServiceLoadAction<Activity>(entity)).onSuccess(e -> {
                                 if (e != null) {
                                     // Delete the activity
-                                    dispatcher.exec(new EntityServiceDeleteAction<>(e)).onSuccess(res -> {
+                                    dispatcher.exec(new EntityServiceDeleteAction(e)).onSuccess(res -> {
                                         listPresenter.refresh();
                                         listPresenter.getView().getSelectionModel().clear();
                                     });

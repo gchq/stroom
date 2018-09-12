@@ -21,6 +21,7 @@ import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.util.io.ByteCountOutputStream;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,7 +40,7 @@ public class RollingStreamDestination extends RollingDestination {
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
-                                    final String nodeName) throws IOException {
+                                    final String nodeName) {
         super(key, frequency, maxSize, creationTime);
 
         this.streamStore = streamStore;

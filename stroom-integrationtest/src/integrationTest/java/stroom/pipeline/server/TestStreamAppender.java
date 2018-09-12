@@ -25,6 +25,11 @@ public class TestStreamAppender extends AbstractStreamAppenderTest {
     }
 
     @Test
+    public void testXMLRolling() throws Exception {
+        test("TestStreamAppender", "XML_Rolling");
+    }
+
+    @Test
     public void testText() throws Exception {
         test("TestStreamAppender", "Text");
     }

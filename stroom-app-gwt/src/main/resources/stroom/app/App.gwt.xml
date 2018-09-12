@@ -57,6 +57,7 @@
     <!--  Minimal -->
     <inherits name="stroom.externaldoc.ExternalDocRef" />
     <inherits name="stroom.about.About" />
+    <inherits name="stroom.activity.Activity" />
     <inherits name="stroom.elastic.Elastic" />
     <inherits name="stroom.alert.Alert" />
     <inherits name="stroom.apikeys.ApiKeys" />

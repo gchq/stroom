@@ -18,10 +18,10 @@ package stroom.activity.server;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.AbstractCoreIntegrationTest;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.annotation.Resource;
 

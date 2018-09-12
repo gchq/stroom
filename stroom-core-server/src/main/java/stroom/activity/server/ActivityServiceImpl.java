@@ -17,6 +17,8 @@
 package stroom.activity.server;
 
 import event.logging.BaseAdvancedQueryItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.activity.shared.Activity;
@@ -29,7 +31,6 @@ import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.SecurityContext;
-import stroom.util.logging.StroomLogger;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 @Transactional
 @Component
 public class ActivityServiceImpl extends SystemEntityServiceImpl<Activity, FindActivityCriteria> implements ActivityService {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(ActivityServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
 
     private final SecurityContext securityContext;
 

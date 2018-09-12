@@ -109,7 +109,7 @@ public class ProxyRequestHandler implements RequestHandler {
                     }
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
-                    logStream.log(RECEIVE_LOG, metaMap, "RECEIVE", request.getRequestURI(), returnCode, inputStream.getByteCount(), duration);
+                    logStream.log(RECEIVE_LOG, metaMap, "RECEIVE", request.getRequestURI(), returnCode, inputStream.getCount(), duration);
 
                 } else {
                     // Just read the stream in and ignore it
@@ -121,7 +121,7 @@ public class ProxyRequestHandler implements RequestHandler {
                     LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(metaMap));
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
-                    logStream.log(RECEIVE_LOG, metaMap, "DROP", request.getRequestURI(), returnCode, inputStream.getByteCount(), duration);
+                    logStream.log(RECEIVE_LOG, metaMap, "DROP", request.getRequestURI(), returnCode, inputStream.getCount(), duration);
                 }
             }
         } catch (final StroomStreamException e) {

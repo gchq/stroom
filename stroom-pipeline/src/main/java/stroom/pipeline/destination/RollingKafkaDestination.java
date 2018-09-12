@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.util.io.ByteCountOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class RollingKafkaDestination extends RollingDestination {
 
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
             @Override
-            public void write(int b) throws IOException {
+            public void write(int b) {
                 byteArrayOutputStream.write(b);
             }
         }));

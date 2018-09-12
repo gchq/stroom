@@ -25,6 +25,7 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomScope;
 
@@ -105,7 +106,7 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a writer for the new lock file.
-            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(new FileOutputStream(lockFile)));
+            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
             return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
