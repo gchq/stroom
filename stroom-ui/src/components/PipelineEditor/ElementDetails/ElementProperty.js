@@ -53,14 +53,13 @@ const enhance = compose(connect(
     elementId,
     name,
     pipelineId,
-    elementTypeProperty,
-    selectedElementId }) => {
+    elementTypeProperty }) => {
 
-    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
+    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === elementId);
 
     const elementPropertiesInChild = pipeline.configStack[
       pipeline.configStack.length - 1
-    ].properties.add.filter(property => property.element === selectedElementId);
+    ].properties.add.filter(property => property.element === elementId);
 
     const docRefTypes = elementTypeProperty.docRefTypes
       ? elementTypeProperty.docRefTypes
@@ -75,20 +74,23 @@ const enhance = compose(connect(
     const value = elementProperties.find(element => element.name === elementTypeProperty.name);
     const childValue = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
 
+    const details = getDetails({
+      value,
+      parentValue,
+      defaultValue: elementTypeProperty.defaultValue,
+      type,
+      pipelineElementPropertyRevertToParent,
+      pipelineElementPropertyRevertToDefault,
+      elementId,
+      name,
+      pipelineId,
+      childValue,
+    });
+
     return {
       type: type.toLowerCase(),
-      details: getDetails({
-        value,
-        parentValue,
-        defaultValue: elementTypeProperty.defaultValue,
-        type,
-        pipelineElementPropertyRevertToParent,
-        pipelineElementPropertyRevertToDefault,
-        elementId,
-        name,
-        pipelineId,
-        childValue,
-      }),
+      value: details.actualValue,
+      inheritanceAdvice: details.info,
       docRefTypes,
     };
   }),
@@ -102,7 +104,8 @@ const ElementProperty = ({
   pipelineId,
   pipelineElementPropertyUpdated,
   elementId,
-  details,
+  value,
+  inheritanceAdvice,
 }) => (
     <div>
       <div className="element-details__field">
@@ -110,7 +113,7 @@ const ElementProperty = ({
         <ElementPropertyField
           {...{
             pipelineElementPropertyUpdated,
-            value: details.actualValue,
+            value,
             name,
             pipelineId,
             elementId,
@@ -121,13 +124,13 @@ const ElementProperty = ({
       </div>
       <Tooltip
         hoverable
-        trigger={<FontAwesomeIcon icon="cog" color="blue" size="lg" />}
+        trigger={<FontAwesomeIcon icon="cog" size="lg" />}
         content={
           <div>
             <p>
               The <em>field name</em> of this property is <strong>{name}</strong>
             </p>
-            {details.info}
+            {inheritanceAdvice}
           </div>
         }
       />
@@ -143,7 +146,6 @@ ElementProperty.propTypes = {
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
   elementTypeProperty: PropTypes.any,
   elementProperties: PropTypes.any,
-  selectedElementId: PropTypes.any,
 };
 
 export default enhance(ElementProperty);

@@ -64,8 +64,8 @@ const enhance = compose(
     const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
     return {
-      element,
-      elementType,
+      icon: elementType.icon,
+      typeName: element.type,
       elementTypeProperties: sortedElementTypeProperties,
       selectedElementId
     };
@@ -76,22 +76,22 @@ const ElementDetails = ({
   pipelineId,
   pipelineState: { pipeline },
   onClose,
-  element,
-  elementType,
+  icon,
   elementTypeProperties,
   elementProperties,
   elementPropertiesInChild,
   selectedElementId,
+  typeName,
 }) => {
   const title = (
     <div className="element-details__title">
       <Image
         size="small"
-        src={require(`../images/${elementType.icon}`)}
+        src={require(`../images/${icon}`)}
         className="element-details__icon"
       />
       <div>
-        <strong>{element.id}</strong>
+        <strong>{selectedElementId}</strong>
       </div>
     </div>
   );
@@ -99,7 +99,7 @@ const ElementDetails = ({
   const content = (
     <React.Fragment>
       <p>
-        This element is a <strong>{element.type}</strong>.
+        This element is a <strong>{typeName}</strong>.
       </p>
       <Form className="element-details__form">
         {Object.keys(elementTypeProperties).length === 0 ? (
@@ -108,13 +108,12 @@ const ElementDetails = ({
             elementTypeProperties.map((elementTypeProperty) => (
               <ElementProperty
                 pipelineId={pipelineId}
-                elementId={element.id}
+                elementId={selectedElementId}
                 key={elementTypeProperty.name}
                 name={elementTypeProperty.name}
                 type={elementTypeProperty.type}
                 elementTypeProperty={elementTypeProperty}
                 description={elementTypeProperty.description}
-                selectedElementId={selectedElementId}
               />
             )
             )
