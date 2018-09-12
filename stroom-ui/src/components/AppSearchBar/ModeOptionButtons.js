@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import IconButton from 'components/IconButton';
+import Button from 'components/Button';
 import { actionCreators as appSearchBarActionCreators, SEARCH_MODE } from './redux';
 
 const { switchMode } = appSearchBarActionCreators;
@@ -33,7 +33,7 @@ const MODE_OPTIONS = [
 const ModeOptionButtons = ({ switchMode, pickerId }) => (
   <React.Fragment>
     {MODE_OPTIONS.map(modeOption => (
-      <IconButton
+      <Button
         key={modeOption.mode}
         icon={modeOption.icon}
         groupPosition={modeOption.position}

@@ -18,7 +18,6 @@ import PropTypes from 'prop-types';
 import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Button } from 'semantic-ui-react';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { canMove } from 'lib/treeUtils';
@@ -27,7 +26,7 @@ import ExpressionTerm from './ExpressionTerm';
 import { actionCreators } from './redux';
 import { LineTo } from 'components/LineTo';
 import { LOGICAL_OPERATORS } from './logicalOperators';
-import IconButton from 'components/IconButton';
+import Button from 'components/Button';
 
 const {
   expressionTermAdded,
@@ -191,26 +190,23 @@ const ExpressionOperator = ({
           <FontAwesomeIcon color={dndBarColour} icon="bars" />
         </span>)}
 
-        <Button.Group>
-          {LOGICAL_OPERATORS.map(l => (
-            <Button
-              color={operator.op === l ? 'blue' : undefined}
-              key={l}
-              compact
-              onClick={() => onOpChange(l)}
-            >
-              {l}
-            </Button>
-          ))}
-        </Button.Group>
+        {LOGICAL_OPERATORS.map((l, i) => (
+          <Button
+            selected={operator.op === l}
+            key={l}
+            groupPosition={i === 0 ? 'left' : (LOGICAL_OPERATORS.length - 1 === i ? 'right' : 'middle')}
+            onClick={() => onOpChange(l)}
+            text={l}
+          />
+        ))}
 
-        <IconButton icon="plus" text="Term" groupPosition='left' onClick={onAddTerm} />
-        <IconButton icon="plus" text="Group" groupPosition='middle' onClick={onAddOperator} />
-        <IconButton icon={enabledIcon} groupPosition='middle' color={enabledColour} onClick={onEnabledToggled} />
+        <Button icon="plus" text="Term" groupPosition='left' onClick={onAddTerm} />
+        <Button icon="plus" text="Group" groupPosition='middle' onClick={onAddOperator} />
+        <Button icon={enabledIcon} groupPosition='middle' color={enabledColour} onClick={onEnabledToggled} />
         {!isRoot ?
-          (<IconButton icon="trash" groupPosition='right' onClick={onRequestDeleteOperator} />)
+          (<Button icon="trash" groupPosition='right' onClick={onRequestDeleteOperator} />)
           :
-          (<IconButton disabled icon="ban" groupPosition='right' />)
+          (<Button disabled icon="ban" groupPosition='right' />)
         }
 
       </div>)}
