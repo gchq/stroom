@@ -18,15 +18,18 @@ import React from 'react';
 import { PropTypes } from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-const IconButton = ({ text, icon, groupPosition, className, ...rest }) => (
-  <button className={`icon-button ${groupPosition} ${className}`} {...rest}>
+const IconButton = ({ text, icon, groupPosition, className, circular, ...rest }) => (
+  <button
+    className={`icon-button ${groupPosition || ''} ${className || ''} ${circular ? 'circular' : ''}`}
+    {...rest}>
     <FontAwesomeIcon className='icon-button__icon' icon={icon} />
   </button>
 );
 
 IconButton.propTypes = {
   icon: PropTypes.string.isRequired,
-  groupPosition: PropTypes.string
+  groupPosition: PropTypes.string,
+  circular: PropTypes.bool,
 }
 
 export default IconButton;
