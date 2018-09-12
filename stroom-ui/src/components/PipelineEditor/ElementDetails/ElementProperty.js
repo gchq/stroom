@@ -21,7 +21,7 @@ import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { actionCreators } from '../redux';
-import { getParentProperty } from '../pipelineUtils';
+import { getParentProperty, getChildValue, getElementValue } from '../pipelineUtils';
 import { getDetails } from './elementDetailsUtils';
 import ElementPropertyField from './ElementPropertyField';
 import Tooltip from 'components/Tooltip';
@@ -46,52 +46,41 @@ const enhance = compose(connect(
   },
 ),
   withProps(({
-    type,
     pipelineElementPropertyRevertToParent,
     pipelineElementPropertyRevertToDefault,
     pipelineState: { pipeline },
     elementId,
-    name,
     pipelineId,
-    elementTypeProperty }) => {
+    elementType }) => {
 
-    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === elementId);
-
-    const elementPropertiesInChild = pipeline.configStack[
-      pipeline.configStack.length - 1
-    ].properties.add.filter(property => property.element === elementId);
-
-    const docRefTypes = elementTypeProperty.docRefTypes
-      ? elementTypeProperty.docRefTypes
-      : undefined;
-
+    const value = getElementValue(pipeline, elementId, elementType.name)
+    const childValue = getChildValue(pipeline, elementId, elementType.name);
     const parentValue = getParentProperty(
       pipeline.configStack,
       elementId,
-      elementTypeProperty.name,
+      elementType.name,
     );
-
-    const value = elementProperties.find(element => element.name === elementTypeProperty.name);
-    const childValue = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
 
     const details = getDetails({
       value,
       parentValue,
-      defaultValue: elementTypeProperty.defaultValue,
-      type,
+      defaultValue: elementType.defaultValue,
+      type: elementType.type,
       pipelineElementPropertyRevertToParent,
       pipelineElementPropertyRevertToDefault,
       elementId,
-      name,
+      name: elementType.name,
       pipelineId,
       childValue,
     });
 
     return {
-      type: type.toLowerCase(),
+      type: elementType.type.toLowerCase(),
       value: details.actualValue,
       inheritanceAdvice: details.info,
-      docRefTypes,
+      docRefTypes: elementType.docRefTypes,
+      name: elementType.name,
+      description: elementType.description,
     };
   }),
 );
@@ -139,12 +128,9 @@ const ElementProperty = ({
 
 ElementProperty.propTypes = {
   pipelineId: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  type: PropTypes.string.isRequired,
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
-  elementTypeProperty: PropTypes.any,
+  elementType: PropTypes.object.isRequired,
   elementProperties: PropTypes.any,
 };
 

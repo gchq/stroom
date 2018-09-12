@@ -105,18 +105,14 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-            elementTypeProperties.map((elementTypeProperty) => (
+            elementTypeProperties.map((elementType) => (
               <ElementProperty
                 pipelineId={pipelineId}
                 elementId={selectedElementId}
-                key={elementTypeProperty.name}
-                name={elementTypeProperty.name}
-                type={elementTypeProperty.type}
-                elementTypeProperty={elementTypeProperty}
-                description={elementTypeProperty.description}
+                key={elementType.name}
+                elementType={elementType}
               />
-            )
-            )
+            ))
           )}
       </Form>
     </React.Fragment>
