@@ -129,9 +129,7 @@ const ElementProperty = ({
 ElementProperty.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
-  pipelineElementPropertyUpdated: PropTypes.func.isRequired,
   elementType: PropTypes.object.isRequired,
-  elementProperties: PropTypes.any,
 };
 
 export default enhance(ElementProperty);
