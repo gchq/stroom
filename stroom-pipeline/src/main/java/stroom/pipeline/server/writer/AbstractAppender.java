@@ -18,7 +18,6 @@ package stroom.pipeline.server.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.streamstore.server.fs.serializable.SegmentOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
@@ -157,9 +156,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
         return sizeBytes;
     }
 
-    @SuppressWarnings("unused")
-    @PipelineProperty(description = "The size of the output stream that will cause a new stream to be created.")
-    public void setSplitWhenBiggerThan(final String size) {
+    protected void setRollSize(final String size) {
         this.size = size;
     }
 }

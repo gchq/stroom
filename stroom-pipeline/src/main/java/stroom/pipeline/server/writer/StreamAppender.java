@@ -190,4 +190,10 @@ public class StreamAppender extends AbstractAppender {
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a new one created.")
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
+    }
 }

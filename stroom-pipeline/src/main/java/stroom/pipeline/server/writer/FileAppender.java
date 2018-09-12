@@ -131,4 +131,10 @@ public class FileAppender extends AbstractAppender {
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.")
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
+    }
 }

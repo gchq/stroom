@@ -16,12 +16,11 @@
 
 package stroom.util.io;
 
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ByteCountOutputStream extends FilterOutputStream {
+public class ByteCountOutputStream extends WrappedOutputStream {
     private final AtomicLong count = new AtomicLong();
 
     public ByteCountOutputStream(final OutputStream outputStream) {
@@ -29,7 +28,7 @@ public class ByteCountOutputStream extends FilterOutputStream {
     }
 
     @Override
-    public synchronized void write(final int b) throws IOException {
+    public void write(final int b) throws IOException {
         count.incrementAndGet();
         super.write(b);
     }
@@ -41,7 +40,7 @@ public class ByteCountOutputStream extends FilterOutputStream {
     }
 
     @Override
-    public synchronized void write(final byte[] b, final int off, final int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len) throws IOException {
         count.addAndGet(len);
         super.write(b, off, len);
     }

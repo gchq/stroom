@@ -22,6 +22,7 @@ import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingFileDestination;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -178,5 +179,21 @@ class RollingFileAppender extends AbstractRollingAppender {
     @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.")
     public void setRolledFileName(final String rolledFileNamePattern) {
         this.rolledFileNamePattern = rolledFileNamePattern;
+    }
+
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.", defaultValue = "100M")
+    public void setRollSize(final String rollSize) {
+        if (rollSize != null && rollSize.trim().length() > 0) {
+            try {
+                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
+                if (value == null) {
+                    throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
+                }
+
+                this.rollSize = value;
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
+            }
+        }
     }
 }

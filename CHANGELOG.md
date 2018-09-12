@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
+
+* Issue **#838** : Fix bug where calculation of written and read bytes was being accounted for twice due to the use of Java internal `FilterInputStream` and `FilterOutputStream` behaviour. This was leading to files being split at half od the expected size. Replaced Java internal classes with our own `WrappedInputStream` and `WrappedOutputStream` code.
+
 * Issue **#837** : Fix bug to no longer try and record set activity events for null activities.
 
 * Issue **#595** : Added stream appender and file appender property `splitWhenBiggerThan` to limit the size of output streams.

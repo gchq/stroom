@@ -28,6 +28,7 @@ import stroom.pipeline.destination.RollingStreamDestination;
 import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
@@ -40,6 +41,7 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -147,5 +149,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
+    }
+
+    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100M")
+    public void setRollSize(final String rollSize) {
+       super.setRollSize(rollSize);
     }
 }
