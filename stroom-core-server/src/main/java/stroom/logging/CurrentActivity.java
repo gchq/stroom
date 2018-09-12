@@ -16,47 +16,61 @@
 
 package stroom.logging;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.stereotype.Component;
 import stroom.activity.shared.Activity;
 import stroom.servlet.HttpServletRequestHolder;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 @Component
-public class CurrentActivity {
+public class CurrentActivity implements BeanFactoryAware {
     private static final String NAME = "SESSION_ACTIVITY";
-    private final HttpServletRequestHolder httpServletRequestHolder;
-
-    @Inject
-    public CurrentActivity(final HttpServletRequestHolder httpServletRequestHolder) {
-        this.httpServletRequestHolder = httpServletRequestHolder;
-    }
+    private BeanFactory beanFactory;
 
     public Activity getActivity() {
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        if (request == null) {
-            throw new NullPointerException("Request holder has no current request");
+        Activity activity = null;
+
+        final HttpServletRequest request = getRequest();
+        if (request != null) {
+            final HttpSession session = request.getSession();
+            final Object object = session.getAttribute(NAME);
+            if (object instanceof Activity) {
+                activity = (Activity) object;
+            }
         }
 
-        final HttpSession session = request.getSession();
-        final Object object = session.getAttribute(NAME);
-        if (!(object instanceof Activity)) {
-            return null;
-        }
-
-        return (Activity) object;
+        return activity;
     }
 
     public void setActivity(final Activity activity) {
-        final HttpServletRequest request = httpServletRequestHolder.get();
-        if (request == null) {
-            throw new NullPointerException("Request holder has no current request");
+        final HttpServletRequest request = getRequest();
+        if (request != null) {
+            final HttpSession session = request.getSession();
+            session.setAttribute(NAME, activity);
         }
+    }
 
-        final HttpSession session = request.getSession();
-        session.setAttribute(NAME, activity);
+    private HttpServletRequest getRequest() {
+        if (beanFactory != null) {
+            try {
+                final HttpServletRequestHolder holder = beanFactory.getBean(HttpServletRequestHolder.class);
+                if (holder != null) {
+                    return holder.get();
+                }
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 }
 

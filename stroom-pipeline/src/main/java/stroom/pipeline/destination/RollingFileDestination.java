@@ -43,14 +43,14 @@ public class RollingFileDestination extends RollingDestination {
 
     public RollingFileDestination(final String key,
                                   final long frequency,
-                                  final long maxSize,
+                                  final long rollSize,
                                   final long creationTime,
                                   final String fileName,
                                   final String rolledFileName,
                                   final Path dir,
                                   final Path file)
             throws IOException {
-        super(key, frequency, maxSize, creationTime);
+        super(key, frequency, rollSize, creationTime);
 
         this.fileName = fileName;
         this.rolledFileName = rolledFileName;

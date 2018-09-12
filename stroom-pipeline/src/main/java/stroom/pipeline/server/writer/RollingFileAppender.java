@@ -22,13 +22,11 @@ import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingFileDestination;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -94,7 +92,7 @@ class RollingFileAppender extends AbstractRollingAppender {
 
         return new RollingFileDestination(key,
                 getFrequency(),
-                getMaxSize(),
+                getRollSize(),
                 System.currentTimeMillis(),
                 fileName,
                 rolledFileName,
@@ -183,17 +181,6 @@ class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.", defaultValue = "100M")
     public void setRollSize(final String rollSize) {
-        if (rollSize != null && rollSize.trim().length() > 0) {
-            try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
-                if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
-                }
-
-                this.rollSize = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
-            }
-        }
+        super.setRollSize(rollSize);
     }
 }

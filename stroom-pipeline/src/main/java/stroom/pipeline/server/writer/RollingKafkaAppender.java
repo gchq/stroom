@@ -77,7 +77,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
         return new RollingKafkaDestination(
                 key,
                 getFrequency(),
-                getMaxSize(),
+                getRollSize(),
                 System.currentTimeMillis(),
                 stroomKafkaProducer,
                 recordKey,

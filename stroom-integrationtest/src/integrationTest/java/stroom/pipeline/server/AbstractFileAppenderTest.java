@@ -42,7 +42,8 @@ public abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
         FileUtil.deleteFile(outputFile);
         FileUtil.deleteFile(outputLockFile);
 
-        super.test(pipelineEntity, dir, name, type, outputReference, encoding);
+        super.process(pipelineEntity, dir, name, encoding);
+        super.validateProcess();
 
         final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
         ComparisonHelper.compareFiles(refFile, outputFile, false, false);

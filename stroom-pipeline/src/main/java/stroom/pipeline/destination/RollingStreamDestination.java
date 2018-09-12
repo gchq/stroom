@@ -36,12 +36,12 @@ public class RollingStreamDestination extends RollingDestination {
 
     public RollingStreamDestination(final StreamKey key,
                                     final long frequency,
-                                    final long maxSize,
+                                    final long rollSize,
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
                                     final String nodeName) {
-        super(key, frequency, maxSize, creationTime);
+        super(key, frequency, rollSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;

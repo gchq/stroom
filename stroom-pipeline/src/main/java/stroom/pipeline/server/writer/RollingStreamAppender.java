@@ -28,7 +28,6 @@ import stroom.pipeline.destination.RollingStreamDestination;
 import stroom.pipeline.destination.StreamKey;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
@@ -41,7 +40,6 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -98,7 +96,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         return new RollingStreamDestination(key,
                 getFrequency(),
-                getMaxSize(),
+                getRollSize(),
                 System.currentTimeMillis(),
                 streamStore,
                 streamTarget,
@@ -136,7 +134,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    @PipelinePropertyDocRef(types=Feed.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
     }
@@ -153,6 +151,6 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100M")
     public void setRollSize(final String rollSize) {
-       super.setRollSize(rollSize);
+        super.setRollSize(rollSize);
     }
 }

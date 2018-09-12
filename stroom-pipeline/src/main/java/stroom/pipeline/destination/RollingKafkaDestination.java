@@ -26,13 +26,13 @@ public class RollingKafkaDestination extends RollingDestination {
 
     public RollingKafkaDestination(final String key,
                                    final long frequency,
-                                   final long maxSize,
+                                   final long rollSize,
                                    final long creationTime,
                                    final StroomKafkaProducer stroomKafkaProducer,
                                    final String recordKey,
                                    final String topic,
                                    final boolean flushOnSend) {
-        super(key, frequency, maxSize, creationTime);
+        super(key, frequency, rollSize, creationTime);
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.recordKey = recordKey;
         this.topic = topic;

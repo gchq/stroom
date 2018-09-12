@@ -31,24 +31,23 @@ import java.io.IOException;
 
 public abstract class AbstractRollingAppender extends AbstractDestinationProvider implements RollingDestinationFactory {
     private static final int MB = 1024 * 1024;
-    private static final int DEFAULT_MAX_SIZE = 100 * MB;
+    private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
     private static final int SECOND = 1000;
     private static final int MINUTE = 60 * SECOND;
     private static final int HOUR = 60 * MINUTE;
 
     private long frequency = HOUR;
-    private long maxSize = DEFAULT_MAX_SIZE;
+    private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
 
     @Resource
     private RollingDestinations destinations;
-
     @Resource
     private TaskMonitor taskMonitor;
 
-    public AbstractRollingAppender() {
+    AbstractRollingAppender() {
         this.validatedSettings = false;
     }
 
@@ -76,8 +75,8 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
                 throw new ProcessException("Rolling frequency must be greater than 0");
             }
 
-            if (maxSize <= 0) {
-                throw new ProcessException("Max size must be greater than 0");
+            if (rollSize <= 0) {
+                throw new ProcessException("Roll size must be greater than 0");
             }
 
             this.validateSpecificSettings();
@@ -88,8 +87,8 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         return frequency;
     }
 
-    long getMaxSize() {
-        return maxSize;
+    long getRollSize() {
+        return rollSize;
     }
 
     /**
@@ -100,6 +99,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
 
     /**
      * Child classes will have their own schemes for generating a key.
+     *
      * @return The key to refer to the appender.
      * @throws IOException If anything goes wrong during key construction, it can call out to external property services
      */
@@ -121,18 +121,17 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         }
     }
 
-    @PipelineProperty(description = "Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.", defaultValue = "100M")
-    public void setMaxSize(final String maxSize) {
-        if (maxSize != null && maxSize.trim().length() > 0) {
+    void setRollSize(final String rollSize) {
+        if (rollSize != null && rollSize.trim().length() > 0) {
             try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(maxSize);
+                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
                 if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
+                    throw new PipelineFactoryException("Incorrect value for roll size: " + rollSize);
                 }
 
-                this.maxSize = value;
+                this.rollSize = value;
             } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
+                throw new PipelineFactoryException("Incorrect value for roll size: " + rollSize);
             }
         }
     }

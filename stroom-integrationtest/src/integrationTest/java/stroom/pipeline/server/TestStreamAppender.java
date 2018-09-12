@@ -16,21 +16,44 @@
 
 package stroom.pipeline.server;
 
+import org.junit.Assert;
 import org.junit.Test;
+import stroom.streamstore.server.StreamSource;
+import stroom.streamstore.server.StreamStore;
+import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
+import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.StreamUtil;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 public class TestStreamAppender extends AbstractStreamAppenderTest {
+    @Resource
+    private StreamStore streamStore;
+
     @Test
     public void testXML() throws Exception {
         test("TestStreamAppender", "XML");
+        validateOuptut("TestStreamAppender/TestStreamAppender_XML.out", "XML");
     }
 
     @Test
     public void testXMLRolling() throws Exception {
         test("TestStreamAppender", "XML_Rolling");
+
+        final List<Stream> streams = streamStore.find(new FindStreamCriteria());
+        final long streamId = streams.get(0).getId();
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(streamSource.getInputStream());
+        StreamUtil.streamToString(byteCountInputStream);
+        Assert.assertEquals(1198, byteCountInputStream.getCount());
+        streamStore.closeStreamSource(streamSource);
     }
 
     @Test
     public void testText() throws Exception {
         test("TestStreamAppender", "Text");
+        validateOuptut("TestStreamAppender/TestStreamAppender_Text.out", "Text");
     }
 }

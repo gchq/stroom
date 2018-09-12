@@ -35,7 +35,7 @@ public abstract class RollingDestination implements Destination {
 
     private final Object key;
     private final long frequency;
-    private final long maxSize;
+    private final long rollSize;
     private final long creationTime;
     private volatile byte[] footer;
 
@@ -49,11 +49,11 @@ public abstract class RollingDestination implements Destination {
 
     protected RollingDestination(final Object key,
                                  final long frequency,
-                                 final long maxSize,
+                                 final long rollSize,
                                  final long creationTime) {
         this.key = key;
         this.frequency = frequency;
-        this.maxSize = maxSize;
+        this.rollSize = rollSize;
         this.creationTime = creationTime;
     }
 
@@ -153,7 +153,7 @@ public abstract class RollingDestination implements Destination {
 
     private boolean shouldRoll(final long currentTime) {
         final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getCount() > maxSize;
+        return creationTime < oldestAllowed || outputStream.getCount() > rollSize;
     }
 
     protected final void roll() throws IOException {
