@@ -112,15 +112,14 @@ const ElementPropertyField = ({
   return elementField;
 };
 
-
 ElementPropertyField.propTypes = {
-  pipelineElementPropertyUpdated: PropTypes.object.isRequired,
-  value: PropTypes.string.isRequired,
+  pipelineElementPropertyUpdated: PropTypes.func.isRequired,
+  value: PropTypes.any,
   name: PropTypes.string.isRequired,
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
-  docRefTypes: PropTypes.array.isRequired,
+  docRefTypes: PropTypes.array,
 }
 
 export default ElementPropertyField;

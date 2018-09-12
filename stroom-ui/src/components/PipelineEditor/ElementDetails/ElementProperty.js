@@ -43,14 +43,33 @@ const enhance = compose(connect(
     pipelineElementPropertyRevertToDefault,
   },
 ),
-  withProps(({ type }) => {
+  withProps(({ value,
+    parentValue,
+    defaultValue,
+    type,
+    pipelineElementPropertyRevertToParent,
+    pipelineElementPropertyRevertToDefault,
+    elementId,
+    name,
+    pipelineId,
+    childValue, }) => {
     return {
       type: type.toLowerCase(),
+      details: getDetails({
+        value,
+        parentValue,
+        defaultValue,
+        type,
+        pipelineElementPropertyRevertToParent,
+        pipelineElementPropertyRevertToDefault,
+        elementId,
+        name,
+        pipelineId,
+        childValue,
+      }),
     };
   }),
 );
-
-
 
 const ElementProperty = ({
   name,
@@ -67,21 +86,8 @@ const ElementProperty = ({
   pipelineElementPropertyRevertToDefault,
   elementId,
   revertToDefault,
-}) => {
-  const details = getDetails({
-    value,
-    parentValue,
-    defaultValue,
-    type,
-    pipelineElementPropertyRevertToParent,
-    pipelineElementPropertyRevertToDefault,
-    elementId,
-    name,
-    pipelineId,
-    childValue,
-  });
-
-  return (
+  details,
+}) => (
     <div>
       <div className="element-details__field">
         <label>{description}</label>
@@ -111,7 +117,6 @@ const ElementProperty = ({
       />
     </div>
   );
-};
 
 ElementProperty.propTypes = {
   pipelineId: PropTypes.string.isRequired,
