@@ -46,6 +46,7 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.test.PipelineTestUtil;
 import stroom.test.StroomProcessTestFileUtil;
+import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -85,6 +86,8 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
     @Resource
     private StreamCloser streamCloser;
 
+    private LoggingErrorReceiver loggingErrorReceiver;
+
     @Test
     public void testXML() throws Exception {
         final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
@@ -94,7 +97,10 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender.xsl", "TestStreamAppender");
         final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_XML_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.xml.out", null, false, 1);
+
+        process(pipelineEntity, dir, "TestStreamAppender", null, false);
+        validateProcess();
+        validateOuptut(dir +"TestStreamAppender.xml.out", false);
     }
 
     @Test
@@ -106,7 +112,16 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender.xsl", "TestStreamAppender");
         final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_XML_Pipeline_Rolling.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.xml.out", null, false, 141);
+
+        process(pipelineEntity, dir, "TestStreamAppender", null, false);
+
+        final List<Stream> streams = streamStore.find(new FindStreamCriteria());
+        final long streamId = streams.get(0).getId();
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(streamSource.getInputStream());
+        StreamUtil.streamToString(byteCountInputStream);
+        Assert.assertEquals(1198, byteCountInputStream.getCount());
+        streamStore.closeStreamSource(streamSource);
     }
 
     @Test
@@ -118,7 +133,10 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         final XSLT filteredXSLT = createXSLT(dir + "TestStreamAppender_Text.xsl", "TestStreamAppender");
         final PipelineEntity pipelineEntity = createPipeline(dir + "TestStreamAppender_Text_Pipeline.xml",
                 textConverter, filteredXSLT);
-        test(pipelineEntity, dir, "TestStreamAppender", dir + "TestStreamAppender.txt.out", null, true, 1);
+
+        process(pipelineEntity, dir, "TestStreamAppender", null, true);
+        validateProcess();
+        validateOuptut(dir +"TestStreamAppender.txt.out", true);
     }
 
     private PipelineEntity createPipeline(final String pipelineFile, final TextConverter textConverter,
@@ -161,13 +179,11 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
 
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
-    private void test(final PipelineEntity pipelineEntity,
-                      final String inputPath,
-                      final String inputStem,
-                      final String outputReference,
-                      final String encoding,
-                      final boolean text,
-                      final int outputCount) throws Exception {
+    private void process(final PipelineEntity pipelineEntity,
+                         final String inputPath,
+                         final String inputStem,
+                         final String encoding,
+                         final boolean text) throws Exception {
         String fileName = inputStem;
         if (text) {
             fileName += ".txt";
@@ -188,7 +204,7 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         FileUtil.deleteFile(outputLockFile);
 
         // Setup the error handler.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+        loggingErrorReceiver = new LoggingErrorReceiver();
         errorReceiver.setErrorReceiver(loggingErrorReceiver);
 
         // Create the parser.
@@ -221,7 +237,9 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
 
         // Close all streams that have been written.,
         streamCloser.close();
+    }
 
+    private void validateProcess() {
         Assert.assertTrue(recordCount.getRead() > 0);
         Assert.assertTrue(recordCount.getWritten() > 0);
         // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
@@ -230,17 +248,15 @@ public class TestStreamAppender extends AbstractProcessIntegrationTest {
         Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
         Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
         Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+    }
 
+    private void validateOuptut(final String outputReference,
+                                final boolean text) throws Exception {
         final List<Stream> streams = streamStore.find(new FindStreamCriteria());
-        Assert.assertEquals(outputCount, streams.size());
-
-        if (outputCount == 1) {
-            final StreamSource streamSource = streamStore.openStreamSource(streams.get(0).getId());
-
-            final long streamId = streams.get(0).getId();
-            checkHeaderFooterOnly(streamId, text);
-            checkFull(streamId, outputReference);
-        }
+        Assert.assertEquals(1, streams.size());
+        final long streamId = streams.get(0).getId();
+        checkHeaderFooterOnly(streamId, text);
+        checkFull(streamId, outputReference);
     }
 
     private void checkHeaderFooterOnly(final long streamId, final boolean text) throws Exception {
