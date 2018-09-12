@@ -21,7 +21,6 @@ import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { DragSource } from 'react-dnd';
 
-import Button from 'components/Button';
 import SelectBox from 'components/SelectBox';
 import Button from 'components/Button';
 import ItemTypes from './dragDropTypes';
