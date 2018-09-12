@@ -45,16 +45,17 @@ const enhance = compose(connect(
     pipelineElementPropertyRevertToDefault,
   },
 ),
-  withProps(({ value,
+  withProps(({
     defaultValue,
     type,
     pipelineElementPropertyRevertToParent,
     pipelineElementPropertyRevertToDefault,
     pipelineState: { pipeline },
+    elementProperties,
+    elementPropertiesInChild,
     elementId,
     name,
     pipelineId,
-    childValue,
     elementTypeProperty }) => {
 
     const docRefTypes = elementTypeProperty.docRefTypes
@@ -66,6 +67,9 @@ const enhance = compose(connect(
       elementId,
       elementTypeProperty.name,
     );
+
+    const value = elementProperties.find(element => element.name === elementTypeProperty.name);
+    const childValue = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
 
     return {
       type: type.toLowerCase(),
@@ -132,10 +136,10 @@ ElementProperty.propTypes = {
   elementId: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
-  value: PropTypes.object,
-  childValue: PropTypes.object,
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
   elementTypeProperty: PropTypes.any,
+  elementProperties: PropTypes.any,
+  elementPropertiesInChild: PropTypes.any,
 };
 
 export default enhance(ElementProperty);

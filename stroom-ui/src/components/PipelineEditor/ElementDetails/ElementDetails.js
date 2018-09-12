@@ -113,24 +113,20 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-            sortedElementTypeProperties.map((elementTypeProperty) => {
-
-              const property = elementProperties.find(element => element.name === elementTypeProperty.name);
-              const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
-              return (
-                <ElementProperty
-                  pipelineId={pipelineId}
-                  elementId={element.id}
-                  key={elementTypeProperty.name}
-                  name={elementTypeProperty.name}
-                  type={elementTypeProperty.type}
-                  elementTypeProperty={elementTypeProperty}
-                  description={elementTypeProperty.description}
-                  childValue={childProperty}
-                  value={property}
-                />
-              );
-            })
+            sortedElementTypeProperties.map((elementTypeProperty) => (
+              <ElementProperty
+                pipelineId={pipelineId}
+                elementId={element.id}
+                key={elementTypeProperty.name}
+                name={elementTypeProperty.name}
+                type={elementTypeProperty.type}
+                elementTypeProperty={elementTypeProperty}
+                description={elementTypeProperty.description}
+                elementProperties={elementProperties}
+                elementPropertiesInChild={elementPropertiesInChild}
+              />
+            )
+            )
           )}
       </Form>
     </React.Fragment>
