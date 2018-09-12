@@ -12,7 +12,11 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import DndDocRefListingEntry from './DndDocRefListingEntry';
-import NewDocDialog from './NewDocDialog';
+import NewDocRefDialog from './NewDocRefDialog';
+import CopyDocRefDialog from './CopyDocRefDialog';
+import MoveDocRefDialog from './MoveDocRefDialog';
+import RenameDocRefDialog from './RenameDocRefDialog';
+import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
 import withSelectableItemListing, { SELECTION_BEHAVIOUR } from 'lib/withSelectableItemListing';
@@ -72,7 +76,7 @@ const enhance = compose(
     const actionBarItems = [
       {
         icon: 'file',
-        onClick: () => prepareDocRefCreation(folder.node),
+        onClick: () => prepareDocRefCreation(LISTING_ID, folder.node),
         tooltip: 'Create a Document',
         title: 'Create'
       },
@@ -90,28 +94,28 @@ const enhance = compose(
           tooltip: 'View Information about this document',
         });
         actionBarItems.push({
-          icon: 'pencil',
+          icon: 'edit',
           title: 'Rename',
-          onClick: () => prepareDocRefRename(singleSelectedDocRef),
+          onClick: () => prepareDocRefRename(LISTING_ID, singleSelectedDocRef),
           tooltip: 'Rename this document',
         });
       }
       actionBarItems.push({
         icon: 'copy',
         title: 'Copy',
-        onClick: d => prepareDocRefCopy(selectedDocRefUuids),
+        onClick: d => prepareDocRefCopy(LISTING_ID, selectedDocRefUuids),
         tooltip: 'Copy selected documents',
       });
       actionBarItems.push({
         icon: 'move',
         title: 'Move',
-        onClick: () => prepareDocRefMove(selectedDocRefUuids),
+        onClick: () => prepareDocRefMove(LISTING_ID, selectedDocRefUuids),
         tooltip: 'Move selected documents',
       });
       actionBarItems.push({
         icon: 'trash',
         title: 'Delete',
-        onClick: () => prepareDocRefDelete(selectedDocRefUuids),
+        onClick: () => prepareDocRefDelete(LISTING_ID, selectedDocRefUuids),
         tooltip: 'Delete selected documents',
       });
     }
@@ -127,7 +131,7 @@ const FolderExplorer = ({
   openDocRef,
   onKeyDownWithShortcuts,
 }) => (
-    <div>
+    <div className='FolderExplorer'>
       <AppSearchBar className="app-search-bar" onChange={openDocRef} />
 
       <header>
@@ -154,8 +158,12 @@ const FolderExplorer = ({
         ))}
       </div>
 
-      <DocRefInfoModal />
-      <NewDocDialog />
+      <DocRefInfoModal listingId={LISTING_ID} />
+      <MoveDocRefDialog listingId={LISTING_ID} />
+      <RenameDocRefDialog listingId={LISTING_ID} />
+      <DeleteDocRefDialog listingId={LISTING_ID} />
+      <CopyDocRefDialog listingId={LISTING_ID} />
+      <NewDocRefDialog listingId={LISTING_ID} />
     </div>
   );
 

@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 import React from 'react';
+import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-import { Header, Button, Form } from 'semantic-ui-react';
 
+import Button from 'components/Button';
+import IconHeader from 'components/IconHeader';
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from './redux';
+import { actionCreators, defaultListingState } from './redux/moveDocRefReducer';
 import { moveDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
 
@@ -36,13 +38,9 @@ const LISTING_ID = 'move-item-listing';
 const enhance = compose(
   withDocumentTree,
   connect(
-    ({
-      folderExplorer: { documentTree },
-      form,
-      folderExplorer: {
-        moveDocRef: { isMoving, uuids, destinationUuid },
-      },
-    }) => {
+    ({ folderExplorer: { documentTree }, form, folderExplorer: { moveDocRef } }, { listingId }) => {
+      const thisState = moveDocRef[listingId] || defaultListingState;
+      const { isMoving, uuids, destinationUuid } = thisState;
       const initialDestination = findItem(documentTree, destinationUuid);
 
       return {
@@ -62,23 +60,25 @@ const enhance = compose(
     enableReinitialize: true,
     touchOnChange: true,
   }),
+  withHandlers({
+    onConfirm: ({
+      moveDocuments,
+      uuids,
+      moveDocRefDialogForm: {
+        values: { destination, permissionInheritance },
+      },
+    }) => () => moveDocuments(uuids, destination.uuid, permissionInheritance),
+    onCancel: ({ listingId, completeDocRefMove }) => () => completeDocRefMove(listingId),
+  }),
 );
 
-const MoveDocRefDialog = ({
-  isMoving,
-  uuids,
-  completeDocRefMove,
-  moveDocuments,
-  moveDocRefDialogForm,
-}) => (
+let MoveDocRefDialog = ({ isMoving, onConfirm, onCancel }) => (
   <ThemedModal
     isOpen={isMoving}
-    header={
-      <Header className="header" icon="move" content="Select a Destination Folder for the Move?" />
-    }
+    header={<IconHeader icon="arrows-alt" text="Select a Destination Folder for the Move?" />}
     content={
-      <Form>
-        <Form.Field>
+      <form>
+        <div>
           <label>Destination</label>
           <Field
             name="destination"
@@ -86,8 +86,8 @@ const MoveDocRefDialog = ({
               <AppSearchBar pickerId={LISTING_ID} onChange={onChange} value={value} />
             )}
           />
-        </Form.Field>
-        <Form.Field>
+        </div>
+        <div>
           <label>Permission Inheritance</label>
           <Field
             name="permissionInheritance"
@@ -95,30 +95,22 @@ const MoveDocRefDialog = ({
               <PermissionInheritancePicker onChange={onChange} value={value} />
             )}
           />
-        </Form.Field>
-      </Form>
+        </div>
+      </form>
     }
     actions={
       <React.Fragment>
-        <Button negative onClick={completeDocRefMove}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() => {
-            moveDocuments(
-              uuids,
-              moveDocRefDialogForm.values.destination.uuid,
-              moveDocRefDialogForm.values.permissionInheritance,
-            );
-          }}
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
-        />
+        <Button onClick={onCancel} icon='times' text="Cancel" />
+        <Button onClick={onConfirm} icon="check" text="Choose" />
       </React.Fragment>
     }
   />
 );
 
-export default enhance(MoveDocRefDialog);
+MoveDocRefDialog = enhance(MoveDocRefDialog);
+
+MoveDocRefDialog.propTypes = {
+  listingId: PropTypes.string.isRequired,
+};
+
+export default MoveDocRefDialog;

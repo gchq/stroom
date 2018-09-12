@@ -13,59 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
+import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Header } from 'semantic-ui-react';
-
-import { actionCreators } from './redux';
+import { actionCreators, defaultListingState } from './redux/deleteDocRefReducer';
 import { deleteDocuments } from 'components/FolderExplorer/explorerClient';
-import ThemedModal from 'components/ThemedModal';
+import { ThemedConfirm } from 'components/ThemedModal';
 
 const { completeDocRefDelete } = actionCreators;
 
-const enhance = compose(connect(
-  ({
-    folderExplorer: {
-      deleteDocRef: { isDeleting, uuids },
-    },
-  }) => ({
-    isDeleting,
-    uuids,
+const enhance = compose(
+  connect(
+    ({ folderExplorer: { deleteDocRef } }, { listingId }) => ({
+      ...(deleteDocRef[listingId] || defaultListingState),
+    }),
+    { completeDocRefDelete, deleteDocuments },
+  ),
+  withHandlers({
+    onConfirm: ({ deleteDocuments, uuids }) => () => deleteDocuments(uuids),
+    onCancel: ({ completeDocRefDelete, listingId }) => () => completeDocRefDelete(listingId),
   }),
-  { completeDocRefDelete, deleteDocuments },
-));
-
-const DeleteDocRefDialog = ({
-  isDeleting, uuids, completeDocRefDelete, deleteDocuments,
-}) => (
-  <ThemedModal
-    isOpen={isDeleting}
-    header={
-      <Header
-        className="header"
-        icon="trash"
-        content="Are you sure about deleting these Doc Refs?"
-      />
-    }
-    content={JSON.stringify(uuids)}
-    actions={
-      <React.Fragment>
-        <Button negative onClick={completeDocRefDelete}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() => deleteDocuments(uuids)}
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
-        />
-      </React.Fragment>
-    }
-  />
+  withProps(({ isDeleting, uuids }) => ({
+    isOpen: isDeleting,
+    question: `Delete these doc refs? ${JSON.stringify(uuids)}?`,
+  })),
 );
 
-export default enhance(DeleteDocRefDialog);
+const DeleteDocRefDialog = enhance(ThemedConfirm);
+
+DeleteDocRefDialog.propTypes = {
+  listingId: PropTypes.string.isRequired,
+};
+
+export default DeleteDocRefDialog;

@@ -335,8 +335,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         }
 
         currentEntity = null;
-        if (property.getValue() != null && property.getValue().getDocRef() != null) {
-            currentEntity = property.getValue().getDocRef();
+        if (property.getValue() != null && property.getValue().getEntity() != null) {
+            currentEntity = property.getValue().getEntity();
         }
 
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());

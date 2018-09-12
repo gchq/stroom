@@ -1,15 +1,15 @@
 import React from 'react';
-import { compose } from 'recompose';
+import PropTypes from 'prop-types';
+
+import { compose, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { reduxForm, Field } from 'redux-form';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Header, Button, Form } from 'semantic-ui-react';
-import { InputField } from 'react-semantic-redux-form';
-
+import IconHeader from 'components/IconHeader';
+import Button from 'components/Button';
 import ThemedModal from 'components/ThemedModal';
 import { required, minLength2 } from 'lib/reduxFormUtils';
-import { actionCreators } from './redux';
+import { actionCreators, defaultListingState } from './redux/newDocReducer';
 import { DocRefTypePicker } from 'components/DocRefTypes';
 import explorerClient from 'components/FolderExplorer/explorerClient';
 
@@ -21,16 +21,9 @@ const { completeDocRefCreation } = actionCreators;
 
 const enhance = compose(
   connect(
-    ({
-      userSettings: { theme },
-      folderExplorer: {
-        newDoc: { isOpen, destination },
-      },
-      form,
-    }) => ({
+    ({ userSettings: { theme }, folderExplorer: { newDoc }, form }, { listingId }) => ({
       theme,
-      isOpen,
-      destination,
+      ...(newDoc[listingId] || defaultListingState),
       newDocRefForm: form.newDocRef,
     }),
     { completeDocRefCreation, createDocument },
@@ -40,18 +33,27 @@ const enhance = compose(
     enableReinitialize: true,
     touchOnChange: true,
   }),
+  withHandlers({
+    onConfirm: ({
+      destination,
+      newDocRefForm: {
+        values: { docRefType, docRefName, permissionInheritance },
+      },
+    }) => () => createDocument(docRefType, docRefName, destination, permissionInheritance),
+    onCancel: ({ completeDocRefCreation, listingId }) => () => completeDocRefCreation(listingId),
+  }),
 );
 
-const NewDocDialog = ({
+let NewDocRefDialog = ({
   isOpen,
   stage,
-  completeDocRefCreation,
   createDocument,
-  newDocRefForm,
   destination,
   // We need to include the theme because modals are mounted outside the root
   // div, i.e. outside the div which contains the theme class.
   theme,
+  onCancel,
+  onConfirm,
 }) => (
   <ThemedModal
     isOpen={isOpen}
@@ -59,15 +61,11 @@ const NewDocDialog = ({
     size="small"
     closeOnDimmerClick={false}
     header={
-      <Header
-        className="header"
-        icon="plus"
-        content={`Create a New Doc Ref in ${destination && destination.name}`}
-      />
+      <IconHeader icon="plus" text={`Create a New Doc Ref in ${destination && destination.name}`} />
     }
     content={
-      <Form>
-        <Form.Field>
+      <form>
+        <div>
           <label>Doc Ref Type</label>
           <Field
             name="docRefType"
@@ -75,18 +73,18 @@ const NewDocDialog = ({
               <DocRefTypePicker pickerId="new-doc-ref-type" onChange={onChange} value={value} />
             )}
           />
-        </Form.Field>
-        <Form.Field>
+        </div>
+        <div>
           <label>Name</label>
           <Field
             name="docRefName"
-            component={InputField}
+            component="input"
             type="text"
             placeholder="Name"
             validate={[required, minLength2]}
           />
-        </Form.Field>
-        <Form.Field>
+        </div>
+        <div>
           <label>Permission Inheritance</label>
           <Field
             className="raised-border"
@@ -95,31 +93,22 @@ const NewDocDialog = ({
               <PermissionInheritancePicker onChange={onChange} value={value} />
             )}
           />
-        </Form.Field>
-      </Form>
+        </div>
+      </form>
     }
     actions={
       <React.Fragment>
-        <Button negative onClick={completeDocRefCreation}>
-          <FontAwesomeIcon icon="times" /> Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() =>
-            createDocument(
-              newDocRefForm.values.docRefType,
-              newDocRefForm.values.docRefName,
-              destination,
-              newDocRefForm.values.permissionInheritance,
-            )
-          }
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
-        />
+        <Button icon="times" onClick={onCancel} text="Cancel" />
+        <Button onClick={onConfirm} icon="check" text="Choose" />
       </React.Fragment>
     }
   />
 );
 
-export default enhance(NewDocDialog);
+NewDocRefDialog = enhance(NewDocRefDialog);
+
+NewDocRefDialog.propTypes = {
+  listingId: PropTypes.string.isRequired,
+};
+
+export default NewDocRefDialog;

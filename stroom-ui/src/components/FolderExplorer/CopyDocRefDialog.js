@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 import React from 'react';
+import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-import { Header, Button, Form } from 'semantic-ui-react';
 
+import Button from 'components/Button';
+import IconHeader from 'components/IconHeader';
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from './redux';
+import { actionCreators, defaultListingState } from './redux/copyDocRefReducer';
 import { copyDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
 
@@ -36,15 +38,10 @@ const LISTING_ID = 'copy-item-listing';
 const enhance = compose(
   withDocumentTree,
   connect(
-    (
-      {
-        folderExplorer: { documentTree },
-        form,
-        folderExplorer: {
-          copyDocRef: { isCopying, uuids, destinationUuid },
-        },
-      }
-    ) => {
+    ({ folderExplorer: { documentTree }, form, folderExplorer: { copyDocRef } }, { listingId }) => {
+      const thisCopyState = copyDocRef[listingId] || defaultListingState;
+      const { isCopying, uuids, destinationUuid } = thisCopyState;
+
       const initialDestination = findItem(documentTree, destinationUuid);
 
       return {
@@ -64,23 +61,25 @@ const enhance = compose(
     enableReinitialize: true,
     touchOnChange: true,
   }),
+  withHandlers({
+    onCancel: ({ completeDocRefCopy, listingId }) => () => completeDocRefCopy(listingId),
+    onConfirm: ({
+      copyDocuments,
+      uuids,
+      copyDocRefDialogForm: {
+        values: { destination, permissionInheritance },
+      },
+    }) => () => copyDocuments(uuids, destination.uuid, permissionInheritance),
+  }),
 );
 
-const CopyDocRefDialog = ({
-  isCopying,
-  uuids,
-  completeDocRefCopy,
-  copyDocuments,
-  copyDocRefDialogForm,
-}) => (
+let CopyDocRefDialog = ({ isCopying, onCancel, onConfirm }) => (
   <ThemedModal
     isOpen={isCopying}
-    header={
-      <Header className="header" icon="copy" content="Select a Destination Folder for the Copy" />
-    }
+    header={<IconHeader icon="copy" text="Select a Destination Folder for the Copy" />}
     content={
-      <Form>
-        <Form.Field>
+      <form>
+        <div>
           <label>Destination</label>
           <Field
             name="destination"
@@ -88,8 +87,8 @@ const CopyDocRefDialog = ({
               <AppSearchBar pickerId={LISTING_ID} onChange={onChange} value={value} />
             )}
           />
-        </Form.Field>
-        <Form.Field>
+        </div>
+        <div>
           <label>Permission Inheritance</label>
           <Field
             name="permissionInheritance"
@@ -97,30 +96,22 @@ const CopyDocRefDialog = ({
               <PermissionInheritancePicker onChange={onChange} value={value} />
             )}
           />
-        </Form.Field>
-      </Form>
+        </div>
+      </form>
     }
     actions={
       <React.Fragment>
-        <Button negative onClick={completeDocRefCopy}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() =>
-            copyDocuments(
-              uuids,
-              copyDocRefDialogForm.values.destination.uuid,
-              copyDocRefDialogForm.values.permissionInheritance,
-            )
-          }
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
-        />
+        <Button onClick={onCancel} icon="times" text="Cancel" />
+        <Button onClick={onConfirm} icon="check" text="Choose" />
       </React.Fragment>
     }
   />
 );
 
-export default enhance(CopyDocRefDialog);
+CopyDocRefDialog = enhance(CopyDocRefDialog);
+
+CopyDocRefDialog.propTypes = {
+  listingId: PropTypes.string.isRequired,
+};
+
+export default CopyDocRefDialog;

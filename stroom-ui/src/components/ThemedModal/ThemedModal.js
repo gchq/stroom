@@ -17,9 +17,9 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Button } from 'semantic-ui-react';
 import ReactModal from 'react-modal';
 
+import Button from 'components/Button';
 import IconHeader from 'components/IconHeader';
 
 const enhance = compose(
@@ -41,7 +41,7 @@ const reactModalOptions = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)'
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
   },
   content: {
     position: 'absolute',
@@ -56,8 +56,8 @@ const reactModalOptions = {
     WebkitOverflowScrolling: 'touch',
     borderRadius: '4px',
     outline: 'none',
-    padding: '0'
-  }
+    padding: '0',
+  },
 };
 /**
  * A themed modal is required because Semantic UI modals are mounted
@@ -69,44 +69,33 @@ const reactModalOptions = {
 let ThemedModal = ({
   dimmer, theme, header, content, actions, ...rest
 }) => (
-    <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
-      <div className="raised-low themed-modal">
-        <header className="raised-low themed-modal__header">{header}</header>
-        <div className="raised-low themed-modal__content">{content}</div>
-        <div className="raised-low themed-modal__footer__actions">
-          {actions}
-        </div>
-      </div>
-    </ReactModal>
-  );
+  <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
+    <div className="raised-low themed-modal">
+      <header className="raised-low themed-modal__header">{header}</header>
+      <div className="raised-low themed-modal__content">{content}</div>
+      <div className="raised-low themed-modal__footer__actions">{actions}</div>
+    </div>
+  </ReactModal>
+);
 
 ThemedModal = enhance(ThemedModal);
 
 let ThemedConfirm = ({
   dimmer, theme, question, details, onCancel, onConfirm, ...rest
 }) => (
-    <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
-      <div className="raised-low themed-modal">
-        <header className="raised-low themed-modal__header">
-          <IconHeader text={question} icon='question-circle' />
-        </header>
-        {details && <div className="raised-low themed-modal__content">{details}</div>}
-        <div className="raised-low themed-modal__footer__actions">
-          <Button negative onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            positive
-            onClick={onConfirm}
-            labelPosition="right"
-            icon="checkmark"
-            content="Confirm"
-          >
-          </Button>
-        </div>
+  <ReactModal className={`${theme}`} {...rest} style={reactModalOptions}>
+    <div className="raised-low themed-modal">
+      <header className="raised-low themed-modal__header">
+        <IconHeader text={question} icon="question-circle" />
+      </header>
+      {details && <div className="raised-low themed-modal__content">{details}</div>}
+      <div className="raised-low themed-modal__footer__actions">
+        <Button icon="times" text="Cancel" onClick={onCancel} />
+        <Button onClick={onConfirm} icon="check" text="Confirm" />
       </div>
-    </ReactModal>
-  );
+    </div>
+  </ReactModal>
+);
 
 ThemedConfirm = enhance(ThemedConfirm);
 
