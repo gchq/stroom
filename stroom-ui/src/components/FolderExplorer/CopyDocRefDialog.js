@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
 
+import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-import { Header, Button, Form } from 'semantic-ui-react';
+import { Header, Form } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { copyDocuments } from './explorerClient';
 import withDocumentTree from './withDocumentTree';
-
+import DialogActionButtons from './DialogActionButtons';
 import ThemedModal from 'components/ThemedModal';
 import AppSearchBar from 'components/AppSearchBar';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
@@ -73,54 +73,44 @@ const CopyDocRefDialog = ({
   copyDocuments,
   copyDocRefDialogForm,
 }) => (
-  <ThemedModal
-    isOpen={isCopying}
-    header={
-      <Header className="header" icon="copy" content="Select a Destination Folder for the Copy" />
-    }
-    content={
-      <Form>
-        <Form.Field>
-          <label>Destination</label>
-          <Field
-            name="destination"
-            component={({ input: { onChange, value } }) => (
-              <AppSearchBar pickerId={LISTING_ID} onChange={onChange} value={value} />
-            )}
-          />
-        </Form.Field>
-        <Form.Field>
-          <label>Permission Inheritance</label>
-          <Field
-            name="permissionInheritance"
-            component={({ input: { onChange, value } }) => (
-              <PermissionInheritancePicker onChange={onChange} value={value} />
-            )}
-          />
-        </Form.Field>
-      </Form>
-    }
-    actions={
-      <React.Fragment>
-        <Button negative onClick={completeDocRefCopy}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() =>
-            copyDocuments(
-              uuids,
-              copyDocRefDialogForm.values.destination.uuid,
-              copyDocRefDialogForm.values.permissionInheritance,
-            )
-          }
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
+    <ThemedModal
+      isOpen={isCopying}
+      header={
+        <Header className="header" icon="copy" content="Select a Destination Folder for the Copy" />
+      }
+      content={
+        <Form>
+          <Form.Field>
+            <label>Destination</label>
+            <Field
+              name="destination"
+              component={({ input: { onChange, value } }) => (
+                <AppSearchBar pickerId={LISTING_ID} onChange={onChange} value={value} />
+              )}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Permission Inheritance</label>
+            <Field
+              name="permissionInheritance"
+              component={({ input: { onChange, value } }) => (
+                <PermissionInheritancePicker onChange={onChange} value={value} />
+              )}
+            />
+          </Form.Field>
+        </Form>
+      }
+      actions={
+        <DialogActionButtons
+          onCancel={completeDocRefCopy}
+          onChoose={() => copyDocuments(
+            uuids,
+            copyDocRefDialogForm.values.destination.uuid,
+            copyDocRefDialogForm.values.permissionInheritance,
+          )}
         />
-      </React.Fragment>
-    }
-  />
-);
+      }
+    />
+  );
 
 export default enhance(CopyDocRefDialog);

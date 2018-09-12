@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
 
+import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-
-import { Button, Header } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 import { deleteDocuments } from 'components/FolderExplorer/explorerClient';
 import ThemedModal from 'components/ThemedModal';
+import DialogActionButtons from './DialogActionButtons';
 
 const { completeDocRefDelete } = actionCreators;
 
@@ -41,31 +41,23 @@ const enhance = compose(connect(
 const DeleteDocRefDialog = ({
   isDeleting, uuids, completeDocRefDelete, deleteDocuments,
 }) => (
-  <ThemedModal
-    isOpen={isDeleting}
-    header={
-      <Header
-        className="header"
-        icon="trash"
-        content="Are you sure about deleting these Doc Refs?"
-      />
-    }
-    content={JSON.stringify(uuids)}
-    actions={
-      <React.Fragment>
-        <Button negative onClick={completeDocRefDelete}>
-          Cancel
-        </Button>
-        <Button
-          positive
-          onClick={() => deleteDocuments(uuids)}
-          labelPosition="right"
-          icon="checkmark"
-          content="Choose"
+    <ThemedModal
+      isOpen={isDeleting}
+      header={
+        <Header
+          className="header"
+          icon="trash"
+          content="Are you sure about deleting these Doc Refs?"
         />
-      </React.Fragment>
-    }
-  />
-);
+      }
+      content={JSON.stringify(uuids)}
+      actions={
+        <DialogActionButtons
+          onCancel={completeDocRefDelete}
+          onChoose={() => deleteDocuments(uuids)}
+        />
+      }
+    />
+  );
 
 export default enhance(DeleteDocRefDialog);
