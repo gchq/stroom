@@ -156,7 +156,7 @@ describe('Pipeline Utils', () => {
       const testPipeline = Object.assign(testPipelines.simple, {});
       const elementName = 'xsltFilter'
       const propertyName = 'xslt'
-      const propertyType = 'docRef'
+      const propertyType = 'entity'
       const propertyDocRefValue = {
         type: 'some type',
         uuid: 'some uuid',
@@ -175,7 +175,7 @@ describe('Pipeline Utils', () => {
       // Then
       const propertyValue = {
         boolean: null,
-        docRef: propertyDocRefValue,
+        entity: propertyDocRefValue,
         integer: null,
         long: null,
         string: null
@@ -206,7 +206,7 @@ describe('Pipeline Utils', () => {
       // Then
       const propertyValue = {
         boolean: null,
-        docRef: null,
+        entity: null,
         integer: null,
         long: null,
         string: propertyDocRefValue

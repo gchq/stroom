@@ -249,8 +249,8 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
  * @param {pipeline} pipeline The current definition of the pipeline.
  * @param {string} element The name of the element to update.
  * @param {string} name The name of the property on the element to update
- * @param {string} propertyType The type of the property to update, one of boolean, docref, integer, long, or string.
- * @param {boolean|docref|integer|long|string} propertyValue The value to add or update
+ * @param {string} propertyType The type of the property to update, one of boolean, entity, integer, long, or string.
+ * @param {boolean|entity|integer|long|string} propertyValue The value to add or update
  */
 export function setElementPropertyValueInPipeline(
   pipeline,
@@ -261,7 +261,7 @@ export function setElementPropertyValueInPipeline(
 ) {
   // Create the 'value' property.
   const value = {
-    boolean: null, docref: null, integer: null, long: null, string: null,
+    boolean: null, entity: null, integer: null, long: null, string: null,
   };
   value[propertyType.toLowerCase()] = propertyValue;
 

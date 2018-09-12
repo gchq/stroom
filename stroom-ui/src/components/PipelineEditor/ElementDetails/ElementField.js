@@ -245,6 +245,7 @@ const FieldValue = ({
   docRefTypes,
 }) => {
   let elementField;
+  console.log('Element field', {value, name, type})
   switch (type) {
     case 'boolean':
       elementField = (
@@ -276,14 +277,14 @@ const FieldValue = ({
         />
       );
       break;
-    case 'docref':
+    case 'entity':
       elementField = (
         <AppSearchBar
           pickerId={getPickerName(name)}
           typeFilters={docRefTypes}
           value={value}
           onChange={(node) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'docref', node);
+            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', node);
           }}
         />
       );
