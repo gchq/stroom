@@ -23,7 +23,7 @@ import { Form, Checkbox, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { getDetails } from './elementDetailsUtils';
-import FieldValue from './FieldValue';
+import ElementPropertyField from './ElementPropertyField';
 import Tooltip from 'components/Tooltip';
 import AppSearchBar from 'components/AppSearchBar';
 
@@ -51,7 +51,8 @@ const enhance = compose(connect(
 );
 
 
-const ElementField = ({
+
+const ElementProperty = ({
   name,
   description,
   type,
@@ -84,7 +85,7 @@ const ElementField = ({
     <div>
       <div className="element-details__field">
         <label>{description}</label>
-        <FieldValue
+        <ElementPropertyField
           {...{
             pipelineElementPropertyUpdated,
             value: details.actualValue,
@@ -112,7 +113,7 @@ const ElementField = ({
   );
 };
 
-ElementField.propTypes = {
+ElementProperty.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
@@ -126,4 +127,4 @@ ElementField.propTypes = {
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
 };
 
-export default enhance(ElementField);
+export default enhance(ElementProperty);

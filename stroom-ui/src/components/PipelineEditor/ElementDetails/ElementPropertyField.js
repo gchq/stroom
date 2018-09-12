@@ -28,7 +28,7 @@ import AppSearchBar from 'components/AppSearchBar';
  * @param {string} type The type of the element
  * @param {array} docRefTypes The docref types to filter by
  */
-const FieldValue = ({
+const ElementPropertyField = ({
   pipelineElementPropertyUpdated,
   value,
   name,
@@ -113,7 +113,7 @@ const FieldValue = ({
 };
 
 
-FieldValue.propTypes = {
+ElementPropertyField.propTypes = {
   pipelineElementPropertyUpdated: PropTypes.object.isRequired,
   value: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
@@ -123,4 +123,4 @@ FieldValue.propTypes = {
   docRefTypes: PropTypes.array.isRequired,
 }
 
-export default FieldValue;
+export default ElementPropertyField;

@@ -23,7 +23,7 @@ import { reduxForm } from 'redux-form';
 
 import { getParentProperty } from '../pipelineUtils';
 import HorizontalPanel from 'components/HorizontalPanel';
-import ElementField from './ElementField';
+import ElementProperty from './ElementProperty';
 
 const enhance = compose(
   connect(
@@ -134,7 +134,7 @@ const ElementDetails = ({
               const property = elementProperties.find(element => element.name === elementTypeProperty.name);
               const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
               return (
-                <ElementField
+                <ElementProperty
                   pipelineId={pipelineId}
                   elementId={element.id}
                   key={elementTypeProperty.name}
