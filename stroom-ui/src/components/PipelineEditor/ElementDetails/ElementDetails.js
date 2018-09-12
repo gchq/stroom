@@ -63,19 +63,12 @@ const enhance = compose(
     const elementTypeProperties = elements.elementProperties[element.type];
     const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
-    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
-
-    const elementPropertiesInChild = pipeline.configStack[
-      pipeline.configStack.length - 1
-    ].properties.add.filter(property => property.element === selectedElementId);
-
     return {
       element,
       elementType,
       elementTypeProperties,
       sortedElementTypeProperties,
-      elementProperties,
-      elementPropertiesInChild,
+      selectedElementId
     };
   }),
 );
@@ -90,6 +83,7 @@ const ElementDetails = ({
   sortedElementTypeProperties,
   elementProperties,
   elementPropertiesInChild,
+  selectedElementId,
 }) => {
   const title = (
     <div className="element-details__title">
@@ -122,8 +116,7 @@ const ElementDetails = ({
                 type={elementTypeProperty.type}
                 elementTypeProperty={elementTypeProperty}
                 description={elementTypeProperty.description}
-                elementProperties={elementProperties}
-                elementPropertiesInChild={elementPropertiesInChild}
+                selectedElementId={selectedElementId}
               />
             )
             )

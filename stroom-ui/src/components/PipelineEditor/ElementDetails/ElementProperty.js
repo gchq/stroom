@@ -51,12 +51,17 @@ const enhance = compose(connect(
     pipelineElementPropertyRevertToParent,
     pipelineElementPropertyRevertToDefault,
     pipelineState: { pipeline },
-    elementProperties,
-    elementPropertiesInChild,
     elementId,
     name,
     pipelineId,
-    elementTypeProperty }) => {
+    elementTypeProperty,
+    selectedElementId }) => {
+
+    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
+
+    const elementPropertiesInChild = pipeline.configStack[
+      pipeline.configStack.length - 1
+    ].properties.add.filter(property => property.element === selectedElementId);
 
     const docRefTypes = elementTypeProperty.docRefTypes
       ? elementTypeProperty.docRefTypes
@@ -139,7 +144,7 @@ ElementProperty.propTypes = {
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
   elementTypeProperty: PropTypes.any,
   elementProperties: PropTypes.any,
-  elementPropertiesInChild: PropTypes.any,
+  selectedElementId: PropTypes.any,
 };
 
 export default enhance(ElementProperty);
