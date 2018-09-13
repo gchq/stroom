@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import PipelineEditor from './PipelineEditor';
-import Pipeline from './Pipeline';
+import { createActions, handleActions } from 'redux-actions';
 
-import { reducer, actionCreators } from './redux';
-import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
-import { fetchElements, fetchElementProperties } from './elementResourceClient';
+import { createActionHandlerPerId } from 'lib/reduxFormUtils';
 
-import { testPipelines } from './test';
+const actionCreators = createActions({
+  START_DEBUGGING: (debuggerId, pipelineId) => ({ debuggerId, pipelineId }),
+});
 
-export {
-  PipelineEditor,
-  Pipeline,
-  reducer,
-  fetchPipeline,
-  fetchElements,
-  fetchElementProperties,
-  searchPipelines,
-  actionCreators,
-  testPipelines,
-};
+const defaultState = {};
 
-export default PipelineEditor;
+const byDebuggerId = createActionHandlerPerId(
+  ({ payload: { debuggerId } }) => debuggerId,
+  defaultState,
+);
+
+const reducer = handleActions({
+  START_DEBUGGING: byDebuggerId((state, { payload: { pipelineId } }) => ({
+    pipelineId
+  })),
+},
+  defaultState,
+);
+
+export { actionCreators, reducer };

@@ -14,25 +14,15 @@
  * limitations under the License.
  */
 
-import PipelineEditor from './PipelineEditor';
-import Pipeline from './Pipeline';
+import React from 'react';
+import { storiesOf, addDecorator } from '@storybook/react';
 
-import { reducer, actionCreators } from './redux';
-import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
-import { fetchElements, fetchElementProperties } from './elementResourceClient';
+import PipelineDebugger from './PipelineDebugger';
 
-import { testPipelines } from './test';
+import { testPipelines } from 'components/PipelineEditor';
 
-export {
-  PipelineEditor,
-  Pipeline,
-  reducer,
-  fetchPipeline,
-  fetchElements,
-  fetchElementProperties,
-  searchPipelines,
-  actionCreators,
-  testPipelines,
-};
+const pipelineStories = storiesOf('Pipeline Debugger', module);
 
-export default PipelineEditor;
+Object.keys(testPipelines).forEach((k) => {
+  pipelineStories.add(k, () => <PipelineDebugger pipelineId={k} debuggerId='testDebugger' />);
+});

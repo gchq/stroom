@@ -183,7 +183,7 @@ const enhance = compose(
     }
 
     if (selectedElementId === elementId) {
-      classNames.push('Pipeline-element__selected');
+      classNames.push('selected');
     }
 
     return {

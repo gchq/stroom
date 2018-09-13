@@ -156,12 +156,6 @@ input {
   }
 }
 
-.selected {
-  @include themify($themes) {
-    background-color: themed("selected-color") !important;
-  }
-}
-
 :focus .inFocus {
   @include themify($themes) {
     border: solid thick themed("selected-color") !important;
@@ -182,12 +176,6 @@ input {
   }
 }
 
-.selected:hover {
-  @include themify($themes) {
-    background-color: themed("selected-color") !important;
-  }
-}
-
 .flat {
   @include themify($themes) {
     background-color: themed("background__color") !important;
@@ -205,6 +193,18 @@ input {
   @include themify($themes) {
     background-color: themed("raised-low__background-color") !important;
     color: themed("text__color") !important;
+  }
+}
+
+.selected {
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
+  }
+}
+
+.selected:hover {
+  @include themify($themes) {
+    background-color: themed("selected-color") !important;
   }
 }
 
