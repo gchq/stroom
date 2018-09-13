@@ -79,6 +79,7 @@ const ElementDetails = ({
   const title = (
     <div className="element-details__title">
       <img
+        alt="Icon representing the selected element"
         src={require(`../images/${icon}`)}
         className="element-details__icon"
       />

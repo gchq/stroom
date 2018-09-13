@@ -18,13 +18,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { actionCreators } from '../redux';
 import { getParentProperty, getChildValue, getElementValue } from '../pipelineUtils';
 import { getDetails } from './elementDetailsUtils';
 import ElementPropertyField from './ElementPropertyField';
-import Tooltip from 'components/Tooltip';
 
 const {
   pipelineElementPropertyUpdated,
