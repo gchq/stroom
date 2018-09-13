@@ -61,13 +61,13 @@ const enhance = compose(
     additionalClasses.push('hoverable');
 
     if (dndIsOver) {
-      additionalClasses.push('dnd-over');
+      additionalClasses.push('dndIsOver');
     }
     if (dndIsOver) {
       if (dndCanDrop) {
-        additionalClasses.push('can-drop');
+        additionalClasses.push('canDrop');
       } else {
-        additionalClasses.push('cannot-drop');
+        additionalClasses.push('cannotDrop');
       }
     }
 

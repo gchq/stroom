@@ -6,14 +6,14 @@
   height: 3rem;
 }
 
-.DocRefListingEntry.dnd-over {
+.DocRefListingEntry.dndIsOver {
   text-decoration: italic;
 }
 
-.DocRefListingEntry.can-drop {
+.DocRefListingEntry.canDrop {
   color: green;
 }
-.DocRefListingEntry.cannot-drop {
+.DocRefListingEntry.cannotDrop {
   color: red;
 }
 

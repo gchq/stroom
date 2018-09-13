@@ -85,15 +85,15 @@ let TestDocRefListingEntry = ({
     </div>
     <div>
       <label>Entered Folder</label>
-      {enteredFolder && enteredFolder.name}
+      <input readOnly value={enteredFolder && enteredFolder.name} />
     </div>
     <div>
       <label>Opened Doc Ref</label>
-      {openedDocRef && openedDocRef.name}
+      <input readOnly value={openedDocRef && openedDocRef.name} />
     </div>
     <div>
       <label>Went Back</label>
-      {wentBack ? 'true' : 'false'}
+      <input type="checkbox" readOnly checked={wentBack} />
     </div>
     <button onClick={onClickClear}>Clear</button>
   </div>
@@ -104,12 +104,7 @@ TestDocRefListingEntry = enhance(TestDocRefListingEntry);
 storiesOf('Doc Ref Listing Entry', module)
   .add('docRef', props => <TestDocRefListingEntry listingId={uuidv4()} docRefs={[testDocRef]} />)
   .add('docRef isOver canDrop', props => (
-    <TestDocRefListingEntry
-      listingId={uuidv4()}
-      docRefs={[testDocRef]}
-      dndIsOver
-      dndCanDrop
-    />
+    <TestDocRefListingEntry listingId={uuidv4()} docRefs={[testDocRef]} dndIsOver dndCanDrop />
   ))
   .add('docRef isOver cannotDrop', props => (
     <TestDocRefListingEntry
