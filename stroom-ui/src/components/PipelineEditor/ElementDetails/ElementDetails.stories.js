@@ -66,33 +66,19 @@ const enhance = compose(
 
 const TestElementDetails = enhance(ElementDetails);
 
-const stories = storiesOf('Element Details', module)
-  .add('longPipeline - splitFilter', () => (
-    <TestElementDetails
-      testElements={elements}
-      testElementProperties={elementProperties}
-      testPipeline={testPipelines.longPipeline}
-      testElementId="splitFilter"
-      testElementConfig={{ splitDepth: 10, splitCount: 10 }}
-      pipelineId="longPipeline"
-    />
-  ))
-  .add('longPipeline - xsltFilter', () => (
-    <TestElementDetails
-      testElements={elements}
-      testElementProperties={elementProperties}
-      testPipeline={testPipelines.longPipeline}
-      testElementId="xsltFilter"
-      testElementConfig={{}}
-      pipelineId="longPipeline"
-    />
-  ))
-  .add('nothing selected', () => (
-    <TestElementDetails
-      testElements={elements}
-      testElementProperties={elementProperties}
-      testPipeline={testPipelines.longPipeline}
-      testElementConfig={{ splitDepth: 10, splitCount: 10 }}
-      pipelineId="longPipeline"
-    />
-  ));
+const stories = storiesOf('Element Details', module);
+
+Object.entries(testPipelines).map(pipeline => {
+  pipeline[1].merged.elements.add.map(element => {
+    stories.add(`${pipeline[1].docRef.uuid} - ${element.id}`, () => (
+      <TestElementDetails
+        testElements={elements}
+        testElementProperties={elementProperties}
+        testPipeline={pipeline[1]}
+        testElementId={element.id}
+        testElementConfig={{ splitDepth: 10, splitCount: 10 }}
+        pipelineId={pipeline[1].docRef.uuid}
+      />)
+    )
+  })
+})
