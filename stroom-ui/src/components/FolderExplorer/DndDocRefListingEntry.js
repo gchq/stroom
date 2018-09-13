@@ -107,9 +107,8 @@ const enhance = compose(
   DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
 );
 
-const DndDocRefListingEntry = ({
+let DndDocRefListingEntry = ({
   docRefWithLineage: { node },
-  index,
   listingId,
   selectableItemListing: { selectedItems },
   onNameClick,
@@ -118,42 +117,27 @@ const DndDocRefListingEntry = ({
   connectDragSource,
   isOver,
   canDrop,
-}) => {
-  let additionalClasses = [];
-  if (isOver) {
-    additionalClasses.push('dnd-over');
-  }
-  if (isOver) {
-    if (canDrop) {
-      additionalClasses.push('can-drop');
-    } else {
-      additionalClasses.push('cannot-drop');
-    }
-  }
-
-  return connectDragSource(connectDropTarget(<div>
+}) => connectDragSource(connectDropTarget(<div>
     <DocRefListingEntry
-      additionalClasses={additionalClasses}
-      index={index}
+      dndIsOver={isOver}
+      dndCanDrop={canDrop}
       openDocRef={openDocRef}
       docRef={node}
       listingId={listingId}
     />
   </div>));
-};
 
-const EnhancedDocRefListingEntry = enhance(DndDocRefListingEntry);
+DndDocRefListingEntry = enhance(DndDocRefListingEntry);
 
-EnhancedDocRefListingEntry.propTypes = {
-  index: PropTypes.number.isRequired,
+DndDocRefListingEntry.propTypes = {
   listingId: PropTypes.string.isRequired,
   docRefUuid: PropTypes.string.isRequired,
   onNameClick: PropTypes.func.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };
 
-EnhancedDocRefListingEntry.defaultProps = {
+DndDocRefListingEntry.defaultProps = {
   checkedDocRefs: [],
 };
 
-export default EnhancedDocRefListingEntry;
+export default DndDocRefListingEntry;

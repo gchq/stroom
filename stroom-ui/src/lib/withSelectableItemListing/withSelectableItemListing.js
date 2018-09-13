@@ -40,6 +40,7 @@ const withSelectableItemListing = propsFunc =>
     withProps((props) => {
       const {
         listingId,
+        getKey,
         items,
         openItem,
         enterItem,
@@ -49,6 +50,7 @@ const withSelectableItemListing = propsFunc =>
 
       return {
         listingId,
+        getKey,
         items,
         selectionBehaviour,
         openItem,
@@ -71,22 +73,22 @@ const withSelectableItemListing = propsFunc =>
     lifecycle({
       componentDidUpdate(prevProps, prevState, snapshot) {
         const {
-          items, listingId, selectableListingMounted, selectionBehaviour,
+          selectableListingMounted, listingId, items, selectionBehaviour, getKey
         } = this.props;
 
         const itemUuids = items ? items.map(d => d.uuid) : [];
         const prevUuids = prevProps.items ? prevProps.items.map(d => d.uuid) : [];
 
         if (!isArraysEqual(itemUuids, prevUuids)) {
-          selectableListingMounted(listingId, items, selectionBehaviour);
+          selectableListingMounted(listingId, items, selectionBehaviour, getKey);
         }
       },
       componentDidMount() {
         const {
-          selectableListingMounted, listingId, items, selectionBehaviour,
+          selectableListingMounted, listingId, items, selectionBehaviour, getKey
         } = this.props;
 
-        selectableListingMounted(listingId, items, selectionBehaviour);
+        selectableListingMounted(listingId, items, selectionBehaviour, getKey);
       },
     }),
     branch(

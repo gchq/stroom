@@ -73,6 +73,7 @@ const enhance = compose(
     listingId: LISTING_ID,
     items: children,
     selectionBehaviour: SELECTION_BEHAVIOUR.MULTIPLE,
+    getKey: d => d.uuid,
     openItem: openDocRef,
     goBack: () => {
       if (lineage.length > 0) {
@@ -163,10 +164,9 @@ const FolderExplorer = ({
         ))}
       </div>
       <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-        {node.children.map((docRef, index) => (
+        {node.children.map(docRef => (
           <DndDocRefListingEntry
             key={docRef.uuid}
-            index={index}
             listingId={LISTING_ID}
             docRefUuid={docRef.uuid}
             onNameClick={openDocRef}
