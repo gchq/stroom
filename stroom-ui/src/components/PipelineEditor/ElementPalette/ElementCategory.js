@@ -22,19 +22,19 @@ const enhance = compose(
 const ElementCategory = ({
   category, elementsWithData, isOpen, setIsOpen, displayTitle, icon,
 }) => (
-  <div className="element-palette-category">
-    <Accordion styled>
-      <Accordion.Title active={isOpen} onClick={() => setIsOpen(!isOpen)} className="flat">
-        <FontAwesomeIcon icon="dropdown" className="borderless" /> {displayTitle}
-      </Accordion.Title>
-      <Accordion.Content active={isOpen} className="flat">
-        <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
-          {elementsWithData.map(e => <NewElement key={e.element.type} elementWithData={e} />)}
-        </div>
-      </Accordion.Content>
-    </Accordion>
-  </div>
-);
+    <div className="element-palette-category">
+      <Accordion styled>
+        <Accordion.Title active={isOpen} onClick={() => setIsOpen(!isOpen)} className="flat">
+          <FontAwesomeIcon icon="caret-down" className="borderless" /> {displayTitle}
+        </Accordion.Title>
+        <Accordion.Content active={isOpen} className="flat">
+          <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
+            {elementsWithData.map(e => <NewElement key={e.element.type} elementWithData={e} />)}
+          </div>
+        </Accordion.Content>
+      </Accordion>
+    </div>
+  );
 
 ElementCategory.propTypes = {
   category: PropTypes.string.isRequired,

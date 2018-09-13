@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Image, Form } from 'semantic-ui-react';
 import { reduxForm } from 'redux-form';
 
 import HorizontalPanel from 'components/HorizontalPanel';
@@ -56,16 +55,13 @@ const enhance = compose(
     )),
   ),
   withProps(({ pipelineState: { pipeline }, elements, selectedElementId }) => {
-    // These next few lines involve extracting the relevant properties from the pipeline.
-    // The types of the properties and their values are in different places.
-    const element = pipeline.merged.elements.add.find(element => element.id === selectedElementId);
-    const elementType = elements.elements.find(e => e.type === element.type);
-    const elementTypeProperties = elements.elementProperties[element.type];
+    const elementType = pipeline.merged.elements.add.find(element => element.id === selectedElementId).type;
+    const elementTypeProperties = elements.elementProperties[elementType];
     const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
     return {
-      element,
-      elementType,
+      icon: elements.elements.find(e => e.type === elementType).icon,
+      typeName: elementType,
       elementTypeProperties: sortedElementTypeProperties,
       selectedElementId
     };
@@ -74,52 +70,44 @@ const enhance = compose(
 
 const ElementDetails = ({
   pipelineId,
-  pipelineState: { pipeline },
   onClose,
-  element,
-  elementType,
+  icon,
   elementTypeProperties,
-  elementProperties,
-  elementPropertiesInChild,
   selectedElementId,
+  typeName,
 }) => {
   const title = (
     <div className="element-details__title">
-      <Image
-        size="small"
-        src={require(`../images/${elementType.icon}`)}
+      <img
+        alt="Icon representing the selected element"
+        src={require(`../images/${icon}`)}
         className="element-details__icon"
       />
       <div>
-        <strong>{element.id}</strong>
+        <h3>{selectedElementId}</h3>
       </div>
     </div>
   );
 
   const content = (
     <React.Fragment>
-      <p>
-        This element is a <strong>{element.type}</strong>.
+      <p className="element-details__summary">
+        This element is a <strong>{typeName}</strong>.
       </p>
-      <Form className="element-details__form">
+      <form className="element-details__form">
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-            elementTypeProperties.map((elementTypeProperty) => (
+            elementTypeProperties.map((elementType) => (
               <ElementProperty
                 pipelineId={pipelineId}
-                elementId={element.id}
-                key={elementTypeProperty.name}
-                name={elementTypeProperty.name}
-                type={elementTypeProperty.type}
-                elementTypeProperty={elementTypeProperty}
-                description={elementTypeProperty.description}
-                selectedElementId={selectedElementId}
+                elementId={selectedElementId}
+                key={elementType.name}
+                elementType={elementType}
               />
-            )
-            )
+            ))
           )}
-      </Form>
+      </form>
     </React.Fragment>
   );
 

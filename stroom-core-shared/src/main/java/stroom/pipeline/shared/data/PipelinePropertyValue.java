@@ -51,7 +51,7 @@ import javax.xml.bind.annotation.XmlType;
  * </pre>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "docref"})
+@XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
 public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePropertyValue> {
     private static final long serialVersionUID = 1247638056133627349L;
 
@@ -61,7 +61,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
     protected Long _long;
     @XmlElement(name = "boolean")
     protected Boolean _boolean;
-    @XmlElement(name = "docref")
+    @XmlElement(name = "entity")
     protected DocRef entity;
 
     public PipelinePropertyValue() {
