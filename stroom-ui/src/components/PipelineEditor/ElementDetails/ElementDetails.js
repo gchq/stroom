@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Image, Form } from 'semantic-ui-react';
 import { reduxForm } from 'redux-form';
 
 import HorizontalPanel from 'components/HorizontalPanel';
@@ -79,13 +78,12 @@ const ElementDetails = ({
 }) => {
   const title = (
     <div className="element-details__title">
-      <Image
-        size="small"
+      <img
         src={require(`../images/${icon}`)}
         className="element-details__icon"
       />
       <div>
-        <strong>{selectedElementId}</strong>
+        <h3>{selectedElementId}</h3>
       </div>
     </div>
   );
@@ -95,7 +93,7 @@ const ElementDetails = ({
       <p className="element-details__summary">
         This element is a <strong>{typeName}</strong>.
       </p>
-      <Form className="element-details__form">
+      <form className="element-details__form">
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
@@ -108,7 +106,7 @@ const ElementDetails = ({
               />
             ))
           )}
-      </Form>
+      </form>
     </React.Fragment>
   );
 

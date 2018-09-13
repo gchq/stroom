@@ -10,6 +10,11 @@
 
 .element-details__form {
   width: 100%;
+  display: grid;
+  grid-template-columns: 300px 200px 300px;
+  grid-column-gap: 8px;
+  grid-row-gap: 30px;
+  margin-left: 10px;
 }
 
 .element-details__title {
@@ -41,4 +46,8 @@
 
 .element-details__summary {
   margin: 5px;
+}
+
+.element-property__advice {
+  font-size: 12px;
 }

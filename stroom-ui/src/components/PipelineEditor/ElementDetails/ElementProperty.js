@@ -96,34 +96,26 @@ const ElementProperty = ({
   value,
   inheritanceAdvice,
 }) => (
-    <div className="element-details__property">
-      <div className="element-details__field">
-        <label>{description}</label>
-        <ElementPropertyField
-          {...{
-            pipelineElementPropertyUpdated,
-            value,
-            name,
-            pipelineId,
-            elementId,
-            type,
-            docRefTypes,
-          }}
-        />
-      </div>
-      <Tooltip
-        hoverable
-        trigger={<FontAwesomeIcon icon="cog" size="lg" />}
-        content={
-          <div>
-            <p>
-              The <em>field name</em> of this property is <strong>{name}</strong>
-            </p>
-            {inheritanceAdvice}
-          </div>
-        }
+    <React.Fragment>
+      <label>{description}</label>
+      <ElementPropertyField
+        {...{
+          pipelineElementPropertyUpdated,
+          value,
+          name,
+          pipelineId,
+          elementId,
+          type,
+          docRefTypes,
+        }}
       />
-    </div>
+      <div className="element-property__advice">
+        <p>
+          The <em>field name</em> of this property is <strong>{name}</strong>
+        </p>
+        {inheritanceAdvice}
+      </div>
+    </React.Fragment>
   );
 
 ElementProperty.propTypes = {
