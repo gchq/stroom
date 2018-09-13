@@ -96,7 +96,7 @@ const ElementProperty = ({
   value,
   inheritanceAdvice,
 }) => (
-    <div>
+    <div className="element-details__property">
       <div className="element-details__field">
         <label>{description}</label>
         <ElementPropertyField

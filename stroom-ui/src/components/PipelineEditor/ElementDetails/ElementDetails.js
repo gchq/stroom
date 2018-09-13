@@ -92,7 +92,7 @@ const ElementDetails = ({
 
   const content = (
     <React.Fragment>
-      <p>
+      <p className="element-details__summary">
         This element is a <strong>{typeName}</strong>.
       </p>
       <Form className="element-details__form">

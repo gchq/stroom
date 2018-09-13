@@ -22,13 +22,14 @@
   padding-right:5px;
 }
 
+.element-details__property{
+  display: inline-flex;
+  margin: 10px;
+}
+
 .element-details__field {
   width: 600px;
 }
-
-.element-details__panel {}
-
-.horizontal-panel__container {}
 
 .element-details__nothing-selected {
   width: 100%;
@@ -36,4 +37,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.element-details__summary {
+  margin: 5px;
 }
