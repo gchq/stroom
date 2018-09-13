@@ -55,6 +55,7 @@ const enhance = compose(
     listingId: pickerId,
     items: docRefTypes,
     openItem: onChange,
+    getKey: d => d
   })),
   withHandlers({
     onSearchKeyDown: ({ onSearchTermChange }) => ({ target: { value } }) =>

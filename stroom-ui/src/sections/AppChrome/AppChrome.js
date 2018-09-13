@@ -177,6 +177,7 @@ const enhance = compose(
   withSelectableItemListing(({ openMenuItems, menuItemOpened, areMenuItemsOpen, selectionToggled }) => ({
     listingId: LISTING_ID,
     items: openMenuItems,
+    getKey: m => m.key,
     openItem: m => m.onClick(),
     enterItem: m => menuItemOpened(m.key, true),
     goBack: m => {
@@ -185,8 +186,8 @@ const enhance = compose(
           menuItemOpened(m.key, false);
         } else if (m.parentDocRef) {
           // Can we bubble back up to the parent folder of the current selection?
-          let newSelection = openMenuItems.findIndex(({key}) => key === m.parentDocRef.uuid);
-          selectionToggled(LISTING_ID, newSelection);
+          let newSelection = openMenuItems.find(({key}) => key === m.parentDocRef.uuid);
+          selectionToggled(LISTING_ID, newSelection.key);
           menuItemOpened(m.parentDocRef.uuid, false);
         }
       }

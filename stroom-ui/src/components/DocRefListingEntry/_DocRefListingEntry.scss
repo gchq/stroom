@@ -1,0 +1,31 @@
+.DocRefListingEntry {
+  padding: 0.7rem;
+  border-top: solid thin $very-light-grey;
+  display: flex;
+  flex-direction: row;
+  height: 3rem;
+}
+
+.DocRefListingEntry.dndIsOver {
+  text-decoration: italic;
+}
+
+.DocRefListingEntry.canDrop {
+  color: green;
+}
+.DocRefListingEntry.cannotDrop {
+  color: red;
+}
+
+.DocRefListingEntry__name {
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.DocRefListingEntry__space {
+  flex-grow: 1;
+}
+
+.DocRefListingEntry__icon {
+  cursor: pointer;
+}
