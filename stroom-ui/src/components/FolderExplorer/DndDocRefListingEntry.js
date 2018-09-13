@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, branch, renderNothing } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { DragSource } from 'react-dnd';
 import { DropTarget } from 'react-dnd';
 
+import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, canMove } from 'lib/treeUtils';
 import DocRefListingEntry from 'components/DocRefListingEntry';
-import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
 
@@ -16,23 +16,24 @@ const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 const dropTarget = {
   canDrop(
     {
-      docRefWithLineage: { node },
+      docRef,
     },
     monitor,
   ) {
     const { docRefs } = monitor.getItem();
 
     return (
-      !!node &&
-      node.type === 'Folder' &&
-      docRefs.reduce((acc, curr) => acc && canMove(curr, node), true)
+      !!docRef &&
+      docRef.type === 'Folder' &&
+      docRefs.reduce((acc, curr) => acc && canMove(curr, docRef), true)
     );
   },
   drop(
     {
+      listingId,
       prepareDocRefCopy,
       prepareDocRefMove,
-      docRefWithLineage: { node },
+      docRef,
     },
     monitor,
   ) {
@@ -40,9 +41,9 @@ const dropTarget = {
     const docRefUuids = docRefs.map(d => d.uuid);
 
     if (isCopy) {
-      prepareDocRefCopy(docRefUuids, node.uuid);
+      prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
     } else {
-      prepareDocRefMove(docRefUuids, node.uuid);
+      prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
     }
   },
 };
@@ -60,7 +61,7 @@ const dragSource = {
     return true;
   },
   beginDrag({
-    docRefWithLineage: {node: docRef},
+    docRef,
     selectableItemListing: { selectedItems },
     keyIsDown: { Control, Meta },
   }) {
@@ -87,14 +88,12 @@ function dragCollect(connect, monitor) {
 }
 
 const enhance = compose(
-  withDocumentTree,
   connect(
     (
-      { folderExplorer: { documentTree }, selectableItemListings, keyIsDown },
-      { listingId, docRefUuid },
+      { selectableItemListings, keyIsDown },
+      { listingId },
     ) => ({
       selectableItemListing: selectableItemListings[listingId],
-      docRefWithLineage: findItem(documentTree, docRefUuid),
       keyIsDown,
     }),
     {
@@ -102,16 +101,13 @@ const enhance = compose(
       prepareDocRefMove,
     },
   ),
-  branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
   DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
   DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
 );
 
 let DndDocRefListingEntry = ({
-  docRefWithLineage: { node },
+  docRef,
   listingId,
-  selectableItemListing: { selectedItems },
-  onNameClick,
   openDocRef,
   connectDropTarget,
   connectDragSource,
@@ -122,7 +118,7 @@ let DndDocRefListingEntry = ({
       dndIsOver={isOver}
       dndCanDrop={canDrop}
       openDocRef={openDocRef}
-      docRef={node}
+      docRef={docRef}
       listingId={listingId}
     />
   </div>));
@@ -131,7 +127,7 @@ DndDocRefListingEntry = enhance(DndDocRefListingEntry);
 
 DndDocRefListingEntry.propTypes = {
   listingId: PropTypes.string.isRequired,
-  docRefUuid: PropTypes.string.isRequired,
+  docRef: DocRefPropType,
   onNameClick: PropTypes.func.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };

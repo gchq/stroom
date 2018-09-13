@@ -168,7 +168,7 @@ const FolderExplorer = ({
           <DndDocRefListingEntry
             key={docRef.uuid}
             listingId={LISTING_ID}
-            docRefUuid={docRef.uuid}
+            docRef={docRef}
             onNameClick={openDocRef}
             openDocRef={openDocRef}
           />

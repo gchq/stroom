@@ -40,6 +40,10 @@ const {
 
 import 'styles/main.css';
 
+const testFolder1 = fromSetupSampleData.children[0];
+const testFolder2 = fromSetupSampleData.children[1];
+const testDocRef = fromSetupSampleData.children[0].children[0].children[0];
+
 const LISTING_ID = 'test';
 
 // New Doc
@@ -98,21 +102,21 @@ const TestRenameDialog = compose(
 )(() => <RenameDocRefDialog listingId={LISTING_ID} />);
 
 storiesOf('Folder Explorer', module)
-  .add('Folder explorer', props => <FolderExplorer folderUuid="pipelines1234567890" />)
-  .add('New Doc Ref Dialog', props => <TestNewDocRefDialog testDestination="pipelines1234567890" />)
+  .add('Folder explorer', props => <FolderExplorer folderUuid={testFolder1.uuid} />)
+  .add('New Doc Ref Dialog', props => <TestNewDocRefDialog testDestination={testFolder2.uuid} />)
   .add('Copy Dialog', props => (
     <TestCopyDialog
-      testUuids={['dictionaries1234567890', 'xslt1234567890']}
-      testDestination="pipelines1234567890"
+      testUuids={testFolder2.children.map(d => d.uuid)}
+      testDestination={testFolder2.uuid}
     />
   ))
   .add('Move Dialog', props => (
     <TestMoveDialog
-      testUuids={['dictionaries1234567890', 'xslt1234567890']}
-      testDestination="pipelines1234567890"
+      testUuids={testFolder2.children.map(d => d.uuid)}
+      testDestination={testFolder2.uuid}
     />
   ))
   .add('Delete Dialog', props => (
-    <TestDeleteDialog testUuids={['dictionaries1234567890', 'xslt1234567890']} />
+    <TestDeleteDialog testUuids={testFolder2.children.map(d => d.uuid)} />
   ))
-  .add('Rename Dialog', props => <TestRenameDialog testDocRef={fromSetupSampleData} />);
+  .add('Rename Dialog', props => <TestRenameDialog testDocRef={testDocRef} />);

@@ -28,13 +28,14 @@ const dropTarget = {
   },
   drop(
     {
+      listingId,
       prepareDocRefCopy,
       prepareDocRefMove,
       menuItem: { docRef },
     },
     monitor,
   ) {
-    const { listingId, docRefs, isCopy } = monitor.getItem();
+    const { docRefs, isCopy } = monitor.getItem();
     const docRefUuids = docRefs.map(d => d.uuid);
 
     if (isCopy) {

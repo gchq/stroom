@@ -19,10 +19,9 @@ import { storiesOf, addDecorator } from '@storybook/react';
 
 import DialogActionButtons from './DialogActionButtons';
 
-storiesOf('DialogActionButtons', module)
-  .add('basic', props => (
-    <DialogActionButtons
-      onCancel={() => console.log('Cancel clicked')}
-      onChoose={() => console.log('Choose clicked')}
-    />
-  ));
+storiesOf('DialogActionButtons', module).add('basic', props => (
+  <DialogActionButtons
+    onCancel={() => console.log('Cancel clicked')}
+    onConfirm={() => console.log('Confirm clicked')}
+  />
+));
