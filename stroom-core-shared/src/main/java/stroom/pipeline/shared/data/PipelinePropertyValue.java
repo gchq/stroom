@@ -61,7 +61,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
     protected Long _long;
     @XmlElement(name = "boolean")
     protected Boolean _boolean;
-    @XmlElement(name = "docref")
+    @XmlElement(name = "entity")
     protected DocRef entity;
 
     public PipelinePropertyValue() {
