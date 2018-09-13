@@ -13,51 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import PropTypes from 'prop-types';
 
-import React from 'react';
-import { compose } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header } from 'semantic-ui-react';
 
-import { actionCreators } from './redux';
+import { actionCreators, defaultListingState } from './redux/deleteDocRefReducer';
 import { deleteDocuments } from 'components/FolderExplorer/explorerClient';
-import ThemedModal from 'components/ThemedModal';
-import DialogActionButtons from './DialogActionButtons';
+import { ThemedConfirm } from 'components/ThemedModal';
 
 const { completeDocRefDelete } = actionCreators;
 
-const enhance = compose(connect(
-  ({
-    folderExplorer: {
-      deleteDocRef: { isDeleting, uuids },
-    },
-  }) => ({
-    isDeleting,
-    uuids,
+const enhance = compose(
+  connect(
+    ({ folderExplorer: { deleteDocRef } }, { listingId }) => ({
+      ...(deleteDocRef[listingId] || defaultListingState),
+    }),
+    { completeDocRefDelete, deleteDocuments },
+  ),
+  withHandlers({
+    onConfirm: ({ deleteDocuments, uuids }) => () => deleteDocuments(uuids),
+    onCancel: ({ completeDocRefDelete, listingId }) => () => completeDocRefDelete(listingId),
   }),
-  { completeDocRefDelete, deleteDocuments },
-));
+  withProps(({ isDeleting, uuids }) => ({
+    isOpen: isDeleting,
+    question: `Delete these doc refs? ${JSON.stringify(uuids)}?`,
+  })),
+);
 
-const DeleteDocRefDialog = ({
-  isDeleting, uuids, completeDocRefDelete, deleteDocuments,
-}) => (
-    <ThemedModal
-      isOpen={isDeleting}
-      header={
-        <Header
-          className="header"
-          icon="trash"
-          content="Are you sure about deleting these Doc Refs?"
-        />
-      }
-      content={JSON.stringify(uuids)}
-      actions={
-        <DialogActionButtons
-          onCancel={completeDocRefDelete}
-          onChoose={() => deleteDocuments(uuids)}
-        />
-      }
-    />
-  );
+const DeleteDocRefDialog = enhance(ThemedConfirm);
 
-export default enhance(DeleteDocRefDialog);
+DeleteDocRefDialog.propTypes = {
+  listingId: PropTypes.string.isRequired,
+};
+
+export default DeleteDocRefDialog;

@@ -1,6 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, withHandlers } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import { ThemedConfirm } from 'components/ThemedModal';
@@ -19,28 +18,21 @@ const enhance = compose(
     },
   ),
   withHandlers({
-    onCancelDelete: ({ expressionId, expressionItemDeleteCancelled }) => () =>
+    onCancel: ({ expressionId, expressionItemDeleteCancelled }) => () =>
       expressionItemDeleteCancelled(expressionId),
-    onConfirmDelete: ({ expressionId, expressionItemDeleteConfirmed }) => () =>
+    onConfirm: ({ expressionId, expressionItemDeleteConfirmed }) => () =>
       expressionItemDeleteConfirmed(expressionId),
   }),
+  withProps(({ pendingDeletionOperatorId }) => ({
+    isOpen: !!pendingDeletionOperatorId,
+    question: `Delete ${pendingDeletionOperatorId} from expression?`,
+  })),
 );
 
-const DeleteExpressionItem = ({
-  expressionState: { pendingDeletionOperatorId },
-  onConfirmDelete,
-  onCancelDelete,
-}) => (
-    <ThemedConfirm
-      isOpen={!!pendingDeletionOperatorId}
-      question={`Delete ${pendingDeletionOperatorId} from expression?`}
-      onCancel={onCancelDelete}
-      onConfirm={onConfirmDelete}
-    />
-  );
+const DeleteExpressionItem = enhance(ThemedConfirm);
 
 DeleteExpressionItem.propTypes = {
   expressionId: PropTypes.string.isRequired,
 };
 
-export default enhance(DeleteExpressionItem);
+export default DeleteExpressionItem;

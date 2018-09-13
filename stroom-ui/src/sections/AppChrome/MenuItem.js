@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withHandlers } from 'recompose';
+import { compose, withHandlers, withProps } from 'recompose';
 import { DropTarget } from 'react-dnd';
 import { DragSource } from 'react-dnd';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { canMove } from 'lib/treeUtils';
@@ -34,13 +34,13 @@ const dropTarget = {
     },
     monitor,
   ) {
-    const { docRefs, isCopy } = monitor.getItem();
+    const { listingId, docRefs, isCopy } = monitor.getItem();
     const docRefUuids = docRefs.map(d => d.uuid);
 
     if (isCopy) {
-      prepareDocRefCopy(docRefUuids, docRef.uuid);
+      prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
     } else {
-      prepareDocRefMove(docRefUuids, docRef.uuid);
+      prepareDocRefMove(listingId, docRefUuids, docRef.uuid);
     }
   },
 };
@@ -78,11 +78,13 @@ const enhance = compose(
       { keyIsDown, appChrome: { areMenuItemsOpen }, selectableItemListings },
       { listingId, menuItem: { key } },
     ) => {
-      const { selectedItems = [], focussedItem } = selectableItemListings[listingId] || {}
+      const { selectedItems = [], focussedItem } = selectableItemListings[listingId] || {};
       const isSelected = selectedItems.map(d => d.key).includes(key);
       const inFocus = focussedItem && focussedItem.key === key;
 
-      return { isSelected, inFocus, keyIsDown, areMenuItemsOpen };
+      return {
+        isSelected, inFocus, keyIsDown, areMenuItemsOpen,
+      };
     },
     {
       prepareDocRefCopy,
@@ -91,71 +93,78 @@ const enhance = compose(
     },
   ),
   withHandlers({
-    onCaretClick: ({menuItem, menuItemOpened, areMenuItemsOpen}) => e => {
+    onCaretClick: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (e) => {
       menuItemOpened(menuItem.key, !areMenuItemsOpen[menuItem.key]);
       e.preventDefault();
     },
-    onTitleClick: ({menuItem, menuItemOpened, areMenuItemsOpen}) => e => {
+    onTitleClick: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (e) => {
       menuItem.onClick();
-    }
+    },
   }),
   DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
-  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect)
+  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
+  withProps(({
+    menuItem, isOver, canDrop, inFocus, isSelected, depth,
+  }) => {
+    const classNames = [];
+
+    classNames.push('sidebar__menu-item');
+    classNames.push(menuItem.style);
+
+    if (isOver) {
+      classNames.push('dnd-over');
+    }
+    if (isOver) {
+      if (canDrop) {
+        classNames.push('can-drop');
+      } else {
+        classNames.push('cannot-drop');
+      }
+    }
+    if (inFocus) {
+      classNames.push('inFocus');
+    }
+    if (isSelected) {
+      classNames.push('selected');
+    }
+
+    return {
+      style: { paddingLeft: `${depth * 0.7}rem` },
+      className: classNames.join(' '),
+    };
+  }),
 );
 
-const MenuItem = ({
+let MenuItem = ({
   menuItem,
   areMenuItemsOpen,
   menuItemOpened,
-  depth,
-  isSelected,
-  inFocus,
   connectDropTarget,
   connectDragSource,
-  isOver,
-  canDrop,
-  onTitleClick, 
-  onCaretClick
-}) => {
-  let className = `sidebar__menu-item ${menuItem.style}`;
-  if (isOver) {
-    className += ' dnd-over';
-  }
-  if (isOver) {
-    if (canDrop) {
-      className += ' can-drop';
-    } else {
-      className += ' cannot-drop';
-    }
-  }
-  if (inFocus) {
-    className += ' inFocus';
-  }
-  if (isSelected) {
-    className += ' selected';
-  }
-
-  return connectDragSource(connectDropTarget(<div className={className} style={{ paddingLeft: `${depth * 0.7}rem` }}>
+  onTitleClick,
+  onCaretClick,
+  className,
+  style,
+}) =>
+  connectDragSource(connectDropTarget(<div className={className} style={style}>
     {menuItem.children && menuItem.children.length > 0 ? (
       <FontAwesomeIcon
         onClick={onCaretClick}
         icon={`caret-${areMenuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
       />
         ) : menuItem.key !== 'stroom' ? (
-          <div className='AppChrome__MenuItemIcon' />
+          <div className="AppChrome__MenuItemIcon" />
         ) : (
           undefined
         )}
     <FontAwesomeIcon icon={menuItem.icon} />
-    <span
-      onClick={onTitleClick}
-    >
-      {menuItem.title}
-    </span>
-                                             </div>));
-};
+    <span onClick={onTitleClick}>{menuItem.title}</span>
+                                      </div>));
+
+MenuItem = enhance(MenuItem);
 
 MenuItem.propTypes = {
+  listingId: PropTypes.string.isRequired,
   menuItem: PropTypes.shape({
     key: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
@@ -164,8 +173,7 @@ MenuItem.propTypes = {
     style: PropTypes.string.isRequired,
   }).isRequired,
   docRef: DocRefPropType,
-  listingId: PropTypes.string.isRequired,
   depth: PropTypes.number.isRequired,
 };
 
-export default enhance(MenuItem);
+export default MenuItem;

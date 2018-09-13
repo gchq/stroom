@@ -62,7 +62,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
     @XmlElement(name = "boolean")
     protected Boolean _boolean;
     @XmlElement(name = "docref")
-    protected DocRef docRef;
+    protected DocRef entity;
 
     public PipelinePropertyValue() {
         // Default constructor necessary for GWT serialisation.
@@ -84,8 +84,8 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         this._boolean = _boolean;
     }
 
-    public PipelinePropertyValue(final DocRef docRef) {
-        this.docRef = docRef;
+    public PipelinePropertyValue(final DocRef entity) {
+        this.entity = entity;
     }
 
     public String getString() {
@@ -120,12 +120,12 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         this._boolean = value;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public DocRef getEntity() {
+        return entity;
     }
 
-    public void setDocRef(final DocRef value) {
-        this.docRef = value;
+    public void setEntity(final DocRef value) {
+        this.entity = value;
     }
 
     @Override
@@ -142,7 +142,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         builder.append(integer, pipelinePropertyValue.integer);
         builder.append(_long, pipelinePropertyValue._long);
         builder.append(_boolean, pipelinePropertyValue._boolean);
-        builder.append(docRef, pipelinePropertyValue.docRef);
+        builder.append(entity, pipelinePropertyValue.entity);
         return builder.isEquals();
     }
 
@@ -153,7 +153,7 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         builder.append(integer);
         builder.append(_long);
         builder.append(_boolean);
-        builder.append(docRef);
+        builder.append(entity);
         return builder.toHashCode();
     }
 
@@ -167,12 +167,12 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
             return _long.toString();
         } else if (_boolean != null) {
             return _boolean.toString();
-        } else if (docRef != null) {
-            if (docRef.getName() != null) {
-                return docRef.getName();
+        } else if (entity != null) {
+            if (entity.getName() != null) {
+                return entity.getName();
             }
 
-            return docRef.toString();
+            return entity.toString();
         }
         return "";
     }
@@ -183,6 +183,6 @@ public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePro
         this.integer = from.integer;
         this._long = from._long;
         this._boolean = from._boolean;
-        this.docRef = from.docRef;
+        this.entity = from.entity;
     }
 }

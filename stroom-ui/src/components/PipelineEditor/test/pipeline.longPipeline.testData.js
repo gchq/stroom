@@ -64,7 +64,7 @@ export default {
             value: {
               string: null,
               integer: 100,
-              docref: null,
+              entity: null,
               long: null,
               boolean: null,
             },
@@ -181,7 +181,7 @@ export default {
           value: {
             string: null,
             integer: 100,
-            docref: null,
+            entity: null,
             long: null,
             boolean: null,
           },

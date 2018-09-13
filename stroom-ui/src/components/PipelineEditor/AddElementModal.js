@@ -3,9 +3,10 @@ import PropTypes from 'prop-types';
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
-import { Header, Form } from 'semantic-ui-react';
+
 import { InputField } from 'react-semantic-redux-form';
 
+import IconHeader from 'components/IconHeader';
 import Button from 'components/Button';
 import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
@@ -75,40 +76,35 @@ const AddElementModal = ({
   onConfirmNewElement,
   onCancelNewElement,
 }) => (
-    <ThemedModal
-      size="tiny"
-      isOpen={isOpen}
-      onClose={onCancelNewElement}
-      dimmer="inverted"
-      header={<Header content="Add New Element" />}
-      content={
-        <Form id="newElementForm">
-          <Form.Field>
-            <label>Name</label>
-            <Field
-              name="name"
-              component={InputField}
-              type="text"
-              placeholder="Name"
-              validate={[required, minLength2, uniqueElementName(pipeline)]}
-              autoFocus
-            />
-          </Form.Field>
-        </Form>
-      }
-      actions={
-        <React.Fragment>
-          <Button
-            text="Submit"
-            disabled={submitDisabled}
-            onClick={onConfirmNewElement}
-            form="newElementForm"
+  <ThemedModal
+    size="tiny"
+    isOpen={isOpen}
+    onClose={onCancelNewElement}
+    dimmer="inverted"
+    header={<IconHeader icon="file" text="Add New Element" />}
+    content={
+      <form>
+        <div>
+          <label>Name</label>
+          <Field
+            name="name"
+            component={InputField}
+            type="text"
+            placeholder="Name"
+            validate={[required, minLength2, uniqueElementName(pipeline)]}
+            autoFocus
           />
-          <Button text="Cancel" onClick={onCancelNewElement} />
-        </React.Fragment>
-      }
-    />
-  );
+        </div>
+      </form>
+    }
+    actions={
+      <React.Fragment>
+        <Button text="Submit" disabled={submitDisabled} onClick={onConfirmNewElement} />
+        <Button text="Cancel" onClick={onCancelNewElement} />
+      </React.Fragment>
+    }
+  />
+);
 
 AddElementModal.propTypes = {
   pipelineId: PropTypes.string.isRequired,

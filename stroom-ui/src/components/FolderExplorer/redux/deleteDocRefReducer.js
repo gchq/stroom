@@ -15,33 +15,39 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
+import { createActionHandlerPerId } from 'lib/reduxFormUtils';
 import { actionCreators as documentTreeActionCreators } from './documentTree';
 
 const { docRefsDeleted } = documentTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_DELETE: uuids => ({ uuids }),
-  COMPLETE_DOC_REF_DELETE: () => ({ uuids: [] }),
+  PREPARE_DOC_REF_DELETE: (listingId, uuids) => ({ listingId, uuids }),
+  COMPLETE_DOC_REF_DELETE: listingId => ({ listingId, uuids: [] }),
 });
 
 const { prepareDocRefDelete, completeDocRefDelete } = actionCreators;
 
+// listings, keyed on ID, there may be several on a page
+const defaultState = {};
+
 // The state will contain a map of arrays.
 // Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = { isDeleting: false, uuids: [] };
+const defaultListingState = { isDeleting: false, uuids: [] };
+
+const byListingId = createActionHandlerPerId(
+  ({ payload: { listingId } }) => listingId,
+  defaultListingState,
+);
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefDelete, completeDocRefDelete)]: (
-      state,
-      { payload: { uuids } },
-    ) => ({
+    [combineActions(prepareDocRefDelete, completeDocRefDelete)]: byListingId((state, { payload: { uuids } }) => ({
       isDeleting: uuids.length > 0,
       uuids,
-    }),
+    })),
     [docRefsDeleted]: () => defaultState,
   },
   defaultState,
 );
 
-export { actionCreators, reducer };
+export { actionCreators, reducer, defaultListingState };

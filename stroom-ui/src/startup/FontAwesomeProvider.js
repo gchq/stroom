@@ -52,6 +52,9 @@ import {
   faRecycle,
   faBan,
   faCheck,
+  faCopy,
+  faEdit,
+  faArrowsAlt,
   faICursor,
   faSave,
 } from '@fortawesome/free-solid-svg-icons';
@@ -93,6 +96,9 @@ export default lifecycle({
       faRecycle,
       faBan,
       faCheck,
+      faCopy,
+      faEdit,
+      faArrowsAlt,
       faICursor,
       faSave,
     );

@@ -40,7 +40,7 @@ export default {
             value: {
               string: null,
               integer: null,
-              docref: {
+              entity: {
                 type: 'TextConverter',
                 uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
                 name: 'dsParser',
@@ -55,7 +55,7 @@ export default {
             value: {
               string: null,
               integer: null,
-              docref: {
+              entity: {
                 type: 'XSLT',
                 uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
                 name: 'xsltFilter',
@@ -128,7 +128,7 @@ export default {
           value: {
             string: null,
             integer: null,
-            docref: {
+            entity: {
               type: 'XSLT',
               uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
               name: 'xsltFilter',
@@ -143,7 +143,7 @@ export default {
           value: {
             string: null,
             integer: null,
-            docref: {
+            entity: {
               type: 'TextConverter',
               uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
               name: 'dsParser',

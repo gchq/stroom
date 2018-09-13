@@ -223,7 +223,7 @@ public class PipelineFactory {
                         obj = value.getString();
                     } else if (DocRef.class.isAssignableFrom(paramType)) {
                         // Load an entity by id.
-                        final DocRef docRef = value.getDocRef();
+                        final DocRef docRef = value.getEntity();
                         if (docRef != null) {
                             obj = docRef;
 

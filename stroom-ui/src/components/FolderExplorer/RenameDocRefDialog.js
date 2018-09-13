@@ -13,62 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import React from 'react';
-import { connect } from 'react-redux';
-import { Header, Form } from 'semantic-ui-react';
+import PropTypes from 'prop-types';
 
-import { actionCreators } from './redux';
+import { connect } from 'react-redux';
+import { compose, withHandlers } from 'recompose';
+import { Field, reduxForm } from 'redux-form';
+
 import DialogActionButtons from './DialogActionButtons';
+import IconHeader from 'components/IconHeader';
+import { actionCreators, defaultListingState } from './redux/renameDocRefReducer';
 import { renameDocument } from 'components/FolderExplorer/explorerClient';
 import ThemedModal from 'components/ThemedModal';
+import { required, minLength2 } from 'lib/reduxFormUtils';
 
-const { completeDocRefRename, renameUpdated } = actionCreators;
+const { completeDocRefRename } = actionCreators;
 
-const enhance = connect(
-  (
-    {
-      folderExplorer: {
-        renameDocRef: { isRenaming, docRef, name },
+const enhance = compose(
+  connect(
+    ({ folderExplorer: { renameDocRef }, form }, { docRef, listingId }) => ({
+      ...(renameDocRef[listingId] || defaultListingState),
+      renameDocRefForm: form.renameDocRefDialog,
+      initialValues: {
+        docRefName: docRef ? docRef.name : '',
       },
-    },
-    props,
-  ) => ({
-    isRenaming,
-    docRef,
-    name,
+    }),
+    { completeDocRefRename, renameDocument },
+  ),
+  reduxForm({
+    form: 'renameDocRefDialog',
+    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
+    enableReinitialize: true,
+    touchOnChange: true,
   }),
-  { completeDocRefRename, renameDocument, renameUpdated },
+  withHandlers({
+    onConfirm: ({
+      renameDocument,
+      docRef,
+      renameDocRefForm: {
+        values: { docRefName },
+      },
+    }) => () => renameDocument(docRef, docRefName),
+    onCancel: ({ completeDocRefRename, listingId }) => () => completeDocRefRename(listingId),
+  }),
 );
 
-const RenameDocRefDialog = ({
-  name,
-  renameUpdated,
-  isRenaming,
-  docRef,
-  completeDocRefRename,
-  renameDocument,
-}) => (
-    <ThemedModal
-      isOpen={isRenaming}
-      header={<Header className="header" icon="pencil" content="Enter New Name for Doc Ref" />}
-      content={
-        <Form>
-          <Form.Input
-            label="Type"
-            type="text"
-            onChange={(e, { value }) => renameUpdated(value)}
-            value={name || (docRef ? docRef.name : '')}
-          />
-        </Form>
-      }
-      actions={
-        <DialogActionButtons
-          onCancel={completeDocRefRename}
-          onChoose={() => renameDocument(docRef, name)}
+let RenameDocRefDialog = ({ isRenaming, onConfirm, onCancel }) => (
+  <ThemedModal
+    isOpen={isRenaming}
+    header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
+    content={
+      <form>
+        <label>Type</label>
+        <Field
+          name="docRefName"
+          component="input"
+          type="text"
+          placeholder="Name"
+          validate={[required, minLength2]}
         />
-      }
-    />
-  );
+      </form>
+    }
+    actions={<DialogActionButtons onCancel={onCancel} onConfirm={onConfirm} />}
+  />
+);
 
-export default enhance(RenameDocRefDialog);
+RenameDocRefDialog = enhance(RenameDocRefDialog);
+
+RenameDocRefDialog.propTypes = {
+  listingId: PropTypes.string.isRequired,
+};
+
+export default RenameDocRefDialog;
