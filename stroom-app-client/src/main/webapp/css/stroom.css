@@ -625,6 +625,7 @@ td {
 }
 
 .activityContainer {
+    background-color: white;
     border: lightblue solid 1px;
     border-radius: 5px;
     padding: 5px;
