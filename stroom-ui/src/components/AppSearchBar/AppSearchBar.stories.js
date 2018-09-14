@@ -24,7 +24,6 @@ import { addThemedStories } from 'lib/themedStoryGenerator';
 import AppSearchBar from './AppSearchBar';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const enhanceForm = compose(
   connect(

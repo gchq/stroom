@@ -3,18 +3,22 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 import { compose, withHandlers, withProps } from 'recompose';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import DocRefImage from 'components/DocRefImage';
 import DocRefPropType from 'lib/DocRefPropType';
-import { actionCreators as selectableItemActionCreators } from 'lib/withSelectableItemListing';
+import {
+  actionCreators as selectableItemActionCreators,
+  defaultSelectableItemListingState,
+} from 'lib/withSelectableItemListing';
 
 const { selectionToggled } = selectableItemActionCreators;
 
 const enhance = compose(
   connect(
     ({ keyIsDown, selectableItemListings }, { listingId, docRef }) => {
-      const { selectedItems = [], focussedItem } = selectableItemListings[listingId] || {};
+      const { selectedItems = [], focussedItem } =
+        selectableItemListings[listingId] || defaultSelectableItemListingState;
       const isSelected = selectedItems.map(d => d.uuid).includes(docRef.uuid);
       const inFocus = focussedItem && focussedItem.uuid === docRef.uuid;
 
@@ -28,9 +32,9 @@ const enhance = compose(
   ),
   withHandlers({
     onSelect: ({
-      listingId, index, keyIsDown, selectionToggled,
+      listingId, docRef, keyIsDown, selectionToggled,
     }) => (e) => {
-      selectionToggled(listingId, index, keyIsDown);
+      selectionToggled(listingId, docRef.uuid, keyIsDown);
       e.preventDefault();
       e.stopPropagation();
     },
@@ -49,58 +53,66 @@ const enhance = compose(
       e.preventDefault();
     },
   }),
-  withProps(({ additionalClasses = [], isSelected, inFocus }) => {
+  withProps(({
+    dndIsOver, dndCanDrop, isSelected, inFocus,
+  }) => {
+    const additionalClasses = [];
+    additionalClasses.push('DocRefListingEntry');
+    additionalClasses.push('hoverable');
+
+    if (dndIsOver) {
+      additionalClasses.push('dndIsOver');
+    }
+    if (dndIsOver) {
+      if (dndCanDrop) {
+        additionalClasses.push('canDrop');
+      } else {
+        additionalClasses.push('cannotDrop');
+      }
+    }
+
     if (isSelected) {
       additionalClasses.push('selected');
     }
     if (inFocus) {
       additionalClasses.push('inFocus');
     }
-    const className = `hoverable doc-ref-listing__item ${additionalClasses.join(' ')}`;
 
     return {
-      className,
+      className: additionalClasses.join(' '),
     };
   }),
 );
 
-const RawDocRefListingEntry = ({
-  className,
-  docRef,
-  onSelect,
-  onOpenDocRef,
-  onEnterFolder,
-  children,
+let DocRefListingEntry = ({
+  className, docRef, onSelect, onOpenDocRef, onEnterFolder,
 }) => (
-    <div className={className} onClick={onSelect}>
-      <div>
-        <DocRefImage docRefType={docRef.type} />
-        <span className="doc-ref-listing__name" onClick={onOpenDocRef}>
-          {docRef.name}
-        </span>
-        <span className="doc-ref-listing__space">&nbsp;</span>
-        {docRef.type === 'System' ||
-          (docRef.type === 'Folder' && (
-            <FontAwesomeIcon
-              className="doc-ref-listing__icon"
-              size="lg"
-              icon="angle-right"
-              onClick={onEnterFolder}
-            />
-          ))}
-      </div>
-      {children}
+  <div className={className} onClick={onSelect}>
+    <DocRefImage docRefType={docRef.type} />
+    <div className="DocRefListingEntry__name" onClick={onOpenDocRef}>
+      {docRef.name}
     </div>
-  );
+    <div className="DocRefListingEntry__space" />
+    {docRef.type === 'System' ||
+      (docRef.type === 'Folder' && (
+        <FontAwesomeIcon
+          className="DocRefListingEntry__icon"
+          size="lg"
+          icon="angle-right"
+          onClick={onEnterFolder}
+        />
+      ))}
+  </div>
+);
 
-const DocRefListingEntry = enhance(RawDocRefListingEntry);
+DocRefListingEntry = enhance(DocRefListingEntry);
 
 DocRefListingEntry.propTypes = {
   listingId: PropTypes.string.isRequired,
   docRef: DocRefPropType,
-  index: PropTypes.number.isRequired,
-  additionalClasses: PropTypes.array,
   isSelected: PropTypes.bool,
+  dndIsOver: PropTypes.bool,
+  dndCanDrop: PropTypes.bool,
   openDocRef: PropTypes.func.isRequired,
   enterFolder: PropTypes.func,
 };

@@ -22,8 +22,6 @@ import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 
 import UserSettings from './UserSettings';
 
-import 'semantic/dist/semantic.min.css';
-
 const PollyDecoratorWithTestData = PollyDecorator({});
 
 const stories = storiesOf('User Settings', module)

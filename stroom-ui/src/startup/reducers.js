@@ -30,8 +30,9 @@ import { reducer as docRefInfo } from 'components/DocRefInfoModal/redux';
 import { reducer as folderExplorer } from 'components/FolderExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
-import { reducer as recentItems } from 'components/DocEditor/redux';
+import { reducer as recentItems } from 'components/SwitchedDocRefEditor/redux';
 import { reducer as xsltEditor } from 'components/XsltEditor';
+import { reducer as debuggers } from 'components/PipelineDebugger';
 import { reducer as processing } from 'sections/Processing';
 import { reducer as errorPage } from 'components/ErrorPage';
 import { reducer as config } from './config';
@@ -64,5 +65,6 @@ export default combineReducers({
   docRefInfo,
   appSearch,
   dictionaryEditor,
-  selectableItemListings
+  selectableItemListings,
+  debuggers,
 });

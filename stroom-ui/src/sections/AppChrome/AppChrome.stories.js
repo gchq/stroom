@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import { Switch, Route } from 'react-router-dom';
-import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import AppChrome, { appChromeRoutes } from '.';
 
@@ -27,7 +27,6 @@ import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 // This basically replicates the 'Routes' implementation, but for test
 const AppChromeWithRouter = () => (
@@ -41,7 +40,7 @@ storiesOf('App Chrome', module)
   .add('Just the chrome', props => (
     <AppChrome
       activeMenuItem="welcome"
-      headerContent={<Header.Content>Stuff</Header.Content>}
+      headerContent={<h3>Stuff</h3>}
       icon="cogs"
       content={<div>Stuff goes here</div>}
     />

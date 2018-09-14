@@ -20,10 +20,10 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 import PanelGroup from 'react-panelgroup';
-import { Header, Input } from 'semantic-ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import Tooltip from 'components/Tooltip';
+import IconHeader from 'components/IconHeader';
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
@@ -65,16 +65,12 @@ const enhance = compose(
 
       expressionChanged('trackerDetailsExpression', expression);
     },
-    onHandleSearchChange: ({ resetPaging, updateSearchCriteria, fetchTrackers }) => (data) => {
+    onHandleSearchChange: ({ resetPaging, updateSearchCriteria, fetchTrackers }) => ({ target: { value } }) => {
+      console.log({ value })
       resetPaging();
-      updateSearchCriteria(data.value);
+      updateSearchCriteria(value);
       // This line enables search as you type. Whether we want it or not depends on performance
       fetchTrackers();
-    },
-    onHandleSearch: ({ fetchTrackers }) => (event) => {
-      if (event === undefined || event.key === 'Enter') {
-        fetchTrackers();
-      }
     },
   }),
   withProps(({ selectedTracker }) => ({
@@ -83,14 +79,12 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        fetchTrackers, resetPaging, onHandleTrackerSelection, onHandleSearch,
+        fetchTrackers, resetPaging, onHandleTrackerSelection,
       } = this.props;
 
       fetchTrackers();
 
       Mousetrap.bind('esc', () => onHandleTrackerSelection(undefined));
-      Mousetrap.bind('enter', () => onHandleSearch());
-      Mousetrap.bind('return', () => onHandleSearch());
 
       // This component monitors window size. For every change it will fetch the
       // trackers. The fetch trackers function will only fetch trackers that fit
@@ -111,21 +105,15 @@ const ProcessingContainer = ({
   showDetails,
   onHandleTrackerSelection,
   onHandleSearchChange,
-  onHandleSearch,
 }) => (
     <React.Fragment>
       <div className="processing__header-container">
-        <Header as="h3">
-          <FontAwesomeIcon icon="play" />
-          <Header.Content className="header">Processing</Header.Content>
-        </Header>
-        <Input
+        <IconHeader icon="play" text="Processing" />
+        <input
           className="border"
-          fluid
           placeholder="Search..."
           value={searchCriteria}
-          onChange={(event, data) => onHandleSearchChange(data)}
-          onKeyPress={(event, data) => onHandleSearch(event, data)}
+          onChange={onHandleSearchChange}
         />
 
         <div className="processing__search__help">

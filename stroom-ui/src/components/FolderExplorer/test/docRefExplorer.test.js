@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { createStore } from 'redux';
-import uuidv4 from 'uuid/v4';
 
 import { iterateNodes } from 'lib/treeUtils';
 import { combineReducers } from 'redux';

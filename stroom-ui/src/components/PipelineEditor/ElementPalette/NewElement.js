@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, withState, withProps } from 'recompose';
 import { DragSource } from 'react-dnd';
 
+import ElementImage from 'components/ElementImage';
 import Button from 'components/Button';
 import ItemTypes from '../dragDropTypes';
 
@@ -60,7 +61,7 @@ const NewElement = ({
 }) =>
   connectDragSource(<div className={`element-palette-element raised-low borderless ${hasFocus ? 'focus' : 'no-focus'}`}>
     <div className="element-palette-element__button-contents">
-      <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
+      <ElementImage icon={element.icon} />
       <Button
         className="element-palette__type"
         onFocus={() => setHasFocus(true)}

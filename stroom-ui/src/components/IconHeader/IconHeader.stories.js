@@ -19,7 +19,18 @@ import { storiesOf } from '@storybook/react';
 
 import { addThemedStories } from 'lib/themedStoryGenerator';
 import IconHeader from './IconHeader';
+import DocRefIconHeader from './DocRefIconHeader';
 
-const stories = storiesOf('IconHeader', module);
+const iconHeaderStories = storiesOf('IconHeader', module);
+addThemedStories(
+  iconHeaderStories,
+  <IconHeader icon="angle-up" text="Good morrow fellow human" />,
+  true,
+);
 
-addThemedStories(stories, <IconHeader icon='angle-up' text='Good morrow fellow human' />, true);
+const docRefIconHeaderStories = storiesOf('DocRefIconHeader', module);
+addThemedStories(
+  docRefIconHeaderStories,
+  <DocRefIconHeader docRefType="XSLT" text="Would anyone like any toast?" />,
+  true,
+);

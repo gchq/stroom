@@ -4,8 +4,6 @@ import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { InputField } from 'react-semantic-redux-form';
-
 import IconHeader from 'components/IconHeader';
 import Button from 'components/Button';
 import ThemedModal from 'components/ThemedModal';
@@ -88,7 +86,7 @@ const AddElementModal = ({
           <label>Name</label>
           <Field
             name="name"
-            component={InputField}
+            component="input"
             type="text"
             placeholder="Name"
             validate={[required, minLength2, uniqueElementName(pipeline)]}

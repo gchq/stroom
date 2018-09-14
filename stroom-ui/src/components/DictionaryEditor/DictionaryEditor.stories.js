@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 import React from 'react';
-
 import { storiesOf } from '@storybook/react';
 
-import 'styles/main.css';
-
 import { testDictionaries } from './test';
-
 import DictionaryEditor from './DictionaryEditor';
+
+import 'styles/main.css';
 
 const stories = storiesOf('Dictionary Editor', module);
 
