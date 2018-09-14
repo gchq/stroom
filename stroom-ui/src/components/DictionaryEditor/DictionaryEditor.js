@@ -61,7 +61,7 @@ const DictionaryEditor = ({
 }) => (
   <div className="DictionaryEditor">
     <DocRefIconHeader
-      docRefType="XSLT"
+      docRefType="Dictionary"
       className="DictionaryEditor__header"
       text={dictionaryUuid}
     />

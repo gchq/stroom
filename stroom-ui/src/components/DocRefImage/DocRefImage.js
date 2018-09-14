@@ -11,7 +11,7 @@ const DocRefImage = ({ docRefType, size, className = '' }) => (
 
 DocRefImage.propTypes = {
   docRefType: PropTypes.string.isRequired,
-  size: PropTypes.oneOf(['small', 'large']).isRequired,
+  size: PropTypes.oneOf(['sm', 'lg']).isRequired,
 };
 
 DocRefImage.defaultProps = {
