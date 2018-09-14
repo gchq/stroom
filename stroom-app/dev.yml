@@ -37,9 +37,9 @@ appConfig:
   contentPackImport:
     enabled: false
   core:
-    node: null
-    rack: null
-    temp: null
+    node: node1a
+    rack: rack1
+    temp: /tmp/stroom
     databaseMultiInsertMaxBatchSize: 500
     connection:
       jdbcDriverClassName: com.mysql.jdbc.Driver
@@ -109,8 +109,8 @@ appConfig:
     enabled: true
     executionInterval: "10s"
   node:
-    node: "tba"
-    rack: "tba"
+    node: node1a
+    rack: rack1
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -293,8 +293,8 @@ appConfig:
       \ systems.</p>"
     buildDate: "TBD"
     buildVersion: "TBD"
-    nodeName: null
-    upDate: null
+    nodeName: null      # set to appConfig.node.node in FetchUiConfigHandler
+FetchUiConfigHandler    upDate: null
     maintenanceMessage: null
     defaultMaxResults: "1000000,100,10,1"
     helpUrl: null
