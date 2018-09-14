@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-// $header-height: 30px;
 .horizontal-panel {
   height: 100%;
   width: 100%;
   display:flex;
   flex-direction: column;
-  // position: relative;
 }
 
 .horizontal-panel__header {
@@ -36,48 +34,3 @@
 .horizontal-panel__header__actions {
   display: inline-flex;
 }
-
-// .horizontal-panel .grid {
-//   margin: 0 !important;
-// }
-
-// .horizontal-panel .header {
-//   height: $header-height;
-//   padding-top: 10px !important;
-// }
-
-// .horizontal-panel .divider {
-//   margin-top: 0px !important;
-//   margin-bottom: 1px;
-// }
-
-// .horizontal-panel__content {
-//   flex-grow: auto;
-// }
-
-// .horizontal-panel_close-button {
-//   padding: 0px !important;
-// }
-
-// .horizontal-panel_close-button .button {
-//   padding: 5px !important;
-// }
-
-// .horizontal-panel_header-container {
-//   background-color: $hover-item-colour;
-//   width: 100%;
-//   height: 30px;
-//   display: inline-flex;
-// }
-
-// .HorizontalPanel_title__container {
-//   padding-top: 6px !important;
-//   padding-left: 5px;
-//   flex-grow: 1;
-// }
-
-// .HorizontalPanel_closeButton__container {
-//   height: 22px;
-//   padding-top: 8px;
-//   padding-right: 5px;
-// }
