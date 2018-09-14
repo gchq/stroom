@@ -1,21 +1,37 @@
 .FolderExplorer {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 30rem;
+  grid-template-rows: 3rem 2rem 2rem auto;
+  grid-template-areas:
+    "searchBar searchBar"
+    "header actionButtons"
+    "breadcrumb breadcrumb"
+    "main main";
+
   width: 100%;
-}
-
-.doc-ref-listing {
-  display: flex;
-  flex-direction: column;
-  position: relative;
   height: 100%;
-  overflow-y: auto;
 }
 
-.DocRefListing__search-bar {
-  padding-top: 0.3rem;
+.FolderExplorer__searchBar {
+  grid-area: searchBar;
 }
 
-.DocRefListing__action-bar {
-  display: flex;
-  float: right;
-  padding-top: 0.3rem;
+.FolderExplorer__header {
+  grid-area: header;
+}
+
+.FolderExplorer__breadcrumb {
+  grid-area: breadcrumb;
+  padding: 0.7rem;
+}
+
+.FolderExplorer__actionButtons {
+  grid-area: actionButtons;
+  justify-self: right;
+}
+
+.FolderExplorer__main {
+  grid-area: main;
+  height: 100%;
 }

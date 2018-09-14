@@ -15,22 +15,20 @@
  */
 
 import React from 'react';
-import { storiesOf } from '@storybook/react';
+import { PropTypes } from 'prop-types';
+import DocRefImage from 'components/DocRefImage';
 
-import { addThemedStories } from 'lib/themedStoryGenerator';
-import IconHeader from './IconHeader';
-import DocRefIconHeader from './DocRefIconHeader';
-
-const iconHeaderStories = storiesOf('IconHeader', module);
-addThemedStories(
-  iconHeaderStories,
-  <IconHeader icon="angle-up" text="Good morrow fellow human" />,
-  true,
+const DocRefIconHeader = ({ text, docRefType, className }) => (
+  <div className={`icon-header ${className}`}>
+    <DocRefImage docRefType={docRefType} className="icon-header__icon" size="lg" />
+    <p className="icon-header__text">{text}</p>
+  </div>
 );
 
-const docRefIconHeaderStories = storiesOf('DocRefIconHeader', module);
-addThemedStories(
-  docRefIconHeaderStories,
-  <DocRefIconHeader docRefType="XSLT" text="Would anyone like any toast?" />,
-  true,
-);
+DocRefIconHeader.propTypes = {
+  text: PropTypes.string.isRequired,
+  docRefType: PropTypes.string.isRequired,
+  className: PropTypes.string,
+};
+
+export default DocRefIconHeader;

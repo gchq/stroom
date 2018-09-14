@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { compose, branch, renderNothing } from 'recompose';
 
 import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
-import Button from 'components/Button';
 import { findItem } from 'lib/treeUtils';
 
 const enhance = compose(
@@ -28,21 +27,24 @@ const DocRefBreadcrumb = ({
   openDocRef,
   className = '',
 }) => (
-    <div className={`DocRefBreadcrumb ${className}`}>
-      {lineage.map(l => (
-        <React.Fragment key={l.uuid}>
-          <Divider />
-          <Button
-            className="DocRefBreadcrumb__link"
-            title={l.name}
-            onClick={() => openDocRef(l)}
-            text={l.name} />
-        </React.Fragment>
-      ))}
-      <Divider />
-      <div className="DocRefBreadcrumb__name">{name}</div>
-    </div>
-  );
+  <div className={`DocRefBreadcrumb ${className}`}>
+    {lineage.map(l => (
+      <React.Fragment key={l.uuid}>
+        <Divider />
+        <a
+          className="DocRefBreadcrumb__link"
+          title={l.name}
+          onClick={() => openDocRef(l)}
+          text={l.name}
+        >
+          {l.name}
+        </a>
+      </React.Fragment>
+    ))}
+    <Divider />
+    <div className="DocRefBreadcrumb__name">{name}</div>
+  </div>
+);
 
 DocRefBreadcrumb.propTypes = {
   docRefUuid: PropTypes.string.isRequired,

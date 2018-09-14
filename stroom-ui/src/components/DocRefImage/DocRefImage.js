@@ -15,7 +15,7 @@ DocRefImage.propTypes = {
 };
 
 DocRefImage.defaultProps = {
-  size: 'large',
+  size: 'lg',
 };
 
 export default DocRefImage;

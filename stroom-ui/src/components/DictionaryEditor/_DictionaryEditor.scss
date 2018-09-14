@@ -1,35 +1,32 @@
 .DictionaryEditor {
   display: grid;
-
-  grid-template-columns: 2rem auto 100px;
-  grid-template-rows: auto 2rem auto;
+  align-items: center;
+  grid-template-columns: auto 30rem;
+  grid-template-rows: 3rem 3rem auto;
   grid-template-areas:
-    "icon title actionButtons"
-    "breadcrumb breadcrumb actionButtons"
-    "main main main";
+    "header actionButtons"
+    "breadcrumb breadcrumb"
+    "main main";
+
+  width: 100%;
+  height: 100%;
 }
 
-.DictionaryEditor__headerIcon {
-  grid-area: icon;
-  background-color: red;
-}
-
-.DictionaryEditor__headerTitle {
-  grid-area: title;
-  background-color: magenta;
+.DictionaryEditor__header {
+  grid-area: header;
 }
 
 .DictionaryEditor__breadcrumb {
   grid-area: breadcrumb;
-  background-color: green;
+  padding: 0.7rem;
 }
 
 .DictionaryEditor__actionButtons {
   grid-area: actionButtons;
-  background-color: blue;
+  justify-self: right;
 }
 
 .DictionaryEditor__main {
   grid-area: main;
-  background-color: orange;
+  height: 100%;
 }
