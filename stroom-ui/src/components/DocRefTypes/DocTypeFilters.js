@@ -62,12 +62,12 @@ const enhance = compose(
   }),
 );
 
-const DocTypeFilters = ({
+let DocTypeFilters = ({
   docRefTypes, onChange, value, allSelectState, onAllCheckboxChanged,
 }) => (
   <React.Fragment>
     <div>
-      <DocRefImage size="small" docRefType="System" />
+      <DocRefImage size="sm" docRefType="System" />
       <label>All</label>
       <input
         type="checkbox"
@@ -79,7 +79,7 @@ const DocTypeFilters = ({
       .map(docRefType => ({ docRefType, isSelected: value.includes(docRefType) }))
       .map(({ docRefType, isSelected }) => (
         <div key={docRefType}>
-          <DocRefImage size="small" docRefType={docRefType} />
+          <DocRefImage size="sm" docRefType={docRefType} />
           <label>{docRefType}</label>
           <input
             type="checkbox"
@@ -97,16 +97,16 @@ const DocTypeFilters = ({
   </React.Fragment>
 );
 
-const EnhancedDocTypeFilters = enhance(DocTypeFilters);
+DocTypeFilters = enhance(DocTypeFilters);
 
-EnhancedDocTypeFilters.propTypes = {
+DocTypeFilters.propTypes = {
   value: PropTypes.arrayOf(PropTypes.string).isRequired,
   onChange: PropTypes.func.isRequired,
 };
 
-EnhancedDocTypeFilters.defaultProps = {
+DocTypeFilters.defaultProps = {
   value: [],
   onChange: v => console.log('Not implemented onChange, value ignored', v),
 };
 
-export default EnhancedDocTypeFilters;
+export default DocTypeFilters;

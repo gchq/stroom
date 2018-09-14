@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Select } from 'semantic-ui-react';
-
+import DropdownSelect from 'components/DropdownSelect';
 import permissionInheritanceValues from './permissionInheritanceValues';
 
 const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
@@ -11,22 +10,13 @@ const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
   text: pi,
 }));
 
-const PermissionInheritancePicker = ({ value, onChange }) => (
-  <Select
-    placeholder="Permission Inheritance"
-    onChange={(e, { value }) => onChange(value)}
-    options={piOptions}
-    value={value}
-  />
+const PermissionInheritancePicker = props => (
+  <DropdownSelect {...props} placeholder="Permission Inheritance" options={piOptions} />
 );
 
 PermissionInheritancePicker.propTypes = {
   value: PropTypes.string,
   onChange: PropTypes.func.isRequired,
-};
-
-PermissionInheritancePicker.defaultProps = {
-  onChange: v => console.log('Not implemented onChange, value ignored', v),
 };
 
 export default PermissionInheritancePicker;
