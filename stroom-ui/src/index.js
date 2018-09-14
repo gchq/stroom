@@ -29,7 +29,7 @@ import FontAwesomeProvider from 'startup/FontAwesomeProvider';
 import { history } from 'startup/middleware';
 
 import './styles/main.css';
-import './semantic/dist/semantic.min.css';
+
 import 'typeface-clear-sans';
 import 'typeface-cooper-hewitt';
 import 'typeface-open-sans';

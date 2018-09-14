@@ -23,7 +23,6 @@ import { DocRefInfoModal } from '.';
 import { actionCreators } from './redux';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
 

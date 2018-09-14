@@ -27,7 +27,6 @@ import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 // This basically replicates the 'Routes' implementation, but for test
 const AppChromeWithRouter = () => (

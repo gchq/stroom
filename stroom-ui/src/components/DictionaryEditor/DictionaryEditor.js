@@ -1,9 +1,9 @@
 import React from 'react';
 import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
-import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 import Loader from 'components/Loader';
+import DocRefEditor from 'components/DocRefEditor';
 import { DocRefIconHeader } from 'components/IconHeader';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchDictionary } from './dictionaryResourceClient';
@@ -14,7 +14,6 @@ import Button from 'components/Button';
 const { dictionaryUpdated } = actionCreators;
 
 const enhance = compose(
-  withRouter,
   connect(
     ({ dictionaryEditor }, { dictionaryUuid }) => ({
       dictionaryState: dictionaryEditor[dictionaryUuid],
@@ -36,55 +35,39 @@ const enhance = compose(
     ({ dictionaryState }) => !dictionaryState,
     renderComponent(() => <Loader active>Loading Dictionary</Loader>),
   ),
-  withProps(({ dictionaryState: { isDirty, isSaving } }) => ({
-    saveDisabled: !isDirty,
-    saveCaption: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
-  })),
   withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
     onDataChange: ({ dictionaryUuid, dictionaryUpdated }) => ({ target: { value } }) =>
       dictionaryUpdated(dictionaryUuid, { data: value }),
     onClickSave: ({ saveDictionary, dictionaryUuid }) => e => saveDictionary(dictionaryUuid),
   }),
+  withProps(({ dictionaryState: { isDirty, isSaving }, onClickSave }) => ({
+    actionBarItems: [
+      {
+        icon: 'save',
+        disabled: !(isDirty || isSaving),
+        title: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
+        onClick: onClickSave,
+      },
+    ],
+  })),
 );
 
 const DictionaryEditor = ({
   dictionaryUuid,
   dictionaryState: { dictionary },
-  dictionaryUpdated,
-  saveDictionary,
   openDocRef,
   onDataChange,
-  onClickSave,
-  saveDisabled,
-  saveCaption,
+  actionBarItems,
 }) => (
-  <div className="DictionaryEditor">
-    <DocRefIconHeader
-      docRefType="Dictionary"
-      className="DictionaryEditor__header"
-      text={dictionaryUuid}
-    />
-
-    <DocRefBreadcrumb
-      className="DictionaryEditor__breadcrumb"
-      docRefUuid={dictionaryUuid}
-      openDocRef={openDocRef}
-    />
-
-    <div className="DictionaryEditor__actionButtons">
-      <Button
-        circular
-        icon="save"
-        disabled={saveDisabled}
-        title="Save Dictionary"
-        onClick={onClickSave}
-      />
-    </div>
-    <div className="DictionaryEditor__main">
-      <textarea value={dictionary.data} onChange={onDataChange} />
-    </div>
-  </div>
+  <DocRefEditor
+    docRef={{
+      type: 'Dictionary',
+      uuid: dictionaryUuid,
+    }}
+    actionBarItems={actionBarItems}
+  >
+    <textarea value={dictionary.data} onChange={onDataChange} />
+  </DocRefEditor>
 );
 
 export default enhance(DictionaryEditor);

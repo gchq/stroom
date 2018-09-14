@@ -30,7 +30,7 @@ const enhance = compose(
   }),
 );
 
-const RawDocEditor = ({ docRef: { type, uuid } }) => {
+let SwitchedDocRefEditor = ({ docRef: { type, uuid } }) => {
   switch (type) {
     case 'System':
     case 'Folder':
@@ -68,13 +68,13 @@ const RawDocEditor = ({ docRef: { type, uuid } }) => {
   }
 };
 
-const DocEditor = enhance(RawDocEditor);
+SwitchedDocRefEditor = enhance(SwitchedDocRefEditor);
 
-DocEditor.propTypes = {
+SwitchedDocRefEditor.propTypes = {
   docRef: PropTypes.shape({
     uuid: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-export default DocEditor;
+export default SwitchedDocRefEditor;

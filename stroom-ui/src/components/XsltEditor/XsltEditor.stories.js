@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 import React from 'react';
-
 import { storiesOf } from '@storybook/react';
 
-import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
-
 import { testXslt } from './test';
-
 import XsltEditor from './XsltEditor';
+
+import 'styles/main.css';
 
 const stories = storiesOf('XSLT Editor', module);
 

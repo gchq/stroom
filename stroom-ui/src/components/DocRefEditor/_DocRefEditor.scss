@@ -1,0 +1,37 @@
+.DocRefEditor {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 30rem;
+  grid-template-rows: 3rem 2rem 2rem auto;
+  grid-template-areas:
+    "searchBar searchBar"
+    "header actionButtons"
+    "breadcrumb breadcrumb"
+    "main main";
+
+  width: 100%;
+  height: 100%;
+}
+
+.DocRefEditor__searchBar {
+  grid-area: searchBar;
+}
+
+.DocRefEditor__header {
+  grid-area: header;
+}
+
+.DocRefEditor__breadcrumb {
+  grid-area: breadcrumb;
+  padding: 0.7rem;
+}
+
+.DocRefEditor__actionButtons {
+  grid-area: actionButtons;
+  justify-self: right;
+}
+
+.DocRefEditor__main {
+  grid-area: main;
+  height: 100%;
+}

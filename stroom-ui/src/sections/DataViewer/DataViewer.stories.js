@@ -17,7 +17,6 @@
 import React from 'react';
 import { storiesOf, addDecorator } from '@storybook/react';
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 import DataViewer from 'sections/DataViewer/DataViewer';
 import { actionCreators } from './redux';

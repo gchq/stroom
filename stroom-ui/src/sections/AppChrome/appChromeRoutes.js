@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { AppChrome } from '.';
 import { Processing } from 'sections/Processing';
-import DocEditor from 'components/DocEditor';
+import SwitchedDocRefEditor from 'components/SwitchedDocRefEditor';
 import IconHeader from 'components/IconHeader';
 import Welcome from 'sections/Welcome';
 import DataViewer from 'sections/DataViewer';
@@ -80,7 +80,7 @@ export default [
     render: props => (
       <AppChrome
         activeMenuItem="Explorer"
-        content={<DocEditor docRef={{ ...props.match.params }} />}
+        content={<SwitchedDocRefEditor docRef={{ ...props.match.params }} />}
       />
     ),
   },

@@ -24,8 +24,6 @@ import ProcessingDetails from './ProcessingDetails';
 import { actionCreators } from '../redux';
 import { trackers } from '../tracker.testData';
 
-import 'semantic/dist/semantic.min.css';
-
 const { updateTrackerSelection, updateTrackers } = actionCreators;
 
 const enhance = compose(
