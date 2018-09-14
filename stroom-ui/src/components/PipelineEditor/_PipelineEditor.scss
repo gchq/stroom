@@ -21,8 +21,15 @@ $palette-width: 12rem;
   flex-grow:1;
 }
 
+.pipeline-editor__header__title .DocRefBreadcrumb {
+  margin-left: 5px;
+}
+
 .pipeline-editor__header__actions {
   width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .Pipeline-editor {
