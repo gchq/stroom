@@ -23,6 +23,9 @@ stroom-util-build.properties
 
 stroom-core-server/src/test/resources/transientContentPacks/
 
+local.yml*
+!local.yml.sh
+
 # IntelliJ
 # Here we ignore everything and create exceptions for what we want to share.
 */out/
