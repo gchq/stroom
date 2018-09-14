@@ -16,10 +16,9 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
-import { Dropdown, Grid } from 'semantic-ui-react';
-import IconHeader from 'components/IconHeader';
+import { compose, withHandlers } from 'recompose';
 
+import IconHeader from 'components/IconHeader';
 import { actionCreators } from './redux';
 
 const { themeChanged } = actionCreators;
@@ -34,36 +33,35 @@ const themeOptions = [
     value: 'theme-dark',
   },
 ];
+
 const enhance = compose(connect(
-  (state, props) => ({
-    theme: state.userSettings.theme,
+  ({ userSettings: { theme } }) => ({
+    theme
   }),
   { themeChanged },
-));
+),
+  withHandlers({
+    onThemeChanged: ({ themeChanged }) => (event) => {
+      themeChanged(event.target.value)
+    },
+  }),
+);
 
-const UserSettings = ({ theme, themeChanged }) => (
+const UserSettings = ({ theme, onThemeChanged }) => (
   <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <IconHeader text="Me" icon="user" />
-      </Grid.Column>
-    </Grid>
+    <IconHeader text="Me" icon="user" />
     <div className="UserSettings__container">
       <h3>User Settings</h3>
-      <Grid>
-        <Grid.Column width={6}>Theme:</Grid.Column>
-        <Grid.Column width={10}>
-          <Dropdown
-            fluid
-            selection
-            options={themeOptions}
-            value={theme}
-            onChange={(_, data) => {
-              themeChanged(data.value);
-            }}
-          />
-        </Grid.Column>
-      </Grid>
+      <div>
+        <label>Theme:</label>
+        <select
+          onChange={onThemeChanged}
+          value={theme}>
+          {themeOptions.map(theme => (
+            <option value={theme.value}>{theme.text}</option>
+          ))}
+        </select>
+      </div>
     </div>
   </React.Fragment>
 );
