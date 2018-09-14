@@ -20,7 +20,6 @@ import { Tab, Table } from 'semantic-ui-react';
 import moment from 'moment';
 
 import DataDetails from './DataDetails';
-// import StreamDetails from './StreamDetails';
 
 const DetailsTabs = ({ data, details, dataViewerId }) => {
   const panes = [
