@@ -1,15 +1,11 @@
-.Welcome {
-  position: relative;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  border-top: none;
-  padding: 10px;
-  overflow: auto;
+.welcome {
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.Welcome__shortcutKeysTable {
-  width: 100% !important;
+.welcome__shortcuts__table {
+  width: 400px !important;
+  margin: 10px;
 }

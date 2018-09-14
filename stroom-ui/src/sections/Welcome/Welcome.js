@@ -16,48 +16,31 @@
 
 import React from 'react';
 
-import { Table, Header, Grid } from 'semantic-ui-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Table } from 'semantic-ui-react';
+
+import IconHeader from 'components/IconHeader';
 
 const Welcome = props => (
-  <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <Header as="h3">
-          <FontAwesomeIcon icon="home" />
-          <Header.Content>Welcome</Header.Content>
-        </Header>
-      </Grid.Column>
-    </Grid>
-    <div className="Welcome__container">
-      <div className="Welcome">
-        <h4>Global shortcut keys</h4>
-        <Table className="Welcome__shortcutKeysTable">
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell />
-              <Table.HeaderCell>Shortcut</Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
-
-          <Table.Body>
-            <Table.Row>
-              <Table.Cell>Document search</Table.Cell>
-              <Table.Cell>
-                <code>ctrl + shift + f</code>
-              </Table.Cell>
-            </Table.Row>
-            <Table.Row>
-              <Table.Cell>Recent documents</Table.Cell>
-              <Table.Cell>
-                <code> ctrl + shift + e</code>
-              </Table.Cell>
-            </Table.Row>
-          </Table.Body>
-        </Table>
-      </div>
+  <div className="welcome">
+    <IconHeader icon="home" text="Welcome" />
+    <div className="welcome__shortcuts">
+      <h4>Global shortcut keys</h4>
+      <table className="welcome__shortcuts__table">
+        <tr>
+          <th />
+          <th>Shortcut</th>
+        </tr>
+        <tr>
+          <td>Document search</td>
+          <td><code>ctrl + shift + f</code></td>
+        </tr>
+        <tr>
+          <td> Recent documents </td>
+          <td><code> ctrl + shift + e</code></td>
+        </tr>
+      </table>
     </div>
-  </React.Fragment>
+  </div>
 );
 
 export default Welcome;
