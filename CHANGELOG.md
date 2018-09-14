@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix background color to white on activity pane.
+
 ## [v5.5.0-beta.5] - 2018-09-12
 
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
