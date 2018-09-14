@@ -293,7 +293,8 @@ appConfig:
       \ systems.</p>"
     buildDate: "TBD"
     buildVersion: "TBD"
-    nodeName: null      # set to appConfig.node.node in FetchUiConfigHandler
+    # nodeName is set to appConfig.node.node in FetchUiConfigHandler
+    nodeName: null
 FetchUiConfigHandler    upDate: null
     maintenanceMessage: null
     defaultMaxResults: "1000000,100,10,1"
