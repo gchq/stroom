@@ -19,7 +19,6 @@ import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import { fromSetupSampleData } from './test';
 import { actionCreators } from './redux';
@@ -48,7 +47,7 @@ const LISTING_ID = 'test';
 
 // New Doc
 const TestNewDocRefDialog = compose(
-  connect(({}) => ({}), { prepareDocRefCreation }),
+  connect(({ }) => ({}), { prepareDocRefCreation }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefCreation, testDestination } = this.props;
@@ -59,7 +58,7 @@ const TestNewDocRefDialog = compose(
 
 // Copy
 const TestCopyDialog = compose(
-  connect(({}) => ({}), { prepareDocRefCopy }),
+  connect(({ }) => ({}), { prepareDocRefCopy }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefCopy, testUuids, testDestination } = this.props;
@@ -70,7 +69,7 @@ const TestCopyDialog = compose(
 
 // Move
 const TestMoveDialog = compose(
-  connect(({}) => ({}), { prepareDocRefMove }),
+  connect(({ }) => ({}), { prepareDocRefMove }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefMove, testUuids, testDestination } = this.props;
@@ -81,7 +80,7 @@ const TestMoveDialog = compose(
 
 // Delete
 const TestDeleteDialog = compose(
-  connect(({}) => ({}), { prepareDocRefDelete }),
+  connect(({ }) => ({}), { prepareDocRefDelete }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefDelete, testUuids } = this.props;
@@ -92,7 +91,7 @@ const TestDeleteDialog = compose(
 
 // Rename
 const TestRenameDialog = compose(
-  connect(({}) => ({}), { prepareDocRefRename }),
+  connect(({ }) => ({}), { prepareDocRefRename }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefRename, testDocRef } = this.props;

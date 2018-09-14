@@ -36,14 +36,13 @@ const enhance = compose(
   connect(
     ({ debuggers, pipelineEditor: { pipelineStates } }, { debuggerId, pipelineId }) => ({
       debuggerState: debuggers[debuggerId],
-      debuggerId,
       pipelineState: pipelineStates[pipelineId],
     }),
     { startDebugging, pipelineElementSelected, fetchPipeline },
   ),
   lifecycle({
     componentDidMount() {
-      const { debuggerId, pipelineId, startDebugging, pipelineElementSelected, fetchPipeline } = this.props;
+      const { debuggerId, pipelineId, startDebugging, fetchPipeline } = this.props;
       fetchPipeline(pipelineId);
       startDebugging(debuggerId, pipelineId);
     }
