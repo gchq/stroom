@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Splash presenter buttons are now always enabled.
+
 * Fix background color to white on activity pane.
 
 ## [v5.5.0-beta.5] - 2018-09-12
