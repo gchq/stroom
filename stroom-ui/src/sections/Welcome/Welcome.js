@@ -16,8 +16,6 @@
 
 import React from 'react';
 
-import { Table } from 'semantic-ui-react';
-
 import IconHeader from 'components/IconHeader';
 
 const Welcome = props => (

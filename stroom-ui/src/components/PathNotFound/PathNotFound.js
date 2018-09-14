@@ -16,8 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Grid, Header } from 'semantic-ui-react';
 
 import IconHeader from 'components/IconHeader';
 

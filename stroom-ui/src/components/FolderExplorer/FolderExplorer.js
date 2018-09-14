@@ -18,15 +18,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent, withHandlers } from 'recompose';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { withRouter } from 'react-router-dom';
 
 import DocRefEditor from 'components/DocRefEditor';
-import { DocRefIconHeader } from 'components/IconHeader';
 import Loader from 'components/Loader';
-import AppSearchBar from 'components/AppSearchBar';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
-import Button from 'components/Button';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
