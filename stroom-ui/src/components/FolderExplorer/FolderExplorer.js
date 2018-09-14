@@ -21,6 +21,7 @@ import { compose, withProps, branch, renderComponent, withHandlers } from 'recom
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { withRouter } from 'react-router-dom';
 
+import DocRefEditor from 'components/DocRefEditor';
 import { DocRefIconHeader } from 'components/IconHeader';
 import Loader from 'components/Loader';
 import AppSearchBar from 'components/AppSearchBar';
@@ -147,24 +148,17 @@ const FolderExplorer = ({
   folder: { node },
   folderUuid,
   actionBarItems,
-  openDocRef,
   onKeyDownWithShortcuts,
+  openDocRef,
 }) => (
-  <div className="FolderExplorer">
-    <AppSearchBar className="FolderExplorer__searchBar" onChange={openDocRef} />
-
-    <DocRefIconHeader docRefType="Folder" className="FolderExplorer__header" text={node.name} />
-
-    <DocRefBreadcrumb
-      className="FolderExplorer__breadcrumb"
-      docRefUuid={node.uuid}
-      openDocRef={openDocRef}
-    />
-
-    <div className="FolderExplorer__actionButtons">
-      {actionBarItems.map(props => <Button key={props.title} circular {...props} text={undefined} />)}
-    </div>
-    <div className="FolderExplorer__main" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+  <DocRefEditor
+    docRef={{
+      type: 'Folder',
+      uuid: folderUuid,
+    }}
+    actionBarItems={actionBarItems}
+  >
+    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
       {node.children.map(docRef => (
         <DndDocRefListingEntry
           key={docRef.uuid}
@@ -175,14 +169,13 @@ const FolderExplorer = ({
         />
       ))}
     </div>
-
     <DocRefInfoModal listingId={LISTING_ID} />
     <MoveDocRefDialog listingId={LISTING_ID} />
     <RenameDocRefDialog listingId={LISTING_ID} />
     <DeleteDocRefDialog listingId={LISTING_ID} />
     <CopyDocRefDialog listingId={LISTING_ID} />
     <NewDocRefDialog listingId={LISTING_ID} />
-  </div>
+  </DocRefEditor>
 );
 
 const EnhanceFolderExplorer = enhance(FolderExplorer);
