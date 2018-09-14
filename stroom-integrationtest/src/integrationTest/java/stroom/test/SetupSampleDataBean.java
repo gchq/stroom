@@ -23,7 +23,6 @@ import stroom.dashboard.DashboardStore;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.impl.db.MetaKeyService;
 import stroom.data.store.api.StreamStore;
-import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedDocCache;
@@ -54,7 +53,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -270,12 +268,6 @@ public final class SetupSampleDataBean {
                 // streamProcessor.setEnabled(true);
                 // streamProcessorService.save(streamProcessor);
             }
-        }
-
-        try (final Connection connection = connectionProvider.getConnection()) {
-            new V6_0_0_21__Dictionary().migrate(connection);
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage());
         }
 
 //        if (shutdown) {
