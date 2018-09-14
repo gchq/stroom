@@ -28,14 +28,16 @@ public class CoreTestModule extends AbstractModule {
         while (path != null && !path.getFileName().toString().equals("stroom-integrationtest")) {
             path = path.getParent();
         }
+
+        // resolve local.yml in the root of the repo
         if (path != null) {
             path = path.getParent();
-            path = path.resolve("stroom-app");
-            path = path.resolve("dev.yml");
+            path = path.resolve("local.yml");
         }
 
         if (path == null) {
-            throw new RuntimeException("Unable to find dev.yaml");
+            throw new RuntimeException("Unable to find local.yml, try running local.yml.sh in the root of the repo " +
+                    "to create one.");
         }
 
         LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
@@ -48,7 +50,6 @@ public class CoreTestModule extends AbstractModule {
         }
 
         install(new CoreModule());
-
         install(new stroom.resource.ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
         install(new stroom.node.NodeTestConfigModule());
