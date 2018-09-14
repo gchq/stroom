@@ -272,7 +272,7 @@ class AppSearchWithFocus extends React.Component {
   }
   render() {
     return (
-      <span>
+      <React.Fragment>
         <span tabIndex={0} ref={this.dummyFocusRef} onFocus={() => this.dummyFocusRef.current.blur()} />
         <EnhancedAppSearchBar
           {...this.props}
@@ -281,7 +281,7 @@ class AppSearchWithFocus extends React.Component {
             this.props.onChange(d);
           }}
         />
-      </span>
+      </React.Fragment>
     );
   }
 }
