@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle, withState, branch, renderComponent, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Grid, Header } from 'semantic-ui-react';
 import PanelGroup from 'react-panelgroup';
 
 import { DocRefIconHeader } from 'components/IconHeader';
@@ -88,14 +87,14 @@ const RawPipelineEditor = ({
   startInheritedPipeline,
   pipelineSettingsOpened
 }) => (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
+    <div className="pipeline-editor__container">
+      <div className="pipeline-editor__header">
 
-        <Grid.Column width={12}>
+        <div className="pipeline-editor__header__title">
           <DocRefIconHeader docRefType={pipeline.docRef.type} text={pipeline.docRef.name} />
           <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
-        </Grid.Column>
-        <Grid.Column width={4}>
+        </div>
+        <div className="pipeline-editor__header__actions">
           <SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
           <CreateChildPipeline
             pipelineId={pipelineId}
@@ -104,8 +103,9 @@ const RawPipelineEditor = ({
           <OpenPipelineSettings
             pipelineId={pipelineId}
             pipelineSettingsOpened={pipelineSettingsOpened}
-          /></Grid.Column>
-      </Grid>
+          />
+        </div>
+      </div>
       <div className="Pipeline-editor">
         <AddElementModal pipelineId={pipelineId} />
         <DeletePipelineElement pipelineId={pipelineId} />
@@ -141,7 +141,7 @@ const RawPipelineEditor = ({
             )}
         </PanelGroup>
       </div>
-    </React.Fragment >
+    </div>
 
   );
 
