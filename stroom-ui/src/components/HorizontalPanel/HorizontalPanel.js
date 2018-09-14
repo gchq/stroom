@@ -28,29 +28,16 @@ const HorizontalPanel = ({
   onClose,
   headerSize,
 }) => (
-    <div className="horizontal-panel__container">
-      <div className="horizontal-panel_header-container flat">
-        <div className="HorizontalPanel_title__container">
+    <div className="horizontal-panel">
+      <div className="horizontal-panel__header flat">
+        <div className="horizontal-panel__header__title">
           {title}
         </div>
-        <div>
-
-          <div>
-            <Menu secondary>
-              <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
-                {headerMenuItems}
-                <Menu.Item className="horizontal-panel_close-button ">
-                  <Button icon="times" onClick={() => onClose()} />
-                </Menu.Item>
-              </Menu.Menu>
-            </Menu>
-          </div>
-        </div>
+        {headerMenuItems}
+        <Button icon="times" onClick={() => onClose()} />
       </div>
-      <div className="horizontal-panel__content__container">
-        <div className="horizontal-panel__content">
-          {content}
-        </div>
+      <div className="horizontal-panel__content">
+        {content}
       </div>
     </div>
   );
