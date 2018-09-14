@@ -1,8 +1,32 @@
-.xsltEditor {
+.XsltEditor {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 30rem;
+  grid-template-rows: 3rem 3rem auto;
+  grid-template-areas:
+    "header actionButtons"
+    "breadcrumb breadcrumb"
+    "main main";
+
+  width: 100%;
+  height: 100%;
 }
 
-.xsltEditor__ace-container {
-  flex-grow: 1;
-  width: auto;
-  height: inherit;
+.XsltEditor__header {
+  grid-area: header;
+}
+
+.XsltEditor__breadcrumb {
+  grid-area: breadcrumb;
+  padding: 0.7rem;
+}
+
+.XsltEditor__actionButtons {
+  grid-area: actionButtons;
+  justify-self: right;
+}
+
+.XsltEditor__main {
+  grid-area: main;
+  height: 100%;
 }

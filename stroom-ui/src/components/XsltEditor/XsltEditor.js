@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 
 import Loader from 'components/Loader';
 import Button from 'components/Button';
-import DocRefImage from 'components/DocRefImage';
+import { DocRefIconHeader } from 'components/IconHeader';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
@@ -60,44 +60,52 @@ const enhance = compose(
   })),
   withHandlers({
     openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
+    onContentChange: ({ xsltUpdated, xsltState: { xsltData } }) => (newValue) => {
+      if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+    },
+    onClickSave: ({ saveXslt, xsltUuid }) => e => saveDictionary(xsltUuid),
   }),
 );
 
 const XsltEditor = ({
   xsltUuid,
   xsltState: { isDirty, isSaving, xsltData },
-  xsltUpdated,
-  saveXslt,
-  openDocRef,
   onClickSave,
+  openDocRef,
   saveDisabled,
   saveCaption,
+  onContentChange,
 }) => (
-    <div className="xsltEditor">
-      <div className="dictionaryEditor__headerBar">
-        <header>
-          <DocRefImage docRefType="XSLT" />
-          <h3>{xsltUuid}</h3>
+  <div className="XsltEditor">
+    <DocRefIconHeader docRefType="XSLT" className="XsltEditor__header" text={xsltUuid} />
 
-          <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
-        </header>
-        <div>
-          <Button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave} text={saveCaption} />
-        </div>
-      </div>
-      <div className="xsltEditor__ace-container">
-        <ThemedAceEditor
-          style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-          name={`${xsltUuid}-ace-editor`}
-          mode="xml"
-          value={xsltData}
-          onChange={(newValue) => {
-            if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
-          }}
-        />
-      </div>
+    <DocRefBreadcrumb
+      className="XsltEditor__breadcrumb"
+      docRefUuid={xsltUuid}
+      openDocRef={openDocRef}
+    />
+
+    <div className="XsltEditor__actionButtons">
+      <Button
+        circular
+        icon="save"
+        disabled={saveDisabled}
+        title="Save XSLT"
+        onClick={onClickSave}
+      />
     </div>
-  );
+
+    <div className="XsltEditor__main">
+      <ThemedAceEditor
+        style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+        name={`${xsltUuid}-ace-editor`}
+        mode="xml"
+        value={xsltData}
+        onChange={onContentChange}
+      />
+    </div>
+  </div>
+);
 
 XsltEditor.propTypes = {
   xsltUuid: PropTypes.string.isRequired,
