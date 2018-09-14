@@ -1,11 +1,11 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Header, Grid } from 'semantic-ui-react/dist/commonjs';
 
 import { AppChrome } from '.';
 import { Processing } from 'sections/Processing';
 import DocEditor from 'components/DocEditor';
+import IconHeader from 'components/IconHeader';
 import Welcome from 'sections/Welcome';
 import DataViewer from 'sections/DataViewer';
 import UserSettings from 'sections/UserSettings';
@@ -19,28 +19,14 @@ const withConfig = connect(({ config }) => ({ config }));
 
 const UsersIFrame = withConfig(({ config: { authUsersUiUrl } }) => (
   <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <Header as="h3">
-          <FontAwesomeIcon icon="users" />
-          <Header.Content>Users</Header.Content>
-        </Header>
-      </Grid.Column>
-    </Grid>
+    <IconHeader icon="users" text="Users" />
     <IFrame key="users" url={authUsersUiUrl} />
   </React.Fragment>
 ));
 
 const ApiTokensIFrame = withConfig(({ config: { authTokensUiUrl } }) => (
   <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={12}>
-        <Header as="h3">
-          <FontAwesomeIcon icon="key" />
-          <Header.Content>API Keys</Header.Content>
-        </Header>
-      </Grid.Column>
-    </Grid>
+    <IconHeader icon="key" text="API keys" />
     <IFrame key="apikeys" url={authTokensUiUrl} />
   </React.Fragment>
 ));

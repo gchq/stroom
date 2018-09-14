@@ -3,6 +3,28 @@
 @import "./PipelineElement";
 @import "./Bin";
 $palette-width: 12rem;
+
+.pipeline-editor__container {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: auto;
+  grid-template-rows: 60px auto;
+}
+
+.pipeline-editor__header {
+  display: inline-flex;
+  flex-direction: row;
+}
+
+.pipeline-editor__header__title {
+  flex-grow:1;
+}
+
+.pipeline-editor__header__actions {
+  width: 150px;
+}
+
 .Pipeline-editor {
   height: 100vh;
   position: relative;

@@ -41,7 +41,7 @@ storiesOf('App Chrome', module)
   .add('Just the chrome', props => (
     <AppChrome
       activeMenuItem="welcome"
-      headerContent={<Header.Content>Stuff</Header.Content>}
+      headerContent={<h3>Stuff</h3>}
       icon="cogs"
       content={<div>Stuff goes here</div>}
     />
