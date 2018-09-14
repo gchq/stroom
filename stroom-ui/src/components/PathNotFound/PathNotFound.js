@@ -24,7 +24,7 @@ import IconHeader from 'components/IconHeader';
 const PathNotFound = ({ message }) => (
   <div className="path-not-found">
     <IconHeader icon='exclamation-triangle' text='Page not found!' />
-    <div>
+    <div className="path-not-found__content">
       <p>{message}</p>
     </div>
   </div>
