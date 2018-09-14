@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
-import { connect } from 'react-redux';
 
 import DocRefImage from 'components/DocRefImage';
 import DropdownSelect from 'components/DropdownSelect';

@@ -18,8 +18,8 @@ import PropTypes from 'prop-types';
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { DragSource, DropTarget } from 'react-dnd';
-import { Image } from 'semantic-ui-react';
 
+import ElementImage from 'components/ElementImage';
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
 import ItemTypes from './dragDropTypes';
@@ -224,13 +224,7 @@ const PipelineElement = ({
   onElementClick,
 }) =>
   compose(connectDragSource, connectDropTarget)(<div className={`${className} raised-low borderless `} onClick={onElementClick}>
-    <Image
-      className="Pipeline-element__icon"
-      alt="X"
-      src={require(`./images/${elementDefinition.icon}`)}
-      disabled={isIconDisabled}
-      size="mini"
-    />
+    <ElementImage icon={elementDefinition.icon} />
     <Button className="Pipeline-element__type" text={elementId} />
   </div>);
 

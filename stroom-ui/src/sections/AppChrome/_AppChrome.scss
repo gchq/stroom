@@ -123,15 +123,6 @@
   color: red;
 }
 
-.ui.header:first-child {
-  padding-top: 0.5rem !important; // semantic UI has a strange fixation with negative margins
-}
-
-.app-chrome__content .ui.grid h3 {
-  // Correctly align the title
-  // padding-top: 0.3rem !important;
-}
-
 .sidebar__logo {
   display: inline;
   align-items: center;

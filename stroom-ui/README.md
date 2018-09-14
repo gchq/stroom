@@ -17,17 +17,6 @@ The various startup and test scripts include the running of an SCSS pre-processo
 Any new style sheets should be written with the .scss extension, the pre-processor will then convert them to .css.
 The components should then import the .css files.
 
-## Semantic UI
-
-We use Semantic UI for most of our components.
-
-If you want to add a font:
-
-1.  Choose one from https://github.com/KyleAMathews/typefaces. These are usefully packaged typefaces. If you want a different source then there are other ways.
-2.  Install it into `node_modules`, e.g. `yarn add typefaces-clear-sans`. This makes it available to the project.
-3.  Import it in the root `index.js`, e.g.: `import 'typeface-clear-sans';`. This adds it into the built files.
-4.  Add it into `src/semantic/src/site/globals/site.variables`. This selects it for use in SUI.
-
 ## Directory structure
 
 The directory structure here aims to reduce coupling between different areas of the app.

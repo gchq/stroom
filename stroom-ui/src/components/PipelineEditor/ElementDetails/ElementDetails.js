@@ -20,31 +20,29 @@ import { compose, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { reduxForm } from 'redux-form';
 
+import ElementImage from 'components/ElementImage';
 import HorizontalPanel from 'components/HorizontalPanel';
 import ElementProperty from './ElementProperty';
 
 const enhance = compose(
-  connect(
-    ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
-      const pipelineState = pipelineStates[pipelineId];
-      let initialValues;
-      let selectedElementId;
-      if (pipelineState) {
-        initialValues = pipelineState.selectedElementInitialValues;
-        selectedElementId = pipelineState.selectedElementId;
-      }
-      const form = `${pipelineId}-elementDetails`;
+  connect(({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
+    const pipelineState = pipelineStates[pipelineId];
+    let initialValues;
+    let selectedElementId;
+    if (pipelineState) {
+      initialValues = pipelineState.selectedElementInitialValues;
+      selectedElementId = pipelineState.selectedElementId;
+    }
+    const form = `${pipelineId}-elementDetails`;
 
-      return {
-        elements,
-        selectedElementId,
-        pipelineState,
-        form,
-        initialValues,
-      };
-    },
-    {},
-  ),
+    return {
+      elements,
+      selectedElementId,
+      pipelineState,
+      form,
+      initialValues,
+    };
+  }, {}),
   reduxForm(),
   branch(
     ({ selectedElementId }) => !selectedElementId,
@@ -63,7 +61,7 @@ const enhance = compose(
       icon: elements.elements.find(e => e.type === elementType).icon,
       typeName: elementType,
       elementTypeProperties: sortedElementTypeProperties,
-      selectedElementId
+      selectedElementId,
     };
   }),
 );
@@ -78,11 +76,7 @@ const ElementDetails = ({
 }) => {
   const title = (
     <div className="element-details__title">
-      <img
-        alt="Icon representing the selected element"
-        src={require(`../images/${icon}`)}
-        className="element-details__icon"
-      />
+      <ElementImage icon={icon} />
       <div>
         <h3>{selectedElementId}</h3>
       </div>
@@ -98,15 +92,15 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-            elementTypeProperties.map((elementType) => (
-              <ElementProperty
-                pipelineId={pipelineId}
-                elementId={selectedElementId}
-                key={elementType.name}
-                elementType={elementType}
-              />
-            ))
-          )}
+          elementTypeProperties.map(elementType => (
+            <ElementProperty
+              pipelineId={pipelineId}
+              elementId={selectedElementId}
+              key={elementType.name}
+              elementType={elementType}
+            />
+          ))
+        )}
       </form>
     </React.Fragment>
   );

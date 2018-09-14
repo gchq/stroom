@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import { Switch, Route } from 'react-router-dom';
-import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import AppChrome, { appChromeRoutes } from '.';
 
