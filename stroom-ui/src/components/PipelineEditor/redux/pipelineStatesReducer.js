@@ -33,10 +33,6 @@ const actionCreators = createActions({
     elementId,
     initialValues,
   }),
-  SELECT_NEXT_PIPELINE_ELEMENT: (pipelineId, currentElementId) => ({
-    pipelineId,
-    currentElementId,
-  }),
   PIPELINE_ELEMENT_MOVED: (pipelineId, itemToMove, destination) => ({
     pipelineId,
     itemToMove,
@@ -125,13 +121,6 @@ const reducer = handleActions(
       selectedElementId: elementId,
       selectedElementInitialValues: initialValues,
     }),
-    SELECT_NEXT_PIPELINE_ELEMENT: (state, { payload: { currentElementId } }) => {
-      //TODO: actually select the next element.
-      //TODO: add SELECT_PREVIOUS_PIPELINE_ELEMENT
-      return ({
-        selectedElementId: 'Source'
-      })
-    },
     [combineActions(pipelineElementDeleteRequested, pipelineElementDeleteCancelled)]: (
       state,
       { payload: { elementId } },

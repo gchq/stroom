@@ -16,39 +16,63 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, branch, renderComponent, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 
+import Button from 'components/Button';
 import { Pipeline } from 'components/PipelineEditor';
-import { actionCreators as pipelineActionCreators } from 'components/PipelineEditor';
+import Loader from 'components/Loader';
+import { actionCreators as pipelineActionCreators, fetchPipeline } from 'components/PipelineEditor';
 
 import { actionCreators } from './redux';
-import DebuggerControls from './DebuggerControls';
 import DebuggerStep from './DebuggerStep';
+import { getNext, getPrevious } from './pipelineDebugger.utils';
 
 const { startDebugging } = actionCreators;
 
-const { selectNextPipelineElement } = pipelineActionCreators;
+const { pipelineElementSelected } = pipelineActionCreators;
 
 const enhance = compose(
   connect(
-    ({ debuggers }, { debuggerId }) => ({ debugger: debuggers[debuggerId], debuggerId }),
-    { startDebugging, selectNextPipelineElement },
+    ({ debuggers, pipelineEditor: { pipelineStates } }, { debuggerId, pipelineId }) => ({
+      debuggerState: debuggers[debuggerId],
+      debuggerId,
+      pipelineState: pipelineStates[pipelineId],
+    }),
+    { startDebugging, pipelineElementSelected, fetchPipeline },
   ),
   lifecycle({
     componentDidMount() {
-      const { debuggerId, pipelineId, startDebugging, selectNextPipelineElement } = this.props;
-
-      selectNextPipelineElement(pipelineId);
+      const { debuggerId, pipelineId, startDebugging, pipelineElementSelected, fetchPipeline } = this.props;
+      fetchPipeline(pipelineId);
       startDebugging(debuggerId, pipelineId);
     }
   }),
+  branch(
+    ({ debuggerState }) => !debuggerState,
+    renderComponent(() => <Loader message="Loading pipeline..." />),
+  ),
+  withHandlers({
+    onNext: ({ pipelineState, pipelineElementSelected, pipelineId, debuggerState, currentElementId }) => () => {
+      const nextElementId = getNext(pipelineState);
+      pipelineElementSelected(pipelineId, nextElementId);
+    },
+    onPrevious: ({ pipelineState, pipelineElementSelected, pipelineId, debuggerState, currentElementId }) => () => {
+      const nextElementId = getPrevious(pipelineState);
+      pipelineElementSelected(pipelineId, nextElementId);
+    },
+  }),
 );
 
-const PipelineDebugger = ({ pipelineId, debuggerId }) => (
+const PipelineDebugger = ({ pipelineId, debuggerId, onNext, onPrevious }) => (
   <div className="pipeline-debugger">
-    <DebuggerControls debuggerId={debuggerId} />
-    <Pipeline pipelineId={pipelineId} onElementSelected={() => { }} />
+    <div>
+      <Button icon='chevron-left' text='Previous' onClick={onPrevious} />
+      <Button icon='chevron-right' text='Next' onClick={onNext} />
+    </div>
+    <Pipeline
+      pipelineId={pipelineId}
+      onElementSelected={() => { }} />
     <DebuggerStep debuggerId={debuggerId} />
   </div>
 );
