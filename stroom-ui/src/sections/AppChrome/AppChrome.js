@@ -19,8 +19,8 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button } from 'semantic-ui-react/dist/commonjs';
 
+import Button from 'components/Button';
 import { actionCreators as selectableItemListingActionCreators } from 'lib/withSelectableItemListing';
 import { actionCreators as appChromeActionCreators } from './redux';
 import withLocalStorage from 'lib/withLocalStorage';

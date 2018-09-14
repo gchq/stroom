@@ -21,9 +21,6 @@ import { connect } from 'react-redux';
 
 import DocRefEditor from 'components/DocRefEditor';
 import Loader from 'components/Loader';
-import Button from 'components/Button';
-import { DocRefIconHeader } from 'components/IconHeader';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchXslt, saveXslt } from './xsltResourceClient';
 import ThemedAceEditor from 'components/ThemedAceEditor';
 import { actionCreators } from './redux';
@@ -53,10 +50,10 @@ const enhance = compose(
     renderComponent(() => <Loader message="Loading XSLT..." />),
   ),
   withHandlers({
-    onContentChange: ({ xsltUpdated, xsltState: { xsltData } }) => (newValue) => {
+    onContentChange: ({ xsltUpdated, xsltUuid, xsltState: { xsltData } }) => (newValue) => {
       if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
     },
-    onClickSave: ({ saveXslt, xsltUuid }) => e => saveDictionary(xsltUuid),
+    onClickSave: ({ saveXslt, xsltUuid }) => e => saveXslt(xsltUuid),
   }),
   withProps(({ xsltState: { isDirty, isSaving }, onClickSave }) => ({
     actionBarItems: [

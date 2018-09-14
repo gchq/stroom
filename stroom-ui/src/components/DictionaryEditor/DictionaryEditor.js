@@ -4,12 +4,9 @@ import { connect } from 'react-redux';
 
 import Loader from 'components/Loader';
 import DocRefEditor from 'components/DocRefEditor';
-import { DocRefIconHeader } from 'components/IconHeader';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { fetchDictionary } from './dictionaryResourceClient';
 import { saveDictionary } from './dictionaryResourceClient';
 import { actionCreators } from './redux';
-import Button from 'components/Button';
 
 const { dictionaryUpdated } = actionCreators;
 

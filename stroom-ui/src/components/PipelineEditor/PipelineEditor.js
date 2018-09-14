@@ -28,7 +28,6 @@ import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import SavePipeline from './SavePipeline';
 import CreateChildPipeline from './CreateChildPipeline';
 import OpenPipelineSettings from './OpenPipelineSettings';
-import DocRefImage from 'components/DocRefImage';
 import PipelineSettings from './PipelineSettings';
 import ElementPalette from './ElementPalette';
 import DeletePipelineElement from './DeletePipelineElement';
