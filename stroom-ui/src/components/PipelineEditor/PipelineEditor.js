@@ -22,6 +22,7 @@ import { connect } from 'react-redux';
 import { Grid, Header } from 'semantic-ui-react';
 import PanelGroup from 'react-panelgroup';
 
+import { DocRefIconHeader } from 'components/IconHeader';
 import Loader from 'components/Loader'
 import AddElementModal from './AddElementModal';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
@@ -89,13 +90,11 @@ const RawPipelineEditor = ({
 }) => (
     <React.Fragment>
       <Grid className="content-tabs__grid">
-        <Grid.Column width={12}><Header as="h3">
-          <DocRefImage docRefType={pipeline.docRef.type} />
-          <Header.Content>{pipeline.docRef.name}</Header.Content>
-          <Header.Subheader>
-            <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
-          </Header.Subheader>
-        </Header></Grid.Column>
+
+        <Grid.Column width={12}>
+          <DocRefIconHeader docRefType={pipeline.docRef.type} text={pipeline.docRef.name} />
+          <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
+        </Grid.Column>
         <Grid.Column width={4}>
           <SavePipeline pipelineId={pipelineId} pipeline={pipeline} savePipeline={savePipeline} />
           <CreateChildPipeline
@@ -142,7 +141,7 @@ const RawPipelineEditor = ({
             )}
         </PanelGroup>
       </div>
-    </React.Fragment>
+    </React.Fragment >
 
   );
 
