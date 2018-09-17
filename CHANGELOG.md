@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.6] - 2018-09-17
+
 * Added additional event logging to stepping.
 
 * An activity property with an id of `disableQueryInfo` can now be used to disable the query info popup on a per activity basis.
@@ -898,7 +900,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.6...HEAD
+[v5.5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.5.0-beta.5...v5.5.0-beta.6
 [v5.5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.5.0-beta.4...v5.5.0-beta.5
 [v5.5.0-beta.4]: https://github.com/gchq/stroom/compare/v5.5.0-beta.3...v5.5.0-beta.4
 [v5.5.0-beta.3]: https://github.com/gchq/stroom/compare/v5.5.0-beta.2...v5.5.0-beta.3
