@@ -46,7 +46,8 @@ public class CoreTestModule extends AbstractModule {
             final AppConfig appConfig = YamlUtil.read(inputStream);
             install(new AppConfigModule(appConfig));
         } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+            throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
+                    "the repo to create one.", e);
         }
 
         install(new CoreModule());
