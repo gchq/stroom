@@ -179,6 +179,9 @@ else
     echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs}${NC}]"
 
+    # Ensure we have a local.yml file as the integration tests will need it
+    ./local.yml.sh
+
     #Do the gradle build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
     ./gradlew -PdumpFailedTestXml=true -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist ${extraBuildArgs}
