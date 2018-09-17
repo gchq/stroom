@@ -22,7 +22,6 @@
     "@types/recompose": "^0.26.5",
     "@types/redux-actions": "^2.3.0",
     "@types/redux-form": "^7.4.7",
-    "@types/redux-localstorage": "^1.0.8",
     "@types/redux-logger": "^3.0.6",
     "@types/redux-thunk": "^2.1.0",
     "@types/sjcl": "^1.0.28",

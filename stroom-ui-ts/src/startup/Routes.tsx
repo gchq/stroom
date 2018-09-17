@@ -19,9 +19,10 @@ import { Route, Router, Switch, withRouter } from "react-router-dom";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 
-import ErrorPage from "../components/ErrorPage";
-import { appChromeRoutes } from "../sections/AppChrome";
-import { Processing } from "../sections/Processing";
+// TODO
+// import ErrorPage from "../components/ErrorPage";
+// import { appChromeRoutes } from "../sections/AppChrome";
+// import { Processing } from "../sections/Processing";
 import { HandleAuthenticationResponse } from "./Authentication";
 
 import withConfig from "./withConfig";
@@ -80,23 +81,25 @@ const Routes = ({
         )}
       />
 
-      <Route exact path="/error" component={ErrorPage} />
+      {/* TODO */}
+      {/* <Route exact path="/error" component={ErrorPage} /> */}
 
-      {appChromeRoutes.map((p, i) => (
+      {/* TODO */}
+      {/* {appChromeRoutes.map((p, i) => (
         <PrivateRoute key={i} {...p} />
-      ))}
+      ))} */}
 
-      {/* Direct paths -- these paths make sections accessible outside the AppChrome
+      {/* TODO Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
-      <PrivateRoute
+      {/* <PrivateRoute
         exact
         path="/trackers"
         referrer="/trackers"
         render={() => <Processing />}
-      />
+      /> */}
 
-      {/* Default route */}
-      <Route render={appChromeRoutes.notFound} />
+      {/* Default route TODO */}
+      {/* <Route render={appChromeRoutes.notFound} /> */}
     </Switch>
   </Router>
 );

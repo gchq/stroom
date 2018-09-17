@@ -1,7 +1,9 @@
-import { compose, lifecycle, branch, renderComponent } from "recompose";
+import { compose, lifecycle, branch, renderNothing } from "recompose";
 import { connect } from "react-redux";
 
-import Loader from "../components/Loader";
+// TODO
+// import Loader from "../components/Loader";
+// renderComponent(() => <Loader message="Awaiting config..." />)
 import { fetchConfig } from "./config";
 
 /**
@@ -23,8 +25,5 @@ export default compose(
       this.props.fetchConfig();
     }
   }),
-  branch(
-    ({ config: { isReady } }) => !isReady,
-    renderComponent(() => <Loader message="Awaiting config..." />)
-  )
+  branch(({ config: { isReady } }) => !isReady, renderNothing)
 );

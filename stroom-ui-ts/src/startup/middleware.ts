@@ -23,7 +23,7 @@ import logger from "redux-logger";
 
 const enhancers = [];
 if (process.env.NODE_ENV === "development") {
-  const devToolsExtension = window.devToolsExtension;
+  const devToolsExtension = (<any>window).devToolsExtension;
 
   if (typeof devToolsExtension === "function") {
     enhancers.push(devToolsExtension());
