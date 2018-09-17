@@ -1,5 +1,6 @@
 .app-container {
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: row;
 }
@@ -38,6 +39,12 @@
 
 .app-chrome__sidebar_header {
   position: absolute;
+}
+
+.AppChrome__MenuItemIcon {
+  display: inline-block;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 .sidebar__menu-item.nav {
@@ -114,15 +121,6 @@
 
 .content-tabs__close-btn:hover {
   color: red;
-}
-
-.ui.header:first-child {
-  padding-top: 0.5rem !important; // semantic UI has a strange fixation with negative margins
-}
-
-.app-chrome__content .ui.grid h3 {
-  // Correctly align the title
-  // padding-top: 0.3rem !important;
 }
 
 .sidebar__logo {

@@ -19,8 +19,8 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, withHandlers } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button } from 'semantic-ui-react/dist/commonjs';
 
+import Button from 'components/Button';
 import { actionCreators as selectableItemListingActionCreators } from 'lib/withSelectableItemListing';
 import { actionCreators as appChromeActionCreators } from './redux';
 import withLocalStorage from 'lib/withLocalStorage';
@@ -30,6 +30,7 @@ import {
   RenameDocRefDialog,
   CopyDocRefDialog,
   DeleteDocRefDialog,
+  NewDocRefDialog,
   withDocumentTree,
 } from 'components/FolderExplorer';
 
@@ -176,6 +177,7 @@ const enhance = compose(
   withSelectableItemListing(({ openMenuItems, menuItemOpened, areMenuItemsOpen, selectionToggled }) => ({
     listingId: LISTING_ID,
     items: openMenuItems,
+    getKey: m => m.key,
     openItem: m => m.onClick(),
     enterItem: m => menuItemOpened(m.key, true),
     goBack: m => {
@@ -184,8 +186,8 @@ const enhance = compose(
           menuItemOpened(m.key, false);
         } else if (m.parentDocRef) {
           // Can we bubble back up to the parent folder of the current selection?
-          let newSelection = openMenuItems.findIndex(({key}) => key === m.parentDocRef.uuid);
-          selectionToggled(LISTING_ID, newSelection);
+          let newSelection = openMenuItems.find(({key}) => key === m.parentDocRef.uuid);
+          selectionToggled(LISTING_ID, newSelection.key);
           menuItemOpened(m.parentDocRef.uuid, false);
         }
       }
@@ -244,10 +246,11 @@ const AppChrome = ({
   return (
     <div className={`app-container ${theme}`}>
       <div className="app-chrome flat">
-        <MoveDocRefDialog />
-        <RenameDocRefDialog />
-        <DeleteDocRefDialog />
-        <CopyDocRefDialog />
+        <NewDocRefDialog listingId={LISTING_ID} />
+        <MoveDocRefDialog listingId={LISTING_ID} />
+        <RenameDocRefDialog listingId={LISTING_ID} />
+        <DeleteDocRefDialog listingId={LISTING_ID} />
+        <CopyDocRefDialog listingId={LISTING_ID} />
         <div className="raised-high">
           {isExpanded ? (
             <React.Fragment>

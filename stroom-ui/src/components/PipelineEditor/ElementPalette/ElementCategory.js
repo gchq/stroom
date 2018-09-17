@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { compose, withState, withProps, branch, renderNothing } from 'recompose';
 
-import { Icon, Accordion } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import NewElement from './NewElement';
 import { ElementCategories } from '../ElementCategories';
@@ -22,18 +22,14 @@ const ElementCategory = ({
   category, elementsWithData, isOpen, setIsOpen, displayTitle, icon,
 }) => (
   <div className="element-palette-category">
-    <Accordion styled>
-      <Accordion.Title active={isOpen} onClick={() => setIsOpen(!isOpen)} className="flat">
-        <Icon name="dropdown" className="borderless" /> {displayTitle}
-      </Accordion.Title>
-      <Accordion.Content active={isOpen} className="flat">
-        <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
-          {elementsWithData.map(e => (
-            <NewElement key={e.element.type} elementWithData={e} />
-          ))}
-        </div>
-      </Accordion.Content>
-    </Accordion>
+    <div onClick={() => setIsOpen(!isOpen)}>
+      <FontAwesomeIcon icon="caret-down" className="borderless" /> {displayTitle}
+    </div>
+    <div active={isOpen} className="flat">
+      <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
+        {elementsWithData.map(e => <NewElement key={e.element.type} elementWithData={e} />)}
+      </div>
+    </div>
   </div>
 );
 

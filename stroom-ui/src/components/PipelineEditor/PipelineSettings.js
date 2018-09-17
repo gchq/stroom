@@ -4,9 +4,8 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { Button, Form, Header } from 'semantic-ui-react';
-import { TextAreaField } from 'react-semantic-redux-form';
-
+import Button from 'components/Button';
+import IconHeader from 'components/IconHeader';
 import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
 
@@ -54,35 +53,33 @@ const PipelineSettings = ({
   pipelineId, onConfirm, onCancel, isOpen, invalid, submitting,
 }) => (
   <ThemedModal
-    open={isOpen}
+    isOpen={isOpen}
     onClose={onCancel}
     size="tiny"
     dimmer="inverted"
-    header={<Header className="header" content="Pipeline Settings" />}
+    header={<IconHeader icon='cog' text='Pipeline Settings' />}
     content={
-      <Form>
-        <Form.Field>
+      <form>
+        <div>
           <label>Description</label>
           <Field
             name="description"
-            component={TextAreaField}
+            component='textarea'
             type="text"
             placeholder="Description"
             autoFocus
           />
-        </Form.Field>
-      </Form>
+        </div>
+      </form>
     }
     actions={
       <React.Fragment>
         <Button
-          positive
-          content="Submit"
+          text="Submit"
           disabled={invalid || submitting}
           onClick={onConfirm}
-          form="pipelineSettings"
         />
-        <Button negative content="Cancel" onClick={onCancel} />
+        <Button text="Cancel" onClick={onCancel} />
       </React.Fragment>
     }
   />

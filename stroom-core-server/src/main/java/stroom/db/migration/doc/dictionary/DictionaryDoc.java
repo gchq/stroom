@@ -28,7 +28,7 @@ import java.util.Objects;
 public class DictionaryDoc extends Doc {
     private static final long serialVersionUID = -4208920620555926044L;
 
-    public static final String ENTITY_TYPE = "Dictionary";
+    public static final String DOCUMENT_TYPE = "Dictionary";
 
     private String description;
     @JsonIgnore

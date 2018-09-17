@@ -17,22 +17,13 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
+import { storiesOf } from '@storybook/react';
 import { Field, reduxForm } from 'redux-form';
-import { Form } from 'semantic-ui-react';
 
 import DocTypeFilters from './DocTypeFilters';
 import DocRefTypePicker from './DocRefTypePicker';
-import { actionCreators } from './redux';
-import { testDocRefsTypes } from './test';
-
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const enhance = compose(
   connect(
@@ -50,8 +41,8 @@ const enhance = compose(
 );
 
 let TestForm = ({ thisForm }) => (
-  <Form>
-    <Form.Field>
+  <form>
+    <div>
       <label>Chosen Doc Type</label>
       <Field
         name="docType"
@@ -59,8 +50,8 @@ let TestForm = ({ thisForm }) => (
           <DocRefTypePicker pickerId="test1" onChange={onChange} value={value} />
         )}
       />
-    </Form.Field>
-    <Form.Field>
+    </div>
+    <div>
       <label>Chosen Doc Types</label>
       <Field
         name="docTypes"
@@ -68,7 +59,7 @@ let TestForm = ({ thisForm }) => (
           <DocTypeFilters onChange={onChange} value={value} />
         )}
       />
-    </Form.Field>
+    </div>
     {thisForm &&
       thisForm.values && (
         <div>
@@ -76,13 +67,9 @@ let TestForm = ({ thisForm }) => (
           <div>Doc Types: {thisForm.values.docTypes.join(',')}</div>
         </div>
       )}
-  </Form>
+  </form>
 );
 
 TestForm = enhance(TestForm);
 
-storiesOf('Doc Type Filters', module)
-  .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecorator)
-  .add('Doc Type Filter', () => <TestForm />);
+storiesOf('Doc Type Filters', module).add('Doc Type Filter', () => <TestForm />);

@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'semantic-ui-react';
+
+import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
 
 const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
   <Tooltip
     trigger={
       <Button
-        className="icon-button"
         floated="right"
         circular
         icon="cogs"

@@ -17,9 +17,9 @@ import { createActions, handleActions } from 'redux-actions';
 import { createActionHandlersPerId } from 'lib/reduxFormUtils';
 
 const actionCreators = createActions({
-  XSLT_RECEIVED: (xsltId, xsltData) => ({ xsltId, xsltData }),
-  XSLT_UPDATED: (xsltId, xsltData) => ({ xsltId, xsltData }),
-  XSLT_SAVED: xsltId => ({ xsltId }),
+  XSLT_RECEIVED: (xsltUuid, xsltData) => ({ xsltUuid, xsltData }),
+  XSLT_UPDATED: (xsltUuid, xsltData) => ({ xsltUuid, xsltData }),
+  XSLT_SAVED: xsltUuid => ({ xsltUuid }),
 });
 
 const defaultState = {};
@@ -28,7 +28,7 @@ const defaultStatePerId = {
   xsltData: undefined,
 };
 
-const byXsltId = createActionHandlersPerId(({ payload: { xsltId } }) => xsltId, defaultStatePerId);
+const byXsltId = createActionHandlersPerId(({ payload: { xsltUuid } }) => xsltUuid, defaultStatePerId);
 
 const reducer = handleActions(
   byXsltId({

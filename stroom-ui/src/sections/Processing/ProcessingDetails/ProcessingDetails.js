@@ -1,6 +1,21 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import {
   compose,
   branch,
@@ -9,10 +24,7 @@ import {
   withHandlers,
 } from 'recompose';
 import { connect } from 'react-redux';
-
 import moment from 'moment';
-
-import { Grid, Checkbox, List, Card } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
@@ -59,98 +71,98 @@ const ProcessingDetails = ({
   onHandleEnableToggle,
   onHandleTrackerSelection,
 }) => (
-  <HorizontalPanel
-    className="element-details__panel"
-    title={title}
-    content={
-      <Grid centered divided columns={3} className="details-grid">
-        <Grid.Column textAlign="left" width={10}>
-          <ExpressionBuilder expressionId="trackerDetailsExpression" />
-        </Grid.Column>
-        <Grid.Column width={6}>
-          <Card.Meta>This tracker:</Card.Meta>
+    <HorizontalPanel
+      title={title}
+      content={
+        <div className='processing-details__content'>
+          <div className="processing-details__content__expression-builder" expressionId="trackerDetailsExpression" >
+            <ExpressionBuilder />
+          </div>
+          <div className="processing-details__content__properties">
+            This tracker:
 
-          <List bulleted>
-            {lastPollAgeIsDefined ? (
-              <React.Fragment>
-                <List.Item>
-                  has a <strong>last poll age</strong> of {selectedTracker.lastPollAge}
-                </List.Item>
-                <List.Item>
-                  has a <strong>task count</strong> of {selectedTracker.taskCount}
-                </List.Item>
-                <List.Item>
-                  was <strong>last active</strong>
-                  {moment(selectedTracker.trackerMs)
-                    .calendar()
-                    .toLowerCase()}
-                </List.Item>
-                <List.Item>
-                  {selectedTracker.status ? (
-                    <span>
-                      has a <strong>status</strong> of {selectedTracker.status}
-                    </span>
-                  ) : (
-                    <span>
-                      does not have a <strong>status</strong>
-                    </span>
-                  )}
-                </List.Item>
-                <List.Item>
-                  {selectedTracker.streamCount ? (
-                    <span>
-                      has a <strong>stream count</strong> of {selectedTracker.streamCount}
-                    </span>
-                  ) : (
-                    <span>
-                      does not have a <strong>stream count</strong>
-                    </span>
-                  )}
-                </List.Item>
-                <List.Item>
-                  {selectedTracker.eventCount ? (
-                    <span>
-                      has an <strong>event count</strong> of {selectedTracker.eventCount}
-                    </span>
-                  ) : (
-                    <span>
-                      does not have an <strong>event count</strong>
-                    </span>
-                  )}
-                </List.Item>
-              </React.Fragment>
-            ) : (
-              <List.Item>has not yet done any work</List.Item>
-            )}
-            <List.Item>
-              was <strong>created</strong> by '{selectedTracker.createUser}' 
+            <ul>
+              {lastPollAgeIsDefined ? (
+                <React.Fragment>
+                  <li>
+                    has a <strong>last poll age</strong> of {selectedTracker.lastPollAge}
+                  </li>
+                  <li>
+                    has a <strong>task count</strong> of {selectedTracker.taskCount}
+                  </li>
+                  <li>
+                    was <strong>last active</strong>
+                    {moment(selectedTracker.trackerMs)
+                      .calendar()
+                      .toLowerCase()}
+                  </li>
+                  <li>
+                    {selectedTracker.status ? (
+                      <span>
+                        has a <strong>status</strong> of {selectedTracker.status}
+                      </span>
+                    ) : (
+                        <span>
+                          does not have a <strong>status</strong>
+                        </span>
+                      )}
+                  </li>
+                  <li>
+                    {selectedTracker.streamCount ? (
+                      <span>
+                        has a <strong>stream count</strong> of {selectedTracker.streamCount}
+                      </span>
+                    ) : (
+                        <span>
+                          does not have a <strong>stream count</strong>
+                        </span>
+                      )}
+                  </li>
+                  <li>
+                    {selectedTracker.eventCount ? (
+                      <span>
+                        has an <strong>event count</strong> of {selectedTracker.eventCount}
+                      </span>
+                    ) : (
+                        <span>
+                          does not have an <strong>event count</strong>
+                        </span>
+                      )}
+                  </li>
+                </React.Fragment>
+              ) : (
+                  <li>has not yet done any work</li>
+                )}
+              <li>
+                was <strong>created</strong> by '{selectedTracker.createUser}'
               {moment(selectedTracker.createdOn)
-                .calendar()
-                .toLowerCase()}
-            </List.Item>
-            <List.Item>
-              was <strong>updated</strong> by '{selectedTracker.updateUser}' 
+                  .calendar()
+                  .toLowerCase()}
+              </li>
+              <li>
+                was <strong>updated</strong> by '{selectedTracker.updateUser}'
               {moment(selectedTracker.updatedOn)
-                .calendar()
-                .toLowerCase()}
-            </List.Item>
-          </List>
-        </Grid.Column>
-      </Grid>
-    }
-    onClose={() => onHandleTrackerSelection(null)}
-    titleColumns={6}
-    menuColumns={10}
-    headerMenuItems={
-      <Checkbox
-        toggle
-        checked={selectedTracker.enabled}
-        onMouseDown={() => onHandleEnableToggle(selectedTracker.filterId, selectedTracker.enabled)}
-      />
-    }
-    headerSize="h3"
-  />
-);
+                  .calendar()
+                  .toLowerCase()}
+              </li>
+            </ul>
+          </div>
+        </div>
+      }
+      onClose={() => onHandleTrackerSelection(null)}
+      titleColumns={6}
+      menuColumns={10}
+      headerMenuItems={
+        <label>
+          <input
+            type="checkbox" name="checkbox" value={selectedTracker.enabled}
+            onChange={() => onHandleEnableToggle(selectedTracker.filterId, selectedTracker.enabled)} />
+          &nbsp;Enabled?
+        </label>
+      }
+      headerSize="h3"
+    />
+  );
 
 ProcessingDetails.propTypes = {
   selectedTracker: PropTypes.object.isRequired,

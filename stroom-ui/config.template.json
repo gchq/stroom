@@ -1,14 +1,8 @@
 {
   "authenticationServiceUrl": "https://IP_ADDRESS/authService/authentication/v1",
   "authorisationServiceUrl": "http://IP_ADDRESS:8080/api/authorisation/v1",
-  "streamTaskServiceUrl": "http://IP_ADDRESS:8080/api/streamtasks/v1",
-  "pipelineServiceUrl": "http://IP_ADDRESS:8080/api/pipelines/v1",
-  "xsltServiceUrl": "http://IP_ADDRESS:8080/api/xslt/v1",
-  "explorerServiceUrl": "http://IP_ADDRESS:8080/api/explorer/v1",
-  "elementServiceUrl": "http://IP_ADDRESS:8080/api/elements/v1",
-  "streamAttributeMapServiceUrl": "http://IP_ADDRESS:8080/api/streamattributemap/v1",
+  "stroomBaseServiceUrl": "http://IP_ADDRESS:8080/api",
   "advertisedUrl": "http://IP_ADDRESS:5001",
-  "dataServiceUrl": "http://IP_ADDRESS:8080/api/data/v1",
   "authUsersUiUrl": "https://IP_ADDRESS:9443/userSearch",
   "authTokensUiUrl": "https://IP_ADDRESS:9443/tokens",
   "appClientId": "stroom-ui"

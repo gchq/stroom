@@ -16,15 +16,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
+import { storiesOf } from '@storybook/react';
 
 import { compose } from 'recompose';
-
-import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
 
 import PipelineEditor from './index';
 
@@ -36,7 +30,6 @@ import { actionCreators as pipelineActionCreators } from './redux';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const {
   pipelineReceived,
@@ -47,20 +40,12 @@ const {
 
 import { testPipelines } from './test';
 
-const pipelineStories = storiesOf('Pipeline Editor', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecorator)
-  .addDecorator(DragDropDecorator)
-  .addDecorator(StoryRouter());
+const pipelineStories = storiesOf('Pipeline Editor', module);
 
 Object.keys(testPipelines).forEach((k) => {
   pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />);
 });
 
-storiesOf('Element Palette', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(ReduxDecorator)
-  .addDecorator(DragDropDecorator)
-  .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
+storiesOf('Element Palette', module).add('Element Palette', () => (
+  <ElementPalette pipelineId="longPipeline" />
+));

@@ -1,18 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'semantic-ui-react';
+
+import Button from 'components/Button';
 import Tooltip from 'components/Tooltip';
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (
   <Tooltip
     trigger={
       <Button
-        className="icon-button"
-        floated="right"
         circular
         icon="save"
-        color={isDirty ? 'blue' : undefined}
-        loading={isSaving}
+        selected={isDirty}
         onClick={() => {
           if (isDirty) savePipeline(pipelineId);
         }}

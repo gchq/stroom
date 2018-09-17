@@ -15,33 +15,43 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
+import { createActionHandlerPerId } from 'lib/reduxFormUtils';
 import { actionCreators as documentTreeActionCreators } from './documentTree';
 
 const { docRefsMoved } = documentTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_MOVE: (uuids, destinationUuid) => ({ uuids, destinationUuid }),
-  COMPLETE_DOC_REF_MOVE: () => ({ uuids: [] }),
+  PREPARE_DOC_REF_MOVE: (listingId, uuids, destinationUuid) => ({
+    listingId,
+    uuids,
+    destinationUuid,
+  }),
+  COMPLETE_DOC_REF_MOVE: listingId => ({ listingId, uuids: [] }),
 });
 
 const { prepareDocRefMove, completeDocRefMove } = actionCreators;
 
+// listings, keyed on ID, there may be several on a page
+const defaultState = {};
+
 // Array of doc refs being moved
-const defaultState = { isMoving: false, uuids: [], destinationUuid: undefined };
+const defaultListingState = { isMoving: false, uuids: [], destinationUuid: undefined };
+
+const byListingId = createActionHandlerPerId(
+  ({ payload: { listingId } }) => listingId,
+  defaultListingState,
+);
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefMove, completeDocRefMove)]: (
-      state,
-      { payload: { uuids, destinationUuid } },
-    ) => ({
+    [combineActions(prepareDocRefMove, completeDocRefMove)]: byListingId((state, { payload: { uuids, destinationUuid } }) => ({
       isMoving: uuids.length > 0,
       uuids,
       destinationUuid,
-    }),
+    })),
     [docRefsMoved]: () => defaultState,
   },
   defaultState,
 );
 
-export { actionCreators, reducer };
+export { actionCreators, reducer, defaultListingState };

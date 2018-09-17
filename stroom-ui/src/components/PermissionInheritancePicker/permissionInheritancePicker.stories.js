@@ -16,20 +16,14 @@
 import React, { Component } from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-
 import { Field, reduxForm } from 'redux-form';
-import { Form } from 'semantic-ui-react';
-import { storiesOf, addDecorator } from '@storybook/react';
-
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { storiesOf } from '@storybook/react';
 
 import {
   PermissionInheritancePicker,
   permissionInheritanceValues,
 } from 'components/PermissionInheritancePicker';
-
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const enhance = compose(
   connect(({ form }) => ({ thisForm: form.permissionInheritanceTest }), {}),
@@ -39,8 +33,8 @@ const enhance = compose(
 );
 
 let TestForm = ({ thisForm }) => (
-  <Form>
-    <Form.Field>
+  <form>
+    <div>
       <label>Chosen Permission Inheritance</label>
       <Field
         name="permissionInheritance"
@@ -48,18 +42,17 @@ let TestForm = ({ thisForm }) => (
           <PermissionInheritancePicker onChange={onChange} value={value} />
         )}
       />
-    </Form.Field>
+    </div>
     {thisForm &&
       thisForm.values && (
         <div>
           <div>Permission Inheritance: {thisForm.values.permissionInheritance}</div>
         </div>
       )}
-  </Form>
+  </form>
 );
 
 TestForm = enhance(TestForm);
 
 storiesOf('Permission Inheritance Picker', module)
-  .addDecorator(ReduxDecorator)
   .add('Permission Inheritance Picker', () => <TestForm />);

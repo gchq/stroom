@@ -9,15 +9,16 @@ const SELECTION_BEHAVIOUR = {
 };
 
 const actionCreators = createActions({
-  SELECTABLE_LISTING_MOUNTED: (listingId, items, selectionBehaviour) => ({
+  SELECTABLE_LISTING_MOUNTED: (listingId, items, selectionBehaviour, getKey) => ({
     listingId,
     items,
     selectionBehaviour,
+    getKey,
   }),
   FOCUS_UP: listingId => ({ listingId, direction: -1 }),
   FOCUS_DOWN: listingId => ({ listingId, direction: 1 }),
   SELECT_FOCUSSED: (listingId, keyIsDown = {}) => ({ listingId, keyIsDown }),
-  SELECTION_TOGGLED: (listingId, index, keyIsDown = {}) => ({ listingId, index, keyIsDown }),
+  SELECTION_TOGGLED: (listingId, itemKey, keyIsDown = {}) => ({ listingId, itemKey, keyIsDown }),
 });
 
 const {
@@ -44,7 +45,7 @@ const reducer = handleActions(
   byListingId({
     SELECTABLE_LISTING_MOUNTED: (
       state,
-      { payload: { items, selectionBehaviour } },
+      { payload: { items, selectionBehaviour, getKey } },
       listingState,
     ) => {
       // Attempt to rescue previous focus index
@@ -62,6 +63,7 @@ const reducer = handleActions(
         focussedItem,
         items,
         selectionBehaviour,
+        getKey,
       };
     },
     [combineActions(focusUp, focusDown)]: (
@@ -83,7 +85,7 @@ const reducer = handleActions(
     },
     [combineActions(selectFocussed, selectionToggled)]: (
       state,
-      { payload: { index, keyIsDown } },
+      { payload: { itemKey, keyIsDown } },
       listingState,
     ) => {
       let {
@@ -91,8 +93,10 @@ const reducer = handleActions(
         focusIndex,
         lastSelectedIndex,
         items,
+        getKey,
         selectionBehaviour,
       } = listingState;
+      const index = items.map(getKey).findIndex(k => k === itemKey);
       const indexToUse = index !== undefined && index >= 0 ? index : focusIndex;
 
       if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {

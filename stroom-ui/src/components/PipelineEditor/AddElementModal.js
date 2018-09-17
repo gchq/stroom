@@ -1,16 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { Header, Form, Button } from 'semantic-ui-react';
-import { InputField } from 'react-semantic-redux-form';
-
+import IconHeader from 'components/IconHeader';
+import Button from 'components/Button';
 import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
-
 import { uniqueElementName } from './pipelineUtils';
 import { required, minLength2 } from 'lib/reduxFormUtils';
 
@@ -79,35 +76,29 @@ const AddElementModal = ({
 }) => (
   <ThemedModal
     size="tiny"
-    open={isOpen}
+    isOpen={isOpen}
     onClose={onCancelNewElement}
     dimmer="inverted"
-    header={<Header content="Add New Element" />}
+    header={<IconHeader icon="file" text="Add New Element" />}
     content={
-      <Form id="newElementForm">
-        <Form.Field>
+      <form>
+        <div>
           <label>Name</label>
           <Field
             name="name"
-            component={InputField}
+            component="input"
             type="text"
             placeholder="Name"
             validate={[required, minLength2, uniqueElementName(pipeline)]}
             autoFocus
           />
-        </Form.Field>
-      </Form>
+        </div>
+      </form>
     }
     actions={
       <React.Fragment>
-        <Button
-          positive
-          content="Submit"
-          disabled={submitDisabled}
-          onClick={onConfirmNewElement}
-          form="newElementForm"
-        />
-        <Button negative content="Cancel" onClick={onCancelNewElement} />
+        <Button text="Submit" disabled={submitDisabled} onClick={onConfirmNewElement} />
+        <Button text="Cancel" onClick={onCancelNewElement} />
       </React.Fragment>
     }
   />

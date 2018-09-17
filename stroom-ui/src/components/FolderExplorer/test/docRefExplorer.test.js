@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { createStore } from 'redux';
-import uuidv4 from 'uuid/v4';
 
 import { iterateNodes } from 'lib/treeUtils';
 import { combineReducers } from 'redux';
@@ -28,7 +27,7 @@ import {
   reducer as docRefTypesReducer,
 } from '../../DocRefTypes/redux';
 
-import { testTree } from './index';
+import { testTree } from './documentTree.testData';
 import { testDocRefsTypes } from '../../DocRefTypes/test';
 
 const { docTreeReceived } = folderExplorerActionCreators;

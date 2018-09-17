@@ -17,9 +17,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, withState, branch, renderComponent, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
-import { Checkbox } from 'semantic-ui-react';
 
-import Loader from 'components/Loader'
+import Loader from 'components/Loader';
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
@@ -74,35 +73,37 @@ const ExpressionBuilder = ({
   inEditMode,
   setEditableByUser,
 }) => (
-    <LineContainer
-      className="Expression-editor__graph"
-      lineContextId={`expression-lines-${expressionId}`}
-      lineElementCreators={lineElementCreators}
-    >
-      <DeleteExpressionItem expressionId={expressionId} />
-      {showModeToggle ? (
-        <Checkbox
-          label="Edit Mode"
-          toggle
+  <LineContainer
+    className="Expression-editor__graph"
+    lineContextId={`expression-lines-${expressionId}`}
+    lineElementCreators={lineElementCreators}
+  >
+    <DeleteExpressionItem expressionId={expressionId} />
+    {showModeToggle ? (
+      <React.Fragment>
+        <label>Edit Mode</label>
+        <input
+          type="checkbox"
           checked={inEditMode}
           onChange={() => setEditableByUser(!inEditMode)}
         />
-      ) : (
-          undefined
-        )}
-      {inEditMode ? (
-        <ExpressionOperator
-          dataSource={dataSource}
-          expressionId={expressionId}
-          isRoot
-          isEnabled
-          operator={expression}
-        />
-      ) : (
-          <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
-        )}
-    </LineContainer>
-  );
+      </React.Fragment>
+    ) : (
+      undefined
+    )}
+    {inEditMode ? (
+      <ExpressionOperator
+        dataSource={dataSource}
+        expressionId={expressionId}
+        isRoot
+        isEnabled
+        operator={expression}
+      />
+    ) : (
+      <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
+    )}
+  </LineContainer>
+);
 
 const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
 

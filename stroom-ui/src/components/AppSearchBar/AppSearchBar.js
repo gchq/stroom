@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { compose, withHandlers, withProps, withStateHandlers } from 'recompose';
 import { connect } from 'react-redux';
-import { Input, Icon } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { findItem, filterTree } from 'lib/treeUtils';
@@ -138,6 +138,7 @@ const enhance = compose(
     listingId: pickerId,
     items: docRefs,
     openItem: onChange,
+    getKey: d => d.uuid,
     enterItem: d => navigateToFolder(pickerId, d),
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
@@ -153,13 +154,13 @@ const enhance = compose(
   }) => {
     let headerTitle;
     let headerIcon;
-    let headerAction = () => {};
+    let headerAction = () => { };
 
     switch (searchMode) {
       case SEARCH_MODE.NAVIGATION: {
         headerTitle = thisFolder.name;
         if (parentFolder) {
-          headerIcon = 'arrow left';
+          headerIcon = 'arrow-left';
           headerAction = () => thisNavigateToFolder(parentFolder);
         } else {
           headerIcon = 'folder';
@@ -206,46 +207,45 @@ const AppSearchBar = ({
   onSearchBlur,
   onSearchTermChange,
 }) => (
-  <div className={`dropdown ${className}`}>
-    <Input
-      className="border flat app-search-bar__input"
-      icon="search"
-      placeholder="Search..."
-      value={valueToShow}
-      onFocus={onSearchFocus}
-      onBlur={onSearchBlur}
-      onChange={onSearchTermChange}
-    />
-    <div
-      tabIndex={0}
-      onKeyDown={onKeyDownWithShortcuts}
-      className="dropdown__content app-search-bar__dropdown-content"
-    >
-      <div className="app-search-header">
-        <Icon name={headerIcon} size="large" onClick={headerAction} />
-        {headerTitle}
-        <ModeOptionButtons pickerId={pickerId} />
-      </div>
-      <div className="app-search-listing">
-        {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
-        {docRefs.map((searchResult, index) => (
-          <DocRefListingEntry
-            key={searchResult.uuid}
-            index={index}
-            listingId={pickerId}
-            docRef={searchResult}
-            openDocRef={onChange}
-            enterFolder={thisNavigateToFolder}
-          >
-            {provideBreadcrumbs && (
-              <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={thisNavigateToFolder} />
-            )}
-          </DocRefListingEntry>
-        ))}
+    <div className={`dropdown ${className}`}>
+      <input
+        className="app-search-bar__input"
+        icon="search"
+        placeholder="Search..."
+        value={valueToShow}
+        onFocus={onSearchFocus}
+        onBlur={onSearchBlur}
+        onChange={onSearchTermChange}
+      />
+      <div
+        tabIndex={0}
+        onKeyDown={onKeyDownWithShortcuts}
+        className="dropdown__content app-search-bar__dropdown-content"
+      >
+        <div className="app-search-header">
+          <FontAwesomeIcon icon={headerIcon} size="lg" onClick={headerAction} />
+          <div className="app-search-header__text">{headerTitle}</div>
+          <ModeOptionButtons pickerId={pickerId} />
+        </div>
+        <div className="app-search-listing">
+          {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
+          {docRefs.map(searchResult => (
+            <DocRefListingEntry
+              key={searchResult.uuid}
+              listingId={pickerId}
+              docRef={searchResult}
+              openDocRef={onChange}
+              enterFolder={thisNavigateToFolder}
+            >
+              {provideBreadcrumbs && (
+                <DocRefBreadcrumb docRefUuid={searchResult.uuid} openDocRef={thisNavigateToFolder} />
+              )}
+            </DocRefListingEntry>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
 const EnhancedAppSearchBar = enhance(AppSearchBar);
 
@@ -272,7 +272,7 @@ class AppSearchWithFocus extends React.Component {
   }
   render() {
     return (
-      <span>
+      <React.Fragment>
         <span tabIndex={0} ref={this.dummyFocusRef} onFocus={() => this.dummyFocusRef.current.blur()} />
         <EnhancedAppSearchBar
           {...this.props}
@@ -281,7 +281,7 @@ class AppSearchWithFocus extends React.Component {
             this.props.onChange(d);
           }}
         />
-      </span>
+      </React.Fragment>
     );
   }
 }

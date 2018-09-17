@@ -19,15 +19,11 @@ import React from 'react';
 import { storiesOf, addDecorator } from '@storybook/react';
 
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import UserSettings from './UserSettings';
-
-import 'semantic/dist/semantic.min.css';
 
 const PollyDecoratorWithTestData = PollyDecorator({});
 
 const stories = storiesOf('User Settings', module)
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecorator)
   .add('Logged in', () => <UserSettings />);

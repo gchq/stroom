@@ -15,24 +15,18 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { compose, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
-
-import { Icon, Button } from 'semantic-ui-react';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { canMove } from 'lib/treeUtils';
 import ItemTypes from './dragDropTypes';
-
 import ExpressionTerm from './ExpressionTerm';
-
 import { actionCreators } from './redux';
-
 import { LineTo } from 'components/LineTo';
-
 import { LOGICAL_OPERATORS } from './logicalOperators';
+import Button from 'components/Button';
 
 const {
   expressionTermAdded,
@@ -148,16 +142,12 @@ const enhance = compose(
       classNames.push('expression-item--disabled');
     }
 
-    let enabledIcon = 'checkmark';
     let enabledColour = 'grey';
-    if (isRoot) {
-      enabledIcon = 'dont';
-    } else if (operator.enabled) {
+    if (operator.enabled) {
       enabledColour = 'blue';
     }
 
     return {
-      enabledIcon,
       enabledColour,
       dndBarColour,
       className: classNames.join(' '),
@@ -187,45 +177,42 @@ const ExpressionOperator = ({
   onRequestDeleteOperator,
   onEnabledToggled,
 
-  enabledIcon,
   enabledColour,
 }) => (
   <div className={className}>
     {connectDropTarget(<div>
       {connectDragSource(<span id={`expression-item${operator.uuid}`}>
-        <Icon color={dndBarColour} name="bars" />
+        <FontAwesomeIcon color={dndBarColour} icon="bars" />
       </span>)}
 
-      <Button.Group>
-        {LOGICAL_OPERATORS.map(l => (
-          <Button
-            color={operator.op === l ? 'blue' : undefined}
-            key={l}
-            compact
-            onClick={() => onOpChange(l)}
-          >
-            {l}
-          </Button>
-          ))}
-      </Button.Group>
+      {LOGICAL_OPERATORS.map((l, i) => (
+        <Button
+          selected={operator.op === l}
+          key={l}
+          groupPosition={
+              i === 0 ? 'left' : LOGICAL_OPERATORS.length - 1 === i ? 'right' : 'middle'
+            }
+          onClick={() => onOpChange(l)}
+          text={l}
+        />
+        ))}
 
-      <Button.Group floated="right">
-        <Button compact onClick={onAddTerm}>
-          <Icon name="add" />
-            Term
-        </Button>
-        <Button compact onClick={onAddOperator}>
-          <Icon name="add" />
-            Group
-        </Button>
-        <Button icon={enabledIcon} compact color={enabledColour} onClick={onEnabledToggled} />
-        {!isRoot ? (
-          <Button icon="trash" compact onClick={onRequestDeleteOperator} />
-          ) : (
-            <Button disabled icon="dont" compact />
+      <div className="ExpressionItem__buttons">
+        <Button icon="plus" text="Term" groupPosition="left" onClick={onAddTerm} />
+        <Button icon="plus" text="Group" groupPosition={isRoot ? 'right' : "middle"} onClick={onAddOperator} />
+        {!isRoot && (
+        <React.Fragment>
+          <Button
+            icon="check"
+            groupPosition="middle"
+            color={enabledColour}
+            onClick={onEnabledToggled}
+          />
+          <Button icon="trash" groupPosition="right" onClick={onRequestDeleteOperator} />
+        </React.Fragment>
           )}
-      </Button.Group>
-    </div>)}
+      </div>
+                       </div>)}
 
     <div className="operator__children">
       {isOver && dropTarget.canDrop && <div className="operator__placeholder" />}

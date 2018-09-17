@@ -17,19 +17,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
 import { Field, reduxForm } from 'redux-form';
-import { Form } from 'semantic-ui-react';
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+import { storiesOf } from '@storybook/react';
 
+import { addThemedStories } from 'lib/themedStoryGenerator';
 import AppSearchBar from './AppSearchBar';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const enhanceForm = compose(
   connect(
@@ -46,12 +40,12 @@ const enhanceForm = compose(
 );
 
 let AppSearchAsForm = ({ pickerId, typeFilters, thisForm }) => (
-  <Form>
-    <Form.Field>
+  <form>
+    <div>
       <label htmlFor="someName">Some Name</label>
       <Field name="someName" component="input" type="text" />
-    </Form.Field>
-    <Form.Field>
+    </div>
+    <div>
       <label>Chosen Doc Ref</label>
       <Field
         name="chosenDocRef"
@@ -64,14 +58,17 @@ let AppSearchAsForm = ({ pickerId, typeFilters, thisForm }) => (
           />
         )}
       />
-    </Form.Field>
+    </div>
     {thisForm &&
       thisForm.values && (
         <div>
+          <h3>Form Values Observed</h3>
+          Name: {thisForm.values.someName}
+          <br />
           Chosen Doc Ref: {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
         </div>
       )}
-  </Form>
+  </form>
 );
 
 AppSearchAsForm = enhanceForm(AppSearchAsForm);
@@ -81,16 +78,16 @@ const enhancePicker = withState('pickedDocRef', 'setPickedDocRef', undefined);
 let AppSearchAsPicker = ({
   pickerId, typeFilters, pickedDocRef, setPickedDocRef,
 }) => (
-  <div>
-    <AppSearchBar
-      pickerId={pickerId}
-      typeFilters={typeFilters}
-      onChange={setPickedDocRef}
-      value={pickedDocRef}
-    />
-    <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
-  </div>
-);
+    <div>
+      <AppSearchBar
+        pickerId={pickerId}
+        typeFilters={typeFilters}
+        onChange={setPickedDocRef}
+        value={pickedDocRef}
+      />
+      <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
+    </div>
+  );
 
 AppSearchAsPicker = enhancePicker(AppSearchAsPicker);
 
@@ -127,12 +124,9 @@ class AppSearchAsNavigator extends React.Component {
   }
 }
 
-storiesOf('App Search Bar', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(KeyIsDownDecorator())
-  .addDecorator(ReduxDecorator)
-  .addDecorator(StoryRouter())
+const stories = storiesOf('App Search Bar', module);
+
+stories
   .add('Search Bar (global)', () => <AppSearchAsNavigator pickerId="global-search" />)
   .add('Doc Ref Form', () => <AppSearchAsForm pickerId="docRefForm1" />)
   .add('Doc Ref Picker', () => <AppSearchAsPicker pickerId="docRefPicker2" />)
@@ -145,3 +139,5 @@ storiesOf('App Search Bar', module)
   .add('Doc Ref Form (Folders)', () => (
     <AppSearchAsForm pickerId="docRefForm5" typeFilters={['Folder']} />
   ));
+
+addThemedStories(stories, <AppSearchAsNavigator pickerId="global-search" />);

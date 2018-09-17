@@ -16,81 +16,79 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, lifecycle, renderComponent, branch, withHandlers } from 'recompose';
-import { withRouter } from 'react-router-dom';
+import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Grid } from 'semantic-ui-react';
 
+import DocRefEditor from 'components/DocRefEditor';
 import Loader from 'components/Loader';
-import DocRefImage from 'components/DocRefImage';
-import SaveXslt from './SaveXslt';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
-import { fetchXslt } from './xsltResourceClient';
-import { saveXslt } from './xsltResourceClient';
-import ThemedAceEditor from 'components/ThemedAceEditor'
+import { fetchXslt, saveXslt } from './xsltResourceClient';
+import ThemedAceEditor from 'components/ThemedAceEditor';
 import { actionCreators } from './redux';
 
 const { xsltUpdated } = actionCreators;
 
 const enhance = compose(
-  withRouter,
-  withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
-  }),
   connect(
-    ({ xslt }, { xsltId }) => ({
-      xslt: xslt[xsltId],
+    ({ xsltEditor }, { xsltUuid }) => ({
+      xsltState: xsltEditor[xsltUuid],
     }),
     {
-      fetchXslt, xsltUpdated, saveXslt,
+      fetchXslt,
+      xsltUpdated,
+      saveXslt,
     },
   ),
   lifecycle({
     componentDidMount() {
-      const { fetchXslt, xsltId } = this.props;
+      const { fetchXslt, xsltUuid } = this.props;
 
-      fetchXslt(xsltId);
+      fetchXslt(xsltUuid);
     },
   }),
-  branch(({ xslt }) => !xslt, renderComponent(() => <Loader message="Loading XSLT..." />)),
+  branch(
+    ({ xsltState }) => !xsltState,
+    renderComponent(() => <Loader message="Loading XSLT..." />),
+  ),
+  withHandlers({
+    onContentChange: ({ xsltUpdated, xsltUuid, xsltState: { xsltData } }) => (newValue) => {
+      if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+    },
+    onClickSave: ({ saveXslt, xsltUuid }) => e => saveXslt(xsltUuid),
+  }),
+  withProps(({ xsltState: { isDirty, isSaving }, onClickSave }) => ({
+    actionBarItems: [
+      {
+        icon: 'save',
+        disabled: !(isDirty || isSaving),
+        title: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
+        onClick: onClickSave,
+      },
+    ],
+  })),
 );
 
 const XsltEditor = ({
-  xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history,
+  xsltUuid, xsltState: { xsltData }, onContentChange, actionBarItems,
 }) => (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Column width={12}>
-          <Header as="h3">
-            <DocRefImage docRefType='XSLT' />
-            <Header.Content>{xsltId}</Header.Content>
-            <Header.Subheader>
-              <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={openDocRef} />
-            </Header.Subheader>
-          </Header>
-        </Grid.Column>
-        <Grid.Column width={4}>
-          <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
-        </Grid.Column>
-      </Grid>
-      <div className="xslt-editor">
-        <div className="xslt-editor__ace-container">
-          <ThemedAceEditor
-            style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-            name={`${xsltId}-ace-editor`}
-            mode="xml"
-            value={xslt.xsltData}
-            onChange={(newValue) => {
-              if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
-            }}
-          />
-        </div>
-      </div>
-    </React.Fragment>
-  );
+  <DocRefEditor
+    docRef={{
+      type: 'XSLT',
+      uuid: xsltUuid,
+    }}
+    actionBarItems={actionBarItems}
+  >
+    <ThemedAceEditor
+      style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+      name={`${xsltUuid}-ace-editor`}
+      mode="xml"
+      value={xsltData}
+      onChange={onContentChange}
+    />
+  </DocRefEditor>
+);
 
 XsltEditor.propTypes = {
-  xsltId: PropTypes.string.isRequired,
+  xsltUuid: PropTypes.string.isRequired,
 };
 
 export default enhance(XsltEditor);

@@ -1,19 +1,36 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, withProps, branch, renderComponent, withHandlers } from 'recompose';
-import { Grid, Header, Icon, Button } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
-import Loader from 'components/Loader'
-import Tooltip from 'components/Tooltip';
-import AppSearchBar from 'components/AppSearchBar';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
+import DocRefEditor from 'components/DocRefEditor';
+import Loader from 'components/Loader';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import DndDocRefListingEntry from './DndDocRefListingEntry';
-import NewDocDialog from './NewDocDialog';
+import NewDocRefDialog from './NewDocRefDialog';
+import CopyDocRefDialog from './CopyDocRefDialog';
+import MoveDocRefDialog from './MoveDocRefDialog';
+import RenameDocRefDialog from './RenameDocRefDialog';
+import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 import withDocumentTree from './withDocumentTree';
 import withSelectableItemListing, { SELECTION_BEHAVIOUR } from 'lib/withSelectableItemListing';
@@ -32,7 +49,7 @@ const enhance = compose(
   withDocumentTree,
   withRouter,
   withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
   }),
   connect(
     ({ folderExplorer: { documentTree }, selectableItemListings }, { folderUuid }) => ({
@@ -53,12 +70,13 @@ const enhance = compose(
     listingId: LISTING_ID,
     items: children,
     selectionBehaviour: SELECTION_BEHAVIOUR.MULTIPLE,
+    getKey: d => d.uuid,
     openItem: openDocRef,
     goBack: () => {
       if (lineage.length > 0) {
-        openDocRef(lineage[lineage.length - 1])
+        openDocRef(lineage[lineage.length - 1]);
       }
-    }
+    },
   })),
   withProps(({
     folder,
@@ -73,8 +91,9 @@ const enhance = compose(
     const actionBarItems = [
       {
         icon: 'file',
-        onClick: () => prepareDocRefCreation(folder.node),
-        tooltip: 'Create a Document',
+        onClick: () => prepareDocRefCreation(LISTING_ID, folder.node),
+        title: 'Create a Document',
+        text: 'Create',
       },
     ];
 
@@ -85,29 +104,34 @@ const enhance = compose(
       if (singleSelectedDocRef) {
         actionBarItems.push({
           icon: 'info',
+          text: 'Info',
           onClick: () => fetchDocInfo(singleSelectedDocRef),
-          tooltip: 'View Information about this document',
+          title: 'View Information about this document',
         });
         actionBarItems.push({
-          icon: 'pencil',
-          onClick: () => prepareDocRefRename(singleSelectedDocRef),
-          tooltip: 'Rename this document',
+          icon: 'edit',
+          text: 'Rename',
+          onClick: () => prepareDocRefRename(LISTING_ID, singleSelectedDocRef),
+          title: 'Rename this document',
         });
       }
       actionBarItems.push({
         icon: 'copy',
-        onClick: d => prepareDocRefCopy(selectedDocRefUuids),
-        tooltip: 'Copy selected documents',
+        text: 'Copy',
+        onClick: d => prepareDocRefCopy(LISTING_ID, selectedDocRefUuids),
+        title: 'Copy selected documents',
       });
       actionBarItems.push({
-        icon: 'move',
-        onClick: () => prepareDocRefMove(selectedDocRefUuids),
-        tooltip: 'Move selected documents',
+        icon: 'arrows-alt',
+        text: 'Move',
+        onClick: () => prepareDocRefMove(LISTING_ID, selectedDocRefUuids),
+        title: 'Move selected documents',
       });
       actionBarItems.push({
         icon: 'trash',
-        onClick: () => prepareDocRefDelete(selectedDocRefUuids),
-        tooltip: 'Delete selected documents',
+        text: 'Delete',
+        onClick: () => prepareDocRefDelete(LISTING_ID, selectedDocRefUuids),
+        title: 'Delete selected documents',
       });
     }
 
@@ -119,59 +143,35 @@ const FolderExplorer = ({
   folder: { node },
   folderUuid,
   actionBarItems,
-  openDocRef,
   onKeyDownWithShortcuts,
+  openDocRef,
 }) => (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Column width={16}>
-          <AppSearchBar className='app-search-bar' onChange={openDocRef} />
-        </Grid.Column>
-        <Grid.Column width={11}>
-          <Header as="h3">
-            <Icon name="folder" />
-            <Header.Content className="header">{node.name}</Header.Content>
-            <Header.Subheader>
-              <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />
-            </Header.Subheader>
-          </Header>
-        </Grid.Column>
-        <Grid.Column width={5}>
-          <span className="doc-ref-listing-entry__action-bar">
-            {actionBarItems.map(({ onClick, icon, tooltip }, i) => (
-              <Tooltip
-                key={i}
-                trigger={
-                  <Button
-                    className="icon-button"
-                    circular
-                    onClick={onClick}
-                    icon={icon}
-                  />
-                }
-                content={tooltip}
-              />
-            ))}
-          </span>
-        </Grid.Column>
-      </Grid>
-      <div className="doc-ref-listing" tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-        {node.children.map((docRef, index) => (
-          <DndDocRefListingEntry
-            key={docRef.uuid}
-            index={index}
-            listingId={LISTING_ID}
-            docRefUuid={docRef.uuid}
-            onNameClick={openDocRef}
-            openDocRef={openDocRef}
-          />
-        ))}
-      </div>
-
-      <DocRefInfoModal />
-      <NewDocDialog />
-    </React.Fragment>
-  );
+  <DocRefEditor
+    docRef={{
+      type: 'Folder',
+      uuid: folderUuid,
+    }}
+    actionBarItems={actionBarItems}
+  >
+    <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+      {node.children.map(docRef => (
+        <DndDocRefListingEntry
+          key={docRef.uuid}
+          listingId={LISTING_ID}
+          docRef={docRef}
+          onNameClick={openDocRef}
+          openDocRef={openDocRef}
+        />
+      ))}
+    </div>
+    <DocRefInfoModal listingId={LISTING_ID} />
+    <MoveDocRefDialog listingId={LISTING_ID} />
+    <RenameDocRefDialog listingId={LISTING_ID} />
+    <DeleteDocRefDialog listingId={LISTING_ID} />
+    <CopyDocRefDialog listingId={LISTING_ID} />
+    <NewDocRefDialog listingId={LISTING_ID} />
+  </DocRefEditor>
+);
 
 const EnhanceFolderExplorer = enhance(FolderExplorer);
 

@@ -64,6 +64,7 @@ dependencies {
     runtime libs.saxon_he
     runtime libs.jackson_annotations
     runtime libs.jackson_core
+    runtime libs.jaxb_runtime
     runtime libs.hibernate_entitymanager
     runtime libs.aopalliance
     // dropwizard 1.0.6 uses hibernate-validator 5.2.4.Final

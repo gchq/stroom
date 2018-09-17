@@ -19,14 +19,14 @@ import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
 const { xsltReceived, xsltSaved } = actionCreators;
 
-export const fetchXslt = xsltId => (dispatch, getState) => {
+export const fetchXslt = xsltUuid => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.xsltServiceUrl}/${xsltId}`;
+  const url = `${state.config.stroomBaseServiceUrl}/xslt/v1/${xsltUuid}`;
   wrappedGet(
     dispatch,
     state,
     url,
-    response => response.text().then(xslt => dispatch(xsltReceived(xsltId, xslt))),
+    response => response.text().then(xslt => dispatch(xsltReceived(xsltUuid, xslt))),
     {
       headers: {
         Accept: 'application/xml',
@@ -36,17 +36,17 @@ export const fetchXslt = xsltId => (dispatch, getState) => {
   );
 };
 
-export const saveXslt = xsltId => (dispatch, getState) => {
+export const saveXslt = xsltUuid => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.xsltServiceUrl}/${xsltId}`;
+  const url = `${state.config.stroomBaseServiceUrl}/xslt/v1/${xsltUuid}`;
 
-  const body = state.xslt[xsltId].xsltData;
+  const body = state.xslt[xsltUuid].xsltData;
 
   wrappedPost(
     dispatch,
     state,
     url,
-    response => response.text().then(response => dispatch(xsltSaved(xsltId))),
+    response => response.text().then(response => dispatch(xsltSaved(xsltUuid))),
     {
       body,
       headers: {

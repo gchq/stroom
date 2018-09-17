@@ -20,9 +20,10 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, withProps, withHandlers } from 'recompose';
 import Mousetrap from 'mousetrap';
 import PanelGroup from 'react-panelgroup';
-import { Header, Icon, Input } from 'semantic-ui-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import Tooltip from 'components/Tooltip';
+import IconHeader from 'components/IconHeader';
 import { actionCreators } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers } from '../streamTasksResourceClient';
@@ -64,16 +65,12 @@ const enhance = compose(
 
       expressionChanged('trackerDetailsExpression', expression);
     },
-    onHandleSearchChange: ({ resetPaging, updateSearchCriteria, fetchTrackers }) => (data) => {
+    onHandleSearchChange: ({ resetPaging, updateSearchCriteria, fetchTrackers }) => ({ target: { value } }) => {
+      console.log({ value })
       resetPaging();
-      updateSearchCriteria(data.value);
+      updateSearchCriteria(value);
       // This line enables search as you type. Whether we want it or not depends on performance
       fetchTrackers();
-    },
-    onHandleSearch: ({ fetchTrackers }) => (event) => {
-      if (event === undefined || event.key === 'Enter') {
-        fetchTrackers();
-      }
     },
   }),
   withProps(({ selectedTracker }) => ({
@@ -82,14 +79,12 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        fetchTrackers, resetPaging, onHandleTrackerSelection, onHandleSearch,
+        fetchTrackers, resetPaging, onHandleTrackerSelection,
       } = this.props;
 
       fetchTrackers();
 
       Mousetrap.bind('esc', () => onHandleTrackerSelection(undefined));
-      Mousetrap.bind('enter', () => onHandleSearch());
-      Mousetrap.bind('return', () => onHandleSearch());
 
       // This component monitors window size. For every change it will fetch the
       // trackers. The fetch trackers function will only fetch trackers that fit
@@ -110,83 +105,77 @@ const ProcessingContainer = ({
   showDetails,
   onHandleTrackerSelection,
   onHandleSearchChange,
-  onHandleSearch,
 }) => (
-  <React.Fragment>
-    <div className="processing__header-container">
-      <Header as="h3">
-        <Icon name="play" />
-        <Header.Content className="header">Processing</Header.Content>
-      </Header>
-      <Input
-        className="border"
-        fluid
-        placeholder="Search..."
-        value={searchCriteria}
-        onChange={(event, data) => onHandleSearchChange(data)}
-        onKeyPress={(event, data) => onHandleSearch(event, data)}
-      />
-
-      <div className="processing__search__help">
-        <Tooltip
-          trigger={<Icon name="question circle" size="large" />}
-          content={<div>
-            <p>You may search for a tracker by part or all of a pipeline name. </p>
-            <p> You may also use the following key words to filter the results:</p>
-            <ul>
-              <li>
-                <code>is:enabled</code>
-              </li>
-              <li>
-                <code>is:disabled</code>
-              </li>
-              <li>
-                <code>is:complete</code>
-              </li>
-              <li>
-                <code>is:incomplete</code>
-              </li>
-            </ul>
-            <p>
-              You may also sort the list to display the trackers that will next receive processing,
-              using:
-            </p>
-            <ul>
-              <li>
-                <code>sort:next</code>
-              </li>
-            </ul>
-          </div>}
+    <React.Fragment>
+      <div className="processing__header-container">
+        <IconHeader icon="play" text="Processing" />
+        <input
+          className="border"
+          placeholder="Search..."
+          value={searchCriteria}
+          onChange={onHandleSearchChange}
         />
+
+        <div className="processing__search__help">
+          <Tooltip
+            trigger={<FontAwesomeIcon icon="question-circle" size="lg" />}
+            content={<div>
+              <p>You may search for a tracker by part or all of a pipeline name. </p>
+              <p> You may also use the following key words to filter the results:</p>
+              <ul>
+                <li>
+                  <code>is:enabled</code>
+                </li>
+                <li>
+                  <code>is:disabled</code>
+                </li>
+                <li>
+                  <code>is:complete</code>
+                </li>
+                <li>
+                  <code>is:incomplete</code>
+                </li>
+              </ul>
+              <p>
+                You may also sort the list to display the trackers that will next receive processing,
+                using:
+            </p>
+              <ul>
+                <li>
+                  <code>sort:next</code>
+                </li>
+              </ul>
+            </div>}
+          />
+        </div>
       </div>
-    </div>
-    <div className="tracker-container">
-      <div className="tracker">
-        <div className="processing__table__container table__container">
-          <div
-            id="table-container"
-            className={`table-container${
-              showDetails ? ' showing-details' : ''
-            } table__reactTable__container`}
-          >
-            {selectedTrackerId === undefined || selectedTrackerId === null ? (
-              <ProcessingList
-                onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
-              />
-            ) : (
-              <PanelGroup direction="column">
+      <div className="tracker-container">
+        <div className="tracker">
+          <div className="processing__table__container table__container">
+            <div
+              id="table-container"
+              className={`table-container${
+                showDetails ? ' showing-details' : ''
+                } table__reactTable__container`}
+            >
+              {selectedTrackerId === undefined || selectedTrackerId === null ? (
                 <ProcessingList
                   onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
                 />
-                <ProcessingDetails />
-              </PanelGroup>
-            )}
+              ) : (
+                  <PanelGroup direction="column">
+                    <ProcessingList
+                      onSelection={(filterId, trackers) => onHandleTrackerSelection(filterId, trackers)}
+                    />
+                    <ProcessingDetails />
+                  </PanelGroup>
+                )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </React.Fragment>
-);
+    </React.Fragment>
+  );
 
 ProcessingContainer.contextTypes = {
   store: PropTypes.object.isRequired,

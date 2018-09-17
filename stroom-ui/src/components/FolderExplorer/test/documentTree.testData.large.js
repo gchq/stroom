@@ -16,6 +16,7 @@
 
 import { testPipelines } from 'components/PipelineEditor/test';
 import { testXslt } from 'components/XsltEditor/test';
+import { testDictionaries } from 'components/DictionaryEditor/test';
 
 export default {
   uuid: '0',
@@ -41,6 +42,21 @@ export default {
               type: 'Pipeline',
               name: pipeline.uuid,
             })),
+        },
+        {
+          uuid: 'dictionaries1234567890',
+          name: 'Dictionaries',
+          type: 'Folder',
+          children: Object.entries(testDictionaries)
+            .map(k => ({
+              uuid: k[0],
+              data: k[1]
+            }))
+            .map(dict => ({
+              uuid: dict.uuid,
+              type: 'Dictionary',
+              name: dict.data.docRef.name
+            }))
         },
         {
           uuid: 'xslt1234567890',

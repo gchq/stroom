@@ -16,8 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, withProps } from 'recompose';
-import { Form, Checkbox } from 'semantic-ui-react';
+import { compose, withProps, withHandlers } from 'recompose';
 
 import DocRefImage from 'components/DocRefImage';
 import withDocRefTypes from './withDocRefTypes';
@@ -46,34 +45,44 @@ const enhance = compose(
       allSelectState,
     };
   }),
+  withHandlers({
+    onAllCheckboxChanged: ({ allSelectState, onChange, docRefTypes }) => () => {
+      switch (allSelectState) {
+        case ALL_SELECT_STATE.ALL:
+        case ALL_SELECT_STATE.INDETERMINATE:
+          onChange([]);
+          break;
+        case ALL_SELECT_STATE.NONE:
+          onChange(docRefTypes);
+          break;
+        default:
+          break;
+      }
+    },
+  }),
 );
 
-const DocTypeFilters = ({
-  docRefTypes, onChange, value, allSelectState,
+let DocTypeFilters = ({
+  docRefTypes, onChange, value, allSelectState, onAllCheckboxChanged,
 }) => (
   <React.Fragment>
-    <Form.Field>
-      <DocRefImage size='small' docRefType='System' />
-      <Checkbox
-        label="All"
-        indeterminate={allSelectState === ALL_SELECT_STATE.INDETERMINATE}
+    <div>
+      <DocRefImage size="sm" docRefType="System" />
+      <label>All</label>
+      <input
+        type="checkbox"
         checked={allSelectState === ALL_SELECT_STATE.ALL}
-        onChange={(e, { checked }) => {
-          if (checked) {
-            onChange(docRefTypes);
-          } else {
-            onChange([]);
-          }
-        }}
+        onChange={onAllCheckboxChanged}
       />;
-    </Form.Field>
+    </div>
     {docRefTypes
       .map(docRefType => ({ docRefType, isSelected: value.includes(docRefType) }))
       .map(({ docRefType, isSelected }) => (
-        <Form.Field key={docRefType}>
-          <DocRefImage size='small' docRefType={docRefType} />
-          <Checkbox
-            label={docRefType}
+        <div key={docRefType}>
+          <DocRefImage size="sm" docRefType={docRefType} />
+          <label>{docRefType}</label>
+          <input
+            type="checkbox"
             checked={isSelected}
             onChange={() => {
               if (isSelected) {
@@ -83,21 +92,21 @@ const DocTypeFilters = ({
               }
             }}
           />
-        </Form.Field>
+        </div>
       ))}
   </React.Fragment>
 );
 
-const EnhancedDocTypeFilters = enhance(DocTypeFilters);
+DocTypeFilters = enhance(DocTypeFilters);
 
-EnhancedDocTypeFilters.propTypes = {
+DocTypeFilters.propTypes = {
   value: PropTypes.arrayOf(PropTypes.string).isRequired,
   onChange: PropTypes.func.isRequired,
 };
 
-EnhancedDocTypeFilters.defaultProps = {
+DocTypeFilters.defaultProps = {
   value: [],
   onChange: v => console.log('Not implemented onChange, value ignored', v),
 };
 
-export default EnhancedDocTypeFilters;
+export default DocTypeFilters;

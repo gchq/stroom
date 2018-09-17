@@ -15,39 +15,40 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
+import { createActionHandlerPerId } from 'lib/reduxFormUtils';
 import { actionCreators as documentTreeActionCreators } from './documentTree';
 
 const { docRefRenamed } = documentTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_RENAME: docRef => ({ docRef }),
-  RENAME_UPDATED: name => ({ name }),
-  COMPLETE_DOC_REF_RENAME: () => ({ docRef: undefined }),
+  PREPARE_DOC_REF_RENAME: (listingId, docRef) => ({ listingId, docRef }),
+  COMPLETE_DOC_REF_RENAME: listingId => ({ listingId, docRef: undefined }),
 });
 
 const { prepareDocRefRename, completeDocRefRename } = actionCreators;
 
+// listings, keyed on ID, there may be several on a page
+const defaultState = {};
+
 // The state will contain a map of arrays.
 // Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = { isRenaming: false, docRef: undefined, name: '' };
+const defaultListingState = { isRenaming: false, docRef: undefined, name: '' };
+
+const byListingId = createActionHandlerPerId(
+  ({ payload: { listingId } }) => listingId,
+  defaultListingState,
+);
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefRename, completeDocRefRename)]: (
-      state,
-      { payload: { docRef } },
-    ) => ({
+    [combineActions(prepareDocRefRename, completeDocRefRename)]: byListingId((state, { payload: { docRef } }) => ({
       isRenaming: !!docRef,
       docRef,
       name: docRef ? docRef.name : '',
-    }),
+    })),
     [docRefRenamed]: () => defaultState,
-    RENAME_UPDATED: (state, { payload: { name } }) => ({
-      ...state,
-      name,
-    }),
   },
   defaultState,
 );
 
-export { actionCreators, reducer };
+export { actionCreators, reducer, defaultListingState };

@@ -14,30 +14,18 @@
  * limitations under the License.
  */
 import React from 'react';
-
-import { storiesOf, addDecorator } from '@storybook/react';
-import StoryRouter from 'storybook-react-router';
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-
-import 'semantic/dist/semantic.min.css';
+import { storiesOf } from '@storybook/react';
 
 import { testXslt } from './test';
-
 import XsltEditor from './XsltEditor';
 
-const PollyDecoratorWithTestData = PollyDecorator({
-  xslt: testXslt,
-});
+import 'styles/main.css';
 
-const stories = storiesOf('XSLT Editor', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecorator)
-  .addDecorator(StoryRouter());
+const stories = storiesOf('XSLT Editor', module);
 
 Object.entries(testXslt)
   .map(k => ({
     name: k[0],
     data: k[1],
   }))
-  .forEach(xslt => stories.add(xslt.name, () => <XsltEditor xsltId={xslt.name} />));
+  .forEach(xslt => stories.add(xslt.name, () => <XsltEditor xsltUuid={xslt.name} />));

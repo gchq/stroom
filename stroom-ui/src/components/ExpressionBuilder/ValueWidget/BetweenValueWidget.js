@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { compose, withHandlers, withProps } from 'recompose';
-import { Input } from 'semantic-ui-react';
 
 const enhance = compose(
   withHandlers({
@@ -45,9 +44,9 @@ const BetweenValueWidget = ({
   valueType,
 }) => (
   <span>
-    <Input placeholder="from" type={valueType} value={fromValue} onChange={onFromValueChange} />
+    <input placeholder="from" type={valueType} value={fromValue} onChange={onFromValueChange} />
     <span className="input-between__divider">to</span>
-    <Input placeholder="to" type={valueType} value={toValue} onChange={onToValueChange} />
+    <input placeholder="to" type={valueType} value={toValue} onChange={onToValueChange} />
   </span>
 );
 

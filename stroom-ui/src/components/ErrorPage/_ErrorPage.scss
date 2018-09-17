@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-.error-page__details {
-    width: 100%;
-    padding: 15px;
-    margin: 0px !important;
+.ErrorPage__details {
+  width: 100%;
+  padding: 15px;
+  margin: 0px !important;
+}
+
+.ErrorPage__section {
+  display: grid;
+  grid-template-columns: 20% 80%;
+  grid-template-rows: auto;
 }

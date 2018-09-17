@@ -13,35 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
-
-import { storiesOf, addDecorator } from '@storybook/react';
+import { storiesOf } from '@storybook/react';
 import { compose, withState } from 'recompose';
-import { Header, Button } from 'semantic-ui-react';
-
-import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { ThemedModal, ThemedConfirm } from '.';
-
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
+
+import Button from 'components/Button';
+import { ThemedModal, ThemedConfirm } from '.';
 
 const withModalOpen = withState('modalIsOpen', 'setModalIsOpen', false);
 
 let TestModal = ({ modalIsOpen, setModalIsOpen }) => (
   <React.Fragment>
     <ThemedModal
-      open={modalIsOpen}
-      header={<Header className="header" content="This is the header" />}
+      isOpen={modalIsOpen}
+      header={<h3>This is the header</h3>}
       content={<div>Maybe put something helpful in here</div>}
       actions={
         <React.Fragment>
-          <Button content="Nothing" onClick={() => setModalIsOpen(false)} />
-          <Button content="Something" onClick={() => setModalIsOpen(false)} />
+          <Button text="Nothing" onClick={() => setModalIsOpen(false)} />
+          <Button text="Something" onClick={() => setModalIsOpen(false)} />
         </React.Fragment>
       }
       onClose={() => setModalIsOpen(false)}
     />
-    <Button onClick={() => setModalIsOpen(!modalIsOpen)} content="Open" />
+    <Button onClick={() => setModalIsOpen(!modalIsOpen)} text="Open" />
   </React.Fragment>
 );
 
@@ -59,29 +56,28 @@ const enhanceConfirm = compose(withModalOpen, withWasConfirmed);
 let TestConfirm = ({
   modalIsOpen, setModalIsOpen, isConfirmed, setIsConfirmed,
 }) => (
-  <React.Fragment>
-    <ThemedConfirm
-      open={modalIsOpen}
-      question="Are you sure about this?"
-      details="Because...nothing will really happen anyway"
-      onConfirm={() => {
-        setIsConfirmed(CONFIRM_STATE.CONFIRMED);
-        setModalIsOpen(false);
-      }}
-      onCancel={() => {
-        setIsConfirmed(CONFIRM_STATE.CANCELLED);
-        setModalIsOpen(false);
-      }}
-      onClose={() => setModalIsOpen(false)}
-    />
-    <Button onClick={() => setModalIsOpen(!modalIsOpen)} content="Check" />
-    <div>Current State: {isConfirmed}</div>
-  </React.Fragment>
-);
+    <React.Fragment>
+      <ThemedConfirm
+        isOpen={modalIsOpen}
+        question="Are you sure about this?"
+        details="Because...nothing will really happen anyway"
+        onConfirm={() => {
+          setIsConfirmed(CONFIRM_STATE.CONFIRMED);
+          setModalIsOpen(false);
+        }}
+        onCancel={() => {
+          setIsConfirmed(CONFIRM_STATE.CANCELLED);
+          setModalIsOpen(false);
+        }}
+        onClose={() => setModalIsOpen(false)}
+      />
+      <Button onClick={() => setModalIsOpen(!modalIsOpen)} text="Check" />
+      <div>Current State: {isConfirmed}</div>
+    </React.Fragment>
+  );
 
 TestConfirm = enhanceConfirm(TestConfirm);
 
 storiesOf('Themed Modal', module)
-  .addDecorator(ReduxDecorator)
   .add('Test Modal', () => <TestModal />)
   .add('Test Confirm', () => <TestConfirm />);

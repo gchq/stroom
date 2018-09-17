@@ -25,14 +25,14 @@ const {
 
 export const fetchPipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
+  const url = `${state.config.stroomBaseServiceUrl}/pipelines/v1/${pipelineId}`;
   wrappedGet(dispatch, state, url, response =>
     response.json().then(pipeline => dispatch(pipelineReceived(pipelineId, pipeline))));
 };
 
 export const savePipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
+  const url = `${state.config.stroomBaseServiceUrl}/pipelines/v1/${pipelineId}`;
 
   const { pipeline } = state.pipelineEditor.pipelineStates[pipelineId];
   const body = JSON.stringify(pipeline);
@@ -52,7 +52,7 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
 
 export const searchPipelines = () => (dispatch, getState) => {
   const state = getState();
-  let url = `${state.config.pipelineServiceUrl}/?`;
+  let url = `${state.config.stroomBaseServiceUrl}/pipelines/v1/?`;
   const { filter, pageSize, pageOffset } = state.pipelineEditor.search.criteria;
 
   if (filter !== undefined && filter !== '') {

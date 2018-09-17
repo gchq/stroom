@@ -13,10 +13,11 @@ buildscript {
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
-        classpath 'com.sun.xml.bind:jaxb-core:2.3.0.1'
-        classpath 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
+        // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
         classpath 'javax.activation:activation:1.1.1'
-        classpath 'javax.xml.bind:jaxb-api:2.3.0'
+        classpath 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'
+        classpath 'com.sun.xml.bind:jaxb-impl:2.4.0-b180830.0438'
+        classpath 'org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438'
     }
 }
 
@@ -149,9 +150,9 @@ ext.libs = [
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
         guice3                         : "com.google.inject:guice:3.0",
-        guice4                         : "com.google.inject:guice:4.2.0",
+        guice4                         : "com.google.inject:guice:$versions.guice4:no_aop",
         guice_assistedinject           : "com.google.inject.extensions:guice-assistedinject:$versions.guice4",
-        guice_multibindings            : "com.google.inject.extensions:guice-multibindings:4.2.0",
+        guice_multibindings            : "com.google.inject.extensions:guice-multibindings:$versions.guice4",
         gwt_dev                        : "com.google.gwt:gwt-dev:$versions.gwt",
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
@@ -181,10 +182,9 @@ ext.libs = [
         javax_mail_api                 : "javax.mail:javax.mail-api:1.6.0",
         javax_servlet_api              : "javax.servlet:javax.servlet-api:3.1.0",
         javax_validation               : 'javax.validation:validation-api:1.1.0.Final',
-        jaxb_api                       : "javax.xml.bind:jaxb-api:2.3.0",
-        jaxb_core                      : "com.sun.xml.bind:jaxb-core:2.3.0",
-        jaxb_impl                      : "com.sun.xml.bind:jaxb-impl:2.3.0",
-        jaxb_runtime                   : "org.glassfish.jaxb:jaxb-runtime:2.3.0.1",
+        jaxb_api                       : "javax.xml.bind:jaxb-api:2.4.0-b180830.0359", // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
+        jaxb_impl                      : "com.sun.xml.bind:jaxb-impl:2.4.0-b180830.0438",
+        jaxb_runtime                   : "org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438",
         jcl_over_slf4j                 : "org.slf4j:jcl-over-slf4j:$versions.slf4j",
         jcommander                     : 'com.beust:jcommander:1.72',
         jersey_client                  : "org.glassfish.jersey.core:jersey-client:$versions.jersey",

@@ -17,30 +17,31 @@ import React, { Component } from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { storiesOf, addDecorator } from '@storybook/react';
-import { Checkbox, Header, Form } from 'semantic-ui-react';
-import 'semantic/dist/semantic.min.css';
 
 import KeyIsDown from './KeyIsDown';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 
 const TestComponent = ({ keyIsDown }) => (
   <div>
-    <Header>Test Keys Down/Up</Header>
-    <Form>
-      <Form.Field>
-        <Checkbox label="Control" checked={keyIsDown.Control} />
-      </Form.Field>
-      <Form.Field>
-        <Checkbox label="Cmd/Meta" checked={keyIsDown.Meta} />
-      </Form.Field>
-      <Form.Field>
-        <Checkbox label="Shift" checked={keyIsDown.Shift} />
-      </Form.Field>
-      <Form.Field>
-        <Checkbox label="Alt" checked={keyIsDown.Alt} />
-      </Form.Field>
-    </Form>
+    <h3>Test Keys Down/Up</h3>
+    <form>
+      <div>
+        <label>Control</label>
+        <input type='checkbox' checked={keyIsDown.Control} />
+      </div>
+      <div>
+        <label>Cmd/Meta</label>
+        <input type='checkbox' checked={keyIsDown.Meta} />
+      </div>
+      <div>
+        <label>Shift</label>
+        <input type='checkbox' checked={keyIsDown.Shift} />
+      </div>
+      <div>
+        <label>Alt</label>
+        <input type='checkbox' checked={keyIsDown.Alt} />
+      </div>
+    </form>
   </div>
 );
 
@@ -49,11 +50,9 @@ const TestComponentB = compose(connect(({ keyIsDown }) => ({ keyIsDown })), KeyI
 const TestComponentC = connect(({ keyIsDown }) => ({ keyIsDown }))(TestComponent);
 
 storiesOf('Key Is Down', module)
-  .addDecorator(ReduxDecorator)
   .add('Test Component', () => <TestComponentA />)
   .add('Test Component (only detect Control)', () => <TestComponentB />);
 
 storiesOf('Key Is Down (decorated, ctrl, alt)', module)
   .addDecorator(KeyIsDownDecorator(['Control', 'Alt']))
-  .addDecorator(ReduxDecorator)
   .add('Test Component', () => <TestComponentC />);

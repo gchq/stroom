@@ -17,13 +17,6 @@
 import React from 'react';
 import { storiesOf, addDecorator } from '@storybook/react';
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
-
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import DataViewer from 'sections/DataViewer/DataViewer';
 import { actionCreators } from './redux';
@@ -32,8 +25,4 @@ import { testData } from './test';
 const { updateStreamAttributeMaps } = actionCreators;
 
 const stories = storiesOf('DataViewer', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ThemedDecorator)
-  .addDecorator(DragDropDecorator)
-  .addDecorator(ReduxDecorator)
   .add('basic', () => <DataViewer dataViewerId="test" />);

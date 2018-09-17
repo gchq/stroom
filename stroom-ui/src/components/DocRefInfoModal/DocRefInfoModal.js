@@ -16,11 +16,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { compose, branch, renderNothing, renderComponent, withProps } from 'recompose';
-import { Header, Button, Form } from 'semantic-ui-react';
 
-import Loader from 'components/Loader'
+import Loader from 'components/Loader';
 import ThemedModal from 'components/ThemedModal';
 import { actionCreators } from './redux';
+import IconHeader from 'components/IconHeader';
+import Button from 'components/Button';
 
 const { docRefInfoClosed } = actionCreators;
 
@@ -43,6 +44,8 @@ const enhance = compose(
   })),
 );
 
+const doNothing = () => { };
+
 const DocRefInfoModal = ({
   isOpen,
   docRefInfo,
@@ -51,32 +54,59 @@ const DocRefInfoModal = ({
   formattedUpdateTime,
 }) => (
     <ThemedModal
-      open={isOpen}
+      isOpen={isOpen}
       onClose={docRefInfoClosed}
-      header={<Header className="header" icon="info" content="Document Information" />}
+      header={<IconHeader icon="info" text="Document Information" />}
       content={
-        <Form>
-          <Form.Group widths="equal">
-            <Form.Input label="Type" type="text" value={docRefInfo.docRef.type} />
-            <Form.Input label="UUID" type="text" value={docRefInfo.docRef.uuid} />
-            <Form.Input label="Name" type="text" value={docRefInfo.docRef.name} />
-          </Form.Group>
-          <Form.Group widths="equal">
-            <Form.Input label="Created by" type="text" value={docRefInfo.createUser} />
-            <Form.Input label="at" type="text" value={formattedCreateTime} />
-          </Form.Group>
-          <Form.Group widths="equal">
-            <Form.Input label="Updated by" type="text" value={docRefInfo.updateUser} />
-            <Form.Input label="at" type="text" value={formattedUpdateTime} />
-          </Form.Group>
-          <Form.Input label="Other Info" type="text" value={docRefInfo.otherInfo} />
-        </Form>
+        <form>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Type</label>
+              <input type="text" value={docRefInfo.docRef.type} onChange={doNothing} />
+            </span>
+            <span>
+              <label>UUID</label>
+              <input type="text" value={docRefInfo.docRef.uuid} onChange={doNothing} />
+            </span>
+            <span>
+              <label>Name</label>
+              <input type="text" value={docRefInfo.docRef.name} onChange={doNothing} />
+            </span>
+          </div>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Created by</label>
+              <input type="text" value={docRefInfo.createUser} onChange={doNothing} />
+            </span>
+            <span>
+              <label>at</label>
+              <input type="text" value={formattedCreateTime} onChange={doNothing} />
+            </span>
+          </div>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Updated by</label>
+              <input type="text" value={docRefInfo.updateUser} onChange={doNothing} />
+            </span>
+            <span>
+              <label>at</label>
+              <input type="text" value={formattedUpdateTime} onChange={doNothing} />
+            </span>
+          </div>
+          <div className="DocRefInfo__formRow">
+            <span>
+              <label>Other Info</label>
+              <input
+                label="Other Info"
+                type="text"
+                value={docRefInfo.otherInfo}
+                onChange={doNothing}
+              />
+            </span>
+          </div>
+        </form>
       }
-      actions={
-        <Button negative onClick={docRefInfoClosed}>
-          Close
-      </Button>
-      }
+      actions={<Button onClick={docRefInfoClosed} text='Close' />}
     />
   );
 

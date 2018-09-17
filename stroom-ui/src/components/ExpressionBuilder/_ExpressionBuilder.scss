@@ -35,6 +35,10 @@
   opacity: 1;
 }
 
+.ExpressionItem__buttons {
+  float: right;
+}
+
 .input-between__divider {
   margin-right: 1rem;
   margin-left: 1rem;
@@ -47,4 +51,12 @@
   border-color: grey;
   height: 2.5rem;
   border-radius: 5px;
+}
+
+.expression-term {
+  display: flex;
+
+}
+.expression-term__spacer {
+  flex-grow:1;
 }

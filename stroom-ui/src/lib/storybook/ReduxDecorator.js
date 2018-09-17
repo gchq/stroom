@@ -22,18 +22,3 @@ import store from 'startup/store';
 
 export const ReduxDecorator = storyFn => <Provider store={store}>{storyFn()}</Provider>;
 
-const enhanceLocal = lifecycle({
-  componentDidMount() {
-    this.props.storeInit(this.props.store);
-  },
-});
-
-const ReduxWithInit = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
-
-export const ReduxDecoratorWithInitialisation = storeInit => storyFn => (
-  <Provider store={store}>
-    <ReduxWithInit storeInit={storeInit} store={store}>
-      {storyFn()}
-    </ReduxWithInit>
-  </Provider>
-);

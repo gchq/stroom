@@ -15,17 +15,17 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, renderComponent, branch, withProps, withHandlers } from 'recompose';
+import { compose, withProps, withHandlers } from 'recompose';
 import { connect } from 'react-redux';
 import { DragSource, DropTarget } from 'react-dnd';
-import { Image } from 'semantic-ui-react';
 
-import Loader from 'components/Loader'
+import ElementImage from 'components/ElementImage';
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
 import ItemTypes from './dragDropTypes';
 import { isValidChildType } from './elementUtils';
 import { getInitialValues } from './ElementDetails';
+import Button from 'components/Button';
 
 const {
   pipelineElementAddRequested,
@@ -183,7 +183,7 @@ const enhance = compose(
     }
 
     if (selectedElementId === elementId) {
-      classNames.push('Pipeline-element__selected');
+      classNames.push('selected');
     }
 
     return {
@@ -224,14 +224,8 @@ const PipelineElement = ({
   onElementClick,
 }) =>
   compose(connectDragSource, connectDropTarget)(<div className={`${className} raised-low borderless `} onClick={onElementClick}>
-    <Image
-      className="Pipeline-element__icon"
-      alt="X"
-      src={require(`./images/${elementDefinition.icon}`)}
-      disabled={isIconDisabled}
-      size="mini"
-    />
-    <button className="Pipeline-element__type">{elementId}</button>
+    <ElementImage icon={elementDefinition.icon} />
+    <Button className="Pipeline-element__type" text={elementId} />
   </div>);
 
 PipelineElement.propTypes = {
