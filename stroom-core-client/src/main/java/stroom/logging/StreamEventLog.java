@@ -76,6 +76,31 @@ public class StreamEventLog {
         }
     }
 
+    public void exportStream(final FindStreamCriteria findStreamCriteria, final Throwable th) {
+        try {
+            if (findStreamCriteria != null) {
+                final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
+
+                final Criteria criteria = new Criteria();
+                criteria.setType("Data");
+                criteria.setQuery(createQuery(findStreamCriteria));
+
+                final MultiObject multiObject = new MultiObject();
+                multiObject.getObjects().add(criteria);
+
+                final Export exp = new Export();
+                exp.setSource(multiObject);
+                exp.setOutcome(EventLoggingUtil.createOutcome(th));
+
+                event.getEventDetail().setExport(exp);
+
+                eventLoggingService.log(event);
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e, e);
+        }
+    }
+
     public void viewStream(final String eventId,
                            final Feed feed,
                            final StreamType streamType,
@@ -95,24 +120,18 @@ public class StreamEventLog {
         }
     }
 
-    public void exportStream(final FindStreamCriteria findStreamCriteria, final Throwable th) {
+    public void stepStream(final String eventId,
+                           final Feed feed,
+                           final StreamType streamType,
+                           final DocRef pipelineRef,
+                           final Throwable th) {
         try {
-            if (findStreamCriteria != null) {
-                final Event event = eventLoggingService.createAction("ExportData", "Exporting Data");
-
-                final Criteria criteria = new Criteria();
-                criteria.setType("Data");
-                criteria.setQuery(createQuery(findStreamCriteria));
-
-                final MultiObject multiObject = new MultiObject();
-                multiObject.getObjects().add(criteria);
-
-                final Export exp = new Export();
-                exp.setSource(multiObject);
-                exp.setOutcome(EventLoggingUtil.createOutcome(th));
-
-                event.getEventDetail().setExport(exp);
-
+            if (eventId != null) {
+                final Event event = eventLoggingService.createAction("Stepping", "Stepping Stream");
+                final ObjectOutcome objectOutcome = new ObjectOutcome();
+                event.getEventDetail().setView(objectOutcome);
+                objectOutcome.getObjects().add(createStreamObject(eventId, feed, streamType, pipelineRef));
+                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
                 eventLoggingService.log(event);
             }
         } catch (final Exception e) {

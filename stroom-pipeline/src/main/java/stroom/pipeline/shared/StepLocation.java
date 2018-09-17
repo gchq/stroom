@@ -76,8 +76,12 @@ public class StepLocation implements SharedObject {
         return builder.isEquals();
     }
 
+    public String getEventId() {
+        return streamId + ":" + streamNo + ":" + recordNo;
+    }
+
     @Override
     public String toString() {
-        return "[" + streamId + ":" + streamNo + ":" + recordNo + "]";
+        return "[" + getEventId() + "]";
     }
 }

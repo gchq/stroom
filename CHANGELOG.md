@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added additional event logging to stepping.
+
 * An activity property with an id of `disableQueryInfo` can now be used to disable the query info popup on a per activity basis.
 
 * Activity properties can now include the attributes `id`, `name`, `showInSelection` and `showInList` to determine their appearance and behaviour;
