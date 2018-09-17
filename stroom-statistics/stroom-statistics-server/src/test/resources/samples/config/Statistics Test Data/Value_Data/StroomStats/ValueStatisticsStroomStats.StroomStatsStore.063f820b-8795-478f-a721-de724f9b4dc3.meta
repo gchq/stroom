@@ -1,0 +1,20 @@
+{
+  "type" : "StroomStatsStore",
+  "uuid" : "063f820b-8795-478f-a721-de724f9b4dc3",
+  "name" : "ValueStatisticsStroomStats",
+  "version" : "ea32d44a-63c8-48a5-9f01-1227e66dfb24",
+  "statisticType" : "VALUE",
+  "rollUpType" : "ALL",
+  "precision" : "MINUTE",
+  "enabled" : true,
+  "config" : {
+    "fields" : [ {
+      "fieldName" : "colour"
+    }, {
+      "fieldName" : "state"
+    }, {
+      "fieldName" : "user"
+    } ],
+    "customRollUpMasks" : [ { } ]
+  }
+}
