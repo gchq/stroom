@@ -16,60 +16,36 @@
 
 package stroom.node.server;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.stereotype.Component;
-
+import stroom.node.shared.Incrementor;
 import stroom.node.shared.RecordCountService;
-import stroom.node.shared.RecordCounter;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 public class RecordCountServiceImpl implements RecordCountService {
-    private long recordsRead;
-    private long recordsWritten;
-    private final Set<RecordCounter> recordReadCounters = new HashSet<>();
-    private final Set<RecordCounter> recordWriteCounters = new HashSet<>();
+    private final AtomicLong readCount = new AtomicLong();
+    private final AtomicLong writeCount = new AtomicLong();
 
-    @Override
-    public synchronized void addRecordReadCounter(final RecordCounter counter) {
-        recordReadCounters.add(counter);
+    public Incrementor getReadIncrementor() {
+        return readCount::incrementAndGet;
+    }
+
+    public Incrementor getWriteIncrementor() {
+        return writeCount::incrementAndGet;
     }
 
     @Override
-    public synchronized void removeRecordReadCounter(final RecordCounter counter) {
-        recordReadCounters.remove(counter);
-        recordsRead += counter.getAndResetCount();
-    }
-
-    @Override
-    public synchronized void addRecordWrittenCounter(final RecordCounter counter) {
-        recordWriteCounters.add(counter);
-    }
-
-    @Override
-    public synchronized void removeRecordWrittenCounter(final RecordCounter counter) {
-        recordWriteCounters.remove(counter);
-        recordsWritten += counter.getAndResetCount();
-    }
-
-    @Override
-    public synchronized long getAndResetRead() {
-        long count = recordsRead;
-        recordsRead = 0;
-        for (final RecordCounter counter : recordReadCounters) {
-            count += counter.getAndResetCount();
-        }
+    public long getAndResetRead() {
+        final long count = readCount.get();
+        readCount.addAndGet(-count);
         return count;
     }
 
     @Override
-    public synchronized long getAndResetWritten() {
-        long count = recordsWritten;
-        recordsWritten = 0;
-        for (final RecordCounter counter : recordWriteCounters) {
-            count += counter.getAndResetCount();
-        }
+    public long getAndResetWritten() {
+        final long count = writeCount.get();
+        writeCount.addAndGet(-count);
         return count;
     }
 }

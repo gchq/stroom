@@ -38,6 +38,7 @@ import stroom.pipeline.server.factory.Pipeline;
 import stroom.pipeline.server.factory.PipelineDataCache;
 import stroom.pipeline.server.factory.PipelineFactory;
 import stroom.pipeline.server.factory.Processor;
+import stroom.pipeline.server.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineEntityService;
 import stroom.pipeline.shared.data.PipelineData;
@@ -178,6 +179,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
         try {
             final Stream stream = streamSource.getStream();
+
+            // Update the meta data for all output streams to use.
+            updateMetaData(streamSource);
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
@@ -483,14 +487,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Write some meta data to the map for all output streams to use
             // when they close.
             metaData.put("Source Stream", String.valueOf(source.getStream().getId()));
-            metaData.put(StreamAttributeConstants.REC_READ, String.valueOf(recordCount.getRead()));
-            metaData.put(StreamAttributeConstants.REC_WRITE, String.valueOf(recordCount.getWritten()));
-            metaData.put(StreamAttributeConstants.REC_INFO, String.valueOf(getMarkerCount(Severity.INFO)));
-            metaData.put(StreamAttributeConstants.REC_WARN, String.valueOf(getMarkerCount(Severity.WARNING)));
-            metaData.put(StreamAttributeConstants.REC_ERROR, String.valueOf(getMarkerCount(Severity.ERROR)));
-            metaData.put(StreamAttributeConstants.REC_FATAL, String.valueOf(getMarkerCount(Severity.FATAL_ERROR)));
-            metaData.put(StreamAttributeConstants.DURATION, String.valueOf(recordCount.getDuration()));
             metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
+
+            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+            processStatistics.write(metaData.getMetaMap());
+
         } catch (final Exception e) {
             outputError(e);
         }

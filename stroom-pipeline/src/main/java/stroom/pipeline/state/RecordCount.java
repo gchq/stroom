@@ -16,38 +16,41 @@
 
 package stroom.pipeline.state;
 
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.node.shared.Incrementor;
+import stroom.util.spring.StroomScope;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(value = StroomScope.TASK)
 public class RecordCount {
-    private long read;
-    private long written;
-    private long duration;
+    private final AtomicLong readCount = new AtomicLong();
+    private final AtomicLong writeCount = new AtomicLong();
+    private volatile long startMs;
 
-    public long getRead() {
-        return read;
+    public Incrementor getReadIncrementor() {
+        return readCount::incrementAndGet;
     }
 
-    public void setRead(final long read) {
-        this.read = read;
+    public Incrementor getWriteIncrementor() {
+        return writeCount::incrementAndGet;
+    }
+
+    public long getRead() {
+        return readCount.get();
     }
 
     public long getWritten() {
-        return written;
-    }
-
-    public void setWritten(final long written) {
-        this.written = written;
+        return writeCount.get();
     }
 
     public long getDuration() {
-        return duration;
+        return System.currentTimeMillis() - startMs;
     }
 
-    public void setDuration(long duration) {
-        this.duration = duration;
+    public void setStartMs(final long startMs) {
+        this.startMs = startMs;
     }
 }

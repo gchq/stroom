@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Record counts are now recorded on a per output stream basis even when splitting output streams.
+
 * Splash presenter buttons are now always enabled.
 
 * Fix background color to white on activity pane.

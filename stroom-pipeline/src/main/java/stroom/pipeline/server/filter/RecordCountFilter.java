@@ -16,23 +16,21 @@
 
 package stroom.pipeline.server.filter;
 
-import javax.annotation.Resource;
-
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
+import stroom.node.shared.Incrementor;
 import stroom.node.shared.RecordCountService;
-import stroom.node.shared.RecordCounter;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.ElementIcons;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.RecordCount;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML
@@ -41,37 +39,50 @@ import stroom.pipeline.state.RecordCount;
  */
 @Component
 @Scope(StroomScope.PROTOTYPE)
-@ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = { PipelineElementType.ROLE_TARGET,
-        PipelineElementType.ROLE_HAS_TARGETS }, icon = ElementIcons.RECORD_COUNT)
-public class RecordCountFilter extends AbstractXMLFilter implements RecordCounter {
-    private static final StroomLogger LOGGER = StroomLogger.getLogger(RecordCountFilter.class);
-    private static final int LOG_COUNT = 10000;
-
+@ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_COUNT)
+public class RecordCountFilter extends AbstractXMLFilter {
     private boolean countRead = true;
     private int depth = 0;
-    private long count = 0;
-    private long lastSnapshot;
-    private long startMs;
-
-    private RecordCount recordCount;
 
     @Resource
     private RecordCountService recordCountService;
+    private RecordCount recordCount;
+
+    private Incrementor incrementor = () -> {
+        // Do nothing.
+    };
 
     /**
-     * @throws SAXException
-     *             Not thrown.
      * @see stroom.pipeline.server.filter.AbstractXMLFilter#startProcessing()
      */
     @Override
     public void startProcessing() {
         try {
-            startMs = System.currentTimeMillis();
-            if (recordCountService != null) {
+            recordCount.setStartMs(System.currentTimeMillis());
+            if (recordCount != null && recordCountService != null) {
                 if (countRead) {
-                    recordCountService.addRecordReadCounter(this);
+                    incrementor = () -> {
+                        recordCount.getReadIncrementor().increment();
+                        recordCountService.getReadIncrementor().increment();
+                    };
                 } else {
-                    recordCountService.addRecordWrittenCounter(this);
+                    incrementor = () -> {
+                        recordCount.getWriteIncrementor().increment();
+                        recordCountService.getWriteIncrementor().increment();
+                    };
+                }
+            } else if (recordCount != null) {
+                if (countRead) {
+                    incrementor = recordCount.getReadIncrementor();
+                } else {
+                    incrementor = recordCount.getWriteIncrementor();
+                }
+            } else if (recordCountService != null) {
+                if (countRead) {
+                    incrementor = recordCountService.getReadIncrementor();
+                } else {
+                    incrementor = recordCountService.getWriteIncrementor();
                 }
             }
         } finally {
@@ -80,31 +91,8 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     }
 
     /**
-     * @throws SAXException
-     *             Not thrown.
-     * @see stroom.pipeline.server.filter.AbstractXMLFilter#endProcessing()
-     */
-    @Override
-    public void endProcessing() {
-        try {
-            if (recordCountService != null) {
-                if (countRead) {
-                    recordCountService.removeRecordReadCounter(this);
-                } else {
-                    recordCountService.removeRecordWrittenCounter(this);
-                }
-            }
-        } finally {
-            super.endProcessing();
-        }
-    }
-
-    /**
      * This method tells filters that a stream is about to be parsed so that
      * they can complete any setup necessary.
-     *
-     * @throws SAXException
-     *             Could be thrown by an implementing class.
      */
     @Override
     public void startStream() {
@@ -118,21 +106,12 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * This method tells filters that a stream has finished parsing so cleanup
      * can be performed.
-     *
-     * @throws SAXException
-     *             Could be thrown by an implementing class.
      */
     @Override
     public void endStream() {
         try {
             super.endStream();
         } finally {
-            recordCount.setDuration(System.currentTimeMillis() - startMs);
-            if (countRead) {
-                recordCount.setRead(count);
-            } else {
-                recordCount.setWritten(count);
-            }
             depth = 0;
         }
     }
@@ -140,22 +119,17 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * Fired on start element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @param atts
-     *            the attributes attached to the element. If there are no
-     *            attributes, it shall be an empty Attributes object. The value
-     *            of this object after startElement returns is undefined
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @param atts      the attributes attached to the element. If there are no
+     *                  attributes, it shall be an empty Attributes object. The value
+     *                  of this object after startElement returns is undefined
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      * @see #endElement
      * @see org.xml.sax.Attributes
      * @see org.xml.sax.helpers.AttributesImpl
@@ -169,35 +143,32 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
 
         if (depth == 2) {
             // This is a first level element.
-            count++;
+            incrementor.increment();
 
-            if (LOGGER.isDebugEnabled()) {
-                if (count % LOG_COUNT == 0) {
-                    if (countRead) {
-                        LOGGER.debug("Records read = " + count);
-                    } else {
-                        LOGGER.debug("Records written = " + count);
-                    }
-                }
-            }
+//            if (LOGGER.isDebugEnabled()) {
+//                long count = recordCounter.getCount();
+//                if (count % LOG_COUNT == 0) {
+//                    if (countRead) {
+//                        LOGGER.debug("Records read = " + count);
+//                    } else {
+//                        LOGGER.debug("Records written = " + count);
+//                    }
+//                }
+//            }
         }
     }
 
     /**
      * Fired on an end element.
      *
-     * @param uri
-     *            the Namespace URI, or the empty string if the element has no
-     *            Namespace URI or if Namespace processing is not being
-     *            performed
-     * @param localName
-     *            the local name (without prefix), or the empty string if
-     *            Namespace processing is not being performed
-     * @param qName
-     *            the qualified XML name (with prefix), or the empty string if
-     *            qualified names are not available
-     * @throws org.xml.sax.SAXException
-     *             any SAX exception, possibly wrapping another exception
+     * @param uri       the Namespace URI, or the empty string if the element has no
+     *                  Namespace URI or if Namespace processing is not being
+     *                  performed
+     * @param localName the local name (without prefix), or the empty string if
+     *                  Namespace processing is not being performed
+     * @param qName     the qualified XML name (with prefix), or the empty string if
+     *                  qualified names are not available
+     * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -205,25 +176,12 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
         depth--;
     }
 
-    public long getCount() {
-        return count;
-    }
-
     /**
-     * @param countRead
-     *            Sets whether we are counting records read or records written.
+     * @param countRead Sets whether we are counting records read or records written.
      */
     @PipelineProperty(description = "Is this filter counting records read or records written?", defaultValue = "true")
     public void setCountRead(final boolean countRead) {
         this.countRead = countRead;
-    }
-
-    @Override
-    public long getAndResetCount() {
-        final long snapshot = count;
-        final long delta = snapshot - lastSnapshot;
-        lastSnapshot = snapshot;
-        return delta;
     }
 
     @Resource
