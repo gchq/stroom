@@ -37,10 +37,7 @@ public class PurposeUtil {
     public static void addData(final List<Data> list, final Activity activity) {
         if (activity != null && activity.getDetails() != null) {
             final ActivityDetails activityDetails = activity.getDetails();
-            activityDetails.getNames().forEach(name -> {
-                final String value = activityDetails.getProperties().get(name);
-                list.add(EventLoggingUtil.createData(name, value));
-            });
+            activityDetails.getProperties().forEach(p -> list.add(EventLoggingUtil.createData(p.getId(), p.getValue())));
         }
     }
 }

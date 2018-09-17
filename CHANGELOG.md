@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* An activity property with an id of `disableQueryInfo` can now be used to disable the query info popup on a per activity basis.
+
+* Activity properties can now include the attributes `id`, `name`, `showInSelection` and `showInList` to determine their appearance and behaviour;
+
+* Nested elements are now usable in the activity editor HTML.
+
 * Record counts are now recorded on a per output stream basis even when splitting output streams.
 
 * Splash presenter buttons are now always enabled.

@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.AbstractCoreIntegrationTest;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 
@@ -33,8 +34,8 @@ public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         // Save 1
         Activity activity1 = new Activity();
-        activity1.getDetails().addProperty("foo", "bar");
-        activity1.getDetails().addProperty("this", "that");
+        activity1.getDetails().add(createProp("foo"), "bar");
+        activity1.getDetails().add(createProp("this"), "that");
         activity1.setUserId("test");
         activity1 = activityService.save(activity1);
 
@@ -44,7 +45,7 @@ public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
 
         // Save 2
         Activity activity2 = new Activity();
-        activity2.getDetails().addProperty("lorem", "ipsum");
+        activity2.getDetails().add(createProp("lorem"), "ipsum");
         activity2.setUserId("test2");
         activity2 = activityService.save(activity2);
 
@@ -70,5 +71,12 @@ public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
         activityService.delete(activity2);
         final BaseResultList<Activity> list5 = activityService.find(new FindActivityCriteria());
         Assert.assertEquals(0, list5.size());
+    }
+
+    private Prop createProp(final String name) {
+        final Prop prop = new Prop();
+        prop.setId(name);
+        prop.setName(name);
+        return prop;
     }
 }

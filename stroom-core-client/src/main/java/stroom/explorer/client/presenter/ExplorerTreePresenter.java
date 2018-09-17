@@ -35,6 +35,7 @@ import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
+import stroom.activity.shared.Activity.Prop;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -147,14 +148,15 @@ public class ExplorerTreePresenter
         final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
 
         if (activity != null) {
-            final ActivityDetails details = activity.getDetails();
-            for (final String name : details.getNames()) {
-                final String value = details.getProperties().get(name);
-                sb.append("<b>");
-                sb.append(name);
-                sb.append(": </b>");
-                sb.append(value);
-                sb.append("</br>");
+            final ActivityDetails activityDetails = activity.getDetails();
+            for (final Prop prop : activityDetails.getProperties()) {
+                if (prop.isShowInSelection()) {
+                    sb.append("<b>");
+                    sb.append(prop.getName());
+                    sb.append(": </b>");
+                    sb.append(prop.getValue());
+                    sb.append("</br>");
+                }
             }
         } else {
             sb.append("<b>");
