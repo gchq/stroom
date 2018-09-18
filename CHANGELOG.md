@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.3]
+
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 
 * Issue **#838** : Fix bug where calculation of written and read bytes was being accounted for twice due to the use of Java internal `FilterInputStream` and `FilterOutputStream` behaviour. This was leading to files being split at half od the expected size. Replaced Java internal classes with our own `WrappedInputStream` and `WrappedOutputStream` code.
@@ -1015,7 +1017,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.1...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.3...6.0
+[v6.0-beta.3]: https://github.com/gchq/stroom/compare/v6.0-beta.2...v6.0-beta.3
+[v6.0-beta.2]: https://github.com/gchq/stroom/compare/v6.0-beta.1...v6.0-beta.2
 [v6.0-beta.1]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...v6.0-beta.1
 [v6.0-alpha.27]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...v6.0-alpha.27
 [v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.26
