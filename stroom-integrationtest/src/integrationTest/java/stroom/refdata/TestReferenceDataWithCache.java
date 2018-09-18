@@ -32,7 +32,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.RefDataStore;
-import stroom.refdata.store.RefDataStoreProvider;
+import stroom.refdata.store.RefDataStoreFactory;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
@@ -68,13 +68,13 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
     @Inject
-    private RefDataStoreProvider refDataStoreProvider;
+    private RefDataStoreFactory refDataStoreFactory;
 
     private RefDataStore refDataStore;
 
     @Before
     public void setup() {
-        refDataStore = refDataStoreProvider.getOffHeapStore();
+        refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
     /**

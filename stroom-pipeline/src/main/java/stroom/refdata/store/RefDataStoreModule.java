@@ -23,7 +23,6 @@ import com.google.inject.multibindings.MapBinder;
 import stroom.refdata.RefDataValueByteBufferConsumer;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
-import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.store.offheapstore.StringByteBufferConsumer;
 import stroom.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -42,8 +41,9 @@ public class RefDataStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
-        final MapBinder<Integer, RefDataValueByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, RefDataValueByteBufferConsumer.Factory.class);
+        final MapBinder<Integer, RefDataValueByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder =
+                MapBinder.newMapBinder(
+                        binder(), Integer.class, RefDataValueByteBufferConsumer.Factory.class);
 
         refDataValueByteBufferConsumerBinder
                 .addBinding(FastInfosetValue.TYPE_ID)
@@ -77,11 +77,6 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(OffHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(OnHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
-
-        install(new FactoryModuleBuilder()
-                .implement(RefDataStore.class, RefDataOffHeapStore.class)
-                .build(RefDataOffHeapStore.Factory.class));
-
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
     }
 }
