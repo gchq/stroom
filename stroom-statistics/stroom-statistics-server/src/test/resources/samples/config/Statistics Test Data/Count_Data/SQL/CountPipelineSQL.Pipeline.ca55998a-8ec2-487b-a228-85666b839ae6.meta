@@ -1,0 +1,6 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "ca55998a-8ec2-487b-a228-85666b839ae6",
+  "name" : "CountPipelineSQL",
+  "version" : "53bb2eb5-73d2-4458-8d7e-130744a1d264"
+}
