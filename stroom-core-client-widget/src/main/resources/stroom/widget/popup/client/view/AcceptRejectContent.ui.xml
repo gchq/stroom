@@ -36,44 +36,35 @@
         color: white;
         border: 1px outset #ccc;
         }
+
         .button:active {
         border: 1px inset #ccc;
         }
+
         .button:hover {
         border-color: #9cf #69e #69e #7af;
         }
+
         .button[disabled] {
         cursor: default;
         background-color: grey;
         color: white;
         }
+
         .button[disabled]:hover {
         cursor: default;
         background-color: grey;
         color: white;
         }
 
-
         .accept {
         background-color: green;
-        <!--color: white;-->
         }
 
         .reject {
         margin-left: 5px;
         background-color: red;
-        <!--color: white;-->
         }
-
-        <!--.accept[disabled] {-->
-        <!--cursor: default;-->
-        <!--background-color: grey;-->
-        <!--color: white;-->
-        <!--}-->
-
-        <!--.accept[disabled]:hover {-->
-        <!--border: 1px outset #ccc;-->
-        <!--}-->
     </ui:style>
 
     <g:VerticalPanel>

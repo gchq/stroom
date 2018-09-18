@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* The accept button now enabled on splash screen.
+
 ## [v5.5.0-beta.6] - 2018-09-17
 
 * Added additional event logging to stepping.
