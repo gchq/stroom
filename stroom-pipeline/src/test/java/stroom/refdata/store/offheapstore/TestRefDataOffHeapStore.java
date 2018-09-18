@@ -103,6 +103,14 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
+    public void testNoReadAhead() {
+        getRefDataStoreConfig().setReadAheadEnabled(false);
+
+        // ensure loading and reading works with the NOREADAHEAD flag set
+        bulkLoadAndAssert(true, 100);
+    }
+
+    @Test
     public void testOverwrite_doOverwrite_keyValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
