@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.7] - 2018-09-18
+
 * The accept button now enabled on splash screen.
 
 ## [v5.5.0-beta.6] - 2018-09-17
@@ -902,7 +904,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.7...HEAD
+[v5.5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.5.0-beta.6...v5.5.0-beta.7
 [v5.5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.5.0-beta.5...v5.5.0-beta.6
 [v5.5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.5.0-beta.4...v5.5.0-beta.5
 [v5.5.0-beta.4]: https://github.com/gchq/stroom/compare/v5.5.0-beta.3...v5.5.0-beta.4
