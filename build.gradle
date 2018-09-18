@@ -136,6 +136,7 @@ ext.libs = [
         dropwizard_client              : "io.dropwizard:dropwizard-client:$versions.dropwizard",
         dropwizard_configuration       : "io.dropwizard:dropwizard-configuration:$versions.dropwizard",
         dropwizard_core                : "io.dropwizard:dropwizard-core:$versions.dropwizard",
+        dropwizard_jackson             : "io.dropwizard:dropwizard-jackson:$versions.dropwizard",
         dropwizard_jersey              : "io.dropwizard:dropwizard-jersey:$versions.dropwizard",
         dropwizard_jetty               : "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
         dropwizard_lifecycle           : "io.dropwizard:dropwizard-lifecycle:$versions.dropwizard",

@@ -24,5 +24,11 @@ dependencies {
     compile libs.slf4j_api
 
     testCompile libs.assertj_core
+    testCompile libs.dropwizard_configuration
+    testCompile libs.dropwizard_core
+    testCompile libs.dropwizard_jersey
+    testCompile libs.dropwizard_jackson
+    testCompile libs.jackson_databind
     testCompile libs.junit_jupiter
+    testCompile libs.javax_validation
 }

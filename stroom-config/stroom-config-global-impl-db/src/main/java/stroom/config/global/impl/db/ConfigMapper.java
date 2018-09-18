@@ -77,6 +77,8 @@ public class ConfigMapper {
                             type.equals(Short.class) ||
                             type.equals(Float.class) ||
                             type.equals(Double.class) ||
+                            type.equals(Boolean.class) ||
+                            type.equals(boolean.class) ||
                             type.equals(Character.class)) {
                         propertyMap.put(fullPath, v);
 
@@ -165,6 +167,8 @@ public class ConfigMapper {
             return Float.valueOf(value);
         } else if (type.equals(Double.class)) {
             return Double.valueOf(value);
+        } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+            return Boolean.valueOf(value);
         } else if (type.equals(Character.class) && value.length() > 0) {
             return value.charAt(0);
         }
