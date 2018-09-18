@@ -18,6 +18,7 @@
 package stroom.config.global.impl.db;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,30 +42,32 @@ public final class BeanUtil {
         for (final Method method : methods) {
             final String methodName = method.getName();
 
-            if (methodName.startsWith("is")) {
-                // Boolean Getter.
+            if (method.getDeclaredAnnotation(JsonIgnore.class) == null) {
+                if (methodName.startsWith("is")) {
+                    // Boolean Getter.
 
-                if (methodName.length() > 2 && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
-                    final String name = getPropertyName(methodName, 2);
-                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                    prop.getter = method;
-                }
+                    if (methodName.length() > 2 && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
+                        final String name = getPropertyName(methodName, 2);
+                        final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                        prop.getter = method;
+                    }
 
-            } else if (methodName.startsWith("get")) {
-                // Getter.
+                } else if (methodName.startsWith("get")) {
+                    // Getter.
 
-                if (methodName.length() > 3 && !methodName.equals("getClass") && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
-                    final String name = getPropertyName(methodName, 3);
-                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                    prop.getter = method;
-                }
-            } else if (methodName.startsWith("set")) {
-                // Setter.
+                    if (methodName.length() > 3 && !methodName.equals("getClass") && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
+                        final String name = getPropertyName(methodName, 3);
+                        final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                        prop.getter = method;
+                    }
+                } else if (methodName.startsWith("set")) {
+                    // Setter.
 
-                if (methodName.length() > 3 && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE)) {
-                    final String name = getPropertyName(methodName, 3);
-                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                    prop.setter = method;
+                    if (methodName.length() > 3 && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE)) {
+                        final String name = getPropertyName(methodName, 3);
+                        final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                        prop.setter = method;
+                    }
                 }
             }
         }
