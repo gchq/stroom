@@ -1,36 +1,54 @@
-import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActions, handleActions, combineActions } from "redux-actions";
 
-import { createActionHandlersPerId } from '../../lib/reduxFormUtils';
+import { StateById, createActionHandlersPerId } from "../../lib/reduxFormUtils";
 
-const SELECTION_BEHAVIOUR = {
-  NONE: 0,
-  SINGLE: 1,
-  MULTIPLE: 2,
-};
+export enum SelectionBehaviour {
+  NONE,
+  SINGLE,
+  MULTIPLE
+}
+
+export interface StoreStatePerId {
+  items: Array<any>;
+  focusIndex: number;
+  focussedItem?: any;
+  lastSelectedIndex: number;
+  selectedItems: Array<any>;
+  selectedItemIndexes: Set<number>;
+}
+
+export type StoreState = StateById<StoreStatePerId>;
 
 const actionCreators = createActions({
-  SELECTABLE_LISTING_MOUNTED: (listingId, items, selectionBehaviour, getKey) => ({
+  SELECTABLE_LISTING_MOUNTED: (
     listingId,
     items,
     selectionBehaviour,
-    getKey,
+    getKey
+  ) => ({
+    listingId,
+    items,
+    selectionBehaviour,
+    getKey
   }),
   FOCUS_UP: listingId => ({ listingId, direction: -1 }),
   FOCUS_DOWN: listingId => ({ listingId, direction: 1 }),
   SELECT_FOCUSSED: (listingId, keyIsDown = {}) => ({ listingId, keyIsDown }),
-  SELECTION_TOGGLED: (listingId, itemKey, keyIsDown = {}) => ({ listingId, itemKey, keyIsDown }),
+  SELECTION_TOGGLED: (listingId, itemKey, keyIsDown = {}) => ({
+    listingId,
+    itemKey,
+    keyIsDown
+  })
 });
 
-const {
-  focusUp, focusDown, selectFocussed, selectionToggled,
-} = actionCreators;
+const { focusUp, focusDown, selectFocussed, selectionToggled } = actionCreators;
 
 const defaultSelectableItemListingState = {
   items: [],
   focusIndex: -1, // Used for simple item selection, by array index
   lastSelectedIndex: -1,
   selectedItems: [],
-  selectedItemIndexes: new Set(),
+  selectedItemIndexes: new Set()
 };
 
 // There will be an entry for each listing ID registered
@@ -38,7 +56,7 @@ const defaultState = {};
 
 const byListingId = createActionHandlersPerId(
   ({ payload: { listingId } }) => listingId,
-  defaultSelectableItemListingState,
+  defaultSelectableItemListingState
 );
 
 const reducer = handleActions(
@@ -46,7 +64,7 @@ const reducer = handleActions(
     SELECTABLE_LISTING_MOUNTED: (
       state,
       { payload: { items, selectionBehaviour, getKey } },
-      listingState,
+      listingState
     ) => {
       // Attempt to rescue previous focus index
       let focusIndex = -1;
@@ -63,13 +81,13 @@ const reducer = handleActions(
         focussedItem,
         items,
         selectionBehaviour,
-        getKey,
+        getKey
       };
     },
     [combineActions(focusUp, focusDown)]: (
       state,
       { payload: { direction } },
-      { items, focusIndex },
+      { items, focusIndex }
     ) => {
       // Calculate the next index based on the selection change
       let nextIndex = 0;
@@ -80,13 +98,13 @@ const reducer = handleActions(
 
       return {
         focusIndex: nextIndex,
-        focussedItem,
+        focussedItem
       };
     },
     [combineActions(selectFocussed, selectionToggled)]: (
       state,
       { payload: { itemKey, keyIsDown } },
-      listingState,
+      listingState
     ) => {
       let {
         selectedItemIndexes,
@@ -94,7 +112,7 @@ const reducer = handleActions(
         lastSelectedIndex,
         items,
         getKey,
-        selectionBehaviour,
+        selectionBehaviour
       } = listingState;
       const index = items.map(getKey).findIndex(k => k === itemKey);
       const indexToUse = index !== undefined && index >= 0 ? index : focusIndex;
@@ -140,11 +158,16 @@ const reducer = handleActions(
         selectedItems,
         selectedItemIndexes,
         focusIndex: indexToUse,
-        lastSelectedIndex: indexToUse,
+        lastSelectedIndex: indexToUse
       };
-    },
+    }
   }),
-  defaultState,
+  defaultState
 );
 
-export { actionCreators, reducer, SELECTION_BEHAVIOUR, defaultSelectableItemListingState };
+export {
+  actionCreators,
+  reducer,
+  SELECTION_BEHAVIOUR,
+  defaultSelectableItemListingState
+};

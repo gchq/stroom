@@ -14,30 +14,59 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { compose, lifecycle, branch, withProps, withHandlers, renderComponent } from 'recompose';
-import { connect } from 'react-redux';
+import * as React from "react";
+import {
+  compose,
+  lifecycle,
+  branch,
+  withProps,
+  withHandlers,
+  renderComponent
+} from "recompose";
+import { connect } from "react-redux";
 
-import Loader from '../Loader'
-import { actionCreators, SELECTION_BEHAVIOUR } from './redux';
+import { GlobalStoreState } from "../../startup/reducers";
+import Loader from "../../components/Loader";
+import { actionCreators, SelectionBehaviour } from "./redux";
 
 const {
-  selectableListingMounted, selectFocussed, focusUp, focusDown,
+  selectableListingMounted,
+  selectFocussed,
+  focusUp,
+  focusDown
 } = actionCreators;
 
-const isArraysEqual = (a, b) => {
+const isArraysEqual = (a: Array<any>, b: Array<any>) => {
   if (a && !b) return false;
   if (!a && b) return false;
   if (!a && !b) return true;
 
   if (a.length !== b.length) return false;
 
-  return a.filter(aItem => !b.includes(aItem)).length === 0;
+  return a.filter(aItem => b.indexOf(aItem) !== -1).length === 0;
 };
 
-const withSelectableItemListing = propsFunc =>
-  compose(
-    withProps((props) => {
+export interface Props<TItem> {
+  listingId: string;
+  getKey: (x: TItem) => string;
+  items: Array<TItem>;
+  openItem: (i: TItem) => void;
+  enterItem: (i: TItem) => void;
+  goBack: () => void;
+  selectionBehaviour: SelectionBehaviour;
+}
+
+export type PropsFunc<TItem> = (a: any) => Props<TItem>;
+
+export interface AddedProps {
+  onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
+}
+
+const withSelectableItemListing = <TItem extends any>(
+  propsFunc: PropsFunc<TItem>
+) =>
+  compose<AddedProps, Props<TItem>>(
+    withProps(props => {
       const {
         listingId,
         getKey,
@@ -45,7 +74,7 @@ const withSelectableItemListing = propsFunc =>
         openItem,
         enterItem,
         goBack,
-        selectionBehaviour = SELECTION_BEHAVIOUR.NONE,
+        selectionBehaviour = SelectionBehaviour.NONE
       } = propsFunc(props);
 
       return {
@@ -55,45 +84,65 @@ const withSelectableItemListing = propsFunc =>
         selectionBehaviour,
         openItem,
         enterItem: enterItem || openItem,
-        goBack: goBack || (() => console.log('Going back not implemented')),
+        goBack: goBack || (() => console.log("Going back not implemented"))
       };
     }),
     connect(
-      ({ selectableItemListings, keyIsDown }, { listingId }) => ({
+      (
+        { selectableItemListings, keyIsDown }: GlobalStoreState,
+        { listingId }: Props<TItem>
+      ) => ({
         selectableItemListing: selectableItemListings[listingId],
-        keyIsDown,
+        keyIsDown
       }),
       {
         selectableListingMounted,
         selectFocussed,
         focusUp,
-        focusDown,
-      },
+        focusDown
+      }
     ),
     lifecycle({
       componentDidUpdate(prevProps, prevState, snapshot) {
         const {
-          selectableListingMounted, listingId, items, selectionBehaviour, getKey
+          selectableListingMounted,
+          listingId,
+          items,
+          selectionBehaviour,
+          getKey
         } = this.props;
 
         const itemUuids = items ? items.map(d => d.uuid) : [];
-        const prevUuids = prevProps.items ? prevProps.items.map(d => d.uuid) : [];
+        const prevUuids = prevProps.items
+          ? prevProps.items.map(d => d.uuid)
+          : [];
 
         if (!isArraysEqual(itemUuids, prevUuids)) {
-          selectableListingMounted(listingId, items, selectionBehaviour, getKey);
+          selectableListingMounted(
+            listingId,
+            items,
+            selectionBehaviour,
+            getKey
+          );
         }
       },
       componentDidMount() {
         const {
-          selectableListingMounted, listingId, items, selectionBehaviour, getKey
+          selectableListingMounted,
+          listingId,
+          items,
+          selectionBehaviour,
+          getKey
         } = this.props;
 
         selectableListingMounted(listingId, items, selectionBehaviour, getKey);
-      },
+      }
     }),
     branch(
       ({ selectableItemListing }) => !selectableItemListing,
-      renderComponent(() => <Loader message="Creating selectable item listing..." />),
+      renderComponent(() => (
+        <Loader message="Creating selectable item listing..." />
+      ))
     ),
     withHandlers({
       onKeyDownWithShortcuts: ({
@@ -105,33 +154,35 @@ const withSelectableItemListing = propsFunc =>
         enterItem,
         goBack,
         selectableItemListing,
-        keyIsDown,
-      }) => (e) => {
-        if (e.key === 'ArrowUp' || e.key === 'k') {
+        keyIsDown
+      }) => (e: React.KeyboardEvent) => {
+        if (e.key === "ArrowUp" || e.key === "k") {
           focusUp(listingId);
           e.preventDefault();
-        } else if (e.key === 'ArrowDown' || e.key === 'j') {
+        } else if (e.key === "ArrowDown" || e.key === "j") {
           focusDown(listingId);
           e.preventDefault();
-        } else if (e.key === 'Enter') {
+        } else if (e.key === "Enter") {
           if (selectableItemListing.focussedItem) {
             openItem(selectableItemListing.focussedItem);
           }
           e.preventDefault();
-        } else if (e.key === 'ArrowRight' || e.key === 'l') {
+        } else if (e.key === "ArrowRight" || e.key === "l") {
           if (selectableItemListing.focussedItem) {
             enterItem(selectableItemListing.focussedItem);
           }
-        } else if (e.key === 'ArrowLeft' || e.key === 'h') {
+        } else if (e.key === "ArrowLeft" || e.key === "h") {
           goBack(selectableItemListing.focussedItem);
-        } else if (e.key === ' ') {
-          if (selectableItemListing.selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
+        } else if (e.key === " ") {
+          if (
+            selectableItemListing.selectionBehaviour !== SelectionBehaviour.NONE
+          ) {
             selectFocussed(listingId, keyIsDown);
             e.preventDefault();
           }
         }
-      },
-    }),
+      }
+    })
   );
 
 export default withSelectableItemListing;

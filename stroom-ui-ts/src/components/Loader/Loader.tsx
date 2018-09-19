@@ -39,19 +39,19 @@ var options = {
   position: "relative"
 };
 
+export interface Props {
+  message: string;
+}
+
 /**
  * Configures and wraps react-loader, which itself wraps spin.js. Isn't 2018 great?
  * Adds a message.
  */
-const Loader = ({ message }) => (
+const Loader = ({ message }: Props) => (
   <div className="loader__container">
-    <ReactLoader options={options} />
+    <ReactLoader loaded={false} options={options} />
     <p>{message}</p>
   </div>
 );
-
-Loader.propTypes = {
-  message: PropTypes.string
-};
 
 export default Loader;

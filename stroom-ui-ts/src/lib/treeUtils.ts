@@ -22,25 +22,45 @@
  * @param {object} input The input object
  * @param {function} mapper Mapping function to apply to each value in the object
  */
-import uuidv4 from 'uuid/v4';
+import * as uuidv4 from "uuid/v4";
 
-export function mapObject(input, mapper) {
+export function mapObject<IN, OUT>(
+  input: (id: any) => IN,
+  mapper: (i: IN) => OUT
+) {
   return Object.keys(input).reduce((previous, current) => {
     previous[current] = mapper(input[current]);
     return previous;
   }, {});
 }
 
-export function filterTree(treeNode, filterFunction) {
+export interface Tree<T> {
+  uuid: string;
+  children?: Array<T>;
+}
+
+export interface TWithLineage<T extends Tree<T>> {
+  node: T;
+  lineage: Array<T>;
+}
+
+export type Filter<T> = (t: T) => boolean;
+
+export function filterTree<T extends Tree<T>>(
+  treeNode: T,
+  filterFunction: Filter<T>
+): T | undefined {
   const includeThisOne = filterFunction(treeNode);
 
   const filteredChildren = treeNode.children
-    ? treeNode.children.map(c => filterTree(c, filterFunction)).filter(c => c !== undefined)
+    ? treeNode.children
+        .map(c => filterTree(c, filterFunction))
+        .filter(c => c !== undefined)
     : [];
   if (includeThisOne || filteredChildren.length > 0) {
     return {
-      ...treeNode,
-      children: filteredChildren,
+      ...(treeNode as any), // hack to allow spreading
+      children: filteredChildren
     };
   }
 
@@ -52,11 +72,14 @@ export function filterTree(treeNode, filterFunction) {
  * @param {treeNode} treeNode
  * @param {array of strings} uuids
  */
-export function findByUuids(treeNode, uuids) {
-  const results = [];
+export function findByUuids<T extends Tree<T>>(
+  treeNode: T,
+  uuids: Array<string>
+): Array<T> {
+  const results: Array<T> = [];
 
   iterateNodes(treeNode, (lineage, node) => {
-    if (uuids.includes(node.uuid)) {
+    if (uuids.indexOf(node.uuid) !== -1) {
       results.push(node);
     }
   });
@@ -70,13 +93,18 @@ export function findByUuids(treeNode, uuids) {
  * @param {treeNode} treeNode The node we are looking into, this will be recursed through children
  * @param {treeNode} itemToFind The item to find
  */
-export function itemIsInSubtree(treeNode, itemToFind) {
+export function itemIsInSubtree<T extends Tree<T>>(
+  treeNode: T,
+  itemToFind: T
+): boolean {
   if (treeNode.uuid === itemToFind.uuid) {
     return true;
   }
 
   if (treeNode.children) {
-    return treeNode.children.filter(c => itemIsInSubtree(c, itemToFind)).length !== 0;
+    return (
+      treeNode.children.filter(c => itemIsInSubtree(c, itemToFind)).length !== 0
+    );
   }
 
   return false;
@@ -93,7 +121,10 @@ export function itemIsInSubtree(treeNode, itemToFind) {
  * @param {treeNode} itemToMove The item that we may want to move
  * @param {treeNode} destinationFolder The potential destination folder
  */
-export function canMove(itemToMove, destinationFolder) {
+export function canMove<T extends Tree<T>>(
+  itemToMove: T,
+  destinationFolder: T
+) {
   // If the item being dropped is a folder, and is being dropped into itself
   if (itemIsInSubtree(itemToMove, destinationFolder)) {
     return false;
@@ -104,7 +135,9 @@ export function canMove(itemToMove, destinationFolder) {
 
   // Does this item appear in the destination folder already?
   return (
-    destinationFolder.children.map(c => c.uuid).filter(u => u === itemToMove.uuid).length === 0
+    destinationFolder
+      .children!.map(c => c.uuid)
+      .filter(u => u === itemToMove.uuid).length === 0
   );
 }
 
@@ -114,13 +147,15 @@ export function canMove(itemToMove, destinationFolder) {
  * @param {treeNode} tree The input tree, will not be modified
  * @return {treeNode} the copied tree plus the UUID values
  */
-export function assignRandomUuids(tree) {
+export function assignRandomUuids<T extends Tree<T>>(tree: T): T {
   return tree
     ? {
-      uuid: tree.uuid ? tree.uuid : uuidv4(), // assign a UUID if there isn't already one
-      ...tree,
-      children: tree.children ? tree.children.map(c => assignRandomUuids(c)) : undefined,
-    }
+        uuid: tree.uuid ? tree.uuid : uuidv4(), // assign a UUID if there isn't already one
+        ...(tree as any),
+        children: tree.children
+          ? tree.children.map(c => assignRandomUuids(c))
+          : undefined
+      }
     : undefined;
 }
 
@@ -131,11 +166,11 @@ export function assignRandomUuids(tree) {
  * @param {treeNode} tree The input tree, will not be modified
  * @return {treeNode} the copied tree minus the UUID values
  */
-export function stripUuids(tree) {
+export function stripUuids<T extends Tree<T>>(tree: T): T {
   return {
-    ...tree,
+    ...(tree as any),
     children: tree.children ? tree.children.map(c => stripUuids(c)) : undefined,
-    uuid: undefined,
+    uuid: undefined
   };
 }
 
@@ -147,13 +182,19 @@ export function stripUuids(tree) {
  * @param {function} callback Called for each node in the tree, first arg is an array of parents, second arg is the node
  * @param {array} lineage Contains the nodes in the lineage of the node given
  */
-export function iterateNodes(tree, callback, lineage) {
+export function iterateNodes<T extends Tree<T>>(
+  tree: T,
+  callback: (l: Array<T>, t: T) => void,
+  lineage?: Array<T>
+) {
   const thisLineage = lineage || [];
 
   const skipChildren = callback(thisLineage, tree);
 
   if (tree.children && !skipChildren) {
-    tree.children.forEach(c => iterateNodes(c, callback, thisLineage.concat([tree])));
+    tree.children.forEach(c =>
+      iterateNodes(c, callback, thisLineage.concat([tree]))
+    );
   }
 }
 
@@ -164,8 +205,11 @@ export function iterateNodes(tree, callback, lineage) {
  * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
  * @return {object} Containing { node, lineage} of picked item
  */
-export function pickRandomItem(tree, filterFunction) {
-  const options = [];
+export function pickRandomItem<T extends Tree<T>>(
+  tree: T,
+  filterFunction: (l: Array<T>, t: T) => boolean
+) {
+  const options: Array<{ node: T; lineage: Array<T> }> = [];
 
   iterateNodes(tree, (lineage, node) => {
     if (filterFunction(lineage, node)) {
@@ -186,9 +230,11 @@ export function pickRandomItem(tree, filterFunction) {
  * @param {treeNode} tree
  * @param {string} uuid
  */
-export function findItem(tree, uuid) {
-  let foundNode,
-    foundLineage;
+export function findItem<T extends Tree<T>>(
+  tree: T,
+  uuid: string
+): TWithLineage<T> | undefined {
+  let foundNode, foundLineage;
   iterateNodes(tree, (lineage, node) => {
     if (node.uuid === uuid) {
       foundNode = node;
@@ -199,7 +245,7 @@ export function findItem(tree, uuid) {
   if (foundNode && foundLineage) {
     return {
       node: foundNode,
-      lineage: foundLineage,
+      lineage: foundLineage
     };
   }
   return undefined;
@@ -214,7 +260,11 @@ export function findItem(tree, uuid) {
  * @param {object} updates The updates to apply to the matching node
  * @return {treeNode} The modified tree
  */
-export function updateItemInTree(treeNode, uuid, updates) {
+export function updateItemInTree<T extends Tree<T>>(
+  treeNode: T,
+  uuid: string,
+  updates: T
+): T {
   let children;
   if (treeNode.children) {
     children = treeNode.children.map(x => updateItemInTree(x, uuid, updates));
@@ -226,9 +276,9 @@ export function updateItemInTree(treeNode, uuid, updates) {
   }
 
   return {
-    ...treeNode,
-    ...thisUpdates,
-    children,
+    ...(treeNode as any),
+    ...(thisUpdates as any),
+    children
   };
 }
 
@@ -239,7 +289,10 @@ export function updateItemInTree(treeNode, uuid, updates) {
  * @param {object} input The input object
  * @param {string} key The key to remove
  */
-export function deleteItemFromObject(input, key) {
+export function deleteItemFromObject<T extends Tree<T>>(
+  input: object,
+  key: any
+) {
   const output = {};
 
   Object.keys(input)
@@ -257,15 +310,20 @@ export function deleteItemFromObject(input, key) {
  *
  * @return {treeNode} Copy of the input tree with the input item removed.
  */
-export function deleteItemFromTree(treeNode, uuid) {
+export function deleteItemFromTree<T extends Tree<T>>(
+  treeNode: T,
+  uuid: string
+): T {
   let children;
   if (treeNode.children) {
-    children = treeNode.children.filter(x => x.uuid !== uuid).map(x => deleteItemFromTree(x, uuid));
+    children = treeNode.children
+      .filter(x => x.uuid !== uuid)
+      .map(x => deleteItemFromTree(x, uuid));
   }
 
   return {
-    ...treeNode,
-    children,
+    ...(treeNode as any),
+    children
   };
 }
 
@@ -277,17 +335,20 @@ export function deleteItemFromTree(treeNode, uuid) {
  *
  * @return {treeNode} Copy of the input tree with the input item removed.
  */
-export function deleteItemsFromTree(treeNode, uuids) {
+export function deleteItemsFromTree<T extends Tree<T>>(
+  treeNode: T,
+  uuids: Array<string>
+): T {
   let children;
   if (treeNode.children) {
     children = treeNode.children
-      .filter(x => !uuids.includes(x.uuid))
+      .filter(x => uuids.indexOf(x.uuid) !== -1)
       .map(x => deleteItemsFromTree(x, uuids));
   }
 
   return {
-    ...treeNode,
-    children,
+    ...(treeNode as any),
+    children
   };
 }
 
@@ -298,24 +359,29 @@ export function deleteItemsFromTree(treeNode, uuids) {
  * @param {string} parentUuid
  * @param {array of items} items
  */
-export function addItemsToTree(treeNode, parentUuid, items) {
-  let children;
+export function addItemsToTree<T extends Tree<T>>(
+  treeNode: T,
+  parentUuid: string,
+  items: Array<T>
+): T {
+  let children: Array<T> | undefined;
   if (treeNode.children) {
     children = treeNode.children.map(x => addItemsToTree(x, parentUuid, items));
   }
 
   if (treeNode.uuid === parentUuid) {
-    items.forEach((item) => {
+    if (!children) children = [];
+    items.forEach(item => {
       if (!item.uuid) {
         item.uuid = uuidv4();
       }
-      children.push(item);
+      children!.push(item);
     });
   }
 
   return {
-    ...treeNode,
-    children,
+    ...(treeNode as any),
+    children
   };
 }
 
@@ -327,23 +393,29 @@ export function addItemsToTree(treeNode, parentUuid, items) {
  * @param {treeNode} itemToMove The item being moved
  * @param {treeNode} destination The destination tree node
  */
-export function moveItemsInTree(rootNode, destination, itemsToMove) {
+export function moveItemsInTree<T extends Tree<T>>(
+  rootNode: T,
+  destination: T,
+  itemsToMove: Array<T>
+): T {
   let children;
   if (rootNode.children) {
     const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToMove : []; // if this is the destination, insert the item to move
     const uuidsToMove = itemsToMove.map(i => i.uuid);
-    const filteredItemsToCopy = rootNode.children.filter(c => !uuidsToMove.includes(c.uuid)); // remove the 'item to move'
+    const filteredItemsToCopy = rootNode.children.filter(
+      c => uuidsToMove.indexOf(c.uuid) !== -1
+    ); // remove the 'item to move'
     children = [
       ...itemsToInsert, // insert at beginning
-      ...filteredItemsToCopy,
+      ...filteredItemsToCopy
     ]
       .filter(c => !!c) // filter out undefined
       .map(c => moveItemsInTree(c, destination, itemsToMove)); // recurse children
   }
 
   return {
-    ...rootNode,
-    children,
+    ...(rootNode as any),
+    children
   };
 }
 
@@ -355,20 +427,24 @@ export function moveItemsInTree(rootNode, destination, itemsToMove) {
  * @param {treeNode} itemToMove The item being moved
  * @param {treeNode} destination The destination tree node
  */
-export function copyItemsInTree(rootNode, destination, itemsToCopy) {
+export function copyItemsInTree<T extends Tree<T>>(
+  rootNode: T,
+  destination: T,
+  itemsToCopy: Array<T>
+): T {
   let children;
   if (rootNode.children) {
     const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToCopy : []; // if this is the destination, insert the item to move
     children = [
       ...itemsToInsert, // insert at beginning
-      ...rootNode.children,
+      ...rootNode.children
     ]
       .filter(c => !!c) // filter out undefined
       .map(c => copyItemsInTree(c, destination, itemsToCopy)); // recurse children
   }
 
   return {
-    ...rootNode,
-    children,
+    ...(rootNode as any),
+    children
   };
 }

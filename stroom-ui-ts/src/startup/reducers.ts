@@ -44,6 +44,11 @@ import {
   StoreState as UserSettingsStoreState
 } from "../sections/UserSettings/redux";
 
+import {
+  reducer as selectableItemListings,
+  StoreState as SelectableItemListingStoreState
+} from "../lib/withSelectableItemListing";
+
 // import { reducer as appSearch } from "../components/AppSearchBar/redux";
 // import { reducer as appChrome } from "../sections/AppChrome/redux";
 // import { reducer as docRefTypes } from "../components/DocRefTypes";
@@ -58,7 +63,6 @@ import {
 // import { reducer as debuggers } from "../components/PipelineDebugger";
 // import { reducer as processing } from "../sections/Processing";
 // import { reducer as dataViewers } from "../sections/DataViewer";
-// import { reducer as selectableItemListings } from "../lib/withSelectableItemListing";
 
 export interface GlobalStoreState {
   keyIsDown: KeyIsDownState;
@@ -68,6 +72,7 @@ export interface GlobalStoreState {
   authorisation: AuthorisationStoreState;
   fetch: FetchStoreStore;
   userSettings: UserSettingsStoreState;
+  selectableItemListings: SelectableItemListingStoreState;
 }
 
 export default combineReducers({
@@ -79,7 +84,8 @@ export default combineReducers({
   authentication,
   authorisation,
   fetch,
-  userSettings
+  userSettings,
+  selectableItemListings
   // processing,
   // folderExplorer,
   // expressionBuilder,
@@ -93,6 +99,5 @@ export default combineReducers({
   // docRefInfo,
   // appSearch,
   // dictionaryEditor,
-  // selectableItemListings,
   // debuggers
 });
