@@ -17,12 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.api.ConfigProperty;
+import stroom.docref.DocRef;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -157,7 +159,48 @@ class TestConfigMapper {
     }
 
     @Test
-    void update_list() {
+    void update_docRef() {
+        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
+        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+
+        Supplier<DocRef> getter = () -> extendedAppConfig.getTestConfig().getDocRefProp();
+        DocRef initialValue = getter.get();
+        DocRef newValue = new DocRef.Builder()
+                .type(initialValue.getType() + "xxx")
+                .uuid(UUID.randomUUID().toString())
+                .build();
+
+        configMapper.update("stroom.test.docRefProp", ConfigMapper.convert(newValue));
+
+        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+    }
+
+    @Test
+    void update_docRefList() {
+        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
+        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+
+        Supplier<List<DocRef>> getter = () -> extendedAppConfig.getTestConfig().getDocRefListProp();
+        List<DocRef> initialValue = getter.get();
+        List<DocRef> newValue = new ArrayList<>();
+        initialValue.forEach(docRef ->
+                newValue.add(new DocRef.Builder()
+                        .type(docRef.getType() + "x")
+                        .uuid(UUID.randomUUID().toString())
+                .name(docRef.getName() + "xx")
+                .build()));
+        newValue.add(new DocRef.Builder()
+                        .type("NewDocRefType")
+                        .uuid(UUID.randomUUID().toString())
+                .build());
+
+        configMapper.update("stroom.test.docRefListProp", ConfigMapper.convert(newValue));
+
+        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+    }
+
+    @Test
+    void update_stringList() {
         ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
         ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
 
@@ -175,7 +218,7 @@ class TestConfigMapper {
     }
 
     @Test
-    void update_map() {
+    void update_stringLongMap() {
         ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
         ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
 
@@ -247,6 +290,12 @@ class TestConfigMapper {
         private List<String> stringListProp = new ArrayList<>();
         private List<Integer> intListProp = new ArrayList<>();
         private Map<String, Long> stringLongMapProp = new HashMap<>();
+        private DocRef docRefProp = new DocRef("MyType", UUID.randomUUID().toString(), "MyName");
+        private List<DocRef> docRefListProp = List.of(
+                new DocRef("MyType1", UUID.randomUUID().toString(), "MyDocRef1"),
+                new DocRef("MyType2", UUID.randomUUID().toString(), "MyDocRef2"));
+
+        // sub-configs
         private TestPrimitiveConfig testPrimitiveConfig = new TestPrimitiveConfig();
         private TestBoxedConfig testBoxedConfig = new TestBoxedConfig();
 
@@ -312,6 +361,22 @@ class TestConfigMapper {
 
         void setStringLongMapProp(final Map<String, Long> stringLongMapProp) {
             this.stringLongMapProp = stringLongMapProp;
+        }
+
+        DocRef getDocRefProp() {
+            return docRefProp;
+        }
+
+        void setDocRefProp(final DocRef docRefProp) {
+            this.docRefProp = docRefProp;
+        }
+
+        List<DocRef> getDocRefListProp() {
+            return docRefListProp;
+        }
+
+        void setDocRefListProp(final List<DocRef> docRefListProp) {
+            this.docRefListProp = docRefListProp;
         }
     }
 

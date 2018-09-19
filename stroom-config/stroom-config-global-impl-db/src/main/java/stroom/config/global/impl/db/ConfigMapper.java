@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.impl.db.BeanUtil.Prop;
+import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
@@ -92,7 +93,8 @@ public class ConfigMapper {
                             type.equals(boolean.class) ||
                             type.equals(Character.class) ||
                             value instanceof List ||
-                            value instanceof Map) {
+                            value instanceof Map ||
+                            value instanceof DocRef) {
                         propertyMap.put(fullPath, v);
 
                         // Create global property.
@@ -138,11 +140,18 @@ public class ConfigMapper {
     }
 
     public static String convert(final Object value) {
+        List<String> availableDelimiters = new ArrayList<>(DELIMITERS);
+        return convert(value, availableDelimiters);
+    }
+
+    private static String convert(final Object value, final List<String> availableDelimiters) {
         if (value != null) {
             if (value instanceof List) {
-                return listToString((List<?>) value);
+                return listToString((List<?>) value, availableDelimiters);
             } else if (value instanceof Map) {
-                return mapToString((Map<?, ?>) value);
+                return mapToString((Map<?, ?>) value, availableDelimiters);
+            } else if (value instanceof DocRef) {
+                return docRefToString((DocRef) value, availableDelimiters);
             } else {
                 return value.toString();
             }
@@ -213,12 +222,15 @@ public class ConfigMapper {
             Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
             Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
             return stringToMap(value, keyType, valueType);
+        } else if (type.equals(DocRef.class)) {
+            return stringToDocRef(value);
         }
 
         return null;
     }
 
-    private static String listToString(final List<?> list) {
+
+    private static String listToString(final List<?> list, final List<String> availableDelimiters) {
 
         if (list.isEmpty()) {
             return "";
@@ -229,14 +241,14 @@ public class ConfigMapper {
 
         String allText = String.join("", strList);
 
-        String delimiter = getDelimiter(allText);
+        String delimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
         return delimiter + String.join(delimiter, strList);
     }
 
-    private static String mapToString(final Map<?, ?> map) {
+    private static String mapToString(final Map<?, ?> map, final List<String> availableDelimiters) {
         if (map.isEmpty()) {
             return "";
         }
@@ -254,8 +266,8 @@ public class ConfigMapper {
                 .map(entry -> entry.getKey() + entry.getValue())
                 .collect(Collectors.joining());
 
-        final String entryDelimiter = getDelimiter(allText);
-        final String keyValueDelimiter = getDelimiter(allText, entryDelimiter);
+        final String keyValueDelimiter = getDelimiter(allText, availableDelimiters);
+        final String entryDelimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiters so when we deserialise
         // we know what the delimiters are
@@ -263,6 +275,15 @@ public class ConfigMapper {
                 .map(entry ->
                     entry.getKey() + keyValueDelimiter + entry.getValue())
                 .collect(Collectors.joining(entryDelimiter));
+    }
+
+    private static String docRefToString(final DocRef docRef, final List<String> availableDelimiters) {
+        String allText = String.join("", docRef.getType(), docRef.getUuid(), docRef.getName());
+        String delimiter = getDelimiter(allText, availableDelimiters);
+
+        // prefix the delimited form with the delimiter so when we deserialise
+        // we know what the delimiter is
+        return delimiter + String.join(delimiter, docRef.getType(), docRef.getUuid(), docRef.getName());
     }
 
     private static <T> List<T> stringToList(final String serialisedForm, final Class<T> type) {
@@ -310,6 +331,19 @@ public class ConfigMapper {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    private static DocRef stringToDocRef(final String serialisedForm) {
+
+        String delimiter = String.valueOf(serialisedForm.charAt(0));
+        String delimitedValue = serialisedForm.substring(1);
+
+        List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
+        return new DocRef.Builder()
+                .type(parts.get(0))
+                .uuid(parts.get(1))
+                .name(parts.get(2))
+                .build();
+    }
+
     private static Class getDataType(Class clazz) {
         if(clazz.isPrimitive()) {
             return clazz;
@@ -348,28 +382,27 @@ public class ConfigMapper {
         }
     }
 
-    private static String getDelimiter(final String allText) {
-        return getDelimiter(allText, "");
-    }
-
-    private static String getDelimiter(final String allText, final String... blackListedDelimiters) {
-        // remove already used delimiters from the available candidates
-        final List<String> delimiterCandidates;
-        if (blackListedDelimiters!= null && blackListedDelimiters.length > 0) {
-            delimiterCandidates = new ArrayList<>(DELIMITERS);
-            for (String blackListedDelimiter : blackListedDelimiters) {
-                delimiterCandidates.remove(blackListedDelimiter);
-            }
-        } else {
-            delimiterCandidates = DELIMITERS;
-        }
+    private static String getDelimiter(final String allText, final List<String> availableDelimiters) {
+//        // remove already used delimiters from the available candidates
+//        final List<String> delimiterCandidates;
+//        if (blackListedDelimiters!= null && blackListedDelimiters.length > 0) {
+//            delimiterCandidates = new ArrayList<>(DELIMITERS);
+//            for (String blackListedDelimiter : blackListedDelimiters) {
+//                delimiterCandidates.remove(blackListedDelimiter);
+//            }
+//        } else {
+//            delimiterCandidates = DELIMITERS;
+//        }
 
         // find the first delimiter that does not appear in the text
-        return delimiterCandidates.stream()
+        String chosenDelimiter = availableDelimiters.stream()
                 .filter(delimiter -> !allText.contains(delimiter))
                 .findFirst()
                 .orElseThrow(() ->
                         new RuntimeException("Exhausted all delimiters"));
+        // remove the chosen delimiter so it doesn't get re-used for another purpose
+        availableDelimiters.remove(chosenDelimiter);
+        return chosenDelimiter;
     }
 
 }
