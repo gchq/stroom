@@ -151,6 +151,43 @@ body {
 .button__icon {
   margin-right: 5px; }
 
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.ErrorPage__details {
+  width: 100%;
+  padding: 15px;
+  margin: 0px !important; }
+
+.ErrorPage__section {
+  display: grid;
+  grid-template-columns: 20% 80%;
+  grid-template-rows: auto; }
+
+.icon-header {
+  display: inline-flex;
+  margin: 5px 5px 5px 5px;
+  align-items: center; }
+
+.icon-header {
+  font-size: large;
+  font-weight: bold; }
+
+.icon-header__icon {
+  padding-right: 5px; }
+
 .theme-light .header {
   color: rgba(0, 0, 0, 0.8); }
 

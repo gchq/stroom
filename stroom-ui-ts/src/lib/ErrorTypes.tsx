@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-import ErrorPage from './ErrorPage';
+export class IHttpError {
+  status: number;
+  message: string;
+  stack: string;
+}
 
-export {
-  default as reducer,
-  setErrorMessageAction,
-  setStackTraceAction,
-  setHttpErrorCodeAction,
-} from './redux';
-export default ErrorPage;
+export class HttpError implements IHttpError {
+  status: number;
+  message: string;
+  stack: string;
+
+  constructor(status: number, message: string) {
+    this.status = status;
+    this.message = message;
+    this.stack = new Error().stack || "";
+  }
+}
+
+HttpError.prototype = Object.create(Error.prototype);
+HttpError.prototype.constructor = HttpError;

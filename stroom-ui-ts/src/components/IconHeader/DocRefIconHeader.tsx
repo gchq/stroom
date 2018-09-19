@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { PropTypes } from 'prop-types';
-import DocRefImage from '../DocRefImage';
+import * as React from "react";
+import DocRefImage from "../DocRefImage";
 
-const DocRefIconHeader = ({ text, docRefType, className }) => (
+export interface Props {
+  text: string;
+  docRefType: string;
+  className?: string;
+}
+
+const DocRefIconHeader = ({ text, docRefType, className }: Props) => (
   <div className={`icon-header ${className}`}>
-    <DocRefImage docRefType={docRefType} className="icon-header__icon" size="lg" />
+    <DocRefImage
+      docRefType={docRefType}
+      className="icon-header__icon"
+      size="lg"
+    />
     <p className="icon-header__text">{text}</p>
   </div>
 );
-
-DocRefIconHeader.propTypes = {
-  text: PropTypes.string.isRequired,
-  docRefType: PropTypes.string.isRequired,
-  className: PropTypes.string,
-};
 
 export default DocRefIconHeader;

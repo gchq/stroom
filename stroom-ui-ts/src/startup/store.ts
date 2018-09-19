@@ -21,6 +21,4 @@ import reducers from "./reducers";
 
 const initialState = {};
 
-const store = createStore(reducers, initialState, middleware);
-
-export default store;
+export default () => createStore(reducers, initialState, middleware);

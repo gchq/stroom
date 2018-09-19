@@ -1,33 +1,43 @@
-import { connect } from 'react-redux';
-import { lifecycle, compose } from 'recompose';
+import { connect } from "react-redux";
+import { lifecycle, compose } from "recompose";
 
-import { actionCreators } from './redux';
+import { actionCreators } from "./redux";
 
 const { keyDown, keyUp } = actionCreators;
 
-const KeyIsDown = (filters = ['Control', 'Shift', 'Alt', 'Meta']) =>
+export interface Props {
+  keyDown: (key: string) => void;
+  keyUp: (key: string) => void;
+}
+
+const KeyIsDown = (
+  filters: Array<String> = ["Control", "Shift", "Alt", "Meta"]
+) =>
   compose(
-    connect((state, props) => ({}), {
-      keyDown,
-      keyUp,
-    }),
-    lifecycle({
+    connect(
+      undefined,
+      {
+        keyDown,
+        keyUp
+      }
+    ),
+    lifecycle<Props, {}, {}>({
       componentDidMount() {
         const { keyDown, keyUp } = this.props;
-        window.onkeydown = function (e) {
-          if (filters.includes(e.key)) {
+        window.onkeydown = function(e) {
+          if (filters.indexOf(e.key) !== -1) {
             keyDown(e.key);
             e.preventDefault();
           }
         };
-        window.onkeyup = function (e) {
-          if (filters.includes(e.key)) {
+        window.onkeyup = function(e) {
+          if (filters.indexOf(e.key) !== -1) {
             keyUp(e.key);
             e.preventDefault();
           }
         };
-      },
-    }),
+      }
+    })
   );
 
 export default KeyIsDown;

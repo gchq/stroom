@@ -1,22 +1,36 @@
-import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActions, handleActions } from "redux-actions";
+import { Action } from "redux";
 
-const actionCreators = createActions({
-  KEY_DOWN: keyCode => ({ keyCode, isDown: true }),
-  KEY_UP: keyCode => ({ keyCode, isDown: false }),
-});
-
-const { keyDown, keyUp } = actionCreators;
+export interface StoreState {
+  [s: string]: boolean;
+}
 
 const defaultState = {};
 
-const reducer = handleActions(
+export interface StoreAction {
+  keyCode: string;
+  isDown: boolean;
+}
+
+const baseActionCreator = createActions<StoreAction>({
+  KEY_CHANGE: (keyCode, isDown) => ({ keyCode, isDown })
+});
+
+const actionCreators = {
+  keyDown: (keyCode: string): Action =>
+    baseActionCreator.keyChange(keyCode, true),
+  keyUp: (keyCode: string): Action =>
+    baseActionCreator.keyChange(keyCode, false)
+};
+
+const reducer = handleActions<StoreState, StoreAction>(
   {
-    [combineActions(keyDown, keyUp)]: (state, { payload: { keyCode, isDown } }) => ({
+    KEY_CHANGE: (state, { payload }) => ({
       ...state,
-      [keyCode]: isDown,
-    }),
+      [payload!.keyCode]: payload!.isDown
+    })
   },
-  defaultState,
+  defaultState
 );
 
 export { actionCreators, reducer };

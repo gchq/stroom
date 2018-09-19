@@ -17,9 +17,14 @@
 import * as React from "react";
 import { connect } from "react-redux";
 import IconHeader from "../IconHeader";
+import { StoreState } from "./redux";
+import { GlobalStoreState } from "../../startup/reducers";
+import ErrorSection from "./ErrorSection";
 
 const enhance = connect(
-  ({ errorPage: { errorMessage, stackTrace, httpErrorCode } }) => ({
+  ({
+    errorPage: { errorMessage, stackTrace, httpErrorCode }
+  }: GlobalStoreState) => ({
     errorMessage,
     stackTrace,
     httpErrorCode
@@ -27,20 +32,9 @@ const enhance = connect(
   {}
 );
 
-const ErrorSection = ({ title, errorData }) => (
-  <div className="ErrorPage__section">
-    <strong>{title}: </strong>
-    <code>{errorData}</code>
-  </div>
-);
-
-const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }) => (
+const ErrorPage = ({ errorMessage, stackTrace, httpErrorCode }: StoreState) => (
   <div>
-    <IconHeader
-      icon="exclamation-circle"
-      color="red"
-      text="There has been an error!"
-    />
+    <IconHeader icon="exclamation-circle" text="There has been an error!" />
 
     <div className="ErrorPage__details">
       {errorMessage && (

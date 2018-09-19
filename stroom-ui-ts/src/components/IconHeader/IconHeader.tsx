@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { PropTypes } from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import * as React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
-const IconHeader = ({ text, icon }) => (
+export interface Props {
+  text: string;
+  icon: IconProp;
+}
+
+const IconHeader = ({ text, icon }: Props) => (
   <div className="icon-header">
-    <FontAwesomeIcon className='icon-header__icon' icon={icon} size='lg' />
+    <FontAwesomeIcon className="icon-header__icon" icon={icon} size="lg" />
     <p className="icon-header__text">{text}</p>
   </div>
 );
-
-IconHeader.propTypes = {
-  text: PropTypes.string.isRequired,
-  icon: PropTypes.string.isRequired
-}
 
 export default IconHeader;

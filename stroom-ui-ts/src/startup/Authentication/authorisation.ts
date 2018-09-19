@@ -1,49 +1,75 @@
-export const SET_CAN_MANAGE_USERS = 'authorisation/SET_CAN_MANAGE_USERS';
-export const SET_APP_PERMISSION = 'authorisation/SET_APP_PERMISSION';
+import { createActions, handleActions } from "redux-actions";
+import { Dispatch } from "redux";
 
-const initialState = {
-  appPermissions: [],
+export const SET_APP_PERMISSION = "authorisation/SET_APP_PERMISSION";
+
+export interface StoreState {
+  appPermissions: Array<string>;
+}
+
+export interface StoreAction {
+  appPermission: string;
+  hasAppPermission: boolean;
+}
+
+const defaultState = {
+  appPermissions: []
 };
 
-export const authorisationReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case SET_APP_PERMISSION:
-      return Object.assign(state, {
-        appPermissions: Object.assign(state.appPermissions, {
-          [action.appPermission]: action.hasAppPermission,
-        }),
-      });
-    default:
-      return state;
-  }
-};
-
-const setHasAppPermission = (appPermission, hasAppPermission) => ({
-  type: SET_APP_PERMISSION,
-  appPermission,
-  hasAppPermission,
+export const actionCreators = createActions<StoreAction>({
+  SET_APP_PERMISSION: (appPermission, hasAppPermission) => ({
+    appPermission,
+    hasAppPermission
+  })
 });
 
-export const hasAppPermission = (idToken, authorisationServiceUrl, appPermission) => (dispatch) => {
+export const reducer = handleActions<StoreState, StoreAction>(
+  {
+    SET_APP_PERMISSION: (state, action) =>
+      Object.assign(state, {
+        appPermissions: Object.assign(state.appPermissions, {
+          [action.payload!.appPermission]: action.payload!.hasAppPermission
+        })
+      })
+  },
+  defaultState
+);
+
+const setHasAppPermission = (
+  appPermission: string,
+  hasAppPermission: boolean
+) => ({
+  type: SET_APP_PERMISSION,
+  appPermission,
+  hasAppPermission
+});
+
+export const hasAppPermission = (
+  idToken: string,
+  authorisationServiceUrl: string,
+  appPermission: string
+) => (dispatch: Dispatch) => {
   const hasAppPermissionUrl = `${authorisationServiceUrl}/hasAppPermission`;
   return fetch(hasAppPermissionUrl, {
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${idToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`
     },
-    method: 'post',
-    mode: 'cors',
+    method: "post",
+    mode: "cors",
     body: JSON.stringify({
-      permission: appPermission,
-    }),
-  }).then((response) => {
+      permission: appPermission
+    })
+  }).then(response => {
     if (response.status === 401) {
       dispatch(setHasAppPermission(appPermission, false));
     } else if (response.status === 200) {
       dispatch(setHasAppPermission(appPermission, true));
     } else {
-      console.log(`Unknown response from the authorisation service! ${response}`);
+      console.log(
+        `Unknown response from the authorisation service! ${response}`
+      );
     }
   });
 };

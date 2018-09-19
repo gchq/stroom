@@ -9,7 +9,7 @@ import HTML5Backend from "react-dnd-html5-backend";
 
 import KeyIsDown from "./lib/KeyIsDown";
 import Routes from "./startup/Routes";
-import store from "./startup/store";
+import createStore from "./startup/store";
 import FontAwesomeProvider from "./startup/FontAwesomeProvider";
 import { history } from "./startup/middleware";
 
@@ -21,6 +21,8 @@ const DndRoutes = compose(
   DragDropContext(HTML5Backend),
   toClass
 )(Routes);
+
+const store = createStore();
 
 ReactDOM.render(
   <Provider store={store}>

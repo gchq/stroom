@@ -15,7 +15,13 @@
  */
 
 import * as React from "react";
-import { Route, Router, Switch, withRouter } from "react-router-dom";
+import {
+  Route,
+  Router,
+  Switch,
+  withRouter,
+  RouteComponentProps
+} from "react-router-dom";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 
@@ -24,17 +30,30 @@ import { connect } from "react-redux";
 // import { appChromeRoutes } from "../sections/AppChrome";
 // import { Processing } from "../sections/Processing";
 import { HandleAuthenticationResponse } from "./Authentication";
+import { GlobalStoreState } from "./reducers";
 
 import withConfig from "./withConfig";
 
-import { PrivateRoute } from "./Authentication";
+// import { PrivateRoute } from "./Authentication";
 
-const enhance = compose(
+export interface Props {}
+
+export interface EnhancedProps extends Props, RouteComponentProps {
+  isLoggedIn: boolean;
+  appClientId: string;
+  authenticationServiceUrl: string;
+  authorisationServiceUrl: string;
+  advertisedUrl: string;
+  authUsersUiUrl: string;
+  authTokensUiUrl: string;
+}
+
+const enhance = compose<EnhancedProps, Props>(
   withConfig,
   withRouter,
   connect(
-    state => ({
-      idToken: state.authentication.idToken
+    ({ authentication: { idToken } }: GlobalStoreState) => ({
+      idToken
       // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
     }),
     {}
@@ -67,8 +86,9 @@ const Routes = ({
   advertisedUrl,
   authUsersUiUrl,
   authTokensUiUrl
-}) => (
-  <Router history={history} basename="/">
+}: EnhancedProps) => (
+  <Router history={history}>
+    {/* basename="/"> TODO */}
     <Switch>
       <Route
         exact

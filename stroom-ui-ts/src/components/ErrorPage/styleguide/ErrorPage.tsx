@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { compose, lifecycle } from 'recompose';
-import { connect } from 'react-redux';
-import { storiesOf } from '@storybook/react';
-import 'styles/main.css';
+import { compose, lifecycle } from "recompose";
+import { connect } from "react-redux";
 
-import ErrorPage from './ErrorPage';
-import { ThemedDecorator } from '../../lib/storybook/ThemedDecorator';
-import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
+import ErrorPage from "../ErrorPage";
+import { actionCreators, ActionCreators } from "../redux";
 
-const errorMessage = 'Everything is a disaster';
+const { setErrorMessage, setStackTrace, setHttpErrorCode } = actionCreators;
+
+const errorMessage = "Everything is a disaster";
 const stackTrace = `Invariant Violation: Objects are not valid as a React child (found: object with keys {sdfs}). If you meant to render a collection of children, use an array instead.
 in code (created by ErrorPage)
 in p (created by ErrorPage)
@@ -47,44 +45,41 @@ at beginWork (http://localhost:9001/static/preview.bundle.js:37139:16)
 at performUnitOfWork (http://localhost:9001/static/preview.bundle.js:39967:16)
 at workLoop (http://localhost:9001/static/preview.bundle.js:39996:26)
 at renderRoot (http://localhost:9001/static/preview.bundle.js:40027:9)`;
-const httpErrorStatus = 501;
+const httpErrorCode = 501;
 
-const enhance = compose(
-  connect(undefined, { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction }),
+export interface Props {
+  includeErrorMessage: boolean;
+  includeStackTrace: boolean;
+  includeHttpErrorCode: boolean;
+}
+
+const enhance = compose<{}, Props>(
+  connect(
+    undefined,
+    { setErrorMessage, setStackTrace, setHttpErrorCode }
+  ),
   lifecycle({
     componentDidMount() {
       const {
-        setErrorMessageAction,
-        setStackTraceAction,
-        setHttpErrorCodeAction,
-        errorMessage,
-        stackTrace,
-        httpErrorStatus,
-      } = this.props;
+        setErrorMessage,
+        setStackTrace,
+        setHttpErrorCode,
+        includeErrorMessage,
+        includeStackTrace,
+        includeHttpErrorCode
+      } = this.props as Props & ActionCreators;
 
-      setErrorMessageAction(errorMessage);
-      setStackTraceAction(stackTrace);
-      setHttpErrorCodeAction(httpErrorStatus);
-    },
-  }),
+      if (includeErrorMessage) {
+        setErrorMessage(errorMessage);
+      }
+      if (includeStackTrace) {
+        setStackTrace(stackTrace);
+      }
+      if (includeHttpErrorCode) {
+        setHttpErrorCode(httpErrorCode);
+      }
+    }
+  })
 );
 
-const TestErrorPage = enhance(ErrorPage);
-
-storiesOf('ErrorPage', module).add('No details', () => <TestErrorPage />);
-
-storiesOf('ErrorPage', module).add('Just error message', () => (
-  <TestErrorPage errorMessage={errorMessage} />
-));
-
-storiesOf('ErrorPage', module).add('Error message and stack trace', () => (
-  <TestErrorPage errorMessage={errorMessage} stackTrace={stackTrace} />
-));
-
-storiesOf('ErrorPage', module).add('Everything', () => (
-  <TestErrorPage
-    errorMessage={errorMessage}
-    stackTrace={stackTrace}
-    httpErrorStatus={httpErrorStatus}
-  />
-));
+export default enhance(ErrorPage);

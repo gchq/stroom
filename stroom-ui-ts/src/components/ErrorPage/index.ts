@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-export function HttpError(status, text) {
-  this.status = status;
-  this.message = text;
-  this.stack = new Error().stack;
-}
+import ErrorPage from "./ErrorPage";
 
-HttpError.prototype = Object.create(Error.prototype);
-HttpError.prototype.constructor = HttpError;
+export { reducer, actionCreators, StoreState } from "./redux";
+
+export default ErrorPage;

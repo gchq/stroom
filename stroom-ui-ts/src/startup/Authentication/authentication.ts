@@ -13,46 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import { createActions, handleActions } from "redux-actions";
 import * as jwtDecode from "jwt-decode";
 import * as uuidv4 from "uuid";
 import * as sjcl from "sjcl";
 import { push } from "react-router-redux";
+import { Dispatch } from "redux";
+import { GlobalStoreState } from "../reducers";
+import { LocationDescriptor } from "history";
 
-// import { hasAppPermission } from './authorisation';
+export interface StoreState {
+  idToken?: string;
+}
 
-export const TOKEN_ID_CHANGE = "authentication/TOKEN_ID_CHANGE";
+export interface StoreAction {
+  idToken: string;
+}
 
-const initialState = {
+const defaultState = {
   idToken: ""
 };
 
-export const authenticationReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case TOKEN_ID_CHANGE:
-      return Object.assign({}, state, {
-        idToken: action.idToken
-      });
+const actionCreators = createActions<StoreAction>({
+  TOKEN_ID_CHANGE: (idToken: string) => ({ idToken })
+});
 
-    default:
-      return state;
-  }
-};
+const { tokenIdChange } = actionCreators;
 
-function changeIdToken(idToken) {
-  return {
-    type: TOKEN_ID_CHANGE,
-    idToken
-  };
-}
+export const reducer = handleActions(
+  {
+    TOKEN_ID_CHANGE: (state, action) =>
+      Object.assign({}, state, {
+        idToken: action.payload!.idToken
+      })
+  },
+  defaultState
+);
 
 export const sendAuthenticationRequest = (
-  referrer,
-  uiUrl,
-  appClientId,
-  authenticationServiceUrl,
-  appPermission
-) => (dispatch, getState) => {
+  referrer: string,
+  uiUrl: string,
+  appClientId: string,
+  authenticationServiceUrl: string,
+  appPermission?: string
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const redirectUrl = `${uiUrl}/handleAuthenticationResponse`;
   const state = "";
 
@@ -64,7 +68,7 @@ export const sendAuthenticationRequest = (
 
   // We need to remember where the user was going
   localStorage.setItem("preAuthenticationRequestReferrer", referrer);
-  localStorage.setItem("appPermission", appPermission);
+  localStorage.setItem("appPermission", appPermission || ""); // TODO, I have added this default thing...is it right?
 
   // Compose the new URL
   const authenticationRequestParams = `?scope=openid&response_type=code&client_id=${appClientId}&redirect_url=${redirectUrl}&state=${state}&nonce=${nonceHash}`;
@@ -75,10 +79,10 @@ export const sendAuthenticationRequest = (
 };
 
 export const handleAuthenticationResponse = (
-  accessCode,
-  authenticationServiceUrl,
-  authorisationServiceUrl
-) => dispatch => {
+  accessCode: string,
+  authenticationServiceUrl: string,
+  authorisationServiceUrl: string
+) => (dispatch: Dispatch) => {
   const idTokenRequestUrl = `${authenticationServiceUrl}/idToken?accessCode=${accessCode}`;
 
   // The cookie including the sessionId will be sent along with this request.
@@ -94,12 +98,14 @@ export const handleAuthenticationResponse = (
   })
     .then(response => response.text())
     .then(idToken => {
-      const decodedToken = jwtDecode(idToken);
+      const decodedToken = jwtDecode<{ nonce: string }>(idToken); // TODO - is this right?? I have added the typing
       const nonce = localStorage.getItem("nonce");
-      const nonceHashBytes = sjcl.hash.sha256.hash(nonce);
+      const nonceHashBytes = sjcl.hash.sha256.hash(nonce!);
       const nonceHash = sjcl.codec.hex.fromBits(nonceHashBytes);
       const returnedNonce = decodedToken.nonce;
-      const referrer = localStorage.getItem("preAuthenticationRequestReferrer");
+      const referrer = localStorage.getItem(
+        "preAuthenticationRequestReferrer"
+      ) as LocationDescriptor;
       // const appPermission = localStorage.getItem('appPermission');
 
       if (nonceHash === returnedNonce) {
@@ -108,7 +114,7 @@ export const handleAuthenticationResponse = (
         localStorage.removeItem("appPermission");
 
         // TODO: if the user has the requested appPermission then we change the ID token.
-        dispatch(changeIdToken(idToken));
+        dispatch(tokenIdChange(idToken));
         // dispatch(hasAppPermission(idToken, authorisationServiceUrl, appPermission));
       } else {
         console.error("Nonce does not match.");

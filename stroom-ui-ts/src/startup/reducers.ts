@@ -17,10 +17,28 @@
 import { combineReducers } from "redux";
 import { routerReducer } from "react-router-redux";
 import { reducer as formReducer } from "redux-form";
-// import {
-//   authenticationReducer as authentication,
-//   authorisationReducer as authorisation
-// } from "./Authentication";
+import {
+  reducer as keyIsDown,
+  StoreState as KeyIsDownState
+} from "../lib/KeyIsDown";
+import {
+  reducer as errorPage,
+  StoreState as ErrorPageState
+} from "../components/ErrorPage";
+import { reducer as config, StoreState as ConfigStoreState } from "./config";
+
+import {
+  authenticationReducer as authentication,
+  authorisationReducer as authorisation,
+  AuthenticationStoreState,
+  AuthorisationStoreState
+} from "./Authentication";
+
+import {
+  reducer as fetch,
+  StoreState as FetchStoreStore
+} from "../lib/fetchTracker.redux";
+
 // import { reducer as appSearch } from "../components/AppSearchBar/redux";
 // import { reducer as appChrome } from "../sections/AppChrome/redux";
 // import { reducer as docRefTypes } from "../components/DocRefTypes";
@@ -34,31 +52,36 @@ import { reducer as formReducer } from "redux-form";
 // import { reducer as xsltEditor } from "../components/XsltEditor";
 // import { reducer as debuggers } from "../components/PipelineDebugger";
 // import { reducer as processing } from "../sections/Processing";
-// import { reducer as errorPage } from "../components/ErrorPage";
-// import { reducer as config } from "./config";
-// import { reducer as fetch } from "../lib/fetchTracker.redux";
 // import { reducer as dataViewers } from "../sections/DataViewer";
-// import { reducer as keyIsDown } from "../lib/KeyIsDown";
 // import { reducer as userSettings } from "../sections/UserSettings";
 // import { reducer as selectableItemListings } from "../lib/withSelectableItemListing";
 
+export interface GlobalStoreState {
+  keyIsDown: KeyIsDownState;
+  errorPage: ErrorPageState;
+  config: ConfigStoreState;
+  authentication: AuthenticationStoreState;
+  authorisation: AuthorisationStoreState;
+  fetch: FetchStoreStore;
+}
+
 export default combineReducers({
   routing: routerReducer,
-  form: formReducer
-  // authentication,
-  // authorisation,
-  // config,
+  form: formReducer,
+  keyIsDown,
+  errorPage,
+  config,
+  authentication,
+  authorisation,
+  fetch
   // processing,
   // folderExplorer,
   // expressionBuilder,
   // pipelineEditor,
   // xsltEditor,
-  // errorPage,
   // lineContainer,
-  // fetch,
   // recentItems,
   // dataViewers,
-  // keyIsDown,
   // docRefTypes,
   // appChrome,
   // userSettings,

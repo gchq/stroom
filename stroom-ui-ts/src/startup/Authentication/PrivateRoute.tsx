@@ -18,18 +18,40 @@ import * as React from "react";
 import { Route } from "react-router-dom";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
+import { GlobalStoreState } from "../../startup/reducers";
 
 import AuthenticationRequest from "./AuthenticationRequest";
 
-const enhance = compose(
+export interface Props {
+  isLoggedIn: boolean;
+  render: (p: any) => any;
+}
+
+export interface EnhancedProps extends Props {
+  advertisedUrl: string;
+  appClientId: string;
+  authenticationServiceUrl: string;
+}
+
+const enhance = compose<EnhancedProps, Props>(
   connect(
-    state => ({
-      idToken: state.authentication.idToken,
+    ({
+      authentication: { idToken },
+      config: {
+        values: {
+          advertisedUrl,
+          appClientId,
+          authenticationServiceUrl,
+          authorisationServiceUrl
+        }
+      }
+    }: GlobalStoreState) => ({
+      idToken,
       // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
-      advertisedUrl: state.config.advertisedUrl,
-      appClientId: state.config.appClientId,
-      authenticationServiceUrl: state.config.authenticationServiceUrl,
-      authorisationServiceUrl: state.config.authorisationServiceUrl
+      advertisedUrl,
+      appClientId,
+      authenticationServiceUrl,
+      authorisationServiceUrl
     }),
     {}
   ),
@@ -45,7 +67,7 @@ const PrivateRoute = ({
   authenticationServiceUrl,
   render,
   ...rest
-}) => (
+}: EnhancedProps) => (
   <Route
     {...rest}
     render={props =>
