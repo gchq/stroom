@@ -1,20 +1,12 @@
 package stroom.statistics.internal;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
+// TODO now config is held as heap objects we don't need this cache
 class InternalStatisticDocRefCache {
     //    static final String PROP_KEY_FORMAT = "stroom.internalstatistics.%s.docRefs";
 //    private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticDocRefCache.class);
@@ -35,11 +27,16 @@ class InternalStatisticDocRefCache {
      * @return A list of {@link DocRef} objects for the given key.  Will return an empty list if no docRefs
      * exist for the key
      */
-    List<DocRef> getDocRefs(final String internalStatisticKey) {
+    List<DocRef> getDocRefs(final InternalStatisticKey internalStatisticKey) {
         Preconditions.checkNotNull(internalStatisticKey);
         return internalStatisticsConfig.get(internalStatisticKey);
 
 //        return map.computeIfAbsent(internalStatisticKey, k -> getDocRefsFromProperty(k, internalStatisticsConfig.get(k)));
+    }
+
+    List<DocRef> getDocRefs(final String internalStatisticKey) {
+        throw new UnsupportedOperationException("TODO remove this method");
+
     }
 //
 //    private List<DocRef> getDocRefsFromProperty(final String key, final DocRefsConfig docRefsConfig) {

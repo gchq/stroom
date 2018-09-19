@@ -70,8 +70,8 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
 
-    private void update(final String key, final String value) {
-        configMapper.update(key, value);
+    private Object update(final String key, final String value) {
+        return configMapper.update(key, value);
     }
 
     private void initialise() {
@@ -149,7 +149,8 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                                 configProperty.setValue(record.getVal());
                                 configProperty.setSource("Database");
 
-                                update(record.getName(), record.getVal());
+                                Object typedValue = update(record.getName(), record.getVal());
+//                                configProperty.setTypedValue(typedValue);
                             }
                         }
                     });

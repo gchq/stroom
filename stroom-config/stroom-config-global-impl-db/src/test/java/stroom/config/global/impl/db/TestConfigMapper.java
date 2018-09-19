@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.api.TypedValue;
 import stroom.docref.DocRef;
 
 import java.io.IOException;
@@ -34,6 +35,11 @@ import java.util.stream.Stream;
 class TestConfigMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigMapper.class);
+
+    @Test
+    void name() {
+        TypedValue<Long> typedValue = new TypedValue(Long.valueOf(123L), Long.class);
+    }
 
     @Test
     void getGlobalProperties() throws IOException, ConfigurationException {

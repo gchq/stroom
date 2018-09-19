@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class StatisticsConfig {
+
     private SQLStatisticsConfig sqlStatisticsConfig;
     private HBaseStatisticsConfig hbaseStatisticsConfig;
     private InternalStatisticsConfig internalStatisticsConfig;
