@@ -188,6 +188,9 @@ body {
 .icon-header__icon {
   padding-right: 5px; }
 
+.UserSettings__container {
+  width: 600px; }
+
 .theme-light .header {
   color: rgba(0, 0, 0, 0.8); }
 

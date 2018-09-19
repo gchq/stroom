@@ -13,17 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { createActions, handleActions } from "redux-actions";
 
-import * as React from 'react';
+export interface StoreState {
+  theme: string;
+}
 
-import { storiesOf, addDecorator } from '@storybook/react';
+export interface StoreAction {
+  theme: string;
+}
 
-import { PollyDecorator } from '../../lib/storybook/PollyDecorator';
+const actionCreators = createActions<StoreAction>({
+  THEME_CHANGED: theme => ({ theme })
+});
 
-import UserSettings from './UserSettings';
+const defaultState = {
+  theme: ""
+};
 
-const PollyDecoratorWithTestData = PollyDecorator({});
+const reducer = handleActions<StoreState, StoreAction>(
+  {
+    THEME_CHANGED: (state, { payload }) => ({
+      ...state,
+      theme: payload!.theme
+    })
+  },
+  defaultState
+);
 
-const stories = storiesOf('User Settings', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .add('Logged in', () => <UserSettings />);
+export { actionCreators, reducer };

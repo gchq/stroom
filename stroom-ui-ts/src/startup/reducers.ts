@@ -39,6 +39,11 @@ import {
   StoreState as FetchStoreStore
 } from "../lib/fetchTracker.redux";
 
+import {
+  reducer as userSettings,
+  StoreState as UserSettingsStoreState
+} from "../sections/UserSettings/redux";
+
 // import { reducer as appSearch } from "../components/AppSearchBar/redux";
 // import { reducer as appChrome } from "../sections/AppChrome/redux";
 // import { reducer as docRefTypes } from "../components/DocRefTypes";
@@ -53,7 +58,6 @@ import {
 // import { reducer as debuggers } from "../components/PipelineDebugger";
 // import { reducer as processing } from "../sections/Processing";
 // import { reducer as dataViewers } from "../sections/DataViewer";
-// import { reducer as userSettings } from "../sections/UserSettings";
 // import { reducer as selectableItemListings } from "../lib/withSelectableItemListing";
 
 export interface GlobalStoreState {
@@ -63,6 +67,7 @@ export interface GlobalStoreState {
   authentication: AuthenticationStoreState;
   authorisation: AuthorisationStoreState;
   fetch: FetchStoreStore;
+  userSettings: UserSettingsStoreState;
 }
 
 export default combineReducers({
@@ -73,7 +78,8 @@ export default combineReducers({
   config,
   authentication,
   authorisation,
-  fetch
+  fetch,
+  userSettings
   // processing,
   // folderExplorer,
   // expressionBuilder,
@@ -84,7 +90,6 @@ export default combineReducers({
   // dataViewers,
   // docRefTypes,
   // appChrome,
-  // userSettings,
   // docRefInfo,
   // appSearch,
   // dictionaryEditor,

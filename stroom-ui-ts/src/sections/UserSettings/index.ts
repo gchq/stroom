@@ -13,22 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import UserSettings from "./UserSettings";
 
-const actionCreators = createActions({
-  THEME_CHANGED: theme => ({ theme }),
-});
-
-const defaultState = [];
-
-const reducer = handleActions(
-  {
-    THEME_CHANGED: (state, { payload: { theme } }) => ({
-      ...state,
-      theme,
-    }),
-  },
-  defaultState,
-);
-
-export { actionCreators, reducer };
+export default UserSettings;

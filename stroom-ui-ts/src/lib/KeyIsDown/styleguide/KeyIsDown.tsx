@@ -17,9 +17,9 @@ import * as React from "react";
 import { compose } from "recompose";
 import { connect } from "react-redux";
 
-import KeyIsDown from "../../lib/KeyIsDown/KeyIsDown";
-import { GlobalStoreState } from "../../startup/reducers";
-import { StoreState } from "../../lib/KeyIsDown/redux";
+import KeyIsDown from "../KeyIsDown";
+import { GlobalStoreState } from "../../../startup/reducers";
+import { StoreState } from "../redux";
 
 const enhance = compose<{}, StoreState>(
   connect(({ keyIsDown }: GlobalStoreState) => ({ ...keyIsDown })),
