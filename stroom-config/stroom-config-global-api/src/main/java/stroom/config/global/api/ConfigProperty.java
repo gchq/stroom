@@ -27,7 +27,11 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
 
     private Integer id;
     private String name;
+    // TODO now that properties are typed in AppConfig we should really be dealing with typed
+    // values here so the UI can edit/display/validate them appropriately according to their type,
+    // e.g. a custom UI control for managing List/Map/boolean types
     private String value;
+
     // These fields are not saved to the database ... just
     private String defaultValue;
     private String source;
