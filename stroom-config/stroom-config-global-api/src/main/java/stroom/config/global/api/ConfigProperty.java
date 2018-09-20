@@ -32,8 +32,6 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
     // e.g. a custom UI control for managing List/Map/boolean types
     private String value;
 
-    private TypedValue typedValue;
-
     // These fields are not saved to the database ... just
     private String defaultValue;
     private String source;
@@ -69,14 +67,6 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
 
     public void setValue(final String value) {
         this.value = value;
-    }
-
-    TypedValue getTypedValue() {
-        return typedValue;
-    }
-
-    void setTypedValue(final TypedValue typedValue) {
-        this.typedValue = typedValue;
     }
 
     public String getDefaultValue() {
