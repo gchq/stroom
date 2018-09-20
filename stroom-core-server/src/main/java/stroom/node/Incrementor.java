@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.shared;
+package stroom.node;
 
 public interface Incrementor {
     void increment();

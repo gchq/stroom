@@ -17,7 +17,6 @@
 
 package stroom.pipeline.writer;
 
-import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamStore;
@@ -36,8 +35,11 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.pipeline.task.ProcessStatisticsFactory;
+import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.streamtask.shared.Processor;
 import stroom.util.shared.Severity;
 
@@ -54,6 +56,7 @@ public class StreamAppender extends AbstractAppender {
     private final StreamHolder streamHolder;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
+    private final RecordCount recordCount;
     private final StreamCloser streamCloser;
 
     private String feed;
@@ -63,12 +66,15 @@ public class StreamAppender extends AbstractAppender {
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private boolean doneHeader;
 
+    private ProcessStatistics lastProcessStatistics;
+
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
                           final StreamStore streamStore,
                           final StreamHolder streamHolder,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
+                          final RecordCount recordCount,
                           final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
@@ -76,6 +82,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamHolder = streamHolder;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
+        this.recordCount = recordCount;
         this.streamCloser = streamCloser;
     }
 
@@ -163,9 +170,19 @@ public class StreamAppender extends AbstractAppender {
     private void close() {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
-            // Write meta data.
-            final AttributeMap attributeMap = metaData.getAttributeMap();
-            streamTarget.getAttributes().putAll(attributeMap);
+            // Write process meta data.
+            streamTarget.getAttributes().putAll(metaData.getAttributes());
+
+            // Get current process statistics
+            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+            // Diff the current statistics with the last captured statistics.
+            final ProcessStatistics currentStatistics = processStatistics.substract(lastProcessStatistics);
+            // Set the last statistics.
+            lastProcessStatistics = processStatistics;
+
+            // Write statistics meta data.
+            currentStatistics.write(streamTarget.getAttributes());
+
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.node.RecordCountService;
-import stroom.node.RecordCounter;
+import stroom.node.Incrementor;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
@@ -38,9 +38,8 @@ import javax.inject.Inject;
  */
 @ConfigurableElement(type = "RecordCountFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.RECORD_COUNT)
-public class RecordCountFilter extends AbstractXMLFilter implements RecordCounter {
+public class RecordCountFilter extends AbstractXMLFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);
-
     private static final int LOG_COUNT = 10000;
 
     private final RecordCountService recordCountService;
@@ -48,9 +47,11 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
 
     private boolean countRead = true;
     private int depth = 0;
-    private long count = 0;
-    private long lastSnapshot;
-    private long startMs;
+    private long logCounter = 0;
+
+    private Incrementor incrementor = () -> {
+        // Do nothing.
+    };
 
     @Inject
     public RecordCountFilter(final RecordCountService recordCountService,
@@ -65,34 +66,34 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     @Override
     public void startProcessing() {
         try {
-            startMs = System.currentTimeMillis();
-            if (recordCountService != null) {
-                if (countRead) {
-                    recordCountService.addRecordReadCounter(this);
-                } else {
-                    recordCountService.addRecordWrittenCounter(this);
-                }
+            recordCount.setStartMs(System.currentTimeMillis());
+//            if (recordCount != null && recordCountService != null) {
+            if (countRead) {
+                incrementor = () -> {
+                    recordCount.getReadIncrementor().increment();
+                    recordCountService.getReadIncrementor().increment();
+                };
+            } else {
+                incrementor = () -> {
+                    recordCount.getWriteIncrementor().increment();
+                    recordCountService.getWriteIncrementor().increment();
+                };
             }
+//            } else if (recordCount != null) {
+//                if (countRead) {
+//                    incrementor = recordCount.getReadIncrementor();
+//                } else {
+//                    incrementor = recordCount.getWriteIncrementor();
+//                }
+//            } else if (recordCountService != null) {
+//                if (countRead) {
+//                    incrementor = recordCountService.getReadIncrementor();
+//                } else {
+//                    incrementor = recordCountService.getWriteIncrementor();
+//                }
+//            }
         } finally {
             super.startProcessing();
-        }
-    }
-
-    /**
-     * @see stroom.pipeline.filter.AbstractXMLFilter#endProcessing()
-     */
-    @Override
-    public void endProcessing() {
-        try {
-            if (recordCountService != null) {
-                if (countRead) {
-                    recordCountService.removeRecordReadCounter(this);
-                } else {
-                    recordCountService.removeRecordWrittenCounter(this);
-                }
-            }
-        } finally {
-            super.endProcessing();
         }
     }
 
@@ -118,12 +119,6 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
         try {
             super.endStream();
         } finally {
-            recordCount.setDuration(System.currentTimeMillis() - startMs);
-            if (countRead) {
-                recordCount.setRead(count);
-            } else {
-                recordCount.setWritten(count);
-            }
             depth = 0;
         }
     }
@@ -155,14 +150,15 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
 
         if (depth == 2) {
             // This is a first level element.
-            count++;
+            incrementor.increment();
 
             if (LOGGER.isDebugEnabled()) {
-                if (count % LOG_COUNT == 0) {
+                logCounter++;
+                if (logCounter % LOG_COUNT == 0) {
                     if (countRead) {
-                        LOGGER.debug("Records read = " + count);
+                        LOGGER.debug("Records read = " + logCounter);
                     } else {
-                        LOGGER.debug("Records written = " + count);
+                        LOGGER.debug("Records written = " + logCounter);
                     }
                 }
             }
@@ -187,10 +183,6 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
         depth--;
     }
 
-    public long getCount() {
-        return count;
-    }
-
     /**
      * @param countRead Sets whether we are counting records read or records written.
      */
@@ -200,13 +192,5 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
             displayPriority = 1)
     public void setCountRead(final boolean countRead) {
         this.countRead = countRead;
-    }
-
-    @Override
-    public long getAndResetCount() {
-        final long snapshot = count;
-        final long delta = snapshot - lastSnapshot;
-        lastSnapshot = snapshot;
-        return delta;
     }
 }

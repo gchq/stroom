@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
-import stroom.feed.MetaMap;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.errorhandler.ErrorStatistics;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.state.RecordCount;
-import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.util.shared.Severity;
 
 import java.util.HashMap;
@@ -43,17 +43,17 @@ public class ProcessStatisticsFactory {
 
     private static void addRecordCounts(final ProcessStatistics stats,
                                         final RecordCount recordCount) {
-        stats.map.put(StreamAttributeConstants.REC_READ, recordCount.getRead());
-        stats.map.put(StreamAttributeConstants.REC_WRITE, recordCount.getWritten());
-        stats.map.put(StreamAttributeConstants.DURATION, recordCount.getDuration());
+        stats.map.put(MetaDataSource.REC_READ, recordCount.getRead());
+        stats.map.put(MetaDataSource.REC_WRITE, recordCount.getWritten());
+        stats.map.put(MetaDataSource.DURATION, recordCount.getDuration());
     }
 
     private static void addMarkerCounts(final ProcessStatistics stats,
                                         final ErrorStatistics errorStatistics) {
-        stats.map.put(StreamAttributeConstants.REC_INFO, getMarkerCount(errorStatistics, Severity.INFO));
-        stats.map.put(StreamAttributeConstants.REC_WARN, getMarkerCount(errorStatistics, Severity.WARNING));
-        stats.map.put(StreamAttributeConstants.REC_ERROR, getMarkerCount(errorStatistics, Severity.ERROR));
-        stats.map.put(StreamAttributeConstants.REC_FATAL, getMarkerCount(errorStatistics, Severity.FATAL_ERROR));
+        stats.map.put(MetaDataSource.REC_INFO, getMarkerCount(errorStatistics, Severity.INFO));
+        stats.map.put(MetaDataSource.REC_WARN, getMarkerCount(errorStatistics, Severity.WARNING));
+        stats.map.put(MetaDataSource.REC_ERROR, getMarkerCount(errorStatistics, Severity.ERROR));
+        stats.map.put(MetaDataSource.REC_FATAL, getMarkerCount(errorStatistics, Severity.FATAL_ERROR));
     }
 
     private static long getMarkerCount(final ErrorStatistics errorStatistics,
@@ -70,8 +70,8 @@ public class ProcessStatisticsFactory {
     public static class ProcessStatistics {
         private final Map<String, Long> map = new HashMap<>();
 
-        public void write(final MetaMap metaMap) {
-            map.forEach((k, v) -> metaMap.put(k, String.valueOf(v)));
+        public void write(final AttributeMap attributeMap) {
+            map.forEach((k, v) -> attributeMap.put(k, String.valueOf(v)));
         }
 
         public ProcessStatistics add(final ProcessStatistics stats) {

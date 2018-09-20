@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.node.shared.Incrementor;
+import stroom.node.Incrementor;
 import stroom.pipeline.scope.PipelineScoped;
 
 import java.util.concurrent.atomic.AtomicLong;

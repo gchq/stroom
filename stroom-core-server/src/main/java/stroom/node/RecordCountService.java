@@ -17,49 +17,30 @@
 package stroom.node;
 
 import javax.inject.Singleton;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class RecordCountService {
-    private final Set<RecordCounter> recordReadCounters = new HashSet<>();
-    private final Set<RecordCounter> recordWriteCounters = new HashSet<>();
-    private long recordsRead;
-    private long recordsWritten;
+    private final AtomicLong readCount = new AtomicLong();
+    private final AtomicLong writeCount = new AtomicLong();
 
-    public synchronized void addRecordReadCounter(final RecordCounter counter) {
-        recordReadCounters.add(counter);
+    public Incrementor getReadIncrementor() {
+        return readCount::incrementAndGet;
     }
 
-    public synchronized void removeRecordReadCounter(final RecordCounter counter) {
-        recordReadCounters.remove(counter);
-        recordsRead += counter.getAndResetCount();
+    public Incrementor getWriteIncrementor() {
+        return writeCount::incrementAndGet;
     }
 
-    public synchronized void addRecordWrittenCounter(final RecordCounter counter) {
-        recordWriteCounters.add(counter);
-    }
-
-    public synchronized void removeRecordWrittenCounter(final RecordCounter counter) {
-        recordWriteCounters.remove(counter);
-        recordsWritten += counter.getAndResetCount();
-    }
-
-    synchronized long getAndResetRead() {
-        long count = recordsRead;
-        recordsRead = 0;
-        for (final RecordCounter counter : recordReadCounters) {
-            count += counter.getAndResetCount();
-        }
+    public long getAndResetRead() {
+        final long count = readCount.get();
+        readCount.addAndGet(-count);
         return count;
     }
 
-    synchronized long getAndResetWritten() {
-        long count = recordsWritten;
-        recordsWritten = 0;
-        for (final RecordCounter counter : recordWriteCounters) {
-            count += counter.getAndResetCount();
-        }
+    public long getAndResetWritten() {
+        final long count = writeCount.get();
+        writeCount.addAndGet(-count);
         return count;
     }
 }
