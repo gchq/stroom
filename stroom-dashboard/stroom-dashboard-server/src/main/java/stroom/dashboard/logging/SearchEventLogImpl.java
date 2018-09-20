@@ -17,6 +17,7 @@
 package stroom.dashboard.logging;
 
 import event.logging.Criteria;
+import event.logging.Criteria.DataSources;
 import event.logging.Event;
 import event.logging.Export;
 import event.logging.MultiObject;
@@ -24,7 +25,6 @@ import event.logging.Purpose;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.Search;
-import event.logging.Search.DataSources;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
