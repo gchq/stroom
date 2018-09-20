@@ -34,10 +34,10 @@ class InternalStatisticDocRefCache {
 //        return map.computeIfAbsent(internalStatisticKey, k -> getDocRefsFromProperty(k, internalStatisticsConfig.get(k)));
     }
 
-    List<DocRef> getDocRefs(final String internalStatisticKey) {
-        throw new UnsupportedOperationException("TODO remove this method");
-
-    }
+//    List<DocRef> getDocRefs(final String internalStatisticKey) {
+//        throw new UnsupportedOperationException("TODO remove this method");
+//
+//    }
 //
 //    private List<DocRef> getDocRefsFromProperty(final String key, final DocRefsConfig docRefsConfig) {
 //        final String docRefsStr = docRefsConfig.getDocRefs();

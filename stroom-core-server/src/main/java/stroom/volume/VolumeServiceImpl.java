@@ -43,6 +43,7 @@ import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticKey;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
@@ -404,7 +405,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                     .build();
 
             InternalStatisticEvent event = InternalStatisticEvent.createValueStat(
-                    INTERNAL_STAT_KEY_VOLUMES, timeMs, tags, bytes.doubleValue());
+                    InternalStatisticKey.VOLUMES, timeMs, tags, bytes.doubleValue());
             events.add(event);
         }
     }

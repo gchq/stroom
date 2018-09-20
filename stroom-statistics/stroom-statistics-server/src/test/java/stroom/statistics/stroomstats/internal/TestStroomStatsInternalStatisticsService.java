@@ -1,6 +1,5 @@
 package stroom.statistics.stroomstats.internal;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -15,6 +14,7 @@ import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafka.pipeline.KafkaProducerRecord;
 import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticKey;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,19 +45,24 @@ public class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
 
-        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any())).thenReturn(Optional.of(mockStroomKafkaProducer));
-        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                mockStroomKafkaProducerFactory,
-                hBaseStatisticsConfig
-        );
+        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
+                .thenReturn(Optional.of(mockStroomKafkaProducer));
+        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
+                new StroomStatsInternalStatisticsService(
+                        mockStroomKafkaProducerFactory,
+                        hBaseStatisticsConfig
+                );
 
         //assemble test data
-        InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat("myKeyA", 0, Collections.emptyMap());
-        InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat("myKeyA", 1, Collections.emptyMap());
-        InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat("myKeyB", 1, Collections.emptyMap());
+        InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat(
+                InternalStatisticKey.MEMORY, 0, Collections.emptyMap());
+        InternalStatisticEvent event2 = InternalStatisticEvent.createPlusOneCountStat(
+                InternalStatisticKey.MEMORY, 1, Collections.emptyMap());
+        InternalStatisticEvent event3 = InternalStatisticEvent.createPlusOneCountStat(
+                InternalStatisticKey.MEMORY, 1, Collections.emptyMap());
         DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
         DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
-        Map<DocRef, List<InternalStatisticEvent>> map = ImmutableMap.of(
+        Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
                 docRefA, Arrays.asList(event1, event2),
                 docRefB, Collections.singletonList(event3));
 
@@ -75,18 +80,20 @@ public class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
         hBaseStatisticsConfig.setEventsPerMessage(10);
 
-        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any())).thenReturn(Optional.of(mockStroomKafkaProducer));
-        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                mockStroomKafkaProducerFactory,
-                hBaseStatisticsConfig
-        );
+        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
+                .thenReturn(Optional.of(mockStroomKafkaProducer));
+        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
+                new StroomStatsInternalStatisticsService(
+                        mockStroomKafkaProducerFactory,
+                        hBaseStatisticsConfig
+                );
 
         //assemble test data
         DocRef docRefA = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat1");
         DocRef docRefB = new DocRef(DOC_REF_TYPE_2, UUID.randomUUID().toString(), "myStat2");
-        Map<DocRef, List<InternalStatisticEvent>> map = ImmutableMap.of(
-                docRefA, createNEvents("myKeyA", 100),
-                docRefB, createNEvents("myKeyB", 15));
+        Map<DocRef, List<InternalStatisticEvent>> map = Map.of(
+                docRefA, createNEvents(InternalStatisticKey.MEMORY, 100),
+                docRefB, createNEvents(InternalStatisticKey.CPU, 15));
 
         stroomStatsInternalStatisticsService.putEvents(map);
 
@@ -96,7 +103,7 @@ public class TestStroomStatsInternalStatisticsService {
                 .sendAsync(Mockito.any(KafkaProducerRecord.class), Mockito.any());
     }
 
-    private List<InternalStatisticEvent> createNEvents(final String key, final int count) {
+    private List<InternalStatisticEvent> createNEvents(final InternalStatisticKey key, final int count) {
 
         return IntStream.rangeClosed(1, count)
                 .mapToObj(i -> InternalStatisticEvent.createPlusOneCountStat(key, i, Collections.emptyMap()))
@@ -109,16 +116,19 @@ public class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
 
-        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any())).thenReturn(Optional.of(mockStroomKafkaProducer));
-        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService = new StroomStatsInternalStatisticsService(
-                mockStroomKafkaProducerFactory,
-                hBaseStatisticsConfig
-        );
+        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
+                .thenReturn(Optional.of(mockStroomKafkaProducer));
+        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
+                new StroomStatsInternalStatisticsService(
+                        mockStroomKafkaProducerFactory,
+                        hBaseStatisticsConfig
+                );
 
         //assemble test data
-        InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat("myKey", 0, Collections.emptyMap());
+        InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
+                InternalStatisticKey.MEMORY, 0, Collections.emptyMap());
         DocRef docRef = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat");
-        Map<DocRef, List<InternalStatisticEvent>> map = ImmutableMap.of(docRef, Collections.singletonList(event));
+        Map<DocRef, List<InternalStatisticEvent>> map = Map.of(docRef, Collections.singletonList(event));
 
         //exercise the service
         stroomStatsInternalStatisticsService.putEvents(map);

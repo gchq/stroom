@@ -67,6 +67,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticKey;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.InclusiveRanges;
@@ -353,7 +354,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private void recordStats(final String feedName, final PipelineDoc pipelineDoc) {
         try {
             InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
-                    INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR,
+                    InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
                     System.currentTimeMillis(),
                     ImmutableMap.of(
                             "Feed", feedName,
