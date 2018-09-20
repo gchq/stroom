@@ -93,8 +93,10 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
         final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
 
-        process(pipelineRef, dir, name, null);
-        validateProcess();
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            process(pipelineRef, dir, name, null);
+            validateProcess();
+        });
     }
 
     private DocRef createPipeline(final String pipelineFile,
@@ -146,52 +148,48 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                  final String dir,
                  final String name,
                  final String encoding) {
-        // Setup the error handler.
-        loggingErrorReceiver = new LoggingErrorReceiver();
-        pipelineScopeRunnable.scopeRunnable(() -> {
-            try {
-                // Setup the error handler.
-                final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-                errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
+        try {
+            // Setup the error handler.
+            loggingErrorReceiver = new LoggingErrorReceiver();
+            errorReceiverProvider.get().setErrorReceiver(loggingErrorReceiver);
 
-                // Create the parser.
-                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
+            // Create the parser.
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-                // Get the input streams.
-                final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
-                Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
+            // Get the input streams.
+            final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
+            Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
 
-                final List<Path> inputFiles = new ArrayList<>();
-                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, name + "*.in")) {
-                    stream.forEach(inputFiles::add);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-                inputFiles.sort(Comparator.naturalOrder());
-
-                Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
-
-                pipeline.startProcessing();
-
-                for (final Path inputFile : inputFiles) {
-                    final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
-                    pipeline.process(inputStream, encoding);
-                    inputStream.close();
-                }
-
-                pipeline.endProcessing();
-
-                // Close all streams that have been written.
-                streamCloserProvider.get().close();
-
-                // FORCE ROLL SO WE CAN GET OUTPUT
-                destinations.forceRoll();
+            final List<Path> inputFiles = new ArrayList<>();
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, name + "*.in")) {
+                stream.forEach(inputFiles::add);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-        });
+            inputFiles.sort(Comparator.naturalOrder());
+
+            Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
+
+            pipeline.startProcessing();
+
+            for (final Path inputFile : inputFiles) {
+                final InputStream inputStream = new BufferedInputStream(Files.newInputStream(inputFile));
+                pipeline.process(inputStream, encoding);
+                inputStream.close();
+            }
+
+            pipeline.endProcessing();
+
+            // Close all streams that have been written.
+            streamCloserProvider.get().close();
+
+            // FORCE ROLL SO WE CAN GET OUTPUT
+            destinations.forceRoll();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     void validateProcess() {
@@ -207,14 +205,18 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     }
 
     void validateOuptut(final String outputReference,
-                        final String type) throws IOException {
-        final List<Data> list = dataMetaService.find(new FindDataCriteria());
-        Assert.assertEquals(1, list.size());
+                        final String type) {
+        try {
+            final List<Data> list = dataMetaService.find(new FindDataCriteria());
+            Assert.assertEquals(1, list.size());
 
-        final long id = list.get(0).getId();
-        checkOuterData(id, type.equalsIgnoreCase("text"));
-        checkInnerData(id, type.equalsIgnoreCase("text"));
-        checkFull(id, outputReference);
+            final long id = list.get(0).getId();
+            checkOuterData(id, type.equalsIgnoreCase("text"));
+            checkInnerData(id, type.equalsIgnoreCase("text"));
+            checkFull(id, outputReference);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void checkInnerData(final long streamId, final boolean text) throws IOException {

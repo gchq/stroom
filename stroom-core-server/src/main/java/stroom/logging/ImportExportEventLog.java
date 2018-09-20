@@ -17,7 +17,6 @@
 
 package stroom.logging;
 
-import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Criteria;
 import event.logging.Event;
 import event.logging.Export;
@@ -25,6 +24,7 @@ import event.logging.Import;
 import event.logging.MultiObject;
 import event.logging.Query;
 import event.logging.Query.Advanced;
+import event.logging.Query.Advanced.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;

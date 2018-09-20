@@ -17,9 +17,10 @@
 
 package stroom.entity;
 
-import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
+import event.logging.Query.Advanced.And;
+import stroom.docref.SharedObject;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindAction;
@@ -28,7 +29,6 @@ import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
-import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 

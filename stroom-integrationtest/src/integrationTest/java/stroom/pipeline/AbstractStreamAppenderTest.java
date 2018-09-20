@@ -17,18 +17,24 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 
-import java.io.IOException;
+import javax.inject.Inject;
 
 abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
+
     void test(final DocRef pipelineRef,
               final String dir,
               final String name,
               final String type,
               final String outputReference,
-              final String encoding) throws IOException {
-        super.process(pipelineRef, dir, name, encoding);
-        validateProcess();
-        validateOuptut(outputReference, type);
+              final String encoding) {
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            super.process(pipelineRef, dir, name, encoding);
+            validateProcess();
+            validateOuptut(outputReference, type);
+        });
     }
 }

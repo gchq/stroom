@@ -17,7 +17,6 @@
 package stroom.dashboard.logging;
 
 import event.logging.Criteria;
-import event.logging.Criteria.DataSources;
 import event.logging.Event;
 import event.logging.Export;
 import event.logging.MultiObject;
@@ -25,13 +24,14 @@ import event.logging.Purpose;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import event.logging.Search;
+import event.logging.Search.DataSources;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.entity.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Security;
 
