@@ -17,13 +17,9 @@
 package stroom.node.shared;
 
 public interface RecordCountService {
-    void addRecordReadCounter(RecordCounter counter);
+    Incrementor getReadIncrementor();
 
-    void removeRecordReadCounter(RecordCounter counter);
-
-    void addRecordWrittenCounter(RecordCounter counter);
-
-    void removeRecordWrittenCounter(RecordCounter counter);
+    Incrementor getWriteIncrementor();
 
     long getAndResetRead();
 

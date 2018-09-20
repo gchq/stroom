@@ -49,7 +49,7 @@ public class ResizableAcceptRejectContent extends ResizeComposite implements Has
 
     public void setContent(final Widget widget) {
         content.setWidget(widget);
-        accept.setEnabled(false);
+        accept.setEnabled(true);
         reject.setEnabled(true);
     }
 

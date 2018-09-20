@@ -119,7 +119,7 @@ public class ManageActivityPresenter extends
         super.onBind();
     }
 
-    public void showInitial(final Consumer<Activity> consumer) {
+    void showInitial(final Consumer<Activity> consumer) {
         clientPropertyCache.get().onSuccess(clientProperties -> {
             final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false);
             if (show) {
@@ -156,7 +156,11 @@ public class ManageActivityPresenter extends
     }
 
     private void enableButtons() {
-        final boolean enabled = getSelected() != null;
+        final Activity activity = getSelected();
+        final boolean enabled = activity != null &&
+                activity.getDetails() != null &&
+                activity.getDetails().getProperties() != null &&
+                activity.getDetails().getProperties().size() > 0;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
         if (enabled) {

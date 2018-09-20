@@ -19,7 +19,6 @@ package stroom.pipeline.server.writer;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.feed.MetaMap;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -28,10 +27,13 @@ import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.factory.PipelinePropertyDocRef;
+import stroom.pipeline.server.task.ProcessStatisticsFactory;
+import stroom.pipeline.server.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.query.api.v2.DocRef;
@@ -42,7 +44,6 @@ import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
@@ -63,6 +64,7 @@ public class StreamAppender extends AbstractAppender {
     private final StreamTypeService streamTypeService;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
+    private final RecordCount recordCount;
     private final StreamCloser streamCloser;
 
     private DocRef feedRef;
@@ -72,6 +74,8 @@ public class StreamAppender extends AbstractAppender {
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private ByteCountOutputStream byteCountOutputStream;
 
+    private ProcessStatistics lastProcessStatistics;
+
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
                           final StreamStore streamStore,
@@ -80,6 +84,7 @@ public class StreamAppender extends AbstractAppender {
                           final StreamTypeService streamTypeService,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
+                          final RecordCount recordCount,
                           final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
@@ -89,11 +94,12 @@ public class StreamAppender extends AbstractAppender {
         this.streamTypeService = streamTypeService;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
+        this.recordCount = recordCount;
         this.streamCloser = streamCloser;
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected OutputStream createOutputStream() {
         final Stream parentStream = streamHolder.getStream();
 
         Feed feed;
@@ -156,9 +162,19 @@ public class StreamAppender extends AbstractAppender {
     private void close() {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
-            // Write meta data.
-            final MetaMap metaMap = metaData.getMetaMap();
-            streamTarget.getAttributeMap().putAll(metaMap);
+            // Write process meta data.
+            streamTarget.getAttributeMap().putAll(metaData.getMetaMap());
+
+            // Get current process statistics
+            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+            // Diff the current statistics with the last captured statistics.
+            final ProcessStatistics currentStatistics = processStatistics.substract(lastProcessStatistics);
+            // Set the last statistics.
+            lastProcessStatistics = processStatistics;
+
+            // Write statistics meta data.
+            currentStatistics.write(streamTarget.getAttributeMap());
+
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }

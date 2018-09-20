@@ -18,13 +18,27 @@ package stroom.node.server;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import stroom.node.shared.Incrementor;
 import stroom.node.shared.RecordCountService;
-import stroom.node.shared.RecordCounter;
 import stroom.util.spring.StroomSpringProfiles;
 
 @Profile(StroomSpringProfiles.TEST)
 @Component
 public class MockRecordCountService implements RecordCountService {
+    @Override
+    public Incrementor getReadIncrementor() {
+        return () -> {
+            // Do nothing.
+        };
+    }
+
+    @Override
+    public Incrementor getWriteIncrementor() {
+        return () -> {
+            // Do nothing.
+        };
+    }
+
     @Override
     public long getAndResetRead() {
         return 0;
@@ -33,21 +47,5 @@ public class MockRecordCountService implements RecordCountService {
     @Override
     public long getAndResetWritten() {
         return 0;
-    }
-
-    @Override
-    public void addRecordReadCounter(RecordCounter counter) {
-    }
-
-    @Override
-    public void removeRecordReadCounter(RecordCounter counter) {
-    }
-
-    @Override
-    public void addRecordWrittenCounter(RecordCounter counter) {
-    }
-
-    @Override
-    public void removeRecordWrittenCounter(RecordCounter counter) {
     }
 }

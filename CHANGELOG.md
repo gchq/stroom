@@ -6,7 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0-beta.3]
+* The accept button now enabled on splash screen.
+
+* Added additional event logging to stepping.
+
+* An activity property with an id of `disableQueryInfo` can now be used to disable the query info popup on a per activity basis.
+
+* Activity properties can now include the attributes `id`, `name`, `showInSelection` and `showInList` to determine their appearance and behaviour;
+
+* Nested elements are now usable in the activity editor HTML.
+
+* Record counts are now recorded on a per output stream basis even when splitting output streams.
+
+* Splash presenter buttons are now always enabled.
+
+* Fix background colour to white on activity pane.
 
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 
