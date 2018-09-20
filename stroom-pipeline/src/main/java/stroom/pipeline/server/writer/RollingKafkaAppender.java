@@ -28,7 +28,6 @@ import java.io.IOException;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.KAFKA)
 public class RollingKafkaAppender extends AbstractRollingAppender {
-
     private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
     private final PathCreator pathCreator;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -101,5 +100,11 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
+    }
+
+    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.",
+            defaultValue = "100M")
+    public void setRollSize(final String rollSize) {
+        super.setRollSize(rollSize);
     }
 }
