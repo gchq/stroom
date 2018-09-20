@@ -54,12 +54,15 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
 
     private final SecurityContext security;
     private final HttpServletRequestHolder httpServletRequestHolder;
+    private final CurrentActivity currentActivity;
 
     @Inject
     StroomEventLoggingService(final SecurityContext security,
-                              final HttpServletRequestHolder httpServletRequestHolder) {
+                              final HttpServletRequestHolder httpServletRequestHolder,
+                              final CurrentActivity currentActivity) {
         this.security = security;
         this.httpServletRequestHolder = httpServletRequestHolder;
+        this.currentActivity = currentActivity;
     }
 
     @Override
@@ -105,6 +108,7 @@ public class StroomEventLoggingService extends DefaultEventLoggingService implem
         final Event event = createEvent();
 
         final EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
+        eventDetail.setPurpose(PurposeUtil.create(currentActivity.getActivity()));
         event.setEventDetail(eventDetail);
 
         return event;

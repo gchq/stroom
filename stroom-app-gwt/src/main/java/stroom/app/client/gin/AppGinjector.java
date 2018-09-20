@@ -24,6 +24,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.about.client.presenter.AboutPresenter;
+import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.externaldoc.client.gin.ExternalDocRefGinjector;
@@ -83,6 +84,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
 @GinModules({
         AlertModule.class,
         ExternalDocRefModule.class,
+        ActivityModule.class,
         AppModule.class,
         CacheModule.class,
         ClientDispatchModule.class,

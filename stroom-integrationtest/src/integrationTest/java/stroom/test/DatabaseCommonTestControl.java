@@ -65,6 +65,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
+            Activity.TABLE_NAME,
             AppPermission.TABLE_NAME,
             ClusterLock.TABLE_NAME,
             "doc",

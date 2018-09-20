@@ -14,38 +14,38 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.destination;
+package stroom.util.io;
 
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ByteCountOutputStream extends FilterOutputStream {
-    private volatile long bytesWritten;
+public class ByteCountOutputStream extends WrappedOutputStream {
+    private final AtomicLong count = new AtomicLong();
 
     public ByteCountOutputStream(final OutputStream outputStream) {
         super(outputStream);
     }
 
     @Override
-    public synchronized void write(final int b) throws IOException {
-        bytesWritten++;
+    public void write(final int b) throws IOException {
+        count.incrementAndGet();
         super.write(b);
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
-        bytesWritten += b.length;
+        count.addAndGet(b.length);
         super.write(b);
     }
 
     @Override
-    public synchronized void write(final byte[] b, final int off, final int len) throws IOException {
-        bytesWritten += len;
+    public void write(final byte[] b, final int off, final int len) throws IOException {
+        count.addAndGet(len);
         super.write(b, off, len);
     }
 
-    public long getBytesWritten() {
-        return bytesWritten;
+    public long getCount() {
+        return count.get();
     }
 }

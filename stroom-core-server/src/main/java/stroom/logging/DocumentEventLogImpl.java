@@ -133,7 +133,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 final Event event = createAction("Create", "Creating", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setCreate(objectOutcome);
-                objectOutcome.getObjects().add(createBaseObject(object));
+                final BaseObject baseObject = createBaseObject(object);
+                objectOutcome.getObjects().add(baseObject);
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
@@ -284,11 +285,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
-    //    @Override
-//    public void delete(final java.lang.Object object) {
-//        delete(object, null);
-//    }
-
     @Override
     public void delete(final java.lang.Object object, final Throwable ex) {
         security.insecure(() -> {
@@ -296,7 +292,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 final Event event = createAction("Delete", "Deleting", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setDelete(objectOutcome);
-                objectOutcome.getObjects().add(createBaseObject(object));
+                final BaseObject baseObject = createBaseObject(object);
+                objectOutcome.getObjects().add(baseObject);
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
@@ -312,7 +309,8 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                 final Event event = createAction("View", "Viewing", object);
                 final ObjectOutcome objectOutcome = new ObjectOutcome();
                 event.getEventDetail().setView(objectOutcome);
-                objectOutcome.getObjects().add(createBaseObject(object));
+                final BaseObject baseObject = createBaseObject(object);
+                objectOutcome.getObjects().add(baseObject);
                 objectOutcome.setOutcome(EventLoggingUtil.createOutcome(ex));
                 eventLoggingService.log(event);
             } catch (final RuntimeException e) {
