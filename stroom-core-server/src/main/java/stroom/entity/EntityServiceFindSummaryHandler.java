@@ -17,9 +17,9 @@
 
 package stroom.entity;
 
+import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
-import event.logging.Query.Advanced.And;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;

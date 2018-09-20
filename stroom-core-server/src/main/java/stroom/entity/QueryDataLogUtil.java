@@ -19,9 +19,9 @@ package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
-import event.logging.Query.Advanced.And;
-import event.logging.Query.Advanced.Not;
-import event.logging.Query.Advanced.Or;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Not;
+import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import stroom.dictionary.DictionaryStore;
