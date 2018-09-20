@@ -4,20 +4,59 @@ import { connect } from "react-redux";
 import { compose, withHandlers, withProps } from "recompose";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import { StoreState as KeyIsDownStoreState } from "../../lib/KeyIsDown";
+import { DocRefType, DocRefConsumer } from "../../types";
 import DocRefImage from "../DocRefImage";
+import { GlobalStoreState } from "../../startup/reducers";
 import {
   actionCreators as selectableItemActionCreators,
-  defaultSelectableItemListingState
+  defaultStatePerId
 } from "../../lib/withSelectableItemListing";
 
 const { selectionToggled } = selectableItemActionCreators;
 
-const enhance = compose(
+export interface Props {
+  listingId: string;
+  docRef: DocRefType;
+  isSelected?: boolean;
+  dndIsOver?: boolean;
+  dndCanDrop?: boolean;
+  openDocRef: DocRefConsumer;
+  enterFolder?: DocRefConsumer;
+}
+
+export interface ConnectProps {
+  keyIsDown: KeyIsDownStoreState;
+  selectionToggled: typeof selectionToggled;
+}
+
+export interface Handlers {
+  onSelect: React.MouseEventHandler<HTMLDivElement>;
+  onOpenDocRef: React.MouseEventHandler<HTMLDivElement>;
+  onEnterFolder: React.MouseEventHandler<HTMLDivElement>;
+}
+
+export interface AddedProps {
+  className: string;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectProps,
+    Handlers,
+    AddedProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   connect(
-    ({ keyIsDown, selectableItemListings }, { listingId, docRef }) => {
+    (
+      { keyIsDown, selectableItemListings }: GlobalStoreState,
+      { listingId, docRef }: Props
+    ) => {
       const { selectedItems = [], focussedItem } =
-        selectableItemListings[listingId] || defaultSelectableItemListingState;
-      const isSelected = selectedItems.map(d => d.uuid).includes(docRef.uuid);
+        selectableItemListings[listingId] || defaultStatePerId;
+      const isSelected = selectedItems
+        .map((d: DocRefType) => d.uuid)
+        .includes(docRef.uuid);
       const inFocus = focussedItem && focussedItem.uuid === docRef.uuid;
 
       return {
@@ -28,7 +67,7 @@ const enhance = compose(
     },
     { selectionToggled }
   ),
-  withHandlers({
+  withHandlers<Props & ConnectProps, Handlers>({
     onSelect: ({ listingId, docRef, keyIsDown, selectionToggled }) => e => {
       selectionToggled(listingId, docRef.uuid, keyIsDown);
       e.preventDefault();
@@ -84,7 +123,7 @@ let DocRefListingEntry = ({
   onSelect,
   onOpenDocRef,
   onEnterFolder
-}) => (
+}: EnhancedProps) => (
   <div className={className} onClick={onSelect}>
     <DocRefImage docRefType={docRef.type} />
     <div className="DocRefListingEntry__name" onClick={onOpenDocRef}>
@@ -93,26 +132,15 @@ let DocRefListingEntry = ({
     <div className="DocRefListingEntry__space" />
     {docRef.type === "System" ||
       (docRef.type === "Folder" && (
-        <FontAwesomeIcon
-          className="DocRefListingEntry__icon"
-          size="lg"
-          icon="angle-right"
-          onClick={onEnterFolder}
-        />
+        <div onClick={onEnterFolder}>
+          <FontAwesomeIcon
+            className="DocRefListingEntry__icon"
+            size="lg"
+            icon="angle-right"
+          />
+        </div>
       ))}
   </div>
 );
 
-DocRefListingEntry = enhance(DocRefListingEntry);
-
-// DocRefListingEntry.propTypes = {
-//   listingId: PropTypes.string.isRequired,
-//   docRef: DocRefPropType,
-//   isSelected: PropTypes.bool,
-//   dndIsOver: PropTypes.bool,
-//   dndCanDrop: PropTypes.bool,
-//   openDocRef: PropTypes.func.isRequired,
-//   enterFolder: PropTypes.func,
-// };
-
-export default DocRefListingEntry;
+export default enhance(DocRefListingEntry);

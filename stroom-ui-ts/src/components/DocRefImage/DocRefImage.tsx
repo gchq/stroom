@@ -2,7 +2,7 @@ import * as React from "react";
 
 export interface Props {
   docRefType: string;
-  size: "lg" | "sm";
+  size?: "lg" | "sm";
   className?: string;
 }
 

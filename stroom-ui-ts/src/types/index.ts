@@ -4,6 +4,8 @@ export interface DocRefType {
   name?: string;
 }
 
+export type DocRefConsumer = (d: DocRefType) => void;
+
 export interface SelectOptionType {
   text: string;
   value: string;

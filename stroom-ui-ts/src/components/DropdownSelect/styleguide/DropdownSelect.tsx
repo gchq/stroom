@@ -100,7 +100,7 @@ let TestForm = ({ thisForm }: Props) => (
             <label>Colour:</label>
             <input
               readOnly
-              value={thisForm.values.colour}
+              value={thisForm.values.colour || ""}
               onChange={() => {}}
             />
           </div>
@@ -108,7 +108,7 @@ let TestForm = ({ thisForm }: Props) => (
             <label>Weekday:</label>
             <input
               readOnly
-              value={thisForm.values.weekday}
+              value={thisForm.values.weekday || ""}
               onChange={() => {}}
             />
           </div>

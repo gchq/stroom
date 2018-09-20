@@ -13,25 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { compose, withStateHandlers } from 'recompose';
-import { storiesOf, addDecorator } from '@storybook/react';
-import uuidv4 from 'uuid/v4';
+import * as React from "react";
+import { compose, withStateHandlers } from "recompose";
 
-import { fromSetupSampleData } from '../FolderExplorer/test';
-import withSelectableItemListing from '../../lib/withSelectableItemListing';
-import DocRefListingEntry from './DocRefListingEntry';
+import { DocRefType, DocRefConsumer } from "../../../types";
+import withSelectableItemListing, {
+  Handlers as SelectableItemListingHandlers
+} from "../../../lib/withSelectableItemListing";
+import DocRefListingEntry from "../DocRefListingEntry";
 
-const testFolder = fromSetupSampleData.children[0];
-const testDocRef = fromSetupSampleData.children[0].children[0].children[0];
+export interface Props {
+  listingId: string;
+  dndIsOver: boolean;
+  dndCanDrop: boolean;
+  docRefs: Array<DocRefType>;
+}
 
-const enhance = compose(
+export interface StateProps {
+  enteredFolder: DocRefType;
+  openedDocRef: DocRefType;
+  wentBack: boolean;
+  onClickClear: () => void;
+  enterFolder: DocRefConsumer;
+  goBack: () => void;
+  openDocRef: DocRefConsumer;
+}
+
+export interface EnhancedProps
+  extends Props,
+    StateProps,
+    SelectableItemListingHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
   withStateHandlers(
-    ({ enteredFolder, openedDocRef, wentBack = false }) => ({
+    ({ enteredFolder, openedDocRef, wentBack = false }: StateProps) => ({
       enteredFolder,
       openedDocRef,
-      wentBack,
+      wentBack
     }),
     {
       enterFolder: () => enteredFolder => ({ enteredFolder }),
@@ -40,20 +58,20 @@ const enhance = compose(
       onClickClear: () => () => ({
         enteredFolder: undefined,
         openedDocRef: undefined,
-        wentBack: false,
-      }),
-    },
+        wentBack: false
+      })
+    }
   ),
-  withSelectableItemListing(({
-    listingId, docRefs, openDocRef, goBack, enterFolder,
-  }) => ({
-    listingId,
-    items: docRefs,
-    openItem: openDocRef,
-    getKey: d => d.uuid,
-    enterItem: enterFolder,
-    goBack,
-  })),
+  withSelectableItemListing<DocRefType>(
+    ({ listingId, docRefs, openDocRef, goBack, enterFolder }) => ({
+      listingId,
+      items: docRefs,
+      openItem: openDocRef,
+      getKey: d => d.uuid,
+      enterItem: enterFolder,
+      goBack
+    })
+  )
 );
 
 let TestDocRefListingEntry = ({
@@ -67,9 +85,9 @@ let TestDocRefListingEntry = ({
   docRefs,
   onKeyDownWithShortcuts,
   dndIsOver,
-  dndCanDrop,
-}) => (
-  <div style={{ width: '50%' }}>
+  dndCanDrop
+}: EnhancedProps) => (
+  <div style={{ width: "50%" }}>
     <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
       {docRefs.map(docRef => (
         <DocRefListingEntry
@@ -99,21 +117,4 @@ let TestDocRefListingEntry = ({
   </div>
 );
 
-TestDocRefListingEntry = enhance(TestDocRefListingEntry);
-
-storiesOf('Doc Ref Listing Entry', module)
-  .add('docRef', props => <TestDocRefListingEntry listingId={uuidv4()} docRefs={[testDocRef]} />)
-  .add('docRef isOver canDrop', props => (
-    <TestDocRefListingEntry listingId={uuidv4()} docRefs={[testDocRef]} dndIsOver dndCanDrop />
-  ))
-  .add('docRef isOver cannotDrop', props => (
-    <TestDocRefListingEntry
-      listingId={uuidv4()}
-      docRefs={[testDocRef]}
-      dndIsOver
-      dndCanDrop={false}
-    />
-  ))
-  .add('folder', props => (
-    <TestDocRefListingEntry listingId={uuidv4()} docRefs={testFolder.children} />
-  ));
+export default enhance(TestDocRefListingEntry);

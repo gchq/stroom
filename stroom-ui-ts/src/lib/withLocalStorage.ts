@@ -1,5 +1,5 @@
-import { createFactory, Component } from 'react';
-import { setDisplayName, wrapDisplayName } from 'recompose';
+import { createFactory, Component } from "react";
+import { setDisplayName, wrapDisplayName } from "recompose";
 
 /**
  * Works like withState but stores the value in localStorage, using React state as a cache.
@@ -11,34 +11,38 @@ import { setDisplayName, wrapDisplayName } from 'recompose';
  * @param {string|boolean} noLocalStorageInitialState
  */
 const withLocalStorage = (
-  stateName,
-  stateUpdaterName,
-  noLocalStorageInitialState,
-) => (BaseComponent) => {
+  stateName: string,
+  stateUpdaterName: string,
+  noLocalStorageInitialState: any
+) => (BaseComponent: React.ComponentClass<any>) => {
   const factory = createFactory(BaseComponent);
   class WithLocalStorage extends Component {
     /**
      * localStorage uses strings, so we need to make sure that if we've stored a boolean it
      * gets correctly converted back to one.
      */
-    getValue = (stateName, noLocalStorageInitialState) => {
+    getValue = (stateName: string, noLocalStorageInitialState: any) => {
       const rawValue = localStorage.getItem(stateName);
       if (rawValue) {
         // localStorage uses strings, so we need to make sure that if we've
         // stored a boolean it gets correctly converted back to one.
-        return rawValue === 'true' ? true : rawValue === 'false' ? false : rawValue;
+        return rawValue === "true"
+          ? true
+          : rawValue === "false"
+            ? false
+            : rawValue;
       }
       return noLocalStorageInitialState;
     };
 
     state = {
-      localStorageValue: this.getValue(stateName, noLocalStorageInitialState),
+      localStorageValue: this.getValue(stateName, noLocalStorageInitialState)
     };
 
-    updateLocalStorageValue = (valueToSet) => {
+    updateLocalStorageValue = (valueToSet: any) => {
       localStorage.setItem(stateName, valueToSet);
-      this.setState(({ localStorageValue }) => ({
-        localStorageValue: valueToSet,
+      this.setState(() => ({
+        localStorageValue: valueToSet
       }));
     };
 
@@ -46,13 +50,15 @@ const withLocalStorage = (
       return factory({
         ...this.props,
         [stateName]: this.state.localStorageValue,
-        [stateUpdaterName]: this.updateLocalStorageValue,
+        [stateUpdaterName]: this.updateLocalStorageValue
       });
     }
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    return setDisplayName(wrapDisplayName(BaseComponent, 'withLocalStorage'))(WithLocalStorage);
+  if (process.env.NODE_ENV !== "production") {
+    return setDisplayName(wrapDisplayName(BaseComponent, "withLocalStorage"))(
+      WithLocalStorage
+    );
   }
   return WithLocalStorage;
 };
