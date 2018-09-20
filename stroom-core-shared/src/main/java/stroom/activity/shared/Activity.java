@@ -25,9 +25,7 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Entity
@@ -91,36 +89,89 @@ public class Activity extends AuditedEntity {
     }
 
     public static class ActivityDetails implements SharedObject {
-        private List<String> names = new ArrayList<>();
-        private Map<String, String> properties = new HashMap<>();
+        private List<Prop> properties = new ArrayList<>();
 
         public ActivityDetails() {
         }
 
-        public List<String> getNames() {
-            return names;
-        }
-
-        public void setNames(final List<String> names) {
-            this.names = names;
-        }
-
-        public Map<String, String> getProperties() {
+        public List<Prop> getProperties() {
             return properties;
         }
 
-        public void setProperties(final Map<String, String> properties) {
+        public void setProperties(final List<Prop> properties) {
             this.properties = properties;
         }
 
-        public void addProperty(final String name, final String value) {
-            names.add(name);
-            properties.put(name, value);
+        public void add(final Prop prop, final String value) {
+            prop.setValue(value);
+            properties.add(prop);
+        }
+
+        public String value(final String propertyId) {
+            if (properties != null) {
+                for (final Prop prop : properties) {
+                    if (prop.getId() != null && prop.getId().equals(propertyId)) {
+                        return prop.getValue();
+                    }
+                }
+            }
+            return null;
         }
 
         @Override
         public String toString() {
-            return names.stream().map(name -> properties.get(name)).collect(Collectors.joining(" - "));
+            return properties.stream().map(prop -> prop.value).collect(Collectors.joining(" - "));
+        }
+    }
+
+    public static class Prop implements SharedObject {
+        private String id;
+        private String name;
+        private String value;
+        private boolean showInSelection = true;
+        private boolean showInList = true;
+
+        public Prop() {
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(final String value) {
+            this.value = value;
+        }
+
+        public boolean isShowInSelection() {
+            return showInSelection;
+        }
+
+        public void setShowInSelection(final boolean showInSelection) {
+            this.showInSelection = showInSelection;
+        }
+
+        public boolean isShowInList() {
+            return showInList;
+        }
+
+        public void setShowInList(final boolean showInList) {
+            this.showInList = showInList;
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.node;
+package stroom.node.shared;
 
-public interface RecordCounter {
-    long getAndResetCount();
+public interface Incrementor {
+    void increment();
 }
