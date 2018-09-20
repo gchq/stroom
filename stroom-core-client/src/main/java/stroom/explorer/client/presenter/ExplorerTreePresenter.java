@@ -43,13 +43,13 @@ import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -77,7 +77,7 @@ public class ExplorerTreePresenter
                                  final DocumentTypeCache documentTypeCache,
                                  final TypeFilterPresenter typeFilterPresenter,
                                  final CurrentActivity currentActivity,
-                                 final ClientPropertyCache clientPropertyCache) {
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
@@ -94,8 +94,9 @@ public class ExplorerTreePresenter
         };
 
         // Add views.
-        clientPropertyCache.get().onSuccess(clientProperties -> {
-            if (clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false)) {
+        uiConfigCache.get().onSuccess(uiConfig -> {
+            final ActivityConfig activityConfig = uiConfig.getActivityConfig();
+            if (activityConfig.isEnabled()) {
                 activityContainer.setStyleName("activityContainer");
 
                 final SimplePanel activityOuter = new SimplePanel();

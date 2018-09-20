@@ -6,99 +6,49 @@ import stroom.docref.SharedObject;
 import javax.inject.Singleton;
 
 @Singleton
-public class ThemeConfig implements SharedObject {
-    private String backgroundAttachment = "scroll";
-    private String backgroundColor = "#1E88E5";
-    private String backgroundImage = "none";
-    private String backgroundPosition = "0 0";
-    private String backgroundRepeat = "repeat";
-    private String backgroundOpacity = "0";
-    private String tubeVisible = "hidden";
-    private String tubeOpacity = "0.6";
-    private String labelColours = "TEST1=#FF0000,TEST2=#FF9900";
+public class SplashConfig implements SharedObject {
+    private boolean enabled;
+    private String title = "Splash Screen";
+    private String body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
+    private String version = "v0.1";
 
-    public ThemeConfig() {
+    public SplashConfig() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    @JsonPropertyDescription("GUI")
-    public String getBackgroundAttachment() {
-        return backgroundAttachment;
+    @JsonPropertyDescription("If you would like users to see a splash screen on login.")
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setBackgroundAttachment(final String backgroundAttachment) {
-        this.backgroundAttachment = backgroundAttachment;
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
     }
 
-    @JsonPropertyDescription("GUI")
-    public String getBackgroundColor() {
-        return backgroundColor;
+    @JsonPropertyDescription("The title of the splash screen popup.")
+    public String getTitle() {
+        return title;
     }
 
-    public void setBackgroundColor(final String backgroundColor) {
-        this.backgroundColor = backgroundColor;
+    public void setTitle(final String title) {
+        this.title = title;
     }
 
-    @JsonPropertyDescription("GUI")
-    public String getBackgroundImage() {
-        return backgroundImage;
+    @JsonPropertyDescription("The HTML to display in the splash screen.")
+    public String getBody() {
+        return body;
     }
 
-    public void setBackgroundImage(final String backgroundImage) {
-        this.backgroundImage = backgroundImage;
+    public void setBody(final String body) {
+        this.body = body;
     }
 
-    @JsonPropertyDescription("GUI")
-    public String getBackgroundPosition() {
-        return backgroundPosition;
+    @JsonPropertyDescription("The version of the splash screen message.")
+    public String getVersion() {
+        return version;
     }
 
-    public void setBackgroundPosition(final String backgroundPosition) {
-        this.backgroundPosition = backgroundPosition;
-    }
-
-    @JsonPropertyDescription("GUI")
-    public String getBackgroundRepeat() {
-        return backgroundRepeat;
-    }
-
-    public void setBackgroundRepeat(final String backgroundRepeat) {
-        this.backgroundRepeat = backgroundRepeat;
-    }
-
-    @JsonPropertyDescription("GUI")
-    public String getBackgroundOpacity() {
-        return backgroundOpacity;
-    }
-
-    public void setBackgroundOpacity(final String backgroundOpacity) {
-        this.backgroundOpacity = backgroundOpacity;
-    }
-
-    @JsonPropertyDescription("GUI")
-    public String getTubeVisible() {
-        return tubeVisible;
-    }
-
-    public void setTubeVisible(final String tubeVisible) {
-        this.tubeVisible = tubeVisible;
-    }
-
-    @JsonPropertyDescription("GUI")
-    public String getTubeOpacity() {
-        return tubeOpacity;
-    }
-
-    public void setTubeOpacity(final String tubeOpacity) {
-        this.tubeOpacity = tubeOpacity;
-    }
-
-    @JsonPropertyDescription("A comma separated list of KV pairs to provide colours for labels.")
-    public String getLabelColours() {
-        return labelColours;
-    }
-
-    public void setLabelColours(final String labelColours) {
-        this.labelColours = labelColours;
+    public void setVersion(final String version) {
+        this.version = version;
     }
 }

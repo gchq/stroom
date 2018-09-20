@@ -22,7 +22,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.io.OutputStream;
 
 @ConfigurableElement(type = "TestAppender", roles = {PipelineElementType.ROLE_TARGET,
@@ -42,5 +41,10 @@ public class TestAppender extends AbstractAppender {
 
     public void setOutputStream(final OutputStream os) {
         outputStream = os;
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        return 0;
     }
 }

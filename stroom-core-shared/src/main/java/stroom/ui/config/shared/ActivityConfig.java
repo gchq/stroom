@@ -6,17 +6,22 @@ import stroom.docref.SharedObject;
 import javax.inject.Singleton;
 
 @Singleton
-public class SplashConfig implements SharedObject {
+public class ActivityConfig implements SharedObject {
     private boolean enabled;
-    private String title = "Splash Screen";
-    private String body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-    private String version = "v0.1";
+    private boolean chooseOnStartup;
+    private String managerTitle = "Choose Activity";
+    private String editorTitle = "Edit Activity";
+    private String editorBody = "Activity Code:</br>" +
+            "<input type=\"text\" name=\"code\"></input></br></br>" +
+            "Activity Description:</br>" +
+            "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\"></textarea>" +
+            "Explain what the activity is";
 
-    public SplashConfig() {
+    public ActivityConfig() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    @JsonPropertyDescription("If you would like users to see a splash screen on login.")
+    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")
     public boolean isEnabled() {
         return enabled;
     }
@@ -25,30 +30,39 @@ public class SplashConfig implements SharedObject {
         this.enabled = enabled;
     }
 
-    @JsonPropertyDescription("The title of the splash screen popup.")
-    public String getTitle() {
-        return title;
+    @JsonPropertyDescription("Set to true if users should be prompted to choose an activity on login.")
+    public boolean isChooseOnStartup() {
+        return chooseOnStartup;
     }
 
-    public void setTitle(final String title) {
-        this.title = title;
+    public void setChooseOnStartup(final boolean chooseOnStartup) {
+        this.chooseOnStartup = chooseOnStartup;
     }
 
-    @JsonPropertyDescription("The HTML to display in the splash screen.")
-    public String getBody() {
-        return body;
+    @JsonPropertyDescription("The title of the activity manager popup.")
+    public String getManagerTitle() {
+        return managerTitle;
     }
 
-    public void setBody(final String body) {
-        this.body = body;
+    public void setManagerTitle(final String managerTitle) {
+        this.managerTitle = managerTitle;
     }
 
-    @JsonPropertyDescription("The version of the splash screen message.")
-    public String getVersion() {
-        return version;
+    @JsonPropertyDescription("The title of the activity editor popup.")
+    public String getEditorTitle() {
+        return editorTitle;
     }
 
-    public void setVersion(final String version) {
-        this.version = version;
+    public void setEditorTitle(final String editorTitle) {
+        this.editorTitle = editorTitle;
+    }
+
+    @JsonPropertyDescription("The HTML to display in the activity editor popup.")
+    public String getEditorBody() {
+        return editorBody;
+    }
+
+    public void setEditorBody(final String editorBody) {
+        this.editorBody = editorBody;
     }
 }

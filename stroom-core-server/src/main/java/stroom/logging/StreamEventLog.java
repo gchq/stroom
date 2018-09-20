@@ -35,13 +35,13 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -92,7 +92,7 @@ public class StreamEventLog {
                            final Throwable th) {
         security.insecure(() -> {
             try {
-                if (stream != null) {
+                if (eventId != null) {
                     final Event event = eventLoggingService.createAction("View", "Viewing Stream");
                     final ObjectOutcome objectOutcome = new ObjectOutcome();
                     event.getEventDetail().setView(objectOutcome);

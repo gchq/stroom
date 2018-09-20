@@ -20,7 +20,6 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataStatus;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.SegmentInputStream;
@@ -30,7 +29,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.logging.StreamEventLog;
@@ -41,6 +39,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.reader.BOMRemovalInputStream;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
@@ -111,18 +110,18 @@ public class DataFetcher {
     private boolean pageTotalIsExact = false;
 
     public DataFetcher(final StreamStore streamStore,
-                             final FeedProperties feedProperties,
-                             final Provider<FeedHolder> feedHolderProvider,
-                             final Provider<MetaDataHolder> metaDataHolderProvider,
-                             final Provider<PipelineHolder> pipelineHolderProvider,
-                             final Provider<StreamHolder> streamHolderProvider,
-                             final PipelineStore pipelineStore,
-                             final Provider<PipelineFactory> pipelineFactoryProvider,
-                             final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                             final PipelineDataCache pipelineDataCache,
-                             final StreamEventLog streamEventLog,
-                             final Security security,
-                             final PipelineScopeRunnable pipelineScopeRunnable) {
+                       final FeedProperties feedProperties,
+                       final Provider<FeedHolder> feedHolderProvider,
+                       final Provider<MetaDataHolder> metaDataHolderProvider,
+                       final Provider<PipelineHolder> pipelineHolderProvider,
+                       final Provider<StreamHolder> streamHolderProvider,
+                       final PipelineStore pipelineStore,
+                       final Provider<PipelineFactory> pipelineFactoryProvider,
+                       final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                       final PipelineDataCache pipelineDataCache,
+                       final StreamEventLog streamEventLog,
+                       final Security security,
+                       final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.feedHolderProvider = feedHolderProvider;
@@ -138,7 +137,7 @@ public class DataFetcher {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
-    public void reset(){
+    public void reset() {
         streamsOffset = 0L;
         streamsTotal = 0L;
         pageOffset = 0L;
@@ -148,13 +147,13 @@ public class DataFetcher {
     }
 
     public AbstractFetchDataResult getData(final Long streamId,
-                                              final String childStreamTypeName,
-                                              final OffsetRange<Long> streamsRange,
-                                              final OffsetRange<Long> pageRange,
-                                              final boolean markerMode,
-                                              final DocRef pipeline,
-                                              final boolean showAsHtml,
-                                              final Severity... expandedSeverities) {
+                                           final String childStreamTypeName,
+                                           final OffsetRange<Long> streamsRange,
+                                           final OffsetRange<Long> pageRange,
+                                           final boolean markerMode,
+                                           final DocRef pipeline,
+                                           final boolean showAsHtml,
+                                           final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return security.useAsReadResult(() -> {
             final StreamCloser streamCloser = new BasicStreamCloser();
@@ -164,6 +163,7 @@ public class DataFetcher {
 
             StreamSource streamSource = null;
             RuntimeException exception = null;
+            String eventId = String.valueOf(streamId);
             try {
                 // Get the stream source.
                 streamSource = streamStore.openStreamSource(streamId, true);
@@ -175,6 +175,8 @@ public class DataFetcher {
                     final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
                     final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, (long) 1);
                     final RowCount<Long> pageRowCount = new RowCount<>((long) 1, true);
+
+                    writeEventLog(eventId, feedName, streamTypeName, pipeline, new IOException("Stream has been deleted"));
 
                     return new FetchDataResult(null, null, resultStreamsRange,
                             streamsRowCount, resultPageRange, pageRowCount, null,
@@ -217,7 +219,16 @@ public class DataFetcher {
                 final SegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
                 streamCloser.add(segmentInputStream);
 
-                writeEventLog(streamSource.getStream(), feedName, streamTypeName, null);
+                // Get the event id.
+                eventId = String.valueOf(streamSource.getStream().getId());
+                if (streamsTotal > 1) {
+                    eventId += ":" + streamsOffset;
+                }
+                if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
+                    eventId += ":" + (pageRange.getOffset() + 1);
+                }
+
+                writeEventLog(eventId, feedName, streamTypeName, pipeline, null);
 
                 // If this is an error stream and the UI is requesting markers then
                 // create a list of markers.
@@ -228,7 +239,7 @@ public class DataFetcher {
                 return createDataResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
 
             } catch (final IOException | RuntimeException e) {
-                writeEventLog(streamSource.getStream(), feedName, streamTypeName, e);
+                writeEventLog(eventId, feedName, streamTypeName, pipeline, e);
 
                 if (DataStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("You cannot view locked streams.");
@@ -355,12 +366,15 @@ public class DataFetcher {
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
-    private void writeEventLog(final Data stream, final String feedName, final String streamTypeName,
+    private void writeEventLog(final String eventId,
+                               final String feedName,
+                               final String streamTypeName,
+                               final DocRef pipelineRef,
                                final Exception e) {
         try {
-            streamEventLog.viewStream(stream, feedName, streamTypeName, e);
-        } catch (final Exception e2) {
-            LOGGER.debug(e.getMessage(), e2);
+            streamEventLog.viewStream(eventId, feedName, streamTypeName, pipelineRef, e);
+        } catch (final Exception ex) {
+            LOGGER.debug(ex.getMessage(), ex);
         }
     }
 

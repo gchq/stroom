@@ -25,7 +25,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
-import stroom.entity.client.presenter.ManageEntityPresenter;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
@@ -48,7 +47,7 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
 
     @Override
     public void setInSlot(final Object slot, final Widget content) {
-        if (ManageEntityPresenter.LIST.equals(slot)) {
+        if (ManageActivityPresenter.LIST.equals(slot)) {
             dataGrid.setWidget(content);
         }
     }

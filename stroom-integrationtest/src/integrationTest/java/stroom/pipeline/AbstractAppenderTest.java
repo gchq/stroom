@@ -17,8 +17,13 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -27,6 +32,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -73,6 +79,12 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private Provider<StreamCloser> streamCloserProvider;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private StreamStore streamStore;
+    @Inject
+    private DataMetaService dataMetaService;
+
+    private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
         final String dir = name + "/";
@@ -80,7 +92,9 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
         final DocRef pipelineRef = createPipeline(stem + "_Pipeline.xml", textConverterRef, filteredXSLT);
-        test(pipelineRef, dir, name, type, stem + ".out", null);
+
+        process(pipelineRef, dir, name, null);
+        validateProcess();
     }
 
     private DocRef createPipeline(final String pipelineFile,
@@ -128,12 +142,12 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     // TODO This method is 80% the same in a whole bunch of test classes -
     // refactor some of the repetition out.
-    void test(final DocRef pipelineRef,
-              final String dir,
-              final String name,
-              final String type,
-              final String outputReference,
-              final String encoding) {
+    void process(final DocRef pipelineRef,
+                 final String dir,
+                 final String name,
+                 final String encoding) {
+        // Setup the error handler.
+        loggingErrorReceiver = new LoggingErrorReceiver();
         pipelineScopeRunnable.scopeRunnable(() -> {
             try {
                 // Setup the error handler.
@@ -174,18 +188,180 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
                 // FORCE ROLL SO WE CAN GET OUTPUT
                 destinations.forceRoll();
-
-                Assert.assertTrue(recordCountProvider.get().getRead() > 0);
-                Assert.assertTrue(recordCountProvider.get().getWritten() > 0);
-                // Assert.assertEquals(recordCountProvider.get().getRead(), recordCountProvider.get().getWritten());
-                Assert.assertEquals(200, recordCountProvider.get().getRead());
-                Assert.assertEquals(200 - 59, recordCountProvider.get().getWritten());
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-                Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         });
+    }
+
+    void validateProcess() {
+        final RecordCount recordCount = recordCountProvider.get();
+        Assert.assertTrue(recordCount.getRead() > 0);
+        Assert.assertTrue(recordCount.getWritten() > 0);
+        // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
+        Assert.assertEquals(200, recordCount.getRead());
+        Assert.assertEquals(200 - 59, recordCount.getWritten());
+        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
+        Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
+        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+    }
+
+    void validateOuptut(final String outputReference,
+                        final String type) throws IOException {
+        final List<Data> list = dataMetaService.find(new FindDataCriteria());
+        Assert.assertEquals(1, list.size());
+
+        final long id = list.get(0).getId();
+        checkOuterData(id, type.equalsIgnoreCase("text"));
+        checkInnerData(id, type.equalsIgnoreCase("text"));
+        checkFull(id, outputReference);
+    }
+
+    private void checkInnerData(final long streamId, final boolean text) throws IOException {
+        if (text) {
+            final String innerRef = "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123firstuser1234/goodGETHTTP/1.0someagent200\n" +
+                    "2013-04-09T00:00:50.000ZTestTestApachetest.test.com123.123.123.123lastuser1234/goodGETHTTP/1.0someagent200\n";
+
+            checkInnerData(streamId, 143, innerRef);
+
+        } else {
+            final String innerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                    "<Events xmlns=\"event-logging:3\"\n" +
+                    "        xmlns:stroom=\"stroom\"\n" +
+                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
+                    "        Version=\"3.0.0\">\n" +
+                    "   <Event>\n" +
+                    "      <EventTime>\n" +
+                    "         <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>\n" +
+                    "      </EventTime>\n" +
+                    "      <EventSource>\n" +
+                    "         <System>\n" +
+                    "            <Name>Test</Name>\n" +
+                    "            <Environment>Test</Environment>\n" +
+                    "         </System>\n" +
+                    "         <Generator>Apache</Generator>\n" +
+                    "         <Device>\n" +
+                    "            <HostName>test.test.com</HostName>\n" +
+                    "         </Device>\n" +
+                    "         <Client>\n" +
+                    "            <IPAddress>123.123.123.123</IPAddress>\n" +
+                    "         </Client>\n" +
+                    "         <User>\n" +
+                    "            <Id>firstuser</Id>\n" +
+                    "         </User>\n" +
+                    "      </EventSource>\n" +
+                    "      <EventDetail>\n" +
+                    "         <TypeId>1234</TypeId>\n" +
+                    "         <View>\n" +
+                    "            <Resource>\n" +
+                    "               <URL>/good</URL>\n" +
+                    "               <HTTPMethod>GET</HTTPMethod>\n" +
+                    "               <HTTPVersion>HTTP/1.0</HTTPVersion>\n" +
+                    "               <UserAgent>someagent</UserAgent>\n" +
+                    "               <ResponseCode>200</ResponseCode>\n" +
+                    "            </Resource>\n" +
+                    "         </View>\n" +
+                    "      </EventDetail>\n" +
+                    "   </Event>\n" +
+                    "   <Event>\n" +
+                    "      <EventTime>\n" +
+                    "         <TimeCreated>2013-04-09T00:00:50.000Z</TimeCreated>\n" +
+                    "      </EventTime>\n" +
+                    "      <EventSource>\n" +
+                    "         <System>\n" +
+                    "            <Name>Test</Name>\n" +
+                    "            <Environment>Test</Environment>\n" +
+                    "         </System>\n" +
+                    "         <Generator>Apache</Generator>\n" +
+                    "         <Device>\n" +
+                    "            <HostName>test.test.com</HostName>\n" +
+                    "         </Device>\n" +
+                    "         <Client>\n" +
+                    "            <IPAddress>123.123.123.123</IPAddress>\n" +
+                    "         </Client>\n" +
+                    "         <User>\n" +
+                    "            <Id>lastuser</Id>\n" +
+                    "         </User>\n" +
+                    "      </EventSource>\n" +
+                    "      <EventDetail>\n" +
+                    "         <TypeId>1234</TypeId>\n" +
+                    "         <View>\n" +
+                    "            <Resource>\n" +
+                    "               <URL>/good</URL>\n" +
+                    "               <HTTPMethod>GET</HTTPMethod>\n" +
+                    "               <HTTPVersion>HTTP/1.0</HTTPVersion>\n" +
+                    "               <UserAgent>someagent</UserAgent>\n" +
+                    "               <ResponseCode>200</ResponseCode>\n" +
+                    "            </Resource>\n" +
+                    "         </View>\n" +
+                    "      </EventDetail>\n" +
+                    "   </Event>\n" +
+                    "</Events>\n";
+
+            checkInnerData(streamId, 143, innerRef);
+        }
+    }
+
+    private void checkOuterData(final long streamId, final boolean text) throws IOException {
+        if (text) {
+            final String outerRef = "";
+
+            checkOuterData(streamId, 143, outerRef);
+
+        } else {
+            final String outerRef = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                    "<Events xmlns=\"event-logging:3\"\n" +
+                    "        xmlns:stroom=\"stroom\"\n" +
+                    "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                    "        xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\"\n" +
+                    "        Version=\"3.0.0\">\n" +
+                    "</Events>\n";
+
+            checkOuterData(streamId, 143, outerRef);
+        }
+    }
+
+    private void checkFull(final long streamId, final String outputReference) throws IOException {
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
+        final String refData = StreamUtil.fileToString(refFile);
+        final String data = StreamUtil.streamToString(streamSource.getInputStream());
+        Assert.assertEquals(refData, data);
+        streamStore.closeStreamSource(streamSource);
+    }
+
+    private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
+
+        Assert.assertEquals(count, segmentInputStream.count());
+
+        // Include the first and last segment only.
+        segmentInputStream.include(0);
+        segmentInputStream.include(segmentInputStream.count() - 1);
+
+        final String data = StreamUtil.streamToString(segmentInputStream);
+        Assert.assertEquals(ref, data);
+
+        streamStore.closeStreamSource(streamSource);
+    }
+
+    private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
+        final StreamSource streamSource = streamStore.openStreamSource(streamId);
+        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
+
+        Assert.assertEquals(count, segmentInputStream.count());
+
+        // Include the first and last segment only.
+        segmentInputStream.include(0);
+        segmentInputStream.include(1);
+        segmentInputStream.include(segmentInputStream.count() - 2);
+        segmentInputStream.include(segmentInputStream.count() - 1);
+
+        final String data = StreamUtil.streamToString(segmentInputStream);
+        Assert.assertEquals(ref, data);
+
+        streamStore.closeStreamSource(streamSource);
     }
 }

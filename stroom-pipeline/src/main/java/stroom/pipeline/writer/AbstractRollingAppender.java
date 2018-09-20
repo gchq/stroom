@@ -30,21 +30,21 @@ import java.io.IOException;
 
 public abstract class AbstractRollingAppender extends AbstractDestinationProvider implements RollingDestinationFactory {
     private static final int MB = 1024 * 1024;
-    private static final int DEFAULT_MAX_SIZE = 100 * MB;
+    private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
     private static final int SECOND = 1000;
     private static final int MINUTE = 60 * SECOND;
     private static final int HOUR = 60 * MINUTE;
 
     private long frequency = HOUR;
-    private long maxSize = DEFAULT_MAX_SIZE;
+    private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
 
     private final RollingDestinations destinations;
     private final TaskContext taskContext;
 
-    public AbstractRollingAppender(final RollingDestinations destinations,
+    protected AbstractRollingAppender(final RollingDestinations destinations,
                                    final TaskContext taskContext) {
         this.destinations = destinations;
         this.taskContext = taskContext;
@@ -75,8 +75,8 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
                 throw new ProcessException("Rolling frequency must be greater than 0");
             }
 
-            if (maxSize <= 0) {
-                throw new ProcessException("Max size must be greater than 0");
+            if (rollSize <= 0) {
+                throw new ProcessException("Roll size must be greater than 0");
             }
 
             this.validateSpecificSettings();
@@ -87,8 +87,8 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         return frequency;
     }
 
-    protected long getMaxSize() {
-        return maxSize;
+    protected long getRollSize() {
+        return rollSize;
     }
 
     /**
@@ -121,21 +121,17 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         }
     }
 
-    @PipelineProperty(
-            description = "Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.",
-            defaultValue = "100M",
-            displayPriority = 5)
-    public void setMaxSize(final String maxSize) {
-        if (maxSize != null && maxSize.trim().length() > 0) {
+    protected void setRollSize(final String rollSize) {
+        if (rollSize != null && rollSize.trim().length() > 0) {
             try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(maxSize);
+                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
                 if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
+                    throw new PipelineFactoryException("Incorrect value for roll size: " + rollSize);
                 }
 
-                this.maxSize = value;
+                this.rollSize = value;
             } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + maxSize);
+                throw new PipelineFactoryException("Incorrect value for roll size: " + rollSize);
             }
         }
     }

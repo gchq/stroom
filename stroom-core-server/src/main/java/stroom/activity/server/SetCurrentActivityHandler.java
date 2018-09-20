@@ -22,27 +22,28 @@ import event.logging.MultiObject;
 import event.logging.Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.logging.CurrentActivity;
 import stroom.logging.PurposeUtil;
 import stroom.logging.StroomEventLoggingService;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
-import stroom.util.spring.StroomScope;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = SetCurrentActivityAction.class)
-@Scope(StroomScope.PROTOTYPE)
 public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentActivityAction, Activity> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetCurrentActivityHandler.class);
 
-    @Resource
-    private CurrentActivity currentActivity;
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
+    private final CurrentActivity currentActivity;
+    private final StroomEventLoggingService eventLoggingService;
+
+    @Inject
+    SetCurrentActivityHandler(final CurrentActivity currentActivity, final StroomEventLoggingService eventLoggingService) {
+        this.currentActivity = currentActivity;
+        this.eventLoggingService = eventLoggingService;
+    }
 
     @Override
     public Activity exec(final SetCurrentActivityAction action) {

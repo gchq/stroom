@@ -21,23 +21,24 @@ import event.logging.Event;
 import event.logging.ObjectOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import stroom.activity.shared.AcknowledgeSplashAction;
 import stroom.logging.StroomEventLoggingService;
-import stroom.task.server.AbstractTaskHandler;
-import stroom.task.server.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.spring.StroomScope;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 @TaskHandlerBean(task = AcknowledgeSplashAction.class)
-@Scope(StroomScope.PROTOTYPE)
 public class AcknowledgeSplashHandler extends AbstractTaskHandler<AcknowledgeSplashAction, SharedBoolean> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcknowledgeSplashHandler.class);
 
-    @Resource
-    private StroomEventLoggingService eventLoggingService;
+    private final StroomEventLoggingService eventLoggingService;
+
+    @Inject
+    AcknowledgeSplashHandler(final StroomEventLoggingService eventLoggingService) {
+        this.eventLoggingService = eventLoggingService;
+    }
 
     @Override
     public SharedBoolean exec(final AcknowledgeSplashAction action) {

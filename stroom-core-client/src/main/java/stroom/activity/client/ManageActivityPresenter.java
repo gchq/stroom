@@ -31,9 +31,8 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -55,7 +54,7 @@ public class ManageActivityPresenter extends
     private final ActivityListPresenter listPresenter;
     private final Provider<ActivityEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache uiConfigCache;
     private FindActivityCriteria criteria = new FindActivityCriteria();
     private ButtonView newButton;
     private ButtonView openButton;
@@ -67,12 +66,12 @@ public class ManageActivityPresenter extends
                                    final ActivityListPresenter listPresenter,
                                    final Provider<ActivityEditPresenter> editProvider,
                                    final ClientDispatchAsync dispatcher,
-                                   final ClientPropertyCache clientPropertyCache) {
+                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         this.dispatcher = dispatcher;
-        this.clientPropertyCache = clientPropertyCache;
+        this.uiConfigCache = uiConfigCache;
 
         getView().setUiHandlers(this);
 
@@ -120,8 +119,8 @@ public class ManageActivityPresenter extends
     }
 
     public void showInitial(final Consumer<Activity> consumer) {
-        clientPropertyCache.get().onSuccess(clientProperties -> {
-            final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false);
+        uiConfigCache.get().onSuccess(uiConfig -> {
+            final boolean show = uiConfig.getActivityConfig().isChooseOnStartup();
             if (show) {
                 show(consumer);
             } else {
@@ -142,8 +141,8 @@ public class ManageActivityPresenter extends
                 consumer.accept(getSelected());
             }
         };
-        clientPropertyCache.get().onSuccess(clientProperties -> {
-            final String title = clientProperties.get(ClientProperties.ACTIVITY_MANAGER_TITLE);
+        uiConfigCache.get().onSuccess(uiConfig -> {
+            final String title = uiConfig.getActivityConfig().getManagerTitle();
             final PopupSize popupSize = new PopupSize(1000, 600, true);
             ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
                     PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);

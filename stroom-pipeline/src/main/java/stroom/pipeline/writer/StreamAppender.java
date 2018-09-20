@@ -20,7 +20,6 @@ package stroom.pipeline.writer;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
-import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;
@@ -61,8 +60,7 @@ public class StreamAppender extends AbstractAppender {
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
-
-    private SegmentOutputStream segmentOutputStream;
+    private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private boolean doneHeader;
 
     @Inject
@@ -121,8 +119,7 @@ public class StreamAppender extends AbstractAppender {
         // Let the stream closer handle closing it
         streamCloser.add(streamTarget);
 
-//        if (segmentOutput) {
-        segmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
+        wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
             @Override
             public void close() throws IOException {
                 super.flush();
@@ -130,19 +127,7 @@ public class StreamAppender extends AbstractAppender {
                 StreamAppender.this.close();
             }
         };
-
-//        } else {
-//            targetOutputStream = new WrappedOutputStream(streamTarget.getOutputStream()) {
-//                @Override
-//                public void close() throws IOException {
-//                    super.flush();
-//                    super.close();
-//                    StreamAppender.this.close();
-//                }
-//            };
-//        }
-
-        return segmentOutputStream;
+        return wrappedSegmentOutputStream;
     }
 
     @Override
@@ -164,12 +149,14 @@ public class StreamAppender extends AbstractAppender {
         // whether a footer is actually written. We do this because we always make an allowance for a footer for data
         // display purposes.
         insertSegmentMarker();
+
+        super.returnDestination(destination);
     }
 
     private void insertSegmentMarker() throws IOException {
         // Add a segment marker to the output stream if we are segmenting.
         if (segmentOutput) {
-            segmentOutputStream.addSegment();
+            wrappedSegmentOutputStream.addSegment();
         }
     }
 
@@ -182,6 +169,14 @@ public class StreamAppender extends AbstractAppender {
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (wrappedSegmentOutputStream != null) {
+            return wrappedSegmentOutputStream.getPosition();
+        }
+        return 0;
     }
 
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
@@ -205,5 +200,12 @@ public class StreamAppender extends AbstractAppender {
             displayPriority = 3)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
+    }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a new one created.",
+            displayPriority = 4)
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
     }
 }

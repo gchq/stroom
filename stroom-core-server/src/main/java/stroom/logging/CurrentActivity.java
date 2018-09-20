@@ -16,25 +16,26 @@
 
 package stroom.logging;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.stereotype.Component;
+import com.google.inject.Inject;
 import stroom.activity.shared.Activity;
 import stroom.servlet.HttpServletRequestHolder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-@Component
-public class CurrentActivity implements BeanFactoryAware {
+public class CurrentActivity {
     private static final String NAME = "SESSION_ACTIVITY";
-    private BeanFactory beanFactory;
+    private final HttpServletRequestHolder httpServletRequestHolder;
+
+    @Inject
+    CurrentActivity(final HttpServletRequestHolder httpServletRequestHolder) {
+        this.httpServletRequestHolder = httpServletRequestHolder;
+    }
 
     public Activity getActivity() {
         Activity activity = null;
 
-        final HttpServletRequest request = getRequest();
+        final HttpServletRequest request = httpServletRequestHolder.get();
         if (request != null) {
             final HttpSession session = request.getSession();
             final Object object = session.getAttribute(NAME);
@@ -47,30 +48,11 @@ public class CurrentActivity implements BeanFactoryAware {
     }
 
     public void setActivity(final Activity activity) {
-        final HttpServletRequest request = getRequest();
+        final HttpServletRequest request = httpServletRequestHolder.get();
         if (request != null) {
             final HttpSession session = request.getSession();
             session.setAttribute(NAME, activity);
         }
-    }
-
-    private HttpServletRequest getRequest() {
-        if (beanFactory != null) {
-            try {
-                final HttpServletRequestHolder holder = beanFactory.getBean(HttpServletRequestHolder.class);
-                if (holder != null) {
-                    return holder.get();
-                }
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void setBeanFactory(final BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 }
 

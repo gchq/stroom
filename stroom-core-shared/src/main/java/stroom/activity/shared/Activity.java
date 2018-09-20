@@ -16,8 +16,8 @@
 
 package stroom.activity.shared;
 
+import stroom.docref.SharedObject;
 import stroom.entity.shared.AuditedEntity;
-import stroom.util.shared.SharedObject;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

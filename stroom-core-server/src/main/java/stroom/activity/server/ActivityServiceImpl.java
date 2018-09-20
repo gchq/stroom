@@ -17,37 +17,30 @@
 package stroom.activity.server;
 
 import event.logging.BaseAdvancedQueryItem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.entity.server.CriteriaLoggingUtil;
-import stroom.entity.server.QueryAppender;
-import stroom.entity.server.SystemEntityServiceImpl;
-import stroom.entity.server.util.HqlBuilder;
-import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.CriteriaLoggingUtil;
+import stroom.entity.QueryAppender;
+import stroom.entity.StroomEntityManager;
+import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.util.HqlBuilder;
+import stroom.security.Security;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Transactional
-@Component
 public class ActivityServiceImpl extends SystemEntityServiceImpl<Activity, FindActivityCriteria> implements ActivityService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
-
     private final SecurityContext securityContext;
-
 
     @Inject
     ActivityServiceImpl(final StroomEntityManager entityManager,
+                        final Security security,
                         final SecurityContext securityContext) {
-        super(entityManager);
+        super(entityManager, security);
         this.securityContext = securityContext;
     }
 

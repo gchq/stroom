@@ -34,8 +34,8 @@ import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -46,23 +46,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
-    private static final String DEFAULT_ACTIVITY_EDITOR_TITLE = "Edit Activity";
-    private static final String DEFAULT_ACTIVITY_EDITOR_BODY = "" +
-            "Activity Code:</br>" +
-            "<input type=\"text\" name=\"code\"></input></br></br>" +
-            "Activity Description:</br>" +
-            "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\"></textarea>" +
-            "Explain what the activity is";
-
-//    private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
-
-
     private final ClientDispatchAsync dispatcher;
 
-    private boolean activityRecordingEnabled = true;
-    private String activityEditorTitle = DEFAULT_ACTIVITY_EDITOR_TITLE;
-    private String activityEditorBody = DEFAULT_ACTIVITY_EDITOR_BODY;
-//    private String queryInfoPopupValidationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
+    private boolean activityRecordingEnabled;
+    private String activityEditorTitle;
+    private String activityEditorBody;
 
     private Activity activity;
 
@@ -70,16 +58,16 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     public ActivityEditPresenter(final EventBus eventBus,
                                  final ActivityEditView view,
                                  final ClientDispatchAsync dispatcher,
-                                 final ClientPropertyCache clientPropertyCache) {
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
 
-        clientPropertyCache.get()
+        uiConfigCache.get()
                 .onSuccess(result -> {
-                    activityRecordingEnabled = result.getBoolean(ClientProperties.ACTIVITY_ENABLED, true);
-                    activityEditorTitle = result.get(ClientProperties.ACTIVITY_EDITOR_TITLE, DEFAULT_ACTIVITY_EDITOR_TITLE);
-                    activityEditorBody = result.get(ClientProperties.ACTIVITY_EDITOR_BODY, DEFAULT_ACTIVITY_EDITOR_BODY);
-//                    queryInfoPopupValidationRegex = result.get(ClientProperties.QUERY_INFO_POPUP_VALIDATION_REGEX, DEFAULT_QUERY_INFO_VALIDATION_REGEX);
+                    final ActivityConfig activityConfig = result.getActivityConfig();
+                    activityRecordingEnabled = activityConfig.isEnabled();
+                    activityEditorTitle = activityConfig.getEditorTitle();
+                    activityEditorBody = activityConfig.getEditorBody();
                 })
                 .onFailure(caught -> AlertEvent.fireError(ActivityEditPresenter.this, caught.getMessage(), null));
     }
@@ -117,9 +105,6 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     popupSize, activityEditorTitle,
                     internalPopupUiHandlers);
         }
-//        else {
-//            consumer.accept(new State(null, true));
-//        }
     }
 
     private void hide() {

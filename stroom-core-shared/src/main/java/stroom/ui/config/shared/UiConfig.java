@@ -40,6 +40,8 @@ public class UiConfig implements SharedObject {
     private String namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private String htmlTitle = "Stroom";
     private String oncontextmenu = "return false;";
+    private SplashConfig splashConfig;
+    private ActivityConfig activityConfig;
     private UrlConfig urlConfig;
 
     private static final long serialVersionUID = 8717922468620533698L;
@@ -49,6 +51,8 @@ public class UiConfig implements SharedObject {
         processConfig = new ProcessConfig();
         themeConfig = new ThemeConfig();
         queryConfig = new QueryConfig();
+        splashConfig = new SplashConfig();
+        activityConfig = new ActivityConfig();
         urlConfig = new UrlConfig();
     }
 
@@ -56,10 +60,14 @@ public class UiConfig implements SharedObject {
     public UiConfig(final ProcessConfig processConfig,
                     final ThemeConfig themeConfig,
                     final QueryConfig queryConfig,
+                    final SplashConfig splashConfig,
+                    final ActivityConfig activityConfig,
                     final UrlConfig urlConfig) {
         this.processConfig = processConfig;
         this.themeConfig = themeConfig;
         this.queryConfig = queryConfig;
+        this.splashConfig = splashConfig;
+        this.activityConfig = activityConfig;
         this.urlConfig = urlConfig;
     }
 
@@ -183,6 +191,24 @@ public class UiConfig implements SharedObject {
 
     public void setNamePattern(final String namePattern) {
         this.namePattern = namePattern;
+    }
+
+    @JsonProperty("splash")
+    public SplashConfig getSplashConfig() {
+        return splashConfig;
+    }
+
+    public void setSplashConfig(final SplashConfig splashConfig) {
+        this.splashConfig = splashConfig;
+    }
+
+    @JsonProperty("activity")
+    public ActivityConfig getActivityConfig() {
+        return activityConfig;
+    }
+
+    public void setActivityConfig(final ActivityConfig activityConfig) {
+        this.activityConfig = activityConfig;
     }
 
     @JsonProperty("url")

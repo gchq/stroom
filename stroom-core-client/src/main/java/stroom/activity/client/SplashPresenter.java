@@ -25,9 +25,9 @@ import com.gwtplatform.mvp.client.View;
 import stroom.activity.shared.AcknowledgeSplashAction;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.LogoutEvent;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.SplashConfig;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -38,17 +38,17 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.function.Consumer;
 
 public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache uiConfigCache;
     private final ClientDispatchAsync dispatcher;
     private boolean enabled;
 
     @Inject
     public SplashPresenter(final EventBus eventBus,
                            final SplashView view,
-                           final ClientPropertyCache clientPropertyCache,
+                           final UiConfigCache uiConfigCache,
                            final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
-        this.clientPropertyCache = clientPropertyCache;
+        this.uiConfigCache = uiConfigCache;
         this.dispatcher = dispatcher;
     }
 
@@ -69,12 +69,13 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
     }
 
     public void show(final Consumer<Boolean> consumer) {
-        clientPropertyCache.get().onSuccess(clientProperties -> {
-            final boolean enableSplashScreen = clientProperties.getBoolean(ClientProperties.SPLASH_ENABLED, false);
+        uiConfigCache.get().onSuccess(uiConfig -> {
+            final SplashConfig splashConfig = uiConfig.getSplashConfig();
+            final boolean enableSplashScreen = splashConfig.isEnabled();
             if (enableSplashScreen) {
-                final String title = clientProperties.get(ClientProperties.SPLASH_TITLE);
-                final String body = clientProperties.get(ClientProperties.SPLASH_BODY);
-                final String version = clientProperties.get(ClientProperties.SPLASH_VERSION);
+                final String title = splashConfig.getTitle();
+                final String body = splashConfig.getBody();
+                final String version = splashConfig.getVersion();
                 setHtml(body);
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override

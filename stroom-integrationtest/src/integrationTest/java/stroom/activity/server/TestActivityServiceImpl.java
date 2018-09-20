@@ -23,10 +23,10 @@ import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import javax.annotation.Resource;
+import javax.inject.Inject;
 
 public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
-    @Resource
+    @Inject
     private ActivityService activityService;
 
     @Test

@@ -18,8 +18,8 @@ package stroom.activity.server;
 
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.entity.server.BaseEntityService;
-import stroom.entity.server.FindService;
+import stroom.entity.BaseEntityService;
+import stroom.entity.FindService;
 
 public interface ActivityService extends BaseEntityService<Activity>, FindService<Activity, FindActivityCriteria> {
 }

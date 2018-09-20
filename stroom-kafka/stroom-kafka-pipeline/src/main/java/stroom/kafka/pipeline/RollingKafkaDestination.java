@@ -2,8 +2,8 @@ package stroom.kafka.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.destination.RollingDestination;
+import stroom.util.io.ByteCountOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,13 +25,13 @@ public class RollingKafkaDestination extends RollingDestination {
 
     public RollingKafkaDestination(final String key,
                                    final long frequency,
-                                   final long maxSize,
+                                   final long rollSize,
                                    final long creationTime,
                                    final KafkaProducer stroomKafkaProducer,
                                    final String recordKey,
                                    final String topic,
                                    final boolean flushOnSend) {
-        super(key, frequency, maxSize, creationTime);
+        super(key, frequency, rollSize, creationTime);
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.recordKey = recordKey;
         this.topic = topic;
@@ -43,7 +43,7 @@ public class RollingKafkaDestination extends RollingDestination {
 
         setOutputStream(new ByteCountOutputStream(new OutputStream() {
             @Override
-            public void write(int b) throws IOException {
+            public void write(int b) {
                 byteArrayOutputStream.write(b);
             }
         }));
