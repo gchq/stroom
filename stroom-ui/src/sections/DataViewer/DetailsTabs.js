@@ -16,20 +16,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tab, Table } from 'semantic-ui-react';
 import moment from 'moment';
 
 import DataDetails from './DataDetails';
-// import StreamDetails from './StreamDetails';
 
 const DetailsTabs = ({ data, details, dataViewerId }) => {
   const panes = [
     {
       menuItem: 'Data',
       render: () => (
-        <Tab.Pane>
+        <div className="tab-pane">
           <DataDetails data={data} />
-        </Tab.Pane>
+        </div>
       ),
     },
     {
@@ -37,132 +35,124 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
       render: () => {
         console.log({ details });
         return (
-          <Tab.Pane>
+          <div className="tab-pane">
             <div className="StreamDetails__container">
               <div className="StreamDetails__table__container">
-                <Table definition compact="very" className="StreamDetails__table">
-                  <Table.Body>
-                    <Table.Row>
-                      <Table.Cell>Stream ID</Table.Cell>
-                      <Table.Cell>
+                <table className="StreamDetails__table">
+                  <tbody>
+                    <tr>
+                      <td>Stream ID</td>
+                      <td>
                         <code>{details.data.id}</code>
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Status</Table.Cell>
-                      <Table.Cell>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Status</td>
+                      <td>
                         <code> {details.data.status}</code>
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Status MS</Table.Cell>
-                      <Table.Cell>
-                        {moment(details.data.statusMs).format('MMMM Do YYYY, h:mm:ss a')}
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Stream Task ID</Table.Cell>
-                      <Table.Cell>{/* <code> {details.data.processTaskId}</code> */}</Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Parent Stream ID</Table.Cell>
-                      <Table.Cell>{/* <code>{details.data.parentDataId}</code> */}</Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Created</Table.Cell>
-                      <Table.Cell>
-                        {moment(details.data.createMs).format('MMMM Do YYYY, h:mm:ss a')}
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Effective</Table.Cell>
-                      <Table.Cell>
-                        {moment(details.data.effectiveMs).format('MMMM Do YYYY, h:mm:ss a')}
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Stream processor uuid</Table.Cell>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Status MS</td>
+                      <td>{moment(details.data.statusMs).format('MMMM Do YYYY, h:mm:ss a')}</td>
+                    </tr>
+                    <tr>
+                      <td>Stream Task ID</td>
+                      <td>{/* <code> {details.data.processTaskId}</code> */}</td>
+                    </tr>
+                    <tr>
+                      <td>Parent Stream ID</td>
+                      <td>{/* <code>{details.data.parentDataId}</code> */}</td>
+                    </tr>
+                    <tr>
+                      <td>Created</td>
+                      <td>{moment(details.data.createMs).format('MMMM Do YYYY, h:mm:ss a')}</td>
+                    </tr>
+                    <tr>
+                      <td>Effective</td>
+                      <td>{moment(details.data.effectiveMs).format('MMMM Do YYYY, h:mm:ss a')}</td>
+                    </tr>
+                    <tr>
+                      <td>Stream processor uuid</td>
                       TODO
-                      {/* <Table.Cell>{details.stream.streamProcessor.id}</Table.Cell> */}
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell>Files</Table.Cell>
+                      {/* <td>{details.stream.streamProcessor.id}</td> */}
+                    </tr>
+                    <tr>
+                      <td>Files</td>
                       TODO
-                      {/* <Table.Cell>{details.fileNameList}</Table.Cell> */}
-                    </Table.Row>
-                  </Table.Body>
-                </Table>
+                      {/* <td>{details.fileNameList}</td> */}
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          </Tab.Pane>
+          </div>
         );
       },
     },
     {
       menuItem: 'Attributes',
       render: () => (
-        <Tab.Pane>
+        <div className="tab-pane">
           <div className="StreamDetails__container">
             <div className="StreamDetails__table__container">
-              <Table definition compact="very" className="StreamDetails__table">
-                <Table.Body>
+              <table definition compact="very" className="StreamDetails__table">
+                <tbody>
                   TODO
                   {/* {Object.keys(details.nameValueMap).map((key, index) => {
                     if (key !== 'Until' && key !== 'Rule' && key !== 'Age') {
                       return (
-                        <Table.Row>
-                          <Table.Cell>{key}</Table.Cell>
-                          <Table.Cell>
+                        <tr>
+                          <td>{key}</td>
+                          <td>
                             <code>{details.nameValueMap[key]}</code>
-                          </Table.Cell>
-                        </Table.Row>
+                          </td>
+                        </tr>
                       );
                     }
                     return undefined;
                   })} */}
-                </Table.Body>
-              </Table>
+                </tbody>
+              </table>
             </div>
           </div>
-        </Tab.Pane>
+        </div>
       ),
     },
     {
       menuItem: 'Retention',
       render: () => (
-        <Tab.Pane>
+        <div className="tab-pane">
           <div className="RetentionDetails__container">
             <div className="RetentionDetails__table__container">
-              <Table definition compact="very" className="RetentionDetails__table">
-                <Table.Body>
-                  <Table.Row>
-                    <Table.Cell>Age</Table.Cell>
+              <table definition compact="very" className="RetentionDetails__table">
+                <tbody>
+                  <tr>
+                    <td>Age</td>
                     TODO
-                    {/* <Table.Cell>{details.nameValueMap.Age}</Table.Cell> */}
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Until</Table.Cell>
+                    {/* <td>{details.nameValueMap.Age}</td> */}
+                  </tr>
+                  <tr>
+                    <td>Until</td>
                     TODO
-                    {/* <Table.Cell>{details.nameValueMap.Until}</Table.Cell> */}
-                  </Table.Row>
-                  <Table.Row>
-                    <Table.Cell>Rule</Table.Cell>
+                    {/* <td>{details.nameValueMap.Until}</td> */}
+                  </tr>
+                  <tr>
+                    <td>Rule</td>
                     TODO
-                    {/* <Table.Cell>{details.nameValueMap.Rule}</Table.Cell> */}
-                  </Table.Row>
-                </Table.Body>
-              </Table>
+                    {/* <td>{details.nameValueMap.Rule}</td> */}
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </Tab.Pane>
+        </div>
       ),
     },
   ];
   return (
     <div className="DetailsTabs__container">
-      <div className="DetailsTabs__contained">
-        <Tab className="DetailsTabs__Tab tabs" panes={panes} />
-      </div>
+      <div className="DetailsTabs__contained" />
     </div>
   );
 };

@@ -41,32 +41,36 @@ const ElementPropertyField = ({
   switch (type) {
     case 'boolean':
       elementField = (
-        <input
-          type="checkbox"
-          checked={value}
-          name={name}
-          onChange={() => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'boolean', !value);
-          }}
-        />
+        <div>
+          <input
+            type="checkbox"
+            checked={value}
+            name={name}
+            onChange={() => {
+              pipelineElementPropertyUpdated(pipelineId, elementId, name, 'boolean', !value);
+            }}
+          />
+        </div>
       );
       break;
     case 'int':
       elementField = (
-        <input
-          type="number"
-          name={name}
-          value={parseInt(value, 10)}
-          onChange={({ target: { value } }) => {
-            pipelineElementPropertyUpdated(
-              pipelineId,
-              elementId,
-              name,
-              'integer',
-              parseInt(value, 10),
-            );
-          }}
-        />
+        <div>
+          <input
+            type="number"
+            name={name}
+            value={parseInt(value, 10)}
+            onChange={({ target: { value } }) => {
+              pipelineElementPropertyUpdated(
+                pipelineId,
+                elementId,
+                name,
+                'integer',
+                parseInt(value, 10),
+              );
+            }}
+          />
+        </div>
       );
       break;
     case 'docref':
@@ -85,13 +89,15 @@ const ElementPropertyField = ({
 
     case 'string':
       elementField = (
-        <input
-          value={value}
-          name={name}
-          onChange={({ target: { value } }) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, type, value);
-          }}
-        />
+        <div>
+          <input
+            value={value}
+            name={name}
+            onChange={({ target: { value } }) => {
+              pipelineElementPropertyUpdated(pipelineId, elementId, name, type, value);
+            }}
+          />
+        </div>
       );
       break;
     case 'pipelinereference':
@@ -99,13 +105,15 @@ const ElementPropertyField = ({
       break;
     default:
       elementField = (
-        <input
-          value={value}
-          name={name}
-          onChange={({ target: { value } }) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, type, value);
-          }}
-        />
+        <div>
+          <input
+            value={value}
+            name={name}
+            onChange={({ target: { value } }) => {
+              pipelineElementPropertyUpdated(pipelineId, elementId, name, type, value);
+            }}
+          />
+        </div>
       );
       break;
   }

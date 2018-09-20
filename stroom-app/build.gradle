@@ -128,13 +128,13 @@ dependencies {
 run {
 //    //Ensure we have the latest kafka plugin jar available for runtime
 //    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
-    args 'server', './dev.yml'
+    args 'server', '../local.yml'
 }
 
 runShadow {
 //    //Ensure we have the latest kafka plugin jar available for runtime
 //    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
-    args 'server', './dev.yml'
+    args 'server', '../local.yml'
 }
 
 //The gwtCompile tasks create files in stroom-app/src/main/resources/ui

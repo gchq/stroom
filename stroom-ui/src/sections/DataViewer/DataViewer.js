@@ -22,10 +22,9 @@ import PanelGroup from 'react-panelgroup';
 import HorizontalPanel from 'components/HorizontalPanel';
 import Mousetrap from 'mousetrap';
 import 'react-table/react-table.css';
-import { Header } from 'semantic-ui-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import Loader from 'components/Loader';
 
+import Loader from 'components/Loader';
+import IconHeader from 'components/IconHeader';
 import ExpressionSearchBar from 'components/ExpressionSearchBar';
 import {
   search,
@@ -208,10 +207,7 @@ const DataViewer = ({
     <React.Fragment>
       <div className="content-tabs__grid">
         <div className="data-viewer__header">
-          <Header as="h3">
-            <FontAwesomeIcon icon="database" />
-            Data
-            </Header>
+          <IconHeader icon="database" text="Data" />
           <ExpressionSearchBar
             className="data-viewer__search-bar"
             dataSource={dataSource}

@@ -41,8 +41,9 @@ import java.util.List;
  */
 public class TestStroomIndexQueryResource {
 
+    // local.yml is not in source control and is created using local.yml.sh
     @ClassRule
-    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "dev.yml");
+    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "../local.yml");
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +

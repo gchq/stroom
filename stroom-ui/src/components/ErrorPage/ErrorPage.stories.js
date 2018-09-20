@@ -19,7 +19,6 @@ import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { storiesOf } from '@storybook/react';
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 import ErrorPage from './ErrorPage';
 import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';

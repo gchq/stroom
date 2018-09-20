@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "2291a856-17cc-4715-a373-7ffee867ec80",
+  "name" : "VALUE_OUTPUT_FEED_SQL",
+  "version" : "65887aff-fb5a-40ae-8d18-7f405ff5950c",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

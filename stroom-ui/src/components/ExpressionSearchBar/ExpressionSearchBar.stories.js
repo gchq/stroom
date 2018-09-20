@@ -40,7 +40,6 @@ import ExpressionSearchBar from './ExpressionSearchBar';
 import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 

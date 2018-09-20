@@ -35,8 +35,8 @@ import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataProcessingInfo;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataStoreConfig;
+import stroom.refdata.store.RefDataStoreFactory;
 import stroom.refdata.store.RefDataStoreModule;
-import stroom.refdata.store.RefDataStoreProvider;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.refdata.store.RefStreamDefinition;
@@ -86,7 +86,8 @@ public class TestRefDataOnHeapStore {
     private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
 
     @Inject
-    private RefDataStoreProvider refDataStoreProvider;
+    private RefDataStoreFactory refDataStoreFactory;
+
     private RefDataStore refDataStore;
 
     @Before
@@ -100,8 +101,7 @@ public class TestRefDataOnHeapStore {
                     }
                 });
         injector.injectMembers(this);
-        refDataStore = refDataStoreProvider.createOnHeapStore();
-//        refDataStoreProvider = new RefDataOnHeapStore(genericRefDataValueSerde);
+        refDataStore = refDataStoreFactory.createOnHeapStore();
     }
 
     @Test
@@ -935,6 +935,10 @@ public class TestRefDataOnHeapStore {
     private interface MapNamFunc {
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
+    }
+
+    RefDataStore getRefDataStore() {
+        return refDataStoreFactory.createOnHeapStore();
     }
 
 }

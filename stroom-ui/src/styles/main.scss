@@ -4,13 +4,14 @@
 @import "./table";
 @import "./dropdown";
 
+@import "../components/DropdownSelect/DropdownSelect";
+@import "../components/DocRefEditor/DocRefEditor";
 @import "../components/AppSearchBar/AppSearchBar";
 @import "../components/DictionaryEditor/DictionaryEditor";
 @import "../components/PipelineEditor/PipelineEditor";
-@import "../components/PipelineSearch/PipelineSearch";
 @import "../components/ExpressionSearchBar/ExpressionSearchBar";
 @import "../components/DocRefBreadcrumb/DocRefBreadcrumb";
-@import "../components/DocRefListingEntry/DocRefListing";
+@import "../components/DocRefListingEntry/DocRefListingEntry";
 @import "../components/XsltEditor/XsltEditor";
 @import "../components/ExpressionBuilder/ExpressionBuilder";
 @import "../components/LineTo/LineTo";
@@ -25,6 +26,7 @@
 @import "../components/IconHeader/IconHeader";
 @import "../components/Button/Button";
 @import "../components/DocRefInfoModal/DocRefInfoModal";
+@import "../components/PipelineDebugger/PipelineDebugger";
 
 @import "../sections/DataViewer/DataViewer";
 @import "../sections/AppChrome/AppChrome";

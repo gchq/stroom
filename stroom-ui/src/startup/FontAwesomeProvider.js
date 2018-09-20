@@ -57,6 +57,8 @@ import {
   faArrowsAlt,
   faICursor,
   faSave,
+  faChevronLeft,
+  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 
 export default lifecycle({
@@ -101,6 +103,8 @@ export default lifecycle({
       faArrowsAlt,
       faICursor,
       faSave,
+      faChevronLeft,
+      faChevronRight,
     );
   },
 });

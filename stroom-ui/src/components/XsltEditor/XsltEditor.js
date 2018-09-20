@@ -17,22 +17,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
-import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
+import DocRefEditor from 'components/DocRefEditor';
 import Loader from 'components/Loader';
-import Button from 'components/Button';
-import DocRefImage from 'components/DocRefImage';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
-import { fetchXslt } from './xsltResourceClient';
-import { saveXslt } from './xsltResourceClient';
+import { fetchXslt, saveXslt } from './xsltResourceClient';
 import ThemedAceEditor from 'components/ThemedAceEditor';
 import { actionCreators } from './redux';
 
 const { xsltUpdated } = actionCreators;
 
 const enhance = compose(
-  withRouter,
   connect(
     ({ xsltEditor }, { xsltUuid }) => ({
       xsltState: xsltEditor[xsltUuid],
@@ -54,50 +49,43 @@ const enhance = compose(
     ({ xsltState }) => !xsltState,
     renderComponent(() => <Loader message="Loading XSLT..." />),
   ),
-  withProps(({ xsltState: { isDirty, isSaving } }) => ({
-    saveDisabled: !isDirty,
-    saveCaption: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
-  })),
   withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
+    onContentChange: ({ xsltUpdated, xsltUuid, xsltState: { xsltData } }) => (newValue) => {
+      if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
+    },
+    onClickSave: ({ saveXslt, xsltUuid }) => e => saveXslt(xsltUuid),
   }),
+  withProps(({ xsltState: { isDirty, isSaving }, onClickSave }) => ({
+    actionBarItems: [
+      {
+        icon: 'save',
+        disabled: !(isDirty || isSaving),
+        title: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
+        onClick: onClickSave,
+      },
+    ],
+  })),
 );
 
 const XsltEditor = ({
-  xsltUuid,
-  xsltState: { isDirty, isSaving, xsltData },
-  xsltUpdated,
-  saveXslt,
-  openDocRef,
-  onClickSave,
-  saveDisabled,
-  saveCaption,
+  xsltUuid, xsltState: { xsltData }, onContentChange, actionBarItems,
 }) => (
-    <div className="xsltEditor">
-      <div className="dictionaryEditor__headerBar">
-        <header>
-          <DocRefImage docRefType="XSLT" />
-          <h3>{xsltUuid}</h3>
-
-          <DocRefBreadcrumb docRefUuid={xsltUuid} openDocRef={openDocRef} />
-        </header>
-        <div>
-          <Button disabled={saveDisabled} title="Save XSLT" onClick={onClickSave} text={saveCaption} />
-        </div>
-      </div>
-      <div className="xsltEditor__ace-container">
-        <ThemedAceEditor
-          style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-          name={`${xsltUuid}-ace-editor`}
-          mode="xml"
-          value={xsltData}
-          onChange={(newValue) => {
-            if (newValue !== xsltData) xsltUpdated(xsltUuid, newValue);
-          }}
-        />
-      </div>
-    </div>
-  );
+  <DocRefEditor
+    docRef={{
+      type: 'XSLT',
+      uuid: xsltUuid,
+    }}
+    actionBarItems={actionBarItems}
+  >
+    <ThemedAceEditor
+      style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+      name={`${xsltUuid}-ace-editor`}
+      mode="xml"
+      value={xsltData}
+      onChange={onContentChange}
+    />
+  </DocRefEditor>
+);
 
 XsltEditor.propTypes = {
   xsltUuid: PropTypes.string.isRequired,

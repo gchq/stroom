@@ -19,22 +19,22 @@ package stroom.refdata;
 
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.refdata.store.RefDataStore;
-import stroom.refdata.store.RefDataStoreProvider;
+import stroom.refdata.store.RefDataStoreFactory;
 
 import javax.inject.Inject;
 
 @PipelineScoped
 public class RefDataStoreHolder {
 
-    private final RefDataStoreProvider refDataStoreProvider;
+    private final RefDataStoreFactory refDataStoreFactory;
     private final RefDataStore offHeapRefDataStore;
 
     private RefDataStore onHeapRefDataStore = null;
 
     @Inject
-    RefDataStoreHolder(final RefDataStoreProvider refDataStoreProvider) {
-        this.refDataStoreProvider = refDataStoreProvider;
-        this.offHeapRefDataStore = refDataStoreProvider.getOffHeapStore();
+    RefDataStoreHolder(final RefDataStoreFactory refDataStoreFactory) {
+        this.refDataStoreFactory = refDataStoreFactory;
+        this.offHeapRefDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
     /**
@@ -52,7 +52,7 @@ public class RefDataStoreHolder {
 
         // on demand creation of a RefDataStore for this pipeline scope
         if (onHeapRefDataStore == null) {
-            onHeapRefDataStore = refDataStoreProvider.createOnHeapStore();
+            onHeapRefDataStore = refDataStoreFactory.createOnHeapStore();
         }
         return onHeapRefDataStore;
     }

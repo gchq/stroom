@@ -29,6 +29,7 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -403,7 +404,9 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 return persistence.read(new DocRef(type, uuid));
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(e);
+                throw new UncheckedIOException(
+                        LambdaLogger.buildMessage("Error reading doc {} from store {}, {}",
+                                uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
             }
         });
 
@@ -411,7 +414,9 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             return serialiser.read(data);
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
+            throw new UncheckedIOException(
+                    LambdaLogger.buildMessage("Error deserialising doc {} from store {}, {}",
+                            uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
         }
     }
 

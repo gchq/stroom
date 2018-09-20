@@ -42,7 +42,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
 //    protected RefDataStoreHolder refDataStoreHolder;
 
     @Inject
-    private RefDataStoreProvider refDataStoreProvider;
+    private RefDataStoreFactory refDataStoreFactory;
 
     private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
 
@@ -74,7 +74,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
                     }
                 });
         injector.injectMembers(this);
-        refDataStore = refDataStoreProvider.getOffHeapStore();
+        refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
     protected RefDataStoreConfig getRefDataStoreConfig() {

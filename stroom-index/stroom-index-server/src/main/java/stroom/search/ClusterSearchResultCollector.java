@@ -27,10 +27,10 @@ import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreSize;
 import stroom.task.GenericServerTask;
-import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
 import stroom.task.TaskTerminatedException;
+import stroom.task.api.TaskCallback;
+import stroom.task.api.TaskContext;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
@@ -39,6 +39,8 @@ import stroom.task.cluster.CollectorIdFactory;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
 
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
@@ -204,10 +207,26 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
         } finally {
             if (remainingNodeCount.compareAndSet(0, 0)) {
+                // All the results are in but we may still have work pending, so wait
+                waitForPendingWork();
                 completionState.complete();
             }
         }
     }
+
+    private void waitForPendingWork() {
+        LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
+                    LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
+                    try {
+                        resultHandler.waitForPendingWork();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
+                        // we will just let it complete as we have been interrupted
+                    }
+        }, "Waiting for resultHandler to finish pending work");
+    }
+
 
     @Override
     public void onFailure(final Node node, final Throwable throwable) {

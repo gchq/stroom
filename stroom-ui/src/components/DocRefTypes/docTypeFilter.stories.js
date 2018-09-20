@@ -24,7 +24,6 @@ import DocTypeFilters from './DocTypeFilters';
 import DocRefTypePicker from './DocRefTypePicker';
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 const enhance = compose(
   connect(

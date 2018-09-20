@@ -10,6 +10,11 @@
 
 .element-details__form {
   width: 100%;
+  display: grid;
+  grid-template-columns: 300px 200px 300px;
+  grid-column-gap: 8px;
+  grid-row-gap: 30px;
+  margin-left: 10px;
 }
 
 .element-details__title {
@@ -22,13 +27,14 @@
   padding-right:5px;
 }
 
+.element-details__property{
+  display: inline-flex;
+  margin: 10px;
+}
+
 .element-details__field {
   width: 600px;
 }
-
-.element-details__panel {}
-
-.horizontal-panel__container {}
 
 .element-details__nothing-selected {
   width: 100%;
@@ -36,4 +42,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.element-details__summary {
+  margin: 5px;
+}
+
+.element-property__advice {
+  font-size: 12px;
 }

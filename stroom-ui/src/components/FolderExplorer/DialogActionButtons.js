@@ -19,21 +19,16 @@ import PropTypes from 'prop-types';
 
 import Button from 'components/Button';
 
-const DialogActionButtons = ({ onCancel, onChoose }) => (
+const DialogActionButtons = ({ onCancel, onConfirm }) => (
   <React.Fragment>
-    <Button text="Cancel" onClick={onCancel} negative />
-    <Button
-      positive
-      onClick={onChoose}
-      icon="check"
-      text="Choose"
-    />
+    <Button text="Cancel" onClick={onCancel} />
+    <Button onClick={onConfirm} icon="check" text="Choose" />
   </React.Fragment>
-)
+);
 
 DialogActionButtons.propTypes = {
   onCancel: PropTypes.func.isRequired,
-  onChoose: PropTypes.func.isRequired
-}
+  onConfirm: PropTypes.func.isRequired,
+};
 
 export default DialogActionButtons;

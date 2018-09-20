@@ -138,6 +138,7 @@ const enhance = compose(
     listingId: pickerId,
     items: docRefs,
     openItem: onChange,
+    getKey: d => d.uuid,
     enterItem: d => navigateToFolder(pickerId, d),
     goBack: () => navigateToFolder(pickerId, parentFolder),
   })),
@@ -228,10 +229,9 @@ const AppSearchBar = ({
         </div>
         <div className="app-search-listing">
           {hasNoResults && <div className="app-search-listing__empty">{noResultsText}</div>}
-          {docRefs.map((searchResult, index) => (
+          {docRefs.map(searchResult => (
             <DocRefListingEntry
               key={searchResult.uuid}
-              index={index}
               listingId={pickerId}
               docRef={searchResult}
               openDocRef={onChange}
@@ -272,7 +272,7 @@ class AppSearchWithFocus extends React.Component {
   }
   render() {
     return (
-      <span>
+      <React.Fragment>
         <span tabIndex={0} ref={this.dummyFocusRef} onFocus={() => this.dummyFocusRef.current.blur()} />
         <EnhancedAppSearchBar
           {...this.props}
@@ -281,7 +281,7 @@ class AppSearchWithFocus extends React.Component {
             this.props.onChange(d);
           }}
         />
-      </span>
+      </React.Fragment>
     );
   }
 }

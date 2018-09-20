@@ -32,7 +32,6 @@ import { actionCreators as folderExplorerActionCreators } from 'components/Folde
 const { expressionChanged } = expressionBuilderActionCreators;
 
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 import {
   testExpression,

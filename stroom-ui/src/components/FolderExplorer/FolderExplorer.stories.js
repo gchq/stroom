@@ -19,7 +19,6 @@ import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import { Header } from 'semantic-ui-react/dist/commonjs';
 
 import { fromSetupSampleData } from './test';
 import { actionCreators } from './redux';
@@ -40,11 +39,15 @@ const {
 
 import 'styles/main.css';
 
+const testFolder1 = fromSetupSampleData.children[0];
+const testFolder2 = fromSetupSampleData.children[1];
+const testDocRef = fromSetupSampleData.children[0].children[0].children[0];
+
 const LISTING_ID = 'test';
 
 // New Doc
 const TestNewDocRefDialog = compose(
-  connect(({}) => ({}), { prepareDocRefCreation }),
+  connect(({ }) => ({}), { prepareDocRefCreation }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefCreation, testDestination } = this.props;
@@ -55,7 +58,7 @@ const TestNewDocRefDialog = compose(
 
 // Copy
 const TestCopyDialog = compose(
-  connect(({}) => ({}), { prepareDocRefCopy }),
+  connect(({ }) => ({}), { prepareDocRefCopy }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefCopy, testUuids, testDestination } = this.props;
@@ -66,7 +69,7 @@ const TestCopyDialog = compose(
 
 // Move
 const TestMoveDialog = compose(
-  connect(({}) => ({}), { prepareDocRefMove }),
+  connect(({ }) => ({}), { prepareDocRefMove }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefMove, testUuids, testDestination } = this.props;
@@ -77,7 +80,7 @@ const TestMoveDialog = compose(
 
 // Delete
 const TestDeleteDialog = compose(
-  connect(({}) => ({}), { prepareDocRefDelete }),
+  connect(({ }) => ({}), { prepareDocRefDelete }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefDelete, testUuids } = this.props;
@@ -88,7 +91,7 @@ const TestDeleteDialog = compose(
 
 // Rename
 const TestRenameDialog = compose(
-  connect(({}) => ({}), { prepareDocRefRename }),
+  connect(({ }) => ({}), { prepareDocRefRename }),
   lifecycle({
     componentDidMount() {
       const { prepareDocRefRename, testDocRef } = this.props;
@@ -98,21 +101,21 @@ const TestRenameDialog = compose(
 )(() => <RenameDocRefDialog listingId={LISTING_ID} />);
 
 storiesOf('Folder Explorer', module)
-  .add('Folder explorer', props => <FolderExplorer folderUuid="pipelines1234567890" />)
-  .add('New Doc Ref Dialog', props => <TestNewDocRefDialog testDestination="pipelines1234567890" />)
+  .add('Folder explorer', props => <FolderExplorer folderUuid={testFolder1.uuid} />)
+  .add('New Doc Ref Dialog', props => <TestNewDocRefDialog testDestination={testFolder2.uuid} />)
   .add('Copy Dialog', props => (
     <TestCopyDialog
-      testUuids={['dictionaries1234567890', 'xslt1234567890']}
-      testDestination="pipelines1234567890"
+      testUuids={testFolder2.children.map(d => d.uuid)}
+      testDestination={testFolder2.uuid}
     />
   ))
   .add('Move Dialog', props => (
     <TestMoveDialog
-      testUuids={['dictionaries1234567890', 'xslt1234567890']}
-      testDestination="pipelines1234567890"
+      testUuids={testFolder2.children.map(d => d.uuid)}
+      testDestination={testFolder2.uuid}
     />
   ))
   .add('Delete Dialog', props => (
-    <TestDeleteDialog testUuids={['dictionaries1234567890', 'xslt1234567890']} />
+    <TestDeleteDialog testUuids={testFolder2.children.map(d => d.uuid)} />
   ))
-  .add('Rename Dialog', props => <TestRenameDialog testDocRef={fromSetupSampleData} />);
+  .add('Rename Dialog', props => <TestRenameDialog testDocRef={testDocRef} />);

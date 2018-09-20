@@ -43,7 +43,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.refdata.store.RefDataStore;
-import stroom.refdata.store.RefDataStoreProvider;
+import stroom.refdata.store.RefDataStoreFactory;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -93,7 +93,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final MetaDataHolder metaDataHolder,
                                  final StreamHolder streamHolder,
                                  final RefDataLoaderHolder refDataLoaderHolder,
-                                 final RefDataStoreProvider refDataStoreProvider,
+                                 final RefDataStoreFactory refDataStoreFactory,
                                  final LocationFactoryProxy locationFactory,
                                  final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
@@ -105,7 +105,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
-        this.refDataStore = refDataStoreProvider.getOffHeapStore();
+        this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;

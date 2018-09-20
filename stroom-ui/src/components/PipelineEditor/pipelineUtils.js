@@ -631,3 +631,31 @@ export function getParentProperty(stack, elementId, propertyName) {
   if (stack.length < 2) return undefined;
   return getFromParent(stack.length - 2);
 }
+
+/**
+ * Gets the value of the child in an inherited element.
+ * 
+ * @param {pipeline} pipeline The pipeline definition
+ * @param {string} elementId The element id
+ * @param {string} elementTypeName The name of the element type
+ */
+export function getChildValue(pipeline, elementId, elementTypeName) {
+  const elementPropertiesInChild = pipeline.configStack[
+    pipeline.configStack.length - 1
+  ].properties.add.filter(property => property.element === elementId);
+  const childValue = elementPropertiesInChild.find(element => element.name === elementTypeName);
+  return childValue;
+}
+
+/**
+ * Gets the value of an element's property.
+ * 
+ * @param {pipeline} pipeline The pipeline definition
+ * @param {string} elementId The element id
+ * @param {string} elementTypeName The name of the element type
+ */
+export function getElementValue(pipeline, elementId, elementTypeName) {
+  const elementProperties = pipeline.merged.properties.add.filter(property => property.element === elementId);
+  const value = elementProperties.find(element => element.name === elementTypeName);
+  return value;
+}

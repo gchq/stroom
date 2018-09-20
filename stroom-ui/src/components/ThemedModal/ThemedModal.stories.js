@@ -17,9 +17,7 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { compose, withState } from 'recompose';
-import { Header } from 'semantic-ui-react';
 import 'styles/main.css';
-import 'semantic/dist/semantic.min.css';
 
 import Button from 'components/Button';
 import { ThemedModal, ThemedConfirm } from '.';
@@ -30,7 +28,7 @@ let TestModal = ({ modalIsOpen, setModalIsOpen }) => (
   <React.Fragment>
     <ThemedModal
       isOpen={modalIsOpen}
-      header={<Header className="header" content="This is the header" />}
+      header={<h3>This is the header</h3>}
       content={<div>Maybe put something helpful in here</div>}
       actions={
         <React.Fragment>

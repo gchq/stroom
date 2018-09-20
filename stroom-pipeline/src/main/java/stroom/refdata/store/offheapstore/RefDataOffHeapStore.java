@@ -19,16 +19,17 @@ package stroom.refdata.store.offheapstore;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.util.concurrent.Striped;
-import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.apache.commons.io.FileUtils;
 import org.lmdbjava.Env;
+import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.writer.PathCreator;
 import stroom.refdata.store.AbstractRefDataStore;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
@@ -53,6 +54,7 @@ import stroom.refdata.util.ByteBufferUtils;
 import stroom.refdata.util.PooledByteBuffer;
 import stroom.refdata.util.PooledByteBufferPair;
 import stroom.util.HasHealthCheck;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -63,12 +65,14 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -83,7 +87,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
-    public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
+    private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
+
+    private static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private final Path dbDir;
     private final long maxSize;
@@ -110,17 +116,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private final ByteBufferPool byteBufferPool;
 
-    /**
-     * @param dbDir   The directory the LMDB environment will be created in, it must already exist
-     * @param maxSize The max size in bytes of the environment. This should be less than the available
-     */
     @Inject
     RefDataOffHeapStore(
-            @Assisted final Path dbDir,
-            @Assisted final long maxSize,
-            @Assisted("maxReaders") final int maxReaders,
-            @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
-            @Assisted("valueBufferCapacity") final int valueBufferCapacity,
+            final RefDataStoreConfig refDataStoreConfig,
             final ByteBufferPool byteBufferPool,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
@@ -128,47 +126,25 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final RangeStoreDb.Factory rangeStoreDbFactory,
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
-            final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final RefDataStoreConfig refDataStoreConfig) {
+            final ProcessingInfoDb.Factory processingInfoDbFactory) {
 
-        this.dbDir = dbDir;
-        this.maxSize = maxSize;
-        this.maxReaders = maxReaders;
-        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
-        this.valueBufferCapacity = valueBufferCapacity;
+        this.refDataStoreConfig = refDataStoreConfig;
+        this.dbDir = getStoreDir();
+        this.maxSize = refDataStoreConfig.getMaxStoreSizeBytes();
+        this.maxReaders = refDataStoreConfig.getMaxReaders();
+        this.maxPutsBeforeCommit = refDataStoreConfig.getMaxPutsBeforeCommit();
+        this.valueBufferCapacity = refDataStoreConfig.getValueBufferCapacity();
 
-        LOGGER.info(
-                "Creating RefDataOffHeapStore with maxSize: {}, dbDir {}, maxReaders {}, maxPutsBeforeCommit {}, valueBufferCapacity {}",
-                FileUtils.byteCountToDisplaySize(maxSize),
-                dbDir.toAbsolutePath().toString() + File.separatorChar,
-                maxReaders,
-                maxPutsBeforeCommit,
-                FileUtils.byteCountToDisplaySize(valueBufferCapacity));
-
-        // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
-        // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
-        // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
-        // comes with greater risk of corruption.
-
-        // NOTE on setMapSize() from LMDB author found on https://groups.google.com/forum/#!topic/caffe-users/0RKsTTYRGpQ
-        // On Windows the OS sets the filesize equal to the mapsize. (MacOS requires that too, and allocates
-        // all of the physical space up front, it doesn't support sparse files.) The mapsize should not be
-        // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
-        // set it larger than the amount of free space on the filesystem.
-        lmdbEnvironment = Env.<ByteBuffer>create()
-                .setMaxReaders(maxReaders)
-                .setMapSize(maxSize)
-                .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
-                .open(dbDir.toFile());
+        this.lmdbEnvironment = createEnvironment(refDataStoreConfig);
 
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
         this.rangeStoreDb = rangeStoreDbFactory.create(lmdbEnvironment);
-        ValueStoreDb valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
-        MapUidForwardDb mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
-        MapUidReverseDb mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
+        final ValueStoreDb valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
+        final MapUidForwardDb mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
+        final MapUidReverseDb mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-        ValueStoreMetaDb valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
+        final ValueStoreMetaDb valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
 
         // hold all the DBs in a map so we can get at them by name
         addDbsToMap(
@@ -183,10 +159,45 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
 
-        this.refDataStoreConfig = refDataStoreConfig;
         this.byteBufferPool = byteBufferPool;
 
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
+    }
+
+    private Env<ByteBuffer> createEnvironment(final RefDataStoreConfig refDataStoreConfig) {
+        LOGGER.info(
+                "Creating RefDataOffHeapStore with maxSize: {}, dbDir {}, maxReaders {}, maxPutsBeforeCommit {}, " +
+                        "valueBufferCapacity {}, isReadAheadEnabled {}",
+                FileUtils.byteCountToDisplaySize(maxSize),
+                dbDir.toAbsolutePath().toString() + File.separatorChar,
+                maxReaders,
+                maxPutsBeforeCommit,
+                FileUtils.byteCountToDisplaySize(valueBufferCapacity),
+                refDataStoreConfig.isReadAheadEnabled());
+
+        // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
+        // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
+        // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
+        // comes with greater risk of corruption.
+
+        // NOTE on setMapSize() from LMDB author found on https://groups.google.com/forum/#!topic/caffe-users/0RKsTTYRGpQ
+        // On Windows the OS sets the filesize equal to the mapsize. (MacOS requires that too, and allocates
+        // all of the physical space up front, it doesn't support sparse files.) The mapsize should not be
+        // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
+        // set it larger than the amount of free space on the filesystem.
+
+        final EnvFlags[] envFlags;
+        if (refDataStoreConfig.isReadAheadEnabled()) {
+            envFlags = new EnvFlags[0];
+        } else {
+            envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
+        }
+
+        return Env.create()
+                .setMaxReaders(maxReaders)
+                .setMapSize(maxSize)
+                .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
+                .open(dbDir.toFile(), envFlags);
     }
 
     @Override
@@ -244,7 +255,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
-
 
         // Use the mapDef to get a mapUid, then use the mapUid and key
         // to do a lookup in the keyValue or rangeValue stores. The resulting
@@ -362,19 +372,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             return wasValueFound;
         }
     }
-
-//    private Optional<TypedByteBuffer> getTypedValueBuffer(final Txn<ByteBuffer> txn, final ByteBuffer valueStoreKeyBuffer) {
-//        OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
-//        if (optTypeId.isPresent()) {
-//            ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
-//                    .orElseThrow(() -> new RuntimeException(
-//                            "If we have a meta entry we should also have a value entry, data may be corrupted"));
-//
-//            return Optional.of(new TypedByteBuffer(optTypeId.getAsInt(), valueBuffer));
-//        } else {
-//            return Optional.empty();
-//        }
-//    }
 
     @Override
     public void purgeOldData() {
@@ -660,11 +657,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                           final AtomicLong valueEntryDeleteCount,
                                           final AtomicLong valueEntryDeReferenceCount) {
 
-//        boolean wasDeleted = valueStoreMetaDb.deReferenceOrDeleteValue(
-//                writeTxn,
-//                valueStoreKeyBuffer,
-//                ((txn, keyBuffer, valueBuffer) -> valueStoreDb.delete(txn, keyBuffer)));
-
         boolean wasDeleted = valueStore.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
 
         if (wasDeleted) {
@@ -813,16 +805,26 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return totalSizeBytes;
     }
 
+    private Path getStoreDir() {
+        String storeDirStr = refDataStoreConfig.getLocalDir();
+        Path storeDir;
+        if (storeDirStr == null) {
+            LOGGER.info("Off heap store dir is not set, falling back to {}", FileUtil.getTempDir());
+            storeDir = FileUtil.getTempDir();
+            Objects.requireNonNull(storeDir, "Temp dir is not set");
+            storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
+        } else {
+            storeDirStr = PathCreator.replaceSystemProperties(storeDirStr);
+            storeDir = Paths.get(storeDirStr);
+        }
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        try {
+            LOGGER.debug("Ensuring directory {}", storeDir);
+            Files.createDirectories(storeDir);
+        } catch (IOException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error ensuring store directory {} exists", storeDirStr), e);
+        }
 
-
-    public interface Factory {
-        RefDataStore create(
-                final Path dbDir,
-                final long maxSize,
-                @Assisted("maxReaders") final int maxReaders,
-                @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
-                @Assisted("valueBufferCapacity") final int valueBufferCapacity);
+        return storeDir;
     }
 }

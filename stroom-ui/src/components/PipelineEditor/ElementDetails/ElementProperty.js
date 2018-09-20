@@ -18,13 +18,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { actionCreators } from '../redux';
-import { getParentProperty } from '../pipelineUtils';
+import { getParentProperty, getChildValue, getElementValue } from '../pipelineUtils';
 import { getDetails } from './elementDetailsUtils';
 import ElementPropertyField from './ElementPropertyField';
-import Tooltip from 'components/Tooltip';
 
 const {
   pipelineElementPropertyUpdated,
@@ -46,50 +44,41 @@ const enhance = compose(connect(
   },
 ),
   withProps(({
-    type,
     pipelineElementPropertyRevertToParent,
     pipelineElementPropertyRevertToDefault,
     pipelineState: { pipeline },
     elementId,
-    name,
     pipelineId,
-    elementTypeProperty,
-    selectedElementId }) => {
+    elementType }) => {
 
-    const elementProperties = pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
-
-    const elementPropertiesInChild = pipeline.configStack[
-      pipeline.configStack.length - 1
-    ].properties.add.filter(property => property.element === selectedElementId);
-
-    const docRefTypes = elementTypeProperty.docRefTypes
-      ? elementTypeProperty.docRefTypes
-      : undefined;
-
+    const value = getElementValue(pipeline, elementId, elementType.name)
+    const childValue = getChildValue(pipeline, elementId, elementType.name);
     const parentValue = getParentProperty(
       pipeline.configStack,
       elementId,
-      elementTypeProperty.name,
+      elementType.name,
     );
 
-    const value = elementProperties.find(element => element.name === elementTypeProperty.name);
-    const childValue = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
+    const details = getDetails({
+      value,
+      parentValue,
+      defaultValue: elementType.defaultValue,
+      type: elementType.type,
+      pipelineElementPropertyRevertToParent,
+      pipelineElementPropertyRevertToDefault,
+      elementId,
+      name: elementType.name,
+      pipelineId,
+      childValue,
+    });
 
     return {
-      type: type.toLowerCase(),
-      details: getDetails({
-        value,
-        parentValue,
-        defaultValue: elementTypeProperty.defaultValue,
-        type,
-        pipelineElementPropertyRevertToParent,
-        pipelineElementPropertyRevertToDefault,
-        elementId,
-        name,
-        pipelineId,
-        childValue,
-      }),
-      docRefTypes,
+      type: elementType.type.toLowerCase(),
+      value: details.actualValue,
+      inheritanceAdvice: details.info,
+      docRefTypes: elementType.docRefTypes,
+      name: elementType.name,
+      description: elementType.description,
     };
   }),
 );
@@ -102,48 +91,35 @@ const ElementProperty = ({
   pipelineId,
   pipelineElementPropertyUpdated,
   elementId,
-  details,
+  value,
+  inheritanceAdvice,
 }) => (
-    <div>
-      <div className="element-details__field">
-        <label>{description}</label>
-        <ElementPropertyField
-          {...{
-            pipelineElementPropertyUpdated,
-            value: details.actualValue,
-            name,
-            pipelineId,
-            elementId,
-            type,
-            docRefTypes,
-          }}
-        />
-      </div>
-      <Tooltip
-        hoverable
-        trigger={<FontAwesomeIcon icon="cog" color="blue" size="lg" />}
-        content={
-          <div>
-            <p>
-              The <em>field name</em> of this property is <strong>{name}</strong>
-            </p>
-            {details.info}
-          </div>
-        }
+    <React.Fragment>
+      <label>{description}</label>
+      <ElementPropertyField
+        {...{
+          pipelineElementPropertyUpdated,
+          value,
+          name,
+          pipelineId,
+          elementId,
+          type,
+          docRefTypes,
+        }}
       />
-    </div>
+      <div className="element-property__advice">
+        <p>
+          The <em>field name</em> of this property is <strong>{name}</strong>
+        </p>
+        {inheritanceAdvice}
+      </div>
+    </React.Fragment>
   );
 
 ElementProperty.propTypes = {
   pipelineId: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  type: PropTypes.string.isRequired,
-  pipelineElementPropertyUpdated: PropTypes.func.isRequired,
-  elementTypeProperty: PropTypes.any,
-  elementProperties: PropTypes.any,
-  selectedElementId: PropTypes.any,
+  elementType: PropTypes.object.isRequired,
 };
 
 export default enhance(ElementProperty);

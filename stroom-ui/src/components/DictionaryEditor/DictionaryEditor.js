@@ -1,20 +1,16 @@
 import React from 'react';
 import { compose, lifecycle, renderComponent, branch, withHandlers, withProps } from 'recompose';
-import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 import Loader from 'components/Loader';
-import DocRefImage from 'components/DocRefImage';
-import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
+import DocRefEditor from 'components/DocRefEditor';
 import { fetchDictionary } from './dictionaryResourceClient';
 import { saveDictionary } from './dictionaryResourceClient';
 import { actionCreators } from './redux';
-import Button from 'components/Button';
 
 const { dictionaryUpdated } = actionCreators;
 
 const enhance = compose(
-  withRouter,
   connect(
     ({ dictionaryEditor }, { dictionaryUuid }) => ({
       dictionaryState: dictionaryEditor[dictionaryUuid],
@@ -36,50 +32,39 @@ const enhance = compose(
     ({ dictionaryState }) => !dictionaryState,
     renderComponent(() => <Loader active>Loading Dictionary</Loader>),
   ),
-  withProps(({ dictionaryState: { isDirty, isSaving } }) => ({
-    saveDisabled: !isDirty,
-    saveCaption: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
-  })),
   withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`),
     onDataChange: ({ dictionaryUuid, dictionaryUpdated }) => ({ target: { value } }) =>
       dictionaryUpdated(dictionaryUuid, { data: value }),
     onClickSave: ({ saveDictionary, dictionaryUuid }) => e => saveDictionary(dictionaryUuid),
   }),
+  withProps(({ dictionaryState: { isDirty, isSaving }, onClickSave }) => ({
+    actionBarItems: [
+      {
+        icon: 'save',
+        disabled: !(isDirty || isSaving),
+        title: isSaving ? 'Saving...' : isDirty ? 'Save' : 'Saved',
+        onClick: onClickSave,
+      },
+    ],
+  })),
 );
 
 const DictionaryEditor = ({
   dictionaryUuid,
   dictionaryState: { dictionary },
-  dictionaryUpdated,
-  saveDictionary,
   openDocRef,
   onDataChange,
-  onClickSave,
-  saveDisabled,
-  saveCaption,
+  actionBarItems,
 }) => (
-    <div className="DictionaryEditor">
-      <DocRefImage docRefType="XSLT" className="DictionaryEditor__headerIcon" />
-      <h3 className="DictionaryEditor__headerTitle">{dictionaryUuid}</h3>
-
-      <DocRefBreadcrumb
-        className="DictionaryEditor__breadcrumb"
-        docRefUuid={dictionaryUuid}
-        openDocRef={openDocRef}
-      />
-
-      <div className="DictionaryEditor__actionButtons">
-        <Button
-          disabled={saveDisabled}
-          title="Save Dictionary"
-          onClick={onClickSave}
-          text={saveCaption} />
-      </div>
-      <div className="DictionaryEditor__main">
-        <textarea value={dictionary.data} onChange={onDataChange} />
-      </div>
-    </div>
-  );
+  <DocRefEditor
+    docRef={{
+      type: 'Dictionary',
+      uuid: dictionaryUuid,
+    }}
+    actionBarItems={actionBarItems}
+  >
+    <textarea value={dictionary.data} onChange={onDataChange} />
+  </DocRefEditor>
+);
 
 export default enhance(DictionaryEditor);
