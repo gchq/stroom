@@ -50,8 +50,7 @@ public class TestStroomStatsInternalStatisticsService {
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,
-                        hBaseStatisticsConfig
-                );
+                        hBaseStatisticsConfig);
 
         //assemble test data
         InternalStatisticEvent event1 = InternalStatisticEvent.createPlusOneCountStat(
