@@ -342,7 +342,7 @@ export function deleteItemsFromTree<T extends Tree<T>>(
   let children;
   if (treeNode.children) {
     children = treeNode.children
-      .filter(x => uuids.indexOf(x.uuid) !== -1)
+      .filter(x => uuids.indexOf(x.uuid) === -1)
       .map(x => deleteItemsFromTree(x, uuids));
   }
 
@@ -403,7 +403,7 @@ export function moveItemsInTree<T extends Tree<T>>(
     const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToMove : []; // if this is the destination, insert the item to move
     const uuidsToMove = itemsToMove.map(i => i.uuid);
     const filteredItemsToCopy = rootNode.children.filter(
-      c => uuidsToMove.indexOf(c.uuid) !== -1
+      c => uuidsToMove.indexOf(c.uuid) === -1
     ); // remove the 'item to move'
     children = [
       ...itemsToInsert, // insert at beginning

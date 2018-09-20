@@ -1,6 +1,7 @@
-import { createActions, handleActions, combineActions } from "redux-actions";
+import { Action, ActionCreator } from "redux";
 
-import { StateById, createActionHandlersPerId } from "../../lib/reduxFormUtils";
+import { StoreState as KeyIsDownStoreState } from "../KeyIsDown/redux";
+import { prepareReducerById, StateById, ActionId } from "../redux-actions-ts";
 
 export enum SelectionBehaviour {
   NONE,
@@ -8,86 +9,137 @@ export enum SelectionBehaviour {
   MULTIPLE
 }
 
+export type GetKey = (a: any) => string;
+
 export interface StoreStatePerId {
   items: Array<any>;
   focusIndex: number;
   focussedItem?: any;
-  lastSelectedIndex: number;
+  lastSelectedIndex?: number;
   selectedItems: Array<any>;
   selectedItemIndexes: Set<number>;
+  selectionBehaviour: SelectionBehaviour;
+  getKey: GetKey;
 }
 
 export type StoreState = StateById<StoreStatePerId>;
 
-const actionCreators = createActions({
-  SELECTABLE_LISTING_MOUNTED: (
-    listingId,
-    items,
-    selectionBehaviour,
-    getKey
+export interface SelectableListingMounted extends ActionId {
+  items: Array<any>;
+  selectionBehaviour: SelectionBehaviour;
+  getKey: GetKey;
+}
+
+export interface FocusChange extends ActionId {
+  direction: -1 | 1;
+}
+
+export interface SelectionChange extends ActionId {
+  itemKey?: string;
+  keyIsDown: KeyIsDownStoreState;
+}
+
+const SELECTABLE_LISTING_MOUNTED = "SELECTABLE_LISTING_MOUNTED";
+const FOCUS_UP = "FOCUS_UP";
+const FOCUS_DOWN = "FOCUS_DOWN";
+const SELECT_FOCUSSED = "SELECT_FOCUSSED";
+const SELECTION_TOGGLED = "SELECTION_TOGGLED";
+
+export interface ActionCreators {
+  selectableListingMounted: ActionCreator<
+    SelectableListingMounted & Action<"SELECTABLE_LISTING_MOUNTED">
+  >;
+  focusUp: ActionCreator<FocusChange & Action<"FOCUS_UP">>;
+  focusDown: ActionCreator<FocusChange & Action<"FOCUS_DOWN">>;
+  selectFocussed: ActionCreator<SelectionChange & Action<"SELECT_FOCUSSED">>;
+  selectionToggled: ActionCreator<
+    SelectionChange & Action<"SELECTION_TOGGLED">
+  >;
+}
+
+export const actionCreators: ActionCreators = {
+  selectableListingMounted: (
+    id: string,
+    items: Array<any>,
+    selectionBehaviour: SelectionBehaviour,
+    getKey: (a: any) => string
   ) => ({
-    listingId,
+    type: SELECTABLE_LISTING_MOUNTED,
+    id,
     items,
     selectionBehaviour,
     getKey
   }),
-  FOCUS_UP: listingId => ({ listingId, direction: -1 }),
-  FOCUS_DOWN: listingId => ({ listingId, direction: 1 }),
-  SELECT_FOCUSSED: (listingId, keyIsDown = {}) => ({ listingId, keyIsDown }),
-  SELECTION_TOGGLED: (listingId, itemKey, keyIsDown = {}) => ({
-    listingId,
+  focusUp: (id: string) => ({
+    type: FOCUS_UP,
+    id,
+    direction: -1
+  }),
+  focusDown: (id: string, direction: number) => ({
+    type: FOCUS_DOWN,
+    id,
+    direction: 1
+  }),
+  selectFocussed: (id: string, keyIsDown: KeyIsDownStoreState) => ({
+    type: SELECT_FOCUSSED,
+    id,
+    keyIsDown
+  }),
+  selectionToggled: (
+    id: string,
+    itemKey: string,
+    keyIsDown: KeyIsDownStoreState
+  ) => ({
+    type: SELECTION_TOGGLED,
+    id,
     itemKey,
     keyIsDown
   })
-});
-
-const { focusUp, focusDown, selectFocussed, selectionToggled } = actionCreators;
-
-const defaultSelectableItemListingState = {
-  items: [],
-  focusIndex: -1, // Used for simple item selection, by array index
-  lastSelectedIndex: -1,
-  selectedItems: [],
-  selectedItemIndexes: new Set()
 };
 
-// There will be an entry for each listing ID registered
-const defaultState = {};
+export const defaultStatePerId: StoreStatePerId = {
+  items: [],
+  focusIndex: -1, // Used for simple item selection, by array index
+  focussedItem: undefined,
+  lastSelectedIndex: -1,
+  selectedItems: [],
+  selectedItemIndexes: new Set(),
+  selectionBehaviour: SelectionBehaviour.SINGLE,
+  getKey: a => "nokey"
+};
 
-const byListingId = createActionHandlersPerId(
-  ({ payload: { listingId } }) => listingId,
-  defaultSelectableItemListingState
-);
-
-const reducer = handleActions(
-  byListingId({
-    SELECTABLE_LISTING_MOUNTED: (
-      state,
-      { payload: { items, selectionBehaviour, getKey } },
-      listingState
+export const reducer = prepareReducerById<StoreStatePerId>(defaultStatePerId)
+  .handleAction(
+    SELECTABLE_LISTING_MOUNTED,
+    (
+      state: StoreStatePerId,
+      { items, selectionBehaviour, getKey }: Action & SelectableListingMounted
     ) => {
       // Attempt to rescue previous focus index
       let focusIndex = -1;
       let focussedItem;
-      if (listingState) {
-        if (listingState.focusIndex < items.length) {
-          focusIndex = listingState.focusIndex;
+      if (state) {
+        if (state.focusIndex < items.length) {
+          focusIndex = state.focusIndex;
           focussedItem = items[focusIndex];
         }
       }
 
       return {
+        ...defaultStatePerId,
         focusIndex,
         focussedItem,
         items,
         selectionBehaviour,
         getKey
       };
-    },
-    [combineActions(focusUp, focusDown)]: (
-      state,
-      { payload: { direction } },
-      { items, focusIndex }
+    }
+  )
+  .handleActions(
+    [FOCUS_UP, FOCUS_DOWN],
+    (
+      { items, focusIndex, ...rest }: StoreStatePerId,
+      { direction }: Action & FocusChange
     ) => {
       // Calculate the next index based on the selection change
       let nextIndex = 0;
@@ -97,77 +149,85 @@ const reducer = handleActions(
       const focussedItem = items[nextIndex];
 
       return {
+        ...rest,
+        items,
         focusIndex: nextIndex,
         focussedItem
       };
-    },
-    [combineActions(selectFocussed, selectionToggled)]: (
-      state,
-      { payload: { itemKey, keyIsDown } },
-      listingState
-    ) => {
-      let {
+    }
+  )
+  .handleActions(
+    [SELECT_FOCUSSED, SELECTION_TOGGLED],
+    (state, { itemKey, keyIsDown }: Action & SelectionChange) => {
+      const {
         selectedItemIndexes,
         focusIndex,
         lastSelectedIndex,
         items,
         getKey,
-        selectionBehaviour
-      } = listingState;
+        selectionBehaviour,
+        ...rest
+      } = state!;
       const index = items.map(getKey).findIndex(k => k === itemKey);
       const indexToUse = index !== undefined && index >= 0 ? index : focusIndex;
+      let newSelectedItemIndexes = new Set();
 
-      if (selectionBehaviour !== SELECTION_BEHAVIOUR.NONE) {
+      if (selectionBehaviour !== SelectionBehaviour.NONE) {
         const isCurrentlySelected = selectedItemIndexes.has(indexToUse);
         if (isCurrentlySelected) {
           if (keyIsDown.Control || keyIsDown.Meta) {
-            selectedItemIndexes = selectedItemIndexes.delete(indexToUse);
-          } else {
-            selectedItemIndexes = new Set();
+            selectedItemIndexes.forEach(i => {
+              if (i !== indexToUse) {
+                newSelectedItemIndexes.add(i);
+              }
+            });
           }
-        } else if (selectionBehaviour === SELECTION_BEHAVIOUR.MULTIPLE) {
+        } else if (selectionBehaviour === SelectionBehaviour.MULTIPLE) {
           if (keyIsDown.Control || keyIsDown.Meta) {
-            selectedItemIndexes.add(indexToUse);
+            selectedItemIndexes.forEach(i => newSelectedItemIndexes.add(i));
+            newSelectedItemIndexes.add(indexToUse);
           } else if (keyIsDown.Shift) {
-            selectedItemIndexes = new Set();
-            items.forEach((n, nIndex) => {
-              if (focusIndex < lastSelectedIndex) {
+            newSelectedItemIndexes = new Set();
+            items.forEach((n: any, nIndex: number) => {
+              if (!lastSelectedIndex) {
+                newSelectedItemIndexes.add(focusIndex);
+              } else if (focusIndex < lastSelectedIndex) {
                 for (let i = focusIndex; i <= lastSelectedIndex; i++) {
-                  selectedItemIndexes.add(i);
+                  newSelectedItemIndexes.add(i);
                 }
               } else {
                 for (let i = lastSelectedIndex; i <= focusIndex; i++) {
-                  selectedItemIndexes.add(i);
+                  newSelectedItemIndexes.add(i);
                 }
               }
             });
           } else {
-            selectedItemIndexes = new Set([indexToUse]);
+            newSelectedItemIndexes.add(indexToUse);
           }
         } else {
-          selectedItemIndexes = new Set([indexToUse]);
+          newSelectedItemIndexes.add(indexToUse);
         }
       }
 
-      const selectedItems = [];
-      selectedItemIndexes.forEach(i => selectedItems.push(items[i]));
-      const focussedItem = items.find((item, i) => i === indexToUse);
+      const selectedItems: Array<any> = [];
+      newSelectedItemIndexes.forEach((i: number) =>
+        selectedItems.push(items[i])
+      );
+      const focussedItem = items.find(
+        (item: any, i: number) => i === indexToUse
+      );
 
       return {
+        ...rest,
+        items,
         focussedItem,
         selectedItems,
-        selectedItemIndexes,
+        selectedItemIndexes: newSelectedItemIndexes,
         focusIndex: indexToUse,
-        lastSelectedIndex: indexToUse
+        lastSelectedIndex: indexToUse,
+        selectionBehaviour,
+        getKey
       };
     }
-  }),
-  defaultState
-);
-
-export {
-  actionCreators,
-  reducer,
-  SELECTION_BEHAVIOUR,
-  defaultSelectableItemListingState
-};
+  )
+  .getReducer();

@@ -34,14 +34,14 @@ const byPickerId = createActionHandlersPerId(
 
 const reducer = handleActions(
   byPickerId({
-    SWITCH_MODE: (state, { payload: { searchMode } }, current) => ({
+    SWITCH_MODE: (state, { payload: { searchMode } }) => ({
       searchMode
     }),
-    NAVIGATE_TO_FOLDER: (state, { payload: { navFolder } }, current) => ({
+    NAVIGATE_TO_FOLDER: (state, { payload: { navFolder } }) => ({
       navFolder,
       searchMode: SEARCH_MODE.NAVIGATION
     }),
-    SEARCH_TERM_UPDATED: (state, { payload: { searchTerm } }, current) => ({
+    SEARCH_TERM_UPDATED: (state, { payload: { searchTerm } }) => ({
       searchTerm,
       searchMode:
         searchTerm.length > 0

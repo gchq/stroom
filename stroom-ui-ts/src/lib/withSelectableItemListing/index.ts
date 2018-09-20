@@ -1,5 +1,5 @@
 import withSelectableItemListing, {
-  AddedProps
+  Handlers
 } from "./withSelectableItemListing";
 import {
   actionCreators,
@@ -7,7 +7,7 @@ import {
   StoreState,
   StoreStatePerId,
   SelectionBehaviour,
-  defaultSelectableItemListingState
+  defaultStatePerId
 } from "./redux";
 
 export default withSelectableItemListing;
@@ -18,7 +18,7 @@ export {
   reducer,
   StoreState,
   StoreStatePerId,
-  AddedProps,
+  Handlers,
   SelectionBehaviour,
-  defaultSelectableItemListingState
+  defaultStatePerId
 };

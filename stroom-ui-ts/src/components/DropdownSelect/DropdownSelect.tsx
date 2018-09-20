@@ -9,38 +9,20 @@ import {
 
 import { GlobalStoreState } from "../../startup/reducers";
 import withSelectableItemListing, {
-  defaultSelectableItemListingState,
+  defaultStatePerId,
   StoreStatePerId,
-  AddedProps as SelectableItemListingAddedProps
+  Handlers as SelectableItemListingHandlers
 } from "../../lib/withSelectableItemListing";
 
-export interface DropdownOption {
-  text: string;
-  value: string;
-}
-
-export interface DropdownOptionProps {
-  option: DropdownOption;
-  inFocus: boolean;
-  onClick: () => void;
-}
-
-const DefaultDropdownOption = ({
-  option,
-  inFocus,
-  onClick
-}: DropdownOptionProps) => (
-  <div className={`hoverable ${inFocus ? "inFocus" : ""}`} onClick={onClick}>
-    {option.text}
-  </div>
-);
+import DefaultDropdownOption from "./DefaultDropdownOption";
+import { DropdownOptionType, DropdownOptionProps } from "./DropdownOptionTypes";
 
 export interface Props {
   pickerId: string;
   onChange: (x: string) => void;
   value: string;
-  options: Array<DropdownOption>;
-  OptionComponent: React.StatelessComponent<DropdownOptionProps>;
+  options: Array<DropdownOptionType>;
+  OptionComponent?: React.ComponentType<DropdownOptionProps>;
 }
 
 export interface StateProps {
@@ -67,7 +49,7 @@ export interface EnhancedProps
     StateFunctions,
     StateProps,
     Handlers,
-    SelectableItemListingAddedProps {
+    SelectableItemListingHandlers {
   valueToShow: string;
   selectableItemListing: StoreStatePerId;
 }
@@ -95,9 +77,6 @@ const enhance = compose<EnhancedProps, Props>(
       { selectableItemListings }: GlobalStoreState,
       { pickerId, value, options, searchTerm, textFocus }: EnhancedProps
     ) => {
-      const selectableItemListing =
-        selectableItemListings[pickerId] || defaultSelectableItemListingState;
-
       let optionsToUse = options;
       let valueToShow = value;
 
@@ -113,18 +92,19 @@ const enhance = compose<EnhancedProps, Props>(
 
       return {
         valueToShow,
-        selectableItemListing,
+        selectableItemListing:
+          selectableItemListings[pickerId] || defaultStatePerId,
         options: optionsToUse
       };
     },
     {}
   ),
-  withSelectableItemListing<DropdownOption>(
+  withSelectableItemListing<DropdownOptionType>(
     ({ pickerId, options, onChange }: EnhancedProps) => ({
       listingId: pickerId,
-      items: options.map(o => o.value),
-      openItem: v => onChange(v),
-      getKey: v => v
+      items: options,
+      openItem: v => onChange(v.value),
+      getKey: v => v.value
     })
   ),
   withHandlers<EnhancedProps, Handlers>({
@@ -162,7 +142,10 @@ let DropdownSelect = ({
       {options.map(option => (
         <OptionComponent
           key={option.value}
-          inFocus={selectableItemListing.focussedItem === option.value}
+          inFocus={
+            selectableItemListing.focussedItem &&
+            selectableItemListing.focussedItem.value === option.value
+          }
           onClick={() => onChange(option.value)}
           option={option}
         />

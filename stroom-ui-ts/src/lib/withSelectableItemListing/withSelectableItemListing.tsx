@@ -43,7 +43,7 @@ const isArraysEqual = (a: Array<any>, b: Array<any>) => {
 
   if (a.length !== b.length) return false;
 
-  return a.filter(aItem => b.indexOf(aItem) !== -1).length === 0;
+  return a.filter(aItem => b.indexOf(aItem) === -1).length === 0;
 };
 
 export interface Props<TItem> {
@@ -51,21 +51,25 @@ export interface Props<TItem> {
   getKey: (x: TItem) => string;
   items: Array<TItem>;
   openItem: (i: TItem) => void;
-  enterItem: (i: TItem) => void;
-  goBack: () => void;
-  selectionBehaviour: SelectionBehaviour;
+  enterItem?: (i: TItem) => void;
+  goBack?: () => void;
+  selectionBehaviour?: SelectionBehaviour;
 }
 
 export type PropsFunc<TItem> = (a: any) => Props<TItem>;
 
-export interface AddedProps {
+export interface Handlers {
   onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
+}
+
+export interface LifecycleProps<TItem> extends Props<TItem>, Handlers {
+  selectableListingMounted: typeof selectableListingMounted;
 }
 
 const withSelectableItemListing = <TItem extends any>(
   propsFunc: PropsFunc<TItem>
 ) =>
-  compose<AddedProps, Props<TItem>>(
+  compose<LifecycleProps<TItem>, Props<TItem>>(
     withProps(props => {
       const {
         listingId,
@@ -92,7 +96,7 @@ const withSelectableItemListing = <TItem extends any>(
         { selectableItemListings, keyIsDown }: GlobalStoreState,
         { listingId }: Props<TItem>
       ) => ({
-        selectableItemListing: selectableItemListings[listingId],
+        selectableItemListing: selectableItemListings.byId[listingId],
         keyIsDown
       }),
       {
@@ -102,8 +106,8 @@ const withSelectableItemListing = <TItem extends any>(
         focusDown
       }
     ),
-    lifecycle({
-      componentDidUpdate(prevProps, prevState, snapshot) {
+    lifecycle<LifecycleProps<TItem>, {}>({
+      componentDidUpdate(prevProps, prevState) {
         const {
           selectableListingMounted,
           listingId,
@@ -112,9 +116,9 @@ const withSelectableItemListing = <TItem extends any>(
           getKey
         } = this.props;
 
-        const itemUuids = items ? items.map(d => d.uuid) : [];
+        const itemUuids = items ? items.map(d => getKey(d)) : [];
         const prevUuids = prevProps.items
-          ? prevProps.items.map(d => d.uuid)
+          ? prevProps.items.map(d => getKey(d))
           : [];
 
         if (!isArraysEqual(itemUuids, prevUuids)) {

@@ -188,6 +188,15 @@ body {
 .icon-header__icon {
   padding-right: 5px; }
 
+.loader__container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 130px; }
+  .loader__container p {
+    margin-top: 40px; }
+
 .UserSettings__container {
   width: 600px; }
 

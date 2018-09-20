@@ -33,8 +33,6 @@ if (process.env.NODE_ENV === "development") {
 export const history = createHistory();
 
 export default compose(
-  // TODO: adding storybookMiddleware causes "Error: Accessing nonexistent addons channel, see https://storybook.js.org/basics/faq/#why-is-there-no-addons-channel"
-  // applyMiddleware(thunk, routerMiddleware(history), logger, storybookMiddleware),
   applyMiddleware(thunk, routerMiddleware(history), logger),
   persistState("userSettings"),
   ...enhancers
