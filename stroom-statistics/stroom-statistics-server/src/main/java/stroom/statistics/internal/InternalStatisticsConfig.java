@@ -24,6 +24,7 @@ public class InternalStatisticsConfig {
     }
 
     private static void populateGetterMap() {
+        // a set of mappings from the internal stat key to the getter to get the docRefs for it
         KEY_TO_DOC_REFS_GETTER_MAP.put(
                 InternalStatisticKey.BENCHMARK_CLUSTER, InternalStatisticsConfig::getBenchmarkClusterDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
