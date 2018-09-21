@@ -139,7 +139,7 @@ ext.libs = [
         dropwizard_jersey              : "io.dropwizard:dropwizard-jersey:$versions.dropwizard",
         dropwizard_jetty               : "io.dropwizard:dropwizard-jetty:$versions.dropwizard", //was 1.0.6 now 1.1.0
         dropwizard_lifecycle           : "io.dropwizard:dropwizard-lifecycle:$versions.dropwizard",
-        dropwizard_metrics_core: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_core",
+        dropwizard_metrics_core        : "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_core",
         dropwizard_metrics_annotation  : "io.dropwizard.metrics:metrics-annotation:$versions.dropwizard_metrics",
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
