@@ -19,6 +19,7 @@ package stroom.monitoring.client.presenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -34,6 +35,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.TreeRowHandler;
@@ -63,7 +65,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGridView<TaskProgress>>
-        implements HasDataSelectionHandlers<Set<String>>, Refreshable {
+        implements HasDataSelectionHandlers<Set<String>>, Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressAction action = new FindTaskProgressAction(criteria);
@@ -93,6 +95,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
+
+        getView().addColumnSortHandler(this);
 
         initTableColumns();
     }
@@ -181,7 +185,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         });
 
         // Node.
-        final Column<TaskProgress, String> nodeColumn = new Column<TaskProgress, String>(new TextCell()) {
+        final Column<TaskProgress, String> nodeColumn = new OrderByColumn<TaskProgress, String>(
+                new TextCell(), FindTaskProgressCriteria.FIELD_NODE, false) {
             @Override
             public String getValue(final TaskProgress value) {
                 if (value.getNode() != null) {
@@ -193,7 +198,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         getView().addResizableColumn(nodeColumn, "Node", 150);
 
         // Name.
-        final Column<TaskProgress, String> nameColumn = new Column<TaskProgress, String>(new TextCell()) {
+        final Column<TaskProgress, String> nameColumn = new OrderByColumn<TaskProgress, String>(
+                new TextCell(), FindTaskProgressCriteria.FIELD_NAME, false) {
             @Override
             public String getValue(final TaskProgress value) {
                 return value.getTaskName();
@@ -202,7 +208,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         getView().addResizableColumn(nameColumn, "Name", 150);
 
         // User.
-        final Column<TaskProgress, String> userColumn = new Column<TaskProgress, String>(new TextCell()) {
+        final Column<TaskProgress, String> userColumn = new OrderByColumn<TaskProgress, String>(
+                new TextCell(), FindTaskProgressCriteria.FIELD_USER, false) {
             @Override
             public String getValue(final TaskProgress value) {
                 return value.getUserName();
@@ -211,7 +218,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         getView().addResizableColumn(userColumn, "User", 80);
 
         // Submit Time.
-        final Column<TaskProgress, String> submitTimeColumn = new Column<TaskProgress, String>(new TextCell()) {
+        final Column<TaskProgress, String> submitTimeColumn = new OrderByColumn<TaskProgress, String>(
+                new TextCell(), FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false) {
             @Override
             public String getValue(final TaskProgress value) {
                 return ClientDateUtil.toISOString(value.getSubmitTimeMs());
@@ -220,7 +228,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         getView().addResizableColumn(submitTimeColumn, "Submit Time", ColumnSizeConstants.DATE_COL);
 
         // Age.
-        final Column<TaskProgress, String> ageColumn = new Column<TaskProgress, String>(new TextCell()) {
+        final Column<TaskProgress, String> ageColumn = new OrderByColumn<TaskProgress, String>(
+                new TextCell(), FindTaskProgressCriteria.FIELD_AGE, false) {
             @Override
             public String getValue(final TaskProgress value) {
                 return ModelStringUtil.formatDurationString(value.getAgeMs());
@@ -229,7 +238,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
         getView().addResizableColumn(ageColumn, "Age", ColumnSizeConstants.SMALL_COL);
 
         // Info.
-        final Column<TaskProgress, String> infoColumn = new Column<TaskProgress, String>(new TextCell()) {
+        final Column<TaskProgress, String> infoColumn = new OrderByColumn<TaskProgress, String>(
+                new TextCell(), FindTaskProgressCriteria.FIELD_INFO, false) {
             @Override
             public String getValue(final TaskProgress value) {
                 if (value.isOrphan()) {
@@ -253,7 +263,7 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     @Override
     public void refresh() {
         // expanderColumnWidth = 0;
-        // dataProvider.refresh();
+         dataProvider.refresh();
     }
 
     @Override
@@ -300,5 +310,20 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    }
+
+    @Override
+    public void onColumnSort(final ColumnSortEvent event) {
+        if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+            if (action != null) {
+                if (event.isSortAscending()) {
+                    action.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                } else {
+                    action.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                }
+                refresh();
+            }
+        }
     }
 }

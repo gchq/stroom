@@ -21,14 +21,19 @@ import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.util.shared.CompareUtil;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements Comparator<TaskProgress> {
+    public static final String FIELD_NODE = "Node";
+    public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";
     public static final String FIELD_SUBMIT_TIME = "Submit Time";
     public static final String FIELD_AGE = "Age";
+    public static final String FIELD_INFO = "Info";
+
     private static final long serialVersionUID = 2014515855795611224L;
     private FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
     private String sessionId;
@@ -106,5 +111,26 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
             return expandedTasks.contains(taskProgress);
         }
         return false;
+    }
+
+    public void validateSortField() {
+        if(this.getSortList().isEmpty()){
+            Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.ASCENDING, true);
+            this.getSortList().add(defaultSort);
+            return;
+        }
+
+        for(Sort sort : this.getSortList()) {
+            if (!Arrays.asList(
+                    FindTaskProgressCriteria.FIELD_AGE,
+                    FindTaskProgressCriteria.FIELD_INFO,
+                    FindTaskProgressCriteria.FIELD_NAME,
+                    FindTaskProgressCriteria.FIELD_NODE,
+                    FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
+                    FindTaskProgressCriteria.FIELD_USER).contains(sort.getField())) {
+                throw new IllegalArgumentException(
+                        "A sort field of " + sort.getField() + " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
+            }
+        }
     }
 }
