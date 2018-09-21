@@ -29,4 +29,12 @@ public class ExtractionConfig {
     public void setMaxThreadsPerTask(final int maxThreadsPerTask) {
         this.maxThreadsPerTask = maxThreadsPerTask;
     }
+
+    @Override
+    public String toString() {
+        return "ExtractionConfig{" +
+                "maxThreads=" + maxThreads +
+                ", maxThreadsPerTask=" + maxThreadsPerTask +
+                '}';
+    }
 }

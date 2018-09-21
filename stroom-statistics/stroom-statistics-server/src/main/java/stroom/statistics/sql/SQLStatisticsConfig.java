@@ -80,4 +80,13 @@ public class SQLStatisticsConfig {
     public void setMaxProcessingAge(final String maxProcessingAge) {
         this.maxProcessingAge = maxProcessingAge;
     }
+
+    @Override
+    public String toString() {
+        return "SQLStatisticsConfig{" +
+                "docRefType='" + docRefType + '\'' +
+                ", statisticAggregationBatchSize=" + statisticAggregationBatchSize +
+                ", maxProcessingAge='" + maxProcessingAge + '\'' +
+                '}';
+    }
 }

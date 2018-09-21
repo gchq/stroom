@@ -36,4 +36,13 @@ public class BenchmarkClusterConfig {
     public void setConcurrentWriters(final int concurrentWriters) {
         this.concurrentWriters = concurrentWriters;
     }
+
+    @Override
+    public String toString() {
+        return "BenchmarkClusterConfig{" +
+                "streamCount=" + streamCount +
+                ", recordCount=" + recordCount +
+                ", concurrentWriters=" + concurrentWriters +
+                '}';
+    }
 }

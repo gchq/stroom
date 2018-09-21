@@ -41,4 +41,13 @@ public class InfoPopupConfig implements SharedObject {
     public void setValidationRegex(final String validationRegex) {
         this.validationRegex = validationRegex;
     }
+
+    @Override
+    public String toString() {
+        return "InfoPopupConfig{" +
+                "enabled=" + enabled +
+                ", title='" + title + '\'' +
+                ", validationRegex='" + validationRegex + '\'' +
+                '}';
+    }
 }

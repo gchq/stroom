@@ -51,4 +51,14 @@ public class MetaValueConfig {
     public void setAddAsync(final boolean addAsync) {
         this.addAsync = addAsync;
     }
+
+    @Override
+    public String toString() {
+        return "MetaValueConfig{" +
+                "deleteAge='" + deleteAge + '\'' +
+                ", deleteBatchSize=" + deleteBatchSize +
+                ", flushBatchSize=" + flushBatchSize +
+                ", addAsync=" + addAsync +
+                '}';
+    }
 }

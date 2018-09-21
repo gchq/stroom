@@ -18,4 +18,11 @@ public class AppenderConfig {
     public void setMaxActiveDestinations(final int maxActiveDestinations) {
         this.maxActiveDestinations = maxActiveDestinations;
     }
+
+    @Override
+    public String toString() {
+        return "AppenderConfig{" +
+                "maxActiveDestinations=" + maxActiveDestinations +
+                '}';
+    }
 }

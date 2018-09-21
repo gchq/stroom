@@ -26,4 +26,12 @@ public class QueryHistoryConfig {
     public void setDaysRetention(final int daysRetention) {
         this.daysRetention = daysRetention;
     }
+
+    @Override
+    public String toString() {
+        return "QueryHistoryConfig{" +
+                "itemsRetention=" + itemsRetention +
+                ", daysRetention=" + daysRetention +
+                '}';
+    }
 }

@@ -92,4 +92,14 @@ public class ConnectionConfig {
     public int hashCode() {
         return Objects.hash(jdbcDriverClassName, jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
     }
+
+    @Override
+    public String toString() {
+        return "ConnectionConfig{" +
+                "jdbcDriverClassName='" + jdbcDriverClassName + '\'' +
+                ", jdbcDriverUrl='" + jdbcDriverUrl + '\'' +
+                ", jdbcDriverUsername='" + jdbcDriverUsername + '\'' +
+                ", jdbcDriverPassword='" + jdbcDriverPassword + '\'' +
+                '}';
+    }
 }

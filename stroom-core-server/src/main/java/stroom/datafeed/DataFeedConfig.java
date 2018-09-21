@@ -53,4 +53,14 @@ public class DataFeedConfig {
     public void setFeedNamePattern(final String feedNamePattern) {
         this.feedNamePattern = feedNamePattern;
     }
+
+    @Override
+    public String toString() {
+        return "DataFeedConfig{" +
+                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
+                ", bufferSize=" + bufferSize +
+                ", unknownClassification='" + unknownClassification + '\'' +
+                ", feedNamePattern='" + feedNamePattern + '\'' +
+                '}';
+    }
 }

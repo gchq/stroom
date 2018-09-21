@@ -78,6 +78,18 @@ public class AuthenticationConfig {
         this.userNamePattern = userNamePattern;
     }
 
+    @Override
+    public String toString() {
+        return "AuthenticationConfig{" +
+                "authenticationServiceUrl='" + authenticationServiceUrl + '\'' +
+                ", authenticationRequired=" + authenticationRequired +
+                ", apiToken='" + apiToken + '\'' +
+                ", authServicesBaseUrl='" + authServicesBaseUrl + '\'' +
+                ", preventLogin=" + preventLogin +
+                ", userNamePattern='" + userNamePattern + '\'' +
+                '}';
+    }
+
     public static class JwtConfig {
         private String jwtIssuer= "stroom";
         private boolean enableTokenRevocationCheck = true;
@@ -98,6 +110,14 @@ public class AuthenticationConfig {
 
         public void setEnableTokenRevocationCheck(final boolean enableTokenRevocationCheck) {
             this.enableTokenRevocationCheck = enableTokenRevocationCheck;
+        }
+
+        @Override
+        public String toString() {
+            return "JwtConfig{" +
+                    "jwtIssuer='" + jwtIssuer + '\'' +
+                    ", enableTokenRevocationCheck=" + enableTokenRevocationCheck +
+                    '}';
         }
     }
 }

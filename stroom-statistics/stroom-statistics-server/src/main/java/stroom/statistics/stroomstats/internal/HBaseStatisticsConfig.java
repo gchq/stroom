@@ -47,4 +47,13 @@ public class HBaseStatisticsConfig {
     public void setEventsPerMessage(final int eventsPerMessage) {
         this.eventsPerMessage = eventsPerMessage;
     }
+
+    @Override
+    public String toString() {
+        return "HBaseStatisticsConfig{" +
+                "docRefType='" + docRefType + '\'' +
+                ", kafkaConfigUuid='" + kafkaConfigUuid + '\'' +
+                ", eventsPerMessage=" + eventsPerMessage +
+                '}';
+    }
 }

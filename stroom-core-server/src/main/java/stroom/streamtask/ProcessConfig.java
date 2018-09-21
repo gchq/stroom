@@ -76,4 +76,17 @@ public class ProcessConfig implements BatchDeleteConfig {
     public void setQueueSize(final int queueSize) {
         this.queueSize = queueSize;
     }
+
+    @Override
+    public String toString() {
+        return "ProcessConfig{" +
+                "assignTasks=" + assignTasks +
+                ", createTasks=" + createTasks +
+                ", deleteAge='" + deleteAge + '\'' +
+                ", deletePurgeAge='" + deletePurgeAge + '\'' +
+                ", deleteBatchSize=" + deleteBatchSize +
+                ", fillTaskQueue=" + fillTaskQueue +
+                ", queueSize=" + queueSize +
+                '}';
+    }
 }

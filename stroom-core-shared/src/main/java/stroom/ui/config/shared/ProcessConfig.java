@@ -34,4 +34,12 @@ public class ProcessConfig implements SharedObject {
     public void setDefaultRecordLimit(final long defaultRecordLimit) {
         this.defaultRecordLimit = defaultRecordLimit;
     }
+
+    @Override
+    public String toString() {
+        return "ProcessConfig{" +
+                "defaultTimeLimit=" + defaultTimeLimit +
+                ", defaultRecordLimit=" + defaultRecordLimit +
+                '}';
+    }
 }

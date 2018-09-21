@@ -16,4 +16,11 @@ public class ContentPackImportConfig {
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
+
+    @Override
+    public String toString() {
+        return "ContentPackImportConfig{" +
+                "enabled=" + enabled +
+                '}';
+    }
 }

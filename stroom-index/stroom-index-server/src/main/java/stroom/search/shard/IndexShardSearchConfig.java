@@ -39,4 +39,13 @@ public class IndexShardSearchConfig {
     public void setMaxThreadsPerTask(final int maxThreadsPerTask) {
         this.maxThreadsPerTask = maxThreadsPerTask;
     }
+
+    @Override
+    public String toString() {
+        return "IndexShardSearchConfig{" +
+                "maxDocIdQueueSize=" + maxDocIdQueueSize +
+                ", maxThreads=" + maxThreads +
+                ", maxThreadsPerTask=" + maxThreadsPerTask +
+                '}';
+    }
 }

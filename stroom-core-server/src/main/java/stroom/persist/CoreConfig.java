@@ -67,4 +67,12 @@ public class CoreConfig {
     public void setDatabaseMultiInsertMaxBatchSize(final int databaseMultiInsertMaxBatchSize) {
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
     }
+
+    @Override
+    public String toString() {
+        return "CoreConfig{" +
+                "temp='" + temp + '\'' +
+                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
+                '}';
+    }
 }

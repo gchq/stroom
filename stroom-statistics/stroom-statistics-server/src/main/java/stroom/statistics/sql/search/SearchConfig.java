@@ -48,4 +48,14 @@ public class SearchConfig {
     public void setFetchSize(final int fetchSize) {
         this.fetchSize = fetchSize;
     }
+
+    @Override
+    public String toString() {
+        return "SearchConfig{" +
+                "storeSize='" + storeSize + '\'' +
+                ", resultHandlerBatchSize=" + resultHandlerBatchSize +
+                ", maxResults=" + maxResults +
+                ", fetchSize=" + fetchSize +
+                '}';
+    }
 }

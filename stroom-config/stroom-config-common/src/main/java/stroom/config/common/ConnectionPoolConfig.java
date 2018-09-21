@@ -62,4 +62,13 @@ public class ConnectionPoolConfig {
 
         return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
     }
+
+    @Override
+    public String toString() {
+        return "ConnectionPoolConfig{" +
+                "cachePrepStmts=" + cachePrepStmts +
+                ", prepStmtCacheSize=" + prepStmtCacheSize +
+                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
+                '}';
+    }
 }

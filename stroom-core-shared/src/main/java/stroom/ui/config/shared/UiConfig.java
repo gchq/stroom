@@ -210,6 +210,24 @@ public class UiConfig implements SharedObject {
         this.oncontextmenu = oncontextmenu;
     }
 
+    @Override
+    public String toString() {
+        return "UiConfig{" +
+                "welcomeHtml='" + welcomeHtml + '\'' +
+                ", aboutHtml='" + aboutHtml + '\'' +
+                ", buildDate='" + buildDate + '\'' +
+                ", buildVersion='" + buildVersion + '\'' +
+                ", nodeName='" + nodeName + '\'' +
+                ", upDate='" + upDate + '\'' +
+                ", maintenanceMessage='" + maintenanceMessage + '\'' +
+                ", defaultMaxResults='" + defaultMaxResults + '\'' +
+                ", helpUrl='" + helpUrl + '\'' +
+                ", namePattern='" + namePattern + '\'' +
+                ", htmlTitle='" + htmlTitle + '\'' +
+                ", oncontextmenu='" + oncontextmenu + '\'' +
+                '}';
+    }
+
     //
 //    @JsonPropertyDescription("The URL of Stroom as provided to the browser")
 //    public String getAdvertisedUrl() {

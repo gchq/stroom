@@ -80,4 +80,13 @@ public class SearchConfig {
     public void setShardConfig(final IndexShardSearchConfig shardConfig) {
         this.shardConfig = shardConfig;
     }
+
+    @Override
+    public String toString() {
+        return "SearchConfig{" +
+                "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
+                ", maxBooleanClauseCount=" + maxBooleanClauseCount +
+                ", storeSize='" + storeSize + '\'' +
+                '}';
+    }
 }

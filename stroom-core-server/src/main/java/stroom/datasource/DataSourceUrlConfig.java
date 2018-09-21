@@ -40,4 +40,14 @@ public class DataSourceUrlConfig {
     public void setElasticIndex(final String elasticIndex) {
         this.elasticIndex = elasticIndex;
     }
+
+    @Override
+    public String toString() {
+        return "DataSourceUrlConfig{" +
+                "index='" + index + '\'' +
+                ", statisticStore='" + statisticStore + '\'' +
+                ", annotations='" + annotations + '\'' +
+                ", elasticIndex='" + elasticIndex + '\'' +
+                '}';
+    }
 }

@@ -166,5 +166,22 @@ public class InternalStatisticsConfig {
     public void setVolumesDocRefs(final List<DocRef> volumesDocRefs) {
         this.volumesDocRefs = volumesDocRefs;
     }
+
+    @Override
+    public String toString() {
+        return "InternalStatisticsConfig{" +
+                "benchmarkClusterDocRefs=" + benchmarkClusterDocRefs +
+                ", cpuDocRefs=" + cpuDocRefs +
+                ", eventsPerSecondDocRefs=" + eventsPerSecondDocRefs +
+                ", heapHistogramBytesDocRefs=" + heapHistogramBytesDocRefs +
+                ", heapHistogramInstancesDocRefs=" + heapHistogramInstancesDocRefs +
+                ", memoryDocRefs=" + memoryDocRefs +
+                ", metaDataStreamSizeDocRefs=" + metaDataStreamSizeDocRefs +
+                ", metaDataStreamsReceivedDocRefs=" + metaDataStreamsReceivedDocRefs +
+                ", pipelineStreamProcessorDocRefs=" + pipelineStreamProcessorDocRefs +
+                ", streamTaskQueueSizeDocRefs=" + streamTaskQueueSizeDocRefs +
+                ", volumesDocRefs=" + volumesDocRefs +
+                '}';
+    }
 }
 

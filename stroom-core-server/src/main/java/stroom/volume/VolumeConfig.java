@@ -46,4 +46,14 @@ public class VolumeConfig {
     public void setCreateDefaultOnStart(final boolean createDefaultOnStart) {
         this.createDefaultOnStart = createDefaultOnStart;
     }
+
+    @Override
+    public String toString() {
+        return "VolumeConfig{" +
+                "resilientReplicationCount=" + resilientReplicationCount +
+                ", preferLocalVolumes=" + preferLocalVolumes +
+                ", volumeSelector='" + volumeSelector + '\'' +
+                ", createDefaultOnStart=" + createDefaultOnStart +
+                '}';
+    }
 }

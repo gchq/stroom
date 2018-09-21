@@ -104,4 +104,17 @@ public class RefDataStoreConfig {
     public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
         this.isReadAheadEnabled = isReadAheadEnabled;
     }
+
+    @Override
+    public String toString() {
+        return "RefDataStoreConfig{" +
+                "localDir='" + localDir + '\'' +
+                ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
+                ", maxReaders=" + maxReaders +
+                ", maxStoreSize='" + maxStoreSize + '\'' +
+                ", purgeAge='" + purgeAge + '\'' +
+                ", valueBufferCapacity=" + valueBufferCapacity +
+                ", isReadAheadEnabled=" + isReadAheadEnabled +
+                '}';
+    }
 }

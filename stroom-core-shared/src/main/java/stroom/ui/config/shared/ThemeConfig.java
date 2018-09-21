@@ -101,4 +101,19 @@ public class ThemeConfig implements SharedObject {
     public void setLabelColours(final String labelColours) {
         this.labelColours = labelColours;
     }
+
+    @Override
+    public String toString() {
+        return "ThemeConfig{" +
+                "backgroundAttachment='" + backgroundAttachment + '\'' +
+                ", backgroundColor='" + backgroundColor + '\'' +
+                ", backgroundImage='" + backgroundImage + '\'' +
+                ", backgroundPosition='" + backgroundPosition + '\'' +
+                ", backgroundRepeat='" + backgroundRepeat + '\'' +
+                ", backgroundOpacity='" + backgroundOpacity + '\'' +
+                ", tubeVisible='" + tubeVisible + '\'' +
+                ", tubeOpacity='" + tubeOpacity + '\'' +
+                ", labelColours='" + labelColours + '\'' +
+                '}';
+    }
 }

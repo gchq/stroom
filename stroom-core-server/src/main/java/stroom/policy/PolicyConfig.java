@@ -13,4 +13,11 @@ public class PolicyConfig {
     public void setDeleteBatchSize(final int deleteBatchSize) {
         this.deleteBatchSize = deleteBatchSize;
     }
+
+    @Override
+    public String toString() {
+        return "PolicyConfig{" +
+                "deleteBatchSize=" + deleteBatchSize +
+                '}';
+    }
 }

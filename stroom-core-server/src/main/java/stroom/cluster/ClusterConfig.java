@@ -58,4 +58,14 @@ public class ClusterConfig {
     public long getClusterResponseTimeoutMs() {
         return ModelStringUtil.parseDurationString(clusterResponseTimeout);
     }
+
+    @Override
+    public String toString() {
+        return "ClusterConfig{" +
+                "clusterCallUseLocal=" + clusterCallUseLocal +
+                ", clusterCallReadTimeout='" + clusterCallReadTimeout + '\'' +
+                ", clusterCallIgnoreSSLHostnameVerifier=" + clusterCallIgnoreSSLHostnameVerifier +
+                ", clusterResponseTimeout='" + clusterResponseTimeout + '\'' +
+                '}';
+    }
 }

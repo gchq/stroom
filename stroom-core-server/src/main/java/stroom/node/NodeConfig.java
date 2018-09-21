@@ -55,4 +55,12 @@ public class NodeConfig {
     public void setStatusConfig(final StatusConfig statusConfig) {
         this.statusConfig = statusConfig;
     }
+
+    @Override
+    public String toString() {
+        return "NodeConfig{" +
+                "nodeName='" + nodeName + '\'' +
+                ", rackName='" + rackName + '\'' +
+                '}';
+    }
 }

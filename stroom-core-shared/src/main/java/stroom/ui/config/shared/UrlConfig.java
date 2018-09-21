@@ -91,4 +91,19 @@ public class UrlConfig implements SharedObject {
     public void setElastic(final String elastic) {
         this.elastic = elastic;
     }
+
+    @Override
+    public String toString() {
+        return "UrlConfig{" +
+                "ui='" + ui + '\'' +
+                ", authenticationService='" + authenticationService + '\'' +
+                ", users='" + users + '\'' +
+                ", apiKeys='" + apiKeys + '\'' +
+                ", changepassword='" + changepassword + '\'' +
+                ", kibana='" + kibana + '\'' +
+                ", trackers='" + trackers + '\'' +
+                ", annotations='" + annotations + '\'' +
+                ", elastic='" + elastic + '\'' +
+                '}';
+    }
 }

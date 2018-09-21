@@ -86,4 +86,18 @@ public class ServiceDiscoveryConfig {
     public void setZookeeperBasePath(final String zookeeperBasePath) {
         this.zookeeperBasePath = zookeeperBasePath;
     }
+
+    @Override
+    public String toString() {
+        return "ServiceDiscoveryConfig{" +
+                "enabled=" + enabled +
+                ", zookeeperUrl='" + zookeeperUrl + '\'' +
+                ", servicesHostNameOrIpAddress='" + servicesHostNameOrIpAddress + '\'' +
+                ", servicesPort=" + servicesPort +
+                ", curatorBaseSleepTimeMs=" + curatorBaseSleepTimeMs +
+                ", curatorMaxSleepTimeMs=" + curatorMaxSleepTimeMs +
+                ", curatorMaxRetries=" + curatorMaxRetries +
+                ", zookeeperBasePath='" + zookeeperBasePath + '\'' +
+                '}';
+    }
 }

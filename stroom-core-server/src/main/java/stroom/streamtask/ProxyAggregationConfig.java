@@ -63,4 +63,15 @@ public class ProxyAggregationConfig {
     public long getMaxStreamSizeBytes() {
         return ModelStringUtil.parseIECByteSizeString(maxStreamSize);
     }
+
+    @Override
+    public String toString() {
+        return "ProxyAggregationConfig{" +
+                "proxyDir='" + proxyDir + '\'' +
+                ", proxyThreads=" + proxyThreads +
+                ", maxAggregation=" + maxAggregation +
+                ", maxAggregationScan=" + maxAggregationScan +
+                ", maxStreamSize='" + maxStreamSize + '\'' +
+                '}';
+    }
 }

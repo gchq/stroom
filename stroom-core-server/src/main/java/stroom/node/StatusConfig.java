@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 public class StatusConfig {
     private HeapHistogramConfig heapHistogramConfig;
 
-    public StatusConfig() {
+    StatusConfig() {
         heapHistogramConfig = new HeapHistogramConfig();
     }
 
@@ -25,5 +25,12 @@ public class StatusConfig {
 
     public void setHeapHistogramConfig(final HeapHistogramConfig heapHistogramConfig) {
         this.heapHistogramConfig = heapHistogramConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "StatusConfig{" +
+                "heapHistogramConfig=" + heapHistogramConfig +
+                '}';
     }
 }

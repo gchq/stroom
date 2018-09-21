@@ -53,4 +53,12 @@ public class LifecycleConfig {
         }
         return ms;
     }
+
+    @Override
+    public String toString() {
+        return "LifecycleConfig{" +
+                "enabled=" + enabled +
+                ", executionInterval='" + executionInterval + '\'' +
+                '}';
+    }
 }

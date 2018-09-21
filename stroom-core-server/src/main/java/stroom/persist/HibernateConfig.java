@@ -54,4 +54,15 @@ public class HibernateConfig {
     public void setGenerateStatistics(final boolean generateStatistics) {
         this.generateStatistics = generateStatistics;
     }
+
+    @Override
+    public String toString() {
+        return "HibernateConfig{" +
+                "dialect='" + dialect + '\'' +
+                ", showSql=" + showSql +
+                ", formatSql=" + formatSql +
+                ", jpaHbm2DdlAuto='" + jpaHbm2DdlAuto + '\'' +
+                ", generateStatistics=" + generateStatistics +
+                '}';
+    }
 }

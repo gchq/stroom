@@ -18,4 +18,11 @@ public class XsltConfig {
     public void setMaxElements(final int maxElements) {
         this.maxElements = maxElements;
     }
+
+    @Override
+    public String toString() {
+        return "XsltConfig{" +
+                "maxElements=" + maxElements +
+                '}';
+    }
 }
