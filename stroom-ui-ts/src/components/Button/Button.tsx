@@ -22,17 +22,17 @@ import { withProps } from "recompose";
 /**
  * Button Properties
  */
-export interface Props {
+export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** The Font Awesome Icon to use */
-  icon: IconProp;
+  icon?: IconProp;
   /** Indicates how to style the button within a group (left | middle | right)  */
-  groupPosition: string;
+  groupPosition?: string;
   /** Make the button circular */
-  circular: boolean;
+  circular?: boolean;
   /** Place this text on the button */
-  text: string;
+  text?: string;
   /** Indicate the button has been selected */
-  selected: boolean;
+  selected?: boolean;
   /** Custom additional class to apply to the button */
   className?: string;
 }

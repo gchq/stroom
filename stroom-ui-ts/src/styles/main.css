@@ -228,6 +228,24 @@ body {
   height: calc(100% - 45px);
   width: 100%; }
 
+.themed-modal {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; }
+
+.themed-modal__header {
+  padding: 10px; }
+
+.themed-modal__content {
+  padding: 0 20px 0 20px; }
+
+.themed-modal__footer__actions {
+  border-top: 1px solid lightgray;
+  padding: 5px;
+  display: flex;
+  justify-content: flex-end; }
+
 .UserSettings__container {
   width: 600px; }
 

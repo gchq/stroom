@@ -1,0 +1,5 @@
+Themed Confirm
+
+```jsx
+<ThemedConfirm />
+```

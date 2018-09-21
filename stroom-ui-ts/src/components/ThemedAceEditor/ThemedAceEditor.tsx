@@ -14,38 +14,37 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { compose, withProps } from 'recompose';
-import { connect } from 'react-redux';
+import * as React from "react";
+import { connect } from "react-redux";
 
 // eslint-disable-next-line
-import brace from 'brace';
-import 'brace/mode/xml';
-import 'brace/theme/github';
-import 'brace/theme/ambiance';
-import 'brace/keybinding/vim';
+import * as brace from "brace";
+import "brace/mode/xml";
+import "brace/theme/github";
+import "brace/theme/ambiance";
+import "brace/keybinding/vim";
 
-import AceEditor from 'react-ace';
+import AceEditor, { AceEditorProps } from "react-ace";
 
-const enhance = compose(
-  connect(
-    ({ userSettings: { theme } }) => ({
-      theme,
-    }),
-    {},
-  ),
-  withProps(({ theme }) => ({
-    aceEditorTheme: theme === 'theme-light' ? 'github' : 'ambiance',
-  })),
+import { GlobalStoreState } from "../../startup/reducers";
+
+// The things I do to shut the compiler up...
+if (brace) console.log("Brace found");
+
+export interface Props extends AceEditorProps {}
+
+const enhance = connect<AceEditorProps, {}, AceEditorProps>(
+  ({ userSettings: { theme } }: GlobalStoreState) => ({
+    theme: theme === "theme-light" ? "github" : "ambiance"
+  }),
+  {}
 );
 
 /**
  * This handles theme switching for the AceEditor. It also applies the vim keyboard handler,
  * because we'll want that everywhere we use the AceEditor.
  */
-const ThemedAceEditor = ({
-  aceEditorTheme, theme, header, content, actions, ...rest
-}) => (
-  <AceEditor theme={aceEditorTheme} keyboardHandler="vim" {...rest} />
+const ThemedAceEditor = (props: AceEditorProps) => (
+  <AceEditor keyboardHandler="vim" {...props} />
 );
 export default enhance(ThemedAceEditor);

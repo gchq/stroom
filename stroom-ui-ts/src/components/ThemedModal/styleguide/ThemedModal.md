@@ -1,0 +1,5 @@
+Themed Modal
+
+```jsx
+<ThemedModal />
+```
