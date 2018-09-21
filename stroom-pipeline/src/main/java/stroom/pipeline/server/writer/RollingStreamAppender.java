@@ -38,6 +38,7 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeService;
+import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
@@ -56,9 +57,9 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
-    private static final int SECOND = 1000;
-    private static final int MINUTE = 60 * SECOND;
-    private static final int HOUR = 60 * MINUTE;
+    private static final long SECOND = 1000;
+    private static final long MINUTE = 60 * SECOND;
+    private static final long HOUR = 60 * MINUTE;
 
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
@@ -69,7 +70,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private Feed feed;
     private String streamType;
     private boolean segmentOutput = true;
-    private long frequency = HOUR;
+    private Long frequency = HOUR;
+    private SimpleCron schedule;
     private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
@@ -102,12 +104,18 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         final String nodeName = nodeCache.getDefaultNode().getName();
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
-        return new RollingStreamDestination(key, frequency, rollSize, streamStore,
-                streamTarget, nodeName, System.currentTimeMillis());
+        return new RollingStreamDestination(key,
+                frequency,
+                schedule,
+                rollSize,
+                streamStore,
+                streamTarget,
+                nodeName,
+                System.currentTimeMillis());
     }
 
     @Override
-    Object getKey() throws IOException {
+    Object getKey() {
         if (key == null) {
             key = new StreamKey(feed, streamType, segmentOutput);
         }
@@ -129,7 +137,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 throw new ProcessException("Stream type not specified");
             }
 
-            if (frequency <= 0) {
+            if (frequency != null && frequency <= 0) {
                 throw new ProcessException("Rolling frequency must be greater than 0");
             }
 
@@ -149,23 +157,38 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         this.streamType = streamType;
     }
 
-    @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
+    @PipelineProperty(description = "Should the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }
 
     @PipelineProperty(description = "Choose how frequently streams are rolled.", defaultValue = "1h")
     public void setFrequency(final String frequency) {
-        if (frequency != null && frequency.trim().length() > 0) {
+        if (frequency == null || frequency.trim().length() == 0) {
+            this.frequency = null;
+        } else {
             try {
                 final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null) {
+                if (value == null || value <= 0) {
                     throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
                 }
 
                 this.frequency = value;
             } catch (final NumberFormatException e) {
                 throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
+            }
+        }
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when streams are rolled.")
+    public void setSchedule(final String expression) {
+        if (expression == null || expression.trim().length() == 0) {
+            this.schedule = null;
+        } else {
+            try {
+                this.schedule = SimpleCron.compile(expression);
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
             }
         }
     }

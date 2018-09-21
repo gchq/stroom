@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.logging.StroomLogger;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -39,32 +40,49 @@ public class RollingFileDestination extends RollingDestination {
 
     private final String fileName;
     private final String rolledFileName;
-    private final long frequency;
-    private final long maxSize;
+    private final Long oldestAllowed;
+    private final long rollSize;
 
     private final File dir;
     private final File file;
     private final ByteCountOutputStream outputStream;
-    private final long creationTime;
 
     private volatile long lastFlushTime;
     private byte[] footer;
 
     private volatile boolean rolled;
 
-    public RollingFileDestination(final String key, final String fileName, final String rolledFileName,
-                                  final long frequency, final long maxSize, final File dir, final File file, final long creationTime)
+    public RollingFileDestination(final String key,
+                                  final String fileName,
+                                  final String rolledFileName,
+                                  final Long frequency,
+                                  final SimpleCron schedule,
+                                  final long rollSize,
+                                  final File dir,
+                                  final File file,
+                                  final long creationTime)
             throws IOException {
         this.key = key;
 
         this.fileName = fileName;
         this.rolledFileName = rolledFileName;
-        this.frequency = frequency;
-        this.maxSize = maxSize;
+        this.rollSize = rollSize;
 
         this.dir = dir;
         this.file = file;
-        this.creationTime = creationTime;
+
+        // Determine the oldest this destination can be.
+        Long time = null;
+        if (schedule != null) {
+            time = schedule.getNextTime(creationTime);
+        }
+        if (frequency != null) {
+            final long value = creationTime + frequency;
+            if (time == null || time > value) {
+                time = value;
+            }
+        }
+        oldestAllowed = time;
 
         // Make sure we can create this path.
         try {
@@ -165,8 +183,8 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     private boolean shouldRoll(final long currentTime) {
-        final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getCount() > maxSize;
+        return (oldestAllowed != null && currentTime > oldestAllowed) ||
+                outputStream.getCount() > rollSize;
     }
 
     private void roll() throws IOException {

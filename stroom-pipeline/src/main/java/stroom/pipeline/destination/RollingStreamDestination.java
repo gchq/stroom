@@ -23,6 +23,7 @@ import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.logging.StroomLogger;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,12 +36,11 @@ public class RollingStreamDestination extends RollingDestination {
 
     private final StreamKey key;
 
-    private final long frequency;
+    private final Long oldestAllowed;
     private final long rollSize;
     private final StreamStore streamStore;
     private final StreamTarget streamTarget;
     private final String nodeName;
-    private final long creationTime;
 
     private volatile long lastFlushTime;
     private volatile byte[] footer;
@@ -52,7 +52,8 @@ public class RollingStreamDestination extends RollingDestination {
     private final AtomicLong recordCount = new AtomicLong();
 
     public RollingStreamDestination(final StreamKey key,
-                                    final long frequency,
+                                    final Long frequency,
+                                    final SimpleCron schedule,
                                     final long rollSize,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
@@ -60,12 +61,23 @@ public class RollingStreamDestination extends RollingDestination {
                                     final long creationTime) throws IOException {
         this.key = key;
 
-        this.frequency = frequency;
         this.rollSize = rollSize;
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
         this.nodeName = nodeName;
-        this.creationTime = creationTime;
+
+        // Determine the oldest this destination can be.
+        Long time = null;
+        if (schedule != null) {
+            time = schedule.getNextTime(creationTime);
+        }
+        if (frequency != null) {
+            final long value = creationTime + frequency;
+            if (time == null || time > value) {
+                time = value;
+            }
+        }
+        oldestAllowed = time;
 
         if (key.isSegmentOutput()) {
             segmentOutputStream = new RASegmentOutputStream(streamTarget);
@@ -162,8 +174,8 @@ public class RollingStreamDestination extends RollingDestination {
     }
 
     private boolean shouldRoll(final long currentTime) {
-        final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getCount() > rollSize;
+        return (oldestAllowed != null && currentTime > oldestAllowed) ||
+                outputStream.getCount() > rollSize;
     }
 
     private void roll() throws IOException {

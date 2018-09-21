@@ -16,14 +16,8 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.annotation.Resource;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingFileDestination;
 import stroom.pipeline.server.errorhandler.ProcessException;
@@ -33,8 +27,13 @@ import stroom.pipeline.server.factory.PipelineFactoryException;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Joins text instances into a single text instance.
@@ -43,14 +42,14 @@ import stroom.util.spring.StroomScope;
 @Scope(StroomScope.PROTOTYPE)
 @ConfigurableElement(type = "RollingFileAppender", category = Category.DESTINATION, roles = {
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
-        PipelineElementType.VISABILITY_STEPPING }, icon = ElementIcons.STREAM)
+        PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingFileAppender extends AbstractRollingAppender {
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
-    private static final int SECOND = 1000;
-    private static final int MINUTE = 60 * SECOND;
-    private static final int HOUR = 60 * MINUTE;
+    private static final long SECOND = 1000;
+    private static final long MINUTE = 60 * SECOND;
+    private static final long HOUR = 60 * MINUTE;
 
     @Resource
     private PathCreator pathCreator;
@@ -58,7 +57,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String[] outputPaths;
     private String fileNamePattern;
     private String rolledFileNamePattern;
-    private long frequency = HOUR;
+    private Long frequency = HOUR;
+    private SimpleCron schedule;
     private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
@@ -90,10 +90,15 @@ public class RollingFileAppender extends AbstractRollingAppender {
             }
         }
 
-        final RollingFileDestination dest = new RollingFileDestination(key, fileName, rolledFileName, frequency,
-                rollSize, parentDir, file, System.currentTimeMillis());
-
-        return dest;
+        return new RollingFileDestination(key,
+                fileName,
+                rolledFileName,
+                frequency,
+                schedule,
+                rollSize,
+                parentDir,
+                file,
+                System.currentTimeMillis());
     }
 
     @Override
@@ -130,7 +135,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
 
         // Get a path to use.
-        String path = null;
+        String path;
         if (outputPaths.length == 1) {
             path = outputPaths[0];
         } else {
@@ -162,7 +167,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 throw new ProcessException("File name and rolled file name cannot be the same");
             }
 
-            if (frequency <= 0) {
+            if (frequency != null && frequency <= 0) {
                 throw new ProcessException("Rolling frequency must be greater than 0");
             }
 
@@ -189,16 +194,31 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
     public void setFrequency(final String frequency) {
-        if (frequency != null && frequency.trim().length() > 0) {
+        if (frequency == null || frequency.trim().length() == 0) {
+            this.frequency = null;
+        } else {
             try {
                 final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null) {
+                if (value == null || value <= 0) {
                     throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
                 }
 
                 this.frequency = value;
             } catch (final NumberFormatException e) {
                 throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
+            }
+        }
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when files are rolled.")
+    public void setSchedule(final String expression) {
+        if (expression == null || expression.trim().length() == 0) {
+            this.schedule = null;
+        } else {
+            try {
+                this.schedule = SimpleCron.compile(expression);
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
             }
         }
     }

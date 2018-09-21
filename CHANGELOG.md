@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#596** : Rolling stream and file appenders can now roll on a cron schedule in addition to a frequency.
+
 ## [v5.5.0-beta.7] - 2018-09-18
 
 * The accept button now enabled on splash screen.
