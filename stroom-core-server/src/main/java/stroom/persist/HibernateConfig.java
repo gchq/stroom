@@ -1,6 +1,8 @@
 package stroom.persist;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.ReadOnly;
+import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
@@ -12,6 +14,7 @@ public class HibernateConfig {
     private String jpaHbm2DdlAuto = "validate";
     private boolean generateStatistics = true;
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getDialect() {
         return dialect;
@@ -21,6 +24,7 @@ public class HibernateConfig {
         this.dialect = dialect;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Log SQL")
     public boolean isShowSql() {
         return showSql;
@@ -38,6 +42,7 @@ public class HibernateConfig {
         this.formatSql = formatSql;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Set by property file to enable auto schema creation")
     public String getJpaHbm2DdlAuto() {
         return jpaHbm2DdlAuto;

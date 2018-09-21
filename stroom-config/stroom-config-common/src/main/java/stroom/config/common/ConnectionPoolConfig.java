@@ -16,6 +16,8 @@
 
 package stroom.config.common;
 
+import stroom.util.config.annotations.RequiresRestart;
+
 import java.util.Objects;
 
 public class ConnectionPoolConfig {
@@ -23,6 +25,7 @@ public class ConnectionPoolConfig {
     private int prepStmtCacheSize = 250;
     private int prepStmtCacheSqlLimit = 2048;
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public boolean isCachePrepStmts() {
         return cachePrepStmts;
     }
@@ -31,6 +34,7 @@ public class ConnectionPoolConfig {
         this.cachePrepStmts = cachePrepStmts;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public int getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
@@ -39,6 +43,7 @@ public class ConnectionPoolConfig {
         this.prepStmtCacheSize = prepStmtCacheSize;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public int getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
     }

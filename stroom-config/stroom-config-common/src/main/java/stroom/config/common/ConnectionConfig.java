@@ -17,6 +17,7 @@
 package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.ReadOnly;
 
 import java.util.Objects;
 
@@ -26,6 +27,7 @@ public class ConnectionConfig {
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverClassName() {
         return jdbcDriverClassName;
@@ -35,6 +37,7 @@ public class ConnectionConfig {
         this.jdbcDriverClassName = jdbcDriverClassName;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverUrl() {
         return jdbcDriverUrl;
@@ -44,6 +47,7 @@ public class ConnectionConfig {
         this.jdbcDriverUrl = jdbcDriverUrl;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverUsername() {
         return jdbcDriverUsername;
@@ -53,6 +57,7 @@ public class ConnectionConfig {
         this.jdbcDriverUsername = jdbcDriverUsername;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverPassword() {
         return jdbcDriverPassword;

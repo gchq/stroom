@@ -20,7 +20,8 @@ public class LifecycleConfig {
     private String executionInterval = "10s";
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will try and process files automatically outside of test cases.")
+    @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will " +
+            "try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;
     }
@@ -29,6 +30,7 @@ public class LifecycleConfig {
         this.enabled = enabled;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("How frequently should the lifecycle service attempt execution.")
     public String getExecutionInterval() {
         return executionInterval;
