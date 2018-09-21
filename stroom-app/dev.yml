@@ -37,8 +37,6 @@ appConfig:
   contentPackImport:
     enabled: false
   core:
-    node: node1a
-    rack: rack1
     temp: /tmp/stroom
     databaseMultiInsertMaxBatchSize: 500
     connection:

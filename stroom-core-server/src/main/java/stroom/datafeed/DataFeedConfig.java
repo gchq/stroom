@@ -1,6 +1,7 @@
 package stroom.datafeed;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
@@ -25,6 +26,7 @@ public class DataFeedConfig {
         this.receiptPolicyUuid = receiptPolicyUuid;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("If set the default buffer size to use")
     public int getBufferSize() {
         return bufferSize;

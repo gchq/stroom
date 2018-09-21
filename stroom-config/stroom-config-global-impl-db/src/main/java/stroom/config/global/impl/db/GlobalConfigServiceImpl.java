@@ -56,6 +56,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     private final Map<String, ConfigProperty> globalProperties = new HashMap<>();
     private final ConfigMapper configMapper;
 
+
     @Inject
     GlobalConfigServiceImpl(final ConnectionProvider connectionProvider,
                             final Security security,
@@ -70,8 +71,8 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
 
-    private Object update(final String key, final String value) {
-        return configMapper.update(key, value);
+    private Object updateConfigObject(final String key, final String value) {
+        return configMapper.updateConfigObject(key, value);
     }
 
     private void initialise() {
@@ -86,7 +87,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
             final List<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
             for (final ConfigProperty configProperty : configPropertyList) {
                 globalProperties.put(configProperty.getName(), configProperty);
-                update(configProperty.getName(), configProperty.getValue());
+                updateConfigObject(configProperty.getName(), configProperty.getValue());
             }
         } catch (final RuntimeException e) {
             e.printStackTrace();
@@ -109,10 +110,10 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                                 configProperty.setValue(record.getVal());
                                 configProperty.setSource("Database");
 
-                                update(record.getName(), record.getVal());
+                                updateConfigObject(record.getName(), record.getVal());
                             } else {
                                 // Delete old property.
-                                delete(record.getName());
+                                deleteFromDb(record.getName());
                             }
                         }
                     });
@@ -133,7 +134,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
         }
     }
 
-    private void updatePropertiesFromDB() {
+    private void updateConfigObjectsFromDB() {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
@@ -149,7 +150,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                                 configProperty.setValue(record.getVal());
                                 configProperty.setSource("Database");
 
-                                Object typedValue = update(record.getName(), record.getVal());
+                                Object typedValue = updateConfigObject(record.getName(), record.getVal());
 //                                configProperty.setTypedValue(typedValue);
                             }
                         }
@@ -162,16 +163,17 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     /**
      * Refresh in background
      */
+    @SuppressWarnings("unused") // Called by scheduler
     @StroomFrequencySchedule("1m")
     @JobTrackedSchedule(jobName = "Property Cache Reload", description = "Reload properties in the cluster")
-    public void update() {
-        updatePropertiesFromDB();
+    public void updateConfigObjects() {
+        updateConfigObjectsFromDB();
     }
 
     @Override
     public List<ConfigProperty> list() {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            updatePropertiesFromDB();
+            updateConfigObjectsFromDB();
 
             final List<ConfigProperty> list = new ArrayList<>(globalProperties.values());
             list.sort(Comparator.comparing(ConfigProperty::getName));
@@ -238,7 +240,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
             try (final Connection connection = connectionProvider.getConnection()) {
                 final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 
-                // Change value.
+                // Change value in DB
                 create
                         .update(CONFIG)
                         .set(CONFIG.VAL, configProperty.getValue())
@@ -248,7 +250,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                 recordHistory(configProperty);
 
                 // Update property.
-                update(configProperty.getName(), configProperty.getValue());
+                updateConfigObject(configProperty.getName(), configProperty.getValue());
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -257,7 +259,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
         });
     }
 
-    private void delete(final String name) {
+    private void deleteFromDb(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create

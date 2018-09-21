@@ -130,6 +130,16 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
         return name.compareTo(o.name);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigProperty{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", value='" + value + '\'' +
+                ", source='" + source + '\'' +
+                '}';
+    }
+
     public static class Builder {
         private final ConfigProperty instance = new ConfigProperty();
 

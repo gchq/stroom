@@ -15,8 +15,6 @@ public class CoreConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
     private HibernateConfig hibernateConfig = new HibernateConfig();
-    private String node;
-    private String rack;
     private String temp;
     private int databaseMultiInsertMaxBatchSize = 500;
 
@@ -45,22 +43,6 @@ public class CoreConfig {
 
     public void setHibernateConfig(final HibernateConfig hibernateConfig) {
         this.hibernateConfig = hibernateConfig;
-    }
-
-    public String getNode() {
-        return node;
-    }
-
-    public void setNode(final String node) {
-        this.node = node;
-    }
-
-    public String getRack() {
-        return rack;
-    }
-
-    public void setRack(final String rack) {
-        this.rack = rack;
     }
 
     @JsonPropertyDescription("Temp folder to write stuff to. Should only be set per node in application property file")

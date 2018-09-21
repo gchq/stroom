@@ -11,7 +11,6 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +30,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestConfigMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigMapper.class);
@@ -48,6 +49,51 @@ class TestConfigMapper {
     }
 
     @Test
+    void testGetGlobalProperties_defaultValueWithValue() throws IOException, ConfigurationException {
+
+        AppConfig appConfig = getAppConfig();
+
+        // simulate dropwiz setting a prop from the yaml
+        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
+        String newValue = initialValue + "xxx";
+        appConfig.getRefDataStoreConfig().setLocalDir(newValue);
+
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        final List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        final ConfigProperty configProperty = configProperties.stream()
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(configProperty.getValue()).isEqualTo(newValue);
+        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+    }
+
+    @Test
+    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
+
+        AppConfig appConfig = getAppConfig();
+
+        // simulate dropwiz setting a prop from the yaml
+        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
+        appConfig.getRefDataStoreConfig().setLocalDir(null);
+
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        final List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        final ConfigProperty configProperty = configProperties.stream()
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(configProperty.getValue()).isEqualTo(initialValue);
+        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+    }
+
+    @Test
     void update_string() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
@@ -56,9 +102,9 @@ class TestConfigMapper {
         String newValue = initialValue + "/xxx";
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.update("stroom.core.temp", newValue);
+        configMapper.updateConfigObject("stroom.core.temp", newValue);
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
@@ -70,9 +116,9 @@ class TestConfigMapper {
         boolean newValue = !initialValue;
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.update("stroom.refdata.readAheadEnabled", Boolean.valueOf(newValue).toString().toLowerCase());
+        configMapper.updateConfigObject("stroom.refdata.readAheadEnabled", Boolean.valueOf(newValue).toString().toLowerCase());
 
-        Assertions.assertThat(getter.getAsBoolean()).isEqualTo(newValue);
+        assertThat(getter.getAsBoolean()).isEqualTo(newValue);
     }
 
     @Test
@@ -84,24 +130,12 @@ class TestConfigMapper {
         int newValue = initialValue + 1;
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
-        configMapper.update("stroom.refdata.maxPutsBeforeCommit", Integer.toString(newValue));
+        configMapper.updateConfigObject("stroom.refdata.maxPutsBeforeCommit", Integer.toString(newValue));
 
-        Assertions.assertThat(getter.getAsInt()).isEqualTo(newValue);
+        assertThat(getter.getAsInt()).isEqualTo(newValue);
     }
 
-//    @Test
-//    void update_long() throws IOException, ConfigurationException {
-//        AppConfig appConfig = getAppConfig();
-//
-//        LongSupplier getter = () -> appConfig.getRefDataStoreConfig().getPurgeAgeMs();
-//        long initialValue = getter.getAsLong();
-//        long newValue = initialValue + 1;
-//
-//        ConfigMapper configMapper = new ConfigMapper(appConfig);
-//        configMapper.update("stroom.refdata.purgeAgeMs", Long.toString(newValue));
-//
-//        Assertions.assertThat(getter.getAsLong()).isEqualTo(newValue);
-//    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
     @Test
@@ -116,6 +150,7 @@ class TestConfigMapper {
                 LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getValue()));
     }
 
+
     @Test
     void update_string2() {
         ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
@@ -125,9 +160,9 @@ class TestConfigMapper {
         String newValue = initialValue + "xxx";
 
         ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
-        configMapper.update("stroom.test.stringProp", newValue);
+        configMapper.updateConfigObject("stroom.test.stringProp", newValue);
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
@@ -139,9 +174,9 @@ class TestConfigMapper {
         int newValue = initialValue + 1;
 
         ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
-        configMapper.update("stroom.test.primitive.intProp", Integer.toString(newValue));
+        configMapper.updateConfigObject("stroom.test.primitive.intProp", Integer.toString(newValue));
 
-        Assertions.assertThat(getter.getAsInt()).isEqualTo(newValue);
+        assertThat(getter.getAsInt()).isEqualTo(newValue);
     }
 
     @Test
@@ -153,9 +188,9 @@ class TestConfigMapper {
         Integer newValue = initialValue + 1;
 
         ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
-        configMapper.update("stroom.test.boxed.intProp", Integer.toString(newValue));
+        configMapper.updateConfigObject("stroom.test.boxed.intProp", Integer.toString(newValue));
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
@@ -170,9 +205,9 @@ class TestConfigMapper {
                 .uuid(UUID.randomUUID().toString())
                 .build();
 
-        configMapper.update("stroom.test.docRefProp", ConfigMapper.convert(newValue));
+        configMapper.updateConfigObject("stroom.test.docRefProp", ConfigMapper.convertToString(newValue));
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
@@ -194,9 +229,9 @@ class TestConfigMapper {
                         .uuid(UUID.randomUUID().toString())
                 .build());
 
-        configMapper.update("stroom.test.docRefListProp", ConfigMapper.convert(newValue));
+        configMapper.updateConfigObject("stroom.test.docRefListProp", ConfigMapper.convertToString(newValue));
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
@@ -210,11 +245,11 @@ class TestConfigMapper {
                 .flatMap(List::stream)
                 .map(str -> str + "x")
                 .collect(Collectors.toList());
-        String newValueStr = ConfigMapper.convert(newValue);
+        String newValueStr = ConfigMapper.convertToString(newValue);
 
-        configMapper.update("stroom.test.stringListProp", newValueStr);
+        configMapper.updateConfigObject("stroom.test.stringListProp", newValueStr);
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
@@ -229,12 +264,13 @@ class TestConfigMapper {
                 newValue.put(k, v + 10));
         newValue.put("k4", 14L);
 
-        String newValueStr = ConfigMapper.convert(newValue);
+        String newValueStr = ConfigMapper.convertToString(newValue);
 
-        configMapper.update("stroom.test.stringLongMapProp", newValueStr);
+        configMapper.updateConfigObject("stroom.test.stringLongMapProp", newValueStr);
 
-        Assertions.assertThat(getter.get()).isEqualTo(newValue);
+        assertThat(getter.get()).isEqualTo(newValue);
     }
+
 
     private AppConfig getAppConfig() throws IOException, ConfigurationException{
         ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(

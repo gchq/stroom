@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
@@ -18,6 +19,7 @@ public class LifecycleConfig {
     private boolean enabled = true;
     private String executionInterval = "10s";
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;

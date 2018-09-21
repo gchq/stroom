@@ -27,6 +27,9 @@ import stroom.config.app.AppConfig;
 import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.impl.db.BeanUtil.Prop;
 import stroom.docref.DocRef;
+import stroom.util.config.annotations.Password;
+import stroom.util.config.annotations.ReadOnly;
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
@@ -43,22 +46,35 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Singleton
-public class ConfigMapper {
+class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
 
     private static final List<String> DELIMITERS = List.of(
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
+    private static final String ROOT_PROPERTY_PATH = "stroom";
 
     private final List<ConfigProperty> globalProperties = new ArrayList<>();
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
     @Inject
     ConfigMapper(final AppConfig appConfig) {
-        addMethods(appConfig, "stroom");
+
+        // The values in the passed AppConfig will have been set from the yaml by DropWizard on
+        // app boot.  We want to know the default values as defined by the compile-time initial values of
+        // the instance variables in the AppConfig tree.  Therefore create our own AppConfig tree and
+        // walk it to build a map of these default values.
+        final Map<String, Prop> propertyDefaultsMap = new HashMap<>();
+        addConfigObjectMethods(new AppConfig(), ROOT_PROPERTY_PATH, propertyDefaultsMap);
+
+        final BiConsumer<String, Prop> propConsumer = createConfigPropertyCreationConsumer(propertyDefaultsMap);
+        // walk the AppConfig object model creating ConfigProperty objects for each property
+        addConfigObjectMethods(appConfig, ROOT_PROPERTY_PATH, propertyMap, propConsumer);
+
         globalProperties.sort(Comparator.naturalOrder());
     }
 
@@ -66,12 +82,26 @@ public class ConfigMapper {
         return globalProperties;
     }
 
-    private void addMethods(final Object object, final String path) {
+
+    private void addConfigObjectMethods(final Object object,
+                                        final String path,
+                                        final Map<String, Prop> propertyMap) {
+        addConfigObjectMethods(object, path, propertyMap, (fullPath, prop) -> {
+            // Do nothing
+        });
+
+    }
+    private void addConfigObjectMethods(final Object object,
+                                        final String path,
+                                        final Map<String, Prop> propertyMap,
+                                        final BiConsumer<String, Prop> propConsumer) {
+        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", object, path);
         final Map<String, Prop> properties = BeanUtil.getProperties(object);
-        properties.forEach((k, v) -> {
-            String specifiedName = getName(v.getGetter());
-            String specifiedDescription = getDescription(v.getGetter());
-            String name = v.getName();
+        properties.forEach((k, prop) -> {
+            LOGGER.trace("prop: {}", prop);
+            Method getter = prop.getGetter();
+            String specifiedName = getNameFromAnnotation(getter);
+            String name = prop.getName();
             if (specifiedName != null) {
                 name = specifiedName;
             }
@@ -79,47 +109,104 @@ public class ConfigMapper {
             final String fullPath = path + "." + name;
 
             try {
-                final Object value = v.getGetter().invoke(v.getObject());
-                if (value != null) {
-                    final Class<?> type = value.getClass();
-                    if (type.equals(String.class) ||
-                            type.equals(Byte.class) ||
-                            type.equals(Integer.class) ||
-                            type.equals(Long.class) ||
-                            type.equals(Short.class) ||
-                            type.equals(Float.class) ||
-                            type.equals(Double.class) ||
-                            type.equals(Boolean.class) ||
-                            type.equals(boolean.class) ||
-                            type.equals(Character.class) ||
-                            value instanceof List ||
-                            value instanceof Map ||
-                            value instanceof DocRef) {
-                        propertyMap.put(fullPath, v);
+                final Class<?> valueType = prop.getValueClass();
 
-                        // Create global property.
-                        final String defaultValue = getDefaultValue(v.getObject(), v.getGetter());
-                        final ConfigProperty configProperty = new ConfigProperty();
-                        configProperty.setSource("Code");
-                        configProperty.setName(fullPath);
-                        configProperty.setDefaultValue(defaultValue);
-                        configProperty.setValue(defaultValue);
-                        configProperty.setDescription(specifiedDescription);
-                        configProperty.setEditable(true);
-                        configProperty.setPassword(fullPath.toLowerCase().contains("pass"));
-                        globalProperties.add(configProperty);
+                if (isSupportedPropertyType(valueType)) {
+                    // This is a leaf, i.e. a property so add it to our map
+                    propertyMap.put(fullPath, prop);
 
-                    } else {
-                        addMethods(value, fullPath);
+                    // Now let the consumer do something to it
+                    propConsumer.accept(fullPath, prop);
+                } else {
+                    final Object value = prop.getValueFromConfigObject();
+                    if (value != null) {
+                        // This must be a branch, i.e. config object so recurse into that
+                        addConfigObjectMethods(value, fullPath, propertyMap, propConsumer);
                     }
                 }
+
             } catch (final InvocationTargetException | IllegalAccessException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         });
     }
 
-    private String getName(final Method method) {
+    private BiConsumer<String, Prop> createConfigPropertyCreationConsumer(final Map<String, Prop> propertyDefaults) {
+
+        return (fullPath, prop) -> {
+            // Create global property.
+            final Prop propDefault = propertyDefaults.get(fullPath);
+            final String defaultValueAsStr = getDefaultValue(propDefault);
+            final String valueAsStr = getStringValue(prop);
+
+            // build a new ConfigProperty object from our Prop and our defaults
+            final ConfigProperty configProperty = new ConfigProperty();
+            configProperty.setSource("Code");
+            configProperty.setName(fullPath);
+            configProperty.setValue(valueAsStr);
+            configProperty.setDefaultValue(defaultValueAsStr);
+
+            updatePropertyFromConfigAnnotations(configProperty, prop);
+
+            // Default the value if we don't have a value and have a default
+            if (configProperty.getValue() == null && configProperty.getDefaultValue() != null) {
+                configProperty.setValue(configProperty.getDefaultValue());
+            }
+
+            globalProperties.add(configProperty);
+        };
+    }
+
+    private boolean isSupportedPropertyType(final Class<?> type) {
+        boolean isSupported = type.equals(String.class) ||
+                type.equals(Byte.class) ||
+                type.equals(Integer.class) ||
+                type.equals(Long.class) ||
+                type.equals(Short.class) ||
+                type.equals(Float.class) ||
+                type.equals(Double.class) ||
+                type.equals(Boolean.class) ||
+                type.equals(boolean.class) ||
+                type.equals(Character.class) ||
+                List.class.isAssignableFrom(type) ||
+                Map.class.isAssignableFrom(type) ||
+                DocRef.class.isAssignableFrom(type);
+
+        LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
+        return isSupported;
+    }
+
+    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty, final Prop prop) {
+        // Editable by default unless found otherwise below
+        configProperty.setEditable(true);
+
+        for (final Annotation declaredAnnotation : prop.getGetter().getDeclaredAnnotations()) {
+            Class<? extends Annotation> annotationType = declaredAnnotation.annotationType();
+
+            if (annotationType.equals(JsonPropertyDescription.class)) {
+                configProperty.setDescription(((JsonPropertyDescription) declaredAnnotation).value());
+            } else if (annotationType.equals(ReadOnly.class)) {
+                configProperty.setEditable(false);
+            } else if (annotationType.equals(Password.class)) {
+                configProperty.setPassword(true);
+            } else if (annotationType.equals(RequiresRestart.class)) {
+                RequiresRestart.RestartScope scope = ((RequiresRestart) declaredAnnotation).value();
+                switch (scope) {
+                    case SYSTEM:
+                        configProperty.setRequireRestart(true);
+                        break;
+                    case UI:
+                        configProperty.setRequireUiRestart(true);
+                        break;
+                    default:
+                        throw new RuntimeException("Should never get here");
+                }
+                configProperty.setEditable(false);
+            }
+        }
+    }
+
+    private String getNameFromAnnotation(final Method method) {
         for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
             if (declaredAnnotation.annotationType().equals(JsonProperty.class)) {
                 final JsonProperty jsonProperty = (JsonProperty) declaredAnnotation;
@@ -129,22 +216,13 @@ public class ConfigMapper {
         return null;
     }
 
-    private String getDescription(final Method method) {
-        for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
-            if (declaredAnnotation.annotationType().equals(JsonPropertyDescription.class)) {
-                final JsonPropertyDescription jsonPropertyDescription = (JsonPropertyDescription) declaredAnnotation;
-                return jsonPropertyDescription.value();
-            }
-        }
-        return null;
-    }
 
-    public static String convert(final Object value) {
+    static String convertToString(final Object value) {
         List<String> availableDelimiters = new ArrayList<>(DELIMITERS);
-        return convert(value, availableDelimiters);
+        return convertToString(value, availableDelimiters);
     }
 
-    private static String convert(final Object value, final List<String> availableDelimiters) {
+    private static String convertToString(final Object value, final List<String> availableDelimiters) {
         if (value != null) {
             if (value instanceof List) {
                 return listToString((List<?>) value, availableDelimiters);
@@ -160,11 +238,11 @@ public class ConfigMapper {
         }
     }
 
-    private String getDefaultValue(final Object object, final Method method) {
+    private String getStringValue(final Prop prop) {
         try {
-            final Object value = method.invoke(object, (Object[]) new Class[0]);
+            final Object value = prop.getValueFromConfigObject();
             if (value != null) {
-                return convert(value);
+                return convertToString(value);
             }
         } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -172,13 +250,27 @@ public class ConfigMapper {
         return null;
     }
 
-    public Object update(final String key, final String value) {
+    private String getDefaultValue(final Prop prop) {
+        if (prop != null) {
+            try {
+                final Object value = prop.getValueFromConfigObject();
+                if (value != null) {
+                    return convertToString(value);
+                }
+            } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+        }
+        return null;
+    }
+
+    Object updateConfigObject(final String key, final String value) {
         try {
             final Prop prop = propertyMap.get(key);
             if (prop != null) {
-                final Type genericType = prop.getSetter().getGenericParameterTypes()[0];
-                final Object typedValue = convert(value, genericType);
-                prop.getSetter().invoke(prop.getObject(), typedValue);
+                final Type genericType = prop.getValueType();
+                final Object typedValue = convertToObject(value, genericType);
+                prop.setValueOnConfigObject(typedValue);
                 return typedValue;
             }
         } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
@@ -188,7 +280,7 @@ public class ConfigMapper {
         return null;
     }
 
-    private static Object convert(final String value, final Type genericType) {
+    private static Object convertToObject(final String value, final Type genericType) {
         if (value == null) {
             return null;
         }
@@ -236,7 +328,7 @@ public class ConfigMapper {
             return "";
         }
         List<String> strList = list.stream()
-                .map(ConfigMapper::convert)
+                .map(ConfigMapper::convertToString)
                 .collect(Collectors.toList());
 
         String allText = String.join("", strList);
@@ -255,8 +347,8 @@ public class ConfigMapper {
         // convert keys/values to strings
         final List<Map.Entry<String, String>> strEntries = map.entrySet().stream()
                 .map(entry -> {
-                    String key = ConfigMapper.convert(entry.getKey());
-                    String value = ConfigMapper.convert(entry.getValue());
+                    String key = ConfigMapper.convertToString(entry.getKey());
+                    String value = ConfigMapper.convertToString(entry.getValue());
                     return Map.entry(key, value);
                 })
                 .collect(Collectors.toList());
@@ -273,7 +365,7 @@ public class ConfigMapper {
         // we know what the delimiters are
         return entryDelimiter + keyValueDelimiter + strEntries.stream()
                 .map(entry ->
-                    entry.getKey() + keyValueDelimiter + entry.getValue())
+                        entry.getKey() + keyValueDelimiter + entry.getValue())
                 .collect(Collectors.joining(entryDelimiter));
     }
 
@@ -287,17 +379,17 @@ public class ConfigMapper {
     }
 
     private static <T> List<T> stringToList(final String serialisedForm, final Class<T> type) {
-       if (serialisedForm == null || serialisedForm.isEmpty()) {
-           return Collections.emptyList();
-       }
+        if (serialisedForm == null || serialisedForm.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-       String delimiter = String.valueOf(serialisedForm.charAt(0));
-       String delimitedValue = serialisedForm.substring(1);
+        String delimiter = String.valueOf(serialisedForm.charAt(0));
+        String delimitedValue = serialisedForm.substring(1);
 
-       return StreamSupport.stream(Splitter.on(delimiter).split(delimitedValue).spliterator(), false)
-               .map(str -> convert(str, type))
-               .map(type::cast)
-               .collect(Collectors.toList());
+        return StreamSupport.stream(Splitter.on(delimiter).split(delimitedValue).spliterator(), false)
+                .map(str -> convertToObject(str, type))
+                .map(type::cast)
+                .collect(Collectors.toList());
     }
 
     private static <K, V> Map<K, V> stringToMap(
@@ -323,8 +415,8 @@ public class ConfigMapper {
                     String keyStr = parts.get(0);
                     String valueStr = parts.size() == 1 ? null : parts.get(1);
 
-                    K key = keyType.cast(convert(keyStr, keyType));
-                    V value = valueStr != null ? valueType.cast(convert(valueStr, valueType)) : null;
+                    K key = keyType.cast(convertToObject(keyStr, keyType));
+                    V value = valueStr != null ? valueType.cast(convertToObject(valueStr, valueType)) : null;
 
                     return Map.entry(key, value);
                 })
@@ -345,11 +437,11 @@ public class ConfigMapper {
     }
 
     private static Class getDataType(Class clazz) {
-        if(clazz.isPrimitive()) {
+        if (clazz.isPrimitive()) {
             return clazz;
         }
 
-        if(clazz.isArray()) {
+        if (clazz.isArray()) {
             return getDataType(clazz.getComponentType());
         }
 
@@ -357,7 +449,7 @@ public class ConfigMapper {
     }
 
     private static Class getDataType(Type type) {
-        if(type instanceof Class) {
+        if (type instanceof Class) {
             return getDataType((Class) type);
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) type;
@@ -369,7 +461,7 @@ public class ConfigMapper {
     }
 
     private static List<Type> getGenericTypes(Type type) {
-        if(type instanceof Class) {
+        if (type instanceof Class) {
             return Collections.emptyList();
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) type;
@@ -383,17 +475,6 @@ public class ConfigMapper {
     }
 
     private static String getDelimiter(final String allText, final List<String> availableDelimiters) {
-//        // remove already used delimiters from the available candidates
-//        final List<String> delimiterCandidates;
-//        if (blackListedDelimiters!= null && blackListedDelimiters.length > 0) {
-//            delimiterCandidates = new ArrayList<>(DELIMITERS);
-//            for (String blackListedDelimiter : blackListedDelimiters) {
-//                delimiterCandidates.remove(blackListedDelimiter);
-//            }
-//        } else {
-//            delimiterCandidates = DELIMITERS;
-//        }
-
         // find the first delimiter that does not appear in the text
         String chosenDelimiter = availableDelimiters.stream()
                 .filter(delimiter -> !allText.contains(delimiter))
