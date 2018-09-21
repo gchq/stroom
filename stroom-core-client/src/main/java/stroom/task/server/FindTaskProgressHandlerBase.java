@@ -28,7 +28,6 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
@@ -36,13 +35,12 @@ import stroom.util.shared.TaskId;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedObject>
+abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedObject>
         extends AbstractTaskHandler<T, R> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
 
@@ -51,7 +49,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
         this.dispatchHelper = dispatchHelper;
     }
 
-    protected BaseResultList<TaskProgress> doExec(final Action<?> action, final FindTaskProgressCriteria criteria) {
+    BaseResultList<TaskProgress> doExec(final Action<?> action, final FindTaskProgressCriteria criteria) {
         final PageRequest originalPageRequest = criteria.getPageRequest();
         try {
             // Don't page limit the first query
@@ -62,9 +60,9 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 
-            final List<TaskProgress> totalList = new ArrayList<TaskProgress>();
-            final Map<TaskId, TaskProgress> totalMap = new HashMap<TaskId, TaskProgress>();
-            final Map<TaskId, List<TaskProgress>> totalChildMap = new HashMap<TaskId, List<TaskProgress>>();
+            final List<TaskProgress> totalList = new ArrayList<>();
+            final Map<TaskId, TaskProgress> totalMap = new HashMap<>();
+            final Map<TaskId, List<TaskProgress>> totalChildMap = new HashMap<>();
 
             for (final Entry<Node, ClusterCallEntry<ResultList<TaskProgress>>> entry : collector.getResponseMap()
                     .entrySet()) {
@@ -76,8 +74,8 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
                 }
             }
 
-            final List<TaskProgress> sortedRootNodes = new ArrayList<TaskProgress>();
-            final List<TaskProgress> additionList = new ArrayList<TaskProgress>();
+            final List<TaskProgress> sortedRootNodes = new ArrayList<>();
+            final List<TaskProgress> additionList = new ArrayList<>();
             for (final TaskProgress taskProgress : totalList) {
                 final TaskId taskId = taskProgress.getId();
                 TaskProgress child = taskProgress;
@@ -118,12 +116,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
                         if (newChild) {
                             // Add this task progress to the child list for this
                             // parent.
-                            List<TaskProgress> childList = totalChildMap.get(parentId);
-                            if (childList == null) {
-                                childList = new ArrayList<TaskProgress>();
-                                totalChildMap.put(parentId, childList);
-                            }
-                            childList.add(child);
+                            totalChildMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(child);
                         }
 
                         // Assign the parent to the child for the next ancestor
@@ -145,9 +138,9 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
             }
             totalList.addAll(additionList);
 
-            final List<TaskProgress> rtnList = new ArrayList<TaskProgress>();
+            final List<TaskProgress> rtnList = new ArrayList<>();
 
-            sortTaskProgressList(sortedRootNodes);
+            sortTaskProgressList(sortedRootNodes, criteria);
             for (final TaskProgress taskProgress : sortedRootNodes) {
                 buildTreeNode(rtnList, criteria, taskProgress, totalChildMap, 0);
             }
@@ -159,8 +152,9 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
         }
     }
 
-    private void sortTaskProgressList(final List<TaskProgress> rtnList) {
-        Collections.sort(rtnList, (lhs, rhs) -> CompareUtil.compareLong(lhs.getSubmitTimeMs(), rhs.getSubmitTimeMs()));
+    private void sortTaskProgressList(final List<TaskProgress> rtnList, FindTaskProgressCriteria criteria) {
+        criteria.validateSortField();
+        rtnList.sort(criteria);
     }
 
     private void buildTreeNode(final List<TaskProgress> rtnList, final FindTaskProgressCriteria criteria,
@@ -168,7 +162,7 @@ public abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends S
         rtnList.add(node);
         final List<TaskProgress> childList = totalChildMap.get(node.getId());
         if (childList != null) {
-            sortTaskProgressList(childList);
+            sortTaskProgressList(childList, criteria);
             // Force expansion on tasks that are younger than a second.
             final boolean forceExpansion = node.getAgeMs() < 1000;
             final boolean expanded = criteria.isExpanded(node);

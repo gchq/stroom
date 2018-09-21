@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#736** : Added sorting to server tasks table.
+
 * Inverted the behaviour of `disableQueryInfo` to now be `requireQueryInfo`.
 
 * Issue **#596** : Rolling stream and file appenders can now roll on a cron schedule in addition to a frequency.
