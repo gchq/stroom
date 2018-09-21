@@ -96,6 +96,7 @@ class ConfigMapper {
                                         final Map<String, Prop> propertyMap,
                                         final BiConsumer<String, Prop> propConsumer) {
         LOGGER.trace("addConfigObjectMethods({}, {}, .....)", object, path);
+
         final Map<String, Prop> properties = BeanUtil.getProperties(object);
         properties.forEach((k, prop) -> {
             LOGGER.trace("prop: {}", prop);
@@ -160,14 +161,21 @@ class ConfigMapper {
     private boolean isSupportedPropertyType(final Class<?> type) {
         boolean isSupported = type.equals(String.class) ||
                 type.equals(Byte.class) ||
+                type.equals(byte.class) ||
                 type.equals(Integer.class) ||
+                type.equals(int.class) ||
                 type.equals(Long.class) ||
+                type.equals(long.class) ||
                 type.equals(Short.class) ||
+                type.equals(short.class) ||
                 type.equals(Float.class) ||
+                type.equals(float.class) ||
                 type.equals(Double.class) ||
+                type.equals(double.class) ||
                 type.equals(Boolean.class) ||
                 type.equals(boolean.class) ||
                 type.equals(Character.class) ||
+                type.equals(char.class) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type);
