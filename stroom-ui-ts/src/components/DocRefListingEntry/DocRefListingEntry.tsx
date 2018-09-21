@@ -27,6 +27,9 @@ export interface Props {
 
 export interface ConnectProps {
   keyIsDown: KeyIsDownStoreState;
+}
+
+export interface ConnectActions {
   selectionToggled: typeof selectionToggled;
 }
 
@@ -38,11 +41,13 @@ export interface Handlers {
 
 export interface AddedProps {
   className: string;
+  canEnterFolder: boolean;
 }
 
 export interface EnhancedProps
   extends Props,
     ConnectProps,
+    ConnectActions,
     Handlers,
     AddedProps {}
 
@@ -53,11 +58,16 @@ const enhance = compose<EnhancedProps, Props>(
       { listingId, docRef }: Props
     ) => {
       const { selectedItems = [], focussedItem } =
-        selectableItemListings[listingId] || defaultStatePerId;
-      const isSelected = selectedItems
-        .map((d: DocRefType) => d.uuid)
-        .includes(docRef.uuid);
+        selectableItemListings.byId[listingId] || defaultStatePerId;
+      const isSelected =
+        selectedItems.map((d: DocRefType) => d.uuid).indexOf(docRef.uuid) !==
+        -1;
       const inFocus = focussedItem && focussedItem.uuid === docRef.uuid;
+      console.log("In Focus", {
+        docRef,
+        inFocus,
+        focussedItem
+      });
 
       return {
         isSelected,
@@ -67,7 +77,7 @@ const enhance = compose<EnhancedProps, Props>(
     },
     { selectionToggled }
   ),
-  withHandlers<Props & ConnectProps, Handlers>({
+  withHandlers<Props & ConnectProps & ConnectActions, Handlers>({
     onSelect: ({ listingId, docRef, keyIsDown, selectionToggled }) => e => {
       selectionToggled(listingId, docRef.uuid, keyIsDown);
       e.preventDefault();
@@ -88,7 +98,7 @@ const enhance = compose<EnhancedProps, Props>(
       e.preventDefault();
     }
   }),
-  withProps(({ dndIsOver, dndCanDrop, isSelected, inFocus }) => {
+  withProps(({ dndIsOver, dndCanDrop, isSelected, inFocus, docRef }) => {
     const additionalClasses = [];
     additionalClasses.push("DocRefListingEntry");
     additionalClasses.push("hoverable");
@@ -111,7 +121,10 @@ const enhance = compose<EnhancedProps, Props>(
       additionalClasses.push("inFocus");
     }
 
+    let canEnterFolder = docRef.type === "System" || docRef.type === "Folder";
+
     return {
+      canEnterFolder,
       className: additionalClasses.join(" ")
     };
   })
@@ -122,7 +135,8 @@ let DocRefListingEntry = ({
   docRef,
   onSelect,
   onOpenDocRef,
-  onEnterFolder
+  onEnterFolder,
+  canEnterFolder
 }: EnhancedProps) => (
   <div className={className} onClick={onSelect}>
     <DocRefImage docRefType={docRef.type} />
@@ -130,16 +144,15 @@ let DocRefListingEntry = ({
       {docRef.name}
     </div>
     <div className="DocRefListingEntry__space" />
-    {docRef.type === "System" ||
-      (docRef.type === "Folder" && (
-        <div onClick={onEnterFolder}>
-          <FontAwesomeIcon
-            className="DocRefListingEntry__icon"
-            size="lg"
-            icon="angle-right"
-          />
-        </div>
-      ))}
+    {canEnterFolder && (
+      <div onClick={onEnterFolder}>
+        <FontAwesomeIcon
+          className="DocRefListingEntry__icon"
+          size="lg"
+          icon="angle-right"
+        />
+      </div>
+    )}
   </div>
 );
 

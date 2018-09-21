@@ -38,17 +38,23 @@ const themeOptions = [
 
 export interface Props {}
 
+export interface ConnectProps {
+  theme: string;
+}
+
+export interface ConnectActions {
+  themeChanged: ActionCreator<StoreAction>;
+}
+
 export interface Handlers {
   onThemeChanged: (event: any) => void; // React.ChangeEventHandler
 }
 
-export interface ActionHandlers {
-  themeChanged: ActionCreator<StoreAction>;
-}
-
-export interface EnhancedProps extends Handlers {
-  theme: string;
-}
+export interface EnhancedProps
+  extends Props,
+    ConnectProps,
+    ConnectActions,
+    Handlers {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect(
@@ -57,7 +63,7 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     { themeChanged }
   ),
-  withHandlers<ActionHandlers, Handlers>({
+  withHandlers<Props & ConnectProps & ConnectActions, Handlers>({
     onThemeChanged: ({ themeChanged }) => event => {
       themeChanged(event.target.value);
     }

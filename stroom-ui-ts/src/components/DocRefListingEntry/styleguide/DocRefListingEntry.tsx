@@ -33,15 +33,19 @@ export interface StateProps {
   enteredFolder: DocRefType;
   openedDocRef: DocRefType;
   wentBack: boolean;
-  onClickClear: () => void;
+}
+
+export interface StateHandlers {
   enterFolder: DocRefConsumer;
-  goBack: () => void;
   openDocRef: DocRefConsumer;
+  goBack: () => void;
+  onClickClear: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 export interface EnhancedProps
   extends Props,
     StateProps,
+    StateHandlers,
     SelectableItemListingHandlers {}
 
 const enhance = compose<EnhancedProps, Props>(
@@ -52,8 +56,8 @@ const enhance = compose<EnhancedProps, Props>(
       wentBack
     }),
     {
-      enterFolder: () => enteredFolder => ({ enteredFolder }),
-      openDocRef: () => openedDocRef => ({ openedDocRef }),
+      enterFolder: () => (enteredFolder: DocRefType) => ({ enteredFolder }),
+      openDocRef: () => (openedDocRef: DocRefType) => ({ openedDocRef }),
       goBack: () => () => ({ wentBack: true }),
       onClickClear: () => () => ({
         enteredFolder: undefined,
@@ -103,11 +107,11 @@ let TestDocRefListingEntry = ({
     </div>
     <div>
       <label>Entered Folder</label>
-      <input readOnly value={enteredFolder && enteredFolder.name} />
+      <input readOnly value={enteredFolder ? enteredFolder.name : ""} />
     </div>
     <div>
       <label>Opened Doc Ref</label>
-      <input readOnly value={openedDocRef && openedDocRef.name} />
+      <input readOnly value={openedDocRef ? openedDocRef.name : ""} />
     </div>
     <div>
       <label>Went Back</label>

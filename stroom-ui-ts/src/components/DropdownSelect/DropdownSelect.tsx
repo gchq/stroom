@@ -30,7 +30,7 @@ export interface StateProps {
   searchTerm: string;
 }
 
-export interface StateFunctions {
+export interface StateHandlers {
   onSearchFocus: () => StateProps;
   onSearchBlur: () => StateProps;
   onSearchTermChange: (x: any) => StateProps;
@@ -38,7 +38,12 @@ export interface StateFunctions {
 
 export interface StateUpdaters
   extends StateHandlerMap<StateProps>,
-    StateFunctions {}
+    StateHandlers {}
+
+export interface ConnectProps {
+  valueToShow: string;
+  selectableItemListing: StoreStatePerId;
+}
 
 export interface Handlers {
   onSearchKeyDown: React.ChangeEventHandler<HTMLInputElement>;
@@ -46,13 +51,11 @@ export interface Handlers {
 
 export interface EnhancedProps
   extends Props,
-    StateFunctions,
+    StateHandlers,
     StateProps,
-    Handlers,
-    SelectableItemListingHandlers {
-  valueToShow: string;
-  selectableItemListing: StoreStatePerId;
-}
+    ConnectProps,
+    SelectableItemListingHandlers,
+    Handlers {}
 
 const enhance = compose<EnhancedProps, Props>(
   withStateHandlers<StateProps, StateUpdaters>(
