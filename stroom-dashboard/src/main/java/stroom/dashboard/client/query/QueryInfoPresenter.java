@@ -59,15 +59,15 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     }
 
     public void show(final String queryInfo, final Consumer<State> consumer) {
-        boolean disabled = false;
+        boolean required = true;
         if (currentActivity.getActivity() != null && currentActivity.getActivity().getDetails() != null) {
-            final String value = currentActivity.getActivity().getDetails().value("disableQueryInfo");
-            if (value != null && value.equalsIgnoreCase("true")) {
-                disabled = true;
+            final String value = currentActivity.getActivity().getDetails().value("requireQueryInfo");
+            if (value != null && value.equalsIgnoreCase("false")) {
+                required = false;
             }
         }
 
-        if (queryInfoPopupEnabled && !disabled) {
+        if (queryInfoPopupEnabled && required) {
             getView().setQueryInfo(queryInfo);
             final PopupSize popupSize = new PopupSize(640, 480, true);
             ShowPopupEvent.fire(this,
