@@ -19,9 +19,8 @@ import { connect } from "react-redux";
 import { compose, withHandlers } from "recompose";
 
 import IconHeader from "../../components/IconHeader";
-import { actionCreators, StoreAction } from "./redux";
+import { actionCreators } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
-import { ActionCreator } from "redux";
 
 const { themeChanged } = actionCreators;
 
@@ -38,22 +37,22 @@ const themeOptions = [
 
 export interface Props {}
 
-export interface ConnectProps {
+export interface ConnectState {
   theme: string;
 }
 
-export interface ConnectActions {
-  themeChanged: ActionCreator<StoreAction>;
+export interface ConnectDispatch {
+  themeChanged: typeof themeChanged;
 }
 
 export interface Handlers {
-  onThemeChanged: (event: any) => void; // React.ChangeEventHandler
+  onThemeChanged: React.ChangeEventHandler<HTMLSelectElement>;
 }
 
 export interface EnhancedProps
   extends Props,
-    ConnectProps,
-    ConnectActions,
+    ConnectState,
+    ConnectDispatch,
     Handlers {}
 
 const enhance = compose<EnhancedProps, Props>(
@@ -63,9 +62,9 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     { themeChanged }
   ),
-  withHandlers<Props & ConnectProps & ConnectActions, Handlers>({
-    onThemeChanged: ({ themeChanged }) => event => {
-      themeChanged(event.target.value);
+  withHandlers<Props & ConnectState & ConnectDispatch, Handlers>({
+    onThemeChanged: ({ themeChanged }) => ({ target: { value } }) => {
+      themeChanged(value);
     }
   })
 );

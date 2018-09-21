@@ -7,7 +7,7 @@ import Loader from "../components/Loader";
 import { fetchConfig } from "./config";
 
 export interface Props {
-  fetchConfig: () => void;
+  fetchConfig: typeof fetchConfig;
 }
 
 /**
@@ -31,8 +31,6 @@ export default compose(
   }),
   branch(
     ({ config: { isReady } }) => !isReady,
-    renderComponent(() => (
-      <Loader message="Creating selectable item listing..." />
-    ))
+    renderComponent(() => <Loader message="Awaiting config..." />)
   )
 );

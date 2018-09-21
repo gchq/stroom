@@ -11,7 +11,10 @@ class TypeSafeReducer<TState> {
     this.initialState = initialState;
   }
 
-  handleActions(names: Array<string>, reducer: Reducer<TState, Action>) {
+  handleActions<TActionBase>(
+    names: Array<string>,
+    reducer: Reducer<TState, Action & TActionBase>
+  ) {
     names.forEach(name => this.handleAction(name, reducer));
     return this;
   }

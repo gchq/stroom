@@ -13,41 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as React from 'react';
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
+import * as React from "react";
+import { compose } from "recompose";
+import { connect } from "react-redux";
 
-import { storiesOf } from '@storybook/react';
-import { Field, reduxForm } from 'redux-form';
+import { Field, reduxForm, FormState } from "redux-form";
 
-import DocTypeFilters from './DocTypeFilters';
-import DocRefTypePicker from './DocRefTypePicker';
+import { GlobalStoreState } from "../../../startup/reducers";
+import DocTypeFilters from "../DocTypeFilters";
+import DocRefTypePicker from "../DocRefTypePicker";
 
-import 'styles/main.css';
+export interface Props {
+  thisForm: FormState;
+}
 
-const enhance = compose(
+const enhance = compose<Props, {}>(
   connect(
-    ({ form }) => ({
+    ({ form }: GlobalStoreState) => ({
       thisForm: form.docTypeFilterTest,
       initialValues: {
-        docTypes: [],
-      },
+        docTypes: []
+      }
     }),
-    {},
+    {}
   ),
   reduxForm({
-    form: 'docTypeFilterTest',
-  }),
+    form: "docTypeFilterTest"
+  })
 );
 
-let TestForm = ({ thisForm }) => (
+let TestForm = ({ thisForm }: Props) => (
   <form>
     <div>
       <label>Chosen Doc Type</label>
       <Field
         name="docType"
         component={({ input: { onChange, value } }) => (
-          <DocRefTypePicker pickerId="test1" onChange={onChange} value={value} />
+          <DocRefTypePicker
+            pickerId="test1"
+            onChange={onChange}
+            value={value}
+          />
         )}
       />
     </div>
@@ -64,12 +70,10 @@ let TestForm = ({ thisForm }) => (
       thisForm.values && (
         <div>
           <div>Doc Type: {thisForm.values.docType}</div>
-          <div>Doc Types: {thisForm.values.docTypes.join(',')}</div>
+          <div>Doc Types: {thisForm.values.docTypes.join(",")}</div>
         </div>
       )}
   </form>
 );
 
-TestForm = enhance(TestForm);
-
-storiesOf('Doc Type Filters', module).add('Doc Type Filter', () => <TestForm />);
+export default enhance(TestForm);

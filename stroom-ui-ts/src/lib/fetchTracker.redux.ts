@@ -1,9 +1,9 @@
-import { createActions, handleActions } from "redux-actions";
 import { push } from "react-router-redux";
-import { Dispatch, Action } from "redux";
+import { Dispatch, Action, ActionCreator } from "redux";
 
 import { actionCreators as errorActionCreators } from "../components/ErrorPage";
 import { GlobalStoreState } from "../startup/reducers";
+import { prepareReducer } from "../lib/redux-actions-ts";
 
 import handleStatus from "./handleStatus";
 
@@ -18,47 +18,69 @@ export interface StoreState {
   [s: string]: FetchState;
 }
 
-export interface StoreAction {
-  url?: string;
+const RESET_ALL_URLS = "RESET_ALL_URLS";
+const URL_RESET = "URL_RESET";
+const URL_REQUESTED = "URL_REQUESTED";
+const URL_RESPONDED = "URL_RESPONDED";
+const URL_FAILED = "URL_FAILED";
+
+export interface UrlAction {
+  url: string;
   fetchState: FetchState;
 }
 
-const baseActionCreators = createActions<StoreAction>({
-  URL_SET: (url: string, fetchState: FetchState) => ({ url, fetchState })
-});
+export type UrlResetAction = UrlAction & Action<"URL_RESET">;
+export type UrlRequestedAction = UrlAction & Action<"URL_REQUESTED">;
+export type UrlRespondedAction = UrlAction & Action<"URL_RESPONDED">;
+export type UrlFailedAction = UrlAction & Action<"URL_FAILED">;
+export type ResetAllUrlsAction = Action<"RESET_ALL_URLS">;
 
-const defaultState = {};
+export interface ActionCreators {
+  resetAllUrls: ActionCreator<ResetAllUrlsAction>;
+  urlReset: ActionCreator<UrlResetAction>;
+  urlRequested: ActionCreator<UrlRequestedAction>;
+  urlResponded: ActionCreator<UrlRespondedAction>;
+  urlFailed: ActionCreator<UrlFailedAction>;
+}
 
-export const actionCreators = {
-  resetAllUrls: (): Action =>
-    baseActionCreators.urlSet(undefined, FetchState.UNREQUESTED),
-  urlReset: (url: string): Action =>
-    baseActionCreators.urlSet(url, FetchState.UNREQUESTED),
-  urlRequested: (url: string): Action =>
-    baseActionCreators.urlSet(url, FetchState.REQUESTED),
-  urlResponded: (url: string): Action =>
-    baseActionCreators.urlSet(url, FetchState.RESPONDED),
-  urlFailed: (url: string): Action =>
-    baseActionCreators.urlSet(url, FetchState.FAILED)
+const defaultState: StoreState = {};
+
+export const actionCreators: ActionCreators = {
+  resetAllUrls: () => ({
+    type: RESET_ALL_URLS
+  }),
+  urlReset: (url: string) => ({
+    type: URL_RESET,
+    url,
+    fetchState: FetchState.UNREQUESTED
+  }),
+  urlRequested: (url: string) => ({
+    type: URL_REQUESTED,
+    url,
+    fetchState: FetchState.REQUESTED
+  }),
+  urlResponded: (url: string) => ({
+    type: URL_RESPONDED,
+    url,
+    fetchState: FetchState.RESPONDED
+  }),
+  urlFailed: (url: string) => ({
+    type: URL_FAILED,
+    url,
+    fetchState: FetchState.FAILED
+  })
 };
 
-export const reducer = handleActions<StoreState, StoreAction>(
-  {
-    URL_SET: (state, { payload }) => {
-      const { url, fetchState } = payload!;
-      if (url) {
-        return {
-          ...state,
-          [url]: fetchState
-        };
-      } else {
-        // Clear everything
-        return {};
-      }
-    }
-  },
-  defaultState
-);
+export const reducer = prepareReducer(defaultState)
+  .handleAction(RESET_ALL_URLS, () => defaultState)
+  .handleActions<Action & UrlAction>(
+    [URL_RESET, URL_REQUESTED, URL_RESPONDED, URL_FAILED],
+    (state, { url, fetchState }) => ({
+      ...state,
+      [url]: fetchState
+    })
+  )
+  .getReducer();
 
 /**
  * A wrapper around fetch that can be used to de-duplicate GET calls to the same resources.

@@ -25,11 +25,11 @@ export interface Props {
   enterFolder?: DocRefConsumer;
 }
 
-export interface ConnectProps {
+export interface ConnectState {
   keyIsDown: KeyIsDownStoreState;
 }
 
-export interface ConnectActions {
+export interface ConnectDispatch {
   selectionToggled: typeof selectionToggled;
 }
 
@@ -46,8 +46,8 @@ export interface AddedProps {
 
 export interface EnhancedProps
   extends Props,
-    ConnectProps,
-    ConnectActions,
+    ConnectState,
+    ConnectDispatch,
     Handlers,
     AddedProps {}
 
@@ -63,11 +63,6 @@ const enhance = compose<EnhancedProps, Props>(
         selectedItems.map((d: DocRefType) => d.uuid).indexOf(docRef.uuid) !==
         -1;
       const inFocus = focussedItem && focussedItem.uuid === docRef.uuid;
-      console.log("In Focus", {
-        docRef,
-        inFocus,
-        focussedItem
-      });
 
       return {
         isSelected,
@@ -77,7 +72,7 @@ const enhance = compose<EnhancedProps, Props>(
     },
     { selectionToggled }
   ),
-  withHandlers<Props & ConnectProps & ConnectActions, Handlers>({
+  withHandlers<Props & ConnectState & ConnectDispatch, Handlers>({
     onSelect: ({ listingId, docRef, keyIsDown, selectionToggled }) => e => {
       selectionToggled(listingId, docRef.uuid, keyIsDown);
       e.preventDefault();

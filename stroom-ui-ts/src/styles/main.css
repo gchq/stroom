@@ -223,6 +223,11 @@ body {
 .DocRefListingEntry__icon {
   cursor: pointer; }
 
+.IFrame__container {
+  position: relative;
+  height: calc(100% - 45px);
+  width: 100%; }
+
 .UserSettings__container {
   width: 600px; }
 

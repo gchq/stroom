@@ -14,31 +14,49 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { connect } from "react-redux";
 import { compose, withProps, withHandlers } from "recompose";
 
+import { DocRefTypeList } from "./redux";
 import DocRefImage from "../DocRefImage";
-import withDocRefTypes from "./withDocRefTypes";
+import withDocRefTypes, {
+  EnhancedProps as WithDocRefTypeProps
+} from "./withDocRefTypes";
 
-const ALL_SELECT_STATE = {
-  ALL: 0,
-  NONE: 1,
-  INDETERMINATE: 2
-};
+enum AllSelectState {
+  ALL,
+  NONE,
+  INDETERMINATE
+}
 
-const enhance = compose(
+export interface Props {
+  value: DocRefTypeList;
+  onChange: (a: DocRefTypeList) => any;
+}
+
+export interface AddedProps {
+  allSelectState: AllSelectState;
+}
+
+export interface Handlers {
+  onAllCheckboxChanged: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+export interface EnhancedProps
+  extends Props,
+    WithDocRefTypeProps,
+    AddedProps,
+    Handlers {}
+
+const enhance = compose<EnhancedProps, Props>(
   withDocRefTypes,
-  connect(({ docRefTypes }) => ({
-    docRefTypes
-  })),
   withProps(({ docRefTypes, value, onChange }) => {
     let allSelectState;
     if (value.length === 0) {
-      allSelectState = ALL_SELECT_STATE.NONE;
+      allSelectState = AllSelectState.NONE;
     } else if (value.length === docRefTypes.length) {
-      allSelectState = ALL_SELECT_STATE.ALL;
+      allSelectState = AllSelectState.ALL;
     } else {
-      allSelectState = ALL_SELECT_STATE.INDETERMINATE;
+      allSelectState = AllSelectState.INDETERMINATE;
     }
     return {
       allSelectState
@@ -47,11 +65,11 @@ const enhance = compose(
   withHandlers({
     onAllCheckboxChanged: ({ allSelectState, onChange, docRefTypes }) => () => {
       switch (allSelectState) {
-        case ALL_SELECT_STATE.ALL:
-        case ALL_SELECT_STATE.INDETERMINATE:
+        case AllSelectState.ALL:
+        case AllSelectState.INDETERMINATE:
           onChange([]);
           break;
-        case ALL_SELECT_STATE.NONE:
+        case AllSelectState.NONE:
           onChange(docRefTypes);
           break;
         default:
@@ -67,14 +85,14 @@ let DocTypeFilters = ({
   value,
   allSelectState,
   onAllCheckboxChanged
-}) => (
+}: EnhancedProps) => (
   <React.Fragment>
     <div>
       <DocRefImage size="sm" docRefType="System" />
       <label>All</label>
       <input
         type="checkbox"
-        checked={allSelectState === ALL_SELECT_STATE.ALL}
+        checked={allSelectState === AllSelectState.ALL}
         onChange={onAllCheckboxChanged}
       />
       ;
@@ -82,7 +100,7 @@ let DocTypeFilters = ({
     {docRefTypes
       .map(docRefType => ({
         docRefType,
-        isSelected: value.includes(docRefType)
+        isSelected: value.indexOf(docRefType) !== -1
       }))
       .map(({ docRefType, isSelected }) => (
         <div key={docRefType}>
@@ -104,16 +122,4 @@ let DocTypeFilters = ({
   </React.Fragment>
 );
 
-DocTypeFilters = enhance(DocTypeFilters);
-
-// DocTypeFilters.propTypes = {
-//   value: PropTypes.arrayOf(PropTypes.string).isRequired,
-//   onChange: PropTypes.func.isRequired,
-// };
-
-// DocTypeFilters.defaultProps = {
-//   value: [],
-//   onChange: v => console.log('Not implemented onChange, value ignored', v),
-// };
-
-export default DocTypeFilters;
+export default enhance(DocTypeFilters);

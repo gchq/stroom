@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from "redux-actions";
-import { Dispatch } from "redux";
+import { Dispatch, Action, ActionCreator } from "redux";
 import { GlobalStoreState } from "../startup/reducers";
-
+import { prepareReducer } from "../lib/redux-actions-ts";
 import { wrappedGet } from "../lib/fetchTracker.redux";
 
 const initialState = { values: {}, isReady: false };
@@ -36,23 +35,26 @@ export interface StoreState {
   values: Config;
 }
 
-export interface StoreAction {
+const UPDATE_CONFIG = "UPDATE_CONFIG";
+
+export interface UpdateConfigAction extends Action<"UPDATE_CONFIG"> {
   values: Config;
 }
 
-const actionCreators = createActions<StoreAction>({
-  UPDATE_CONFIG: values => ({ values })
-});
+export interface ActionCreators {
+  updateConfig: ActionCreator<UpdateConfigAction>;
+}
 
-const reducer = handleActions<StoreState, StoreAction>(
-  {
-    UPDATE_CONFIG: (_, { payload }) => ({
-      isReady: true,
-      values: payload!.values
-    })
-  },
-  initialState
-);
+const actionCreators: ActionCreators = {
+  updateConfig: values => ({ type: UPDATE_CONFIG, values })
+};
+
+const reducer = prepareReducer(initialState)
+  .handleAction<UpdateConfigAction>(UPDATE_CONFIG, (state, { values }) => ({
+    isReady: true,
+    values: values
+  }))
+  .getReducer();
 
 const fetchConfig = () => (
   dispatch: Dispatch,

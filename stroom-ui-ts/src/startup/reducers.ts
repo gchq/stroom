@@ -51,7 +51,10 @@ import {
 
 // import { reducer as appSearch } from "../components/AppSearchBar/redux";
 // import { reducer as appChrome } from "../sections/AppChrome/redux";
-// import { reducer as docRefTypes } from "../components/DocRefTypes";
+import {
+  reducer as docRefTypes,
+  StoreState as DocRefTypesStoreState
+} from "../components/DocRefTypes";
 // import { reducer as dictionaryEditor } from "../components/DictionaryEditor";
 // import { reducer as lineContainer } from "../components/LineTo";
 // import { reducer as docRefInfo } from "../components/DocRefInfoModal/redux";
@@ -74,6 +77,7 @@ export interface GlobalStoreState {
   userSettings: UserSettingsStoreState;
   selectableItemListings: SelectableItemListingStoreState;
   form: FormStateMap;
+  docRefTypes: DocRefTypesStoreState;
 }
 
 export default combineReducers({
@@ -86,7 +90,8 @@ export default combineReducers({
   authorisation,
   fetch,
   userSettings,
-  selectableItemListings
+  selectableItemListings,
+  docRefTypes
   // processing,
   // folderExplorer,
   // expressionBuilder,
@@ -95,7 +100,6 @@ export default combineReducers({
   // lineContainer,
   // recentItems,
   // dataViewers,
-  // docRefTypes,
   // appChrome,
   // docRefInfo,
   // appSearch,

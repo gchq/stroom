@@ -23,7 +23,10 @@ class TypeSafeReducer<TStatePerId> {
     this.initialStatePerId = initialStatePerId;
   }
 
-  handleActions(names: Array<string>, reducer: Reducer<TStatePerId, Action>) {
+  handleActions<TActionBase>(
+    names: Array<string>,
+    reducer: Reducer<TStatePerId, ActionId & Action & TActionBase>
+  ) {
     names.forEach(name => this.handleAction(name, reducer));
     return this;
   }

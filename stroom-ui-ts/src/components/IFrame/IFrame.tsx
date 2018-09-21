@@ -1,7 +1,20 @@
 import * as React from "react";
 
-class IFrame extends React.Component {
-  shouldComponentUpdate(nextProps, nextState) {
+export interface Props {
+  url: string;
+  id?: string;
+  className?: string;
+  width?: string;
+  position?: string;
+  display?: string;
+  name?: string;
+  height?: string;
+  styles?: object;
+  allowFullScreen?: boolean;
+}
+
+class IFrame extends React.Component<Props> {
+  shouldComponentUpdate(nextProps: Props, nextState: {}) {
     return nextProps.url !== this.props.url;
   }
 
@@ -41,19 +54,5 @@ class IFrame extends React.Component {
     );
   }
 }
-
-// IFrame.propTypes = {
-//   url: PropTypes.string.isRequired,
-//   id: PropTypes.string,
-//   className: PropTypes.string,
-//   width: PropTypes.string,
-//   position: PropTypes.string,
-//   display: PropTypes.string,
-//   name: PropTypes.string,
-//   height: PropTypes.string,
-//   onLoad: PropTypes.func,
-//   styles: PropTypes.object,
-//   allowFullScreen: PropTypes.bool,
-// };
 
 export default IFrame;

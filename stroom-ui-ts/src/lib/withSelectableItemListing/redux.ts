@@ -109,12 +109,9 @@ export const defaultStatePerId: StoreStatePerId = {
 };
 
 export const reducer = prepareReducerById<StoreStatePerId>(defaultStatePerId)
-  .handleAction(
+  .handleAction<Action & SelectableListingMounted>(
     SELECTABLE_LISTING_MOUNTED,
-    (
-      state: StoreStatePerId,
-      { items, selectionBehaviour, getKey }: Action & SelectableListingMounted
-    ) => {
+    (state: StoreStatePerId, { items, selectionBehaviour, getKey }) => {
       // Attempt to rescue previous focus index
       let focusIndex = -1;
       let focussedItem;
@@ -135,12 +132,9 @@ export const reducer = prepareReducerById<StoreStatePerId>(defaultStatePerId)
       };
     }
   )
-  .handleActions(
+  .handleActions<Action & FocusChange>(
     [FOCUS_UP, FOCUS_DOWN],
-    (
-      { items, focusIndex, ...rest }: StoreStatePerId,
-      { direction }: Action & FocusChange
-    ) => {
+    ({ items, focusIndex, ...rest }: StoreStatePerId, { direction }) => {
       // Calculate the next index based on the selection change
       let nextIndex = 0;
       if (focusIndex !== -1) {
@@ -156,9 +150,9 @@ export const reducer = prepareReducerById<StoreStatePerId>(defaultStatePerId)
       };
     }
   )
-  .handleActions(
+  .handleActions<Action & SelectionChange>(
     [SELECT_FOCUSSED, SELECTION_TOGGLED],
-    (state, { itemKey, keyIsDown }: Action & SelectionChange) => {
+    (state, { itemKey, keyIsDown }) => {
       const {
         selectedItemIndexes,
         focusIndex,

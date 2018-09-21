@@ -40,7 +40,7 @@ export interface StateUpdaters
   extends StateHandlerMap<StateProps>,
     StateHandlers {}
 
-export interface ConnectProps {
+export interface ConnectState {
   valueToShow: string;
   selectableItemListing: StoreStatePerId;
 }
@@ -53,7 +53,7 @@ export interface EnhancedProps
   extends Props,
     StateHandlers,
     StateProps,
-    ConnectProps,
+    ConnectState,
     SelectableItemListingHandlers,
     Handlers {}
 

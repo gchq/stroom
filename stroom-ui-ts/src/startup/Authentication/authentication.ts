@@ -13,42 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from "redux-actions";
 import * as jwtDecode from "jwt-decode";
 import * as uuidv4 from "uuid";
 import * as sjcl from "sjcl";
 import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Dispatch, Action, ActionCreator } from "redux";
+
 import { GlobalStoreState } from "../reducers";
 import { LocationDescriptor } from "history";
+import { prepareReducer } from "../../lib/redux-actions-ts";
 
 export interface StoreState {
   idToken?: string;
 }
 
-export interface StoreAction {
+const TOKEN_ID_CHANGE = "TOKEN_ID_CHANGE";
+
+export interface TokenIdChangeAction extends Action<"TOKEN_ID_CHANGE"> {
   idToken: string;
 }
+
+export interface ActionCreators {
+  tokenIdChange: ActionCreator<TokenIdChangeAction>;
+}
+
+const actionCreators: ActionCreators = {
+  tokenIdChange: (idToken: string) => ({ type: TOKEN_ID_CHANGE, idToken })
+};
 
 const defaultState = {
   idToken: ""
 };
 
-const actionCreators = createActions<StoreAction>({
-  TOKEN_ID_CHANGE: (idToken: string) => ({ idToken })
-});
-
 const { tokenIdChange } = actionCreators;
 
-export const reducer = handleActions(
-  {
-    TOKEN_ID_CHANGE: (state, action) =>
-      Object.assign({}, state, {
-        idToken: action.payload!.idToken
-      })
-  },
-  defaultState
-);
+export const reducer = prepareReducer(defaultState)
+  .handleAction<TokenIdChangeAction>(TOKEN_ID_CHANGE, (state, { idToken }) => ({
+    ...state,
+    idToken
+  }))
+  .getReducer();
 
 export const sendAuthenticationRequest = (
   referrer: string,

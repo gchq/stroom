@@ -14,36 +14,33 @@
  * limitations under the License.
  */
 import { Action, ActionCreator } from "redux";
-
 import { prepareReducer } from "../../lib/redux-actions-ts";
 
-export interface StoreState {
-  theme: string;
+export type DocRefTypeList = Array<string>;
+export type StoreState = DocRefTypeList;
+
+export interface DocRefTypesReceived extends Action<"DOC_REF_TYPES_RECEIVED"> {
+  docRefTypes: DocRefTypeList;
 }
 
-const THEME_CHANGED = "THEME_CHANGED";
-
-export interface ThemeChangedAction extends Action<"THEME_CHANGED"> {
-  theme: string;
-}
+const DOC_REF_TYPES_RECEIVED = "DOC_REF_TYPES_RECEIVED";
 
 export interface ActionCreators {
-  themeChanged: ActionCreator<ThemeChangedAction>;
+  docRefTypesReceived: ActionCreator<DocRefTypesReceived>;
 }
 
-const actionCreators: ActionCreators = {
-  themeChanged: (theme: string) => ({ type: THEME_CHANGED, theme })
+export const actionCreators: ActionCreators = {
+  docRefTypesReceived: (docRefTypes: DocRefTypeList) => ({
+    type: DOC_REF_TYPES_RECEIVED,
+    docRefTypes
+  })
 };
 
-const defaultState = {
-  theme: ""
-};
+const defaultState: StoreState = [];
 
-const reducer = prepareReducer(defaultState)
-  .handleAction<ThemeChangedAction>(THEME_CHANGED, (state, { theme }) => ({
-    ...state,
-    theme
-  }))
+export const reducer = prepareReducer(defaultState)
+  .handleAction<DocRefTypesReceived>(
+    DOC_REF_TYPES_RECEIVED,
+    (state: StoreState, { docRefTypes }) => docRefTypes
+  )
   .getReducer();
-
-export { actionCreators, reducer };

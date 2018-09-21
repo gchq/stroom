@@ -1,5 +1,5 @@
-import { createActions, handleActions } from "redux-actions";
-import { Action } from "redux";
+import { Action, ActionCreator } from "redux";
+import { prepareReducer } from "../redux-actions-ts";
 
 export interface StoreState {
   [s: string]: boolean;
@@ -7,30 +7,32 @@ export interface StoreState {
 
 const defaultState = {};
 
-export interface StoreAction {
+export interface KeyChangeAction {
   keyCode: string;
   isDown: boolean;
 }
+export interface KeyUpAction extends KeyChangeAction, Action<"KEY_UP"> {}
+export interface KeyDownAction extends KeyChangeAction, Action<"KEY_DOWN"> {}
 
-const baseActionCreator = createActions<StoreAction>({
-  KEY_CHANGE: (keyCode, isDown) => ({ keyCode, isDown })
-});
+const KEY_UP = "KEY_UP";
+const KEY_DOWN = "KEY_DOWN";
 
-const actionCreators = {
-  keyDown: (keyCode: string): Action =>
-    baseActionCreator.keyChange(keyCode, true),
-  keyUp: (keyCode: string): Action =>
-    baseActionCreator.keyChange(keyCode, false)
+export interface ActionCreators {
+  keyDown: ActionCreator<KeyDownAction>;
+  keyUp: ActionCreator<KeyUpAction>;
+}
+
+export const actionCreators: ActionCreators = {
+  keyDown: (keyCode: string) => ({ type: KEY_DOWN, keyCode, isDown: true }),
+  keyUp: (keyCode: string) => ({ type: KEY_UP, keyCode, isDown: false })
 };
 
-const reducer = handleActions<StoreState, StoreAction>(
-  {
-    KEY_CHANGE: (state, { payload }) => ({
+export const reducer = prepareReducer(defaultState)
+  .handleActions<KeyChangeAction & Action>(
+    [KEY_DOWN, KEY_UP],
+    (state, { keyCode, isDown }) => ({
       ...state,
-      [payload!.keyCode]: payload!.isDown
+      [keyCode]: isDown
     })
-  },
-  defaultState
-);
-
-export { actionCreators, reducer };
+  )
+  .getReducer();

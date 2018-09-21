@@ -1,5 +1,6 @@
-import { createActions, handleActions } from "redux-actions";
-import { Dispatch } from "redux";
+import { Dispatch, Action, ActionCreator } from "redux";
+
+import { prepareReducer } from "../../lib/redux-actions-ts";
 
 export const SET_APP_PERMISSION = "authorisation/SET_APP_PERMISSION";
 
@@ -7,33 +8,39 @@ export interface StoreState {
   appPermissions: Array<string>;
 }
 
-export interface StoreAction {
+export interface SetAppPermissionAction
+  extends Action<"authorisation/SET_APP_PERMISSION"> {
   appPermission: string;
   hasAppPermission: boolean;
+}
+
+export interface ActionCreators {
+  setAppPermission: ActionCreator<SetAppPermissionAction>;
 }
 
 const defaultState = {
   appPermissions: []
 };
 
-export const actionCreators = createActions<StoreAction>({
-  SET_APP_PERMISSION: (appPermission, hasAppPermission) => ({
+export const actionCreators: ActionCreators = {
+  setAppPermission: (appPermission, hasAppPermission) => ({
+    type: SET_APP_PERMISSION,
     appPermission,
     hasAppPermission
   })
-});
+};
 
-export const reducer = handleActions<StoreState, StoreAction>(
-  {
-    SET_APP_PERMISSION: (state, action) =>
+export const reducer = prepareReducer(defaultState)
+  .handleAction<SetAppPermissionAction>(
+    SET_APP_PERMISSION,
+    (state = defaultState, { appPermission, hasAppPermission }) =>
       Object.assign(state, {
         appPermissions: Object.assign(state.appPermissions, {
-          [action.payload!.appPermission]: action.payload!.hasAppPermission
+          [appPermission]: hasAppPermission
         })
       })
-  },
-  defaultState
-);
+  )
+  .getReducer();
 
 const setHasAppPermission = (
   appPermission: string,
