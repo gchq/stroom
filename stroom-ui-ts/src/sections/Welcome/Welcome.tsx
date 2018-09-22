@@ -14,28 +14,36 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 
-import IconHeader from '../IconHeader';
+import IconHeader from "../../components/IconHeader";
 
-const Welcome = props => (
+export interface Props {}
+
+const Welcome = (props: Props) => (
   <div className="welcome">
     <IconHeader icon="home" text="Welcome" />
     <div className="welcome__shortcuts">
       <h4>Global shortcut keys</h4>
       <table className="welcome__shortcuts__table">
-        <tr>
-          <th />
-          <th>Shortcut</th>
-        </tr>
-        <tr>
-          <td>Document search</td>
-          <td><code>ctrl + shift + f</code></td>
-        </tr>
-        <tr>
-          <td> Recent documents </td>
-          <td><code> ctrl + shift + e</code></td>
-        </tr>
+        <tbody>
+          <tr>
+            <th />
+            <th>Shortcut</th>
+          </tr>
+          <tr>
+            <td>Document search</td>
+            <td>
+              <code>ctrl + shift + f</code>
+            </td>
+          </tr>
+          <tr>
+            <td> Recent documents </td>
+            <td>
+              <code> ctrl + shift + e</code>
+            </td>
+          </tr>
+        </tbody>
       </table>
     </div>
   </div>

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { withProps } from "recompose";
 
-import { DropdownOptionProps } from "./DropdownOptionTypes";
+import { DropdownOptionProps } from "./DropdownSelect";
 
 export interface AddedProps {
   className: string;

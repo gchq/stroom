@@ -15,13 +15,19 @@ import withSelectableItemListing, {
 } from "../../lib/withSelectableItemListing";
 
 import DefaultDropdownOption from "./DefaultDropdownOption";
-import { DropdownOptionType, DropdownOptionProps } from "./DropdownOptionTypes";
+import { OptionType } from "../../types";
+
+export interface DropdownOptionProps {
+  option: OptionType;
+  inFocus: boolean;
+  onClick: () => void;
+}
 
 export interface Props {
   pickerId: string;
   onChange: (x: string) => void;
   value: string;
-  options: Array<DropdownOptionType>;
+  options: Array<OptionType>;
   OptionComponent?: React.ComponentType<DropdownOptionProps>;
 }
 
@@ -102,7 +108,7 @@ const enhance = compose<EnhancedProps, Props>(
     },
     {}
   ),
-  withSelectableItemListing<DropdownOptionType>(
+  withSelectableItemListing<OptionType>(
     ({ pickerId, options, onChange }: EnhancedProps) => ({
       listingId: pickerId,
       items: options,

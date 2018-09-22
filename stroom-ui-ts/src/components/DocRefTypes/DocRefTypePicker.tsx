@@ -2,10 +2,8 @@ import * as React from "react";
 import { compose, withProps } from "recompose";
 
 import DocRefImage from "../DocRefImage";
-import DropdownSelect, {
-  DropdownOptionType,
-  DropdownOptionProps
-} from "../DropdownSelect";
+import { OptionType } from "../../types";
+import DropdownSelect, { DropdownOptionProps } from "../DropdownSelect";
 
 import withDocRefTypes, {
   EnhancedProps as WithDocRefTypeProps
@@ -29,7 +27,7 @@ export interface Props {
 }
 
 export interface AddedProps {
-  options: Array<DropdownOptionType>;
+  options: Array<OptionType>;
 }
 
 export interface EnhancedProps extends Props, WithDocRefTypeProps, AddedProps {}

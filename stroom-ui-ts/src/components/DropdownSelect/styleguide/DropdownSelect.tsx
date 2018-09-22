@@ -5,7 +5,7 @@ import { reduxForm, Field, FormState } from "redux-form";
 
 import { GlobalStoreState } from "../../../startup/reducers";
 import DropdownSelect from "../DropdownSelect";
-import { DropdownOptionProps } from "../DropdownOptionTypes";
+import { DropdownOptionProps } from "../";
 
 export interface Props {
   thisForm: FormState;

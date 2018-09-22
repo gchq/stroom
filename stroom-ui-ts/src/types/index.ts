@@ -10,3 +10,10 @@ export interface SelectOptionType {
   text: string;
   value: string;
 }
+
+export interface OptionType {
+  text: string;
+  value: string;
+}
+
+

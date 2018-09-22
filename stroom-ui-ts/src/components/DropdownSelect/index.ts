@@ -1,6 +1,5 @@
-import DropdownSelect from "./DropdownSelect";
-import { DropdownOptionType, DropdownOptionProps } from "./DropdownOptionTypes";
+import DropdownSelect, { DropdownOptionProps } from "./DropdownSelect";
 
 export default DropdownSelect;
 
-export { DropdownSelect, DropdownOptionType, DropdownOptionProps };
+export { DropdownSelect, DropdownOptionProps };
