@@ -87,7 +87,7 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
 
     /**
      * @param node
-     * @return true iff the node is in the tree
+     * @return true if the node is in the tree
      */
     public boolean hasNode(final TreeNode node) {
         return node == getRoot() || parents.containsKey(node);
