@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.8] - 2018-09-23
+
 * Issue **#827** : Added `TextReplacementFilterReader` pipeline element.
 
 * Issue **#736** : Added sorting to server tasks table.
@@ -912,7 +914,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.8...HEAD
+[v5.5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.5.0-beta.7...v5.5.0-beta.8
 [v5.5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.5.0-beta.6...v5.5.0-beta.7
 [v5.5.0-beta.6]: https://github.com/gchq/stroom/compare/v5.5.0-beta.5...v5.5.0-beta.6
 [v5.5.0-beta.5]: https://github.com/gchq/stroom/compare/v5.5.0-beta.4...v5.5.0-beta.5
