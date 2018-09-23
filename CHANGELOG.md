@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#827** : Added `TextReplacementFilterReader` pipeline element.
+
 * Issue **#736** : Added sorting to server tasks table.
 
 * Inverted the behaviour of `disableQueryInfo` to now be `requireQueryInfo`.
