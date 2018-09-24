@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added multiple fixes and improvements to the find and replace filter including limited support of input/output recording when stepping.
+
 ## [v5.5.0-beta.8] - 2018-09-23
 
 * Issue **#827** : Added `TextReplacementFilterReader` pipeline element.
