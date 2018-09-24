@@ -29,9 +29,9 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.entity.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Security;
 
@@ -125,7 +125,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                 final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
 
                 event.getEventDetail().setExport(exp);
-                event.getEventDetail().setPurpose(getPurpose(queryInfo));
+                event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e2) {
@@ -157,7 +157,7 @@ public class SearchEventLogImpl implements SearchEventLog {
 
                 final Event event = eventLoggingService.createAction(type, type + "ing data source \"" + dataSourceRef.toInfoString());
                 event.getEventDetail().setSearch(search);
-                event.getEventDetail().setPurpose(getPurpose(queryInfo));
+                event.getEventDetail().setPurpose(getPurpose(event.getEventDetail().getPurpose(), queryInfo));
 
                 eventLoggingService.log(event);
             } catch (final RuntimeException e2) {
@@ -179,14 +179,16 @@ public class SearchEventLogImpl implements SearchEventLog {
         return docRef.getName();
     }
 
-    private Purpose getPurpose(final String queryInfo) {
+    private Purpose getPurpose(Purpose purpose, final String queryInfo) {
         if (null != queryInfo) {
-            final Purpose purpose = new Purpose();
+            if (purpose == null) {
+                purpose = new Purpose();
+            }
+
             purpose.setJustification(queryInfo);
-            return purpose;
-        } else {
-            return null;
         }
+
+        return purpose;
     }
 
     private Query getQuery(final ExpressionOperator expression) {

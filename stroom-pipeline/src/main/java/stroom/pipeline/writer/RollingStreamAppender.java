@@ -17,6 +17,10 @@
 
 package stroom.pipeline.writer;
 
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
@@ -33,14 +37,9 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.meta.api.Data;
 import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 /**
  * Joins text instances into a single text instance.
@@ -74,7 +73,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    public RollingDestination createDestination() throws IOException {
+    public RollingDestination createDestination() {
         if (key.getStreamType() == null) {
             throw new ProcessException("Stream type not specified");
         }
@@ -91,7 +90,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
-                getMaxSize(),
+                getRollSize(),
                 System.currentTimeMillis(),
                 streamStore,
                 streamTarget,
@@ -149,5 +148,12 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
+    }
+
+    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.",
+            defaultValue = "100M",
+            displayPriority = 3)
+    public void setRollSize(final String rollSize) {
+        super.setRollSize(rollSize);
     }
 }

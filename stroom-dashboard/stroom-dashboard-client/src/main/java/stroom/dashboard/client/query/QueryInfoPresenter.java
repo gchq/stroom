@@ -20,8 +20,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.activity.client.CurrentActivity;
 import stroom.alert.client.event.AlertEvent;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.QueryConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -34,25 +36,39 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
     private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
 
+    private final CurrentActivity currentActivity;
     private boolean queryInfoPopupEnabled = false;
     private String queryInfoPopupTitle = DEFAULT_QUERY_INFO_POPUP_TITLE;
     private String queryInfoPopupValidationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
 
     @Inject
-    public QueryInfoPresenter(final EventBus eventBus, final QueryInfoView view, final UiConfigCache clientPropertyCache) {
+    public QueryInfoPresenter(final EventBus eventBus,
+                              final QueryInfoView view,
+                              final UiConfigCache uiConfigCache,
+                              final CurrentActivity currentActivity) {
         super(eventBus, view);
+        this.currentActivity = currentActivity;
 
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    queryInfoPopupEnabled = result.getQueryConfig().getInfoPopupConfig().isEnabled();
-                    queryInfoPopupTitle = result.getQueryConfig().getInfoPopupConfig().getTitle();
-                    queryInfoPopupValidationRegex = result.getQueryConfig().getInfoPopupConfig().getValidationRegex();
+        uiConfigCache.get()
+                .onSuccess(uiConfig -> {
+                    final QueryConfig queryConfig = uiConfig.getQueryConfig();
+                    queryInfoPopupEnabled = queryConfig.getInfoPopupConfig().isEnabled();
+                    queryInfoPopupTitle = queryConfig.getInfoPopupConfig().getTitle();
+                    queryInfoPopupValidationRegex = queryConfig.getInfoPopupConfig().getValidationRegex();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryInfoPresenter.this, caught.getMessage(), null));
     }
 
     public void show(final String queryInfo, final Consumer<State> consumer) {
-        if (queryInfoPopupEnabled) {
+        boolean disabled = false;
+        if (currentActivity.getActivity() != null && currentActivity.getActivity().getDetails() != null) {
+            final String value = currentActivity.getActivity().getDetails().value("disableQueryInfo");
+            if (value != null && value.equalsIgnoreCase("true")) {
+                disabled = true;
+            }
+        }
+
+        if (queryInfoPopupEnabled && !disabled) {
             getView().setQueryInfo(queryInfo);
             final PopupSize popupSize = new PopupSize(640, 480, true);
             ShowPopupEvent.fire(this,
@@ -106,7 +122,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
         private final String queryInfo;
         private final boolean ok;
 
-        public State(final String queryInfo, final boolean ok) {
+        State(final String queryInfo, final boolean ok) {
             this.queryInfo = queryInfo;
             this.ok = ok;
         }

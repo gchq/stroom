@@ -22,12 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
@@ -63,6 +63,7 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -213,6 +214,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
         try {
             final Data stream = streamSource.getStream();
+
+            // Update the meta data for all output streams to use.
+            updateMetaData(streamSource);
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
@@ -523,17 +527,13 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Write some meta data to the map for all output streams to use
             // when they close.
             metaData.put("Source Stream", String.valueOf(source.getStream().getId()));
-            metaData.put(MetaDataSource.REC_READ, String.valueOf(recordCount.getRead()));
-            metaData.put(MetaDataSource.REC_WRITE, String.valueOf(recordCount.getWritten()));
-            metaData.put(MetaDataSource.REC_INFO, String.valueOf(getMarkerCount(Severity.INFO)));
-            metaData.put(MetaDataSource.REC_WARN, String.valueOf(getMarkerCount(Severity.WARNING)));
-            metaData.put(MetaDataSource.REC_ERROR, String.valueOf(getMarkerCount(Severity.ERROR)));
-            metaData.put(MetaDataSource.REC_FATAL, String.valueOf(getMarkerCount(Severity.FATAL_ERROR)));
-            metaData.put(MetaDataSource.DURATION, String.valueOf(recordCount.getDuration()));
-
             // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-//            metaData.put(StreamAttributeConstants.NODE, nodeCache.get().getName());
-        } catch (final RuntimeException e) {
+//            metaData.put(MetaDataSource.NODE, nodeCache.get().getName());
+
+            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+            processStatistics.write(metaData.getAttributes());
+
+        } catch (final Exception e) {
             outputError(e);
         }
     }
@@ -649,7 +649,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         // Only do something if an output stream was used.
                         if (processInfoStreamTarget != null) {
                             // Write meta data.
-                            final AttributeMap attributeMap = metaData.getAttributeMap();
+                            final AttributeMap attributeMap = metaData.getAttributes();
                             processInfoStreamTarget.getAttributes().putAll(attributeMap);
                             // We let the streamCloser close the stream target
                             // with the stream store as it may want to delete it

@@ -1,0 +1,184 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "name" : "Date Time",
+        "expression" : "${Date Time}",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 172,
+        "visible" : true
+      }, {
+        "name" : "Precision",
+        "expression" : "${Precision}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 72,
+        "visible" : true
+      }, {
+        "name" : "Precision ms",
+        "expression" : "${Precision ms}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 94,
+        "visible" : true
+      }, {
+        "name" : "colour",
+        "expression" : "${colour}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 47,
+        "visible" : true
+      }, {
+        "name" : "state",
+        "expression" : "${state}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 38,
+        "visible" : true
+      }, {
+        "name" : "user",
+        "expression" : "${user}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 48,
+        "visible" : true
+      }, {
+        "name" : "Statistic Count",
+        "expression" : "${Statistic Count}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 102,
+        "visible" : true
+      }, {
+        "name" : "Statistic Value",
+        "expression" : "${Statistic Value}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 139,
+        "visible" : true
+      }, {
+        "name" : "Max Statistic Value",
+        "expression" : "${Max Statistic Value}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 122,
+        "visible" : true
+      }, {
+        "name" : "Min Statistic Value",
+        "expression" : "${Min Statistic Value}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 123,
+        "visible" : true
+      }, {
+        "name" : "Statistic Name",
+        "expression" : "${Statistic Name}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 268,
+        "visible" : true
+      } ],
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "StroomStatsStore",
+        "uuid" : "063f820b-8795-478f-a721-de724f9b4dc3",
+        "name" : "ValueStatisticsStroomStats"
+      },
+      "expression" : {
+        "type" : "operator",
+        "op" : "AND",
+        "children" : [ {
+          "type" : "term",
+          "field" : "Date Time",
+          "condition" : "BETWEEN",
+          "value" : "now() - 14d,now() +14d",
+          "enabled" : false
+        }, {
+          "type" : "term",
+          "field" : "Precision",
+          "condition" : "EQUALS",
+          "value" : "DAY",
+          "enabled" : true
+        }, {
+          "type" : "term",
+          "field" : "colour",
+          "condition" : "EQUALS",
+          "value" : "Green",
+          "enabled" : false
+        }, {
+          "type" : "term",
+          "field" : "state",
+          "condition" : "EQUALS",
+          "value" : "IN",
+          "enabled" : false
+        }, {
+          "type" : "term",
+          "field" : "user",
+          "condition" : "EQUALS",
+          "value" : "user2",
+          "enabled" : false
+        } ],
+        "enabled" : true
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      }
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 200,
+      "height" : 200
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "query-JT8D7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "table-IIO1T"
+      } ],
+      "selected" : 0
+    } ]
+  },
+  "tabVisibility" : "SHOW_ALL"
+}

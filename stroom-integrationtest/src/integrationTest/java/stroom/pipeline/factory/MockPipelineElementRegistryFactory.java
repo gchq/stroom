@@ -114,7 +114,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                 return (T) new TextWriter(null);
             }
             if (elementClass.equals(StreamAppender.class)) {
-                return (T) new StreamAppender(null, null, null, null, null, null);
+                return (T) new StreamAppender(null, null, null, null, null, null, null);
             }
             if (elementClass.equals(FileAppender.class)) {
                 return (T) new FileAppender(null, null);

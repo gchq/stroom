@@ -123,25 +123,20 @@ public final class CriteriaLoggingUtil {
                                          final CriteriaSet<?> set) {
         if (set != null) {
             final Or or = new Or();
-
             for (final Object obj : set) {
                 if (obj != null) {
                     or.getAdvancedQueryItems()
                             .add(EventLoggingUtil.createTerm(name, TermCondition.EQUALS, obj.toString()));
                 }
             }
+            if (set.getMatchNull() != null && set.getMatchNull()) {
+                or.getAdvancedQueryItems().add((EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "NULL")));
+            }
 
-            if (or.getAdvancedQueryItems().size() == 0) {
-                if (set.getMatchNull() != null && set.getMatchNull()) {
-                    or.getAdvancedQueryItems().add((EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "NULL")));
-                }
-
+            if (or.getAdvancedQueryItems().size() == 1) {
+                items.add(or.getAdvancedQueryItems().get(0));
+            } else if (or.getAdvancedQueryItems().size() > 1) {
                 items.add(or);
-
-            } else {
-                if (set.getMatchNull() != null && set.getMatchNull()) {
-                    items.add((EventLoggingUtil.createTerm(name, TermCondition.EQUALS, "NULL")));
-                }
             }
         }
     }

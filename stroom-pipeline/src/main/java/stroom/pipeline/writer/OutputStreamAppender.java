@@ -18,7 +18,6 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 public class OutputStreamAppender extends AbstractAppender {
@@ -31,7 +30,12 @@ public class OutputStreamAppender extends AbstractAppender {
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected OutputStream createOutputStream() {
         return outputStream;
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        return 0;
     }
 }

@@ -1,0 +1,146 @@
+<!--
+  ~ Copyright 2018 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+    <ui:style>
+        .layout {
+        width: 100%;
+        height: 100%;
+        }
+
+        .content {
+        width: 100%;
+        height: 100%;
+        }
+
+        .buttons {
+        width: 100%;
+        text-align: right;
+        padding-top: 5px;
+        }
+
+        .button {
+        margin: 0;
+        padding: 2px 4px;
+        width: 100px;
+        text-decoration: none;
+        cursor: pointer;
+        cursor: hand;
+        border: 1px solid #918e8c;
+        border-radius: 6px;
+        box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+        background-color: #2962ff;
+        border-color: #2979ff;
+        color: white;
+        }
+        .button:active {
+        border: 1px solid #5b7aa1 !important;
+        background-color: #2979ff !important;
+        }
+        .button:hover {
+        border: 1px solid #5b7aa1 !important;
+        background-color: #2979ff !important;
+        }
+        .button[disabled] {
+        cursor: default;
+        background-color: #bdbdbd;
+        color: #fafafa;
+        }
+        .button[disabled]:hover {
+        cursor: default;
+        background-color: #bdbdbd;
+        color: #fafafa;
+        }
+
+
+        .accept {
+        background-color: #388e3c;
+        border-color: #2e7d32;
+        }
+        .accept:active {
+        background-color: #43a047 !important;
+        border-color: #388e3c !important;
+        }
+        .accept:hover {
+        background-color: #43a047 !important;
+        border-color: #388e3c !important;
+        }
+        .accept[disabled] {
+        border: 1px solid #bdbdbd !important;
+        box-shadow: none !important;
+        background-color: #bdbdbd !important;
+        color: #fafafa !important;
+        }
+        .accept[disabled]:hover {
+        border: 1px solid #bdbdbd !important;
+        box-shadow: none !important;
+        background-color: #bdbdbd !important;
+        color: #fafafa !important;
+        }
+
+        .reject {
+        margin-left: 5px;
+        background-color: #d50000;
+        border-color: #b71c1c;
+        }
+        .reject:active {
+        background-color: #e53935 !important;
+        border-color: #d50000 !important;
+        }
+        .reject:hover {
+        background-color: #e53935 !important;
+        border-color: #d50000 !important;
+        }
+        .reject[disabled] {
+        border: 1px solid #bdbdbd !important;
+        box-shadow: none !important;
+        background-color: #bdbdbd !important;
+        color: #fafafa !important;
+        }
+        .reject[disabled]:hover {
+        border: 1px solid #bdbdbd !important;
+        box-shadow: none !important;
+        background-color: #bdbdbd !important;
+        color: #fafafa !important;
+        }
+
+        <!--.accept[disabled] {-->
+        <!--cursor: default;-->
+        <!--background-color: grey;-->
+        <!--color: white;-->
+        <!--}-->
+
+        <!--.accept[disabled]:hover {-->
+        <!--border: 1px outset #ccc;-->
+        <!--}-->
+    </ui:style>
+
+    <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+        <g:center>
+            <g:ResizeLayoutPanel ui:field="content" styleName="{style.content}"/>
+        </g:center>
+        <g:south size="26">
+            <g:FlowPanel styleName="{style.buttons}">
+                <g:Button ui:field="accept" styleName="{style.button} {style.accept}" text="Accept"/>
+                <g:Button ui:field="reject" styleName="{style.button} {style.reject}" text="Reject"/>
+            </g:FlowPanel>
+        </g:south>
+    </g:DockLayoutPanel>
+</ui:UiBinder>

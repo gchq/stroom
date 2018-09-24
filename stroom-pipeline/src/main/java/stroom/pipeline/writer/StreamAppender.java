@@ -17,10 +17,8 @@
 
 package stroom.pipeline.writer;
 
-import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
-import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;
@@ -37,8 +35,11 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.pipeline.task.ProcessStatisticsFactory;
+import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.streamtask.shared.Processor;
 import stroom.util.shared.Severity;
 
@@ -55,15 +56,17 @@ public class StreamAppender extends AbstractAppender {
     private final StreamHolder streamHolder;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
+    private final RecordCount recordCount;
     private final StreamCloser streamCloser;
 
     private String feed;
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
-
-    private SegmentOutputStream segmentOutputStream;
+    private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private boolean doneHeader;
+
+    private ProcessStatistics lastProcessStatistics;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -71,6 +74,7 @@ public class StreamAppender extends AbstractAppender {
                           final StreamHolder streamHolder,
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
+                          final RecordCount recordCount,
                           final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
@@ -78,6 +82,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamHolder = streamHolder;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
+        this.recordCount = recordCount;
         this.streamCloser = streamCloser;
     }
 
@@ -121,8 +126,7 @@ public class StreamAppender extends AbstractAppender {
         // Let the stream closer handle closing it
         streamCloser.add(streamTarget);
 
-//        if (segmentOutput) {
-        segmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
+        wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
             @Override
             public void close() throws IOException {
                 super.flush();
@@ -130,19 +134,7 @@ public class StreamAppender extends AbstractAppender {
                 StreamAppender.this.close();
             }
         };
-
-//        } else {
-//            targetOutputStream = new WrappedOutputStream(streamTarget.getOutputStream()) {
-//                @Override
-//                public void close() throws IOException {
-//                    super.flush();
-//                    super.close();
-//                    StreamAppender.this.close();
-//                }
-//            };
-//        }
-
-        return segmentOutputStream;
+        return wrappedSegmentOutputStream;
     }
 
     @Override
@@ -164,24 +156,44 @@ public class StreamAppender extends AbstractAppender {
         // whether a footer is actually written. We do this because we always make an allowance for a footer for data
         // display purposes.
         insertSegmentMarker();
+
+        super.returnDestination(destination);
     }
 
     private void insertSegmentMarker() throws IOException {
         // Add a segment marker to the output stream if we are segmenting.
         if (segmentOutput) {
-            segmentOutputStream.addSegment();
+            wrappedSegmentOutputStream.addSegment();
         }
     }
 
     private void close() {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
-            // Write meta data.
-            final AttributeMap attributeMap = metaData.getAttributeMap();
-            streamTarget.getAttributes().putAll(attributeMap);
+            // Write process meta data.
+            streamTarget.getAttributes().putAll(metaData.getAttributes());
+
+            // Get current process statistics
+            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+            // Diff the current statistics with the last captured statistics.
+            final ProcessStatistics currentStatistics = processStatistics.substract(lastProcessStatistics);
+            // Set the last statistics.
+            lastProcessStatistics = processStatistics;
+
+            // Write statistics meta data.
+            currentStatistics.write(streamTarget.getAttributes());
+
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (wrappedSegmentOutputStream != null) {
+            return wrappedSegmentOutputStream.getPosition();
+        }
+        return 0;
     }
 
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
@@ -205,5 +217,12 @@ public class StreamAppender extends AbstractAppender {
             displayPriority = 3)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
+    }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a new one created.",
+            displayPriority = 4)
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
     }
 }

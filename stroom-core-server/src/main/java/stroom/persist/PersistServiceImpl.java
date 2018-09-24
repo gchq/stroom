@@ -119,6 +119,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 //                .scan();
 
         final List<String> entityClassNames = Arrays.asList(
+                "stroom.activity.shared.Activity",
                 "stroom.dashboard.shared.QueryEntity",
 //                "stroom.explorer.ExplorerTreeNode",
 //                "stroom.explorer.ExplorerTreePath",

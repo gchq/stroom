@@ -18,6 +18,7 @@ public class RefDataStoreConfig {
     private String maxStoreSize = "50G";
     private String purgeAge = "30d";
     private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
+    private boolean isReadAheadEnabled = true;
 
     @JsonPropertyDescription("The full directory path to use for storing the reference data store. It MUST be on " +
             "local disk, NOT network storage, due to use of memory mapped files. The directory will be created " +
@@ -87,7 +88,20 @@ public class RefDataStoreConfig {
     }
 
     @JsonIgnore
-    long getMaxStoreSizeBytes() {
+    public long getMaxStoreSizeBytes() {
         return ModelStringUtil.parseIECByteSizeString(maxStoreSize);
+    }
+
+    @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
+            "expectation that it will be used at some point. This generally improves performance as more data is " +
+            "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
+            "the actively used ref data is larger than the available RAM, as this will stop it evicting hot " +
+            "ref entries to make space for pre-fetched data.")
+    public boolean isReadAheadEnabled() {
+        return isReadAheadEnabled;
+    }
+
+    public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
+        this.isReadAheadEnabled = isReadAheadEnabled;
     }
 }

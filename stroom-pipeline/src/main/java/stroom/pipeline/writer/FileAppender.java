@@ -23,6 +23,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -47,7 +48,7 @@ public class FileAppender extends AbstractAppender {
     private static final String LOCK_EXTENSION = ".lock";
 
     private final PathCreator pathCreator;
-
+    private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
 
     @Inject
@@ -65,7 +66,7 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a path to use.
-            String path = null;
+            String path;
             if (outputPaths.length == 1) {
                 path = outputPaths[0];
             } else {
@@ -100,14 +101,22 @@ public class FileAppender extends AbstractAppender {
             }
 
             // Get a writer for the new lock file.
-            final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(lockFile));
-            return new LockedOutputStream(outputStream, lockFile, outFile);
+            byteCountOutputStream = new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
 
         } catch (final IOException e) {
             throw e;
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (byteCountOutputStream == null) {
+            return 0;
+        }
+        return byteCountOutputStream.getCount();
     }
 
     /**
@@ -118,5 +127,12 @@ public class FileAppender extends AbstractAppender {
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
+    }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.",
+            displayPriority = 2)
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
     }
 }

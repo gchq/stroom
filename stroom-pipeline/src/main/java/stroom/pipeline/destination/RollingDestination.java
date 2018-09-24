@@ -18,6 +18,7 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.io.ByteCountOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,7 +35,7 @@ public abstract class RollingDestination implements Destination {
 
     private final Object key;
     private final long frequency;
-    private final long maxSize;
+    private final long rollSize;
     private final long creationTime;
     private volatile byte[] footer;
 
@@ -48,11 +49,11 @@ public abstract class RollingDestination implements Destination {
 
     protected RollingDestination(final Object key,
                                  final long frequency,
-                                 final long maxSize,
+                                 final long rollSize,
                                  final long creationTime) {
         this.key = key;
         this.frequency = frequency;
-        this.maxSize = maxSize;
+        this.rollSize = rollSize;
         this.creationTime = creationTime;
     }
 
@@ -94,7 +95,7 @@ public abstract class RollingDestination implements Destination {
 
         // If we haven't written yet then create the output stream and
         // write a header if we have one.
-        if (header != null && header.length > 0 && outputStream != null && outputStream.getBytesWritten() == 0) {
+        if (header != null && header.length > 0 && outputStream != null && outputStream.getCount() == 0) {
             // Write the header.
             write(header);
         }
@@ -152,7 +153,7 @@ public abstract class RollingDestination implements Destination {
 
     private boolean shouldRoll(final long currentTime) {
         final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getBytesWritten() > maxSize;
+        return creationTime < oldestAllowed || outputStream.getCount() > rollSize;
     }
 
     protected final void roll() throws IOException {
@@ -163,7 +164,7 @@ public abstract class RollingDestination implements Destination {
         beforeRoll(exceptions::add);
 
         // If we have written any data then write a footer if we have one.
-        if (footer != null && footer.length > 0 && outputStream != null && outputStream.getBytesWritten() > 0) {
+        if (footer != null && footer.length > 0 && outputStream != null && outputStream.getCount() > 0) {
             // Write the footer.
             try {
                 write(footer);

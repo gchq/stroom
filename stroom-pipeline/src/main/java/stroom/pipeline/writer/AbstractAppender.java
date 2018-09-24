@@ -18,6 +18,7 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;
@@ -28,6 +29,8 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     private OutputStream outputStream;
     private byte[] footer;
+    private String size;
+    private Long sizeBytes = null;
 
     AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;
@@ -35,6 +38,24 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void endProcessing() {
+        closeCurrentOutputStream();
+        super.endProcessing();
+    }
+
+    @Override
+    public Destination borrowDestination() throws IOException {
+        return this;
+    }
+
+    @Override
+    public void returnDestination(final Destination destination) throws IOException {
+        final Long sizeBytes = getSizeBytes();
+        if (sizeBytes > 0 && sizeBytes <= getCurrentOutputSize()) {
+            closeCurrentOutputStream();
+        }
+    }
+
+    private void closeCurrentOutputStream() {
         if (outputStream != null) {
             try {
                 writeFooter();
@@ -47,18 +68,9 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
             } catch (final IOException e) {
                 error(e.getMessage(), e);
             }
+
+            outputStream = null;
         }
-
-        super.endProcessing();
-    }
-
-    @Override
-    public Destination borrowDestination() throws IOException {
-        return this;
-    }
-
-    @Override
-    public void returnDestination(final Destination destination) throws IOException {
     }
 
     @Override
@@ -99,5 +111,27 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     protected void error(final String message, final Exception e) {
         errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, e);
+    }
+
+    abstract long getCurrentOutputSize();
+
+    private Long getSizeBytes() {
+        if (sizeBytes == null) {
+            sizeBytes = -1L;
+
+            // Set the maximum number of bytes to write before creating a new stream.
+            if (size != null && size.trim().length() > 0) {
+                try {
+                    sizeBytes = ModelStringUtil.parseIECByteSizeString(size);
+                } catch (final RuntimeException e) {
+                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(), "Unable to parse size: " + size, null);
+                }
+            }
+        }
+        return sizeBytes;
+    }
+
+    protected void setRollSize(final String size) {
+        this.size = size;
     }
 }
