@@ -67,8 +67,7 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
     /**
      * Creates a new instance with a given node as the root
      *
-     * @param root
-     *            the node to be used as the root.
+     * @param root the node to be used as the root.
      */
     public DefaultTreeForTreeLayout(final TreeNode root) {
         super(root);
@@ -94,21 +93,14 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
     }
 
     /**
-     * @param parentNode
-     *            [hasNode(parentNode)]
-     * @param node
-     *            [!hasNode(node)]
+     * @param parentNode [hasNode(parentNode)]
+     * @param node       [!hasNode(node)]
      */
     public void addChild(final TreeNode parentNode, final TreeNode node) {
         checkArg(hasNode(parentNode), "parentNode is not in the tree");
         checkArg(!hasNode(node), "node is already in the tree");
 
-        List<TreeNode> list = childrenMap.get(parentNode);
-        if (list == null) {
-            list = new ArrayList<>();
-            childrenMap.put(parentNode, list);
-        }
-        list.add(node);
+        childrenMap.computeIfAbsent(parentNode, k -> new ArrayList<>()).add(node);
         parents.put(node, parentNode);
     }
 

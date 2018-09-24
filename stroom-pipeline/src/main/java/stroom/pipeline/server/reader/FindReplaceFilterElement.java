@@ -33,40 +33,40 @@ import java.io.Reader;
 @Component
 @Scope("prototype")
 @ConfigurableElement(
-        type = "TextReplacementFilterReader",
+        type = "FindReplaceFilter",
         category = Category.READER,
         roles = {
-//                PipelineElementType.ROLE_TARGET,
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.ROLE_READER,
                 PipelineElementType.ROLE_MUTATOR,
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
-public class TextReplacementFilterReaderElement extends AbstractReaderElement {
+public class FindReplaceFilterElement extends AbstractReaderElement {
     private final ErrorReceiver errorReceiver;
 
-    private TextReplacementFilterReader textReplacementFilterReader;
+    private FindReplaceFilter textReplacementFilterReader;
 
-    private String regex;
-    private String replacement;
-    private Integer maxReplacements;
-    private boolean literal;
+    private String find;
+    private String replacement = "";
+    private int maxReplacements = -1;
+    private boolean regex;
     private boolean dotAll;
-    private int bufferSize = 2000;
+    private int bufferSize = 1000;
 
     @Inject
-    public TextReplacementFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
+    public FindReplaceFilterElement(final ErrorReceiverProxy errorReceiver) {
         this.errorReceiver = errorReceiver;
     }
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        textReplacementFilterReader = new TextReplacementFilterReader.Builder()
+        textReplacementFilterReader = new FindReplaceFilter.Builder()
                 .reader(reader)
-                .regex(regex)
+                .find(find)
                 .replacement(replacement)
                 .maxReplacements(maxReplacements)
-                .literal(literal)
+                .regex(regex)
                 .dotAll(dotAll)
                 .bufferSize(bufferSize)
                 .errorReceiver(errorReceiver)
@@ -88,8 +88,8 @@ public class TextReplacementFilterReaderElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
-    public void setPattern(final String regex) {
-        this.regex = regex;
+    public void setFind(final String find) {
+        this.find = find;
     }
 
     @PipelineProperty(description = "The replacement text.")
@@ -98,21 +98,29 @@ public class TextReplacementFilterReaderElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.")
-    public void setMaxReplacements(final int maxReplacements) {
-        this.maxReplacements = maxReplacements;
+    public void setMaxReplacements(final String maxReplacements) {
+        try {
+            this.maxReplacements = Integer.parseInt(maxReplacements);
+        } catch (final NumberFormatException e) {
+            this.maxReplacements = -1;
+            // Ignore.
+        }
     }
 
-    @PipelineProperty(description = "Whether the pattern should be treated as a literal or a regex.")
-    public void setLiteral(final boolean literal) {
-        this.literal = literal;
+    @PipelineProperty(description = "Whether the pattern should be treated as a literal or a regex.",
+            defaultValue = "false")
+    public void setRegex(final boolean regex) {
+        this.regex = regex;
     }
 
-    @PipelineProperty(description = "Let '.' match all characters in a regex.")
+    @PipelineProperty(description = "Let '.' match all characters in a regex.",
+            defaultValue = "false")
     public void setDotAll(final boolean dotAll) {
         this.dotAll = dotAll;
     }
 
-    @PipelineProperty(description = "The number of characters to buffer when matching the regex.")
+    @PipelineProperty(description = "The number of characters to buffer when matching the regex.",
+            defaultValue = "1000")
     public void setBufferSize(final int bufferSize) {
         this.bufferSize = bufferSize;
     }

@@ -222,17 +222,20 @@ public class SteppingController {
 
     }
 
-    public void storeStepData(final StepData stepData) {
+    void storeStepData(final StepData stepData) {
         // Store the current data and reset for each filter.
+        final LoggingErrorReceiver errorReceiver = getErrorReceiver();
+        final List<Highlight> sourceHighlights = stepData.getSourceHighlights();
         for (final ElementMonitor monitor : monitors) {
-            stepData.getElementMap().put(monitor.getElementId(), monitor.getElementData(getErrorReceiver()));
+            final ElementData elementData = monitor.getElementData(errorReceiver, sourceHighlights);
+            stepData.getElementMap().put(monitor.getElementId(), elementData);
         }
     }
 
     /**
      * This method resets all filters so they are ready for the next record.
      */
-    public void clearAllFilters() throws SAXException {
+    void clearAllFilters() {
         // Store the current data for each filter.
         monitors.forEach(ElementMonitor::clear);
 
@@ -245,9 +248,8 @@ public class SteppingController {
 
     private LoggingErrorReceiver getErrorReceiver() {
         final ErrorReceiver errorReceiver = errorReceiverProxy.getErrorReceiver();
-        if (errorReceiver != null && errorReceiver instanceof LoggingErrorReceiver) {
-            final LoggingErrorReceiver loggingErrorReceiver = (LoggingErrorReceiver) errorReceiver;
-            return loggingErrorReceiver;
+        if (errorReceiver instanceof LoggingErrorReceiver) {
+            return (LoggingErrorReceiver) errorReceiver;
         }
         return null;
     }
@@ -255,8 +257,6 @@ public class SteppingController {
     /**
      * Used to decide if we have found a record that is in the appropriate
      * location, e.g. after the last returned record when stepping forward.
-     *
-     * @return
      */
     private boolean isRecordPositionOk(final long currentRecordNo) {
         // final PipelineStepTask request = controller.getRequest();

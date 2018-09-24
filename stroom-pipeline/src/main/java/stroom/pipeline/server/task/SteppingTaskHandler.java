@@ -36,7 +36,6 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
@@ -46,8 +45,6 @@ import stroom.security.Secured;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.server.fs.serializable.NestedInputStream;
-import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -58,16 +55,13 @@ import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.StroomLogger;
-import stroom.util.shared.Highlight;
 import stroom.util.shared.UserTokenUtil;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -142,7 +136,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
             // Set the current user so they are visible during translation.
             currentUserHolder.setCurrentUser(UserTokenUtil.getUserId(request.getUserToken()));
 
-            StepData stepData = null;
+            StepData stepData;
             generalErrors = new HashSet<>();
 
             loggingErrorReceiver = new LoggingErrorReceiver();
@@ -181,14 +175,14 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
                 // memory.
                 stepData = steppingResponseCache.getStepData(currentLocation);
 
-                // Fill in the source data if it hasn't been already.
-                for (final ElementData elementData : stepData.getElementMap().values()) {
-                    if (elementData.getElementType().hasRole(PipelineElementType.ROLE_PARSER)
-                            && elementData.getInput() == null) {
-                        final String data = getSourceData(currentLocation, stepData.getSourceHighlights());
-                        elementData.setInput(data);
-                    }
-                }
+//                // Fill in the source data if it hasn't been already.
+//                for (final ElementData elementData : stepData.getElementMap().values()) {
+//                    if (elementData.getElementType().hasRole(PipelineElementType.ROLE_PARSER)
+//                            && elementData.getInput() == null) {
+//                        final String data = getSourceData(currentLocation, stepData.getSourceHighlights());
+//                        elementData.setInput(data);
+//                    }
+//                }
 
             } else {
                 // Pick up any step data that remains so we can deliver any errors
@@ -320,12 +314,10 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
                     } finally {
                         // Close the stream source.
-                        if (streamSource != null) {
-                            try {
-                                streamStore.closeStreamSource(streamSource);
-                            } catch (final Exception e) {
-                                error(e);
-                            }
+                        try {
+                            streamStore.closeStreamSource(streamSource);
+                        } catch (final Exception e) {
+                            error(e);
                         }
                     }
 
@@ -413,14 +405,14 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
             // Find streams.
             final List<Stream> allStreamList = streamStore.find(criteria);
-            allStreamIdList = new ArrayList<Long>(allStreamList.size());
+            allStreamIdList = new ArrayList<>(allStreamList.size());
             for (final Stream stream : allStreamList) {
                 allStreamIdList.add(stream.getId());
             }
 
             if (criteria.getStreamIdSet() == null || Boolean.TRUE.equals(criteria.getStreamIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
-                filteredList = new ArrayList<Long>(allStreamList.size());
+                filteredList = new ArrayList<>(allStreamList.size());
                 for (final Stream stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
@@ -627,96 +619,94 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
     }
 
     private String createStreamInfo(final Feed feed, final Stream stream) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Feed: ");
-        sb.append(feed.getName());
-        sb.append(" Received: ");
-        sb.append(DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-        sb.append(" [");
-        sb.append(stream.getId());
-        return sb.toString();
+        return "Feed: " +
+                feed.getName() +
+                " Received: " +
+                DateUtil.createNormalDateTimeString(stream.getCreateMs()) +
+                " [" +
+                stream.getId();
     }
 
-    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
-        String data = null;
-        if (location != null && highlights != null && highlights.size() > 0) {
-            try {
-                final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
-                if (streamSource != null) {
-                    final NestedInputStream inputStream = new RANestedInputStream(streamSource);
-
-                    try {
-                        // Skip to the appropriate stream.
-                        if (inputStream.getEntry(location.getStreamNo() - 1)) {
-                            // Load the feed.
-                            final Feed feed = feedService.load(streamSource.getStream().getFeed());
-
-                            // Get the stream type.
-                            final StreamType streamType = streamTypeService.load(streamSource.getType());
-
-                            // Get the appropriate encoding for the stream type.
-                            final String encoding = EncodingSelection.select(feed, streamType);
-
-                            final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
-                            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                            final StringBuilder sb = new StringBuilder();
-
-                            int i = 0;
-                            boolean found = false;
-                            int lineNo = 1;
-                            int colNo = 0;
-                            boolean inRecord = false;
-
-                            while ((i = bufferedReader.read()) != -1 && !found) {
-                                final char c = (char) i;
-
-                                if (c == '\n') {
-                                    lineNo++;
-                                    colNo = 0;
-                                } else {
-                                    colNo++;
-                                }
-
-                                for (final Highlight highlight : highlights) {
-                                    if (!inRecord) {
-                                        if (lineNo > highlight.getLineFrom() || (lineNo >= highlight.getLineFrom()
-                                                && colNo >= highlight.getColFrom())) {
-                                            inRecord = true;
-                                            break;
-                                        }
-                                    } else if (lineNo > highlight.getLineTo()
-                                            || (lineNo >= highlight.getLineTo() && colNo >= highlight.getColTo())) {
-                                        inRecord = false;
-                                        found = true;
-                                        break;
-                                    }
-                                }
-
-                                if (inRecord) {
-                                    sb.append(c);
-                                }
-                            }
-
-                            inputStream.closeEntry();
-                            bufferedReader.close();
-
-                            data = sb.toString();
-                        }
-                    } finally {
-                        try {
-                            inputStream.close();
-                        } finally {
-                            streamStore.closeStreamSource(streamSource);
-                        }
-                    }
-                }
-            } catch (final IOException e) {
-                error(e);
-            }
-        }
-
-        return data;
-    }
+//    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
+//        String data = null;
+//        if (location != null && highlights != null && highlights.size() > 0) {
+//            try {
+//                final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
+//                if (streamSource != null) {
+//                    final NestedInputStream inputStream = new RANestedInputStream(streamSource);
+//
+//                    try {
+//                        // Skip to the appropriate stream.
+//                        if (inputStream.getEntry(location.getStreamNo() - 1)) {
+//                            // Load the feed.
+//                            final Feed feed = feedService.load(streamSource.getStream().getFeed());
+//
+//                            // Get the stream type.
+//                            final StreamType streamType = streamTypeService.load(streamSource.getType());
+//
+//                            // Get the appropriate encoding for the stream type.
+//                            final String encoding = EncodingSelection.select(feed, streamType);
+//
+//                            final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
+//                            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+//                            final StringBuilder sb = new StringBuilder();
+//
+//                            int i = 0;
+//                            boolean found = false;
+//                            int lineNo = 1;
+//                            int colNo = 0;
+//                            boolean inRecord = false;
+//
+//                            while ((i = bufferedReader.read()) != -1 && !found) {
+//                                final char c = (char) i;
+//
+//                                if (c == '\n') {
+//                                    lineNo++;
+//                                    colNo = 0;
+//                                } else {
+//                                    colNo++;
+//                                }
+//
+//                                for (final Highlight highlight : highlights) {
+//                                    if (!inRecord) {
+//                                        if (lineNo > highlight.getLineFrom() || (lineNo >= highlight.getLineFrom()
+//                                                && colNo >= highlight.getColFrom())) {
+//                                            inRecord = true;
+//                                            break;
+//                                        }
+//                                    } else if (lineNo > highlight.getLineTo()
+//                                            || (lineNo >= highlight.getLineTo() && colNo >= highlight.getColTo())) {
+//                                        inRecord = false;
+//                                        found = true;
+//                                        break;
+//                                    }
+//                                }
+//
+//                                if (inRecord) {
+//                                    sb.append(c);
+//                                }
+//                            }
+//
+//                            inputStream.closeEntry();
+//                            bufferedReader.close();
+//
+//                            data = sb.toString();
+//                        }
+//                    } finally {
+//                        try {
+//                            inputStream.close();
+//                        } finally {
+//                            streamStore.closeStreamSource(streamSource);
+//                        }
+//                    }
+//                }
+//            } catch (final IOException e) {
+//                error(e);
+//            }
+//        }
+//
+//        return data;
+//    }
 
     private void error(final Exception e) {
         LOGGER.debug(e, e);

@@ -16,18 +16,19 @@
 
 package stroom.pipeline.server.writer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.task.Recorder;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.StroomLogger;
+import stroom.util.shared.Highlight;
 import stroom.util.spring.StroomScope;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -38,12 +39,12 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(4096);
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
+        public OutputStream getOutputStream() {
             return outputStream;
         }
 
         @Override
-        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             this.header = header;
             this.footer = footer;
             return outputStream;
@@ -106,16 +107,16 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
     }
 
     @Override
-    public Destination borrowDestination() throws IOException {
+    public Destination borrowDestination() {
         return destination;
     }
 
     @Override
-    public void returnDestination(final Destination destination) throws IOException {
+    public void returnDestination(final Destination destination) {
     }
 
     @Override
-    public Object getData() {
+    public Object getData(final List<Highlight> highlights) {
         return destination.getData();
     }
 

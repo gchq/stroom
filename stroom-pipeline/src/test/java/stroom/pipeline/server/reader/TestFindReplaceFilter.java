@@ -24,15 +24,15 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 
-public class TestTextReplacementFilterReader {
+public class TestFindReplaceFilter {
     private static final int BUFFER_SIZE = 4096;
 
     @Test
     public void test() {
         final Reader reader = new StringReader("This is a nasty string");
-        final TextReplacementFilterReader textReplacementFilterReader = new TextReplacementFilterReader.Builder()
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
                 .reader(reader)
-                .regex("nasty")
+                .find("nasty")
                 .replacement("friendly")
                 .build();
         final String output = getOutput(textReplacementFilterReader);
@@ -42,9 +42,9 @@ public class TestTextReplacementFilterReader {
     @Test
     public void testSmallReads() {
         final Reader reader = new StringReader("This is a nasty string");
-        final TextReplacementFilterReader textReplacementFilterReader = new TextReplacementFilterReader.Builder()
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
                 .reader(reader)
-                .regex("nasty")
+                .find("nasty")
                 .replacement("friendly")
                 .build();
         final String output = getOutput(textReplacementFilterReader, 2);
@@ -54,9 +54,9 @@ public class TestTextReplacementFilterReader {
     @Test
     public void testSingleReplacement() {
         final Reader reader = new StringReader("dog cat dog cat dog");
-        final TextReplacementFilterReader textReplacementFilterReader = new TextReplacementFilterReader.Builder()
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
                 .reader(reader)
-                .regex("cat")
+                .find("cat")
                 .replacement("dog")
                 .maxReplacements(1)
                 .build();
@@ -67,9 +67,9 @@ public class TestTextReplacementFilterReader {
     @Test
     public void testBiggerReplacement() {
         final Reader reader = new StringReader(getDogCat());
-        final TextReplacementFilterReader textReplacementFilterReader = new TextReplacementFilterReader.Builder()
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
                 .reader(reader)
-                .regex("cat")
+                .find("cat")
                 .replacement("dog")
                 .build();
         final String output = getOutput(textReplacementFilterReader);
@@ -79,13 +79,39 @@ public class TestTextReplacementFilterReader {
     @Test
     public void testBiggerReplacement2() {
         final Reader reader = new StringReader(getDogCat2());
-        final TextReplacementFilterReader textReplacementFilterReader = new TextReplacementFilterReader.Builder()
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
                 .reader(reader)
-                .regex("cat")
+                .find("cat")
                 .replacement("a")
                 .build();
         final String output = getOutput(textReplacementFilterReader, 100000);
         Assert.assertFalse(output.contains("cat"));
+    }
+
+    @Test
+    public void testStartMatch() {
+        final Reader reader = new StringReader("cat dog cat dog");
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
+                .reader(reader)
+                .find("^cat")
+                .replacement("dog")
+                .regex(true)
+                .build();
+        final String output = getOutput(textReplacementFilterReader, 100000);
+        Assert.assertTrue(output.endsWith("dog dog cat dog"));
+    }
+
+    @Test
+    public void testEndMatch() {
+        final Reader reader = new StringReader(getDogCat3());
+        final FindReplaceFilter textReplacementFilterReader = new FindReplaceFilter.Builder()
+                .reader(reader)
+                .find("cat$")
+                .replacement("a")
+                .regex(true)
+                .build();
+        final String output = getOutput(textReplacementFilterReader, 100000);
+        Assert.assertTrue(output.endsWith("aaacata"));
     }
 
     private String getDogCat() {
@@ -106,6 +132,15 @@ public class TestTextReplacementFilterReader {
                 sb.append("a");
         }
         sb.append("cat");
+        return sb.toString();
+    }
+
+    private String getDogCat3() {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 39997; i++) {
+            sb.append("a");
+        }
+        sb.append("catcat");
         return sb.toString();
     }
 

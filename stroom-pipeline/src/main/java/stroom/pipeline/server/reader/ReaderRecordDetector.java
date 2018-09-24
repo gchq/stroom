@@ -53,6 +53,10 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
 
     @Override
     public int read(final char buf[], final int off, final int len) throws IOException {
+        if (controller == null) {
+            return super.read(buf, off, len);
+        }
+
         if (end) {
             return -1;
         }

@@ -16,21 +16,13 @@
 
 package stroom.pipeline.server.filter;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.annotation.Resource;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.xpath.XPathEvaluator;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
@@ -42,14 +34,20 @@ import stroom.pipeline.shared.Record;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.state.StreamHolder;
+import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
-import net.sf.saxon.Configuration;
-import net.sf.saxon.om.DocumentInfo;
-import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.xpath.XPathEvaluator;
+
+import javax.annotation.Resource;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -204,56 +202,56 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                     if (nodes.size() > 0) {
                         final XPathFilter xPathFilter = compiledXPathFilter.getXPathFilter();
                         switch (xPathFilter.getMatchType()) {
-                        case EXISTS:
-                            return true;
+                            case EXISTS:
+                                return true;
 
-                        case CONTAINS:
-                            for (int i = 0; i < nodes.size(); i++) {
-                                final NodeInfo node = nodes.get(i);
-                                if (contains(node.getStringValue(), xPathFilter.getValue(),
-                                        xPathFilter.isIgnoreCase())) {
-                                    return true;
-                                }
-                            }
-                            break;
-
-                        case EQUALS:
-                            for (int i = 0; i < nodes.size(); i++) {
-                                final NodeInfo node = nodes.get(i);
-                                if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                                    return true;
-                                }
-                            }
-                            break;
-                        case UNIQUE:
-                            for (int i = 0; i < nodes.size(); i++) {
-                                final NodeInfo node = nodes.get(i);
-                                String value = node.getStringValue();
-                                if (value != null) {
-                                    value = value.trim();
-                                    if (xPathFilter.isIgnoreCase() != null && xPathFilter.isIgnoreCase()) {
-                                        value = value.toLowerCase();
-                                    }
-                                }
-
-                                // See if we previously found a matching record
-                                // for this filter.
-                                Record record = xPathFilter.getUniqueRecord(value);
-                                if (record != null) {
-                                    // We did so see if this is the same record.
-                                    // If it is then we can return this record
-                                    // again.
-                                    if (record.getStreamId() == streamId && record.getRecordNo() == recordNo) {
+                            case CONTAINS:
+                                for (int i = 0; i < nodes.size(); i++) {
+                                    final NodeInfo node = nodes.get(i);
+                                    if (contains(node.getStringValue(), xPathFilter.getValue(),
+                                            xPathFilter.isIgnoreCase())) {
                                         return true;
                                     }
-
-                                } else {
-                                    record = new Record(streamId, recordNo);
-                                    xPathFilter.addUniqueValue(value, record);
-                                    return true;
                                 }
-                            }
-                            break;
+                                break;
+
+                            case EQUALS:
+                                for (int i = 0; i < nodes.size(); i++) {
+                                    final NodeInfo node = nodes.get(i);
+                                    if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                                        return true;
+                                    }
+                                }
+                                break;
+                            case UNIQUE:
+                                for (int i = 0; i < nodes.size(); i++) {
+                                    final NodeInfo node = nodes.get(i);
+                                    String value = node.getStringValue();
+                                    if (value != null) {
+                                        value = value.trim();
+                                        if (xPathFilter.isIgnoreCase() != null && xPathFilter.isIgnoreCase()) {
+                                            value = value.toLowerCase();
+                                        }
+                                    }
+
+                                    // See if we previously found a matching record
+                                    // for this filter.
+                                    Record record = xPathFilter.getUniqueRecord(value);
+                                    if (record != null) {
+                                        // We did so see if this is the same record.
+                                        // If it is then we can return this record
+                                        // again.
+                                        if (record.getStreamId() == streamId && record.getRecordNo() == recordNo) {
+                                            return true;
+                                        }
+
+                                    } else {
+                                        record = new Record(streamId, recordNo);
+                                        xPathFilter.addUniqueValue(value, record);
+                                        return true;
+                                    }
+                                }
+                                break;
                         }
                     }
                 }
@@ -306,7 +304,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         private final XPathExpression xPathExpression;
 
         public CompiledXPathFilter(final XPathFilter xPathFilter, final Configuration configuration,
-                final NamespaceContext namespaceContext) throws XPathExpressionException {
+                                   final NamespaceContext namespaceContext) throws XPathExpressionException {
             this.xPathFilter = xPathFilter;
 
             final String path = xPathFilter.getXPath();
@@ -328,7 +326,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public Object getData() {
+    public Object getData(final List<Highlight> highlights) {
         final NodeInfo events = getEvents();
         if (events == null) {
             return null;
