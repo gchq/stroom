@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -21,6 +22,7 @@ import java.util.TreeMap;
 /**
  * Responsible for registering stroom's various externally exposed services with service discovery
  */
+@Singleton
 public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryRegistrar.class);
 
