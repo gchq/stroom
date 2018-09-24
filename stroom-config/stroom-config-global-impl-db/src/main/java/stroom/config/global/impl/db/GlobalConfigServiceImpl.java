@@ -30,6 +30,8 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,6 +51,7 @@ import static stroom.config.impl.db.stroom.tables.ConfigHistory.CONFIG_HISTORY;
 @Singleton
 class GlobalConfigServiceImpl implements GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigServiceImpl.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigServiceImpl.class);
 
     private final ConnectionProvider connectionProvider;
     private final Security security;
@@ -123,6 +126,17 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
             final List<ConfigRecord> records = map.values().stream()
                     .map(v -> new ConfigRecord(null, v.getName(), v.getValue()))
                     .collect(Collectors.toList());
+
+            LAMBDA_LOGGER.debug(() -> {
+               String msg = "Attempting to insert the following properties into the database:\n";
+               return msg + records.stream()
+                       .map(configRecord ->
+                               LambdaLogger.buildMessage("[{}] : [{}]",
+                                       configRecord.get(CONFIG.NAME),
+                                       configRecord.get(CONFIG.VAL)))
+                       .collect(Collectors.joining("\n"));
+            });
+
             create.batchInsert(records).execute();
 
 
@@ -240,6 +254,10 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
             try (final Connection connection = connectionProvider.getConnection()) {
                 final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 
+                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                        "Saving property [{}] with new value [{}]",
+                        configProperty.getName(), configProperty.getValue()));
+
                 // Change value in DB
                 create
                         .update(CONFIG)
@@ -262,6 +280,8 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     private void deleteFromDb(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            LAMBDA_LOGGER.debug(() ->
+                    LambdaLogger.buildMessage("Deleting property [{}]", name));
             create
                     .deleteFrom(CONFIG)
                     .where(CONFIG.NAME.eq(name));
