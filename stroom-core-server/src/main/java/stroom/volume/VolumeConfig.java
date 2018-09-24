@@ -1,6 +1,7 @@
 package stroom.volume;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
@@ -20,7 +21,8 @@ public class VolumeConfig {
         this.resilientReplicationCount = resilientReplicationCount;
     }
 
-    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to remote ones?")
+    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to " +
+            "remote ones?")
     public boolean isPreferLocalVolumes() {
         return preferLocalVolumes;
     }
@@ -29,7 +31,10 @@ public class VolumeConfig {
         this.preferLocalVolumes = preferLocalVolumes;
     }
 
-    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', 'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') default is 'RoundRobin'")
+    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
+            "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
+            "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
+            "default is 'RoundRobin'")
     public String getVolumeSelector() {
         return volumeSelector;
     }
@@ -38,7 +43,9 @@ public class VolumeConfig {
         this.volumeSelector = volumeSelector;
     }
 
-    @JsonPropertyDescription("If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory")
+    @RequiresRestart(RequiresRestart.RestartScope.UI)
+    @JsonPropertyDescription("If no existing volumes are present a default volume will be created on application " +
+            "start. The volume will live in the volumes sub directory of the Stroom installation directory")
     public boolean isCreateDefaultOnStart() {
         return createDefaultOnStart;
     }

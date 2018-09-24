@@ -24,7 +24,6 @@ public class NodeConfig {
     }
 
     @ReadOnly
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Should only be set per node in application property file")
     @JsonProperty("node")
     public String getNodeName() {
@@ -36,7 +35,6 @@ public class NodeConfig {
     }
 
     @ReadOnly
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Should only be set per node in application property file")
     @JsonProperty("rack")
     public String getRackName() {

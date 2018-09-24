@@ -1,5 +1,7 @@
 package stroom.datasource;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import javax.inject.Singleton;
 
 @Singleton
@@ -9,6 +11,7 @@ public class DataSourceUrlConfig {
     private String annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
     private String elasticIndex = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
 
+    @JsonPropertyDescription("The URL for the Lucene index search service")
     public String getIndex() {
         return index;
     }
@@ -17,6 +20,7 @@ public class DataSourceUrlConfig {
         this.index = index;
     }
 
+    @JsonPropertyDescription("The URL for the SQL based statistics service")
     public String getStatisticStore() {
         return statisticStore;
     }
@@ -25,6 +29,7 @@ public class DataSourceUrlConfig {
         this.statisticStore = statisticStore;
     }
 
+    @JsonPropertyDescription("The URL for the annotations service")
     public String getAnnotations() {
         return annotations;
     }
@@ -33,6 +38,7 @@ public class DataSourceUrlConfig {
         this.annotations = annotations;
     }
 
+    @JsonPropertyDescription("The URL for the Elastic Search service")
     public String getElasticIndex() {
         return elasticIndex;
     }

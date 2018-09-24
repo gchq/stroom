@@ -6,8 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that a change to this configuration item requires the system
- * to be restarted for the change to take effect.
+ * Indicates that a change to this configuration item requires some or all of
+ * the system to be restarted for the change to take effect.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

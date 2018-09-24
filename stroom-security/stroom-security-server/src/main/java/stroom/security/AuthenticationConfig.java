@@ -2,6 +2,8 @@ package stroom.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.ReadOnly;
+import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
@@ -24,6 +26,7 @@ public class AuthenticationConfig {
         this.authenticationServiceUrl = authenticationServiceUrl;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Choose whether Stroom requires authenticated access")
     public boolean isAuthenticationRequired() {
         return authenticationRequired;
@@ -33,6 +36,7 @@ public class AuthenticationConfig {
         this.authenticationRequired = authenticationRequired;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.UI)
     @JsonPropertyDescription("The API token Stroom will use to authenticate itself when accessing other services")
     public String getApiToken() {
         return apiToken;
@@ -60,7 +64,8 @@ public class AuthenticationConfig {
         this.jwtConfig = jwtConfig;
     }
 
-    @JsonPropertyDescription("Prevent new logins to the system. This is useful if the system is scheduled to have an outage.")
+    @JsonPropertyDescription("Prevent new logins to the system. This is useful if the system is scheduled to " +
+            "have an outage.")
     public boolean isPreventLogin() {
         return preventLogin;
     }
@@ -94,6 +99,7 @@ public class AuthenticationConfig {
         private String jwtIssuer= "stroom";
         private boolean enableTokenRevocationCheck = true;
 
+        @RequiresRestart(RequiresRestart.RestartScope.UI)
         @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
         public String getJwtIssuer() {
             return jwtIssuer;
@@ -103,7 +109,9 @@ public class AuthenticationConfig {
             this.jwtIssuer = jwtIssuer;
         }
 
-        @JsonPropertyDescription("Whether or not to enable remote calls to the auth service to check if a token we have has been revoked.")
+        @RequiresRestart(RequiresRestart.RestartScope.UI)
+        @JsonPropertyDescription("Whether or not to enable remote calls to the auth service to check if " +
+                "a token we have has been revoked.")
         public boolean isEnableTokenRevocationCheck() {
             return enableTokenRevocationCheck;
         }

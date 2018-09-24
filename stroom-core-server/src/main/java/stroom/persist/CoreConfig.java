@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.util.config.annotations.ReadOnly;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Singleton;
@@ -45,6 +46,7 @@ public class CoreConfig {
         this.hibernateConfig = hibernateConfig;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Temp folder to write stuff to. Should only be set per node in application property file")
     public String getTemp() {
         return temp;

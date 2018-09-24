@@ -2,6 +2,7 @@ package stroom.cluster;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
@@ -13,6 +14,7 @@ public class ClusterConfig {
     private boolean clusterCallIgnoreSSLHostnameVerifier = true;
     private String clusterResponseTimeout = "30s";
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Do local calls when calling our own local services (true is an optimisation)")
     public boolean isClusterCallUseLocal() {
         return clusterCallUseLocal;
@@ -22,6 +24,7 @@ public class ClusterConfig {
         this.clusterCallUseLocal = clusterCallUseLocal;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Time in ms (but can be specified as 10s, 1m) before throwing read timeout")
     public String getClusterCallReadTimeout() {
         return clusterCallReadTimeout;
@@ -31,7 +34,9 @@ public class ClusterConfig {
         this.clusterCallReadTimeout = clusterCallReadTimeout;
     }
 
-    @JsonPropertyDescription("If cluster calls are using SSL then choose if we want to ignore host name verification")
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription("If cluster calls are using SSL then choose if we want to ignore host name " +
+            "verification")
     public boolean isClusterCallIgnoreSSLHostnameVerifier() {
         return clusterCallIgnoreSSLHostnameVerifier;
     }
