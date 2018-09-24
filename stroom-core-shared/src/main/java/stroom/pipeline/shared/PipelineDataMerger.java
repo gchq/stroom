@@ -214,26 +214,6 @@ public class PipelineDataMerger {
                 }
             }
 
-            // Ensure an element can only be linked to once.
-            final Map<String, PipelineLink> uniqueLinkToMap = new HashMap<>();
-            for (final Entry<String, List<PipelineLink>> entry : linkMap.entrySet()) {
-                final List<PipelineLink> links = entry.getValue();
-                final Iterator<PipelineLink> iter = links.iterator();
-                while (iter.hasNext()) {
-                    final PipelineLink link = iter.next();
-                    final PipelineLink existing = uniqueLinkToMap.get(link.getTo());
-                    if (existing == null) {
-                        // We haven't linked to this element before so just record
-                        // the link.
-                        uniqueLinkToMap.put(link.getTo(), link);
-                    } else {
-                        // We already have a link to this element so remove this
-                        // additional link.
-                        iter.remove();
-                    }
-                }
-            }
-
             // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
             if (!sourceProvided && !linkMap.containsKey(SOURCE)) {
                 String parserId = null;
@@ -252,6 +232,26 @@ public class PipelineDataMerger {
                     final List<PipelineLink> list = linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>());
                     if (!list.contains(link)) {
                         list.add(link);
+                    }
+                }
+            }
+
+            // Ensure an element can only be linked to once.
+            final Map<String, PipelineLink> uniqueLinkToMap = new HashMap<>();
+            for (final Entry<String, List<PipelineLink>> entry : linkMap.entrySet()) {
+                final List<PipelineLink> links = entry.getValue();
+                final Iterator<PipelineLink> iter = links.iterator();
+                while (iter.hasNext()) {
+                    final PipelineLink link = iter.next();
+                    final PipelineLink existing = uniqueLinkToMap.get(link.getTo());
+                    if (existing == null) {
+                        // We haven't linked to this element before so just record
+                        // the link.
+                        uniqueLinkToMap.put(link.getTo(), link);
+                    } else {
+                        // We already have a link to this element so remove this
+                        // additional link.
+                        iter.remove();
                     }
                 }
             }
