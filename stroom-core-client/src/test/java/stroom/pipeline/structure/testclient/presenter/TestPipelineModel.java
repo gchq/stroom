@@ -24,8 +24,11 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -37,7 +40,7 @@ import java.util.List;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestPipelineModel extends StroomUnitTest {
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
-            new String[] { PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS }, null);
+            new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
     private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType(ELEM_TYPE, "TestProperty1",
             "String");
     private static final PipelinePropertyType PROP_TYPE2 = new PipelinePropertyType(ELEM_TYPE, "TestProperty2",
@@ -283,10 +286,51 @@ public class TestPipelineModel extends StroomUnitTest {
         test(baseStack, override, 0, 0, 0, 0, 0, 1, 0, 0);
     }
 
+    @Test
+    public void testMove() {
+        final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
+
+        final PipelineElementType sourceElementType = new PipelineElementType("Source", null,
+                new String[]{PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE}, null);
+
+        final PipelineElementType combinedParserElementType = new PipelineElementType("CombinedParser", Category.PARSER,
+                new String[]{PipelineElementType.ROLE_PARSER,
+                        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
+                        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.ROLE_HAS_CODE}, null);
+
+        final PipelineElementType findReplaceElementType = new PipelineElementType("FindReplaceFilter", Category.READER,
+                new String[]{PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.ROLE_READER,
+                        PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.VISABILITY_STEPPING}, null);
+
+        final PipelineData pipelineData = new PipelineData();
+//        pipelineData.addElement(sourceElementType, "Source");
+        pipelineData.addElement(combinedParserElementType, "combinedParser");
+        pipelineData.addElement(findReplaceElementType, "findReplaceFilter");
+
+        pipelineData.addLink("Source", "combinedParser");
+        pipelineData.addLink("Source", "findReplaceFilter");
+
+        final PipelineModel pipelineModel = new PipelineModel();
+        pipelineModel.setBaseStack(null);
+        pipelineModel.setPipelineData(pipelineData);
+        pipelineModel.build();
+        builder.getTree(pipelineModel);
+
+        pipelineModel.removeElement(new PipelineElement("combinedParser", "CombinedParser"));
+        pipelineModel.addExistingElement(new PipelineElement("findReplaceFilter", "FindReplaceFilter"), new PipelineElement("combinedParser", "CombinedParser"));
+
+        pipelineModel.build();
+        builder.getTree(pipelineModel);
+    }
+
     private void test(final List<PipelineData> baseStack, final PipelineData pipelineData, final int addedElements,
-            final int removedElements, final int addedProperties, final int removedProperties,
-            final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
-            final int removedLinks) throws PipelineModelException {
+                      final int removedElements, final int addedProperties, final int removedProperties,
+                      final int addedPipelineReferences, final int removedPipelineReferences, final int addedLinks,
+                      final int removedLinks) throws PipelineModelException {
         final PipelineModel pipelineModel = new PipelineModel();
         pipelineModel.setBaseStack(baseStack);
         pipelineModel.setPipelineData(pipelineData);

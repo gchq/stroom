@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -287,6 +286,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     public void addExistingElement(final PipelineElement parent, final PipelineElement existingElement)
             throws PipelineModelException {
+//        debugLinks("LINKS 1", pipelineData.getLinks());
+//        debugLinks("LINKS 1", combinedData.getLinks());
+
         final String id = existingElement.getId();
 
         if (combinedData.getElements().containsKey(id)) {
@@ -296,15 +298,46 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         }
 
         // Make sure this element isn't shadowed anymore.
-        if (pipelineData.getRemovedElements().contains(existingElement)) {
-            pipelineData.getRemovedElements().remove(existingElement);
-        }
+        pipelineData.getRemovedElements().remove(existingElement);
+
+//        debugLinks("LINKS 2", pipelineData.getLinks());
+//        debugLinks("LINKS 2", combinedData.getLinks());
 
         pipelineData.addLink(PipelineDataUtil.createLink(parent.getId(), id));
 
+//        debugLinks("LINKS 3", pipelineData.getLinks());
+//        debugLinks("LINKS 3", combinedData.getLinks());
+
         buildCombinedData();
+
+//        debugLinks("LINKS 4", pipelineData.getLinks());
+//        debugLinks("LINKS 4", combinedData.getLinks());
+
         refresh();
     }
+
+//    private void debugLinks(final String title, final Map<String, List<PipelineLink>> links) {
+//        log("-----------");
+//        log(title);
+//
+//        log("--- Add ---");
+//        links.forEach((k, v) -> v.forEach(link -> log(link.getFrom() + " -> " + link.getTo())));
+//        log("-----------");
+//    }
+//
+//    private void debugLinks(final String title, final PipelineLinks links) {
+//        log("-----------");
+//        log(title);
+//        log("--- Add ---");
+//        if (links.getAdd() != null) {
+//            links.getAdd().forEach(link -> log(link.getFrom() + " -> " + link.getTo()));
+//        }
+//        log("--- Remove ---");
+//        if (links.getRemove() != null) {
+//            links.getRemove().forEach(link -> log(link.getFrom() + " -> " + link.getTo()));
+//        }
+//        log("-----------");
+//    }
 
     public void removeElement(final PipelineElement element) throws PipelineModelException {
         final String id = element.getId();
@@ -355,13 +388,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     private void removeLinks(final List<PipelineLink> list, final String element) {
-        final Iterator<PipelineLink> iter = list.iterator();
-        while (iter.hasNext()) {
-            final PipelineLink link = iter.next();
-            if (link.getTo().equals(element)) {
-                iter.remove();
-            }
-        }
+        list.removeIf(link -> link.getTo().equals(element));
     }
 
     @Override
@@ -373,4 +400,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEventFromSource(event, this);
     }
+
+//    private void log(String message) {
+////        LoggerFactory.getLogger(PipelineModel.class).info(message);
+////        GWT.log(message);
+//    }
 }

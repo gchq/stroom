@@ -235,7 +235,7 @@ public class PipelineDataMerger {
             }
 
             // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
-            if (!sourceProvided) {
+            if (!sourceProvided && !linkMap.containsKey(SOURCE)) {
                 String parserId = null;
                 for (final Entry<String, PipelineElement> entry : elementMap.entrySet()) {
                     if (parserId == null) {
