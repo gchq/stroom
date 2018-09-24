@@ -289,10 +289,7 @@ export function updateItemInTree<T extends Tree<T>>(
  * @param {object} input The input object
  * @param {string} key The key to remove
  */
-export function deleteItemFromObject<T extends Tree<T>>(
-  input: object,
-  key: any
-) {
+export function deleteItemFromObject(input: object, key: any) {
   const output = {};
 
   Object.keys(input)

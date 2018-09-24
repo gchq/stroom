@@ -56,7 +56,10 @@ import {
   StoreState as DocRefTypesStoreState
 } from "../components/DocRefTypes";
 // import { reducer as dictionaryEditor } from "../components/DictionaryEditor";
-// import { reducer as lineContainer } from "../components/LineTo";
+import {
+  reducer as lineContainer,
+  StoreState as LineContainerStoreState
+} from "../components/LineTo";
 // import { reducer as docRefInfo } from "../components/DocRefInfoModal/redux";
 // import { reducer as folderExplorer } from "../components/FolderExplorer/redux";
 // import { reducer as expressionBuilder } from "../components/ExpressionBuilder";
@@ -78,6 +81,7 @@ export interface GlobalStoreState {
   selectableItemListings: SelectableItemListingStoreState;
   form: FormStateMap;
   docRefTypes: DocRefTypesStoreState;
+  lineContainer: LineContainerStoreState;
 }
 
 export default combineReducers({
@@ -91,13 +95,13 @@ export default combineReducers({
   fetch,
   userSettings,
   selectableItemListings,
-  docRefTypes
+  docRefTypes,
   // processing,
   // folderExplorer,
   // expressionBuilder,
   // pipelineEditor,
   // xsltEditor,
-  // lineContainer,
+  lineContainer
   // recentItems,
   // dataViewers,
   // appChrome,

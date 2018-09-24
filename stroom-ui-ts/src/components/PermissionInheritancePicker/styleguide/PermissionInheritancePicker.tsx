@@ -13,26 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
-import { Field, reduxForm } from 'redux-form';
-import { storiesOf } from '@storybook/react';
+import * as React from "react";
+import { compose } from "recompose";
+import { connect } from "react-redux";
+import { Field, reduxForm, FormState } from "redux-form";
 
-import {
-  PermissionInheritancePicker,
-  permissionInheritanceValues,
-} from '../PermissionInheritancePicker';
-import 'styles/main.css';
+import { GlobalStoreState } from "../../../startup/reducers";
+import { PermissionInheritancePicker } from "../";
 
-const enhance = compose(
-  connect(({ form }) => ({ thisForm: form.permissionInheritanceTest }), {}),
+export interface EnhancedProps {
+  thisForm: FormState;
+}
+
+const enhance = compose<EnhancedProps, {}>(
+  connect(
+    ({ form }: GlobalStoreState) => ({
+      thisForm: form.permissionInheritanceTest
+    }),
+    {}
+  ),
   reduxForm({
-    form: 'permissionInheritanceTest',
-  }),
+    form: "permissionInheritanceTest"
+  })
 );
 
-let TestForm = ({ thisForm }) => (
+let TestForm = ({ thisForm }: EnhancedProps) => (
   <form>
     <div>
       <label>Chosen Permission Inheritance</label>
@@ -46,13 +51,12 @@ let TestForm = ({ thisForm }) => (
     {thisForm &&
       thisForm.values && (
         <div>
-          <div>Permission Inheritance: {thisForm.values.permissionInheritance}</div>
+          <div>
+            Permission Inheritance: {thisForm.values.permissionInheritance}
+          </div>
         </div>
       )}
   </form>
 );
 
-TestForm = enhance(TestForm);
-
-storiesOf('Permission Inheritance Picker', module)
-  .add('Permission Inheritance Picker', () => <TestForm />);
+export default enhance(TestForm);

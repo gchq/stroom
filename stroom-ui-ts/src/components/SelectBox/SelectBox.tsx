@@ -2,10 +2,13 @@ import * as React from "react";
 
 import { OptionType } from "../../types";
 
-export interface Props {
-  options: Array<OptionType>;
+export interface ControlledInputProps {
   value?: string;
   onChange: (a: string) => any;
+}
+
+export interface Props extends ControlledInputProps {
+  options: Array<OptionType>;
   placeholder?: string;
 }
 

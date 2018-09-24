@@ -1,7 +1,5 @@
-import SelectBox from './SelectBox';
+import SelectBox, { Props, ControlledInputProps } from "./SelectBox";
 
 export default SelectBox;
 
-export {
-  SelectBox
-}
+export { SelectBox, Props, ControlledInputProps };

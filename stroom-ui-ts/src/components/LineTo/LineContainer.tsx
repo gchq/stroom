@@ -24,9 +24,16 @@ import {
   renderComponent
 } from "recompose";
 
+import { GlobalStoreState } from "../../startup/reducers";
 import Loader from "../Loader";
 import LineContext from "./LineContext";
-import { actionCreators } from "./redux";
+import { actionCreators, StoreStatePerId } from "./redux";
+import {
+  LineType,
+  LineDefinition,
+  LineElementCreators,
+  LineElementCreator
+} from "./types";
 
 const { lineContainerCreated, lineContainerDestroyed } = actionCreators;
 
@@ -38,7 +45,11 @@ const { lineContainerCreated, lineContainerDestroyed } = actionCreators;
  *
  * @param {{ lineId, fromRect, toRect }} line details
  */
-const straightLineCreator = ({ lineId, fromRect, toRect }) => (
+const straightLineCreator: LineElementCreator = ({
+  lineId,
+  fromRect,
+  toRect
+}: LineDefinition) => (
   <line
     key={lineId}
     x1={fromRect.left + fromRect.width / 2}
@@ -53,53 +64,85 @@ const straightLineCreator = ({ lineId, fromRect, toRect }) => (
   />
 );
 
-function calculateLine(k) {
-  const lineId = k[0];
-  const lineData = k[1];
-
+function calculateLine(
+  lineId: string,
+  lineData: LineType
+): LineDefinition | undefined {
   const lineType = lineData.lineType;
   const fromElement = document.getElementById(lineData.fromId);
   const toElement = document.getElementById(lineData.toId);
 
-  const fromRect = fromElement.getBoundingClientRect();
-  const toRect = toElement.getBoundingClientRect();
+  if (fromElement && toElement) {
+    const fromRect = fromElement.getBoundingClientRect() as DOMRect;
+    const toRect = toElement.getBoundingClientRect() as DOMRect;
 
-  return {
-    lineId,
-    lineType,
-    fromRect,
-    toRect
-  };
+    return {
+      lineId,
+      lineType,
+      fromRect,
+      toRect
+    };
+  } else {
+    return undefined;
+  }
 }
 
 const DEFAULT_LINE_TYPE = "straight-line";
 
-const enhance = compose(
+export interface Props {
+  lineContextId: string;
+  className?: string;
+  children: React.ReactNode;
+  lineElementCreators?: LineElementCreators;
+}
+
+export interface ConnectState {
+  lineContainer: StoreStatePerId;
+}
+
+export interface ConnectDispatch {
+  lineContainerCreated: typeof lineContainerCreated;
+  lineContainerDestroyed: typeof lineContainerDestroyed;
+}
+
+export interface AddedProps {
+  lines: Array<LineDefinition>;
+  thisRect: DOMRect;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    AddedProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   connect(
-    (state, props) => ({
-      // operators are nested, so take all their props from parent
-      lineContainer: state.lineContainer[props.lineContextId]
+    ({ lineContainer }: GlobalStoreState, { lineContextId }: Props) => ({
+      lineContainer: lineContainer.byId[lineContextId]
     }),
     {
       lineContainerCreated,
       lineContainerDestroyed
     }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}, {}>({
     componentDidMount() {
-      this.props.lineContainerCreated(this.props.lineContextId);
+      const { lineContainerCreated, lineContextId } = this.props;
+      lineContainerCreated(lineContextId);
     },
 
     componentWillUnmount() {
-      this.props.lineContainerDestroyed(this.props.lineContextId);
+      const { lineContainerDestroyed, lineContextId } = this.props;
+      lineContainerDestroyed(lineContextId);
     }
   }),
   branch(
     ({ lineContainer }) => !lineContainer,
-    renderComponent(() => <Loader message="Loading pipeline..." />)
+    renderComponent(() => <Loader message="Loading Line Container..." />)
   ),
   withProps(({ lineContextId, lineContainer }) => {
-    let lines = [];
+    let lines: Array<LineDefinition> = [];
 
     const thisElement = document.getElementById(lineContextId);
     let thisRect;
@@ -108,7 +151,10 @@ const enhance = compose(
     }
 
     if (lineContainer) {
-      lines = Object.entries(lineContainer).map(k => calculateLine(k));
+      lines = Object.entries(lineContainer)
+        .map(k => calculateLine(k[0], k[1] as LineType))
+        .filter(e => e !== undefined)
+        .map(e => e as LineDefinition);
     }
 
     return { lines, thisRect };
@@ -117,12 +163,14 @@ const enhance = compose(
 
 const LineContainer = ({
   lineContextId,
-  lineElementCreators,
+  lineElementCreators = {
+    DEFAULT_LINE_TYPE: straightLineCreator
+  },
   className,
   thisRect,
   lines,
   children
-}) => {
+}: EnhancedProps) => {
   // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
   let transform;
   if (thisRect) {
@@ -153,18 +201,4 @@ const LineContainer = ({
   );
 };
 
-const EnhancedLineContainer = enhance(LineContainer);
-
-// EnhancedLineContainer.propTypes = {
-//   lineContextId: PropTypes.string.isRequired,
-//   lineElementCreators: PropTypes.object.isRequired, // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
-//   className: PropTypes.string,
-// };
-
-// EnhancedLineContainer.defaultProps = {
-//   lineElementCreators: {
-//     [DEFAULT_LINE_TYPE]: straightLineCreator,
-//   },
-// };
-
-export default EnhancedLineContainer;
+export default enhance(LineContainer);
