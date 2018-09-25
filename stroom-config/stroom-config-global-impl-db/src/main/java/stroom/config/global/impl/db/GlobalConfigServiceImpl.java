@@ -23,7 +23,6 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.impl.db.stroom.tables.records.ConfigRecord;
 import stroom.config.global.api.ConfigProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
@@ -38,12 +37,12 @@ import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import static stroom.config.impl.db.stroom.tables.Config.CONFIG;
 import static stroom.config.impl.db.stroom.tables.ConfigHistory.CONFIG_HISTORY;
@@ -58,7 +57,6 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     private final SecurityContext securityContext;
     private final Map<String, ConfigProperty> globalProperties = new HashMap<>();
     private final ConfigMapper configMapper;
-
 
     @Inject
     GlobalConfigServiceImpl(final ConnectionProvider connectionProvider,
@@ -87,7 +85,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
 
     private void loadMappedProperties() {
         try {
-            final List<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
+            final Collection<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
             for (final ConfigProperty configProperty : configPropertyList) {
                 globalProperties.put(configProperty.getName(), configProperty);
                 updateConfigObject(configProperty.getName(), configProperty.getValue());
@@ -111,34 +109,15 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                             if (configProperty != null) {
                                 configProperty.setId(record.getId());
                                 configProperty.setValue(record.getVal());
-                                configProperty.setSource("Database");
+                                configProperty.setSource(ConfigProperty.SourceType.DATABASE);
 
                                 updateConfigObject(record.getName(), record.getVal());
                             } else {
                                 // Delete old property.
-                                deleteFromDb(record.getName());
+//                                deleteFromDb(record.getName());
                             }
                         }
                     });
-
-
-            // Add remaining properties to the db.
-            final List<ConfigRecord> records = map.values().stream()
-                    .map(v -> new ConfigRecord(null, v.getName(), v.getValue()))
-                    .collect(Collectors.toList());
-
-            LAMBDA_LOGGER.debug(() -> {
-               String msg = "Attempting to insert the following properties into the database:\n";
-               return msg + records.stream()
-                       .map(configRecord ->
-                               LambdaLogger.buildMessage("[{}] : [{}]",
-                                       configRecord.get(CONFIG.NAME),
-                                       configRecord.get(CONFIG.VAL)))
-                       .collect(Collectors.joining("\n"));
-            });
-
-            create.batchInsert(records).execute();
-
 
 //            // Add remaining properties to the db.
 //            map.forEach((k, v) -> create(v));
@@ -162,7 +141,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                             if (configProperty != null) {
                                 configProperty.setId(record.getId());
                                 configProperty.setValue(record.getVal());
-                                configProperty.setSource("Database");
+                                configProperty.setSource(ConfigProperty.SourceType.DATABASE);
 
                                 Object typedValue = updateConfigObject(record.getName(), record.getVal());
 //                                configProperty.setTypedValue(typedValue);
@@ -212,7 +191,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                                 if (loaded != null) {
                                     loaded.setId(record.getId());
                                     loaded.setValue(record.getVal());
-                                    loaded.setSource("Database");
+                                    loaded.setSource(ConfigProperty.SourceType.DATABASE);
                                 }
                             }
                         });
@@ -258,17 +237,40 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                         "Saving property [{}] with new value [{}]",
                         configProperty.getName(), configProperty.getValue()));
 
+
                 // Change value in DB
-                create
+                int rowsAffected = create
                         .update(CONFIG)
                         .set(CONFIG.VAL, configProperty.getValue())
-                        .where(CONFIG.NAME.eq(configProperty.getName()));
+                        .where(CONFIG.NAME.eq(configProperty.getName()))
+                        .execute();
+
+                if (rowsAffected == 0) {
+                    LOGGER.debug("No record to update with key {}, so inserting new record", configProperty.getName());
+                    create
+                            .insertInto(CONFIG,
+                                    CONFIG.NAME,
+                                    CONFIG.VAL)
+                            .values(configProperty.getName(), configProperty.getValue())
+                            .execute();
+                }
 
                 // Record history.
                 recordHistory(configProperty);
 
-                // Update property.
+                // Update property in the config object tree
                 updateConfigObject(configProperty.getName(), configProperty.getValue());
+
+                // update the property in
+                final ConfigProperty configPropertyFromMap = globalProperties.get(configProperty.getName());
+                if (configPropertyFromMap != null) {
+                    configPropertyFromMap.setSource(ConfigProperty.SourceType.DATABASE);
+                    configPropertyFromMap.setValue(configProperty.getValue());
+                } else {
+                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
+                    globalProperties.put(configProperty.getName(), configProperty);
+                }
+
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -284,7 +286,8 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                     LambdaLogger.buildMessage("Deleting property [{}]", name));
             create
                     .deleteFrom(CONFIG)
-                    .where(CONFIG.NAME.eq(name));
+                    .where(CONFIG.NAME.eq(name))
+                    .execute();
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -295,7 +298,11 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
-                    .insertInto(CONFIG_HISTORY, CONFIG_HISTORY.UPDATE_TIME, CONFIG_HISTORY.UPDATE_USER, CONFIG_HISTORY.NAME, CONFIG_HISTORY.VAL)
+                    .insertInto(CONFIG_HISTORY,
+                            CONFIG_HISTORY.UPDATE_TIME,
+                            CONFIG_HISTORY.UPDATE_USER,
+                            CONFIG_HISTORY.NAME,
+                            CONFIG_HISTORY.VAL)
                     .values(System.currentTimeMillis(), securityContext.getUserId(), configProperty.getName(), configProperty.getValue())
                     .execute();
         } catch (final SQLException e) {

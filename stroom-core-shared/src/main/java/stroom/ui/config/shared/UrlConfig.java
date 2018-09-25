@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
 
 public class UrlConfig implements SharedObject {
-    private String ui;
+    private String ui = null;
     private String authenticationService = "http://auth-service:8099/authentication/v1";
-    private String users;
-    private String apiKeys;
-    private String changepassword;
-    private String kibana;
-    private String trackers;
+    private String users = "http://IP_ADDRESS/users";
+    private String apiKeys = "http://IP_ADDRESS/tokens";
+    private String changepassword = "http://IP_ADDRESS/changepassword";
+    private String kibana = null;
+    private String trackers = null;
     private String annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
     private String elastic = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
 

@@ -10,7 +10,7 @@
 
     <logger name="stroom" level="info" />
 
-    <logger name="stroom.config" level="trace" />
+    <logger name="stroom.config" level="debug" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

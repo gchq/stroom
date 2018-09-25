@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +43,14 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
-        List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         configProperties.forEach(configProperty ->
-                LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getValue()));
+                LOGGER.debug("{} - {} - {} - {}",
+                        configProperty.getName(),
+                        configProperty.getValue(),
+                        configProperty.getSource(),
+                        configProperty.getDefaultValue()));
     }
 
     @Test
@@ -60,7 +65,7 @@ class TestConfigMapper {
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
-        final List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
@@ -71,27 +76,27 @@ class TestConfigMapper {
         assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
     }
 
-//    @Test
-//    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
-//
-//        AppConfig appConfig = getAppConfig();
-//
-//        // simulate dropwiz setting a prop from the yaml
-//        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
-//        appConfig.getRefDataStoreConfig().setLocalDir(null);
-//
-//        ConfigMapper configMapper = new ConfigMapper(appConfig);
-//
-//        final List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
-//
-//        final ConfigProperty configProperty = configProperties.stream()
-//                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
-//                .findFirst()
-//                .orElseThrow();
-//
-//        assertThat(configProperty.getValue()).isEqualTo(initialValue);
-//        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
-//    }
+    @Test
+    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
+
+        AppConfig appConfig = getAppConfig();
+
+        // simulate a prop not being defined in the yaml
+        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
+        appConfig.getRefDataStoreConfig().setLocalDir(null);
+
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        final ConfigProperty configProperty = configProperties.stream()
+                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(configProperty.getValue()).isEqualTo(initialValue);
+        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+    }
 
     @Test
     void update_string() throws IOException, ConfigurationException {
@@ -144,7 +149,7 @@ class TestConfigMapper {
         ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
         ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
 
-        List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         configProperties.forEach(configProperty ->
                 LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getValue()));

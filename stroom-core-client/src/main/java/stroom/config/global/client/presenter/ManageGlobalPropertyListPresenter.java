@@ -21,17 +21,13 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.api.FindGlobalConfigCriteria;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.data.meta.api.DataRow;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.config.global.api.FetchGlobalConfigAction;
-import stroom.config.global.api.FindGlobalConfigCriteria;
-import stroom.config.global.api.ConfigProperty;
-import stroom.entity.shared.ResultList;
-import stroom.streamstore.client.presenter.FindStreamActionDataProvider;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
@@ -69,7 +65,7 @@ public class ManageGlobalPropertyListPresenter
                 if (row == null) {
                     return null;
                 }
-                return row.getSource();
+                return row.getSource().getName();
             }
         }, "Source", 150);
 

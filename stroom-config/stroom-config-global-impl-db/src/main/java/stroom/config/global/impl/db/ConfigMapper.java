@@ -20,6 +20,7 @@ package stroom.config.global.impl.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,11 +42,13 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -59,7 +62,8 @@ class ConfigMapper {
     private static final String ROOT_PROPERTY_PATH = "stroom";
     private static final String DOCREF_PREFIX = "docRef(";
 
-    private final List<ConfigProperty> globalProperties = new ArrayList<>();
+    //    private final List<ConfigProperty> globalProperties = new ArrayList<>();
+    private final SortedMap<String, ConfigProperty> globalPropertiesMap = new TreeMap<>();
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
     @Inject
@@ -68,21 +72,17 @@ class ConfigMapper {
         // The values in the passed AppConfig will have been set from the yaml by DropWizard on
         // app boot.  We want to know the default values as defined by the compile-time initial values of
         // the instance variables in the AppConfig tree.  Therefore create our own AppConfig tree and
-        // walk it to build a map of these default values.
-        final Map<String, Prop> propertyDefaultsMap = new HashMap<>();
-        addConfigObjectMethods(new AppConfig(), ROOT_PROPERTY_PATH, propertyDefaultsMap);
+        // walk it to populate globalPropertiesMap with the defaults.
+        addConfigObjectMethods(new AppConfig(), ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
 
-        final BiConsumer<String, Prop> propConsumer = createConfigPropertyCreationConsumer(propertyDefaultsMap);
-        // walk the AppConfig object model creating ConfigProperty objects for each property
-        addConfigObjectMethods(appConfig, ROOT_PROPERTY_PATH, propertyMap, propConsumer);
-
-        globalProperties.sort(Comparator.naturalOrder());
+        // Now walk the AppConfig object model from the YAML updating globalPropertiesMap where values
+        // differ from the defaults.
+        addConfigObjectMethods(appConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
     }
 
-    List<ConfigProperty> getGlobalProperties() {
-        return globalProperties;
+    Collection<ConfigProperty> getGlobalProperties() {
+        return globalPropertiesMap.values();
     }
-
 
     private void addConfigObjectMethods(final Object object,
                                         final String path,
@@ -90,7 +90,6 @@ class ConfigMapper {
         addConfigObjectMethods(object, path, propertyMap, (fullPath, prop) -> {
             // Do nothing
         });
-
     }
 
     private void addConfigObjectMethods(final Object object,
@@ -115,14 +114,14 @@ class ConfigMapper {
                 final Class<?> valueType = prop.getValueClass();
 
                 final Object value = prop.getValueFromConfigObject();
-                if (value != null) {
-                    if (isSupportedPropertyType(valueType)) {
-                        // This is a leaf, i.e. a property so add it to our map
-                        propertyMap.put(fullPath, prop);
+                if (isSupportedPropertyType(valueType)) {
+                    // This is a leaf, i.e. a property so add it to our map
+                    propertyMap.put(fullPath, prop);
 
-                        // Now let the consumer do something to it
-                        propConsumer.accept(fullPath, prop);
-                    } else {
+                    // Now let the consumer do something to it
+                    propConsumer.accept(fullPath, prop);
+                } else {
+                    if (value != null) {
                         // This must be a branch, i.e. config object so recurse into that
                         addConfigObjectMethods(value, fullPath, propertyMap, propConsumer);
                     }
@@ -134,30 +133,53 @@ class ConfigMapper {
         });
     }
 
-    private BiConsumer<String, Prop> createConfigPropertyCreationConsumer(final Map<String, Prop> propertyDefaults) {
+    private void yamlPropertyConsumer(final String fullPath, final Prop yamlProp) {
 
-        return (fullPath, prop) -> {
-            // Create global property.
-            final Prop propDefault = propertyDefaults.get(fullPath);
-            final String defaultValueAsStr = getDefaultValue(propDefault);
-            final String valueAsStr = getStringValue(prop);
+        // We have already walked a vanilla AppConfig object tree so all compile time
+        // props should be in here with a default value (and a value that matches it)
+        final ConfigProperty configProperty = globalPropertiesMap.get(fullPath);
 
-            // build a new ConfigProperty object from our Prop and our defaults
-            final ConfigProperty configProperty = new ConfigProperty();
-            configProperty.setSource("Code");
-            configProperty.setName(fullPath);
+        Preconditions.checkNotNull(configProperty, "Property %s with path %s exists in the " +
+                "YAML but not in the object model, this should not happen", yamlProp, fullPath);
+
+        // Create global property.
+        final String valueAsStr = getStringValue(yamlProp);
+
+        if (valueAsStr != null && !valueAsStr.equals(configProperty.getDefaultValue())) {
+            configProperty.setSource(ConfigProperty.SourceType.YAML);
             configProperty.setValue(valueAsStr);
-            configProperty.setDefaultValue(defaultValueAsStr);
+        }
 
-            updatePropertyFromConfigAnnotations(configProperty, prop);
+        if (configProperty.getValue() == null) {
+            LOGGER.debug("Property {} has no value from {} or {}",
+                    configProperty.getName(),
+                    ConfigProperty.SourceType.DEFAULT,
+                    ConfigProperty.SourceType.YAML);
+        }
+    }
 
-            // Default the value if we don't have a value and have a default
-            if (configProperty.getValue() == null && configProperty.getDefaultValue() != null) {
-                configProperty.setValue(configProperty.getDefaultValue());
-            }
+    private void defaultPropertyConsumer(final String fullPath, final Prop defaultProp) {
 
-            globalProperties.add(configProperty);
-        };
+        // Create global property.
+        final String defaultValueAsStr = getDefaultValue(defaultProp);
+
+        // build a new ConfigProperty object from our Prop and our defaults
+        final ConfigProperty configProperty = new ConfigProperty();
+        configProperty.setSource(ConfigProperty.SourceType.DEFAULT);
+        configProperty.setName(fullPath);
+
+        // Set both value and default to the default value defined in the object
+        configProperty.setValue(defaultValueAsStr);
+        configProperty.setDefaultValue(defaultValueAsStr);
+
+        updatePropertyFromConfigAnnotations(configProperty, defaultProp);
+
+        // Default the value if we don't have a value and have a default
+//        if (configProperty.getValue() == null && configProperty.getDefaultValue() != null) {
+//            configProperty.setValue(configProperty.getDefaultValue());
+//        }
+
+        globalPropertiesMap.put(fullPath, configProperty);
     }
 
     private boolean isSupportedPropertyType(final Class<?> type) {

@@ -34,7 +34,7 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
 
     // These fields are not saved to the database ... just
     private String defaultValue;
-    private String source;
+    private SourceType source;
     private String description;
     private boolean editable;
     private boolean password;
@@ -117,11 +117,11 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
         this.password = password;
     }
 
-    public String getSource() {
+    public SourceType getSource() {
         return source;
     }
 
-    public void setSource(final String source) {
+    public void setSource(final SourceType source) {
         this.source = source;
     }
 
@@ -138,6 +138,22 @@ public class ConfigProperty implements SharedObject, Comparable<ConfigProperty> 
                 ", value='" + value + '\'' +
                 ", source='" + source + '\'' +
                 '}';
+    }
+
+    public static enum SourceType {
+        DEFAULT("Default"),
+        YAML("YAML"),
+        DATABASE("Database");
+
+        private final String name;
+
+        SourceType(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     public static class Builder {
