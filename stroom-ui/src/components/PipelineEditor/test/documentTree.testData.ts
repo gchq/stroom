@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import testPipelines from './testPipelines';
+import testPipelines from "./testPipelines";
+import { DocRefTree } from "../../../types";
 
 export default {
-  uuid: 'root1234567890',
-  name: 'Stroom',
-  type: 'Folder',
+  uuid: "root1234567890",
+  name: "Stroom",
+  type: "Folder",
   children: Object.entries(testPipelines)
     .map(k => ({
       uuid: k[0],
-      data: k[1],
+      data: k[1]
     }))
     .map(pipeline => ({
       uuid: pipeline.uuid,
-      type: 'Pipeline',
-      name: pipeline.uuid,
-    })),
-};
+      type: "Pipeline",
+      name: pipeline.uuid
+    }))
+} as DocRefTree;

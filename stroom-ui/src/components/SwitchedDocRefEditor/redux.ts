@@ -13,20 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import { Action, ActionCreator } from "redux";
 
-const actionCreators = createActions({
-  DOC_REF_OPENED: docRef => ({ docRef }),
-});
+import { prepareReducer } from "../../lib/redux-actions-ts";
+import { DocRefType } from "../../types";
 
-const defaultState = [];
+export const DOC_REF_OPENED = "DOC_REF_OPENED";
 
-const reducer = handleActions(
-  {
-    DOC_REF_OPENED: (state, { payload: { docRef } }) =>
-      [docRef].concat(state.filter(d => d.uuid !== docRef.uuid)),
-  },
-  defaultState,
-);
+export interface DocRefOpenedAction extends Action<"DOC_REF_OPENED"> {
+  docRef: DocRefType;
+}
 
-export { actionCreators, reducer };
+export interface ActionCreators {
+  docRefOpened: ActionCreator<DocRefOpenedAction>;
+}
+
+export const actionCreators: ActionCreators = {
+  docRefOpened: docRef => ({
+    type: DOC_REF_OPENED,
+    docRef
+  })
+};
+
+export type StoreState = Array<DocRefType>;
+
+export const defaultState: StoreState = [];
+
+export const reducer = prepareReducer(defaultState)
+  .handleAction<DocRefOpenedAction>(
+    DOC_REF_OPENED,
+    (state: StoreState, { docRef }: DocRefOpenedAction) =>
+      [docRef].concat(state.filter(d => d.uuid !== docRef.uuid))
+  )
+  .getReducer();

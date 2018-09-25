@@ -1,16 +1,19 @@
-import { combineReducers } from 'redux';
+import { combineReducers } from "redux";
 
 import {
   reducer as menuItemsOpenReducer,
   actionCreators as menuItemsOpenActionCreators,
-} from './menuItemsOpenReducer';
+  StoreState as MenuItemsStoreState
+} from "./menuItemsOpenReducer";
 
-const actionCreators = {
-  ...menuItemsOpenActionCreators,
+export const actionCreators = {
+  ...menuItemsOpenActionCreators
 };
 
-const reducer = combineReducers({
-  areMenuItemsOpen: menuItemsOpenReducer,
+export const reducer = combineReducers({
+  areMenuItemsOpen: menuItemsOpenReducer
 });
 
-export { actionCreators, reducer };
+export interface StoreState {
+  areMenuItemsOpen: MenuItemsStoreState;
+}

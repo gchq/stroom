@@ -53,7 +53,10 @@ import {
   reducer as appSearch,
   StoreState as AppSearchStoreState
 } from "../components/AppSearchBar/redux";
-// import { reducer as appChrome } from "../sections/AppChrome/redux";
+import {
+  reducer as appChrome,
+  StoreState as AppChromeStoreState
+} from "../sections/AppChrome/redux";
 import {
   reducer as docRefTypes,
   StoreState as DocRefTypesStoreState
@@ -66,21 +69,42 @@ import {
   reducer as lineContainer,
   StoreState as LineContainerStoreState
 } from "../components/LineTo";
-// import { reducer as docRefInfo } from "../components/DocRefInfoModal/redux";
+import {
+  reducer as docRefInfo,
+  StoreState as DocRefInfoStoreState
+} from "../components/DocRefInfoModal/redux";
 import {
   reducer as folderExplorer,
   StoreState as FolderExplorerStoreState
 } from "../components/FolderExplorer/redux";
-// import { reducer as expressionBuilder } from "../components/ExpressionBuilder";
-// import { reducer as pipelineEditor } from "../components/PipelineEditor";
-// import { reducer as recentItems } from "../components/SwitchedDocRefEditor/redux";
+import {
+  reducer as expressionBuilder,
+  StoreState as ExpressionBuilderStoreState
+} from "../components/ExpressionBuilder";
+import {
+  reducer as pipelineEditor,
+  StoreState as PipelineEditorStoreState
+} from "../components/PipelineEditor";
+import {
+  reducer as recentItems,
+  StoreState as RecentItemsStoreState
+} from "../components/SwitchedDocRefEditor/redux";
 import {
   reducer as xsltEditor,
   StoreState as XsltEditorStoreState
 } from "../components/XsltEditor";
-// import { reducer as debuggers } from "../components/PipelineDebugger";
-// import { reducer as processing } from "../sections/Processing";
-// import { reducer as dataViewers } from "../sections/DataViewer";
+import {
+  reducer as debuggers,
+  StoreState as DebuggersStoreState
+} from "../components/PipelineDebugger";
+import {
+  reducer as processing,
+  StoreState as ProcessingStoreState
+} from "../sections/Processing";
+import {
+  reducer as dataViewers,
+  StoreState as DataViewersStoreState
+} from "../sections/DataViewer";
 
 export interface GlobalStoreState {
   appSearch: AppSearchStoreState;
@@ -98,6 +122,14 @@ export interface GlobalStoreState {
   folderExplorer: FolderExplorerStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
   xsltEditor: XsltEditorStoreState;
+  processing: ProcessingStoreState;
+  expressionBuilder: ExpressionBuilderStoreState;
+  pipelineEditor: PipelineEditorStoreState;
+  recentItems: RecentItemsStoreState;
+  dataViewers: DataViewersStoreState;
+  appChrome: AppChromeStoreState;
+  docRefInfo: DocRefInfoStoreState;
+  debuggers: DebuggersStoreState;
 }
 
 export default combineReducers({
@@ -112,17 +144,17 @@ export default combineReducers({
   userSettings,
   selectableItemListings,
   docRefTypes,
-  // processing,
   folderExplorer,
-  // expressionBuilder,
-  // pipelineEditor,
   xsltEditor,
   lineContainer,
-  // recentItems,
-  // dataViewers,
-  // appChrome,
-  // docRefInfo,
   appSearch,
-  dictionaryEditor
-  // debuggers
+  dictionaryEditor,
+  processing,
+  expressionBuilder,
+  pipelineEditor,
+  recentItems,
+  dataViewers,
+  appChrome,
+  docRefInfo,
+  debuggers
 });

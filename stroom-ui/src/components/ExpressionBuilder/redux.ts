@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from "redux-actions";
+import { Action, ActionCreator } from "redux";
+
+import { prepareReducer } from "../../lib/redux-actions-ts";
 
 import {
   assignRandomUuids,
@@ -24,7 +26,22 @@ import {
 } from "../../lib/treeUtils";
 
 import { toString } from "./expressionBuilderUtils";
-import { createActionHandlersPerId } from "../../lib/reduxFormUtils";
+
+export const EXPRESSION_EDITOR_CREATED = "EXPRESSION_EDITOR_CREATED";
+export const EXPRESSION_EDITOR_DESTROYED = "EXPRESSION_EDITOR_DESTROYED";
+export const EXPRESSION_SET_EDITABLE_BY_USER =
+  "EXPRESSION_SET_EDITABLE_BY_USER";
+export const EXPRESSION_CHANGED = "EXPRESSION_CHANGED";
+export const EXPRESSION_TERM_ADDED = "EXPRESSION_TERM_ADDED";
+export const EXPRESSION_OPERATOR_ADDED = "EXPRESSION_OPERATOR_ADDED";
+export const EXPRESSION_ITEM_UPDATED = "EXPRESSION_ITEM_UPDATED";
+export const EXPRESSION_ITEM_DELETE_REQUESTED =
+  "EXPRESSION_ITEM_DELETE_REQUESTED";
+export const EXPRESSION_ITEM_DELETE_CANCELLED =
+  "EXPRESSION_ITEM_DELETE_CANCELLED";
+export const EXPRESSION_ITEM_DELETE_CONFIRMED =
+  "EXPRESSION_ITEM_DELETE_CONFIRMED";
+export const EXPRESSION_ITEM_MOVED = "EXPRESSION_ITEM_MOVED";
 
 // Expression Editors
 const actionCreators = createActions({

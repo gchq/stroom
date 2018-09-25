@@ -1,19 +1,38 @@
-import { createActions, handleActions } from 'redux-actions';
+import { Action, ActionCreator } from "redux";
 
-const defaultState = {};
+import { prepareReducer } from "../../../lib/redux-actions-ts";
 
-const actionCreators = createActions({
-  MENU_ITEM_OPENED: (key, isOpen) => ({ key, isOpen }),
-});
+export const MENU_ITEM_OPENED = "MENU_ITEM_OPENED";
 
-const reducer = handleActions(
-  {
-    MENU_ITEM_OPENED: (state, { payload: { key, isOpen } }) => ({
+export interface MenuItemOpenedAction extends Action<"MENU_ITEM_OPENED"> {
+  key: string;
+  isOpen: boolean;
+}
+
+export interface ActionCreators {
+  menuItemOpened: ActionCreator<MenuItemOpenedAction>;
+}
+
+export const actionCreators: ActionCreators = {
+  menuItemOpened: (key, isOpen) => ({
+    type: MENU_ITEM_OPENED,
+    key,
+    isOpen
+  })
+};
+
+export interface StoreState {
+  [s: string]: boolean;
+}
+
+const defaultState: StoreState = {};
+
+export const reducer = prepareReducer(defaultState)
+  .handleAction<MenuItemOpenedAction>(
+    MENU_ITEM_OPENED,
+    (state, { key, isOpen }) => ({
       ...state,
-      [key]: isOpen,
-    }),
-  },
-  defaultState,
-);
-
-export { actionCreators, reducer };
+      [key]: isOpen
+    })
+  )
+  .getReducer();

@@ -14,358 +14,360 @@
  * limitations under the License.
  */
 
-const emptyExpression = {
-  uuid: 'root',
-  type: 'operator',
-  op: 'AND',
+import { ExpressionOperator } from "../../types";
+
+const emptyExpression: ExpressionOperator = {
+  uuid: "root",
+  type: "operator",
+  op: "AND",
   children: [],
-  enabled: true,
+  enabled: true
 };
 
-const singleTermExpression = {
-  type: 'operator',
-  op: 'AND',
+const singleTermExpression: ExpressionOperator = {
+  type: "operator",
+  op: "AND",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'CONTAINS',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "CONTAINS",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     }
   ],
-  enabled: true,
-}
+  enabled: true
+};
 
 const simpleAndExpression = {
-  type: 'operator',
-  op: 'AND',
+  type: "operator",
+  op: "AND",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'CONTAINS',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "CONTAINS",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'IN',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "IN",
+      value: "blue",
       dictionary: null,
-      enabled: true,
-    },
+      enabled: true
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const simpleOrExpression = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'LIKE',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "LIKE",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: '=',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "=",
+      value: "blue",
       dictionary: null,
-      enabled: true,
-    },
+      enabled: true
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const nestedExpression = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'CONTAINS',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "CONTAINS",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'IN',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "IN",
+      value: "blue",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'operator',
-      op: 'AND',
+      type: "operator",
+      op: "AND",
       enabled: true,
       children: [
         {
-          type: 'term',
-          field: 'numberOfDoors',
-          condition: 'BETWEEN',
-          value: '1,5',
+          type: "term",
+          field: "numberOfDoors",
+          condition: "BETWEEN",
+          value: "1,5",
           dictionary: null,
-          enabled: true,
+          enabled: true
         },
         {
-          type: 'term',
-          field: 'createUser',
-          condition: 'EQUALS',
-          value: 'me',
+          type: "term",
+          field: "createUser",
+          condition: "EQUALS",
+          value: "me",
           dictionary: null,
-          enabled: true,
-        },
-      ],
-    },
+          enabled: true
+        }
+      ]
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const deeplyNestedExpression = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'CONTAINS',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "CONTAINS",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'IN',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "IN",
+      value: "blue",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'operator',
-      op: 'AND',
+      type: "operator",
+      op: "AND",
       enabled: true,
       children: [
         {
-          type: 'term',
-          field: 'numberOfDoors',
-          condition: 'BETWEEN',
-          value: '1,5',
+          type: "term",
+          field: "numberOfDoors",
+          condition: "BETWEEN",
+          value: "1,5",
           dictionary: null,
-          enabled: true,
+          enabled: true
         },
         {
-          type: 'term',
-          field: 'createUser',
-          condition: 'EQUALS',
-          value: 'me',
+          type: "term",
+          field: "createUser",
+          condition: "EQUALS",
+          value: "me",
           dictionary: null,
-          enabled: true,
+          enabled: true
         },
         {
-          type: 'operator',
-          op: 'OR',
+          type: "operator",
+          op: "OR",
           enabled: true,
           children: [
             {
-              type: 'term',
-              field: 'id',
-              condition: 'CONTAINS',
-              value: 'bob',
+              type: "term",
+              field: "id",
+              condition: "CONTAINS",
+              value: "bob",
               dictionary: null,
-              enabled: true,
+              enabled: true
             },
             {
-              type: 'term',
-              field: 'updateTime',
-              condition: 'BETWEEN',
-              value: 'me',
+              type: "term",
+              field: "updateTime",
+              condition: "BETWEEN",
+              value: "me",
               dictionary: null,
-              enabled: true,
-            },
-          ],
-        },
-      ],
-    },
+              enabled: true
+            }
+          ]
+        }
+      ]
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const partlyDisabledExpression01 = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'LIKE',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "LIKE",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: '=',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "=",
+      value: "blue",
       dictionary: null,
-      enabled: false,
-    },
+      enabled: false
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const partlyDisabledExpression02 = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'LIKE',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "LIKE",
+      value: "red",
       dictionary: null,
-      enabled: false,
+      enabled: false
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: '=',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "=",
+      value: "blue",
       dictionary: null,
-      enabled: true,
-    },
+      enabled: true
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const partlyDisabledExpression03 = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'CONTAINS',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "CONTAINS",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'IN',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "IN",
+      value: "blue",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'operator',
-      op: 'AND',
+      type: "operator",
+      op: "AND",
       enabled: true,
       children: [
         {
-          type: 'term',
-          field: 'numberOfDoors',
-          condition: 'BETWEEN',
-          value: '1,5',
+          type: "term",
+          field: "numberOfDoors",
+          condition: "BETWEEN",
+          value: "1,5",
           dictionary: null,
-          enabled: true,
+          enabled: true
         },
         {
-          type: 'term',
-          field: 'createUser',
-          condition: 'EQUALS',
-          value: 'me',
+          type: "term",
+          field: "createUser",
+          condition: "EQUALS",
+          value: "me",
           dictionary: null,
-          enabled: false,
-        },
-      ],
-    },
+          enabled: false
+        }
+      ]
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 const hugeExpression = {
-  type: 'operator',
-  op: 'OR',
+  type: "operator",
+  op: "OR",
   children: [
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'CONTAINS',
-      value: 'red',
+      type: "term",
+      field: "colour",
+      condition: "CONTAINS",
+      value: "red",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'term',
-      field: 'colour',
-      condition: 'IN',
-      value: 'blue',
+      type: "term",
+      field: "colour",
+      condition: "IN",
+      value: "blue",
       dictionary: null,
-      enabled: true,
+      enabled: true
     },
     {
-      type: 'operator',
-      op: 'AND',
+      type: "operator",
+      op: "AND",
       enabled: true,
       children: [
         {
-          type: 'term',
-          field: 'numberOfDoors',
-          condition: 'BETWEEN',
-          value: '1,5',
+          type: "term",
+          field: "numberOfDoors",
+          condition: "BETWEEN",
+          value: "1,5",
           dictionary: null,
-          enabled: true,
+          enabled: true
         },
         {
-          type: 'term',
-          field: 'createUser',
-          condition: 'EQUALS',
-          value: 'me',
+          type: "term",
+          field: "createUser",
+          condition: "EQUALS",
+          value: "me",
           dictionary: null,
-          enabled: true,
-        },
-      ],
+          enabled: true
+        }
+      ]
     },
     {
-      type: 'operator',
-      op: 'OR',
+      type: "operator",
+      op: "OR",
       enabled: false,
       children: [
         {
-          type: 'term',
-          field: 'id',
-          condition: 'CONTAINS',
-          value: 'bob',
+          type: "term",
+          field: "id",
+          condition: "CONTAINS",
+          value: "bob",
           dictionary: null,
-          enabled: false,
+          enabled: false
         },
         {
-          type: 'term',
-          field: 'updateTime',
-          condition: 'BETWEEN',
-          value: 'me',
+          type: "term",
+          field: "updateTime",
+          condition: "BETWEEN",
+          value: "me",
           dictionary: null,
-          enabled: true,
-        },
-      ],
-    },
+          enabled: true
+        }
+      ]
+    }
   ],
-  enabled: true,
+  enabled: true
 };
 
 export {
@@ -378,5 +380,5 @@ export {
   partlyDisabledExpression01,
   partlyDisabledExpression02,
   partlyDisabledExpression03,
-  hugeExpression,
+  hugeExpression
 };
