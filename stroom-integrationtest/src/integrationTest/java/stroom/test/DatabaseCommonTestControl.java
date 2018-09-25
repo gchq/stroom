@@ -18,16 +18,17 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.activity.shared.Activity;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.Clearable;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
+import stroom.lifecycle.StroomBeanStore;
 import stroom.node.NodeCreator;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
@@ -65,6 +66,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
+            Activity.TABLE_NAME,
             AppPermission.TABLE_NAME,
             ClusterLock.TABLE_NAME,
             "doc",

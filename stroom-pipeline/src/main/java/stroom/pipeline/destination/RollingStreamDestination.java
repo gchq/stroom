@@ -20,6 +20,7 @@ import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.util.io.ByteCountOutputStream;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,12 +36,12 @@ public class RollingStreamDestination extends RollingDestination {
 
     public RollingStreamDestination(final StreamKey key,
                                     final long frequency,
-                                    final long maxSize,
+                                    final long rollSize,
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
                                     final String nodeName) {
-        super(key, frequency, maxSize, creationTime);
+        super(key, frequency, rollSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
@@ -48,8 +49,6 @@ public class RollingStreamDestination extends RollingDestination {
         this.segmentOutput = key.isSegmentOutput();
 
         segmentOutputStream = streamTarget.getOutputStreamProvider().next();
-//        if (segmentOutput) {
-//            segmentOutputStream = streamTarget.getSegmentOutputStream();
         setOutputStream(new ByteCountOutputStream(segmentOutputStream));
     }
 

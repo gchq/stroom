@@ -29,6 +29,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.util.io.ByteCountOutputStream;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -66,6 +67,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
+    private ByteCountOutputStream byteCountOutputStream;
 
     @Inject
     HDFSFileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -149,13 +151,18 @@ public class HDFSFileAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() throws IOException {
+        byteCountOutputStream = new ByteCountOutputStream(createHDFSLockedOutputStream());
+        return byteCountOutputStream;
+    }
+
+    HDFSLockedOutputStream createHDFSLockedOutputStream() throws IOException {
         try {
             if (outputPaths == null || outputPaths.length == 0) {
                 throw new IOException("No output paths have been set");
             }
 
             // Get a path to use.
-            String path = null;
+            String path;
             if (outputPaths.length == 1) {
                 path = outputPaths[0];
             } else {
@@ -176,6 +183,14 @@ public class HDFSFileAppender extends AbstractAppender {
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    long getCurrentOutputSize() {
+        if (byteCountOutputStream != null) {
+            return byteCountOutputStream.getCount();
+        }
+        return 0;
     }
 
     /**
@@ -257,7 +272,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
         if (hdfsLockedOutputStream == null) {
             throw new RuntimeException(String.format(
-                    "Something went wrong creating the HDFSLockedOutputStream, lockFile %s, outFile %s, hdfs uri %s",
+                    "Something went wrong creating the HDFSLockedOutputStream, outFile %s, hdfs uri %s",
                     filePath, hdfsUri));
         }
 
@@ -284,6 +299,13 @@ public class HDFSFileAppender extends AbstractAppender {
             displayPriority = 3)
     public void setRunAsUser(final String runAsUser) {
         this.runAsUser = runAsUser;
+    }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.",
+    displayPriority = 4)
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
     }
 
     /**

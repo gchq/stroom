@@ -16,31 +16,35 @@
 
 package stroom.pipeline;
 
+import stroom.logging.StreamEventLog;
 import stroom.pipeline.shared.PipelineStepAction;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
-import stroom.security.Security;
+import stroom.task.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
-import stroom.task.TaskManager;
 
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = PipelineStepAction.class)
 class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
-    private final Security security;
+    private final StreamEventLog streamEventLog;
 
     @Inject
     PipelineStepActionHandler(final TaskManager taskManager,
-                              final Security security) {
+                              final StreamEventLog streamEventLog) {
         this.taskManager = taskManager;
-        this.security = security;
+        this.streamEventLog = streamEventLog;
     }
 
     @Override
     public SteppingResult exec(final PipelineStepAction action) {
-        return security.secureResult(() -> {
+        SteppingResult result = null;
+        StepLocation stepLocation = action.getStepLocation();
+
+        try {
             // Copy the action settings to the server task.
             final SteppingTask task = new SteppingTask(action.getUserToken());
             task.setCriteria(action.getCriteria());
@@ -57,7 +61,20 @@ class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, 
             // folderValidator.constrainCriteria(task.getCriteria());
 
             // Execute the stepping task.
-            return taskManager.exec(task);
-        });
+            result = taskManager.exec(task);
+            if (result.getStepLocation() != null) {
+                stepLocation = result.getStepLocation();
+            }
+
+            if (stepLocation != null) {
+                streamEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), null);
+            }
+        } catch (final RuntimeException e) {
+            if (stepLocation != null) {
+                streamEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), e);
+            }
+        }
+
+        return result;
     }
 }

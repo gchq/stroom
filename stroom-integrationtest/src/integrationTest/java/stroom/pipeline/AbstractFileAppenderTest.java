@@ -17,13 +17,18 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 
-public abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
+abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
+
     void test(final DocRef pipelineRef,
               final String dir,
               final String name,
@@ -42,7 +47,10 @@ public abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
         FileUtil.deleteFile(outputFile);
         FileUtil.deleteFile(outputLockFile);
 
-        super.test(pipelineRef, dir, name, type, outputReference, encoding);
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            super.process(pipelineRef, dir, name, encoding);
+            super.validateProcess();
+        });
 
         final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
         ComparisonHelper.compareFiles(refFile, outputFile, false, false);

@@ -2,16 +2,17 @@ package stroom.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
+import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
-import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new stroom.activity.server.ActivityModule());
         install(new stroom.cache.CacheModule());
         install(new stroom.cache.PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());

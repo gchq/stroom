@@ -31,7 +31,7 @@ public class MetaData {
         this.attributeMap.putAll(attributeMap);
     }
 
-    public AttributeMap getAttributeMap() {
+    public AttributeMap getAttributes() {
         return attributeMap;
     }
 }

@@ -77,7 +77,7 @@ class RollingKafkaAppender extends AbstractRollingAppender {
         return new RollingKafkaDestination(
                 key,
                 getFrequency(),
-                getMaxSize(),
+                getRollSize(),
                 System.currentTimeMillis(),
                 stroomKafkaProducer,
                 recordKey,
@@ -112,5 +112,12 @@ class RollingKafkaAppender extends AbstractRollingAppender {
             displayPriority = 6)
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
+    }
+
+    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.",
+            defaultValue = "100M",
+            displayPriority = 7)
+    public void setRollSize(final String rollSize) {
+        super.setRollSize(rollSize);
     }
 }

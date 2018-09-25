@@ -19,6 +19,9 @@ package stroom.entity;
 
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Not;
+import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import stroom.dictionary.DictionaryStore;
@@ -108,11 +111,11 @@ public class QueryDataLogUtil {
                                        final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
         if (exp.getOp() == Op.NOT) {
-            operator = new BaseAdvancedQueryOperator.Not();
+            operator = new Not();
         } else if (exp.getOp() == Op.OR) {
-            operator = new BaseAdvancedQueryOperator.Or();
+            operator = new Or();
         } else {
-            operator = new BaseAdvancedQueryOperator.And();
+            operator = new And();
         }
 
         items.add(operator);

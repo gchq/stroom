@@ -6,6 +6,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* The accept button now enabled on splash screen.
+
+* Added additional event logging to stepping.
+
+* An activity property with an id of `disableQueryInfo` can now be used to disable the query info popup on a per activity basis.
+
+* Activity properties can now include the attributes `id`, `name`, `showInSelection` and `showInList` to determine their appearance and behaviour;
+
+* Nested elements are now usable in the activity editor HTML.
+
+* Record counts are now recorded on a per output stream basis even when splitting output streams.
+
+* Splash presenter buttons are now always enabled.
+
+* Fix background colour to white on activity pane.
+
+* Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
+
+* Issue **#838** : Fix bug where calculation of written and read bytes was being accounted for twice due to the use of Java internal `FilterInputStream` and `FilterOutputStream` behaviour. This was leading to files being split at half od the expected size. Replaced Java internal classes with our own `WrappedInputStream` and `WrappedOutputStream` code.
+
+* Issue **#837** : Fix bug to no longer try and record set activity events for null activities.
+
+* Issue **#595** : Added stream appender and file appender property `splitWhenBiggerThan` to limit the size of output streams.
+
+* Now logs activity change correctly.
+
+* Add support for checkbox and selection control types to activity descriptions.
+
+* Issue **#833** : The global property edit dialog can now be made larger.
+
+* Fixed some issues in the activity manager.
+
 * Issue **#722** : Change pipeline reference data loader to store its reference data in an off-heap disk backed LMDB store to reduce Java heap usage. See the `stroom.refloader.*` properties for configuration of the off-heap store.
 
 * Issue **#794** : Automatically suggest a pipeline element name when creating it
@@ -14,11 +46,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
 
-* Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+* Issue **#828** : Changed statistics store caches to 10 minute time to live so that they will definitely pick up new statistics store definitions after 10 minutes.
 
-* Issue **819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
+* Issue **#774** : Event logging now logs find stream criteria correctly so that feeds ids are included.
 
-* Issue **817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
+* Issue **#829** : Stroom now logs event id when viewing individual events.
+
+* Added functionality to record actions against user defined activities.
+
+* Added functionality to show a splash screen on login.
+
+* Issue **#791** : Fixed broken equals method so query total row count gets updated correctly.
+
+* Issue **#830** : Fix for API queries not returning before timing out.
+
+* Issue **#824** : Fix for replace method in PathCreator also found in stroom proxy.
+
+* Issue **#820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+
+* Issue **#819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
+
+* Issue **#817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
 
 * Moved Index entities over to the new multi part document store.
 

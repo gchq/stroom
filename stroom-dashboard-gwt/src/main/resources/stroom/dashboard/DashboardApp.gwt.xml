@@ -50,6 +50,7 @@
 
     <!-- Import functional areas -->
     <!-- Minimal -->
+    <inherits name="stroom.activity.Activity" />
     <inherits name="stroom.config.Config" />
     <inherits name="stroom.config.global.GlobalConfig" />
     <inherits name="stroom.ui.config.UiConfig" />

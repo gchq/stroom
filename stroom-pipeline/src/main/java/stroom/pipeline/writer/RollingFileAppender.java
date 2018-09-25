@@ -25,8 +25,8 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.util.io.FileUtil;
 import stroom.task.api.TaskContext;
+import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
         return new RollingFileDestination(key,
                 getFrequency(),
-                getMaxSize(),
+                getRollSize(),
                 System.currentTimeMillis(),
                 fileName,
                 rolledFileName,
@@ -169,13 +169,22 @@ public class RollingFileAppender extends AbstractRollingAppender {
         this.outputPaths = outputPaths.split(",");
     }
 
-    @PipelineProperty(description = "Choose the name of the file to write.", displayPriority = 2)
+    @PipelineProperty(description = "Choose the name of the file to write.",
+            displayPriority = 2)
     public void setFileName(final String fileNamePattern) {
         this.fileNamePattern = fileNamePattern;
     }
 
-    @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.", displayPriority = 3)
+    @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.",
+            displayPriority = 3)
     public void setRolledFileName(final String rolledFileNamePattern) {
         this.rolledFileNamePattern = rolledFileNamePattern;
+    }
+
+    @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.",
+            defaultValue = "100M",
+            displayPriority = 4)
+    public void setRollSize(final String rollSize) {
+        super.setRollSize(rollSize);
     }
 }

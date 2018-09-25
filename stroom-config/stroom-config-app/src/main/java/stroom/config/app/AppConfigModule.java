@@ -33,7 +33,9 @@ import stroom.statistics.sql.SQLStatisticsConfig;
 import stroom.statistics.stroomstats.internal.HBaseStatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
+import stroom.ui.config.shared.ActivityConfig;
 import stroom.ui.config.shared.QueryConfig;
+import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
@@ -90,6 +92,8 @@ public class AppConfigModule extends AbstractModule {
         bind(stroom.ui.config.shared.ProcessConfig.class).toProvider(() -> appConfig.getUiConfig().getProcessConfig());
         bind(ThemeConfig.class).toProvider(() -> appConfig.getUiConfig().getThemeConfig());
         bind(QueryConfig.class).toProvider(() -> appConfig.getUiConfig().getQueryConfig());
+        bind(SplashConfig.class).toProvider(() -> appConfig.getUiConfig().getSplashConfig());
+        bind(ActivityConfig.class).toProvider(() -> appConfig.getUiConfig().getActivityConfig());
         bind(UrlConfig.class).toProvider(() -> appConfig.getUiConfig().getUrlConfig());
         bind(VolumeConfig.class).toProvider(appConfig::getVolumeConfig);
     }
