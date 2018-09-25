@@ -13,7 +13,7 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class GlobalConfigDbModule extends AbstractModule {
-    private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db";
+    private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
     private static final String FLYWAY_TABLE = "config_schema_history";
 
     @Override
