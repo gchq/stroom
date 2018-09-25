@@ -57,6 +57,7 @@ class ConfigMapper {
     private static final List<String> DELIMITERS = List.of(
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final String ROOT_PROPERTY_PATH = "stroom";
+    private static final String DOCREF_PREFIX = "docRef(";
 
     private final List<ConfigProperty> globalProperties = new ArrayList<>();
     private final Map<String, Prop> propertyMap = new HashMap<>();
@@ -384,7 +385,10 @@ class ConfigMapper {
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
-        return delimiter + String.join(delimiter, docRef.getType(), docRef.getUuid(), docRef.getName());
+        return delimiter
+                + "docRef("
+                + String.join(delimiter, docRef.getType(), docRef.getUuid(), docRef.getName())
+                + ")";
     }
 
     private static <T> List<T> stringToList(final String serialisedForm, final Class<T> type) {
@@ -434,10 +438,14 @@ class ConfigMapper {
 
     private static DocRef stringToDocRef(final String serialisedForm) {
 
-        String delimiter = String.valueOf(serialisedForm.charAt(0));
+        final String delimiter = String.valueOf(serialisedForm.charAt(0));
         String delimitedValue = serialisedForm.substring(1);
 
-        List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
+        delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");
+        delimitedValue = delimitedValue.replace(")", "");
+
+        final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
+
         return new DocRef.Builder()
                 .type(parts.get(0))
                 .uuid(parts.get(1))

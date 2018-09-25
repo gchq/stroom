@@ -71,27 +71,27 @@ class TestConfigMapper {
         assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
     }
 
-    @Test
-    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
-
-        AppConfig appConfig = getAppConfig();
-
-        // simulate dropwiz setting a prop from the yaml
-        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
-        appConfig.getRefDataStoreConfig().setLocalDir(null);
-
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
-
-        final List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
-
-        final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
-                .findFirst()
-                .orElseThrow();
-
-        assertThat(configProperty.getValue()).isEqualTo(initialValue);
-        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
-    }
+//    @Test
+//    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
+//
+//        AppConfig appConfig = getAppConfig();
+//
+//        // simulate dropwiz setting a prop from the yaml
+//        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
+//        appConfig.getRefDataStoreConfig().setLocalDir(null);
+//
+//        ConfigMapper configMapper = new ConfigMapper(appConfig);
+//
+//        final List<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+//
+//        final ConfigProperty configProperty = configProperties.stream()
+//                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.refdata.localDir"))
+//                .findFirst()
+//                .orElseThrow();
+//
+//        assertThat(configProperty.getValue()).isEqualTo(initialValue);
+//        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+//    }
 
     @Test
     void update_string() throws IOException, ConfigurationException {
