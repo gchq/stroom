@@ -25,11 +25,13 @@ import stroom.pipeline.shared.data.PipelineReference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 public class PipelineDataMerger {
     private static final String SOURCE = "Source";
@@ -216,24 +218,48 @@ public class PipelineDataMerger {
 
             // If there is no source provided then we need to attach a parser to source as this is an old pipeline config.
             if (!sourceProvided && !linkMap.containsKey(SOURCE)) {
-                String parserId = null;
-                for (final Entry<String, PipelineElement> entry : elementMap.entrySet()) {
-                    if (parserId == null) {
-                        final String elementId = entry.getKey();
-                        final PipelineElement element = entry.getValue();
-                        if (element.getType().toLowerCase().contains("parser")) {
-                            parserId = elementId;
-                        }
-                    }
-                }
+                final Optional<String> optionalParserId = elementMap.entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().getType().toLowerCase().contains("parser"))
+                        .map(Entry::getKey)
+                        .findFirst();
 
-                if (parserId != null) {
-                    final PipelineLink link = new PipelineLink(SOURCE, parserId);
-                    final List<PipelineLink> list = linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>());
-                    if (!list.contains(link)) {
-                        list.add(link);
+                optionalParserId.ifPresent(parserId -> {
+                    // Track back up any links that might point to the parser.
+                    final Map<String, String> parentMap = new HashMap<>();
+                    linkMap.forEach((k, v) -> v.forEach(link -> {
+                        parentMap.put(link.getTo(), k);
+                    }));
+
+                    String childId = null;
+                    String parentId = parserId;
+                    while (parentId != null) {
+                        childId = parentId;
+                        parentId = parentMap.get(childId);
                     }
-                }
+
+                    final PipelineLink link = new PipelineLink(SOURCE, childId);
+                    linkMap.put(SOURCE, Collections.singletonList(link));
+                });
+
+//                String parserId = null;
+//                for (final Entry<String, PipelineElement> entry : elementMap.entrySet()) {
+//                    if (parserId == null) {
+//                        final String elementId = entry.getKey();
+//                        final PipelineElement element = entry.getValue();
+//                        if (element.getType().toLowerCase().contains("parser")) {
+//                            parserId = elementId;
+//                        }
+//                    }
+//                }
+//
+//                if (parserId != null) {
+//                    final PipelineLink link = new PipelineLink(SOURCE, parserId);
+//                    final List<PipelineLink> list = linkMap.computeIfAbsent(SOURCE, k -> new ArrayList<>());
+//                    if (!list.contains(link)) {
+//                        list.add(link);
+//                    }
+//                }
             }
 
             // Ensure an element can only be linked to once.
