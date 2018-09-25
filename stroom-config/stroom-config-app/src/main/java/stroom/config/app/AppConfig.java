@@ -9,6 +9,7 @@ import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
+import stroom.index.IndexConfig;
 import stroom.lifecycle.LifecycleConfig;
 import stroom.node.NodeConfig;
 import stroom.persist.CoreConfig;
@@ -39,6 +40,7 @@ public class AppConfig {
     private DataSourceUrlConfig dataSourceUrlConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
+    private IndexConfig indexConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
     private PipelineConfig pipelineConfig;
@@ -65,6 +67,7 @@ public class AppConfig {
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
+        this.indexConfig = new IndexConfig();
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
@@ -92,6 +95,7 @@ public class AppConfig {
               final DataSourceUrlConfig dataSourceUrlConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
+              final IndexConfig indexConfig,
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
@@ -116,6 +120,7 @@ public class AppConfig {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
+        this.indexConfig = indexConfig;
         this.lifecycleConfig = lifecycleConfig;
         this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
@@ -216,13 +221,13 @@ public class AppConfig {
         this.exportConfig = exportConfig;
     }
 
-    @JsonProperty("pipeline")
-    public PipelineConfig getPipelineConfig() {
-        return pipelineConfig;
+    @JsonProperty("index")
+    public IndexConfig getIndexConfig() {
+        return indexConfig;
     }
 
-    public void setPipelineConfig(final PipelineConfig pipelineConfig) {
-        this.pipelineConfig = pipelineConfig;
+    public void setIndexConfig(final IndexConfig indexConfig) {
+        this.indexConfig = indexConfig;
     }
 
     @JsonProperty("lifecycle")
@@ -241,6 +246,15 @@ public class AppConfig {
 
     public void setNodeConfig(final NodeConfig nodeConfig) {
         this.nodeConfig = nodeConfig;
+    }
+
+    @JsonProperty("pipeline")
+    public PipelineConfig getPipelineConfig() {
+        return pipelineConfig;
+    }
+
+    public void setPipelineConfig(final PipelineConfig pipelineConfig) {
+        this.pipelineConfig = pipelineConfig;
     }
 
     @JsonProperty("policy")
@@ -352,4 +366,5 @@ public class AppConfig {
     public void setVolumeConfig(final VolumeConfig volumeConfig) {
         this.volumeConfig = volumeConfig;
     }
+
 }

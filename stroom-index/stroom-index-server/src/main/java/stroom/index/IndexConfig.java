@@ -31,4 +31,11 @@ public class IndexConfig {
     public void setIndexWriterConfig(final IndexWriterConfig indexWriterConfig) {
         this.indexWriterConfig = indexWriterConfig;
     }
+
+    @Override
+    public String toString() {
+        return "IndexConfig{" +
+                "ramBufferSizeMB=" + ramBufferSizeMB +
+                '}';
+    }
 }

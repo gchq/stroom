@@ -2,6 +2,9 @@ package stroom.statistics.stroomstats.internal;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class KafkaTopicsConfig {
     private String count = "statisticEvents-Count";
     private String value = "statisticEvents-Value";

@@ -113,21 +113,17 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
 
                                 updateConfigObject(record.getName(), record.getVal());
                             } else {
-                                // Delete old property.
-//                                deleteFromDb(record.getName());
+                                // Delete old property that is not in the object model
+                                deleteFromDb(record.getName());
                             }
                         }
                     });
-
-//            // Add remaining properties to the db.
-//            map.forEach((k, v) -> create(v));
-
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private void updateConfigObjectsFromDB() {
+    private synchronized void updateConfigObjectsFromDB() {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
@@ -282,14 +278,14 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     private void deleteFromDb(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            LAMBDA_LOGGER.debug(() ->
+            LAMBDA_LOGGER.info(() ->
                     LambdaLogger.buildMessage("Deleting property [{}]", name));
             create
                     .deleteFrom(CONFIG)
                     .where(CONFIG.NAME.eq(name))
                     .execute();
         } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("Error deleting property {}: {}", name, e.getMessage(), e);
         }
     }
 
@@ -303,7 +299,11 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                             CONFIG_HISTORY.UPDATE_USER,
                             CONFIG_HISTORY.NAME,
                             CONFIG_HISTORY.VAL)
-                    .values(System.currentTimeMillis(), securityContext.getUserId(), configProperty.getName(), configProperty.getValue())
+                    .values(
+                            System.currentTimeMillis(),
+                            securityContext.getUserId(),
+                            configProperty.getName(),
+                            configProperty.getValue())
                     .execute();
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
