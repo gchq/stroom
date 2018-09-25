@@ -91,6 +91,7 @@ class ConfigMapper {
         });
 
     }
+
     private void addConfigObjectMethods(final Object object,
                                         final String path,
                                         final Map<String, Prop> propertyMap,
@@ -112,15 +113,15 @@ class ConfigMapper {
             try {
                 final Class<?> valueType = prop.getValueClass();
 
-                if (isSupportedPropertyType(valueType)) {
-                    // This is a leaf, i.e. a property so add it to our map
-                    propertyMap.put(fullPath, prop);
+                final Object value = prop.getValueFromConfigObject();
+                if (value != null) {
+                    if (isSupportedPropertyType(valueType)) {
+                        // This is a leaf, i.e. a property so add it to our map
+                        propertyMap.put(fullPath, prop);
 
-                    // Now let the consumer do something to it
-                    propConsumer.accept(fullPath, prop);
-                } else {
-                    final Object value = prop.getValueFromConfigObject();
-                    if (value != null) {
+                        // Now let the consumer do something to it
+                        propConsumer.accept(fullPath, prop);
+                    } else {
                         // This must be a branch, i.e. config object so recurse into that
                         addConfigObjectMethods(value, fullPath, propertyMap, propConsumer);
                     }
