@@ -326,7 +326,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public Object getData(final List<Highlight> highlights) {
+    public Object getData(final Highlight highlight) {
         final NodeInfo events = getEvents();
         if (events == null) {
             return null;
@@ -336,7 +336,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public void clear() {
+    public void clear(final Highlight highlight) {
         // Clear the event buffer as this is a new record.
         clearBuffer();
 

@@ -116,12 +116,12 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
     }
 
     @Override
-    public Object getData(final List<Highlight> highlights) {
+    public Object getData(final Highlight highlight) {
         return destination.getData();
     }
 
     @Override
-    public void clear() {
+    public void clear(final Highlight highlight) {
         destination.clear();
     }
 

@@ -24,108 +24,138 @@ import stroom.util.shared.Highlight;
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class ReaderRecorder extends AbstractReaderElement implements Recorder {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecorder.class);
 
-    private Filter filter;
+    private Buffer buffer;
+    private int lineNo = 1;
+    private int colNo = 0;
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        filter = new Filter(reader);
-        return filter;
+        buffer = new Buffer(reader);
+        return buffer;
     }
 
     @Override
-    public Object getData(final List<Highlight> highlights) {
-        if (filter == null) {
+    public Object getData(final Highlight highlight) {
+        if (buffer == null) {
             return null;
         }
 
-        if (highlights != null && highlights.size() > 0) {
-            final String data = filter.toString();
-            final StringReader reader = new StringReader(data);
-            return getHighlightedSection(reader, highlights);
+        if (highlight != null) {
+            return getHighlightedSection(highlight);
         }
 
         return null;
     }
 
-    private String getHighlightedSection(final Reader reader, final List<Highlight> highlights) {
+    private String getHighlightedSection(final Highlight highlight) {
         final StringBuilder sb = new StringBuilder();
-
-        try {
-            int i;
-            boolean found = false;
-            int lineNo = 1;
-            int colNo = 0;
-            boolean inRecord = false;
-
-            while ((i = reader.read()) != -1 && !found) {
-                final char c = (char) i;
-
-                if (c == '\n') {
-                    lineNo++;
-                    colNo = 0;
-                } else {
-                    colNo++;
-                }
-
-                for (final Highlight highlight : highlights) {
-                    if (!inRecord) {
-                        if (lineNo > highlight.getLineFrom() || (lineNo >= highlight.getLineFrom()
-                                && colNo >= highlight.getColFrom())) {
-                            inRecord = true;
-                            break;
-                        }
-                    } else if (lineNo > highlight.getLineTo()
-                            || (lineNo >= highlight.getLineTo() && colNo >= highlight.getColTo())) {
-                        inRecord = false;
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (inRecord) {
-                    sb.append(c);
-                }
-            }
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
+        consumeHighlightedSection(highlight, sb::append);
         return sb.toString();
     }
 
     @Override
-    public void clear() {
-//        if (filter != null) {
-//            filter.clear();
-//        }
+    public void clear(final Highlight highlight) {
+        if (buffer != null) {
+            if (highlight == null) {
+                buffer.clear();
+            } else {
+                consumeHighlightedSection(highlight, c -> {
+                });
+            }
+        }
+    }
+
+    private void consumeHighlightedSection(final Highlight highlight, final Consumer<Character> consumer) {
+        final int lineFrom = highlight.getLineFrom();
+        final int colFrom = highlight.getColFrom();
+        final int lineTo = highlight.getLineTo();
+        final int colTo = highlight.getColTo();
+
+        boolean found = false;
+        boolean inRecord = false;
+
+        int advance = 0;
+        int i = 0;
+        for (; i < buffer.length() && !found; i++) {
+            final char c = buffer.charAt(i);
+
+            // Remember the previous line and column numbers in case we need to go back to them.
+            final int previousLineNo = lineNo;
+            final int previousColNo = colNo;
+
+            // Advance the line or column number.
+            if (c == '\n') {
+                lineNo++;
+                colNo = 0;
+            } else {
+                colNo++;
+            }
+
+            if (!inRecord) {
+                if (lineNo > lineFrom ||
+                        (lineNo >= lineFrom && colNo >= colFrom)) {
+                    inRecord = true;
+                }
+            }
+
+            if (inRecord) {
+                if (lineNo > lineTo ||
+                        (lineNo >= lineTo && colNo >= colTo)) {
+                    inRecord = false;
+                    found = true;
+                    advance = i;
+
+                    // We won't be consuming the current char so revert to the previous line and column numbers.
+                    lineNo = previousLineNo;
+                    colNo = previousColNo;
+                }
+            }
+
+            if (inRecord) {
+                consumer.accept(c);
+            }
+        }
+
+        // If we went through the whole buffer and didn't find what we are looking for then clear it.
+        if (!found) {
+            buffer.clear();
+        } else {
+            // Move the filter buffer forward and discard any content we no longer need.
+            buffer.move(advance);
+        }
     }
 
     @Override
     public void startStream() {
         super.startStream();
-        if (filter != null) {
-            filter.clear();
+        lineNo = 1;
+        colNo = 0;
+        if (buffer != null) {
+            buffer.clear();
         }
     }
 
-    private static class Filter extends FilterReader {
+    private static class Buffer extends FilterReader {
         private static final int MAX_BUFFER_SIZE = 1000000;
         private final StringBuilder stringBuilder = new StringBuilder();
 
-        public Filter(final Reader in) {
+        public Buffer(final Reader in) {
             super(in);
         }
 
         @Override
         public int read(final char[] cbuf, final int off, final int len) throws IOException {
-            final int length =  super.read(cbuf, off, len);
-            if (length > 0 && stringBuilder.length() < MAX_BUFFER_SIZE) {
+            final int length = super.read(cbuf, off, len);
+            if (length > 0) {
+                if (LOGGER.isDebugEnabled() && stringBuilder.length() > MAX_BUFFER_SIZE) {
+                    LOGGER.debug("Exceeding buffer length");
+                }
+
                 stringBuilder.append(cbuf, off, length);
             }
             return length;
@@ -140,20 +170,35 @@ public class ReaderRecorder extends AbstractReaderElement implements Recorder {
         public int read() throws IOException {
             final int result = super.read();
             if (result != -1) {
-                if (stringBuilder.length() < MAX_BUFFER_SIZE) {
-                    stringBuilder.append((char) result);
+                if (LOGGER.isDebugEnabled() && stringBuilder.length() > MAX_BUFFER_SIZE) {
+                    LOGGER.debug("Exceeding buffer length");
                 }
+
+                stringBuilder.append((char) result);
             }
             return result;
         }
 
-        public void clear() {
-            stringBuilder.setLength(0);
+        char charAt(int index) {
+            return stringBuilder.charAt(index);
         }
 
-        @Override
-        public String toString() {
-            return stringBuilder.toString();
+        int length() {
+            return stringBuilder.length();
+        }
+
+        void move(final int len) {
+            if (len > 0) {
+                if (len >= stringBuilder.length()) {
+                    stringBuilder.setLength(0);
+                } else {
+                    stringBuilder.delete(0, len);
+                }
+            }
+        }
+
+        void clear() {
+            stringBuilder.setLength(0);
         }
     }
 }

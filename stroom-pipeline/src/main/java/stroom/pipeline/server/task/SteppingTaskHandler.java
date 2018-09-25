@@ -187,8 +187,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
             } else {
                 // Pick up any step data that remains so we can deliver any errors
                 // that caused the system not to step.
-                stepData = new StepData();
-                controller.storeStepData(stepData);
+                stepData = controller.createStepData(null);
             }
 
             return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
@@ -540,7 +539,7 @@ public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, Stepp
 
                     // Process the boundary making sure to use the right
                     // encoding.
-                    controller.clearAllFilters();
+                    controller.clearAllFilters(null);
 
                     // Get the stream.
                     final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo - 1);
