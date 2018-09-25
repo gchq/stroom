@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* The find and replace filter now resets the match count in between nested streams so that each stream is treated the same way, i.e. it can have the same number of text replacements.
+
 ## [v5.5.0-beta.9] - 2018-09-24
 
 * Added multiple fixes and improvements to the find and replace filter including limited support of input/output recording when stepping.

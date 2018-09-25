@@ -37,6 +37,7 @@ public class FindReplaceFilter extends FilterReader {
 
     private boolean firstPass = true;
     private int replacementCount;
+    private int totalReplacementCount;
     private final BufferedReader inBuffer;
     private final OutBuffer outBuffer = new OutBuffer();
 
@@ -107,6 +108,7 @@ public class FindReplaceFilter extends FilterReader {
                 inBuffer.move(matcher.end());
                 doneReplacement = true;
                 replacementCount++;
+                totalReplacementCount++;
             }
         }
 
@@ -195,14 +197,23 @@ public class FindReplaceFilter extends FilterReader {
         return result;
     }
 
-    int getReplacementCount() {
-        return replacementCount;
+    int getTotalReplacementCount() {
+        return totalReplacementCount;
     }
 
     private void error(final String error) {
         if (errorReceiver != null) {
             errorReceiver.log(Severity.ERROR, null, elementId, error, null);
         }
+    }
+
+    void clear() {
+        // Be ready to start matching from teh start again.
+        firstPass = true;
+        // Reset the replacement count.
+        replacementCount = 0;
+        // Clear out buffer.
+        outBuffer.clear();
     }
 
     private class OutBuffer {
@@ -230,9 +241,8 @@ public class FindReplaceFilter extends FilterReader {
         }
 
         void move(final int len) {
-            if (len == length()) {
-                stringBuffer.setLength(0);
-                offset = 0;
+            if (len >= length()) {
+                clear();
             } else {
                 offset += len;
                 if (offset > 1000) {
@@ -240,6 +250,11 @@ public class FindReplaceFilter extends FilterReader {
                     offset = 0;
                 }
             }
+        }
+
+        void clear() {
+            stringBuffer.setLength(0);
+            offset = 0;
         }
 
         @Override

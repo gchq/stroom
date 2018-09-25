@@ -77,14 +77,17 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
 
     @Override
     public void endStream() {
-        if (textReplacementFilterReader.getReplacementCount() > 0) {
+        if (textReplacementFilterReader.getTotalReplacementCount() > 0) {
             errorReceiver.log(
                     Severity.INFO,
                     null,
                     getElementId(),
-                    "Performed " + textReplacementFilterReader.getReplacementCount() + " replacements",
+                    "Performed " + textReplacementFilterReader.getTotalReplacementCount() + " replacements",
                     null);
         }
+
+        // Reset some of the variables so we can find/replace again in the next stream.
+        textReplacementFilterReader.clear();
     }
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
