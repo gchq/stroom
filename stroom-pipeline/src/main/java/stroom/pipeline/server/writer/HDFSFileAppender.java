@@ -291,6 +291,11 @@ public class HDFSFileAppender extends AbstractAppender {
         super.setRollSize(size);
     }
 
+    @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output files.", defaultValue = "false")
+    public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
+        super.setSplitAggregatedStreams(splitAggregatedStreams);
+    }
+
     /**
      * Used for injecting a configuration in testing
      */

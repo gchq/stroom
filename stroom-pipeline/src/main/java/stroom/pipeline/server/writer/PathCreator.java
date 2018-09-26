@@ -77,6 +77,9 @@ public class PathCreator {
         if (streamHolder != null && streamHolder.getStream() != null) {
             path = replace(path, "streamId", String.valueOf(streamHolder.getStream().getId()));
         }
+        if (streamHolder != null) {
+            path = replace(path, "streamNo", String.valueOf(streamHolder.getStreamNo()));
+        }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
             path = replace(path, "searchId", String.valueOf(searchIdHolder.getSearchId()));
         }
@@ -116,7 +119,7 @@ public class PathCreator {
 
     public static String replaceUUIDVars(String path) {
         // Guard for UUID as creation is expensive.
-        if (path.indexOf("${uuid}") != -1) {
+        if (path.contains("${uuid}")) {
             path = replace(path, "uuid", UUID.randomUUID().toString());
         }
         return path;

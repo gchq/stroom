@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#338** : Added `splitAggregatedStreams` property to `StreamAppender`, `FileAppender` and `HDFSFileAppender` so that aggregated streams can be split into separate streams on output.
+
 * Added tests and fixed sorting of server tasks.
 
-* Improved the way text input and output is buffered and recorded when stepping
+* Improved the way text input and output is buffered and recorded when stepping.
 
 * The find and replace filter now resets the match count in between nested streams so that each stream is treated the same way, i.e. it can have the same number of text replacements.
 
