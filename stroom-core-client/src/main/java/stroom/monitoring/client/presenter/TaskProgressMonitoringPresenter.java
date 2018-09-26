@@ -242,10 +242,6 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 new TextCell(), FindTaskProgressCriteria.FIELD_INFO, false) {
             @Override
             public String getValue(final TaskProgress value) {
-                if (value.isOrphan()) {
-                    return "??? Orphan Task ??? " + value.getTaskInfo();
-                }
-
                 return value.getTaskInfo();
             }
         };
