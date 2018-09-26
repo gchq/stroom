@@ -49,6 +49,8 @@ public class StroomXSLTFunctionLibrary {
             register("format-date", FormatDate.class, 1, 5, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING}, SequenceType.OPTIONAL_STRING);
             register("get", Get.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("hash", Hash.class, 1, 3, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING}, SequenceType.OPTIONAL_STRING);
+            register("host-address", HostAddress.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
+            register("host-name", HostName.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("json-to-xml", JsonToXml.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.NODE_SEQUENCE);
             register("log", Log.class, 2, 2, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING}, SequenceType.EMPTY_SEQUENCE);
             register("lookup", Lookup.class, 2, 5, new SequenceType[]{SequenceType.SINGLE_STRING, SequenceType.SINGLE_STRING, SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_BOOLEAN, SequenceType.OPTIONAL_BOOLEAN}, SequenceType.NODE_SEQUENCE);
