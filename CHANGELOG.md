@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0-beta.10] - 2018-09-26
+
 * Issue **#732** : Added `host-address` and `host-name` XSLT functions.
 
 * Issue **#338** : Added `splitAggregatedStreams` property to `StreamAppender`, `FileAppender` and `HDFSFileAppender` so that aggregated streams can be split into separate streams on output.
@@ -930,7 +932,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.10...HEAD
+[v5.5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.5.0-beta.9...v5.5.0-beta.10
 [v5.5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.5.0-beta.8...v5.5.0-beta.9
 [v5.5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.5.0-beta.7...v5.5.0-beta.8
 [v5.5.0-beta.7]: https://github.com/gchq/stroom/compare/v5.5.0-beta.6...v5.5.0-beta.7
