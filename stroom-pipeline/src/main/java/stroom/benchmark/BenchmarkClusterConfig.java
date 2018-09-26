@@ -1,11 +1,12 @@
 package stroom.benchmark;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class BenchmarkClusterConfig {
+public class BenchmarkClusterConfig implements IsConfig {
     private int streamCount = 1000;
     private int recordCount = 10000;
     private int concurrentWriters = 10;

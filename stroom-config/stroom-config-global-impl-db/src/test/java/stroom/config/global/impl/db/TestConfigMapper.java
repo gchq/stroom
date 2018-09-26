@@ -17,10 +17,13 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.api.ConfigProperty;
 import stroom.docref.DocRef;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.shared.IsConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,12 +48,18 @@ class TestConfigMapper {
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
-        configProperties.forEach(configProperty ->
-                LOGGER.debug("{} - {} - {} - {}",
-                        configProperty.getName(),
-                        configProperty.getValue(),
-                        configProperty.getSource(),
-                        configProperty.getDefaultValue()));
+        String txt = configProperties.stream()
+                .sorted(Comparator.comparing(ConfigProperty::getName))
+                .map(configProperty ->
+                        LambdaLogger.buildMessage("{} - [{}] - [{}] - [{}] - [{}]",
+                                configProperty.getName(),
+                                configProperty.getValue(),
+                                configProperty.getDefaultValue(),
+                                configProperty.getSource(),
+                                configProperty.getDescription()))
+                .collect(Collectors.joining("\n"));
+
+        LOGGER.debug("Properties\n{}", txt);
     }
 
     @Test
@@ -145,9 +154,9 @@ class TestConfigMapper {
 
     @Test
     void testGetGlobalProperties2() {
+        TestConfig testConfig = new TestConfig();
 
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -158,93 +167,123 @@ class TestConfigMapper {
 
     @Test
     void update_string2() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
+        TestConfig testConfig = new TestConfig();
 
-        Supplier<String> getter = () -> extendedAppConfig.getTestConfig().getStringProp();
+        Supplier<String> getter = testConfig::getStringProp;
         String initialValue = getter.get();
         String newValue = initialValue + "xxx";
 
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
-        configMapper.updateConfigObject("stroom.test.stringProp", newValue);
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        configMapper.updateConfigObject("stroom.stringProp", newValue);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
     void update_primitiveInt() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
+        TestConfig testConfig = new TestConfig();
 
-        IntSupplier getter = () -> extendedAppConfig.getTestConfig().getTestPrimitiveConfig().getIntProp();
+        IntSupplier getter = () -> testConfig.getTestPrimitiveConfig().getIntProp();
         int initialValue = getter.getAsInt();
         int newValue = initialValue + 1;
 
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
-        configMapper.updateConfigObject("stroom.test.primitive.intProp", Integer.toString(newValue));
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        configMapper.updateConfigObject("stroom.primitive.intProp", Integer.toString(newValue));
 
         assertThat(getter.getAsInt()).isEqualTo(newValue);
     }
 
     @Test
     void update_boxedInt() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
+        TestConfig testConfig = new TestConfig();
 
-        Supplier<Integer> getter = () -> extendedAppConfig.getTestConfig().getTestBoxedConfig().getIntProp();
+        Supplier<Integer> getter = () -> testConfig.getTestBoxedConfig().getIntProp();
         Integer initialValue = getter.get();
         Integer newValue = initialValue + 1;
 
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
-        configMapper.updateConfigObject("stroom.test.boxed.intProp", Integer.toString(newValue));
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        configMapper.updateConfigObject("stroom.boxed.intProp", Integer.toString(newValue));
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
     void update_docRef() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
 
-        Supplier<DocRef> getter = () -> extendedAppConfig.getTestConfig().getDocRefProp();
+        Supplier<DocRef> getter = testConfig::getDocRefProp;
         DocRef initialValue = getter.get();
         DocRef newValue = new DocRef.Builder()
                 .type(initialValue.getType() + "xxx")
                 .uuid(UUID.randomUUID().toString())
                 .build();
 
-        configMapper.updateConfigObject("stroom.test.docRefProp", ConfigMapper.convertToString(newValue));
+        configMapper.updateConfigObject("stroom.docRefProp", ConfigMapper.convertToString(newValue));
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
-    void update_docRefList() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+    void update_enum() {
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
 
-        Supplier<List<DocRef>> getter = () -> extendedAppConfig.getTestConfig().getDocRefListProp();
+        Supplier<TestConfig.State> getter = testConfig::getStateProp;
+        TestConfig.State initialValue = getter.get();
+        TestConfig.State newValue = TestConfig.State.ON;
+
+        configMapper.updateConfigObject("stroom.stateProp", ConfigMapper.convertToString(newValue));
+
+        assertThat(initialValue).isEqualTo(TestConfig.State.OFF);
+        assertThat(getter.get()).isEqualTo(newValue);
+    }
+
+    @Test
+    void update_docRefList() {
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        Supplier<List<DocRef>> getter = testConfig::getDocRefListProp;
         List<DocRef> initialValue = getter.get();
         List<DocRef> newValue = new ArrayList<>();
         initialValue.forEach(docRef ->
                 newValue.add(new DocRef.Builder()
                         .type(docRef.getType() + "x")
                         .uuid(UUID.randomUUID().toString())
-                .name(docRef.getName() + "xx")
-                .build()));
+                        .name(docRef.getName() + "xx")
+                        .build()));
         newValue.add(new DocRef.Builder()
-                        .type("NewDocRefType")
-                        .uuid(UUID.randomUUID().toString())
+                .type("NewDocRefType")
+                .uuid(UUID.randomUUID().toString())
                 .build());
 
-        configMapper.updateConfigObject("stroom.test.docRefListProp", ConfigMapper.convertToString(newValue));
+        configMapper.updateConfigObject("stroom.docRefListProp", ConfigMapper.convertToString(newValue));
+
+        assertThat(getter.get()).isEqualTo(newValue);
+    }
+
+    @Test
+    void update_enumList() {
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        Supplier<List<TestConfig.State>> getter = testConfig::getStateListProp;
+        List<TestConfig.State> initialValue = getter.get();
+        List<TestConfig.State> newValue = new ArrayList<>(initialValue);
+        newValue.add(TestConfig.State.ON);
+
+        configMapper.updateConfigObject("stroom.stateListProp", ConfigMapper.convertToString(newValue));
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
     void update_stringList() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
 
-        Supplier<List<String>> getter = () -> extendedAppConfig.getTestConfig().getStringListProp();
+        Supplier<List<String>> getter = () -> testConfig.getStringListProp();
         List<String> initialValue = getter.get();
         List<String> newValue = Stream.of(initialValue, initialValue)
                 .flatMap(List::stream)
@@ -252,17 +291,17 @@ class TestConfigMapper {
                 .collect(Collectors.toList());
         String newValueStr = ConfigMapper.convertToString(newValue);
 
-        configMapper.updateConfigObject("stroom.test.stringListProp", newValueStr);
+        configMapper.updateConfigObject("stroom.stringListProp", newValueStr);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
     @Test
     void update_stringLongMap() {
-        ExtendedAppConfig extendedAppConfig = new ExtendedAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(extendedAppConfig);
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
 
-        Supplier<Map<String, Long>> getter = () -> extendedAppConfig.getTestConfig().getStringLongMapProp();
+        Supplier<Map<String, Long>> getter = testConfig::getStringLongMapProp;
         Map<String, Long> initialValue = getter.get();
         Map<String, Long> newValue = new HashMap<>();
         initialValue.forEach((k, v) ->
@@ -271,18 +310,18 @@ class TestConfigMapper {
 
         String newValueStr = ConfigMapper.convertToString(newValue);
 
-        configMapper.updateConfigObject("stroom.test.stringLongMapProp", newValueStr);
+        configMapper.updateConfigObject("stroom.stringLongMapProp", newValueStr);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
 
 
-    private AppConfig getAppConfig() throws IOException, ConfigurationException{
+    private AppConfig getAppConfig() throws IOException, ConfigurationException {
         ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
                 new FileConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false));
 
-            ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+        ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
 
         final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
                 .create(
@@ -290,9 +329,9 @@ class TestConfigMapper {
                         io.dropwizard.jersey.validation.Validators.newValidator(),
                         Jackson.newObjectMapper(),
                         "dw");
-            Config config = configurationFactory.build(configurationSourceProvider, "../../stroom-app/dev.yml");
+        Config config = configurationFactory.build(configurationSourceProvider, "../../stroom-app/dev.yml");
 
-           return config.getAppConfig();
+        return config.getAppConfig();
     }
 
 
@@ -311,21 +350,25 @@ class TestConfigMapper {
         }
     }
 
-    private static class ExtendedAppConfig extends AppConfig {
+//    private static class ExtendedAppConfig extends AppConfig {
+//
+//        private TestConfig testConfig = new TestConfig();
+//
+//        @JsonProperty("test")
+//        TestConfig getTestConfig() {
+//            return testConfig;
+//        }
+//
+//        void setTestConfig(final TestConfig testConfig) {
+//            this.testConfig = testConfig;
+//        }
+//    }
 
-        private TestConfig testConfig = new TestConfig();
+    private static class TestConfig implements IsConfig {
 
-        @JsonProperty("test")
-        TestConfig getTestConfig() {
-            return testConfig;
+        public enum State {
+            ON, IN_BETWEEN, OFF
         }
-
-        void setTestConfig(final TestConfig testConfig) {
-            this.testConfig = testConfig;
-        }
-    }
-
-    private static class TestConfig {
 
         private String stringProp = "initial value";
         private List<String> stringListProp = new ArrayList<>();
@@ -335,6 +378,8 @@ class TestConfigMapper {
         private List<DocRef> docRefListProp = List.of(
                 new DocRef("MyType1", UUID.randomUUID().toString(), "MyDocRef1"),
                 new DocRef("MyType2", UUID.randomUUID().toString(), "MyDocRef2"));
+        private State stateProp = State.OFF;
+        private List<State> stateListProp = List.of(State.ON, State.IN_BETWEEN);
 
         // sub-configs
         private TestPrimitiveConfig testPrimitiveConfig = new TestPrimitiveConfig();
@@ -419,10 +464,26 @@ class TestConfigMapper {
         void setDocRefListProp(final List<DocRef> docRefListProp) {
             this.docRefListProp = docRefListProp;
         }
+
+        State getStateProp() {
+            return stateProp;
+        }
+
+        void setStateProp(final State stateProp) {
+            this.stateProp = stateProp;
+        }
+
+        List<State> getStateListProp() {
+            return stateListProp;
+        }
+
+        void setStateListProp(final List<State> stateListProp) {
+            this.stateListProp = stateListProp;
+        }
     }
 
 
-    private static class TestPrimitiveConfig {
+    private static class TestPrimitiveConfig implements IsConfig {
 
         private boolean booleanProp = false;
         private int intProp = 123;
@@ -471,7 +532,7 @@ class TestConfigMapper {
         }
     }
 
-    private static class TestBoxedConfig {
+    private static class TestBoxedConfig implements IsConfig {
 
         private Boolean booleanProp = false;
         private Integer intProp = 123;

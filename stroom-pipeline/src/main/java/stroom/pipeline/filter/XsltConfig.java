@@ -1,11 +1,12 @@
 package stroom.pipeline.filter;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class XsltConfig {
+public class XsltConfig implements IsConfig {
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
     private int maxElements = DEFAULT_MAX_ELEMENTS;

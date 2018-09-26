@@ -1,11 +1,13 @@
 package stroom.streamtask;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ProcessConfig implements BatchDeleteConfig {
+public class ProcessConfig implements BatchDeleteConfig, IsConfig {
+
     private boolean assignTasks = true;
     private boolean createTasks = true;
     private String deleteAge = "1d";

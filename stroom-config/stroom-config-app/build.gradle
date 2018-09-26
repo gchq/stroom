@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-pipeline')
     compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
    //compile libs.jackson_core
    compile libs.commons_text

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.io.FileUtil;
 
@@ -12,7 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Singleton
-public class CoreConfig {
+public class CoreConfig implements IsConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
     private HibernateConfig hibernateConfig = new HibernateConfig();

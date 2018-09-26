@@ -5,15 +5,20 @@ import stroom.config.app.AppConfig;
 import stroom.proxy.guice.ProxyConfig;
 
 public class Config extends Configuration {
-    private String mode;
+    public enum StartupMode {
+        PROXY,
+        APP
+    }
+
+    private StartupMode mode = StartupMode.APP;
     private AppConfig appConfig;
     private ProxyConfig proxyConfig;
 
-    public String getMode() {
+    public StartupMode getMode() {
         return mode;
     }
 
-    public void setMode(final String mode) {
+    public void setMode(final StartupMode mode) {
         this.mode = mode;
     }
 

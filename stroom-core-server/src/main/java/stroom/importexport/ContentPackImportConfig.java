@@ -1,12 +1,13 @@
 package stroom.importexport;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ContentPackImportConfig {
+public class ContentPackImportConfig implements IsConfig {
     private boolean enabled;
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)

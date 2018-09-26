@@ -4,6 +4,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
@@ -13,6 +16,7 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class GlobalConfigDbModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigDbModule.class);
     private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
     private static final String FLYWAY_TABLE = "config_schema_history";
 
@@ -47,7 +51,14 @@ public class GlobalConfigDbModule extends AbstractModule {
         flyway.setLocations(FLYWAY_LOCATIONS);
         flyway.setTable(FLYWAY_TABLE);
         flyway.setBaselineOnMigrate(true);
-        flyway.migrate();
+        LOGGER.info("Applying Flyway migrations to {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        try {
+            flyway.migrate();
+        } catch (FlywayException e) {
+            LOGGER.error("Error migrating global copnfig database",e);
+            throw e;
+        }
+        LOGGER.info("Completed Flyway migrations for {}", FLYWAY_TABLE);
         return flyway;
     }
 

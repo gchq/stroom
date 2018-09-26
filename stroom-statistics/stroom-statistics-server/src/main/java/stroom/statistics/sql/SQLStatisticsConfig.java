@@ -5,12 +5,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.statistics.sql.search.SearchConfig;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class SQLStatisticsConfig {
+public class SQLStatisticsConfig implements IsConfig {
     private String docRefType = "StatisticStore";
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();

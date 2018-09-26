@@ -2,11 +2,12 @@ package stroom.index;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexConfig {
+public class IndexConfig implements IsConfig {
     private int ramBufferSizeMB = 1024;
     private IndexWriterConfig indexWriterConfig;
 

@@ -1,7 +1,6 @@
 package stroom.statistics.internal;
 
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

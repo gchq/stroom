@@ -32,8 +32,10 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -66,33 +68,31 @@ class ConfigMapper {
     private final SortedMap<String, ConfigProperty> globalPropertiesMap = new TreeMap<>();
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
-    @Inject
-    ConfigMapper(final AppConfig appConfig) {
+    ConfigMapper(final IsConfig configObject) {
 
+        LOGGER.debug("Initialising ConfigMapper with class {}", configObject.getClass().getName());
         // The values in the passed AppConfig will have been set from the yaml by DropWizard on
         // app boot.  We want to know the default values as defined by the compile-time initial values of
         // the instance variables in the AppConfig tree.  Therefore create our own AppConfig tree and
         // walk it to populate globalPropertiesMap with the defaults.
-        addConfigObjectMethods(new AppConfig(), ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
+        try {
+            IsConfig vanillaObject = configObject.getClass().getDeclaredConstructor().newInstance();
+            addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unable to call constructor on class {}",
+                    configObject.getClass().getName()), e);
+        }
 
         // Now walk the AppConfig object model from the YAML updating globalPropertiesMap where values
         // differ from the defaults.
-        addConfigObjectMethods(appConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+        addConfigObjectMethods(configObject, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
     }
 
     Collection<ConfigProperty> getGlobalProperties() {
         return globalPropertiesMap.values();
     }
 
-    private void addConfigObjectMethods(final Object object,
-                                        final String path,
-                                        final Map<String, Prop> propertyMap) {
-        addConfigObjectMethods(object, path, propertyMap, (fullPath, prop) -> {
-            // Do nothing
-        });
-    }
-
-    private void addConfigObjectMethods(final Object object,
+    private void addConfigObjectMethods(final IsConfig object,
                                         final String path,
                                         final Map<String, Prop> propertyMap,
                                         final BiConsumer<String, Prop> propConsumer) {
@@ -120,11 +120,18 @@ class ConfigMapper {
 
                     // Now let the consumer do something to it
                     propConsumer.accept(fullPath, prop);
-                } else {
+                } else if (IsConfig.class.isAssignableFrom(valueType)) {
+                    // This must be a branch, i.e. config object so recurse into that
                     if (value != null) {
-                        // This must be a branch, i.e. config object so recurse into that
-                        addConfigObjectMethods(value, fullPath, propertyMap, propConsumer);
+                        IsConfig childConfigObject = (IsConfig) value;
+                        addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
                     }
+                } else {
+                    // This is not expected
+                    throw  new RuntimeException(LambdaLogger.buildMessage(
+                            "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
+                            valueType.getName(),
+                            IsConfig.class.getSimpleName()));
                 }
 
             } catch (final InvocationTargetException | IllegalAccessException e) {
@@ -174,15 +181,10 @@ class ConfigMapper {
 
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
 
-        // Default the value if we don't have a value and have a default
-//        if (configProperty.getValue() == null && configProperty.getDefaultValue() != null) {
-//            configProperty.setValue(configProperty.getDefaultValue());
-//        }
-
         globalPropertiesMap.put(fullPath, configProperty);
     }
 
-    private boolean isSupportedPropertyType(final Class<?> type) {
+    private static boolean isSupportedPropertyType(final Class<?> type) {
         boolean isSupported = type.equals(String.class) ||
                 type.equals(Byte.class) ||
                 type.equals(byte.class) ||
@@ -202,7 +204,8 @@ class ConfigMapper {
                 type.equals(char.class) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
-                DocRef.class.isAssignableFrom(type);
+                DocRef.class.isAssignableFrom(type) ||
+                Enum.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -256,14 +259,21 @@ class ConfigMapper {
 
     private static String convertToString(final Object value, final List<String> availableDelimiters) {
         if (value != null) {
-            if (value instanceof List) {
-                return listToString((List<?>) value, availableDelimiters);
-            } else if (value instanceof Map) {
-                return mapToString((Map<?, ?>) value, availableDelimiters);
-            } else if (value instanceof DocRef) {
-                return docRefToString((DocRef) value, availableDelimiters);
+            if (isSupportedPropertyType(value.getClass())) {
+                if (value instanceof List) {
+                    return listToString((List<?>) value, availableDelimiters);
+                } else if (value instanceof Map) {
+                    return mapToString((Map<?, ?>) value, availableDelimiters);
+                } else if (value instanceof DocRef) {
+                    return docRefToString((DocRef) value, availableDelimiters);
+                } else if (value instanceof Enum) {
+                    return enumToString((Enum) value);
+                } else {
+                    return value.toString();
+                }
             } else {
-                return value.toString();
+                throw new RuntimeException(LambdaLogger.buildMessage("Value [{}] of type {}, is not a supported type",
+                        value, value.getClass().getName()));
             }
         } else {
             return null;
@@ -304,6 +314,8 @@ class ConfigMapper {
                 final Object typedValue = convertToObject(value, genericType);
                 prop.setValueOnConfigObject(typedValue);
                 return typedValue;
+            } else {
+                LOGGER.error(LambdaLogger.buildMessage("Cannot find property with key [{}]", key));
             }
         } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
             // TODO why swallow these exceptions
@@ -337,19 +349,23 @@ class ConfigMapper {
             return Boolean.valueOf(value);
         } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
             return value.charAt(0);
-        } else if (type.isAssignableFrom(List.class)) {
+        } else if (List.class.isAssignableFrom(type)) {
             // determine the type of the list items
             Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
             return stringToList(value, itemType);
-        } else if (type.isAssignableFrom(Map.class)) {
+//        } else if (type.isAssignableFrom(Map.class)) {
+        } else if (Map.class.isAssignableFrom(type)) {
             // determine the types of the keys and values
             Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
             Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
             return stringToMap(value, keyType, valueType);
         } else if (type.equals(DocRef.class)) {
             return stringToDocRef(value);
+        } else if (Enum.class.isAssignableFrom(type)) {
+            return stringToEnum(value, type);
         }
 
+        LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
         return null;
     }
 
@@ -411,6 +427,10 @@ class ConfigMapper {
                 + "docRef("
                 + String.join(delimiter, docRef.getType(), docRef.getUuid(), docRef.getName())
                 + ")";
+    }
+
+    private static String enumToString(final Enum enumInstance) {
+        return enumInstance.name();
     }
 
     private static <T> List<T> stringToList(final String serialisedForm, final Class<T> type) {
@@ -475,6 +495,10 @@ class ConfigMapper {
                 .build();
     }
 
+    private static Enum stringToEnum(final String serialisedForm, final Class<?> type) {
+        return Enum.valueOf((Class<Enum>) type, serialisedForm.toUpperCase());
+    }
+
     private static Class getDataType(Class clazz) {
         if (clazz.isPrimitive()) {
             return clazz;
@@ -525,4 +549,18 @@ class ConfigMapper {
         return chosenDelimiter;
     }
 
+    public static class ConfigMapperFactory implements Provider<ConfigMapper> {
+
+        private final ConfigMapper configMapper;
+
+        @Inject
+        ConfigMapperFactory(final AppConfig appConfig) {
+            configMapper = new ConfigMapper(appConfig);
+        }
+
+        @Override
+        public ConfigMapper get() {
+            return configMapper;
+        }
+    }
 }

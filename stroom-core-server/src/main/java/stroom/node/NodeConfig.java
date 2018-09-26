@@ -2,14 +2,14 @@ package stroom.node;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class NodeConfig {
+public class NodeConfig implements IsConfig {
     private String nodeName = "tba";
     private String rackName = "tba";
     private StatusConfig statusConfig;

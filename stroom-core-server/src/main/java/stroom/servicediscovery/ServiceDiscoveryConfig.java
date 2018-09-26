@@ -1,12 +1,13 @@
 package stroom.servicediscovery;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ServiceDiscoveryConfig {
+public class ServiceDiscoveryConfig implements IsConfig {
     private boolean enabled = false;
     private String zookeeperUrl = "localhost:2181";
     private String servicesHostNameOrIpAddress = "localhost";

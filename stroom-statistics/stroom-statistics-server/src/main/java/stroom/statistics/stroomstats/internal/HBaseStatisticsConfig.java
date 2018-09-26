@@ -2,11 +2,12 @@ package stroom.statistics.stroomstats.internal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class HBaseStatisticsConfig {
+public class HBaseStatisticsConfig implements IsConfig {
     private String docRefType = "StroomStatsStore";
     private KafkaTopicsConfig kafkaTopicsConfig = new KafkaTopicsConfig();
     private String kafkaConfigUuid;

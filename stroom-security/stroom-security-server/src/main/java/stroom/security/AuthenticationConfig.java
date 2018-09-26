@@ -2,13 +2,14 @@ package stroom.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class AuthenticationConfig {
+public class AuthenticationConfig implements IsConfig {
     private String authenticationServiceUrl;
     private boolean authenticationRequired = true;
     private String apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc";
@@ -95,7 +96,7 @@ public class AuthenticationConfig {
                 '}';
     }
 
-    public static class JwtConfig {
+    public static class JwtConfig implements IsConfig {
         private String jwtIssuer= "stroom";
         private boolean enableTokenRevocationCheck = true;
 

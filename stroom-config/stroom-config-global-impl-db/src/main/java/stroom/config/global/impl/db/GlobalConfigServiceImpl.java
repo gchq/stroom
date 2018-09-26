@@ -78,7 +78,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
 
     private void initialise() {
         // Setup DB properties.
-        LOGGER.info("Adding global properties to the DB");
+        LOGGER.info("Setting up configuration properties");
         loadMappedProperties();
         loadDBProperties();
     }

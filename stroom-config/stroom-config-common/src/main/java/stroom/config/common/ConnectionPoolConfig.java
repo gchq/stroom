@@ -16,11 +16,12 @@
 
 package stroom.config.common;
 
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
 
 import java.util.Objects;
 
-public class ConnectionPoolConfig {
+public class ConnectionPoolConfig implements IsConfig {
     private boolean cachePrepStmts = true;
     private int prepStmtCacheSize = 250;
     private int prepStmtCacheSqlLimit = 2048;

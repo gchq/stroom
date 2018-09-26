@@ -1,12 +1,13 @@
 package stroom.datafeed;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataFeedConfig {
+public class DataFeedConfig implements IsConfig {
     /**
      * Same size as JDK's Buffered Output Stream.
      */

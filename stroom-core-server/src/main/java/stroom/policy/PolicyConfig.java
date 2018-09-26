@@ -1,9 +1,11 @@
 package stroom.policy;
 
+import stroom.util.shared.IsConfig;
+
 import javax.inject.Singleton;
 
 @Singleton
-public class PolicyConfig {
+public class PolicyConfig implements IsConfig {
     private int deleteBatchSize = 1000;
 
     public int getDeleteBatchSize() {

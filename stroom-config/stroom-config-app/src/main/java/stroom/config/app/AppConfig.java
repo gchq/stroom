@@ -24,13 +24,15 @@ import stroom.statistics.StatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.shared.IsConfig;
 import stroom.volume.VolumeConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class AppConfig {
+public class AppConfig implements IsConfig {
+
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ContentPackImportConfig contentPackImportConfig;

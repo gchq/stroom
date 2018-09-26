@@ -2,12 +2,13 @@ package stroom.streamtask;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ProxyAggregationConfig {
+public class ProxyAggregationConfig implements IsConfig {
     private String proxyDir = "${stroom.temp}/proxy";
     private volatile int proxyThreads = 10;
     private volatile int maxAggregation = 10000;

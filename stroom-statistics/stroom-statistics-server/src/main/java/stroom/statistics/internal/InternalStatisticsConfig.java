@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import stroom.docref.DocRef;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 import java.util.Collections;
@@ -13,7 +14,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Singleton
-public class InternalStatisticsConfig {
+public class InternalStatisticsConfig implements IsConfig {
 
     private static final Map<InternalStatisticKey, Function<InternalStatisticsConfig, List<DocRef>>>
             KEY_TO_DOC_REFS_GETTER_MAP = new EnumMap<>(InternalStatisticKey.class);

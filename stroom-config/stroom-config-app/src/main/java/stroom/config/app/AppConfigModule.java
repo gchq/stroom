@@ -51,7 +51,7 @@ public class AppConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         // Bind the application config.        
-        bind(AppConfig.class).toProvider(() -> appConfig);
+        bind(AppConfig.class).toInstance(appConfig);
 
         bind(BenchmarkClusterConfig.class).toProvider(appConfig::getBenchmarkClusterConfig);
         bind(ClusterConfig.class).toProvider(appConfig::getClusterConfig);

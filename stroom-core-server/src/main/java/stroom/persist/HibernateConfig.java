@@ -1,13 +1,14 @@
 package stroom.persist;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class HibernateConfig {
+public class HibernateConfig implements IsConfig {
     private String dialect = "org.hibernate.dialect.MySQLInnoDBDialect";
     private boolean showSql;
     private boolean formatSql;

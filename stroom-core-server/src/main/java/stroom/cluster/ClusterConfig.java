@@ -2,13 +2,14 @@ package stroom.cluster;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ClusterConfig {
+public class ClusterConfig implements IsConfig {
     private boolean clusterCallUseLocal = true;
     private String clusterCallReadTimeout = "30s";
     private boolean clusterCallIgnoreSSLHostnameVerifier = true;

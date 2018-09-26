@@ -2,11 +2,13 @@ package stroom.volume;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class VolumeConfig {
+public class VolumeConfig implements IsConfig {
+
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
