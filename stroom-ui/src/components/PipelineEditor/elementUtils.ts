@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ElementRoles } from './ElementRoles';
+import { ElementRoles } from "./ElementRoles";
+import {
+  ElementDefinitions,
+  ElementDefinitionsByCategory,
+  ElementDefinitionsByType,
+  PipelineElementType,
+  ElementDefinition
+} from "../../types";
 
 /**
  * This will take in the map of element types and return a new map
  * of those types grouped by category
  * @param {elementTypes} elements The element definitions from Stroom
  */
-export function groupByCategory(elements) {
+export function groupByCategory(
+  elements: ElementDefinitions
+): ElementDefinitionsByCategory {
   return Object.entries(elements)
     .map(k => k[1])
     .reduce(
       (acc, next) => ({
         ...acc,
-        [next.category]: [...(acc[next.category] || []), next],
+        [next.category]: [...(acc[next.category] || []), next]
       }),
-      {},
+      {}
     );
 }
 
@@ -37,15 +46,17 @@ export function groupByCategory(elements) {
  * of those types grouped by category
  * @param {elementTypes} elements The element definitions from Stroom
  */
-export function keyByType(elements) {
+export function keyByType(
+  elements: ElementDefinitions
+): ElementDefinitionsByType {
   return Object.entries(elements)
     .map(k => k[1])
     .reduce(
       (acc, next) => ({
         ...acc,
-        [next.type]: next,
+        [next.type]: next
       }),
-      {},
+      {}
     );
 }
 
@@ -54,11 +65,15 @@ export function keyByType(elements) {
  * to a parent type. It takes into the account the roles being played by both
  * elements, and the number of existing connections.
  *
- * @param {PipelineElementType} parentType The parent element type
- * @param {PipelineElementType} childType The child element type
+ * @param {ElementDefinition} parentType The parent element type
+ * @param {ElementDefinition} childType The child element type
  * @param {integer} currentChildCount Number of existing connections from the parent
  */
-export function isValidChildType(parentType, childType, currentChildCount) {
+export function isValidChildType(
+  parentType: ElementDefinition,
+  childType: ElementDefinition,
+  currentChildCount: number
+) {
   if (parentType.roles.includes(ElementRoles.WRITER)) {
     if (currentChildCount > 0) {
       return false;

@@ -33,6 +33,7 @@ import { fetchPipeline } from "./pipelineResourceClient";
 import { fetchElements, fetchElementProperties } from "./elementResourceClient";
 import lineElementCreators from "./pipelineLineElementCreators";
 import { getPipelineLayoutInformation } from "./pipelineUtils";
+import { PipelineElementType } from "../../types";
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -106,7 +107,11 @@ const Pipeline = ({
     >
       <div className="Pipeline-editor__elements">
         {Object.keys(elementStyles)
-          .map(es => pipeline.merged.elements.add.find(e => e.id === es))
+          .map(es =>
+            pipeline.merged.elements.add.find(
+              (e: PipelineElementType) => e.id === es
+            )
+          )
           .map(e => (
             <div key={e.id} id={e.id} style={elementStyles[e.id]}>
               <PipelineElement

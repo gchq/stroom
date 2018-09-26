@@ -1,167 +1,169 @@
+import { PipelineModelType } from "../../../types";
+
 export default {
   docRef: {
-    uuid: 'childRestoredLink',
-    name: 'Child Restored Link',
-    type: 'Pipeline'
+    uuid: "childRestoredLink",
+    name: "Child Restored Link",
+    type: "Pipeline"
   },
-  description: 'This demonstrates a pipeline with a link that can be restored',
+  description: "This demonstrates a pipeline with a link that can be restored",
   configStack: [
     {
       elements: {
         add: [
           {
-            id: 'dsParser',
-            type: 'DSParser',
+            id: "dsParser",
+            type: "DSParser"
           },
           {
-            id: 'xsltFilter',
-            type: 'XSLTFilter',
+            id: "xsltFilter",
+            type: "XSLTFilter"
           },
           {
-            id: 'xmlWriter',
-            type: 'XMLWriter',
+            id: "xmlWriter",
+            type: "XMLWriter"
           },
           {
-            id: 'streamAppender',
-            type: 'StreamAppender',
+            id: "streamAppender",
+            type: "StreamAppender"
           },
           {
-            id: 'Source',
-            type: 'Source',
-          },
+            id: "Source",
+            type: "Source"
+          }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [
           {
-            from: 'Source',
-            to: 'dsParser',
+            from: "Source",
+            to: "dsParser"
           },
           {
-            from: 'dsParser',
-            to: 'xsltFilter',
+            from: "dsParser",
+            to: "xsltFilter"
           },
           {
-            from: 'xsltFilter',
-            to: 'xmlWriter',
+            from: "xsltFilter",
+            to: "xmlWriter"
           },
           {
-            from: 'xmlWriter',
-            to: 'streamAppender',
-          },
+            from: "xmlWriter",
+            to: "streamAppender"
+          }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
           {
-            id: 'xmlParser',
-            type: 'XMLParser',
-          },
+            id: "xmlParser",
+            type: "XMLParser"
+          }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [
           {
-            from: 'Source',
-            to: 'xmlParser',
+            from: "Source",
+            to: "xmlParser"
           },
           {
-            from: 'xmlParser',
-            to: 'xsltFilter',
-          },
+            from: "xmlParser",
+            to: "xsltFilter"
+          }
         ],
         remove: [
           {
-            from: 'dsParser',
-            to: 'xsltFilter',
-          },
-        ],
-      },
-    },
+            from: "dsParser",
+            to: "xsltFilter"
+          }
+        ]
+      }
+    }
   ],
   merged: {
     elements: {
       add: [
         {
-          id: 'xsltFilter',
-          type: 'XSLTFilter',
+          id: "xsltFilter",
+          type: "XSLTFilter"
         },
         {
-          id: 'streamAppender',
-          type: 'StreamAppender',
+          id: "streamAppender",
+          type: "StreamAppender"
         },
         {
-          id: 'xmlParser',
-          type: 'XMLParser',
+          id: "xmlParser",
+          type: "XMLParser"
         },
         {
-          id: 'xmlWriter',
-          type: 'XMLWriter',
+          id: "xmlWriter",
+          type: "XMLWriter"
         },
         {
-          id: 'dsParser',
-          type: 'DSParser',
+          id: "dsParser",
+          type: "DSParser"
         },
         {
-          id: 'Source',
-          type: 'Source',
-        },
+          id: "Source",
+          type: "Source"
+        }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [],
-      remove: [],
+      remove: []
     },
     pipelineReferences: {
       add: [],
-      remove: [],
+      remove: []
     },
     links: {
       add: [
         {
-          from: 'xsltFilter',
-          to: 'xmlWriter',
+          from: "xsltFilter",
+          to: "xmlWriter"
         },
         {
-          from: 'xmlParser',
-          to: 'xsltFilter',
+          from: "xmlParser",
+          to: "xsltFilter"
         },
         {
-          from: 'xmlWriter',
-          to: 'streamAppender',
+          from: "xmlWriter",
+          to: "streamAppender"
         },
         {
-          from: 'Source',
-          to: 'dsParser',
+          from: "Source",
+          to: "dsParser"
         },
         {
-          from: 'Source',
-          to: 'xmlParser',
-        },
+          from: "Source",
+          to: "xmlParser"
+        }
       ],
-      remove: [],
-    },
-  },
-};
+      remove: []
+    }
+  }
+} as PipelineModelType;

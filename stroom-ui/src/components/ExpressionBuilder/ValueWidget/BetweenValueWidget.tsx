@@ -1,39 +1,60 @@
-import * as React from 'react';
+import * as React from "react";
 
-import { compose, withHandlers, withProps } from 'recompose';
+import { compose, withHandlers, withProps } from "recompose";
+import { ControlledInput } from "../../../types";
 
-const enhance = compose(
+export interface Props extends ControlledInput<any> {
+  valueType: string;
+}
+
+export interface WithHandlers {
+  onFromValueChange: React.ChangeEventHandler<HTMLInputElement>;
+  onToValueChange: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+export interface WithProps {
+  fromValue: string;
+  toValue: string;
+}
+
+export interface EnhancedProps extends Props, WithHandlers, WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   withHandlers({
-    onFromValueChange: ({ onChange, value = '' }) => (event, data) => {
-      const parts = value.split(',');
-      const existingToValue = parts.length === 2 ? parts[1] : '';
-      const newValue = `${data.value},${existingToValue}`;
+    onFromValueChange: ({ onChange, value = "" }) => ({
+      target: { value }
+    }: React.ChangeEvent<HTMLInputElement>) => {
+      const parts = value.split(",");
+      const existingToValue = parts.length === 2 ? parts[1] : "";
+      const newValue = `${value},${existingToValue}`;
 
       onChange(newValue);
     },
 
-    onToValueChange: ({ onChange, value = '' }) => (event, data) => {
-      const parts = value.split(',');
-      const existingFromValue = parts.length === 2 ? parts[0] : '';
-      const newValue = `${existingFromValue},${data.value}`;
+    onToValueChange: ({ onChange, value = "" }) => ({
+      target: { value }
+    }: React.ChangeEvent<HTMLInputElement>) => {
+      const parts = value.split(",");
+      const existingFromValue = parts.length === 2 ? parts[0] : "";
+      const newValue = `${existingFromValue},${value}`;
 
       onChange(newValue);
-    },
+    }
   }),
   withProps(({ value }) => {
-    let fromValue = '';
-    let toValue = '';
+    let fromValue = "";
+    let toValue = "";
     if (value) {
-      const splitValues = value.split(',');
-      fromValue = splitValues.length === 2 ? splitValues[0] : '';
-      toValue = splitValues.length === 2 ? splitValues[1] : '';
+      const splitValues = value.split(",");
+      fromValue = splitValues.length === 2 ? splitValues[0] : "";
+      toValue = splitValues.length === 2 ? splitValues[1] : "";
     }
 
     return {
       fromValue,
-      toValue,
+      toValue
     };
-  }),
+  })
 );
 
 const BetweenValueWidget = ({
@@ -41,12 +62,22 @@ const BetweenValueWidget = ({
   toValue,
   onFromValueChange,
   onToValueChange,
-  valueType,
-}) => (
+  valueType
+}: EnhancedProps) => (
   <span>
-    <input placeholder="from" type={valueType} value={fromValue} onChange={onFromValueChange} />
+    <input
+      placeholder="from"
+      type={valueType}
+      value={fromValue}
+      onChange={onFromValueChange}
+    />
     <span className="input-between__divider">to</span>
-    <input placeholder="to" type={valueType} value={toValue} onChange={onToValueChange} />
+    <input
+      placeholder="to"
+      type={valueType}
+      value={toValue}
+      onChange={onToValueChange}
+    />
   </span>
 );
 

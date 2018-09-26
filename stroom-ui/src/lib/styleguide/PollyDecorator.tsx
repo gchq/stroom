@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// import * as uuidv4 from "uuid/v4";
+import * as uuidv4 from "uuid/v4";
 import { connect } from "react-redux";
-// import { compose, lifecycle, branch, renderComponent } from "recompose";
+import { compose, lifecycle, branch, renderComponent } from "recompose";
 import { compose, lifecycle } from "recompose";
 import { Polly } from "@pollyjs/core";
 import FetchAdapter from "@pollyjs/adapter-fetch";
@@ -23,15 +23,15 @@ import FetchAdapter from "@pollyjs/adapter-fetch";
 // Register the fetch adapter so its accessible by all future polly instances
 Polly.register(FetchAdapter);
 
-// import * as JsSearch from "js-search";
+import * as JsSearch from "js-search";
 
-// import {
-//   findItem,
-//   addItemsToTree,
-//   findByUuids,
-//   deleteItemsFromTree,
-//   iterateNodes
-// } from "../../lib/treeUtils";
+import {
+  findItem,
+  addItemsToTree,
+  findByUuids,
+  deleteItemsFromTree,
+  iterateNodes
+} from "../../lib/treeUtils";
 import { GlobalStoreState } from "../../startup/reducers";
 import { actionCreators as fetchActionCreators } from "../../lib/fetchTracker.redux";
 import withConfig from "../../startup/withConfig";
@@ -100,7 +100,7 @@ const testCache: TestCache = {
   data: {}
 };
 
-//const startTime = Date.now();
+const startTime = Date.now();
 
 // This is normally deployed as part of the server
 server.get("*.hot-update.json").passthrough();
@@ -109,274 +109,272 @@ server.get("/config.json").intercept((req: any, res: any) => {
   res.json(testConfig);
 });
 
-// TODO - Gradually Reinstate these things
-// // Explorer Resource
-// // // Get Explorer Tree
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/all`)
-//   .intercept((req, res) => {
-//     res.json(testCache.data.documentTree);
-//   });
-// // Search
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/search`)
-//   .intercept((req, res) => {
-//     const { searchTerm, docRefType, pageOffset, pageSize } = req.query;
+// Explorer Resource
+// // Get Explorer Tree
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/all`)
+  .intercept((req, res) => {
+    res.json(testCache.data.documentTree);
+  });
+// Search
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/search`)
+  .intercept((req, res) => {
+    const { searchTerm, docRefType, pageOffset, pageSize } = req.query;
 
-//     let searchResults = [];
-//     const searchTermValid = searchTerm && searchTerm.length > 1;
-//     const docRefTypeValid = docRefType && docRefType.length > 1;
+    let searchResults = [];
+    const searchTermValid = searchTerm && searchTerm.length > 1;
+    const docRefTypeValid = docRefType && docRefType.length > 1;
 
-//     if (searchTermValid || docRefTypeValid) {
-//       iterateNodes(testCache.data.documentTree, (lineage, node) => {
-//         searchResults.push({
-//           name: node.name,
-//           type: node.type,
-//           uuid: node.uuid,
-//           lineage,
-//           lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, "")
-//         });
-//       });
+    if (searchTermValid || docRefTypeValid) {
+      iterateNodes(testCache.data.documentTree, (lineage, node) => {
+        searchResults.push({
+          name: node.name,
+          type: node.type,
+          uuid: node.uuid,
+          lineage,
+          lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, "")
+        });
+      });
 
-//       if (searchTermValid) {
-//         const search = new JsSearch.Search("uuid");
-//         search.addIndex("name");
-//         search.addIndex("lineageNames");
-//         search.addDocuments(searchResults);
+      if (searchTermValid) {
+        const search = new JsSearch.Search("uuid");
+        search.addIndex("name");
+        search.addIndex("lineageNames");
+        search.addDocuments(searchResults);
 
-//         searchResults = search.search(searchTerm);
-//       }
+        searchResults = search.search(searchTerm);
+      }
 
-//       if (docRefTypeValid) {
-//         searchResults = searchResults.filter(d => d.type === docRefType);
-//       }
-//     }
+      if (docRefTypeValid) {
+        searchResults = searchResults.filter(d => d.type === docRefType);
+      }
+    }
 
-//     res.json(
-//       searchResults
-//         .map(s => ({
-//           name: s.name,
-//           type: s.type,
-//           uuid: s.uuid
-//         }))
-//         .splice(pageOffset, pageSize)
-//     );
-//   });
-// // // Get Info
-// server
-//   .get(
-//     `${
-//       testConfig.stroomBaseServiceUrl
-//     }/explorer/v1/info/:docRefType/:docRefUuid`
-//   )
-//   .intercept((req, res) => {
-//     const { node: docRef } = findItem(
-//       testCache.data.documentTree,
-//       req.params.docRefUuid
-//     );
-//     const info = {
-//       docRef,
-//       createTime: startTime,
-//       updateTime: Date.now(),
-//       createUser: "testGuy",
-//       updateUser: "testGuy",
-//       otherInfo: "pet peeves - crying babies"
-//     };
-//     res.json(info);
-//   });
-// // Get Document Types
+    res.json(
+      searchResults
+        .map(s => ({
+          name: s.name,
+          type: s.type,
+          uuid: s.uuid
+        }))
+        .splice(pageOffset, pageSize)
+    );
+  });
+// // Get Info
+server
+  .get(
+    `${
+      testConfig.stroomBaseServiceUrl
+    }/explorer/v1/info/:docRefType/:docRefUuid`
+  )
+  .intercept((req, res) => {
+    const { node: docRef } = findItem(
+      testCache.data.documentTree,
+      req.params.docRefUuid
+    );
+    const info = {
+      docRef,
+      createTime: startTime,
+      updateTime: Date.now(),
+      createUser: "testGuy",
+      updateUser: "testGuy",
+      otherInfo: "pet peeves - crying babies"
+    };
+    res.json(info);
+  });
+// Get Document Types
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/docRefTypes`)
   .intercept((req: any, res: any) => {
     res.json(testCache.data.docRefTypes);
   });
-// TODO - Gradually Re-instate these things
-// // // Create Document
-// server
-//   .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/create`)
-//   .intercept((req, res) => {
-//     const {
-//       docRefType,
-//       docRefName,
-//       destinationFolderRef,
-//       permissionInheritance
-//     } = JSON.parse(req.body);
+// // Create Document
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/create`)
+  .intercept((req, res) => {
+    const {
+      docRefType,
+      docRefName,
+      destinationFolderRef,
+      permissionInheritance
+    } = JSON.parse(req.body);
 
-//     const newDocRef = {
-//       uuid: uuidv4(),
-//       type: docRefType,
-//       name: docRefName,
-//       children: docRefType === "Folder" ? [] : undefined
-//     };
-//     testCache.data.documentTree = addItemsToTree(
-//       testCache.data.documentTree,
-//       destinationFolderRef.uuid,
-//       [newDocRef]
-//     );
+    const newDocRef = {
+      uuid: uuidv4(),
+      type: docRefType,
+      name: docRefName,
+      children: docRefType === "Folder" ? [] : undefined
+    };
+    testCache.data.documentTree = addItemsToTree(
+      testCache.data.documentTree,
+      destinationFolderRef.uuid,
+      [newDocRef]
+    );
 
-//     res.json(testCache.data.documentTree);
-//   });
+    res.json(testCache.data.documentTree);
+  });
 
-// // Copies need to be deep
-// const copyDocRef = docRef => ({
-//   uuid: uuidv4(),
-//   type: docRef.type,
-//   name: `${docRef.name}-copy-${uuidv4()}`,
-//   children: docRef.children ? docRef.children.map(copyDocRef) : undefined
-// });
+// Copies need to be deep
+const copyDocRef = docRef => ({
+  uuid: uuidv4(),
+  type: docRef.type,
+  name: `${docRef.name}-copy-${uuidv4()}`,
+  children: docRef.children ? docRef.children.map(copyDocRef) : undefined
+});
 
-// // Copy Document
-// server
-//   .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/copy`)
-//   .intercept((req, res) => {
-//     const { destinationFolderRef, docRefs } = JSON.parse(req.body);
+// Copy Document
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/copy`)
+  .intercept((req, res) => {
+    const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-//     const copies = docRefs
-//       .map(d => findItem(testCache.data.documentTree, d.uuid))
-//       .map(d => d.node)
-//       .map(copyDocRef);
-//     testCache.data.documentTree = addItemsToTree(
-//       testCache.data.documentTree,
-//       destinationFolderRef.uuid,
-//       copies
-//     );
+    const copies = docRefs
+      .map(d => findItem(testCache.data.documentTree, d.uuid))
+      .map(d => d.node)
+      .map(copyDocRef);
+    testCache.data.documentTree = addItemsToTree(
+      testCache.data.documentTree,
+      destinationFolderRef.uuid,
+      copies
+    );
 
-//     res.json(testCache.data.documentTree);
-//   });
-// // Move Document
-// server
-//   .put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/move`)
-//   .intercept((req, res) => {
-//     const { destinationFolderRef, docRefs } = JSON.parse(req.body);
+    res.json(testCache.data.documentTree);
+  });
+// Move Document
+server
+  .put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/move`)
+  .intercept((req, res) => {
+    const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-//     const docRefUuidsToDelete = docRefs.map(d => d.uuid);
-//     const itemsToMove = findByUuids(
-//       testCache.data.documentTree,
-//       docRefUuidsToDelete
-//     );
-//     testCache.data.documentTree = deleteItemsFromTree(
-//       testCache.data.documentTree,
-//       docRefUuidsToDelete
-//     );
-//     testCache.data.documentTree = addItemsToTree(
-//       testCache.data.documentTree,
-//       destinationFolderRef.uuid,
-//       itemsToMove
-//     );
+    const docRefUuidsToDelete = docRefs.map(d => d.uuid);
+    const itemsToMove = findByUuids(
+      testCache.data.documentTree,
+      docRefUuidsToDelete
+    );
+    testCache.data.documentTree = deleteItemsFromTree(
+      testCache.data.documentTree,
+      docRefUuidsToDelete
+    );
+    testCache.data.documentTree = addItemsToTree(
+      testCache.data.documentTree,
+      destinationFolderRef.uuid,
+      itemsToMove
+    );
 
-//     res.json(testCache.data.documentTree);
-//   });
-// // Rename Document
-// server
-//   .put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/rename`)
-//   .intercept((req, res) => {
-//     const { docRef, name } = JSON.parse(req.body);
-//     res.json({ ...docRef, name });
-//   });
-// // Delete Document
-// server
-//   .delete(`${testConfig.stroomBaseServiceUrl}/explorer/v1/delete`)
-//   .intercept((req, res) => {
-//     const docRefs = JSON.parse(req.body);
-//     res.json(testCache.data.documentTree);
-//   });
+    res.json(testCache.data.documentTree);
+  });
+// Rename Document
+server
+  .put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/rename`)
+  .intercept((req, res) => {
+    const { docRef, name } = JSON.parse(req.body);
+    res.json({ ...docRef, name });
+  });
+// Delete Document
+server
+  .delete(`${testConfig.stroomBaseServiceUrl}/explorer/v1/delete`)
+  .intercept((req, res) => {
+    const docRefs = JSON.parse(req.body);
+    res.json(testCache.data.documentTree);
+  });
 
-// // Elements Resource
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elements`)
-//   .intercept((req, res) => {
-//     res.json(testCache.data.elements);
-//   });
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elementProperties`)
-//   .intercept((req, res) => {
-//     res.json(testCache.data.elementProperties);
-//   });
+// Elements Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elements`)
+  .intercept((req, res) => {
+    res.json(testCache.data.elements);
+  });
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elementProperties`)
+  .intercept((req, res) => {
+    res.json(testCache.data.elementProperties);
+  });
 
-// // Pipeline Resource
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
-//   .intercept((req, res) => {
-//     const pipeline = testCache.data.pipelines[req.params.pipelineId];
-//     if (pipeline) {
-//       res.json(pipeline);
-//     } else {
-//       res.sendStatus(404);
-//     }
-//   });
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/`)
-//   .intercept((req, res) => {
-//     res.json({
-//       total: Object.keys(testCache.data.pipelines).length,
-//       pipelines: Object.keys(testCache.data.pipelines).map(p => ({
-//         uuid: p,
-//         name: p,
-//         type: "Pipeline"
-//       }))
-//     });
-//   });
-// server
-//   .post(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
-//   .intercept((req, res) => res.sendStatus(200));
+// Pipeline Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
+  .intercept((req, res) => {
+    const pipeline = testCache.data.pipelines[req.params.pipelineId];
+    if (pipeline) {
+      res.json(pipeline);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/`)
+  .intercept((req, res) => {
+    res.json({
+      total: Object.keys(testCache.data.pipelines).length,
+      pipelines: Object.keys(testCache.data.pipelines).map(p => ({
+        uuid: p,
+        name: p,
+        type: "Pipeline"
+      }))
+    });
+  });
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
+  .intercept((req, res) => res.sendStatus(200));
 
-// // XSLT Resource
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
-//   .intercept((req, res) => {
-//     const xslt = testCache.data.xslt[req.params.xsltUuid];
-//     if (xslt) {
-//       res.setHeader("Content-Type", "application/xml");
-//       res.send(xslt);
-//     } else {
-//       res.sendStatus(404);
-//     }
-//   });
-// server
-//   .post(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
-//   .intercept((req, res) => res.sendStatus(200));
+// XSLT Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
+  .intercept((req, res) => {
+    const xslt = testCache.data.xslt[req.params.xsltUuid];
+    if (xslt) {
+      res.setHeader("Content-Type", "application/xml");
+      res.send(xslt);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
+  .intercept((req, res) => res.sendStatus(200));
 
-// // Dictionary Resource
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`)
-//   .intercept((req, res) => {
-//     const dict = testCache.data.dictionaries[req.params.dictionaryUuid];
-//     if (dict) {
-//       res.json(dict);
-//     } else {
-//       res.sendStatus(404);
-//     }
-//   });
-// server
-//   .post(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`)
-//   .intercept((req, res) => res.sendStatus(200));
+// Dictionary Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`)
+  .intercept((req, res) => {
+    const dict = testCache.data.dictionaries[req.params.dictionaryUuid];
+    if (dict) {
+      res.json(dict);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+server
+  .post(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`)
+  .intercept((req, res) => res.sendStatus(200));
 
-// // Stream Task Resource (for Tracker Dashboard)
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/streamTasks/v1/`)
-//   .intercept((req, res) =>
-//     res.json({
-//       streamTasks: testCache.data.trackers || [],
-//       totalStreamTasks: testCache.data.trackers
-//         ? testCache.data.trackers.length
-//         : 0
-//     })
-//   );
+// Stream Task Resource (for Tracker Dashboard)
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/streamTasks/v1/`)
+  .intercept((req, res) =>
+    res.json({
+      streamTasks: testCache.data.trackers || [],
+      totalStreamTasks: testCache.data.trackers
+        ? testCache.data.trackers.length
+        : 0
+    })
+  );
 
-// /**
-//  * The StreamAttributeMap resource supports expression-based search.
-//  * This responds with the datasource for this expression.
-//  */
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/dataSource`)
-//   .intercept((req, res) => res.json(testCache.data.dataSource));
+/**
+ * The StreamAttributeMap resource supports expression-based search.
+ * This responds with the datasource for this expression.
+ */
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/dataSource`)
+  .intercept((req, res) => res.json(testCache.data.dataSource));
 
-// /**
-//  * This responds with a list of streamAttributeMaps
-//  */
-// server
-//   .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/`)
-//   .intercept((req, res) => res.json(testCache.data.dataList));
+/**
+ * This responds with a list of streamAttributeMaps
+ */
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/`)
+  .intercept((req, res) => res.json(testCache.data.dataList));
 
 export interface Props {
   testData: TestData;
@@ -409,16 +407,16 @@ const setupTestServer = (testData: TestData) =>
 
         // Replace all the 'server side data' with the properties passed in
         testCache.data = {
-          // documentTree: { ...this.props.documentTree },
+          documentTree: { ...testData.documentTree },
           docRefTypes: testData.docRefTypes
-          // pipelines: { ...this.props.pipelines },
-          // elements: [...this.props.elements],
-          // elementProperties: { ...this.props.elementProperties },
-          // xslt: { ...this.props.xslt },
-          // dictionaries: { ...this.props.dictionaries },
-          // trackers: [...this.props.trackers],
-          // dataList: { ...this.props.dataList },
-          // dataSource: { ...this.props.dataSource }
+          pipelines: { ...testData.pipelines },
+          elements: [...testData.elements],
+          elementProperties: { ...testData.elementProperties },
+          xslt: { ...testData.xslt },
+          dictionaries: { ...testData.dictionaries },
+          trackers: [...testData.trackers],
+          dataList: { ...testData.dataList },
+          dataSource: { ...testData.dataSource }
         };
       }
     }),

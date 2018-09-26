@@ -14,37 +14,12 @@
  * limitations under the License.
  */
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
 import { compose, lifecycle } from "recompose";
 
 import { GlobalStoreState } from "../../startup/reducers";
 import { DocRefTypeList } from "./redux";
-//TODO
-//import { fetchDocRefTypes } from "../FolderExplorer/explorerClient";
+import { fetchDocRefTypes } from "../FolderExplorer/explorerClient";
 
-// TODO - remove this
-import { wrappedGet } from "../../lib/fetchTracker.redux";
-import { actionCreators } from "./redux";
-const { docRefTypesReceived } = actionCreators;
-const fetchDocRefTypes = () => (
-  dispatch: Dispatch,
-  getState: () => GlobalStoreState
-) => {
-  // dispatch(
-  //   docRefTypesReceived(["XSLT", "Pipeline", "Feed", "AnnotationsIndex"])
-  // );
-  const state = getState();
-  const url = `${
-    state.config.values.stroomBaseServiceUrl
-  }/explorer/v1/docRefTypes`;
-  wrappedGet(dispatch, state, url, response =>
-    response
-      .json()
-      .then((docRefTypes: DocRefTypeList) =>
-        dispatch(docRefTypesReceived(docRefTypes))
-      )
-  );
-};
 export interface Props {}
 
 export interface ConnectState {

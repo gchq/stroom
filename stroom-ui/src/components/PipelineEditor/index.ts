@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import PipelineEditor from './PipelineEditor';
-import Pipeline from './Pipeline';
+import PipelineEditor from "./PipelineEditor";
+import Pipeline from "./Pipeline";
 
-import { reducer, actionCreators } from './redux';
-import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
-import { fetchElements, fetchElementProperties } from './elementResourceClient';
+import { reducer, actionCreators, StoreState } from "./redux";
+import { fetchPipeline, searchPipelines } from "./pipelineResourceClient";
+import { fetchElements, fetchElementProperties } from "./elementResourceClient";
 
-import { testPipelines } from './test';
+import { testPipelines } from "./test";
 
 export {
   PipelineEditor,
@@ -32,7 +32,8 @@ export {
   fetchElementProperties,
   searchPipelines,
   actionCreators,
-  testPipelines,
+  StoreState,
+  testPipelines
 };
 
 export default PipelineEditor;

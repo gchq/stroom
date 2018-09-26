@@ -1,1324 +1,1354 @@
+import { PipelineModelType } from "../../../types";
+
 export const noParent = {
   docRef: {
-    uuid: 'noParent',
-    name: 'No Parent',
-    type: 'Pipeline',
+    uuid: "noParent",
+    name: "No Parent",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties with no parent pipeline',
+  description: "Demonstrates properties with no parent pipeline",
   configStack: [
     {
       elements: {
         add: [
           {
-            id: 'combinedParser',
-            type: 'CombinedParser',
+            id: "combinedParser",
+            type: "CombinedParser"
           },
           {
-            id: 'xsltFilter',
-            type: 'XSLTFilter',
+            id: "xsltFilter",
+            type: "XSLTFilter"
           },
           {
-            id: 'Source',
-            type: 'Source',
-          },
+            id: "Source",
+            type: "Source"
+          }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [
           {
-            from: 'Source',
-            to: 'combinedParser',
+            from: "Source",
+            to: "combinedParser"
           },
           {
-            from: 'combinedParser',
-            to: 'xsltFilter',
-          },
+            from: "combinedParser",
+            to: "xsltFilter"
+          }
         ],
-        remove: [],
-      },
-    },
+        remove: []
+      }
+    }
   ],
   merged: {
     elements: {
       add: [
         {
-          id: 'xsltFilter',
-          type: 'XSLTFilter',
+          id: "xsltFilter",
+          type: "XSLTFilter"
         },
         {
-          id: 'combinedParser',
-          type: 'CombinedParser',
+          id: "combinedParser",
+          type: "CombinedParser"
         },
         {
-          id: 'Source',
-          type: 'Source',
-        },
+          id: "Source",
+          type: "Source"
+        }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'DSD',
+            string: "DSD",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: {
       add: [],
-      remove: [],
+      remove: []
     },
     links: {
       add: [
         {
-          from: 'combinedParser',
-          to: 'xsltFilter',
+          from: "combinedParser",
+          to: "xsltFilter"
         },
         {
-          from: 'Source',
-          to: 'combinedParser',
-        },
+          from: "Source",
+          to: "combinedParser"
+        }
       ],
-      remove: [],
-    },
-  },
+      remove: []
+    }
+  }
 };
 
 export const childNoProperty = {
   docRef: {
-    uuid: 'childNoProperty',
-    name: 'Parent No Property',
-    type: 'Pipeline',
+    uuid: "childNoProperty",
+    name: "Parent No Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties when parent has no property',
+  description: "Demonstrates properties when parent has no property",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const childWithProperty = {
   docRef: {
-    uuid: 'childWithProperty',
-    name: 'Parent With Property',
-    type: 'Pipeline',
+    uuid: "childWithProperty",
+    name: "Parent With Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties with parent that has properties',
+  description: "Demonstrates properties with parent that has properties",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JS',
+              string: "JS",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const childNoPropertyParentNoProperty = {
   docRef: {
-    uuid: 'childNoPropertyParentNoProperty',
-    name: 'This No Property, Parent No Property',
-    type: 'Pipeline',
+    uuid: "childNoPropertyParentNoProperty",
+    name: "This No Property, Parent No Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties with no property, parent has no property either',
+  description:
+    "Demonstrates properties with no property, parent has no property either",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const childNoPropertyParentWithProperty = {
   docRef: {
-    uuid: 'childNoPropertyParentWithProperty',
-    name: 'This No Property, Parent Has Property',
-    type: 'Pipeline',
+    uuid: "childNoPropertyParentWithProperty",
+    name: "This No Property, Parent Has Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties with no property, parent has the property either',
+  description:
+    "Demonstrates properties with no property, parent has the property either",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property1',
+            element: "xsltFilter",
+            name: "property1",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const childWithPropertyParentNoProperty = {
   docRef: {
-    uuid: 'childWithPropertyParentNoProperty',
-    name: 'This With Property, Parent No Property',
-    type: 'Pipeline',
+    uuid: "childWithPropertyParentNoProperty",
+    name: "This With Property, Parent No Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties with a property, parent has no property either',
+  description:
+    "Demonstrates properties with a property, parent has no property either",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property2',
+            element: "xsltFilter",
+            name: "property2",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property1',
+            element: "xsltFilter",
+            name: "property1",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const childWithPropertyParentWithProperty = {
   docRef: {
-    uuid: 'childWithPropertyParentWithProperty',
-    name: 'This With Property, Parent With Property',
-    type: 'Pipeline',
+    uuid: "childWithPropertyParentWithProperty",
+    name: "This With Property, Parent With Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties with a property, parent also has property',
+  description:
+    "Demonstrates properties with a property, parent also has property",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD123',
+              string: "DSD123",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property2',
+            element: "xsltFilter",
+            name: "property2",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property1',
+            element: "xsltFilter",
+            name: "property1",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const childWithRemoveForItsParentsAdd = {
   docRef: {
-    uuid: 'childWithRemoveForItsParentsAdd',
-    name: 'This Removing Property from parent',
-    type: 'Pipeline',
+    uuid: "childWithRemoveForItsParentsAdd",
+    name: "This Removing Property from parent",
+    type: "Pipeline"
   },
-  description: 'Demonstrates property removal from a parent',
+  description: "Demonstrates property removal from a parent",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD123',
+              string: "DSD123",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property2',
+            element: "xsltFilter",
+            name: "property2",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'property1',
+            element: "xsltFilter",
+            name: "property1",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
         remove: [
           {
-            element: 'xsltFilter',
-            name: 'property2',
+            element: "xsltFilter",
+            name: "property2",
             value: {
               string: null,
               integer: null,
               entity: null,
               boolean: false,
-              long: null,
-            },
-          },
-        ],
+              long: null
+            }
+          }
+        ]
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JSON',
+              string: "JSON",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'D',
+              string: "D",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
 };
 
 export const emptyChildParentWithProperty = {
   docRef: {
-    uuid: 'emptyChildParentWithProperty',
-    name: 'Empty Child, Parent With Property',
-    type: 'Pipeline',
+    uuid: "emptyChildParentWithProperty",
+    name: "Empty Child, Parent With Property",
+    type: "Pipeline"
   },
-  description: 'Demonstrates properties',
+  description: "Demonstrates properties",
   configStack: [
     {
       elements: {
         add: [
-          { id: 'combinedParser', type: 'CombinedParser' },
-          { id: 'xsltFilter', type: 'XSLTFilter' },
-          { id: 'Source', type: 'Source' },
+          { id: "combinedParser", type: "CombinedParser" },
+          { id: "xsltFilter", type: "XSLTFilter" },
+          { id: "Source", type: "Source" }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'combinedParser',
-            name: 'type',
+            element: "combinedParser",
+            name: "type",
             value: {
-              string: 'JS',
+              string: "JS",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
+              long: null
+            }
           },
           {
-            element: 'xsltFilter',
-            name: 'xsltNamePattern',
+            element: "xsltFilter",
+            name: "xsltNamePattern",
             value: {
-              string: 'DSD',
+              string: "DSD",
               integer: null,
               entity: null,
               boolean: null,
-              long: null,
-            },
-          },
+              long: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
       links: {
         add: [
-          { from: 'Source', to: 'combinedParser' },
-          { from: 'combinedParser', to: 'xsltFilter' },
+          { from: "Source", to: "combinedParser" },
+          { from: "combinedParser", to: "xsltFilter" }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: { add: [], remove: [] },
       properties: {
         add: [],
-        remove: [],
+        remove: []
       },
       pipelineReferences: { add: [], remove: [] },
-      links: { add: [], remove: [] },
-    },
+      links: { add: [], remove: [] }
+    }
   ],
   merged: {
     elements: {
       add: [
-        { id: 'xsltFilter', type: 'XSLTFilter' },
-        { id: 'combinedParser', type: 'CombinedParser' },
-        { id: 'Source', type: 'Source' },
+        { id: "xsltFilter", type: "XSLTFilter" },
+        { id: "combinedParser", type: "CombinedParser" },
+        { id: "Source", type: "Source" }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'xsltFilter',
-          name: 'xsltNamePattern',
+          element: "xsltFilter",
+          name: "xsltNamePattern",
           value: {
-            string: 'D',
+            string: "D",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
+            long: null
+          }
         },
         {
-          element: 'combinedParser',
-          name: 'type',
+          element: "combinedParser",
+          name: "type",
           value: {
-            string: 'JSON',
+            string: "JSON",
             integer: null,
             entity: null,
             boolean: null,
-            long: null,
-          },
-        },
+            long: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: { add: [], remove: [] },
     links: {
-      add: [{ from: 'combinedParser', to: 'xsltFilter' }, { from: 'Source', to: 'combinedParser' }],
-      remove: [],
-    },
-  },
-};
+      add: [
+        { from: "combinedParser", to: "xsltFilter" },
+        { from: "Source", to: "combinedParser" }
+      ],
+      remove: []
+    }
+  }
+} as PipelineModelType;

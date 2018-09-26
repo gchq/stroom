@@ -28,11 +28,33 @@ import ThemedModal from "../ThemedModal";
 import { actionCreators } from "./redux";
 import IconHeader from "../IconHeader";
 import Button from "../Button";
+import { DocRefInfoType } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { docRefInfoClosed } = actionCreators;
 
-const enhance = compose(
-  connect(
+export interface Props {}
+export interface ConnectState {
+  isOpen: boolean;
+  docRefInfo?: DocRefInfoType;
+}
+export interface ConnectDispatch {
+  docRefInfoClosed: typeof docRefInfoClosed;
+}
+export interface WithProps {
+  formattedCreateTime: string;
+  formattedUpdateTime: string;
+}
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithProps {
+  docRefInfo: DocRefInfoType;
+}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ docRefInfo: { isOpen, docRefInfo } }, props) => ({
       isOpen,
       docRefInfo
@@ -62,10 +84,10 @@ const DocRefInfoModal = ({
   docRefInfoClosed,
   formattedCreateTime,
   formattedUpdateTime
-}) => (
+}: EnhancedProps) => (
   <ThemedModal
     isOpen={isOpen}
-    onClose={docRefInfoClosed}
+    onRequestClose={docRefInfoClosed}
     header={<IconHeader icon="info" text="Document Information" />}
     content={
       <form>
@@ -135,7 +157,6 @@ const DocRefInfoModal = ({
           <span>
             <label>Other Info</label>
             <input
-              label="Other Info"
               type="text"
               value={docRefInfo.otherInfo}
               onChange={doNothing}

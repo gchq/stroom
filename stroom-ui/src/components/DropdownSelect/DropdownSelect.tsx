@@ -61,7 +61,7 @@ export interface EnhancedProps
     StateHandlers,
     StateProps,
     ConnectState,
-    SelectableItemListingHandlers,
+    SelectableItemListingHandlers<OptionType>,
     Handlers {}
 
 const enhance = compose<EnhancedProps, Props>(

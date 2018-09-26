@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ExpressionBuilder from './ExpressionBuilder';
+import ExpressionBuilder from "./ExpressionBuilder";
 
-import { reducer, actionCreators } from './redux';
+import { reducer, actionCreators, StoreState } from "./redux";
 
-import { toString as expressionToString } from './expressionBuilderUtils'
+import { toString as expressionToString } from "./expressionBuilderUtils";
 
-export { ExpressionBuilder, reducer, actionCreators, expressionToString };
+export {
+  ExpressionBuilder,
+  reducer,
+  actionCreators,
+  expressionToString,
+  StoreState
+};

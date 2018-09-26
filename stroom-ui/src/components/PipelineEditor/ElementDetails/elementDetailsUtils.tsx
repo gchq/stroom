@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import Button from '../Button';
+import * as React from "react";
+import Button from "../Button";
+import { ElementPropertyType, PipelinePropertyType } from "../../../types";
 
-const getActualValue = (value, type) => {
+const getActualValue = (value: PipelinePropertyType, type: string) => {
   // In case the type of the element doesn't match the type in the data.
-  type = type === 'int' ? 'integer' : type;
+  type = type === "int" ? "integer" : type;
 
   let actualValue;
 
@@ -32,14 +33,19 @@ const getActualValue = (value, type) => {
   return actualValue;
 };
 
-const getInitialValues = (elementTypeProperties, elementProperties) => {
+const getInitialValues = (
+  elementTypeProperties: ElementPropertyType,
+  elementProperties: Array<PipelinePropertyType>
+) => {
   const initialValues = {};
-  Object.keys(elementTypeProperties).map((key) => {
-    const elementsProperty = elementProperties.find(element => element.name === key);
+  Object.keys(elementTypeProperties).map(key => {
+    const elementsProperty = elementProperties.find(
+      element => element.name === key
+    );
     initialValues[key] = getActualValue(
       elementsProperty,
       elementTypeProperties[key].defaultValue,
-      elementTypeProperties[key].type,
+      elementTypeProperties[key].type
     );
     return null;
   });
@@ -52,11 +58,12 @@ const getInitialValues = (elementTypeProperties, elementProperties) => {
  * @param {property} value The property
  * @param {string} type The type of the property
  */
-const getDisplayValue = (value, type) => {
+const getDisplayValue = (value: any, type: string): string => {
   // If values are entities then they'll be objects, which we can't drop into JSX.
-  let displayValue = value !== null && typeof value === 'object' ? value.value : value;
+  let displayValue: string =
+    value !== null && typeof value === "object" ? value.value : value;
   // And if we're dealing with a boolean then we'll want to get the string equivelent.
-  if (type === 'boolean') {
+  if (type === "boolean") {
     displayValue = value.toString();
   }
   return displayValue;
@@ -83,28 +90,34 @@ const getDetails = ({
   defaultValue,
   type,
   pipelineElementPropertyRevertToParent,
-  pipelineElementPropertyRevertToDefault,
+  pipelineElementPropertyRevertToDefault
 }) => {
   const RevertToDefaultButton = (
     <Button
       text="Revert to default"
-      onClick={() => pipelineElementPropertyRevertToDefault(pipelineId, elementId, name)} />
+      onClick={() =>
+        pipelineElementPropertyRevertToDefault(pipelineId, elementId, name)
+      }
+    />
   );
   const RevertToParentButton = (
     <Button
       text="Revert to parent"
-      onClick={() => pipelineElementPropertyRevertToParent(pipelineId, elementId, name)} />
+      onClick={() =>
+        pipelineElementPropertyRevertToParent(pipelineId, elementId, name)
+      }
+    />
   );
 
   // Parse the value if it's a boolean.
-  if (type === 'boolean') {
-    defaultValue = defaultValue === 'true';
+  if (type === "boolean") {
+    defaultValue = defaultValue === "true";
   }
 
   // The property.value object uses integer so we might need to convert
-  type = type === 'int' ? 'integer' : type;
+  type = type === "int" ? "integer" : type;
 
-  const isSet = value => value !== undefined && value !== '';
+  const isSet = value => value !== undefined && value !== "";
 
   let actualValue;
   let info;
@@ -119,54 +132,74 @@ const getDetails = ({
     info = (
       <div>
         <p>
-          This property is using the default value of{' '}
+          This property is using the default value of{" "}
           <strong>{getDisplayValue(defaultValue, type)}</strong>.
         </p>
-        <p>It is not inheriting anything and hasn't been set to anything by a user.</p>
+        <p>
+          It is not inheriting anything and hasn't been set to anything by a
+          user.
+        </p>
       </div>
     );
-  } else if (value !== undefined && parentValue === undefined && isSet(defaultValue)) {
+  } else if (
+    value !== undefined &&
+    parentValue === undefined &&
+    isSet(defaultValue)
+  ) {
     actualValue = value.value[type];
     info = (
       <div>
         <p>
-          This property has a default value of{' '}
-          <strong>{getDisplayValue(defaultValue, type)}</strong> but it has been overridden by the
-          user. You can revert to the default if you like.
+          This property has a default value of{" "}
+          <strong>{getDisplayValue(defaultValue, type)}</strong> but it has been
+          overridden by the user. You can revert to the default if you like.
         </p>
         {RevertToDefaultButton}
         <p>This property is not inheriting anything.</p>
       </div>
     );
-  } else if (value === undefined && parentValue !== undefined && isSet(defaultValue)) {
+  } else if (
+    value === undefined &&
+    parentValue !== undefined &&
+    isSet(defaultValue)
+  ) {
     actualValue = defaultValue;
     info = (
       <div>
         <p>
-          This property is currently set to the default value. It's parent has a value of{' '}
-          <strong>{getDisplayValue(parentValue.value[type], type)}</strong>. You may revert to this
-          if you wish.
+          This property is currently set to the default value. It's parent has a
+          value of{" "}
+          <strong>{getDisplayValue(parentValue.value[type], type)}</strong>. You
+          may revert to this if you wish.
         </p>
         {RevertToParentButton}
       </div>
     );
-  } else if (value !== undefined && parentValue !== undefined && isSet(defaultValue)) {
+  } else if (
+    value !== undefined &&
+    parentValue !== undefined &&
+    isSet(defaultValue)
+  ) {
     actualValue = value.value[type];
-    const setByChild = childValue !== undefined && childValue.value[type] === value.value[type];
+    const setByChild =
+      childValue !== undefined && childValue.value[type] === value.value[type];
     if (setByChild) {
       info = (
         <div>
           <p>
-            This property has a default value of{' '}
+            This property has a default value of{" "}
             <strong>{getDisplayValue(defaultValue, type)}</strong>.
           </p>
           <p>
-            This property would inherit a value of{' '}
-            <strong>{getDisplayValue(parentValue.value[type], type)}</strong> except this has been
-            set by a user.
+            This property would inherit a value of{" "}
+            <strong>{getDisplayValue(parentValue.value[type], type)}</strong>{" "}
+            except this has been set by a user.
           </p>
 
-          <p>You may revert it to the default or you may revert to the parent's value</p>
+          <p>
+            You may revert it to the default or you may revert to the parent's
+            value
+          </p>
           <div>
             {RevertToDefaultButton}
             {RevertToParentButton}
@@ -177,7 +210,7 @@ const getDetails = ({
       info = (
         <div>
           <p>
-            This property has a default value of{' '}
+            This property has a default value of{" "}
             <strong>{getDisplayValue(defaultValue, type)}</strong>.
           </p>
           <p>This property is using an inherited value.</p>
@@ -187,43 +220,61 @@ const getDetails = ({
         </div>
       );
     }
-  } else if (value === undefined && parentValue === undefined && !isSet(defaultValue)) {
+  } else if (
+    value === undefined &&
+    parentValue === undefined &&
+    !isSet(defaultValue)
+  ) {
     actualValue = undefined;
     info = (
       <p>
-        This property has no default value, it is not inheriting anything, and hasn't been set to
-        anything by a user.
+        This property has no default value, it is not inheriting anything, and
+        hasn't been set to anything by a user.
       </p>
     );
-  } else if (value !== undefined && parentValue === undefined && !isSet(defaultValue)) {
+  } else if (
+    value !== undefined &&
+    parentValue === undefined &&
+    !isSet(defaultValue)
+  ) {
     actualValue = value.value[type];
     info = (
       <p>
-        This property has no default value and it is not inheriting anything. It has been set by the
-        user.
+        This property has no default value and it is not inheriting anything. It
+        has been set by the user.
       </p>
     );
-  } else if (value === undefined && parentValue !== undefined && !isSet(defaultValue)) {
+  } else if (
+    value === undefined &&
+    parentValue !== undefined &&
+    !isSet(defaultValue)
+  ) {
     actualValue = undefined;
     info = (
       <p>
-        This property has no default value and has not been set to anything by the user, but it is
-        inheriting a value of <strong>{getDisplayValue(parentValue.value[type], type)}</strong>.
+        This property has no default value and has not been set to anything by
+        the user, but it is inheriting a value of{" "}
+        <strong>{getDisplayValue(parentValue.value[type], type)}</strong>.
       </p>
     );
-  } else if (value !== undefined && parentValue !== undefined && !isSet(defaultValue)) {
+  } else if (
+    value !== undefined &&
+    parentValue !== undefined &&
+    !isSet(defaultValue)
+  ) {
     actualValue = value.value[type];
-    const setByChild = childValue !== undefined && childValue.value[type] === value.value[type];
+    const setByChild =
+      childValue !== undefined && childValue.value[type] === value.value[type];
     if (setByChild) {
       info = (
         <div>
           <p>This property has no default value.</p>
 
           <p>
-            It is inheriting a value of{' '}
+            It is inheriting a value of{" "}
             <strong> {getDisplayValue(parentValue.value[type], type)}</strong>
-            but this has been overriden by the user. You can revert to this inherited value if you
-            like.
+            but this has been overriden by the user. You can revert to this
+            inherited value if you like.
           </p>
           {RevertToParentButton}
         </div>

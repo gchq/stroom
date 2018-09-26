@@ -1,40 +1,66 @@
-import { createActions, handleActions, combineActions } from 'redux-actions';
-import { createActionHandlersPerId } from '../../lib/reduxFormUtils';
+import { Action, ActionCreator } from "redux";
 
-import { actionCreators as pipelineActionCreators } from './pipelineStatesReducer';
+import {
+  prepareReducerById,
+  StateById,
+  ActionId
+} from "../../../lib/redux-actions-ts";
 
-const { pipelineSettingsUpdated } = pipelineActionCreators;
+import {
+  PIPELINE_SETTINGS_UPDATED,
+  PipelineSettingsUpdatedAction
+} from "./pipelineStatesReducer";
 
-const actionCreators = createActions({
-  PIPELINE_SETTINGS_OPENED: pipelineId => ({ pipelineId, isOpen: true }),
-  PIPELINE_SETTINGS_CLOSED: pipelineId => ({ pipelineId, isOpen: false }),
-});
+export const PIPELINE_SETTINGS_OPENED = "PIPELINE_SETTINGS_OPENED";
+export const PIPELINE_SETTINGS_CLOSED = "PIPELINE_SETTINGS_CLOSED";
 
-const { pipelineSettingsOpened, pipelineSettingsClosed } = actionCreators;
+export interface PipelineSettingsAction extends ActionId {
+  isOpen: boolean;
+}
 
-const defaultState = {};
-const defaultStatePerPipeline = {
-  isOpen: false,
+export interface ActionCreators {
+  pipelineSettingsOpened: ActionCreator<
+    Action<"PIPELINE_SETTINGS_OPENED"> & PipelineSettingsAction
+  >;
+  pipelineSettingsClosed: ActionCreator<
+    Action<"PIPELINE_SETTINGS_CLOSED"> & PipelineSettingsAction
+  >;
+}
+
+export const actionCreators: ActionCreators = {
+  pipelineSettingsOpened: id => ({
+    type: PIPELINE_SETTINGS_OPENED,
+    id,
+    isOpen: true
+  }),
+  pipelineSettingsClosed: id => ({
+    type: PIPELINE_SETTINGS_CLOSED,
+    id,
+    isOpen: false
+  })
 };
 
-const byPipelineId = createActionHandlersPerId(
-  ({ payload: pipelineId }) => pipelineId,
-  defaultStatePerPipeline,
-);
+export interface StoreStatePerId {
+  isOpen: boolean;
+}
 
-const reducer = handleActions(
-  byPipelineId({
-    [combineActions(pipelineSettingsOpened, pipelineSettingsClosed)]: (
-      state,
-      { payload: { pipelineId, isOpen } },
-    ) => ({
-      isOpen,
-    }),
-    [pipelineSettingsUpdated]: (state, { payload: { pipelineId } }) => ({
-      isOpen: false,
-    }),
-  }),
-  defaultState,
-);
+export interface StoreState extends StateById<StoreStatePerId> {}
 
-export { actionCreators, reducer };
+const defaultStatePerId: StoreStatePerId = {
+  isOpen: false
+};
+
+export const reducer = prepareReducerById(defaultStatePerId)
+  .handleActions<PipelineSettingsAction>(
+    [PIPELINE_SETTINGS_OPENED, PIPELINE_SETTINGS_CLOSED],
+    (state, { isOpen }) => ({
+      isOpen
+    })
+  )
+  .handleForeignAction<PipelineSettingsUpdatedAction>(
+    PIPELINE_SETTINGS_UPDATED,
+    () => ({
+      isOpen: false
+    })
+  )
+  .getReducer();

@@ -1,15 +1,27 @@
 import { compose, withHandlers, withProps } from "recompose";
 import { connect } from "react-redux";
 
-import { ThemedConfirm } from "../ThemedModal";
-import { actionCreators } from "./redux";
+import ThemedConfirm from "../ThemedConfirm";
+import { actionCreators, State } from "./redux";
 
 const {
   expressionItemDeleteCancelled,
   expressionItemDeleteConfirmed
 } = actionCreators;
 
-const enhance = compose(
+export interface Props {
+  expressionId: string;
+}
+export interface ConnectState {
+  expressionState: 
+}
+export interface EnhancedProps extends Props{};
+
+// DeleteExpressionItem.propTypes = {
+//   expressionId: PropTypes.string.isRequired,
+// };
+
+const enhance = compose<EnhancedProps, Props>(
   connect(
     ({ expressionBuilder }, { expressionId }) => ({
       expressionState: expressionBuilder[expressionId]
@@ -31,10 +43,5 @@ const enhance = compose(
   }))
 );
 
-const DeleteExpressionItem = enhance(ThemedConfirm);
+export default enhance(ThemedConfirm);
 
-// DeleteExpressionItem.propTypes = {
-//   expressionId: PropTypes.string.isRequired,
-// };
-
-export default DeleteExpressionItem;

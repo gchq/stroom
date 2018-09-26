@@ -30,7 +30,7 @@ const enhance = compose<EnhancedProps, Props>(
   })
 );
 
-const DictionaryEditor = ({
+const DocRefEditor = ({
   docRef,
   openDocRef,
   actionBarItems,
@@ -64,4 +64,4 @@ const DictionaryEditor = ({
   </div>
 );
 
-export default enhance(DictionaryEditor);
+export default enhance(DocRefEditor);

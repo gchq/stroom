@@ -1,242 +1,244 @@
+import { PipelineModelType } from "../../../types";
+
 export default {
   docRef: {
-    uuid: 'longPipeline',
-    name: 'Long Pipeline',
-    type: 'Pipeline'
+    uuid: "longPipeline",
+    name: "Long Pipeline",
+    type: "Pipeline"
   },
-  description: 'This pipeline is long enough to stress out the rendering',
+  description: "This pipeline is long enough to stress out the rendering",
   configStack: [
     {
       elements: {
         add: [
           {
-            id: 'dsParser',
-            type: 'DSParser',
+            id: "dsParser",
+            type: "DSParser"
           },
           {
-            id: 'splitFilter',
-            type: 'SplitFilter',
+            id: "splitFilter",
+            type: "SplitFilter"
           },
           {
-            id: 'readCount',
-            type: 'RecordCountFilter',
+            id: "readCount",
+            type: "RecordCountFilter"
           },
           {
-            id: 'xsltFilter',
-            type: 'XSLTFilter',
+            id: "xsltFilter",
+            type: "XSLTFilter"
           },
           {
-            id: 'idEnrichmentFilter',
-            type: 'IdEnrichmentFilter',
+            id: "idEnrichmentFilter",
+            type: "IdEnrichmentFilter"
           },
           {
-            id: 'writeCount',
-            type: 'RecordCountFilter',
+            id: "writeCount",
+            type: "RecordCountFilter"
           },
           {
-            id: 'recordOutputFilter',
-            type: 'RecordOutputFilter',
+            id: "recordOutputFilter",
+            type: "RecordOutputFilter"
           },
           {
-            id: 'xsltOut',
-            type: 'XSLTFilter',
+            id: "xsltOut",
+            type: "XSLTFilter"
           },
           {
-            id: 'xmlWriter',
-            type: 'XMLWriter',
+            id: "xmlWriter",
+            type: "XMLWriter"
           },
           {
-            id: 'kafkaAppender',
-            type: 'KafkaAppender',
+            id: "kafkaAppender",
+            type: "KafkaAppender"
           },
           {
-            id: 'Source',
-            type: 'Source',
-          },
+            id: "Source",
+            type: "Source"
+          }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'splitFilter',
-            name: 'splitCount',
+            element: "splitFilter",
+            name: "splitCount",
             value: {
               string: null,
               integer: 100,
               entity: null,
               long: null,
-              boolean: null,
-            },
-          },
+              boolean: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [
           {
-            from: 'Source',
-            to: 'dsParser',
+            from: "Source",
+            to: "dsParser"
           },
           {
-            from: 'dsParser',
-            to: 'splitFilter',
+            from: "dsParser",
+            to: "splitFilter"
           },
           {
-            from: 'splitFilter',
-            to: 'readCount',
+            from: "splitFilter",
+            to: "readCount"
           },
           {
-            from: 'readCount',
-            to: 'xsltFilter',
+            from: "readCount",
+            to: "xsltFilter"
           },
           {
-            from: 'xsltFilter',
-            to: 'idEnrichmentFilter',
+            from: "xsltFilter",
+            to: "idEnrichmentFilter"
           },
           {
-            from: 'idEnrichmentFilter',
-            to: 'writeCount',
+            from: "idEnrichmentFilter",
+            to: "writeCount"
           },
           {
-            from: 'writeCount',
-            to: 'recordOutputFilter',
+            from: "writeCount",
+            to: "recordOutputFilter"
           },
           {
-            from: 'recordOutputFilter',
-            to: 'xsltOut',
+            from: "recordOutputFilter",
+            to: "xsltOut"
           },
           {
-            from: 'xsltOut',
-            to: 'xmlWriter',
+            from: "xsltOut",
+            to: "xmlWriter"
           },
           {
-            from: 'xmlWriter',
-            to: 'kafkaAppender',
-          },
+            from: "xmlWriter",
+            to: "kafkaAppender"
+          }
         ],
-        remove: [],
-      },
-    },
+        remove: []
+      }
+    }
   ],
   merged: {
     elements: {
       add: [
         {
-          id: 'xsltFilter',
-          type: 'XSLTFilter',
+          id: "xsltFilter",
+          type: "XSLTFilter"
         },
         {
-          id: 'kafkaAppender',
-          type: 'KafkaAppender',
+          id: "kafkaAppender",
+          type: "KafkaAppender"
         },
         {
-          id: 'xmlWriter',
-          type: 'XMLWriter',
+          id: "xmlWriter",
+          type: "XMLWriter"
         },
         {
-          id: 'writeCount',
-          type: 'RecordCountFilter',
+          id: "writeCount",
+          type: "RecordCountFilter"
         },
         {
-          id: 'recordOutputFilter',
-          type: 'RecordOutputFilter',
+          id: "recordOutputFilter",
+          type: "RecordOutputFilter"
         },
         {
-          id: 'splitFilter',
-          type: 'SplitFilter',
+          id: "splitFilter",
+          type: "SplitFilter"
         },
         {
-          id: 'idEnrichmentFilter',
-          type: 'IdEnrichmentFilter',
+          id: "idEnrichmentFilter",
+          type: "IdEnrichmentFilter"
         },
         {
-          id: 'xsltOut',
-          type: 'XSLTFilter',
+          id: "xsltOut",
+          type: "XSLTFilter"
         },
         {
-          id: 'dsParser',
-          type: 'DSParser',
+          id: "dsParser",
+          type: "DSParser"
         },
         {
-          id: 'readCount',
-          type: 'RecordCountFilter',
+          id: "readCount",
+          type: "RecordCountFilter"
         },
         {
-          id: 'Source',
-          type: 'Source',
-        },
+          id: "Source",
+          type: "Source"
+        }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'splitFilter',
-          name: 'splitCount',
+          element: "splitFilter",
+          name: "splitCount",
           value: {
             string: null,
             integer: 100,
             entity: null,
             long: null,
-            boolean: null,
-          },
-        },
+            boolean: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: {
       add: [],
-      remove: [],
+      remove: []
     },
     links: {
       add: [
         {
-          from: 'xsltFilter',
-          to: 'idEnrichmentFilter',
+          from: "xsltFilter",
+          to: "idEnrichmentFilter"
         },
         {
-          from: 'xmlWriter',
-          to: 'kafkaAppender',
+          from: "xmlWriter",
+          to: "kafkaAppender"
         },
         {
-          from: 'recordOutputFilter',
-          to: 'xsltOut',
+          from: "recordOutputFilter",
+          to: "xsltOut"
         },
         {
-          from: 'writeCount',
-          to: 'recordOutputFilter',
+          from: "writeCount",
+          to: "recordOutputFilter"
         },
         {
-          from: 'idEnrichmentFilter',
-          to: 'writeCount',
+          from: "idEnrichmentFilter",
+          to: "writeCount"
         },
         {
-          from: 'splitFilter',
-          to: 'readCount',
+          from: "splitFilter",
+          to: "readCount"
         },
         {
-          from: 'xsltOut',
-          to: 'xmlWriter',
+          from: "xsltOut",
+          to: "xmlWriter"
         },
         {
-          from: 'readCount',
-          to: 'xsltFilter',
+          from: "readCount",
+          to: "xsltFilter"
         },
         {
-          from: 'dsParser',
-          to: 'splitFilter',
+          from: "dsParser",
+          to: "splitFilter"
         },
         {
-          from: 'Source',
-          to: 'dsParser',
-        },
+          from: "Source",
+          to: "dsParser"
+        }
       ],
-      remove: [],
-    },
-  },
-};
+      remove: []
+    }
+  }
+} as PipelineModelType;

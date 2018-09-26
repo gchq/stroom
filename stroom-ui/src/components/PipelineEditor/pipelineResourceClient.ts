@@ -13,26 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { actionCreators } from './redux';
-import { wrappedGet, wrappedPost } from '../../lib/fetchTracker.redux';
+import { actionCreators } from "./redux";
+import { wrappedGet, wrappedPost } from "../../lib/fetchTracker.redux";
+import { PipelineModelType, PipelineSearchResultType } from "../../types";
+import { Dispatch } from "redux";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const {
   pipelineReceived,
   pipelineSaveRequested,
   pipelineSaved,
-  pipelinesReceived,
+  pipelinesReceived
 } = actionCreators;
 
-export const fetchPipeline = pipelineId => (dispatch, getState) => {
+export const fetchPipeline = (pipelineId: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/pipelines/v1/${pipelineId}`;
+  const url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/pipelines/v1/${pipelineId}`;
   wrappedGet(dispatch, state, url, response =>
-    response.json().then(pipeline => dispatch(pipelineReceived(pipelineId, pipeline))));
+    response
+      .json()
+      .then((pipeline: PipelineModelType) =>
+        dispatch(pipelineReceived(pipelineId, pipeline))
+      )
+  );
 };
 
-export const savePipeline = pipelineId => (dispatch, getState) => {
+export const savePipeline = (pipelineId: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/pipelines/v1/${pipelineId}`;
+  const url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/pipelines/v1/${pipelineId}`;
 
   const { pipeline } = state.pipelineEditor.pipelineStates[pipelineId];
   const body = JSON.stringify(pipeline);
@@ -43,19 +61,22 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    response => response.text().then(response => dispatch(pipelineSaved(pipelineId))),
+    response => response.text().then(() => dispatch(pipelineSaved(pipelineId))),
     {
-      body,
-    },
+      body
+    }
   );
 };
 
-export const searchPipelines = () => (dispatch, getState) => {
+export const searchPipelines = () => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  let url = `${state.config.stroomBaseServiceUrl}/pipelines/v1/?`;
+  let url = `${state.config.values.stroomBaseServiceUrl}/pipelines/v1/?`;
   const { filter, pageSize, pageOffset } = state.pipelineEditor.search.criteria;
 
-  if (filter !== undefined && filter !== '') {
+  if (filter !== undefined && filter !== "") {
     url += `&filter=${filter}`;
   }
 
@@ -71,8 +92,10 @@ export const searchPipelines = () => (dispatch, getState) => {
     response =>
       response
         .json()
-        .then(response => dispatch(pipelinesReceived(response.total, response.pipelines))),
-    null,
-    forceGet,
+        .then((response: PipelineSearchResultType) =>
+          dispatch(pipelinesReceived(response.total, response.pipelines))
+        ),
+    {},
+    forceGet
   );
 };

@@ -1,3 +1,5 @@
+import { PipelineModelType } from "../../../types";
+
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -16,286 +18,286 @@
 
 export default {
   parentPipeline: {
-    uuid: 'simple',
-    type: 'Pipeline',
-    name: 'type'
+    uuid: "simple",
+    type: "Pipeline",
+    name: "type"
   },
   docRef: {
-    uuid: 'inherited',
-    name: 'Inherited',
-    type: 'Pipeline'
+    uuid: "inherited",
+    name: "Inherited",
+    type: "Pipeline"
   },
-  description: 'This demonstrates an inherited pipeline',
+  description: "This demonstrates an inherited pipeline",
   configStack: [
     {
       elements: {
         add: [
           {
-            id: 'pDsParser',
-            type: 'DSParser',
+            id: "pDsParser",
+            type: "DSParser"
           },
           {
-            id: 'pXsltFilter',
-            type: 'XSLTFilter',
+            id: "pXsltFilter",
+            type: "XSLTFilter"
           },
           {
-            id: 'pXmlWriter',
-            type: 'XMLWriter',
+            id: "pXmlWriter",
+            type: "XMLWriter"
           },
           {
-            id: 'pStreamAppender',
-            type: 'StreamAppender',
+            id: "pStreamAppender",
+            type: "StreamAppender"
           },
           {
-            id: 'Source',
-            type: 'Source',
-          },
+            id: "Source",
+            type: "Source"
+          }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [
           {
-            from: 'Source',
-            to: 'pDsParser',
+            from: "Source",
+            to: "pDsParser"
           },
           {
-            from: 'pDsParser',
-            to: 'pXsltFilter',
+            from: "pDsParser",
+            to: "pXsltFilter"
           },
           {
-            from: 'pXsltFilter',
-            to: 'pXmlWriter',
+            from: "pXsltFilter",
+            to: "pXmlWriter"
           },
           {
-            from: 'pXmlWriter',
-            to: 'pStreamAppender',
-          },
+            from: "pXmlWriter",
+            to: "pStreamAppender"
+          }
         ],
-        remove: [],
-      },
+        remove: []
+      }
     },
     {
       elements: {
         add: [
           {
-            id: 'cXsltFilter',
-            type: 'XSLTFilter',
+            id: "cXsltFilter",
+            type: "XSLTFilter"
           },
           {
-            id: 'cXmlWriter',
-            type: 'XMLWriter',
+            id: "cXmlWriter",
+            type: "XMLWriter"
           },
           {
-            id: 'cStreamAppender',
-            type: 'StreamAppender',
-          },
+            id: "cStreamAppender",
+            type: "StreamAppender"
+          }
         ],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [
           {
-            element: 'pDsParser',
-            name: 'textConverter',
+            element: "pDsParser",
+            name: "textConverter",
             value: {
               string: null,
               integer: null,
               entity: {
-                type: 'TextConverter',
-                uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
-                name: 'My CSV Splitter',
+                type: "TextConverter",
+                uuid: "4fde9c79-796c-4069-bbdb-e707ff558376",
+                name: "My CSV Splitter"
               },
               long: null,
-              boolean: null,
-            },
+              boolean: null
+            }
           },
           {
-            element: 'pXsltFilter',
-            name: 'xslt',
+            element: "pXsltFilter",
+            name: "xslt",
             value: {
               string: null,
               integer: null,
               entity: {
-                type: 'XSLT',
-                uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
-                name: 'MyXSLT',
+                type: "XSLT",
+                uuid: "5871080f-b5bb-49d2-9483-5a54f7fb4e7c",
+                name: "MyXSLT"
               },
               long: null,
-              boolean: null,
-            },
+              boolean: null
+            }
           },
           {
-            element: 'pStreamAppender',
-            name: 'feed',
+            element: "pStreamAppender",
+            name: "feed",
             value: {
               string: null,
               integer: null,
               entity: {
-                type: 'Feed',
-                uuid: 'c65aa827-d10b-4aea-8bf0-3e361e0ee4dd',
-                name: 'MY_FEED',
+                type: "Feed",
+                uuid: "c65aa827-d10b-4aea-8bf0-3e361e0ee4dd",
+                name: "MY_FEED"
               },
               long: null,
-              boolean: null,
-            },
+              boolean: null
+            }
           },
           {
-            element: 'pStreamAppender',
-            name: 'streamType',
+            element: "pStreamAppender",
+            name: "streamType",
             value: {
-              string: 'Events',
+              string: "Events",
               integer: null,
               entity: null,
               long: null,
-              boolean: null,
-            },
-          },
+              boolean: null
+            }
+          }
         ],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [
           {
-            from: 'pDsParser',
-            to: 'cXsltFilter',
+            from: "pDsParser",
+            to: "cXsltFilter"
           },
           {
-            from: 'cXsltFilter',
-            to: 'cXmlWriter',
+            from: "cXsltFilter",
+            to: "cXmlWriter"
           },
           {
-            from: 'cXmlWriter',
-            to: 'cStreamAppender',
-          },
+            from: "cXmlWriter",
+            to: "cStreamAppender"
+          }
         ],
-        remove: [],
-      },
-    },
+        remove: []
+      }
+    }
   ],
   merged: {
     elements: {
       add: [
         {
-          id: 'pXsltFilter',
-          type: 'XSLTFilter',
+          id: "pXsltFilter",
+          type: "XSLTFilter"
         },
         {
-          id: 'pStreamAppender',
-          type: 'StreamAppender',
+          id: "pStreamAppender",
+          type: "StreamAppender"
         },
         {
-          id: 'pXmlWriter',
-          type: 'XMLWriter',
+          id: "pXmlWriter",
+          type: "XMLWriter"
         },
         {
-          id: 'pDsParser',
-          type: 'DSParser',
+          id: "pDsParser",
+          type: "DSParser"
         },
         {
-          id: 'Source',
-          type: 'Source',
-        },
+          id: "Source",
+          type: "Source"
+        }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [
         {
-          element: 'pXsltFilter',
-          name: 'xslt',
+          element: "pXsltFilter",
+          name: "xslt",
           value: {
             string: null,
             integer: null,
             entity: {
-              type: 'XSLT',
-              uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
-              name: 'MyXSLT',
+              type: "XSLT",
+              uuid: "5871080f-b5bb-49d2-9483-5a54f7fb4e7c",
+              name: "MyXSLT"
             },
             long: null,
-            boolean: null,
-          },
+            boolean: null
+          }
         },
         {
-          element: 'pStreamAppender',
-          name: 'feed',
+          element: "pStreamAppender",
+          name: "feed",
           value: {
             string: null,
             integer: null,
             entity: {
-              type: 'Feed',
-              uuid: 'c65aa827-d10b-4aea-8bf0-3e361e0ee4dd',
-              name: 'MY_FEED',
+              type: "Feed",
+              uuid: "c65aa827-d10b-4aea-8bf0-3e361e0ee4dd",
+              name: "MY_FEED"
             },
             long: null,
-            boolean: null,
-          },
+            boolean: null
+          }
         },
         {
-          element: 'pStreamAppender',
-          name: 'streamType',
+          element: "pStreamAppender",
+          name: "streamType",
           value: {
-            string: 'Events',
+            string: "Events",
             integer: null,
             entity: null,
             long: null,
-            boolean: null,
-          },
+            boolean: null
+          }
         },
         {
-          element: 'pDsParser',
-          name: 'textConverter',
+          element: "pDsParser",
+          name: "textConverter",
           value: {
             string: null,
             integer: null,
             entity: {
-              type: 'TextConverter',
-              uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
-              name: 'My CSV Splitter',
+              type: "TextConverter",
+              uuid: "4fde9c79-796c-4069-bbdb-e707ff558376",
+              name: "My CSV Splitter"
             },
             long: null,
-            boolean: null,
-          },
-        },
+            boolean: null
+          }
+        }
       ],
-      remove: [],
+      remove: []
     },
     pipelineReferences: {
       add: [],
-      remove: [],
+      remove: []
     },
     links: {
       add: [
         {
-          from: 'pXsltFilter',
-          to: 'pXmlWriter',
+          from: "pXsltFilter",
+          to: "pXmlWriter"
         },
         {
-          from: 'pXmlWriter',
-          to: 'pStreamAppender',
+          from: "pXmlWriter",
+          to: "pStreamAppender"
         },
         {
-          from: 'pDsParser',
-          to: 'pXsltFilter',
+          from: "pDsParser",
+          to: "pXsltFilter"
         },
         {
-          from: 'Source',
-          to: 'pDsParser',
-        },
+          from: "Source",
+          to: "pDsParser"
+        }
       ],
-      remove: [],
-    },
-  },
-};
+      remove: []
+    }
+  }
+} as PipelineModelType;

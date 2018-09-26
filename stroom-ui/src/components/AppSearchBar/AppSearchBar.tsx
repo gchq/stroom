@@ -10,7 +10,12 @@ import {
   defaultStatePerId as appSearchDefaultStatePerId,
   SearchMode
 } from "./redux";
-import { DocRefType, DocRefConsumer } from "../../types";
+import {
+  DocRefType,
+  DocRefConsumer,
+  DocRefTree,
+  DocRefWithLineage
+} from "../../types";
 import { searchApp } from "../FolderExplorer/explorerClient";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 import DocRefListingEntry from "../DocRefListingEntry";
@@ -104,9 +109,9 @@ const enhance = compose<EnhancedProps, Props>(
         searchResults,
         searchMode
       } = appSearchForPicker;
-      const documentTreeToUse =
+      const documentTreeToUse: DocRefTree =
         typeFilters.length > 0
-          ? filterTree(documentTree, d => typeFilters.includes(d.type))
+          ? filterTree(documentTree, d => typeFilters.includes(d.type))!
           : documentTree;
 
       let docRefs;
@@ -125,10 +130,10 @@ const enhance = compose<EnhancedProps, Props>(
       switch (searchMode) {
         case SearchMode.NAVIGATION: {
           const navFolderToUse = navFolder || documentTreeToUse;
-          const navFolderWithLineage = findItem(
+          const navFolderWithLineage: DocRefWithLineage = findItem(
             documentTreeToUse,
             navFolderToUse.uuid
-          );
+          )!;
           docRefs = navFolderWithLineage.node.children;
           thisFolder = navFolderWithLineage.node;
 

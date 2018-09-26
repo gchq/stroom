@@ -1,10 +1,15 @@
-import * as React from 'react';
+import * as React from "react";
+import { ControlledInput } from "../../../types";
 
-const SingleValueWidget = ({ value, onChange, valueType }) => (
+export interface Props extends ControlledInput<any> {
+  valueType: string;
+}
+
+const SingleValueWidget = ({ value, onChange, valueType }: Props) => (
   <input
     placeholder="value"
     type={valueType}
-    value={value || ''}
+    value={value || ""}
     onChange={({ target: { value } }) => onChange(value)}
   />
 );

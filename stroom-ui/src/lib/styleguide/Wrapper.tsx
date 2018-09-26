@@ -11,27 +11,31 @@ import createStore from "../../startup/store";
 import setupTestServer from "./PollyDecorator";
 import { GlobalStoreState } from "../../startup/reducers";
 
-// import { fromSetupSampleData } from '../FolderExplorer/test';
-// import { testPipelines, elements, elementProperties } from '../PipelineEditor/test';
+import { fromSetupSampleData } from "../../components/FolderExplorer/test";
+import {
+  testPipelines,
+  elements,
+  elementProperties
+} from "../../components/PipelineEditor/test";
 import { testDocRefsTypes } from "../../components/DocRefTypes/test";
-// import { testXslt } from '../XsltEditor/test';
-// import { testDictionaries } from '../DictionaryEditor/test';
-// import { generateGenericTracker } from 'sections/Processing/tracker.testData';
-// import { dataList, dataSource } from 'sections/DataViewer/test';
+import { testXslt } from "../../components/XsltEditor/test";
+import { testDictionaries } from "../../components/DictionaryEditor/test";
+import { generateGenericTracker } from "../../sections/Processing/tracker.testData";
+import { dataList, dataSource } from "../../sections/DataViewer/test";
 
-const testData = { docRefTypes: testDocRefsTypes };
+const testData = {
+  docRefTypes: testDocRefsTypes,
+  documentTree: fromSetupSampleData,
 
-// documentTree: fromSetupSampleData,
-
-// elements,
-// elementProperties,
-// pipelines: testPipelines,
-// xslt: testXslt,
-// dictionaries: testDictionaries,
-// dataList,
-// dataSource,
-// trackers: [...Array(10).keys()].map(i => generateGenericTracker(i)),
-//});
+  elements,
+  elementProperties,
+  pipelines: testPipelines,
+  xslt: testXslt,
+  dictionaries: testDictionaries,
+  dataList,
+  dataSource,
+  trackers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => generateGenericTracker(i))
+};
 
 export interface Props {
   children: React.ReactNode;

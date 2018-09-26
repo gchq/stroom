@@ -1,21 +1,38 @@
-import { createActions, handleActions } from 'redux-actions';
+import { Action, ActionCreator } from "redux";
 
-const actionCreators = createActions({
-  START_INHERITED_PIPELINE: pipelineId => ({ pipelineId }),
-});
+import { prepareReducer } from "../../../lib/redux-actions-ts";
 
-const defaultState = {
-  pipelineId: undefined,
+export const START_INHERITED_PIPELINE = "START_INHERITED_PIPELINE";
+
+export interface StoreState {
+  pipelineId?: string;
+}
+
+export interface StartInheritPipelineAction
+  extends Action<"START_INHERITED_PIPELINE"> {
+  pipelineId: string;
+}
+
+export interface ActionCreators {
+  startInheritPipeline: ActionCreator<StartInheritPipelineAction>;
+}
+
+export const actionCreators: ActionCreators = {
+  startInheritPipeline: pipelineId => ({
+    type: START_INHERITED_PIPELINE,
+    pipelineId
+  })
 };
 
-const reducer = handleActions(
-  {
-    START_INHERITED_PIPELINE: (state, { payload: { pipelineId } }) => ({
-      ...state,
-      pipelineId,
-    }),
-  },
-  defaultState,
-);
+const defaultState: StoreState = {
+  pipelineId: undefined
+};
 
-export { actionCreators, reducer };
+export const reducer = prepareReducer(defaultState)
+  .handleAction<StartInheritPipelineAction>(
+    START_INHERITED_PIPELINE,
+    (state, { pipelineId }) => ({
+      pipelineId
+    })
+  )
+  .getReducer();

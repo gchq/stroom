@@ -1,3 +1,5 @@
+import { PipelineModelType } from "../../../types";
+
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -15,52 +17,52 @@
  */
 export default {
   docRef: {
-    uuid: 'singleElement',
-    name: 'Single Element',
-    type: 'Pipeline'
+    uuid: "singleElement",
+    name: "Single Element",
+    type: "Pipeline"
   },
-  description: 'Pipeline with a single element',
+  description: "Pipeline with a single element",
   configStack: [
     {
       elements: {
         add: [],
-        remove: [],
+        remove: []
       },
       properties: {
         add: [],
-        remove: [],
+        remove: []
       },
       pipelineReferences: {
         add: [],
-        remove: [],
+        remove: []
       },
       links: {
         add: [],
-        remove: [],
-      },
-    },
+        remove: []
+      }
+    }
   ],
   merged: {
     elements: {
       add: [
         {
-          id: 'Source',
-          type: 'Source',
-        },
+          id: "Source",
+          type: "Source"
+        }
       ],
-      remove: [],
+      remove: []
     },
     properties: {
       add: [],
-      remove: [],
+      remove: []
     },
     pipelineReferences: {
       add: [],
-      remove: [],
+      remove: []
     },
     links: {
       add: [],
-      remove: [],
-    },
-  },
-};
+      remove: []
+    }
+  }
+} as PipelineModelType;

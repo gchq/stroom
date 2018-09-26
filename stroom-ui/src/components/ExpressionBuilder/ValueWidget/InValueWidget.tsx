@@ -18,17 +18,45 @@ import * as React from "react";
 import { compose, withHandlers, withProps, withStateHandlers } from "recompose";
 
 import Button from "../../Button";
+import { ControlledInput } from "../../../types";
 
-const enhance = compose(
-  withProps(({ value }) => {
+export interface Props extends ControlledInput<any> {}
+export interface WithProps {
+  valueToShow: string;
+  splitValues: Array<string>;
+}
+export interface StateProps {
+  composingValue: string;
+  inputHasFocus: boolean;
+}
+export interface StateHandlers {
+  onInputFocus: () => void;
+  onInputBlur: () => void;
+  onInputChange: React.ChangeEventHandler<HTMLInputElement>;
+  onInputSubmit: () => void;
+}
+export interface WithHandlers {
+  onInputKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
+  onTermDelete: (term: string) => void;
+}
+export interface EnhancedProps
+  extends Props,
+    WithProps,
+    StateProps,
+    StateHandlers,
+    WithHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
+  withProps(({ value, composingValue, inputHasFocus }) => {
     const hasValues = !!value && value.length > 0;
     const splitValues = hasValues ? value.split(",") : [];
 
     return {
+      valueToShow: inputHasFocus ? composingValue : value,
       splitValues
     };
   }),
-  withStateHandlers(
+  withStateHandlers<StateProps, {}, Props & WithProps & StateProps>(
     ({ composingValue = "", inputHasFocus = false }) => ({
       composingValue,
       inputHasFocus
@@ -36,10 +64,15 @@ const enhance = compose(
     {
       onInputFocus: () => () => ({ inputHasFocus: true }),
       onInputBlur: () => () => ({ inputHasFocus: false }),
-      onInputChange: () => ({ target: { value } }) => ({
+      onInputChange: () => ({
+        target: { value }
+      }: React.ChangeEvent<HTMLInputElement>) => ({
         composingValue: value
       }),
-      onInputSubmit: ({ composingValue }, { splitValues, onChange }) => () => {
+      onInputSubmit: (
+        { composingValue }: StateProps,
+        { splitValues, onChange }: Props & WithProps & StateProps
+      ) => () => {
         const newValue = splitValues
           .filter(s => s !== composingValue)
           .concat([composingValue])
@@ -50,7 +83,7 @@ const enhance = compose(
       }
     }
   ),
-  withHandlers({
+  withHandlers<Props & StateProps & StateHandlers & WithProps, WithHandlers>({
     onInputKeyDown: ({ onInputSubmit }) => e => {
       if (e.key === "Enter") {
         onInputSubmit();
@@ -60,10 +93,7 @@ const enhance = compose(
       const newValue = splitValues.filter(s => s !== term).join();
       onChange(newValue);
     }
-  }),
-  withProps(({ value, composingValue, inputHasFocus }) => ({
-    valueToShow: inputHasFocus ? composingValue : value
-  }))
+  })
 );
 
 const InValueWidget = ({
@@ -74,7 +104,7 @@ const InValueWidget = ({
   splitValues,
   valueToShow,
   onTermDelete
-}) => (
+}: EnhancedProps) => (
   <div className="dropdown">
     <input
       placeholder="Type and hit 'Enter'"

@@ -4,12 +4,19 @@ import SingleValueWidget from "./SingleValueWidget";
 import BetweenValueWidget from "./BetweenValueWidget";
 import InValueWidget from "./InValueWidget";
 import AppSearchBar from "../../AppSearchBar";
+import { ExpressionTerm, ConditionType } from "../../../types";
+
+export interface Props {
+  onChange: (value: any) => any;
+  term: ExpressionTerm;
+  valueType: string;
+}
 
 const ValueWidget = ({
   term: { uuid, value, condition },
   onChange,
   valueType
-}) => {
+}: Props) => {
   switch (condition) {
     case "CONTAINS":
     case "EQUALS":
@@ -40,7 +47,7 @@ const ValueWidget = ({
     case "IN_DICTIONARY": {
       return (
         <AppSearchBar
-          pickerId={uuid}
+          pickerId={uuid!}
           typeFilters={["Dictionary"]}
           onChange={onChange}
           value={value}

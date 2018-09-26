@@ -1,29 +1,71 @@
-import { createActions, handleActions } from 'redux-actions';
+import { Action, ActionCreator } from "redux";
 
-import { groupByCategory, keyByType } from '../elementUtils';
+import { prepareReducer } from "../../../lib/redux-actions-ts";
+import { groupByCategory, keyByType } from "../elementUtils";
+import {
+  ElementDefinitions,
+  ElementPropertyTypes,
+  ElementDefinitionsByCategory,
+  ElementDefinitionsByType
+} from "../../../types";
 
-const defaultElementState = {};
+export const ELEMENTS_RECEIVED = "ELEMENTS_RECEIVED";
+export const ELEMENT_PROPERTIES_RECEIVED = "ELEMENT_PROPERTIES_RECEIVED";
 
-const actionCreators = createActions({
-  ELEMENTS_RECEIVED: elements => ({ elements }),
-  ELEMENT_PROPERTIES_RECEIVED: elementProperties => ({ elementProperties }),
-});
+export interface ElementsReceivedAction extends Action<"ELEMENTS_RECEIVED"> {
+  elements: ElementDefinitions;
+}
 
-const reducer = handleActions(
-  {
-    ELEMENTS_RECEIVED: (state, { payload: { elements } }) => ({
+export interface ElementPropertiesReceivedAction
+  extends Action<"ELEMENT_PROPERTIES_RECEIVED"> {
+  elementProperties: ElementPropertyTypes;
+}
+
+export interface ActionCreators {
+  elementsReceived: ActionCreator<ElementsReceivedAction>;
+  elementPropertiesReceived: ActionCreator<ElementPropertiesReceivedAction>;
+}
+
+export interface StoreState {
+  elements: ElementDefinitions;
+  elementProperties: ElementPropertyTypes;
+  byCategory: ElementDefinitionsByCategory;
+  byType: ElementDefinitionsByType;
+}
+
+export const defaultState: StoreState = {
+  elements: [],
+  elementProperties: {},
+  byCategory: {},
+  byType: {}
+};
+
+export const actionCreators: ActionCreators = {
+  elementsReceived: elements => ({
+    type: ELEMENTS_RECEIVED,
+    elements
+  }),
+  elementPropertiesReceived: elementProperties => ({
+    type: ELEMENT_PROPERTIES_RECEIVED,
+    elementProperties
+  })
+};
+
+export const reducer = prepareReducer(defaultState)
+  .handleAction<ElementsReceivedAction>(
+    ELEMENTS_RECEIVED,
+    (state = defaultState, { elements }) => ({
       ...state,
       elements,
       byCategory: groupByCategory(elements),
-      byType: keyByType(elements),
-    }),
-
-    ELEMENT_PROPERTIES_RECEIVED: (state, { payload: { elementProperties } }) => ({
+      byType: keyByType(elements)
+    })
+  )
+  .handleAction<ElementPropertiesReceivedAction>(
+    ELEMENT_PROPERTIES_RECEIVED,
+    (state = defaultState, { elementProperties }) => ({
       ...state,
-      elementProperties,
-    }),
-  },
-  defaultElementState,
-);
-
-export { actionCreators, reducer };
+      elementProperties
+    })
+  )
+  .getReducer();
