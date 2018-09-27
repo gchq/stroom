@@ -32,7 +32,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     removed in Zookeeper 3.4.x, creating a fresh service provider for each call to the same service will
     eventually exhaust the memory of the JVM.
      */
-    private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
+    private final Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @Inject
     ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {
