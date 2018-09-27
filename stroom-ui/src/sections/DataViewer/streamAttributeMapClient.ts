@@ -1,10 +1,25 @@
-import { actionCreators } from './redux';
-import { wrappedGet, wrappedPost } from '../../lib/fetchTracker.redux';
+import { actionCreators } from "./redux";
+import { wrappedGet, wrappedPost } from "../../lib/fetchTracker.redux";
+import {
+  StreamAttributeMapResult,
+  ExpressionOperator,
+  DataSourceType,
+  DataRow
+} from "../../types";
+import { Dispatch } from "redux";
+import { GlobalStoreState } from "../../startup/reducers";
 
-export const search = (dataViewerId, pageOffset, pageSize, addResults) => (dispatch, getState) => {
+export const search = (
+  dataViewerId: string,
+  pageOffset: number,
+  pageSize: number,
+  addResults: boolean
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
 
-  let url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/?`;
+  let url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/streamattributemap/v1/?`;
   url += `pageSize=${pageSize}`;
   url += `&pageOffset=${pageOffset}`;
 
@@ -12,42 +27,51 @@ export const search = (dataViewerId, pageOffset, pageSize, addResults) => (dispa
     dispatch,
     state,
     url,
-    (response) => {
-      response.json().then((data) => {
+    response => {
+      response.json().then((data: StreamAttributeMapResult) => {
         if (addResults) {
-          dispatch(actionCreators.add(
-            dataViewerId,
-            data.streamAttributeMaps,
-            data.pageResponse.total,
-            pageSize,
-            pageOffset,
-          ));
+          dispatch(
+            actionCreators.add(
+              dataViewerId,
+              data.streamAttributeMaps,
+              data.pageResponse.total,
+              pageSize,
+              pageOffset
+            )
+          );
         } else {
-          dispatch(actionCreators.updateStreamAttributeMaps(
-            dataViewerId,
-            data.streamAttributeMaps,
-            data.pageResponse.total,
-            pageSize,
-            pageOffset,
-          ));
+          dispatch(
+            actionCreators.updateStreamAttributeMaps(
+              dataViewerId,
+              data.streamAttributeMaps,
+              data.pageResponse.total,
+              pageSize,
+              pageOffset
+            )
+          );
         }
       });
     },
-    null,
-    true,
+    {},
+    true
   );
 };
 
-export const searchWithExpression = (dataViewerId, pageOffset, pageSize, expressionId, addResults) => (
-  dispatch,
-  getState,
-) => {
+export const searchWithExpression = (
+  dataViewerId: string,
+  pageOffset: number,
+  pageSize: number,
+  expressionId: string,
+  addResults: boolean
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
   const expressionState = state.expressionBuilder[expressionId];
 
   const expression = cleanExpression(expressionState.expression);
 
-  let url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/?`;
+  let url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/streamattributemap/v1/?`;
   url += `pageSize=${pageSize}`;
   url += `&pageOffset=${pageOffset}`;
 
@@ -55,31 +79,34 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
     dispatch,
     state,
     url,
-    (response) => {
-      response.json().then((data) => {
+    response => {
+      response.json().then((data: StreamAttributeMapResult) => {
         if (addResults) {
-          dispatch(actionCreators.add(
-            dataViewerId,
-            data.streamAttributeMaps,
-            data.pageResponse.total,
-            pageSize,
-            pageOffset,
-          ));
+          dispatch(
+            actionCreators.add(
+              dataViewerId,
+              data.streamAttributeMaps,
+              data.pageResponse.total,
+              pageSize,
+              pageOffset
+            )
+          );
         } else {
-          dispatch(actionCreators.updateStreamAttributeMaps(
-            dataViewerId,
-            data.streamAttributeMaps,
-            data.pageResponse.total,
-            pageSize,
-            pageOffset,
-          ));
+          dispatch(
+            actionCreators.updateStreamAttributeMaps(
+              dataViewerId,
+              data.streamAttributeMaps,
+              data.pageResponse.total,
+              pageSize,
+              pageOffset
+            )
+          );
         }
       });
     },
     {
-      body: JSON.stringify(expression),
-    },
-    true,
+      body: JSON.stringify(expression)
+    }
   );
 };
 
@@ -88,53 +115,65 @@ export const searchWithExpression = (dataViewerId, pageOffset, pageSize, express
  * generate JSON compatible with the resource's endpoints. I.e. jackson binding
  * fails if we have these uuids.
  */
-const cleanExpression = (expression) => {
+const cleanExpression = (expression: ExpressionOperator) => {
   // UUIDs are not part of Expression
   delete expression.uuid;
-  expression.children.forEach((child) => {
+  expression.children!.forEach(child => {
     delete child.uuid;
   });
 
   // Occasionally the ExpressionBuilder will put a value on the root, which is wrong.
   // It does this when there's an underscore in the term, e.g. feedName=thing_thing.
-  delete expression.value;
+  //delete expression.value; // TODO oh rly?
   return expression;
 };
 
-export const fetchDataSource = dataViewerId => (dispatch, getState) => {
+export const fetchDataSource = (dataViewerId: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/dataSource`;
+  const url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/streamattributemap/v1/dataSource`;
 
   wrappedGet(
     dispatch,
     state,
     url,
-    (response) => {
-      response.json().then((data) => {
+    response => {
+      response.json().then((data: DataSourceType) => {
         dispatch(actionCreators.updateDataSource(dataViewerId, data));
       });
     },
-    null,
-    true,
+    {},
+    true
   );
 };
 
-export const getDetailsForSelectedRow = dataViewerId => (dispatch, getState) => {
+export const getDetailsForSelectedRow = (dataViewerId: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
   const dataView = state.dataViewers[dataViewerId];
   const streamId = dataView.streamAttributeMaps[dataView.selectedRow].data.id;
-  const url = `${state.config.stroomBaseServiceUrl}/streamattributemap/v1/${streamId}`;
+  const url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/streamattributemap/v1/${streamId}`;
 
   wrappedGet(
     dispatch,
     state,
     url,
-    (response) => {
-      response.json().then((data) => {
-        dispatch(actionCreators.updateDetailsForSelectedRow(dataViewerId, data));
+    response => {
+      response.json().then((data: DataRow) => {
+        dispatch(
+          actionCreators.updateDetailsForSelectedRow(dataViewerId, data)
+        );
       });
     },
-    null,
-    true,
+    {},
+    true
   );
 };

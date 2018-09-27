@@ -13,40 +13,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import { Action, ActionCreator } from "redux";
+
+import {
+  prepareReducerById,
+  ActionId,
+  StateById
+} from "../../lib/redux-actions-ts";
+import { DataRow } from "../../types";
+
+export const ADD = "ADD";
+export const UPDATE_STREAM_ATTRIBUTE_MAPS = "UPDATE_STREAM_ATTRIBUTE_MAPS";
+export const SELECT_ROW = "SELECT_ROW";
+export const DESELECT_ROW = "DESELECT_ROW";
+export const UPDATE_DATA_FOR_SELECTED_ROW = "UPDATE_DATA_FOR_SELECTED_ROW";
+export const UPDATE_DETAILS_FOR_SELECTED_ROW =
+  "UPDATE_DETAILS_FOR_SELECTED_ROW";
+export const UPDATE_DATA_SOURCE = "UPDATE_DATA_SOURCE";
+
+export interface Add extends Action<"ADD">, ActionId {
+  streamAttributeMaps: Array<DataRow>;
+  total: number;
+  pageSize: number;
+  pageOffset: number;
+}
 
 const actionCreators = createActions({
-  ADD: (
+  ADD: (dataViewerId, streamAttributeMaps, total, pageSize, pageOffset) => ({
     dataViewerId,
     streamAttributeMaps,
     total,
     pageSize,
-    pageOffset,
-  ) => ({
-    dataViewerId,
-    streamAttributeMaps,
-    total,
-    pageSize,
-    pageOffset,
+    pageOffset
   }),
   UPDATE_STREAM_ATTRIBUTE_MAPS: (
     dataViewerId,
     streamAttributeMaps,
     total,
     pageSize,
-    pageOffset,
+    pageOffset
   ) => ({
     dataViewerId,
     streamAttributeMaps,
     total,
     pageSize,
-    pageOffset,
+    pageOffset
   }),
   SELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId, rowIndex }),
   DESELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId }),
-  UPDATE_DATA_FOR_SELECTED_ROW: (dataViewerId, data) => ({ dataViewerId, data }),
-  UPDATE_DETAILS_FOR_SELECTED_ROW: (dataViewerId, details) => ({ dataViewerId, details }),
-  UPDATE_DATA_SOURCE: (dataViewerId, dataSource) => ({ dataViewerId, dataSource }),
+  UPDATE_DATA_FOR_SELECTED_ROW: (dataViewerId, data) => ({
+    dataViewerId,
+    data
+  }),
+  UPDATE_DETAILS_FOR_SELECTED_ROW: (dataViewerId, details) => ({
+    dataViewerId,
+    details
+  }),
+  UPDATE_DATA_SOURCE: (dataViewerId, dataSource) => ({
+    dataViewerId,
+    dataSource
+  })
 });
 
 const defaultState = {};
@@ -57,26 +83,36 @@ const reducer = handleActions(
       state,
       {
         payload: {
-          dataViewerId, streamAttributeMaps, total, pageSize, pageOffset,
-        },
-      },
+          dataViewerId,
+          streamAttributeMaps,
+          total,
+          pageSize,
+          pageOffset
+        }
+      }
     ) => ({
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
         total,
-        streamAttributeMaps: state[dataViewerId].streamAttributeMaps.concat(streamAttributeMaps),
+        streamAttributeMaps: state[dataViewerId].streamAttributeMaps.concat(
+          streamAttributeMaps
+        ),
         pageSize,
-        pageOffset,
-      },
+        pageOffset
+      }
     }),
     UPDATE_STREAM_ATTRIBUTE_MAPS: (
       state,
       {
         payload: {
-          dataViewerId, streamAttributeMaps, total, pageSize, pageOffset,
-        },
-      },
+          dataViewerId,
+          streamAttributeMaps,
+          total,
+          pageSize,
+          pageOffset
+        }
+      }
     ) => ({
       ...state,
       [dataViewerId]: {
@@ -84,46 +120,52 @@ const reducer = handleActions(
         total,
         streamAttributeMaps,
         pageSize,
-        pageOffset,
-      },
+        pageOffset
+      }
     }),
     SELECT_ROW: (state, { payload: { dataViewerId, rowIndex } }) => ({
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        selectedRow: rowIndex,
-      },
+        selectedRow: rowIndex
+      }
     }),
     DESELECT_ROW: (state, { payload: { dataViewerId } }) => ({
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        selectedRow: undefined,
-      },
+        selectedRow: undefined
+      }
     }),
-    UPDATE_DATA_FOR_SELECTED_ROW: (state, { payload: { dataViewerId, data } }) => ({
+    UPDATE_DATA_FOR_SELECTED_ROW: (
+      state,
+      { payload: { dataViewerId, data } }
+    ) => ({
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        dataForSelectedRow: data,
-      },
+        dataForSelectedRow: data
+      }
     }),
-    UPDATE_DETAILS_FOR_SELECTED_ROW: (state, { payload: { dataViewerId, details } }) => ({
+    UPDATE_DETAILS_FOR_SELECTED_ROW: (
+      state,
+      { payload: { dataViewerId, details } }
+    ) => ({
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        detailsForSelectedRow: details,
-      },
+        detailsForSelectedRow: details
+      }
     }),
     UPDATE_DATA_SOURCE: (state, { payload: { dataViewerId, dataSource } }) => ({
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        dataSource,
-      },
-    }),
+        dataSource
+      }
+    })
   },
-  defaultState,
+  defaultState
 );
 
 export { actionCreators, reducer };
