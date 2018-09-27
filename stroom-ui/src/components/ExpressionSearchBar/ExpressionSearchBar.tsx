@@ -15,49 +15,107 @@
  */
 
 import * as React from "react";
-import { compose, withState, withProps, lifecycle } from "recompose";
+import {
+  compose,
+  withStateHandlers,
+  lifecycle,
+  StateHandlerMap,
+  withHandlers
+} from "recompose";
 import { connect } from "react-redux";
 
 import {
   ExpressionBuilder,
-  actionCreators as expressionBuilderActionCreators
+  actionCreators as expressionBuilderActionCreators,
+  StoreStateById as ExpressionBuilderStoreState
 } from "../ExpressionBuilder";
 import { processSearchString } from "./expressionSearchBarUtils";
 import Button from "../Button";
+import { DataSourceType } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
-const withIsExpression = withState("isExpression", "setIsExpression", false);
-const withIsExpressionVisible = withState(
-  "isExpressionVisible",
-  "setIsExpressionVisible",
-  false
-);
-const withSearchString = withState("searchString", "setSearchString", "");
-const withIsSearchStringValid = withState(
-  "isSearchStringValid",
-  "setIsSearchStringValid",
-  true
-);
-const withSearchStringValidationMessages = withState(
-  "searchStringValidationMessages",
-  "setSearchStringValidationMessages",
-  []
-);
+export interface Props {
+  expressionId: string;
+  dataSource: DataSourceType;
+  onSearch: (expressionId: string) => void;
+}
 
-const enhance = compose(
-  connect(
+export interface ConnectState {
+  expressionState: ExpressionBuilderStoreState;
+}
+
+export interface ConnectDispatch {
+  expressionChanged: typeof expressionChanged;
+}
+
+export interface WithState {
+  isExpression: boolean;
+  isExpressionVisible: boolean;
+  searchString: string;
+  isSearchStringValid: boolean;
+  searchIsInvalid: boolean;
+  searchStringValidationMessages: Array<string>;
+}
+
+export interface WithHandlers {
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+export interface WithStateHandlers {
+  setIsExpression: (isExpression: boolean) => WithState;
+  setIsExpressionVisible: (isExpressionVisible: boolean) => WithState;
+  setSearchString: (searchString: string) => WithState;
+  setIsSearchStringValid: (isSearchStringValid: boolean) => WithState;
+  setSearchStringValidationMessages: (
+    searchStringValidationMessages: Array<string>
+  ) => WithState;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithState,
+    WithStateHandlers,
+    WithHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ expressionBuilder }, { expressionId }) => ({
       expressionState: expressionBuilder[expressionId]
     }),
     { expressionChanged }
   ),
-  withIsExpression,
-  withIsExpressionVisible,
-  withSearchString,
-  withIsSearchStringValid,
-  withSearchStringValidationMessages,
-  lifecycle({
+  withStateHandlers<WithState, WithStateHandlers & StateHandlerMap<WithState>>(
+    () => ({
+      isExpression: false,
+      isExpressionVisible: false,
+      searchString: "",
+      searchIsInvalid: false,
+      isSearchStringValid: true,
+      searchStringValidationMessages: []
+    }),
+    {
+      setIsExpression: ({}) => (isExpression: boolean) => ({ isExpression }),
+      setIsExpressionVisible: ({}) => (isExpressionVisible: boolean) => ({
+        isExpressionVisible
+      }),
+      setSearchString: ({}) => (searchString: string) => ({ searchString }),
+      setIsSearchStringValid: ({}) => isSearchStringValid => ({
+        isSearchStringValid
+      }),
+      setSearchStringValidationMessages: ({}) => searchStringValidationMessages => ({
+        searchStringValidationMessages,
+        searchIsInvalid: searchStringValidationMessages.length > 0
+      })
+    }
+  ),
+  lifecycle<
+    Props & ConnectState & ConnectDispatch & WithState & WithStateHandlers,
+    {}
+  >({
     componentDidMount() {
       // We need to set up an expression so we've got something to search with,
       // even though it'll be empty.
@@ -69,17 +127,41 @@ const enhance = compose(
       onSearch(expressionId);
     }
   }),
-  withProps(
-    ({
-      searchStringValidationMessages,
-      isExpression,
-      expression,
+  withHandlers<
+    Props & ConnectState & ConnectDispatch & WithState & WithStateHandlers,
+    WithHandlers
+  >({
+    onChange: ({
+      expressionId,
+      dataSource,
+      searchString,
       setSearchString,
-      isExpressionVisible
-    }) => ({
-      searchIsInvalid: searchStringValidationMessages.length > 0
-    })
-  )
+      setIsSearchStringValid,
+      setSearchStringValidationMessages
+    }) => ({ target: { value } }) => {
+      const expression = processSearchString(dataSource, value);
+      const invalidFields = expression.fields.filter(
+        field =>
+          !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid
+      );
+
+      const searchStringValidationMessages: Array<string> = [];
+      if (invalidFields.length > 0) {
+        invalidFields.forEach(invalidField => {
+          searchStringValidationMessages.push(
+            `'${invalidField.original}' is not a valid search term`
+          );
+        });
+      }
+
+      setIsSearchStringValid(invalidFields.length === 0);
+      setSearchStringValidationMessages(searchStringValidationMessages);
+      setSearchString(value);
+
+      const parsedExpression = processSearchString(dataSource, searchString);
+      expressionChanged(expressionId, parsedExpression.expression);
+    }
+  })
 );
 
 const ExpressionSearchBar = ({
@@ -89,55 +171,19 @@ const ExpressionSearchBar = ({
   searchString,
   isExpression,
   setIsExpression,
-  setSearchString,
-  expression,
   expressionState,
-  setExpression,
-  setIsSearchStringValid,
-  isSearchStringValid,
-  setSearchStringValidationMessages,
   searchStringValidationMessages,
   onSearch,
   searchIsInvalid,
-  visibilityClass,
-  showHideExpressionIcon,
-  isExpressionVisible,
-  setIsExpressionVisible
-}) => (
+  onChange
+}: EnhancedProps) => (
   <div className="dropdown search-bar borderless">
     <div className="search-bar__header">
       <input
         placeholder="I.e. field1=value1 field2=value2"
         value={isExpression ? expressionState.expressionAsString : searchString}
         className="search-bar__input"
-        onChange={(_, data) => {
-          const expression = processSearchString(dataSource, data.value);
-          const invalidFields = expression.fields.filter(
-            field =>
-              !field.conditionIsValid ||
-              !field.fieldIsValid ||
-              !field.valueIsValid
-          );
-
-          const searchStringValidationMessages = [];
-          if (invalidFields.length > 0) {
-            invalidFields.forEach(invalidField => {
-              searchStringValidationMessages.push(
-                `'${invalidField.original}' is not a valid search term`
-              );
-            });
-          }
-
-          setIsSearchStringValid(invalidFields.length === 0);
-          setSearchStringValidationMessages(searchStringValidationMessages);
-          setSearchString(data.value);
-
-          const parsedExpression = processSearchString(
-            dataSource,
-            searchString
-          );
-          expressionChanged(expressionId, parsedExpression.expression);
-        }}
+        onChange={onChange}
       />
       <Button
         disabled={searchIsInvalid}
@@ -147,10 +193,7 @@ const ExpressionSearchBar = ({
         }}
       />
     </div>
-    <div
-      tabIndex={0}
-      className={`dropdown__content search-bar__content ${visibilityClass}`}
-    >
+    <div tabIndex={0} className={`dropdown__content search-bar__content`}>
       <div className="search-bar__content__header">
         <Button
           text="Text search"
@@ -193,12 +236,5 @@ const ExpressionSearchBar = ({
     </div>
   </div>
 );
-
-// ExpressionSearchBar.propTypes = {
-//   dataSource: PropTypes.object.isRequired,
-//   expressionId: PropTypes.string.isRequired,
-//   searchString: PropTypes.string,
-//   onSearch: PropTypes.func.isRequired,
-// };
 
 export default enhance(ExpressionSearchBar);

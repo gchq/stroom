@@ -27,8 +27,8 @@ import { GlobalStoreState } from "../../startup/reducers";
 export interface Props extends ReactModal.Props {
   question: string;
   details: string;
-  onConfirm: (args: any) => any;
-  onCancel: (args: any) => any;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 export interface ConnectState {

@@ -1,8 +1,9 @@
 import { compose, withHandlers, withProps } from "recompose";
 import { connect } from "react-redux";
 
-import ThemedConfirm from "../ThemedConfirm";
-import { actionCreators, State } from "./redux";
+import ThemedConfirm, { Props as ConfirmProps } from "../ThemedConfirm";
+import { actionCreators, StoreStateById as ExpressionState } from "./redux";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const {
   expressionItemDeleteCancelled,
@@ -13,16 +14,29 @@ export interface Props {
   expressionId: string;
 }
 export interface ConnectState {
-  expressionState: 
+  expressionState: ExpressionState;
 }
-export interface EnhancedProps extends Props{};
+export interface ConnectDispatch {
+  expressionItemDeleteCancelled: typeof expressionItemDeleteCancelled;
+  expressionItemDeleteConfirmed: typeof expressionItemDeleteConfirmed;
+}
+export interface WithHandlers {
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+export interface WithProps {
+  isOpen: boolean;
+  question: string;
+}
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers,
+    WithProps {}
 
-// DeleteExpressionItem.propTypes = {
-//   expressionId: PropTypes.string.isRequired,
-// };
-
-const enhance = compose<EnhancedProps, Props>(
-  connect(
+const enhance = compose<ConfirmProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ expressionBuilder }, { expressionId }) => ({
       expressionState: expressionBuilder[expressionId]
     }),
@@ -31,7 +45,7 @@ const enhance = compose<EnhancedProps, Props>(
       expressionItemDeleteConfirmed
     }
   ),
-  withHandlers({
+  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
     onCancel: ({ expressionId, expressionItemDeleteCancelled }) => () =>
       expressionItemDeleteCancelled(expressionId),
     onConfirm: ({ expressionId, expressionItemDeleteConfirmed }) => () =>
@@ -44,4 +58,3 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 export default enhance(ThemedConfirm);
-

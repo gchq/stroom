@@ -32,8 +32,8 @@ import {
 
 import { toString } from "./expressionBuilderUtils";
 import {
-  ExpressionOperator,
-  ExpressionTerm,
+  ExpressionOperatorType,
+  ExpressionTermType,
   ExpressionItem
 } from "../../types";
 
@@ -67,7 +67,7 @@ export interface ExpressionSetEditableByUserAction
 export interface ExpressionChangedAction
   extends Action<"EXPRESSION_CHANGED">,
     ActionId {
-  expression: ExpressionOperator;
+  expression: ExpressionOperatorType;
 }
 export interface ExpressionTermAddedAction
   extends Action<"EXPRESSION_TERM_ADDED">,
@@ -83,7 +83,7 @@ export interface ExpressionItemUpdatedAction
   extends Action<"EXPRESSION_ITEM_UPDATED">,
     ActionId {
   itemId: string;
-  updates: ExpressionOperator | ExpressionTerm;
+  updates: ExpressionOperatorType | ExpressionTermType;
 }
 export interface ExpressionItemDeleteRequestedAction
   extends Action<"EXPRESSION_ITEM_DELETE_REQUESTED">,
@@ -179,14 +179,14 @@ export const actionCreators: ActionCreators = {
   })
 };
 
-const NEW_TERM: ExpressionTerm = {
+const NEW_TERM: ExpressionTermType = {
   uuid: uuidv4(),
   type: "term",
   condition: "EQUALS",
   enabled: true
 };
 
-const NEW_OPERATOR: ExpressionOperator = {
+const NEW_OPERATOR: ExpressionOperatorType = {
   uuid: uuidv4(),
   type: "operator",
   op: "AND",
@@ -196,7 +196,7 @@ const NEW_OPERATOR: ExpressionOperator = {
 
 export interface StoreStateById {
   pendingDeletionOperatorId?: string;
-  expression: ExpressionOperator;
+  expression: ExpressionOperatorType;
   expressionAsString?: string;
 }
 
@@ -212,7 +212,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
     EXPRESSION_CHANGED,
     (state, { expression }) => ({
       ...state,
-      expression: assignRandomUuids(expression) as ExpressionOperator,
+      expression: assignRandomUuids(expression) as ExpressionOperatorType,
       expressionAsString: toString(expression)
     })
   )
@@ -221,7 +221,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
     (state = defaultStatePerId, { operatorId }) => ({
       expression: addItemsToTree(state.expression, operatorId, [
         NEW_TERM
-      ]) as ExpressionOperator,
+      ]) as ExpressionOperatorType,
       expressionAsString: toString(state.expression)
     })
   )
@@ -230,7 +230,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
     (state = defaultStatePerId, { operatorId }) => ({
       expression: addItemsToTree(state.expression, operatorId, [
         NEW_OPERATOR
-      ]) as ExpressionOperator,
+      ]) as ExpressionOperatorType,
       expressionAsString: toString(state.expression)
     })
   )
@@ -241,7 +241,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
         state.expression,
         itemId,
         updates
-      ) as ExpressionOperator,
+      ) as ExpressionOperatorType,
       expressionAsString: toString(state.expression)
     })
   )
@@ -266,7 +266,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
       expression: deleteItemFromTree(
         state.expression,
         state.pendingDeletionOperatorId!
-      ) as ExpressionOperator,
+      ) as ExpressionOperatorType,
       pendingDeletionOperatorId: undefined,
       expressionAsString: toString(state.expression)
     })
@@ -276,7 +276,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
     (state = defaultStatePerId, { destination, itemToMove }) => ({
       expression: moveItemsInTree(state.expression, destination, [
         itemToMove
-      ]) as ExpressionOperator,
+      ]) as ExpressionOperatorType,
       expressionAsString: toString(state.expression)
     })
   )

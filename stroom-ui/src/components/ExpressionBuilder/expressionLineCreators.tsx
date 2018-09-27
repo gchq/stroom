@@ -1,28 +1,31 @@
-import * as React from 'react';
+import * as React from "react";
+import { LineDefinition } from "../LineTo/types";
 
-const downRightElbow = ({ lineId, fromRect, toRect }) => {
+const downRightElbow = ({ lineId, fromRect, toRect }: LineDefinition) => {
   const from = {
     x: fromRect.left + fromRect.width / 2 - 2,
-    y: fromRect.bottom,
+    y: fromRect.bottom
   };
   const to = {
     x: toRect.left,
-    y: toRect.top + toRect.height / 2,
+    y: toRect.top + toRect.height / 2
   };
-  const pathSpec = `M ${from.x} ${from.y} L ${from.x} ${to.y} L ${to.x} ${to.y}`;
+  const pathSpec = `M ${from.x} ${from.y} L ${from.x} ${to.y} L ${to.x} ${
+    to.y
+  }`;
   return (
     <path
       key={lineId}
       d={pathSpec}
       style={{
-        stroke: 'grey',
+        stroke: "grey",
         strokeWidth: 2,
-        fill: 'none',
+        fill: "none"
       }}
     />
   );
 };
 
 export default {
-  downRightElbow,
+  downRightElbow
 };

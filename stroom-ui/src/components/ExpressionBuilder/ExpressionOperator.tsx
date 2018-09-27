@@ -35,6 +35,18 @@ const {
   expressionItemDeleteRequested
 } = actionCreators;
 
+// EnhancedExpressionOperator.propTypes = {
+//   dataSource: PropTypes.object.isRequired, // complete definition of the data source
+//   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
+//   operator: PropTypes.object.isRequired, // the operator that this particular element is to represent
+//   isRoot: PropTypes.bool.isRequired, // used to prevent deletion of root nodes
+//   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
+// };
+
+// EnhancedExpressionOperator.defaultProps = {
+//   isRoot: false,
+// };
+
 const dragSource = {
   canDrag(props) {
     return true;
@@ -305,18 +317,4 @@ const ExpressionOperator = ({
   </div>
 );
 
-const EnhancedExpressionOperator = enhance(ExpressionOperator);
-
-// EnhancedExpressionOperator.propTypes = {
-//   dataSource: PropTypes.object.isRequired, // complete definition of the data source
-//   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
-//   operator: PropTypes.object.isRequired, // the operator that this particular element is to represent
-//   isRoot: PropTypes.bool.isRequired, // used to prevent deletion of root nodes
-//   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
-// };
-
-// EnhancedExpressionOperator.defaultProps = {
-//   isRoot: false,
-// };
-
-export default EnhancedExpressionOperator;
+export default enhance(ExpressionOperator);

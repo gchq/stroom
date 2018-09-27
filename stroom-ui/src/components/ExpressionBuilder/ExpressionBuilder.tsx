@@ -30,6 +30,10 @@ import ROExpressionOperator from "./ROExpressionOperator";
 import { LineContainer } from "../LineTo";
 import DeleteExpressionItem from "./DeleteExpressionItem";
 import lineElementCreators from "./expressionLineCreators";
+import { GlobalStoreState } from "../../startup/reducers";
+import { DataSourceType } from "../../types";
+import { StoreStateById } from "./redux";
+import ROExpressionBuilder from "./ROExpressionBuilder";
 
 const withSetEditableByUser = withState(
   "inEditMode",
@@ -37,26 +41,33 @@ const withSetEditableByUser = withState(
   false
 );
 
-const ROExpressionBuilder = ({ expressionId, expression }) => (
-  <LineContainer
-    lineContextId={`expression-lines-${expressionId}`}
-    lineElementCreators={lineElementCreators}
-  >
-    <ROExpressionOperator
-      expressionId={expressionId}
-      isEnabled
-      operator={expression}
-    />
-  </LineContainer>
-);
+export interface Props {
+  dataSource: DataSourceType;
+  expressionId: string;
+  showModeToggle: boolean;
+  editMode?: boolean;
+}
 
-ROExpressionBuilder.propTypes = {
-  expressionId: PropTypes.string.isRequired,
-  expression: PropTypes.object.isRequired
-};
+export interface ConnectState {
+  expressionState: StoreStateById;
+}
+export interface ConnectDispatch {}
+export interface WithState {
+  inEditMode: boolean;
+}
+export interface WithStateHandlers {
+  setEditableByUser: (v: boolean) => void;
+}
 
-const enhance = compose(
-  connect(
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithState,
+    WithStateHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ expressionBuilder }, { expressionId }) => ({
       expressionState: expressionBuilder[expressionId]
     }),
@@ -65,14 +76,28 @@ const enhance = compose(
     }
   ),
   withSetEditableByUser,
-  lifecycle({
+  lifecycle<
+    Props & ConnectState & ConnectDispatch & WithState & WithStateHandlers,
+    {}
+  >({
     componentDidMount() {
-      this.props.setEditableByUser(this.props.editMode);
+      this.props.setEditableByUser(!!this.props.editMode);
     }
   }),
   branch(
     ({ expressionState }) => !expressionState,
     renderComponent(() => <Loader message="Loading expression state..." />)
+  ),
+  branch<Props & ConnectState & ConnectDispatch & WithState>(
+    ({ inEditMode }) => inEditMode,
+    renderComponent<Props & ConnectState & ConnectDispatch & WithState>(
+      ({ expressionId, expressionState: { expression } }) => (
+        <ROExpressionBuilder
+          expressionId={expressionId}
+          expression={expression}
+        />
+      )
+    )
   ),
   withProps(({ showModeToggle, dataSource }) => ({
     showModeToggle: showModeToggle && !!dataSource
@@ -86,7 +111,7 @@ const ExpressionBuilder = ({
   showModeToggle,
   inEditMode,
   setEditableByUser
-}) => (
+}: EnhancedProps) => (
   <LineContainer
     className="Expression-editor__graph"
     lineContextId={`expression-lines-${expressionId}`}
@@ -105,35 +130,14 @@ const ExpressionBuilder = ({
     ) : (
       undefined
     )}
-    {inEditMode ? (
-      <ExpressionOperator
-        dataSource={dataSource}
-        expressionId={expressionId}
-        isRoot
-        isEnabled
-        operator={expression}
-      />
-    ) : (
-      <ROExpressionOperator
-        expressionId={expressionId}
-        isEnabled
-        operator={expression}
-      />
-    )}
+    <ExpressionOperator
+      dataSource={dataSource}
+      expressionId={expressionId}
+      isRoot
+      isEnabled
+      operator={expression}
+    />
   </LineContainer>
 );
 
-const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
-
-// EnhancedExpressionBuilder.propTypes = {
-//   dataSource: PropTypes.object,
-//   expressionId: PropTypes.string.isRequired,
-//   showModeToggle: PropTypes.bool.isRequired,
-//   editMode: PropTypes.bool,
-// };
-
-// EnhancedExpressionBuilder.defaultProps = {
-//   showModeToggle: false,
-// };
-
-export default EnhancedExpressionBuilder;
+export default enhance(ExpressionBuilder);

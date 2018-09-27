@@ -1,4 +1,8 @@
-import { ExpressionOperator } from "../../types";
+import {
+  ExpressionItem,
+  ExpressionTermType,
+  ExpressionOperatorType
+} from "../../types";
 
 /**
  * Converts an expression to a string.
@@ -6,7 +10,7 @@ import { ExpressionOperator } from "../../types";
  * Currently the string is intended only for display, but we
  * might want to parse it back into an expression at some point.
  */
-export function toString(expression: ExpressionOperator) {
+export function toString(expression: ExpressionOperatorType) {
   if (expression.children !== undefined && expression.children.length > 0) {
     return childrenToString(expression);
   }
@@ -14,24 +18,30 @@ export function toString(expression: ExpressionOperator) {
 }
 
 function childrenToString(
-  expression: ExpressionOperator,
+  expression: ExpressionOperatorType,
   asString: string = ""
 ) {
-  expression.children.forEach((child, i) => {
-    if (child.enabled) {
-      if (child.type === "term") {
-        asString += `${child.field} ${child.condition} ${child.value}`;
-        if (
-          expression.children.length > i + 1 &&
-          expression.children[i + 1].enabled
-        ) {
-          asString += ` ${expression.op} `;
+  if (!!expression.children) {
+    expression.children.forEach((child: ExpressionItem, i: number) => {
+      if (child.enabled) {
+        if (child.type === "term") {
+          let childTerm = child as ExpressionTermType;
+          asString += `${childTerm.field} ${childTerm.condition} ${
+            childTerm.value
+          }`;
+          if (
+            expression.children!.length > i + 1 &&
+            expression.children![i + 1].enabled
+          ) {
+            asString += ` ${expression.op} `;
+          }
+        } else if (child.type === "operator") {
+          let childOperator = child as ExpressionOperatorType;
+          let childTerms = "";
+          asString += `(${childrenToString(childOperator, childTerms)})`;
         }
-      } else if (child.type === "operator") {
-        let childTerms = "";
-        asString += `(${childrenToString(child, childTerms)})`;
       }
-    }
-  });
+    });
+  }
   return asString;
 }

@@ -1,3 +1,5 @@
+import { DataSourceType } from "../../types";
+
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -20,28 +22,32 @@
  * @param {object} dataSource The data source for the expression
  * @param {string} criteria The search string
  */
-export const processSearchString = (dataSource, criteria) => {
+export const processSearchString = (dataSource: DataSourceType, criteria) => {
   const splitted = split(criteria);
 
   const validationResults = [];
-  splitted.forEach((criterionObj) => {
+  splitted.forEach(criterionObj => {
     let validationResult;
     if (criterionObj.splitCriterion !== undefined) {
       // Field validation
       const field = criterionObj.splitCriterion[0];
-      const foundField = dataSource.fields.filter(availableField => availableField.name === field);
+      const foundField = dataSource.fields.filter(
+        availableField => availableField.name === field
+      );
       const fieldIsValid = foundField.length > 0;
 
       // Condition/operator validation
       const operator = criterionObj.splitCriterion[1];
-      const foundCondition = dataSource.fields.filter(availableField =>
-        availableField.name === field &&
-          availableField.conditions.find(condition => condition === operator));
+      const foundCondition = dataSource.fields.filter(
+        availableField =>
+          availableField.name === field &&
+          availableField.conditions.find(condition => condition === operator)
+      );
       const conditionIsValid = foundCondition.length > 0;
 
       // Value validation
       const value = criterionObj.splitCriterion[2];
-      const valueIsValid = value !== undefined && value !== '';
+      const valueIsValid = value !== undefined && value !== "";
 
       validationResult = {
         original: criterionObj.criterion,
@@ -49,7 +55,7 @@ export const processSearchString = (dataSource, criteria) => {
         fieldIsValid,
         conditionIsValid,
         valueIsValid,
-        term: toTermFromArray(criterionObj.splitCriterion),
+        term: toTermFromArray(criterionObj.splitCriterion)
       };
     } else {
       // If we don't have a splitCriterion then the term is invalid and we'll return
@@ -60,20 +66,20 @@ export const processSearchString = (dataSource, criteria) => {
         fieldIsValid: false,
         conditionIsValid: false,
         valueIsValid: false,
-        term: undefined,
+        term: undefined
       };
     }
     validationResults.push(validationResult);
   });
 
   const expression = {
-    uuid: 'root',
-    type: 'operator',
-    op: 'AND',
+    uuid: "root",
+    type: "operator",
+    op: "AND",
     children: validationResults
       .filter(validationResult => validationResult.term !== undefined)
       .map(validationResult => validationResult.term),
-    enabled: true,
+    enabled: true
   };
 
   return { expression, fields: validationResults };
@@ -84,9 +90,9 @@ export const processSearchString = (dataSource, criteria) => {
  * e.g. = becomes 'EQUALS'
  * @param {array} criterion The search criterion as an array.
  */
-const parse = (criterion) => {
+const parse = criterion => {
   let split;
-  Object.keys(operatorMap).forEach((key) => {
+  Object.keys(operatorMap).forEach(key => {
     if (criterion.includes(key)) {
       split = criterion.split(key);
       split.splice(1, 0, operatorMap[key]);
@@ -102,8 +108,8 @@ const parse = (criterion) => {
  */
 const split = criteria =>
   criteria
-    .split(' ')
-    .filter(criterion => criterion !== '' && criterion !== ' ')
+    .split(" ")
+    .filter(criterion => criterion !== "" && criterion !== " ")
     .map(criterion => ({ criterion, splitCriterion: parse(criterion) }));
 
 /**
@@ -119,21 +125,21 @@ const toTermFromArray = asArray => toTerm(asArray[0], asArray[1], asArray[2]);
  * @param {string} value
  */
 const toTerm = (field, condition, value) => ({
-  type: 'term',
+  type: "term",
   field,
   condition,
   value,
   dictionary: null,
-  enabled: true,
+  enabled: true
 });
 
 /**
  * A map of operators to ExpressionBuilder conditions
  */
 const operatorMap = {
-  '=': 'EQUALS',
-  '>': 'GREATER_THAN',
-  '<': 'LESS_THAN',
-  '>=': 'GREATER_THAN_OR_EQUAL_TO',
-  '<=': 'LESS_THAN_OR_EQUAL_TO',
+  "=": "EQUALS",
+  ">": "GREATER_THAN",
+  "<": "LESS_THAN",
+  ">=": "GREATER_THAN_OR_EQUAL_TO",
+  "<=": "LESS_THAN_OR_EQUAL_TO"
 };
