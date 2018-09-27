@@ -35,7 +35,7 @@ export interface SearchTermUpdatedAction
 export interface SearchResultsReturnedAction
   extends Action<"SEARCH_RESULTS_RETURNED">,
     ActionId {
-  searchResults: Array<any>; // TODO
+  searchResults: Array<DocRefType>;
 }
 
 export interface ActionCreators {

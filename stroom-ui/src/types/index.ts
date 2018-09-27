@@ -236,3 +236,10 @@ export interface StreamAttributeMapResult {
   pageResponse: PageResponse;
   streamAttributeMaps: Array<DataRow>;
 }
+
+export enum PermissionInheritance {
+  NONE = "None",
+  SOURCE = "Source",
+  DESTINATION = "Destination",
+  COMBINED = "Combined"
+}

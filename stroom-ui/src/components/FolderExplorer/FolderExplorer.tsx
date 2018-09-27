@@ -37,10 +37,18 @@ import MoveDocRefDialog from "./MoveDocRefDialog";
 import RenameDocRefDialog from "./RenameDocRefDialog";
 import DeleteDocRefDialog from "./DeleteDocRefDialog";
 import DocRefInfoModal from "../DocRefInfoModal";
-import withDocumentTree from "./withDocumentTree";
+import withDocumentTree, {
+  EnhancedProps as WithDocumentTreeProps
+} from "./withDocumentTree";
 import withSelectableItemListing, {
-  SELECTION_BEHAVIOUR
+  SelectionBehaviour,
+  StoreState as SelectableItemListingState,
+  LifecycleProps as SelectableItemListingProps,
+  defaultStatePerId as defaultSelectableItemListing
 } from "../../lib/withSelectableItemListing";
+import { Props as ButtonProps } from "../Button";
+import { DocRefConsumer, DocRefType, DocRefWithLineage } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const {
   prepareDocRefCreation,
@@ -52,19 +60,61 @@ const {
 
 const LISTING_ID = "folder-explorer";
 
-const enhance = compose(
+export interface Props {
+  folderUuid: string;
+}
+
+export interface ConnectState {
+  folder: DocRefWithLineage;
+  selectableItemListing: SelectableItemListingState;
+}
+
+export interface WithHandlers {
+  openDocRef: DocRefConsumer;
+}
+
+export interface ConnectDispatch {
+  prepareDocRefCreation: typeof prepareDocRefCreation;
+  prepareDocRefDelete: typeof prepareDocRefDelete;
+  prepareDocRefCopy: typeof prepareDocRefCopy;
+  prepareDocRefRename: typeof prepareDocRefRename;
+  prepareDocRefMove: typeof prepareDocRefMove;
+  fetchDocInfo: typeof fetchDocInfo;
+}
+
+export interface WithProps {
+  actionBarItems: Array<ButtonProps>;
+}
+
+export interface EnhancedProps
+  extends Props,
+    WithDocumentTreeProps,
+    WithHandlers,
+    ConnectState,
+    ConnectDispatch,
+    SelectableItemListingProps<DocRefType>,
+    WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
   withRouter,
   withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => (d: DocRefType) =>
+      history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
-  connect(
+  connect<
+    ConnectState,
+    ConnectDispatch,
+    Props & WithDocumentTreeProps,
+    GlobalStoreState
+  >(
     (
       { folderExplorer: { documentTree }, selectableItemListings },
       { folderUuid }
     ) => ({
-      folder: findItem(documentTree, folderUuid),
-      selectableItemListing: selectableItemListings[LISTING_ID] || {}
+      folder: findItem(documentTree, folderUuid)!,
+      selectableItemListing:
+        selectableItemListings[LISTING_ID] || defaultSelectableItemListing
     }),
     {
       prepareDocRefCreation,
@@ -79,7 +129,7 @@ const enhance = compose(
     ({ folder }) => !folder,
     renderComponent(() => <Loader message="Loading folder..." />)
   ),
-  withSelectableItemListing(
+  withSelectableItemListing<DocRefType>(
     ({
       openDocRef,
       folder: {
@@ -89,7 +139,7 @@ const enhance = compose(
     }) => ({
       listingId: LISTING_ID,
       items: children,
-      selectionBehaviour: SELECTION_BEHAVIOUR.MULTIPLE,
+      selectionBehaviour: SelectionBehaviour.MULTIPLE,
       getKey: d => d.uuid,
       openItem: openDocRef,
       goBack: () => {
@@ -110,7 +160,7 @@ const enhance = compose(
       fetchDocInfo,
       selectableItemListing: { selectedItems, items }
     }) => {
-      const actionBarItems = [
+      const actionBarItems: Array<ButtonProps> = [
         {
           icon: "file",
           onClick: () => prepareDocRefCreation(LISTING_ID, folder.node),
@@ -121,7 +171,7 @@ const enhance = compose(
 
       const singleSelectedDocRef =
         selectedItems.length === 1 ? selectedItems[0] : undefined;
-      const selectedDocRefUuids = selectedItems.map(d => d.uuid);
+      const selectedDocRefUuids = selectedItems.map((d: DocRefType) => d.uuid);
 
       if (selectedItems.length > 0) {
         if (singleSelectedDocRef) {
@@ -170,7 +220,7 @@ const FolderExplorer = ({
   actionBarItems,
   onKeyDownWithShortcuts,
   openDocRef
-}) => (
+}: EnhancedProps) => (
   <DocRefEditor
     docRef={{
       type: "Folder",
@@ -179,17 +229,19 @@ const FolderExplorer = ({
     actionBarItems={actionBarItems}
   >
     <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
-      {node.children.map(docRef => (
-        <DndDocRefListingEntry
-          key={docRef.uuid}
-          listingId={LISTING_ID}
-          docRef={docRef}
-          onNameClick={openDocRef}
-          openDocRef={openDocRef}
-        />
-      ))}
+      {node &&
+        node.children &&
+        node.children.map(docRef => (
+          <DndDocRefListingEntry
+            key={docRef.uuid}
+            listingId={LISTING_ID}
+            docRef={docRef}
+            onNameClick={openDocRef}
+            openDocRef={openDocRef}
+          />
+        ))}
     </div>
-    <DocRefInfoModal listingId={LISTING_ID} />
+    <DocRefInfoModal />
     <MoveDocRefDialog listingId={LISTING_ID} />
     <RenameDocRefDialog listingId={LISTING_ID} />
     <DeleteDocRefDialog listingId={LISTING_ID} />
@@ -198,14 +250,4 @@ const FolderExplorer = ({
   </DocRefEditor>
 );
 
-const EnhanceFolderExplorer = enhance(FolderExplorer);
-
-// EnhanceFolderExplorer.contextTypes = {
-//   store: PropTypes.object,
-// };
-
-// EnhanceFolderExplorer.propTypes = {
-//   folderUuid: PropTypes.string.isRequired,
-// };
-
-export default EnhanceFolderExplorer;
+export default enhance(FolderExplorer);

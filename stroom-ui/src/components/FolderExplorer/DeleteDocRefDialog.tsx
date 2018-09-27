@@ -50,10 +50,4 @@ const enhance = compose<ConfirmProps, Props>(
   }))
 );
 
-const DeleteDocRefDialog = enhance(ThemedConfirm);
-
-// DeleteDocRefDialog.propTypes = {
-//   listingId: PropTypes.string.isRequired,
-// };
-
-export default DeleteDocRefDialog;
+export default enhance(ThemedConfirm);

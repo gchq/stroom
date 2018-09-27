@@ -1,28 +1,86 @@
 import * as React from "react";
 import { compose } from "recompose";
 import { connect } from "react-redux";
-import { DragSource, DropTarget } from "react-dnd";
+import {
+  DragSource,
+  DropTarget,
+  DropTargetSpec,
+  DragSourceSpec,
+  DropTargetCollector,
+  ConnectDropTarget,
+  DragSourceCollector,
+  ConnectDragSource
+} from "react-dnd";
 
 import { canMove } from "../../lib/treeUtils";
 import DocRefListingEntry from "../DocRefListingEntry";
 import { actionCreators as folderExplorerActionCreators } from "../FolderExplorer/redux";
 import ItemTypes from "./dragDropTypes";
+import { DocRefType, DocRefConsumer } from "../../types";
+import { StoreStatePerId as SelectableItemListingState } from "../../lib/withSelectableItemListing";
+import { GlobalStoreState } from "../../startup/reducers";
+import { StoreState as KeyIsDownStoreState } from "../../lib/KeyIsDown";
 
 const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
 
-const dropTarget = {
+export interface Props {
+  listingId: string;
+  docRef: DocRefType;
+  onNameClick: DocRefConsumer;
+  openDocRef: DocRefConsumer;
+}
+
+export interface ConnectDispatch {
+  prepareDocRefCopy: typeof prepareDocRefCopy;
+  prepareDocRefMove: typeof prepareDocRefMove;
+}
+
+export interface ConnectState {
+  selectableItemListing: SelectableItemListingState;
+  keyIsDown: KeyIsDownStoreState;
+}
+
+export interface DndProps extends Props, ConnectDispatch, ConnectState {}
+
+export interface DropCollectedProps {
+  connectDropTarget: ConnectDropTarget;
+  isOver: boolean;
+  canDrop: boolean;
+}
+
+export interface DragCollectedProps {
+  connectDragSource: ConnectDragSource;
+  isDragging: boolean;
+}
+
+export interface DragObject {
+  docRefs: Array<DocRefType>;
+  isCopy: boolean;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    DragCollectedProps,
+    DropCollectedProps {}
+
+const dropTarget: DropTargetSpec<DndProps> = {
   canDrop({ docRef }, monitor) {
     const { docRefs } = monitor.getItem();
 
     return (
       !!docRef &&
       docRef.type === "Folder" &&
-      docRefs.reduce((acc, curr) => acc && canMove(curr, docRef), true)
+      docRefs.reduce(
+        (acc: boolean, curr: DocRefType) => acc && canMove(curr, docRef),
+        true
+      )
     );
   },
   drop({ listingId, prepareDocRefCopy, prepareDocRefMove, docRef }, monitor) {
     const { docRefs, isCopy } = monitor.getItem();
-    const docRefUuids = docRefs.map(d => d.uuid);
+    const docRefUuids = docRefs.map((d: DocRefType) => d.uuid);
 
     if (isCopy) {
       prepareDocRefCopy(listingId, docRefUuids, docRef.uuid);
@@ -32,15 +90,18 @@ const dropTarget = {
   }
 };
 
-function dropCollect(connect, monitor) {
+let dropCollect: DropTargetCollector<DropCollectedProps> = function dropCollect(
+  connect,
+  monitor
+) {
   return {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
     canDrop: monitor.canDrop()
   };
-}
+};
 
-const dragSource = {
+const dragSource: DragSourceSpec<DndProps, DragObject> = {
   canDrag(props) {
     return true;
   },
@@ -64,15 +125,17 @@ const dragSource = {
   }
 };
 
-function dragCollect(connect, monitor) {
+const dragCollect: DragSourceCollector<
+  DragCollectedProps
+> = function dragCollect(connect, monitor) {
   return {
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging()
   };
-}
+};
 
-const enhance = compose(
-  connect(
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ selectableItemListings, keyIsDown }, { listingId }) => ({
       selectableItemListing: selectableItemListings[listingId],
       keyIsDown
@@ -94,7 +157,7 @@ let DndDocRefListingEntry = ({
   connectDragSource,
   isOver,
   canDrop
-}) =>
+}: EnhancedProps) =>
   connectDragSource(
     connectDropTarget(
       <div>
@@ -109,17 +172,4 @@ let DndDocRefListingEntry = ({
     )
   );
 
-DndDocRefListingEntry = enhance(DndDocRefListingEntry);
-
-// DndDocRefListingEntry.propTypes = {
-//   listingId: PropTypes.string.isRequired,
-//   docRef: DocRefPropType,
-//   onNameClick: PropTypes.func.isRequired,
-//   openDocRef: PropTypes.func.isRequired,
-// };
-
-// DndDocRefListingEntry.defaultProps = {
-//   checkedDocRefs: [],
-// };
-
-export default DndDocRefListingEntry;
+export default enhance(DndDocRefListingEntry);
