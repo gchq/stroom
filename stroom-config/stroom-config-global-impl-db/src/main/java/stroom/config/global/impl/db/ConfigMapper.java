@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Singleton
-class ConfigMapper {
+public class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
 
     private static final List<String> DELIMITERS = List.of(
@@ -64,11 +64,10 @@ class ConfigMapper {
     private static final String ROOT_PROPERTY_PATH = "stroom";
     private static final String DOCREF_PREFIX = "docRef(";
 
-    //    private final List<ConfigProperty> globalProperties = new ArrayList<>();
     private final SortedMap<String, ConfigProperty> globalPropertiesMap = new TreeMap<>();
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
-    ConfigMapper(final IsConfig configObject) {
+    public ConfigMapper(final IsConfig configObject) {
 
         LOGGER.debug("Initialising ConfigMapper with class {}", configObject.getClass().getName());
         // The values in the passed AppConfig will have been set from the yaml by DropWizard on
@@ -86,6 +85,10 @@ class ConfigMapper {
         // Now walk the AppConfig object model from the YAML updating globalPropertiesMap where values
         // differ from the defaults.
         addConfigObjectMethods(configObject, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+    }
+
+    boolean validatePropertyPath(final String fullPath) {
+        return propertyMap.get(fullPath) != null;
     }
 
     Collection<ConfigProperty> getGlobalProperties() {
