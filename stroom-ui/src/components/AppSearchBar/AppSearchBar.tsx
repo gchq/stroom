@@ -21,7 +21,8 @@ import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 import DocRefListingEntry from "../DocRefListingEntry";
 import withSelectableItemListing, {
   LifecycleProps as SelectableItemListingProps,
-  defaultStatePerId as selectableItemListingDefaultStatePerId
+  defaultStatePerId as selectableItemListingDefaultStatePerId,
+  StoreStatePerId as SelectableItemListingState
 } from "../../lib/withSelectableItemListing";
 import withDocumentTree, {
   EnhancedProps as WithDocumentTreeProps
@@ -29,6 +30,7 @@ import withDocumentTree, {
 
 import ModeOptionButtons from "./ModeOptionButtons";
 import { GlobalStoreState } from "../../startup/reducers";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
 
@@ -49,13 +51,38 @@ interface Props {
   className?: string;
 }
 
-export interface ConnectState {}
+export interface ConnectState {
+  searchTerm: string;
+  searchMode: SearchMode;
+  valueToShow: string;
+  selectableItemListing: SelectableItemListingState;
+  docRefs: Array<DocRefType>;
+  hasNoResults: boolean;
+  noResultsText: string;
+  provideBreadcrumbs: boolean;
+  thisFolder?: DocRefTree;
+  parentFolder?: DocRefType;
+}
 
-export interface ConnectDispatch {}
+export interface ConnectDispatch {
+  searchApp: typeof searchApp;
+  searchTermUpdated: typeof searchTermUpdated;
+  navigateToFolder: typeof navigateToFolder;
+}
 
-export interface WithHandlers {
+export interface WithHandlers1 {
+  onThisChange: DocRefConsumer;
+}
+
+export interface WithHandlers2 {
   onSearchTermChange: React.ChangeEventHandler<HTMLInputElement>;
   thisNavigateToFolder: DocRefConsumer;
+}
+
+export interface WithProps {
+  headerTitle: string;
+  headerIcon: IconProp;
+  headerAction: () => any;
 }
 
 export interface EnhancedProps
@@ -65,8 +92,10 @@ export interface EnhancedProps
     FocusHandlerProps,
     ConnectState,
     ConnectDispatch,
-    WithHandlers,
-    SelectableItemListingProps<DocRefType> {}
+    WithHandlers1,
+    SelectableItemListingProps<DocRefType>,
+    WithHandlers2,
+    WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -114,15 +143,15 @@ const enhance = compose<EnhancedProps, Props>(
           ? filterTree(documentTree, d => typeFilters.includes(d.type))!
           : documentTree;
 
-      let docRefs;
-      let thisFolder;
-      let parentFolder;
-      let valueToShow;
+      let docRefs: Array<DocRefType> = [];
+      let thisFolder: DocRefTree | undefined = undefined;
+      let parentFolder: DocRefType | undefined;
+      let valueToShow: string;
 
       if (textFocus) {
         valueToShow = searchTerm;
       } else if (value) {
-        valueToShow = value.name;
+        valueToShow = value.name || "UNKNOWN_NAME";
       } else {
         valueToShow = "";
       }
@@ -134,7 +163,7 @@ const enhance = compose<EnhancedProps, Props>(
             documentTreeToUse,
             navFolderToUse.uuid
           )!;
-          docRefs = navFolderWithLineage.node.children;
+          docRefs = navFolderWithLineage.node.children!;
           thisFolder = navFolderWithLineage.node;
 
           if (
@@ -207,7 +236,10 @@ const enhance = compose<EnhancedProps, Props>(
       goBack: () => navigateToFolder(pickerId, parentFolder)
     })
   ),
-  withHandlers<{}, WithHandlers>({
+  withHandlers<
+    Props & ConnectState & ConnectDispatch & WithHandlers1,
+    WithHandlers2
+  >({
     onSearchTermChange: ({ pickerId, searchTermUpdated, searchApp }) => ({
       target: { value }
     }) => {
@@ -313,7 +345,7 @@ const AppSearchBar = ({
             key={searchResult.uuid}
             listingId={pickerId}
             docRef={searchResult}
-            openDocRef={onChange}
+            openDocRef={onThisChange}
             enterFolder={thisNavigateToFolder}
           >
             {provideBreadcrumbs && (

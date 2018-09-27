@@ -18,28 +18,53 @@ import * as React from "react";
 
 import { compose, withHandlers } from "recompose";
 import { connect } from "react-redux";
-import { reduxForm, Field } from "redux-form";
+import { reduxForm, Field, FormState } from "redux-form";
 
 import IconHeader from "../IconHeader";
 import ThemedModal from "../ThemedModal";
 import DialogActionButtons from "./DialogActionButtons";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
-import { actionCreators, defaultStatePerId } from "./redux/newDocReducer";
+import {
+  actionCreators,
+  defaultStatePerId,
+  StoreStatePerId as NewDocStoreState
+} from "./redux/newDocReducer";
 import { DocRefTypePicker } from "../DocRefTypes";
 import explorerClient from "../FolderExplorer/explorerClient";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { createDocument } = explorerClient;
 
 const { completeDocRefCreation } = actionCreators;
 
-const enhance = compose(
-  connect(
-    (
-      { userSettings: { theme }, folderExplorer: { newDoc }, form },
-      { listingId }
-    ) => ({
-      theme,
+export interface Props {
+  listingId: string;
+}
+
+export interface ConnectState extends NewDocStoreState {
+  newDocRefForm: FormState;
+}
+
+export interface ConnectDispatch {
+  completeDocRefCreation: typeof completeDocRefCreation;
+  createDocument: typeof createDocument;
+}
+
+export interface WithHandlers {
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    ({ folderExplorer: { newDoc }, form }, { listingId }) => ({
       ...(newDoc[listingId] || defaultStatePerId),
       newDocRefForm: form.newDocRef
     }),
@@ -70,20 +95,13 @@ const enhance = compose(
 
 let NewDocRefDialog = ({
   isOpen,
-  stage,
-  createDocument,
   destination,
-  // We need to include the theme because modals are mounted outside the root
-  // div, i.e. outside the div which contains the theme class.
-  theme,
   onCancel,
   onConfirm
-}) => (
+}: EnhancedProps) => (
   <ThemedModal
     isOpen={isOpen}
-    onClose={completeDocRefCreation}
-    size="small"
-    closeOnDimmerClick={false}
+    onRequestClose={completeDocRefCreation}
     header={
       <IconHeader
         icon="plus"
@@ -131,10 +149,4 @@ let NewDocRefDialog = ({
   />
 );
 
-NewDocRefDialog = enhance(NewDocRefDialog);
-
-NewDocRefDialog.propTypes = {
-  listingId: PropTypes.string.isRequired
-};
-
-export default NewDocRefDialog;
+export default enhance(NewDocRefDialog);

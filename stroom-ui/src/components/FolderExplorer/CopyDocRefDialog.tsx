@@ -22,7 +22,11 @@ import { Field, reduxForm, FormState } from "redux-form";
 import { GlobalStoreState } from "../../startup/reducers";
 import IconHeader from "../IconHeader";
 import { findItem } from "../../lib/treeUtils";
-import { actionCreators, defaultStatePerId } from "./redux/copyDocRefReducer";
+import {
+  actionCreators,
+  defaultStatePerId,
+  StoreStatePerId as CopyStoreState
+} from "./redux/copyDocRefReducer";
 import { copyDocuments } from "./explorerClient";
 import withDocumentTree from "./withDocumentTree";
 import DialogActionButtons from "./DialogActionButtons";
@@ -39,10 +43,8 @@ export interface Props {
   listingId: string;
 }
 
-export interface ConnectState {
+export interface ConnectState extends CopyStoreState {
   copyDocRefDialogForm: FormState;
-  isCopying: boolean;
-  uuids: Array<string>;
   initialValues: {
     destination?: Tree<DocRefType>;
   };
@@ -69,14 +71,15 @@ const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ folderExplorer: { documentTree, copyDocRef }, form }, { listingId }) => {
       const thisCopyState = copyDocRef[listingId] || defaultStatePerId;
-      const { isCopying, uuids, destinationUuid } = thisCopyState;
 
-      const initialDestination = findItem(documentTree, destinationUuid);
+      const initialDestination = findItem(
+        documentTree,
+        thisCopyState.destinationUuid
+      );
 
       return {
         copyDocRefDialogForm: form.copyDocRefDialog,
-        isCopying,
-        uuids,
+        ...thisCopyState,
         initialValues: {
           destination: initialDestination && initialDestination.node
         }

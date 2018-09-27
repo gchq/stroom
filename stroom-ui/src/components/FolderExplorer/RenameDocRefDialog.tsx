@@ -17,26 +17,60 @@ import * as React from "react";
 
 import { connect } from "react-redux";
 import { compose, withHandlers } from "recompose";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState } from "redux-form";
 
 import DialogActionButtons from "./DialogActionButtons";
 import IconHeader from "../IconHeader";
-import { actionCreators, defaultStatePerId } from "./redux/renameDocRefReducer";
+import {
+  actionCreators,
+  defaultStatePerId,
+  StoreStateById as RenameStoreState
+} from "./redux/renameDocRefReducer";
 import { renameDocument } from "../FolderExplorer/explorerClient";
 import ThemedModal from "../ThemedModal";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { completeDocRefRename } = actionCreators;
 
-const enhance = compose(
-  connect(
-    ({ folderExplorer: { renameDocRef }, form }, { docRef, listingId }) => ({
-      ...(renameDocRef[listingId] || defaultStatePerId),
-      renameDocRefForm: form.renameDocRefDialog,
-      initialValues: {
-        docRefName: docRef ? docRef.name : ""
-      }
-    }),
+export interface Props {
+  listingId: string;
+}
+
+export interface ConnectState extends RenameStoreState {
+  renameDocRefForm: FormState;
+}
+
+export interface ConnectDispatch {
+  completeDocRefRename: typeof completeDocRefRename;
+  renameDocument: typeof renameDocument;
+}
+
+export interface WithHandlers {
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    ({ folderExplorer: { renameDocRef }, form }, { listingId }) => {
+      let renameState: RenameStoreState =
+        renameDocRef[listingId] || defaultStatePerId;
+
+      return {
+        ...renameState,
+        renameDocRefForm: form.renameDocRefDialog,
+        initialValues: {
+          docRefName: renameState.docRef ? renameState.docRef.name : ""
+        }
+      };
+    },
     { completeDocRefRename, renameDocument }
   ),
   reduxForm({
@@ -58,7 +92,11 @@ const enhance = compose(
   })
 );
 
-let RenameDocRefDialog = ({ isRenaming, onConfirm, onCancel }) => (
+let RenameDocRefDialog = ({
+  isRenaming,
+  onConfirm,
+  onCancel
+}: EnhancedProps) => (
   <ThemedModal
     isOpen={isRenaming}
     header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
@@ -78,10 +116,4 @@ let RenameDocRefDialog = ({ isRenaming, onConfirm, onCancel }) => (
   />
 );
 
-RenameDocRefDialog = enhance(RenameDocRefDialog);
-
-// RenameDocRefDialog.propTypes = {
-//   listingId: PropTypes.string.isRequired
-// };
-
-export default RenameDocRefDialog;
+export default enhance(RenameDocRefDialog);

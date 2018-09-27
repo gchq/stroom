@@ -17,7 +17,11 @@ import { compose, withHandlers, withProps } from "recompose";
 import { connect } from "react-redux";
 
 import { GlobalStoreState } from "../../startup/reducers";
-import { actionCreators, defaultStatePerId } from "./redux/deleteDocRefReducer";
+import {
+  actionCreators,
+  defaultStatePerId,
+  StoreStatePerId as DeleteStoreState
+} from "./redux/deleteDocRefReducer";
 import { deleteDocuments } from "../FolderExplorer/explorerClient";
 import ThemedConfirm, { Props as ConfirmProps } from "../ThemedConfirm";
 
@@ -26,7 +30,7 @@ const { completeDocRefDelete } = actionCreators;
 export interface Props {
   listingId: string;
 }
-export type ConnectState = typeof defaultStatePerId;
+export interface ConnectState extends DeleteStoreState {}
 export interface ConnectDispatch {
   completeDocRefDelete: typeof completeDocRefDelete;
   deleteDocuments: typeof deleteDocuments;

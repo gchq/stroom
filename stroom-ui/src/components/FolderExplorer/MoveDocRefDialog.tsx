@@ -17,25 +17,66 @@ import * as React from "react";
 
 import { compose, withHandlers } from "recompose";
 import { connect } from "react-redux";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState } from "redux-form";
 
 import IconHeader from "../IconHeader";
 import { findItem } from "../../lib/treeUtils";
-import { actionCreators, defaultStatePerId } from "./redux/moveDocRefReducer";
+import {
+  actionCreators,
+  defaultStatePerId,
+  StoreStatePerId as MoveStoreState
+} from "./redux/moveDocRefReducer";
 import { moveDocuments } from "./explorerClient";
-import withDocumentTree from "./withDocumentTree";
+import withDocumentTree, {
+  EnhancedProps as WithDocumentTreeProps
+} from "./withDocumentTree";
 import DialogActionButtons from "./DialogActionButtons";
 import AppSearchBar from "../AppSearchBar";
 import ThemedModal from "../ThemedModal";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
+import { GlobalStoreState } from "../../startup/reducers";
+import { DocRefType } from "../../types";
 
 const { completeDocRefMove } = actionCreators;
 
 const LISTING_ID = "move-item-listing";
 
-const enhance = compose(
+export interface Props {
+  listingId: string;
+}
+
+export interface ConnectState extends MoveStoreState {
+  moveDocRefDialogForm: FormState;
+  initialValues: {
+    destination?: DocRefType;
+  };
+}
+
+export interface ConnectDispatch {
+  completeDocRefMove: typeof completeDocRefMove;
+  moveDocuments: typeof moveDocuments;
+}
+
+export interface WithHandlers {
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export interface EnhancedProps
+  extends Props,
+    WithDocumentTreeProps,
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
-  connect(
+  connect<
+    ConnectState,
+    ConnectDispatch,
+    Props & WithDocumentTreeProps,
+    GlobalStoreState
+  >(
     (
       {
         folderExplorer: { documentTree },
@@ -45,13 +86,14 @@ const enhance = compose(
       { listingId }
     ) => {
       const thisState = moveDocRef[listingId] || defaultStatePerId;
-      const { isMoving, uuids, destinationUuid } = thisState;
-      const initialDestination = findItem(documentTree, destinationUuid);
+      const initialDestination = findItem(
+        documentTree,
+        thisState.destinationUuid
+      );
 
       return {
         moveDocRefDialogForm: form.moveDocRefDialog,
-        isMoving,
-        uuids,
+        ...thisState,
         initialValues: {
           destination: initialDestination && initialDestination.node
         }
@@ -78,7 +120,7 @@ const enhance = compose(
   })
 );
 
-let MoveDocRefDialog = ({ isMoving, onConfirm, onCancel }) => (
+let MoveDocRefDialog = ({ isMoving, onConfirm, onCancel }: EnhancedProps) => (
   <ThemedModal
     isOpen={isMoving}
     header={
@@ -117,10 +159,4 @@ let MoveDocRefDialog = ({ isMoving, onConfirm, onCancel }) => (
   />
 );
 
-MoveDocRefDialog = enhance(MoveDocRefDialog);
-
-MoveDocRefDialog.propTypes = {
-  listingId: PropTypes.string.isRequired
-};
-
-export default MoveDocRefDialog;
+export default enhance(MoveDocRefDialog);

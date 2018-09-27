@@ -52,7 +52,7 @@ export const actionCreators: ActionCreators = {
 };
 
 export interface StoreStatePerId {
-  isMoveing: boolean;
+  isMoving: boolean;
   uuids: Array<string>;
   destinationUuid?: string;
 }
@@ -62,7 +62,7 @@ export interface StoreState extends StateById<StoreStatePerId> {}
 // The state will contain a map of arrays.
 // Keyed on explorer ID, the arrays will contain the doc refs being moved
 export const defaultStatePerId: StoreStatePerId = {
-  isMoveing: false,
+  isMoving: false,
   uuids: [],
   destinationUuid: undefined
 };
@@ -71,7 +71,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
   .handleAction<PrepareDocRefMove>(
     PREPARE_DOC_REF_MOVE,
     (state, { uuids, destinationUuid }: PrepareDocRefMove) => ({
-      isMoveing: uuids.length > 0,
+      isMoving: uuids.length > 0,
       uuids,
       destinationUuid
     })
