@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 export default {
-  NONE: 'None',
-  SOURCE: 'Source',
-  DESTINATION: 'Destination',
-  COMBINED: 'Combined',
+  NONE: "None",
+  SOURCE: "Source",
+  DESTINATION: "Destination",
+  COMBINED: "Combined"
 };

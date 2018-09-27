@@ -1,3 +1,5 @@
+import { Dispatch, Action } from "redux";
+
 import { actionCreators as folderExplorerActionCreators } from "./redux";
 import { actionCreators as docRefTypesActionCreators } from "../DocRefTypes/redux";
 import { actionCreators as docRefInfoActionCreators } from "../DocRefInfoModal";
@@ -8,6 +10,8 @@ import {
   wrappedPost
 } from "../../lib/fetchTracker.redux";
 import { findByUuids, findItem } from "../../lib/treeUtils";
+import { DocRefType, DocRefTree, DocRefInfoType } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const {
   docTreeReceived,
@@ -24,20 +28,20 @@ const { docRefInfoOpened, docRefInfoReceived } = docRefInfoActionCreators;
 
 const { docRefTypesReceived } = docRefTypesActionCreators;
 
-const stripDocRef = docRef => ({
+const stripDocRef = (docRef: DocRefType) => ({
   uuid: docRef.uuid,
   type: docRef.type,
   name: docRef.name
 });
 
 export const searchApp = (
-  pickerId,
+  pickerId: string,
   { term = "", docRefType = "", pageOffset = 0, pageSize = 10 }
-) => (dispatch, getState) => {
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
   const params = `searchTerm=${term}&docRefType=${docRefType}&pageOffset=${pageOffset}&pageSize=${pageSize}`;
   const url = `${
-    state.config.stroomBaseServiceUrl
+    state.config.values.stroomBaseServiceUrl
   }/explorer/v1/search?${params}`;
   wrappedGet(
     dispatch,
@@ -46,7 +50,7 @@ export const searchApp = (
     r =>
       r
         .json()
-        .then(searchResults =>
+        .then((searchResults: Array<DocRefType>) =>
           dispatch(searchResultsReturned(pickerId, searchResults))
         ),
     {},
@@ -54,51 +58,74 @@ export const searchApp = (
   );
 };
 
-export const fetchDocTree = () => (dispatch, getState) => {
+export const fetchDocTree = () => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/all`;
+  const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/all`;
   wrappedGet(dispatch, state, url, response =>
     response
       .json()
-      .then(documentTree => dispatch(docTreeReceived(documentTree)))
+      .then((documentTree: DocRefTree) =>
+        dispatch(docTreeReceived(documentTree))
+      )
   );
 };
 
-export const fetchDocRefTypes = () => (dispatch, getState) => {
+export const fetchDocRefTypes = () => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/docRefTypes`;
+  const url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/explorer/v1/docRefTypes`;
   wrappedGet(dispatch, state, url, response =>
     response
       .json()
-      .then(docRefTypes => dispatch(docRefTypesReceived(docRefTypes)))
+      .then((docRefTypes: Array<string>) =>
+        dispatch(docRefTypesReceived(docRefTypes))
+      )
   );
 };
 
-export const fetchDocInfo = docRef => (dispatch, getState) => {
+export const fetchDocInfo = (docRef: DocRefType) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   dispatch(docRefInfoOpened(docRef));
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/info/${
+  const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/info/${
     docRef.type
   }/${docRef.uuid}`;
   wrappedGet(dispatch, state, url, response =>
-    response.json().then(docRefInfo => dispatch(docRefInfoReceived(docRefInfo)))
+    response
+      .json()
+      .then((docRefInfo: DocRefInfoType) =>
+        dispatch(docRefInfoReceived(docRefInfo))
+      )
   );
 };
 
 export const createDocument = (
-  docRefType,
-  docRefName,
-  destinationFolderRef,
-  permissionInheritance
-) => (dispatch, getState) => {
+  docRefType: string,
+  docRefName: string,
+  destinationFolderRef: DocRefType,
+  permissionInheritance: string
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/create`;
+  const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/create`;
   wrappedPost(
     dispatch,
     state,
     url,
     response =>
-      response.json().then(updatedTree => dispatch(docRefCreated(updatedTree))),
+      response
+        .json()
+        .then((updatedTree: DocRefTree) =>
+          dispatch(docRefCreated(updatedTree))
+        ),
     {
       body: JSON.stringify({
         docRefType,
@@ -110,9 +137,12 @@ export const createDocument = (
   );
 };
 
-export const renameDocument = (docRef, name) => (dispatch, getState) => {
+export const renameDocument = (docRef: DocRefType, name: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/rename`;
+  const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/rename`;
 
   wrappedPut(
     dispatch,
@@ -121,7 +151,7 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
     response =>
       response
         .json()
-        .then(resultDocRef =>
+        .then((resultDocRef: DocRefType) =>
           dispatch(docRefRenamed(docRef, name, resultDocRef))
         ),
     {
@@ -134,18 +164,20 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
 };
 
 export const copyDocuments = (
-  uuids,
-  destinationUuid,
-  permissionInheritance
-) => (dispatch, getState) => {
+  uuids: Array<string>,
+  destinationUuid: string,
+  permissionInheritance: string
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
   const {
-    config: { stroomBaseServiceUrl },
+    config: {
+      values: { stroomBaseServiceUrl }
+    },
     folderExplorer: { documentTree }
   } = state;
   const url = `${stroomBaseServiceUrl}/explorer/v1/copy`;
   const docRefs = findByUuids(documentTree, uuids);
-  const destination = findItem(documentTree, destinationUuid);
+  const destination = findItem(documentTree, destinationUuid)!;
 
   wrappedPost(
     dispatch,
@@ -154,7 +186,7 @@ export const copyDocuments = (
     response =>
       response
         .json()
-        .then(updatedTree =>
+        .then((updatedTree: DocRefTree) =>
           dispatch(docRefsCopied(docRefs, destination.node, updatedTree))
         ),
     {
@@ -168,19 +200,21 @@ export const copyDocuments = (
 };
 
 export const moveDocuments = (
-  uuids,
-  destinationUuid,
-  permissionInheritance
-) => (dispatch, getState) => {
+  uuids: Array<string>,
+  destinationUuid: string,
+  permissionInheritance: string
+) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
   const {
-    config: { stroomBaseServiceUrl },
+    config: {
+      values: { stroomBaseServiceUrl }
+    },
     folderExplorer: { documentTree }
   } = state;
 
   const url = `${stroomBaseServiceUrl}/explorer/v1/move`;
   const docRefs = findByUuids(documentTree, uuids);
-  const destination = findItem(documentTree, destinationUuid);
+  const destination = findItem(documentTree, destinationUuid)!;
   wrappedPut(
     dispatch,
     state,
@@ -188,7 +222,7 @@ export const moveDocuments = (
     response =>
       response
         .json()
-        .then(updatedTree =>
+        .then((updatedTree: DocRefTree) =>
           dispatch(docRefsMoved(docRefs, destination.node, updatedTree))
         ),
     {
@@ -201,9 +235,12 @@ export const moveDocuments = (
   );
 };
 
-export const deleteDocuments = uuids => (dispatch, getState) => {
+export const deleteDocuments = (uuids: Array<string>) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/explorer/v1/delete`;
+  const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/delete`;
   const docRefs = findByUuids(state.folderExplorer.documentTree, uuids);
   wrappedPost(
     dispatch,
@@ -212,7 +249,9 @@ export const deleteDocuments = uuids => (dispatch, getState) => {
     response =>
       response
         .json()
-        .then(updatedTree => dispatch(docRefsDeleted(docRefs, updatedTree))),
+        .then((updatedTree: DocRefTree) =>
+          dispatch(docRefsDeleted(docRefs, updatedTree))
+        ),
     {
       method: "delete",
       body: JSON.stringify(docRefs.map(stripDocRef))

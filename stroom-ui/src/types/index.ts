@@ -197,3 +197,10 @@ export interface PipelineAsTreeType {
   type: string;
   children: Array<PipelineAsTreeType>;
 }
+
+export enum PermissionInheritance {
+  NONE = "None",
+  SOURCE = "Source",
+  DESTINATION = "Destination",
+  COMBINED = "Combined"
+}
