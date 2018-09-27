@@ -1,11 +1,11 @@
 -- v6 prop mappings
--- UPDATE config set name = '' where name = '';
 
+-- Yank the update line below to register 'a'
+-- UPDATE config set name = '' where name = '';
+-- Yank this macro to a register and run it against a line like 'my.old.prop my.new.prop'
 -- "cdt x"bD"ap0f'"bpf';"cpj0
 
-
-insert into config (name, val) values ('stroom.internalstatistics.cpu.docRefs', 'docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)');
-insert into config (name, val) values ('stroom.internalstatistics.memory.docRefs', 'docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)');
+-- TODO what do we do about mapping c3po pool props to hikari?
 
 UPDATE config set 
   name = 'stroom.ui.aboutHTML' 
@@ -55,9 +55,11 @@ UPDATE config set
   name = 'stroom.security.authentication.authenticationRequired' 
   where name = 'stroom.authentication.required';
 
--- ? stroom.benchmark.concurrentWriters
--- ? stroom.benchmark.recordCount
--- ? stroom.benchmark.streamCount
+-- same names in 6 & master
+-- stroom.benchmark.concurrentWriters
+-- stroom.benchmark.recordCount
+-- stroom.benchmark.streamCount
+
 UPDATE config set 
   name = 'stroom.feed.bufferSize' 
   where name = 'stroom.bufferSize';
@@ -125,12 +127,14 @@ UPDATE config set
   name = 'stroom.ui.helpUrl' 
   where name = 'stroom.helpUrl';
 
--- ? stroom.index.ramBufferSizeMB
--- ? stroom.index.writer.cache.coreItems
--- ? stroom.index.writer.cache.maxItems
--- ? stroom.index.writer.cache.minItems
--- ? stroom.index.writer.cache.timeToIdle
--- ? stroom.index.writer.cache.timeToLive
+-- same names in 6 & master
+-- stroom.index.ramBufferSizeMB
+-- stroom.index.writer.cache.coreItems
+-- stroom.index.writer.cache.maxItems
+-- stroom.index.writer.cache.minItems
+-- stroom.index.writer.cache.timeToIdle
+-- stroom.index.writer.cache.timeToLive
+
 UPDATE config set 
   name = 'stroom.statistics.internal.benchmarkCluster' 
   where name = 'stroom.internalstatistics.benchmarkCluster.docRefs';
@@ -199,10 +203,16 @@ UPDATE config set
   name = 'stroom.core.hibernate.jpaHbm2DdlAuto' 
   where name = 'stroom.jpaHbm2DdlAuto';
 
+-- same names in 6 & master
 -- stroom.lifecycle.enabled
 -- stroom.lifecycle.executionInterval
+
+-- Now defined in a doc entity
 -- stroom.kafka.bootstrap.servers
+
+-- Now handled by auth service
 -- stroom.loginHTML 
+
 UPDATE config set 
   name = 'stroom.ui.maintenanceMessage' 
   where name = 'stroom.maintenance.message';
@@ -231,20 +241,32 @@ UPDATE config set
   name = 'stroom.node.node' 
   where name = 'stroom.node';
 
+-- Same names in 6 & master
 -- stroom.node.status.heapHistogram.classNameMatchRegex
 -- stroom.node.status.heapHistogram.classNameReplacementRegex
 -- stroom.node.status.heapHistogram.jMapExecutable
+
 UPDATE config set 
   name = '?' 
   where name = 'stroom.pageTitle';
 
+-- Same names in 6 & master
 -- stroom.pipeline.appender.maxActiveDestinations
 -- stroom.pipeline.xslt.maxElements
+
+-- These are now all part of ProxyConfig that does not get written to the DB and thus has no prop name.
 -- stroom.proxy.store.dir ? 
 -- stroom.proxy.store.format ?
 -- stroom.proxy.store.rollCron ?
--- stroom.proxyDir ?
--- stroom.proxyThreads ?
+
+UPDATE config set 
+  name = 'stroom.proxyAggregation.proxyDir' 
+  where name = 'stroom.proxyDir';
+
+UPDATE config set 
+  name = 'stroom.proxyAggregation.proxyThreads' 
+  where name = 'stroom.proxyThreads';
+
 UPDATE config set 
   name = 'stroom.queryHistory.daysRetention' 
   where name = 'stroom.query.history.daysRetention';
@@ -269,10 +291,12 @@ UPDATE config set
   name = 'stroom.node.rack' 
   where name = 'stroom.rack';
 
+-- Same name in 6 & master
 -- stroom.search.extraction.maxThreads
 -- stroom.search.extraction.maxThreadsPerTask
 -- stroom.search.maxBooleanClauseCount
 -- stroom.search.maxStoredDataQueueSize
+
 UPDATE config set 
   name = 'stroom.ui.process.defaultRecordLimit' 
   where name = 'stroom.search.process.defaultRecordLimit';
@@ -281,10 +305,12 @@ UPDATE config set
   name = 'stroom.ui.process.defaultTimeLimit' 
   where name = 'stroom.search.process.defaultTimeLimit';
 
+-- Same name in 6 & master
 -- stroom.search.shard.maxDocIdQueueSize
 -- stroom.search.shard.maxThreads
 -- stroom.search.shard.maxThreadsPerTask
 -- stroom.search.storeSize
+
 UPDATE config set 
   name = 'stroom.security.authentication.apiToken' 
   where name = 'stroom.security.apitoken';
@@ -305,6 +331,7 @@ UPDATE config set
   name = 'stroom.serviceDiscovery.curatorMaxSleepTimeMs' 
   where name = 'stroom.serviceDiscovery.curator.maxSleepTimeMs';
 
+-- TODO need to figure out what we are doing with service disco
 -- stroom.serviceDiscovery.enabled
 -- stroom.serviceDiscovery.servicesHostNameOrIpAddress
 -- stroom.serviceDiscovery.servicesPort
@@ -324,6 +351,9 @@ UPDATE config set
 -- ? stroom.services.stroomIndex.name ?
 -- ? stroom.services.stroomIndex.version ?
 -- ? stroom.services.stroomStats.docRefType ?
+-- ? stroom.services.stroomStats.name ?
+-- ? stroom.services.stroomStats.version ?
+
 UPDATE config set 
   name = 'stroom.statistics.hbase.eventsPerMessage' 
   where name = 'stroom.services.stroomStats.internalStats.eventsPerMessage';
@@ -336,8 +366,6 @@ UPDATE config set
   name = 'stroom.statistics.hbase.kafkaTopics.value' 
   where name = 'stroom.services.stroomStats.kafkaTopics.value';
 
--- ? stroom.services.stroomStats.name ?
--- ? stroom.services.stroomStats.version ?
 UPDATE config set 
   name = 'stroom.core.hibernate.showSql' 
   where name = 'stroom.showSql';
@@ -358,8 +386,10 @@ UPDATE config set
   name = 'stroom.ui.splash.version' 
   where name = 'stroom.splash.version';
 
+-- No longer used, stat doc entities are totally separate
 -- stroom.statistics.common.statisticEngines
--- ? stroom.statistics.legacy.statisticAggregationBatchSize
+
+-- TODO what to do about 
 -- ? stroom.statistics.sql.db.connectionPool.acquireIncrement
 -- ? stroom.statistics.sql.db.connectionPool.acquireRetryAttempts
 -- ? stroom.statistics.sql.db.connectionPool.acquireRetryDelay
@@ -373,6 +403,7 @@ UPDATE config set
 -- ? stroom.statistics.sql.db.connectionPool.minPoolSize
 -- ? stroom.statistics.sql.db.connectionPool.numHelperThreads
 -- ? stroom.statistics.sql.db.connectionPool.unreturnedConnectionTimeout
+
 UPDATE config set 
   name = 'stroom.statistics.sql.connection.jdbcDriverClassName' 
   where name = 'stroom.statistics.sql.jdbcDriverClassName';
@@ -389,15 +420,19 @@ UPDATE config set
   name = 'stroom.statistics.sql.connection.jdbcDriverUsername' 
   where name = 'stroom.statistics.sql.jdbcDriverUsername';
 
+-- Same names in 6 & master
 -- stroom.statistics.sql.maxProcessingAge
 -- stroom.statistics.sql.search.fetchSize
 -- stroom.statistics.sql.search.maxResults
 -- stroom.statistics.sql.search.resultHandlerBatchSize
 -- stroom.statistics.sql.statisticAggregationBatchSize
+
+-- TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
 -- ? stroom.stream.deleteBatchSize ? stroom.data.store.deleteBatchSize
 -- ? stroom.stream.deletePurgeAge ? stroom.data.store.deletePurgeAge
 -- ? stroom.streamAttribute.deleteAge ? stroom.process.deleteAge
 -- ? stroom.streamAttribute.deleteBatchSize ?
+
 UPDATE config set 
   name = 'stroom.process.assignTasks' 
   where name = 'stroom.streamTask.assignTasks';
@@ -406,8 +441,10 @@ UPDATE config set
   name = 'stroom.process.createTasks' 
   where name = 'stroom.streamTask.createTasks';
 
+-- TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
 -- ? stroom.streamTask.deleteAge ? stroom.process.deleteAge
 -- ? stroom.streamTask.deleteBatchSize ?
+
 UPDATE config set 
   name = 'stroom.process.fillTaskQueue' 
   where name = 'stroom.streamTask.fillTaskQueue';
@@ -468,9 +505,10 @@ UPDATE config set
   name = 'stroom.ui.theme.tubeVisible' 
   where name = 'stroom.unknownClassification';
 
+-- Same name in 6 & master
 -- stroom.volumes.createDefaultOnStart
+
 UPDATE config set 
   name = 'stroom.ui.welcomeHtml' 
   where name = 'stroom.welcomeHTML';
-
 
