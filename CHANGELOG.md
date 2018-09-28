@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#815** : `stroom.pageTitle` property changed to `stroom.htmlTitle`.
+
 * Issue **#732** : Added `host-address` and `host-name` XSLT functions.
 
 * Issue **#338** : Added `splitAggregatedStreams` property to `StreamAppender`, `FileAppender` and `HDFSFileAppender` so that aggregated streams can be split into separate streams on output.
