@@ -51,14 +51,14 @@ public class GlobalConfigDbModule extends AbstractModule {
         flyway.setLocations(FLYWAY_LOCATIONS);
         flyway.setTable(FLYWAY_TABLE);
         flyway.setBaselineOnMigrate(true);
-        LOGGER.info("Applying Flyway migrations to {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        LOGGER.info("Applying Flyway migrations to stroom-config in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating global copnfig database",e);
+            LOGGER.error("Error migrating stroom-config database",e);
             throw e;
         }
-        LOGGER.info("Completed Flyway migrations for {}", FLYWAY_TABLE);
+        LOGGER.info("Completed Flyway migrations for stroom-config in {}", FLYWAY_TABLE);
         return flyway;
     }
 
