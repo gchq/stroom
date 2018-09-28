@@ -225,4 +225,11 @@ public class StreamAppender extends AbstractAppender {
     public void setRollSize(final String size) {
         super.setRollSize(size);
     }
+
+    @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output streams.",
+            defaultValue = "false",
+            displayPriority = 5)
+    public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
+        super.setSplitAggregatedStreams(splitAggregatedStreams);
+    }
 }

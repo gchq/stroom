@@ -21,6 +21,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
         bindFunction(HexToOctFunction.class);
+        bindFunction(HostAddressFunction.class);
+        bindFunction(HostNameFunction.class);
         bindFunction(JsonToXmlFunction.class);
         bindFunction(LogFunction.class);
         bindFunction(MetaFunction.class);
@@ -147,6 +149,24 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HexToOctFunction(final Provider<HexToDec> functionCallProvider) {
             super("hex-to-oct", 1, 1, new SequenceType[]{
+                    SequenceType.SINGLE_STRING
+            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class HostAddressFunction extends StroomExtensionFunctionDefinition<HostAddress> {
+        @Inject
+        HostAddressFunction(final Provider<HostAddress> functionCallProvider) {
+            super("host-address", 1, 1, new SequenceType[]{
+                    SequenceType.SINGLE_STRING
+            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class HostNameFunction extends StroomExtensionFunctionDefinition<HostName> {
+        @Inject
+        HostNameFunction(final Provider<HostName> functionCallProvider) {
+            super("host-name", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }

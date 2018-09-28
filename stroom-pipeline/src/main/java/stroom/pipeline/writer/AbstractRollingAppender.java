@@ -22,7 +22,7 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.pipeline.factory.PipelineProperty;
+import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 import stroom.task.api.TaskContext;
 
@@ -32,11 +32,12 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
-    private static final int SECOND = 1000;
-    private static final int MINUTE = 60 * SECOND;
-    private static final int HOUR = 60 * MINUTE;
+    private static final long SECOND = 1000;
+    private static final long MINUTE = 60 * SECOND;
+    private static final long HOUR = 60 * MINUTE;
 
-    private long frequency = HOUR;
+    private Long frequency;
+    private SimpleCron schedule;
     private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
@@ -63,7 +64,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     }
 
     @Override
-    public void returnDestination(final Destination destination) throws IOException {
+    public void returnDestination(final Destination destination) {
         destinations.returnDestination((RollingDestination) destination);
     }
 
@@ -71,8 +72,13 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         if (!validatedSettings) {
             validatedSettings = true;
 
-            if (frequency <= 0) {
-                throw new ProcessException("Rolling frequency must be greater than 0");
+            if (frequency != null) {
+                if (frequency <= 0) {
+                    throw new ProcessException("Rolling frequency must be greater than 0");
+                }
+            } else if (schedule == null) {
+                // Default the frequency to an hour if there is no schedule.
+                frequency = HOUR;
             }
 
             if (rollSize <= 0) {
@@ -85,6 +91,10 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
 
     protected long getFrequency() {
         return frequency;
+    }
+
+    protected SimpleCron getSchedule() {
+        return schedule;
     }
 
     protected long getRollSize() {
@@ -105,18 +115,31 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
      */
     protected abstract Object getKey() throws IOException;
 
-    @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h", displayPriority = 4)
-    public void setFrequency(final String frequency) {
-        if (frequency != null && frequency.trim().length() > 0) {
+    protected void setFrequency(final String frequency) {
+        if (frequency == null || frequency.trim().length() == 0) {
+            this.frequency = null;
+        } else {
             try {
                 final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null) {
+                if (value == null || value <= 0) {
                     throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
                 }
 
                 this.frequency = value;
             } catch (final NumberFormatException e) {
                 throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
+            }
+        }
+    }
+
+    protected void setSchedule(final String expression) {
+        if (expression == null || expression.trim().length() == 0) {
+            this.schedule = null;
+        } else {
+            try {
+                this.schedule = SimpleCron.compile(expression);
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
             }
         }
     }
