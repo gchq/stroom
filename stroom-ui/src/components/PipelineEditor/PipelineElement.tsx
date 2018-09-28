@@ -33,6 +33,13 @@ const {
   pipelineElementReinstated
 } = actionCreators;
 
+// PipelineElement.propTypes = {
+//   pipelineId: PropTypes.string.isRequired,
+//   elementId: PropTypes.string.isRequired,
+//   onClick: PropTypes.func,
+//   selectedElementId: PropTypes.string,
+// };
+
 const dragSource = {
   canDrag(props) {
     return true;
@@ -265,12 +272,5 @@ const PipelineElement = ({
       <Button className="Pipeline-element__type" text={elementId} />
     </div>
   );
-
-// PipelineElement.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-//   elementId: PropTypes.string.isRequired,
-//   onClick: PropTypes.func,
-//   selectedElementId: PropTypes.string,
-// };
 
 export default enhance(PipelineElement);

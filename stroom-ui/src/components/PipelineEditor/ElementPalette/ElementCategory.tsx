@@ -12,10 +12,27 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import NewElement from "./NewElement";
 import { ElementCategories } from "../ElementCategories";
+import { RecycleBinItem } from "../pipelineUtils";
 
 const withCategoryIsOpen = withState("isOpen", "setIsOpen", true);
 
-const enhance = compose(
+export interface Props {
+  category: string;
+  elementsWithData: Array<RecycleBinItem>;
+}
+
+export interface WithCategoryIsOpen {
+  isOpen: boolean;
+  setIsOpen: (value: boolean) => any;
+}
+
+export interface WithProps {
+  displayTitle: string;
+}
+
+export interface EnhancedProps extends Props, WithCategoryIsOpen, WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   withCategoryIsOpen,
   withProps(({ category }) => ({
     displayTitle: ElementCategories[category]
@@ -30,31 +47,25 @@ const ElementCategory = ({
   elementsWithData,
   isOpen,
   setIsOpen,
-  displayTitle,
-  icon
-}) => (
+  displayTitle
+}: EnhancedProps) => (
   <div className="element-palette-category">
     <div onClick={() => setIsOpen(!isOpen)}>
       <FontAwesomeIcon icon="caret-down" className="borderless" />{" "}
       {displayTitle}
     </div>
-    <div active={isOpen} className="flat">
+    <div className="flat">
       <div
         className={`element-palette-category__elements--${
           isOpen ? "open" : "closed"
         }`}
       >
-        {elementsWithData.map(e => (
+        {elementsWithData.map((e: RecycleBinItem) => (
           <NewElement key={e.element.type} elementWithData={e} />
         ))}
       </div>
     </div>
   </div>
 );
-
-// ElementCategory.propTypes = {
-//   category: PropTypes.string.isRequired,
-//   elementsWithData: PropTypes.array.isRequired,
-// };
 
 export default enhance(ElementCategory);

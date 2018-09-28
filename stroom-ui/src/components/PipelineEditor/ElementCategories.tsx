@@ -1,4 +1,4 @@
-export class ElementCategory {
+export class ElementCategoryType {
   displayName: string;
   index: number;
 
@@ -9,10 +9,10 @@ export class ElementCategory {
 }
 
 export const ElementCategories = {
-  INTERNAL: new ElementCategory("Internal", -1),
-  READER: new ElementCategory("Reader", 0),
-  PARSER: new ElementCategory("Parser", 1),
-  FILTER: new ElementCategory("Filter", 2),
-  WRITER: new ElementCategory("Writer", 3),
-  DESTINATION: new ElementCategory("Destination", 4)
+  INTERNAL: new ElementCategoryType("Internal", -1),
+  READER: new ElementCategoryType("Reader", 0),
+  PARSER: new ElementCategoryType("Parser", 1),
+  FILTER: new ElementCategoryType("Filter", 2),
+  WRITER: new ElementCategoryType("Writer", 3),
+  DESTINATION: new ElementCategoryType("Destination", 4)
 };

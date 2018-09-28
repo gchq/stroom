@@ -29,10 +29,15 @@ import {
   PipelineLinkType
 } from "../../types";
 
+export interface RecycleBinItem {
+  recycleData?: PipelineElementType;
+  element: ElementDefinition;
+}
+
 export function getBinItems(
   pipeline: PipelineModelType,
   elementsByType: ElementDefinitionsByType
-) {
+): Array<RecycleBinItem> {
   const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
 
   return thisConfigStack.elements.remove.map(e => ({

@@ -15,49 +15,62 @@
  */
 
 import * as React from "react";
-import { compose, withState, withProps } from "recompose";
-import { DragSource } from "react-dnd";
+import { compose, withState } from "recompose";
+import { DragSource, DragSourceSpec, DragSourceCollector } from "react-dnd";
 
 import ElementImage from "../../ElementImage";
 import Button from "../../Button";
-import ItemTypes from "../dragDropTypes";
+import {
+  DragDropTypes,
+  DragObject,
+  DragCollectedProps
+} from "../dragDropTypes";
+import { RecycleBinItem } from "../pipelineUtils";
 
 const withFocus = withState("hasFocus", "setHasFocus", false);
 
-const dragSource = {
+export interface Props {
+  elementWithData: RecycleBinItem;
+}
+
+export interface WithFocus {
+  hasFocus: boolean;
+  setHasFocus: (value: boolean) => any;
+}
+
+const dragSource: DragSourceSpec<Props & WithFocus, DragObject> = {
   canDrag(props) {
     return true;
   },
   beginDrag(props) {
     return {
-      element: props.element,
-      recycleData: props.recycleData
+      ...props.elementWithData
     };
   }
 };
 
-const dragCollect = (connect, monitor) => ({
+const dragCollect: DragSourceCollector<DragCollectedProps> = (
+  connect,
+  monitor
+) => ({
   connectDragSource: connect.dragSource(),
   isDragging: monitor.isDragging()
 });
 
-const enhance = compose(
+export interface EnhancedProps extends Props, WithFocus, DragCollectedProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   withFocus,
-  withProps(({ elementWithData }) => ({
-    element: elementWithData.element,
-    recycleData: elementWithData.recycleData
-  })),
-  DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect)
+  DragSource(DragDropTypes.PALLETE_ELEMENT, dragSource, dragCollect)
 );
 
 const NewElement = ({
   connectDragSource,
   isDragging,
-  element,
-  recycleData,
+  elementWithData: { element, recycleData },
   hasFocus,
   setHasFocus
-}) =>
+}: EnhancedProps) =>
   connectDragSource(
     <div
       className={`element-palette-element raised-low borderless ${
@@ -75,9 +88,5 @@ const NewElement = ({
       </div>
     </div>
   );
-
-// NewElement.propTypes = {
-//   elementWithData: PropTypes.object.isRequired,
-// };
 
 export default enhance(NewElement);

@@ -105,7 +105,7 @@ export interface ElementDefinition {
 
 export type ElementDefinitions = Array<ElementDefinition>;
 export type ElementDefinitionsByCategory = {
-  [category: string]: ElementDefinition;
+  [category: string]: Array<ElementDefinition>;
 };
 export type ElementDefinitionsByType = { [type: string]: ElementDefinition };
 

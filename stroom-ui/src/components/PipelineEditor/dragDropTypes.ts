@@ -1,3 +1,6 @@
+import { ConnectDropTarget, ConnectDragSource } from "react-dnd";
+import { ElementDefinition, PipelineElementType } from "../../types";
+
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -16,4 +19,17 @@
 export enum DragDropTypes {
   ELEMENT = "element",
   PALLETE_ELEMENT = "paletteElement"
+}
+export interface DragObject {
+  element: ElementDefinition;
+  recycleData?: PipelineElementType;
+}
+export interface DropCollectedProps {
+  connectDropTarget: ConnectDropTarget;
+  isOver: boolean;
+  dndIsHappening: boolean;
+}
+export interface DragCollectedProps {
+  connectDragSource: ConnectDragSource;
+  isDragging: boolean;
 }

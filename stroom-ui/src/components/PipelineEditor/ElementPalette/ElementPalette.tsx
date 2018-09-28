@@ -1,18 +1,48 @@
 import * as React from "react";
 
-import { DropTarget } from "react-dnd";
+import { DropTarget, DropTargetSpec, DropTargetCollector } from "react-dnd";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import ElementCategory from "./ElementCategory";
-import { getBinItems } from "../pipelineUtils";
-import ItemTypes from "../dragDropTypes";
+import { getBinItems, RecycleBinItem } from "../pipelineUtils";
+import { DragDropTypes, DropCollectedProps } from "../dragDropTypes";
 import { actionCreators } from "../redux";
+import { GlobalStoreState } from "../../../startup/reducers";
+import {
+  ElementDefinitionsByCategory,
+  ElementDefinition
+} from "../../../types";
 
 const { pipelineElementDeleteRequested } = actionCreators;
 
-const dropTarget = {
+export interface Props {
+  pipelineId: string;
+}
+
+export interface ConnectState {
+  byCategory: ElementDefinitionsByCategory;
+  recycleBinItems: Array<RecycleBinItem>;
+}
+export interface ConnectDispatch {
+  pipelineElementDeleteRequested: typeof pipelineElementDeleteRequested;
+}
+
+export interface DndProps extends Props, ConnectDispatch, ConnectState {}
+
+export interface WithProps {
+  binColour: string;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectDispatch,
+    ConnectState,
+    DropCollectedProps,
+    WithProps {}
+
+const dropTarget: DropTargetSpec<DndProps> = {
   canDrop(props, monitor) {
     return true;
   },
@@ -22,14 +52,17 @@ const dropTarget = {
   }
 };
 
-const dropCollect = (connect, monitor) => ({
+const dropCollect: DropTargetCollector<DropCollectedProps> = (
+  connect,
+  monitor
+) => ({
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
   dndIsHappening: monitor.getItem() !== null
 });
 
-const enhance = compose(
-  connect(
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (
       {
         pipelineEditor: {
@@ -52,7 +85,7 @@ const enhance = compose(
       pipelineElementDeleteRequested
     }
   ),
-  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
+  DropTarget([DragDropTypes.ELEMENT], dropTarget, dropCollect),
   withProps(({ isOver }) => ({
     binColour: isOver ? "red" : "black"
   }))
@@ -64,12 +97,12 @@ const ElementPalette = ({
   binColour,
   connectDropTarget,
   dndIsHappening
-}) =>
+}: EnhancedProps) =>
   connectDropTarget(
     <div className="element-palette">
       {dndIsHappening ? (
         <div className="Pipeline-editor__bin">
-          <FontAwesomeIcon icon="trash" size="huge" color={binColour} />
+          <FontAwesomeIcon icon="trash" size="lg" color={binColour} />
         </div>
       ) : (
         <React.Fragment>
@@ -78,16 +111,14 @@ const ElementPalette = ({
             <ElementCategory
               key={k[0]}
               category={k[0]}
-              elementsWithData={k[1].map(e => ({ element: e }))}
+              elementsWithData={k[1].map((e: ElementDefinition) => ({
+                element: e
+              }))}
             />
           ))}
         </React.Fragment>
       )}
     </div>
   );
-
-// ElementPalette.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-// };
 
 export default enhance(ElementPalette);

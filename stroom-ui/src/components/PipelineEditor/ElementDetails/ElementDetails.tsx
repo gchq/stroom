@@ -45,7 +45,7 @@ const enhance = compose(
     },
     {}
   ),
-  reduxForm(),
+  reduxForm({}),
   branch(
     ({ selectedElementId }) => !selectedElementId,
     renderComponent(() => (
