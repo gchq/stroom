@@ -63,6 +63,26 @@ class TestConfigMapper {
     }
 
     @Test
+    void testValidatePropertyPath_valid() {
+        AppConfig appConfig = new AppConfig();
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        boolean isValid = configMapper.validatePropertyPath("stroom.ui.aboutHtml");
+
+        assertThat(isValid).isTrue();
+    }
+
+    @Test
+    void testValidatePropertyPath_invalid() {
+        AppConfig appConfig = new AppConfig();
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        boolean isValid = configMapper.validatePropertyPath("stroom.unknown.prop");
+
+        assertThat(isValid).isFalse();
+    }
+
+    @Test
     void testGetGlobalProperties_defaultValueWithValue() throws IOException, ConfigurationException {
 
         AppConfig appConfig = getAppConfig();

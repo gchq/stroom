@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.util.Map;
 
 import static stroom.config.impl.db.stroom.tables.Config.CONFIG;
 
@@ -29,10 +30,13 @@ public class V7_0_0_3__docref_serialisation implements JdbcMigration {
         // Change the serialised form of internal statistic docRef lists in the config table from:
         // docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)
         // to:
-        // |,docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)|docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)
+        // |,docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)|,docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)
 
         try {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+
+            // This line should only be un-commented for manual testing in development
+//            loadTestDataForManualTesting(create);
 
             create
                     .selectFrom(CONFIG)
@@ -40,8 +44,8 @@ public class V7_0_0_3__docref_serialisation implements JdbcMigration {
                     .fetch()
                     .forEach(configRecord -> {
                         final String value = configRecord.getVal();
-                        // change the delimiter between docRefs
-                        String newValue = value.replace("),(", ")|(");
+                        // change the delimiter between docRefs and prefix the docRef with its internal delimiter
+                        String newValue = value.replace("),docRef", ")|,docRef");
                         // add the delimiters in use to the front for de-serialisation
                         newValue = "|," + newValue;
                         if (!newValue.equals(value)) {
@@ -61,5 +65,22 @@ public class V7_0_0_3__docref_serialisation implements JdbcMigration {
             LOGGER.error("Error changing docRef serialisation", e);
             throw e;
         }
+    }
+
+    private void loadTestDataForManualTesting(final DSLContext create) {
+
+        LOGGER.warn("Loading test data - Not for use in prod");
+
+        final Map<String, String> testDataMap = Map.of(
+                "stroom.statistics.internal.cpu", "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes),docRef(StroomStatsStore,b0110ab4-ac25-4b73-b4f6-96f2b50b456a,Heap Histogram Bytes)",
+                "stroom.statistics.internal.memory", "docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)"
+        );
+
+        testDataMap.forEach((key, value) ->
+                create
+                        .insertInto(CONFIG)
+                        .columns(CONFIG.NAME, CONFIG.VAL)
+                        .values(key, value)
+                        .execute());
     }
 }

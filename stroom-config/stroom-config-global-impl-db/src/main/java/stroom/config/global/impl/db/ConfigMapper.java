@@ -437,17 +437,22 @@ public class ConfigMapper {
     }
 
     private static <T> List<T> stringToList(final String serialisedForm, final Class<T> type) {
-        if (serialisedForm == null || serialisedForm.isEmpty()) {
-            return Collections.emptyList();
+        try {
+            if (serialisedForm == null || serialisedForm.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            String delimiter = String.valueOf(serialisedForm.charAt(0));
+            String delimitedValue = serialisedForm.substring(1);
+
+            return StreamSupport.stream(Splitter.on(delimiter).split(delimitedValue).spliterator(), false)
+                    .map(str -> convertToObject(str, type))
+                    .map(type::cast)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Error de-serialising a List<?> from [{}]", serialisedForm), e);
         }
-
-        String delimiter = String.valueOf(serialisedForm.charAt(0));
-        String delimitedValue = serialisedForm.substring(1);
-
-        return StreamSupport.stream(Splitter.on(delimiter).split(delimitedValue).spliterator(), false)
-                .map(str -> convertToObject(str, type))
-                .map(type::cast)
-                .collect(Collectors.toList());
     }
 
     private static <K, V> Map<K, V> stringToMap(
@@ -483,19 +488,24 @@ public class ConfigMapper {
 
     private static DocRef stringToDocRef(final String serialisedForm) {
 
-        final String delimiter = String.valueOf(serialisedForm.charAt(0));
-        String delimitedValue = serialisedForm.substring(1);
+        try {
+            final String delimiter = String.valueOf(serialisedForm.charAt(0));
+            String delimitedValue = serialisedForm.substring(1);
 
-        delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");
-        delimitedValue = delimitedValue.replace(")", "");
+            delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");
+            delimitedValue = delimitedValue.replace(")", "");
 
-        final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
+            final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
 
-        return new DocRef.Builder()
-                .type(parts.get(0))
-                .uuid(parts.get(1))
-                .name(parts.get(2))
-                .build();
+            return new DocRef.Builder()
+                    .type(parts.get(0))
+                    .uuid(parts.get(1))
+                    .name(parts.get(2))
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Error de-serialising a docRef from [{}]", serialisedForm), e);
+        }
     }
 
     private static Enum stringToEnum(final String serialisedForm, final Class<?> type) {
