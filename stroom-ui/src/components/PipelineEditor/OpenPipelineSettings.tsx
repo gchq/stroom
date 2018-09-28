@@ -3,11 +3,18 @@ import * as React from "react";
 import Button from "../Button";
 import Tooltip from "../Tooltip";
 
-const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
+export interface Props {
+  pipelineId: string;
+  pipelineSettingsOpened: (pipelineId: string) => void;
+}
+
+const OpenPipelineSettings = ({
+  pipelineId,
+  pipelineSettingsOpened
+}: Props) => (
   <Tooltip
     trigger={
       <Button
-        floated="right"
         circular
         icon="cogs"
         onClick={() => pipelineSettingsOpened(pipelineId)}
@@ -16,10 +23,5 @@ const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
     content="Edit the settings for this pipeline"
   />
 );
-
-// OpenPipelineSettings.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-//   pipelineSettingsOpened: PropTypes.func.isRequired,
-// };
 
 export default OpenPipelineSettings;

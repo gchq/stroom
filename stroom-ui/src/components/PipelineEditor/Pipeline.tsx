@@ -22,7 +22,6 @@ import {
   renderComponent,
   withProps
 } from "recompose";
-import { withRouter } from "react-router-dom";
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
@@ -32,8 +31,14 @@ import PipelineElement from "./PipelineElement";
 import { fetchPipeline } from "./pipelineResourceClient";
 import { fetchElements, fetchElementProperties } from "./elementResourceClient";
 import lineElementCreators from "./pipelineLineElementCreators";
-import { getPipelineLayoutInformation } from "./pipelineUtils";
+import {
+  getPipelineLayoutInformation,
+  PipelineLayoutInfo
+} from "./pipelineUtils";
 import { PipelineElementType } from "../../types";
+import { StoreState as ElementStoreState } from "./redux/elementReducer";
+import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -43,21 +48,48 @@ const COMMON_ELEMENT_STYLE = {
   position: "absolute"
 };
 
-const enhance = compose(
-  withRouter,
-  connect(
+export interface Props {
+  pipelineId: string;
+}
+
+export interface ConnectState {
+  elements: ElementStoreState;
+  pipelineState: PipelineStatesStoreStateById;
+}
+
+export interface ConnectDispatch {
+  fetchPipeline: typeof fetchPipeline;
+  fetchElements: typeof fetchElements;
+  fetchElementProperties: typeof fetchElementProperties;
+}
+
+export interface WithProps {
+  elementStyles: {
+    [uuid: string]: React.HTMLAttributes<HTMLDivElement>;
+  };
+}
+
+export interface ElementStyles {}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => ({
       pipelineState: pipelineStates[pipelineId],
       elements
     }),
     {
-      // action, needed by lifecycle hook below
       fetchPipeline,
       fetchElements,
       fetchElementProperties
     }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         fetchElements,
@@ -76,29 +108,30 @@ const enhance = compose(
       !(pipelineState && pipelineState.pipeline && elements),
     renderComponent(() => <Loader message="Loading pipeline..." />)
   ),
-  withProps(({ pipelineState: { asTree, pipeline } }) => ({
-    elementStyles: mapObject(getPipelineLayoutInformation(asTree), l => {
-      const index = l.verticalPos - 1;
-      const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
-      const fromLeft =
-        HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+  withProps(({ pipelineState: { asTree } }) => ({
+    elementStyles: mapObject(
+      getPipelineLayoutInformation(asTree),
+      (l: PipelineLayoutInfo) => {
+        const index: number = l.verticalPos - 1;
+        const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
+        const fromLeft =
+          HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
 
-      return {
-        ...COMMON_ELEMENT_STYLE,
-        top: `${fromTop}px`,
-        left: `${fromLeft}px`
-      };
-    }),
-    pipeline
+        return {
+          ...COMMON_ELEMENT_STYLE,
+          top: `${fromTop}px`,
+          left: `${fromLeft}px`
+        };
+      }
+    )
   }))
 );
 
 const Pipeline = ({
   pipelineId,
   elementStyles,
-  pipeline,
-  onElementSelected
-}) => {
+  pipelineState: { pipeline }
+}: EnhancedProps) => {
   return (
     <LineContainer
       className="Pipeline-editor__graph flat"
@@ -107,42 +140,37 @@ const Pipeline = ({
     >
       <div className="Pipeline-editor__elements">
         {Object.keys(elementStyles)
-          .map(es =>
-            pipeline.merged.elements.add.find(
-              (e: PipelineElementType) => e.id === es
-            )
+          .map(
+            es =>
+              pipeline &&
+              pipeline.merged.elements.add.find(
+                (e: PipelineElementType) => e.id === es
+              )
           )
+          .filter(e => e !== undefined)
           .map(e => (
-            <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-              <PipelineElement
-                pipelineId={pipelineId}
-                elementId={e.id}
-                onClick={onElementSelected}
-              />
+            <div key={e!.id} id={e!.id} style={elementStyles[e!.id]}>
+              <PipelineElement pipelineId={pipelineId} elementId={e!.id} />
             </div>
           ))}
       </div>
       <div className="Pipeline-editor__lines">
-        {pipeline.merged.links.add
-          .filter(l => elementStyles[l.from] && elementStyles[l.to])
-          .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-          .map(l => (
-            <LineTo
-              lineId={l.lineId}
-              key={l.lineId}
-              fromId={l.from}
-              toId={l.to}
-              lineType="curve"
-            />
-          ))}
+        {pipeline &&
+          pipeline.merged.links.add
+            .filter(l => elementStyles[l.from] && elementStyles[l.to])
+            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+            .map(l => (
+              <LineTo
+                lineId={l.lineId}
+                key={l.lineId}
+                fromId={l.from}
+                toId={l.to}
+                lineType="curve"
+              />
+            ))}
       </div>
     </LineContainer>
   );
 };
-
-// Pipeline.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-//   onElementSelected: PropTypes.func.isRequired
-// }
 
 export default enhance(Pipeline);

@@ -23,7 +23,7 @@ import {
   renderComponent,
   withHandlers
 } from "recompose";
-import { withRouter } from "react-router-dom";
+import { withRouter, RouteComponentProps } from "react-router-dom";
 import { connect } from "react-redux";
 import PanelGroup from "react-panelgroup";
 
@@ -41,8 +41,11 @@ import { ElementDetails } from "./ElementDetails";
 import { fetchPipeline, savePipeline } from "./pipelineResourceClient";
 import { actionCreators } from "./redux";
 import Pipeline from "./Pipeline";
+import { GlobalStoreState } from "../../startup/reducers";
+import { DocRefConsumer } from "../../types";
+import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
 
-const { startInheritedPipeline, pipelineSettingsOpened } = actionCreators;
+const { startInheritPipeline, pipelineSettingsOpened } = actionCreators;
 
 const withElementDetailsOpen = withState(
   "isElementDetailsOpen",
@@ -50,12 +53,40 @@ const withElementDetailsOpen = withState(
   false
 );
 
-const enhance = compose(
+export interface Props {
+  pipelineId: string;
+}
+export interface WithHandlers {
+  openDocRef: DocRefConsumer;
+}
+export interface ConnectState {
+  pipelineState: PipelineStatesStoreStateById;
+}
+export interface ConnectDispatch {
+  fetchPipeline: typeof fetchPipeline;
+  savePipeline: typeof savePipeline;
+  startInheritPipeline: typeof startInheritPipeline;
+  pipelineSettingsOpened: typeof pipelineSettingsOpened;
+}
+export interface WithElementDetailsOpen {
+  isElementDetailsOpen: boolean;
+  setElementDetailsOpen: (v: boolean) => void;
+}
+
+export interface EnhancedProps
+  extends Props,
+    RouteComponentProps<any>,
+    WithHandlers,
+    ConnectState,
+    ConnectDispatch,
+    WithElementDetailsOpen {}
+
+const enhance = compose<EnhancedProps, Props>(
   withRouter,
-  withHandlers({
+  withHandlers<Props & RouteComponentProps<any>, WithHandlers>({
     openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
-  connect(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ pipelineEditor: { pipelineStates } }, { pipelineId }) => ({
       pipelineState: pipelineStates[pipelineId]
     }),
@@ -63,11 +94,11 @@ const enhance = compose(
       // action, needed by lifecycle hook below
       fetchPipeline,
       savePipeline,
-      startInheritedPipeline,
+      startInheritPipeline,
       pipelineSettingsOpened
     }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const { fetchPipeline, pipelineId } = this.props;
       fetchPipeline(pipelineId);
@@ -80,34 +111,34 @@ const enhance = compose(
   withElementDetailsOpen
 );
 
-const RawPipelineEditor = ({
+const PipelineEditor = ({
   pipelineId,
-  pipelineState: { pipeline },
+  pipelineState: { pipeline, isDirty },
   isElementDetailsOpen,
   setElementDetailsOpen,
   openDocRef,
   savePipeline,
-  startInheritedPipeline,
+  startInheritPipeline,
   pipelineSettingsOpened
-}) => (
+}: EnhancedProps) => (
   <div className="pipeline-editor__container">
     <div className="pipeline-editor__header">
       <div className="pipeline-editor__header__title">
         <DocRefIconHeader
-          docRefType={pipeline.docRef.type}
-          text={pipeline.docRef.name}
+          docRefType={pipeline!.docRef.type}
+          text={pipeline!.docRef.name || "UNKNOWN_NAME"}
         />
         <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
       </div>
       <div className="pipeline-editor__header__actions">
         <SavePipeline
           pipelineId={pipelineId}
-          pipeline={pipeline}
+          isDirty={isDirty}
           savePipeline={savePipeline}
         />
         <CreateChildPipeline
           pipelineId={pipelineId}
-          startInheritedPipeline={startInheritedPipeline}
+          startInheritPipeline={startInheritPipeline}
         />
         <OpenPipelineSettings
           pipelineId={pipelineId}
@@ -154,10 +185,4 @@ const RawPipelineEditor = ({
   </div>
 );
 
-const PipelineEditor = enhance(RawPipelineEditor);
-
-PipelineEditor.propTypes = {
-  pipelineId: PropTypes.string.isRequired
-};
-
-export default PipelineEditor;
+export default enhance(PipelineEditor);

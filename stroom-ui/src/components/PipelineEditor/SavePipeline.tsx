@@ -3,11 +3,13 @@ import * as React from "react";
 import Button from "../Button";
 import Tooltip from "../Tooltip";
 
-const SavePipeline = ({
-  pipeline: { isSaving, isDirty },
-  savePipeline,
-  pipelineId
-}) => (
+export interface Props {
+  isDirty: boolean;
+  savePipeline: (pipelineId: string) => any;
+  pipelineId: string;
+}
+
+const SavePipeline = ({ isDirty, savePipeline, pipelineId }: Props) => (
   <Tooltip
     trigger={
       <Button
@@ -22,11 +24,5 @@ const SavePipeline = ({
     content={isDirty ? "Save changes" : "Changes saved"}
   />
 );
-
-// SavePipeline.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-//   pipeline: PropTypes.object.isRequired,
-//   savePipeline: PropTypes.func.isRequired,
-// };
 
 export default SavePipeline;

@@ -1,17 +1,45 @@
 import * as React from "react";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState, InjectedFormProps } from "redux-form";
 
 import Button from "../Button";
 import IconHeader from "../IconHeader";
 import ThemedModal from "../ThemedModal";
 import { actionCreators } from "./redux";
+import { GlobalStoreState } from "../../startup/reducers";
+import { StoreStatePerId as PipelineSettingsStoreStatePerId } from "./redux/pipelineSettingsReducer";
 
 const { pipelineSettingsClosed, pipelineSettingsUpdated } = actionCreators;
 
-const enhance = compose(
-  connect(
+export interface Props {
+  pipelineId: string;
+}
+
+export interface ConnectState {
+  pipelineSettingsForm: FormState;
+  settings: PipelineSettingsStoreStatePerId;
+}
+
+export interface ConnectDispatch {
+  pipelineSettingsClosed: typeof pipelineSettingsClosed;
+  pipelineSettingsUpdated: typeof pipelineSettingsUpdated;
+}
+
+export interface WithProps {
+  onConfirm: () => any;
+  onCancel: () => any;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    InjectedFormProps,
+    WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (
       {
         pipelineEditor: { settings, pipelineStates },
@@ -19,7 +47,7 @@ const enhance = compose(
       },
       { pipelineId }
     ) => ({
-      ...settings[pipelineId],
+      settings: settings[pipelineId],
       pipelineSettingsForm: pipelineSettings,
       initialValues: {
         description: pipelineStates[pipelineId].pipeline.description
@@ -63,15 +91,13 @@ const PipelineSettings = ({
   pipelineId,
   onConfirm,
   onCancel,
-  isOpen,
+  settings: { isOpen },
   invalid,
   submitting
-}) => (
+}: EnhancedProps) => (
   <ThemedModal
     isOpen={isOpen}
-    onClose={onCancel}
-    size="tiny"
-    dimmer="inverted"
+    onRequestClose={onCancel}
     header={<IconHeader icon="cog" text="Pipeline Settings" />}
     content={
       <form>
@@ -99,9 +125,5 @@ const PipelineSettings = ({
     }
   />
 );
-
-// PipelineSettings.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-// };
 
 export default enhance(PipelineSettings);

@@ -21,7 +21,7 @@ import { DragSource, DropTarget } from "react-dnd";
 import ElementImage from "../ElementImage";
 import { actionCreators } from "./redux";
 import { canMovePipelineElement } from "./pipelineUtils";
-import ItemTypes from "./dragDropTypes";
+import { DragDropTypes } from "./dragDropTypes";
 import { isValidChildType } from "./elementUtils";
 import { getInitialValues } from "./ElementDetails";
 import Button from "../Button";
@@ -56,7 +56,7 @@ const dropTarget = {
     const { pipelineState, elementId, elementDefinition } = props;
 
     switch (monitor.getItemType()) {
-      case ItemTypes.ELEMENT:
+      case DragDropTypes.ELEMENT:
         const dropeeId = monitor.getItem().elementId;
         const dropeeDefinition = monitor.getItem().elementDefinition;
         const isValidChild = isValidChildType(
@@ -73,7 +73,7 @@ const dropTarget = {
         );
 
         return isValidChild && isValid;
-      case ItemTypes.PALLETE_ELEMENT:
+      case DragDropTypes.PALLETE_ELEMENT:
         const dropeeType = monitor.getItem().element;
         if (dropeeType) {
           const isValidChild = isValidChildType(
@@ -168,9 +168,9 @@ const enhance = compose(
       pipelineElementReinstated
     }
   ),
-  DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
+  DragSource(DragDropTypes.ELEMENT, dragSource, dragCollect),
   DropTarget(
-    [ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT],
+    [DragDropTypes.ELEMENT, DragDropTypes.PALLETE_ELEMENT],
     dropTarget,
     dropCollect
   ),

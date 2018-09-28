@@ -1,22 +1,61 @@
 import * as React from "react";
 import { compose, withProps, withHandlers } from "recompose";
 import { connect } from "react-redux";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState } from "redux-form";
 
 import IconHeader from "../IconHeader";
 import Button from "../Button";
 import ThemedModal from "../ThemedModal";
 import { actionCreators } from "./redux";
-import { uniqueElementName } from "./pipelineUtils";
+import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
+import { getAllElementNames } from "./pipelineUtils";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
+import { GlobalStoreState } from "../../startup/reducers";
+import { ElementDefinition } from "../../types";
 
 const {
   pipelineElementAddConfirmed,
   pipelineElementAddCancelled
 } = actionCreators;
 
-const enhance = compose(
-  connect(
+export interface Props {
+  pipelineId: string;
+}
+
+export interface ConnectState {
+  newElementForm: FormState;
+  initialValues?: {
+    name: string;
+  };
+  pipelineState: PipelineStatesStoreStateById;
+  pendingNewElement: ElementDefinition;
+}
+
+export interface ConnectDispatch {
+  pipelineElementAddConfirmed: typeof pipelineElementAddConfirmed;
+  pipelineElementAddCancelled: typeof pipelineElementAddCancelled;
+}
+
+export interface WithHandlers {
+  onConfirmNewElement: () => void;
+  onCancelNewElement: () => void;
+  onUniqueNameCheck: (value: string) => boolean;
+}
+
+export interface WithProps {
+  submitDisabled: boolean;
+  isOpen: boolean;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers,
+    WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ form, pipelineEditor: { pipelineStates } }, { pipelineId }) => {
       const pipelineState = pipelineStates[pipelineId];
       let initialValues;
@@ -65,6 +104,10 @@ const enhance = compose(
     }) => () => {
       pipelineElementAddCancelled(pipelineId);
       reset();
+    },
+    onUniqueNameCheck: ({ pipelineState: { pipeline } }) => (value: string) => {
+      const elementNames = getAllElementNames(pipeline);
+      return !elementNames.includes(value);
     }
   }),
   withProps(({ invalid, submitting, pendingNewElement }) => ({
@@ -78,13 +121,12 @@ const AddElementModal = ({
   isOpen,
   submitDisabled,
   onConfirmNewElement,
-  onCancelNewElement
-}) => (
+  onCancelNewElement,
+  onUniqueNameCheck
+}: EnhancedProps) => (
   <ThemedModal
-    size="tiny"
     isOpen={isOpen}
-    onClose={onCancelNewElement}
-    dimmer="inverted"
+    onRequestClose={onCancelNewElement}
     header={<IconHeader icon="file" text="Add New Element" />}
     content={
       <form>
@@ -95,7 +137,7 @@ const AddElementModal = ({
             component="input"
             type="text"
             placeholder="Name"
-            validate={[required, minLength2, uniqueElementName(pipeline)]}
+            validate={[required, minLength2, onUniqueNameCheck]}
             autoFocus
           />
         </div>

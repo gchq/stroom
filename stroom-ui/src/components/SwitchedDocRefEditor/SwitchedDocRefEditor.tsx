@@ -9,15 +9,29 @@ import PipelineEditor from "../PipelineEditor";
 import XsltEditor from "../XsltEditor";
 import PathNotFound from "../PathNotFound";
 import { actionCreators } from "./redux";
+import { GlobalStoreState } from "../../startup/reducers";
+import { StoreState as DocumentTreeStoreState } from "../FolderExplorer/redux/documentTree";
+import { DocRefType } from "../../types";
 
 const { docRefOpened } = actionCreators;
 
-const enhance = compose(
-  connect(
+export interface Props {
+  docRef: DocRefType;
+}
+export interface ConnectState {
+  documentTree: DocumentTreeStoreState;
+}
+export interface ConnectDispatch {
+  docRefOpened: typeof docRefOpened;
+}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ folderExplorer: { documentTree } }) => ({ documentTree }),
     { docRefOpened }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         documentTree,
@@ -27,12 +41,14 @@ const enhance = compose(
 
       const openedDocRefWithLineage = findItem(documentTree, uuid);
 
-      docRefOpened(openedDocRefWithLineage.node);
+      if (openedDocRefWithLineage) {
+        docRefOpened(openedDocRefWithLineage.node);
+      }
     }
   })
 );
 
-let SwitchedDocRefEditor = ({ docRef: { type, uuid } }) => {
+let SwitchedDocRefEditor = ({ docRef: { type, uuid } }: EnhancedProps) => {
   switch (type) {
     case "System":
     case "Folder":
@@ -76,13 +92,4 @@ let SwitchedDocRefEditor = ({ docRef: { type, uuid } }) => {
   }
 };
 
-SwitchedDocRefEditor = enhance(SwitchedDocRefEditor);
-
-// SwitchedDocRefEditor.propTypes = {
-//   docRef: PropTypes.shape({
-//     uuid: PropTypes.string.isRequired,
-//     type: PropTypes.string.isRequired,
-//   }).isRequired,
-// };
-
-export default SwitchedDocRefEditor;
+export default enhance(SwitchedDocRefEditor);

@@ -20,7 +20,7 @@ import * as ReactTooltip from "react-tooltip";
 import * as uuidv4 from "uuid/v4";
 
 export interface Props {
-  trigger: React.ComponentType;
+  trigger: React.ReactNode;
   content: string;
 }
 

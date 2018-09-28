@@ -25,9 +25,9 @@
 import * as uuidv4 from "uuid/v4";
 import { Tree, TWithLineage, ItemWithId } from "../types";
 
-export function mapObject<IN, OUT>(
-  input: (id: any) => IN,
-  mapper: (i: IN) => OUT
+export function mapObject<OUT>(
+  input: { [id: string]: object },
+  mapper: (i: object) => OUT
 ) {
   return Object.keys(input).reduce((previous, current) => {
     previous[current] = mapper(input[current]);

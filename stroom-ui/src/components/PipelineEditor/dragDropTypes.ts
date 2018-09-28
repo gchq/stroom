@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export default {
-  ELEMENT: 'element',
-  PALLETE_ELEMENT: 'paletteElement',
-};
+export enum DragDropTypes {
+  ELEMENT = "element",
+  PALLETE_ELEMENT = "paletteElement"
+}

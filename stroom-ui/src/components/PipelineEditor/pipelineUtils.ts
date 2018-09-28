@@ -108,6 +108,15 @@ export enum Orientation {
   vertical
 }
 
+export interface PipelineLayoutInfo {
+  horizontalPos: number;
+  verticalPos: number;
+}
+
+export interface PipelineLayoutInfoById {
+  [uuid: string]: PipelineLayoutInfo;
+}
+
 /**
  * This calculates the layout information for the elements in a tree where the tree
  * must be layed out in a graphical manner.
@@ -122,8 +131,8 @@ export enum Orientation {
 export function getPipelineLayoutInformation(
   asTree: PipelineAsTreeType,
   orientation: Orientation = Orientation.horizontal
-) {
-  const layoutInformation = {};
+): PipelineLayoutInfoById {
+  const layoutInformation: PipelineLayoutInfoById = {};
 
   let sidewayPosition = 1;
   let lastLineageLengthSeen = -1;
@@ -177,46 +186,6 @@ export function getAllElementNames(pipeline: PipelineModelType): Array<string> {
 
   return names;
 }
-
-// We have to 'cache' the unique name function or the redux form remounts every time the value changes.
-let memoizedUniqueName: (value: string) => string | undefined;
-let namesForMemoizedFunction: Array<string> | undefined = undefined;
-
-const listsOfStringsAreEquals = (
-  list1: Array<string>,
-  list2: Array<string>
-) => {
-  if (list1.length !== list2.length) {
-    return false;
-  }
-
-  return JSON.stringify(list1) === JSON.stringify(list2);
-};
-
-export const uniqueElementName = (pipeline: PipelineModelType) => {
-  // If we already had a names list
-  if (namesForMemoizedFunction) {
-    const namesNow = getAllElementNames(pipeline);
-
-    // Has it changed?
-    if (!listsOfStringsAreEquals(namesForMemoizedFunction, namesNow)) {
-      namesForMemoizedFunction = namesNow;
-      memoizedUniqueName = (value: string) =>
-        namesForMemoizedFunction!.includes(value.toLowerCase())
-          ? "must be unique name"
-          : undefined;
-    }
-  } else {
-    // Create a new memoized function
-    namesForMemoizedFunction = getAllElementNames(pipeline);
-    memoizedUniqueName = value =>
-      namesForMemoizedFunction!.includes(value.toLowerCase())
-        ? "must be unique name"
-        : undefined;
-  }
-
-  return memoizedUniqueName;
-};
 
 /**
  * Utility function for replacing the last item in an array by using a given map function.

@@ -18,7 +18,6 @@ import {
   ElementDefinitions,
   ElementDefinitionsByCategory,
   ElementDefinitionsByType,
-  PipelineElementType,
   ElementDefinition
 } from "../../types";
 
