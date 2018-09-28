@@ -7,15 +7,18 @@ import {
   DropTargetSpec,
   DragSourceSpec,
   DropTargetCollector,
-  ConnectDropTarget,
-  DragSourceCollector,
-  ConnectDragSource
+  DragSourceCollector
 } from "react-dnd";
 
 import { canMove } from "../../lib/treeUtils";
 import DocRefListingEntry from "../DocRefListingEntry";
 import { actionCreators as folderExplorerActionCreators } from "../FolderExplorer/redux";
-import ItemTypes from "./dragDropTypes";
+import {
+  DragDropTypes,
+  DragCollectedProps,
+  DropCollectedProps,
+  DragObject
+} from "./dragDropTypes";
 import { DocRefType, DocRefConsumer } from "../../types";
 import { StoreStatePerId as SelectableItemListingState } from "../../lib/withSelectableItemListing";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -41,22 +44,6 @@ export interface ConnectState {
 }
 
 export interface DndProps extends Props, ConnectDispatch, ConnectState {}
-
-export interface DropCollectedProps {
-  connectDropTarget: ConnectDropTarget;
-  isOver: boolean;
-  canDrop: boolean;
-}
-
-export interface DragCollectedProps {
-  connectDragSource: ConnectDragSource;
-  isDragging: boolean;
-}
-
-export interface DragObject {
-  docRefs: Array<DocRefType>;
-  isCopy: boolean;
-}
 
 export interface EnhancedProps
   extends Props,
@@ -145,8 +132,8 @@ const enhance = compose<EnhancedProps, Props>(
       prepareDocRefMove
     }
   ),
-  DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
-  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect)
+  DropTarget([DragDropTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
+  DragSource(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect)
 );
 
 let DndDocRefListingEntry = ({

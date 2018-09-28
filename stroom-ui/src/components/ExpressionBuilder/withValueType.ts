@@ -1,21 +1,39 @@
-import { withProps } from 'recompose';
+import { withProps } from "recompose";
+import {
+  DataSourceFieldType,
+  ExpressionTermType,
+  DataSourceType
+} from "../../types";
 
-const withValueType = withProps(({term, dataSource}) => {
-  let valueType = 'text';
+export interface Props {
+  term: ExpressionTermType;
+  dataSource: DataSourceType;
+}
 
-  const thisField = dataSource.fields.find(f => f.name === term.field);
+export interface WithProps {
+  valueType: string;
+}
+
+export interface EnhancedProps extends Props, WithProps {}
+
+const withValueType = withProps<WithProps, Props>(({ term, dataSource }) => {
+  let valueType: string = "text";
+
+  const thisField = dataSource.fields.find(
+    (f: DataSourceFieldType) => f.name === term.field
+  );
 
   if (thisField) {
     switch (thisField.type) {
-      case 'FIELD':
-      case 'ID':
-        valueType = 'text';
+      case "FIELD":
+      case "ID":
+        valueType = "text";
         break;
-      case 'NUMERIC_FIELD':
-        valueType = 'number';
+      case "NUMERIC_FIELD":
+        valueType = "number";
         break;
-      case 'DATE_FIELD':
-        valueType = 'datetime-local';
+      case "DATE_FIELD":
+        valueType = "datetime-local";
         break;
       default:
         throw new Error(`Invalid field type: ${thisField.type}`);
@@ -24,7 +42,7 @@ const withValueType = withProps(({term, dataSource}) => {
 
   return {
     valueType
-  }
+  };
 });
 
 export default withValueType;

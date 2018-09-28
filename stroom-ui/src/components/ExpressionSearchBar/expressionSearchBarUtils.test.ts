@@ -17,7 +17,7 @@
 import { processSearchString } from "./expressionSearchBarUtils";
 
 import { testDataSource } from "../ExpressionBuilder/dataSource.testData";
-import { ConditionType, ExpressionTerm } from "../../types";
+import { ConditionType, ExpressionTermType } from "../../types";
 
 describe("ExpressionSearchBarUtils", () => {
   describe("#processSearchString", () => {
@@ -274,7 +274,7 @@ describe("ExpressionSearchBarUtils", () => {
   });
 });
 
-const expectForHealthy = (children: Array<ExpressionTerm>) => {
+const expectForHealthy = (children: Array<ExpressionTermType>) => {
   expect(children.length).toBe(5);
   expectForTerm(children[0], "foo4", "GREATER_THAN_OR_EQUAL_TO", "bar4");
   expectForTerm(children[1], "foo5", "LESS_THAN_OR_EQUAL_TO", "bar5");
@@ -284,7 +284,7 @@ const expectForHealthy = (children: Array<ExpressionTerm>) => {
 };
 
 const expectForTerm = (
-  child: ExpressionTerm,
+  child: ExpressionTermType,
   field: string,
   condition: ConditionType,
   value: any

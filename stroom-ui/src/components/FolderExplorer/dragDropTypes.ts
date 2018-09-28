@@ -13,6 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export default {
-  DOC_REF_UUIDS: 'docRef',
-};
+import { ConnectDropTarget, ConnectDragSource } from "react-dnd";
+import { DocRefType } from "../../types";
+
+export enum DragDropTypes {
+  DOC_REF_UUIDS = "docRef"
+}
+export interface DropCollectedProps {
+  connectDropTarget: ConnectDropTarget;
+  isOver: boolean;
+  canDrop: boolean;
+}
+
+export interface DragCollectedProps {
+  connectDragSource: ConnectDragSource;
+  isDragging: boolean;
+}
+
+export interface DragObject {
+  docRefs: Array<DocRefType>;
+  isCopy: boolean;
+}

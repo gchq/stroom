@@ -5,7 +5,11 @@ import ROExpressionTerm from "./ROExpressionTerm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { LineTo } from "../LineTo";
-import { ExpressionOperatorType, ExpressionItem } from "../../types";
+import {
+  ExpressionOperatorType,
+  ExpressionItem,
+  ExpressionTermType
+} from "../../types";
 
 export interface Props {
   expressionId: string;
@@ -52,7 +56,7 @@ const ROExpressionOperator = ({
                       <ROExpressionTerm
                         expressionId={expressionId}
                         isEnabled={cIsEnabled}
-                        term={c}
+                        term={c as ExpressionTermType}
                       />
                     </div>
                   );
@@ -89,11 +93,5 @@ const ROExpressionOperator = ({
     </div>
   );
 };
-
-// ROExpressionOperator.propTypes = {
-//   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
-//   operator: PropTypes.object.isRequired, // the operator that this particular element is to represent
-//   isEnabled: PropTypes.bool.isRequired // a combination of any parent enabled state, and its own
-// };
 
 export default ROExpressionOperator;

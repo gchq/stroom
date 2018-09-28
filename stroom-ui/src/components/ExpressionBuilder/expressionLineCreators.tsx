@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LineDefinition } from "../LineTo/types";
+import { LineDefinition, LineElementCreators } from "../LineTo/types";
 
 const downRightElbow = ({ lineId, fromRect, toRect }: LineDefinition) => {
   const from = {
@@ -28,4 +28,4 @@ const downRightElbow = ({ lineId, fromRect, toRect }: LineDefinition) => {
 
 export default {
   downRightElbow
-};
+} as LineElementCreators;

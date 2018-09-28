@@ -13,7 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export default {
-  OPERATOR: 'operator',
-  TERM: 'term',
+import { ExpressionOperatorType, ExpressionTermType } from "../../types";
+import {
+  DragSourceCollector,
+  ConnectDragSource,
+  ConnectDropTarget
+} from "react-dnd";
+
+export enum DragDropTypes {
+  OPERATOR = "operator",
+  TERM = "term"
+}
+
+export interface DragCollectedProps {
+  connectDragSource: ConnectDragSource;
+  isDragging: boolean;
+}
+export interface DropCollectedProps {
+  connectDropTarget: ConnectDropTarget;
+  isOver: boolean;
+  canDrop: boolean;
+}
+
+export interface DragObject {
+  expressionItem: ExpressionOperatorType | ExpressionTermType;
+}
+
+export const dragCollect: DragSourceCollector<
+  DragCollectedProps
+> = function dragCollect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
+  };
 };

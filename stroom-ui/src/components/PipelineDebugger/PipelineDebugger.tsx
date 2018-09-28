@@ -26,22 +26,52 @@ import { connect } from "react-redux";
 
 import Button from "../Button";
 import { Pipeline } from "../PipelineEditor";
+import { StoreStateById as PipelineStatesStatePerId } from "../PipelineEditor/redux/pipelineStatesReducer";
 import Loader from "../Loader";
 import {
   actionCreators as pipelineActionCreators,
   fetchPipeline
 } from "../PipelineEditor";
 
-import { actionCreators } from "./redux";
+import {
+  actionCreators,
+  StoreStateById as DebuggerStoreStatePerId
+} from "./redux";
 import DebuggerStep from "./DebuggerStep";
 import { getNext, getPrevious } from "./pipelineDebugger.utils";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { startDebugging } = actionCreators;
 
 const { pipelineElementSelected } = pipelineActionCreators;
 
-const enhance = compose(
-  connect(
+export interface Props {
+  debuggerId: string;
+  pipelineId: string;
+}
+
+export interface ConnectState {
+  pipelineState: PipelineStatesStatePerId;
+  debuggerState: DebuggerStoreStatePerId;
+}
+export interface ConnectDispatch {
+  startDebugging: typeof startDebugging;
+  pipelineElementSelected: typeof pipelineElementSelected;
+  fetchPipeline: typeof fetchPipeline;
+}
+export interface WithHandlers {
+  onNext: () => void;
+  onPrevious: () => void;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (
       { debuggers, pipelineEditor: { pipelineStates } },
       { debuggerId, pipelineId }
@@ -51,7 +81,7 @@ const enhance = compose(
     }),
     { startDebugging, pipelineElementSelected, fetchPipeline }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         debuggerId,
@@ -67,23 +97,15 @@ const enhance = compose(
     ({ debuggerState }) => !debuggerState,
     renderComponent(() => <Loader message="Loading pipeline..." />)
   ),
-  withHandlers({
-    onNext: ({
-      pipelineState,
-      pipelineElementSelected,
-      pipelineId,
-      debuggerState,
-      currentElementId
-    }) => () => {
+  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
+    onNext: ({ pipelineState, pipelineElementSelected, pipelineId }) => () => {
       const nextElementId = getNext(pipelineState);
       pipelineElementSelected(pipelineId, nextElementId);
     },
     onPrevious: ({
       pipelineState,
       pipelineElementSelected,
-      pipelineId,
-      debuggerState,
-      currentElementId
+      pipelineId
     }) => () => {
       const nextElementId = getPrevious(pipelineState);
       pipelineElementSelected(pipelineId, nextElementId);
@@ -91,8 +113,13 @@ const enhance = compose(
   })
 );
 
-const PipelineDebugger = ({ pipelineId, debuggerId, onNext, onPrevious }) => (
-  <div className="pipeline-debugger">
+const PipelineDebugger = ({
+  pipelineId,
+  debuggerId,
+  onNext,
+  onPrevious
+}: EnhancedProps) => (
+  <div className="PipelineDebugger">
     <div>
       <Button icon="chevron-left" text="Previous" onClick={onPrevious} />
       <Button icon="chevron-right" text="Next" onClick={onNext} />
@@ -101,10 +128,5 @@ const PipelineDebugger = ({ pipelineId, debuggerId, onNext, onPrevious }) => (
     <DebuggerStep debuggerId={debuggerId} />
   </div>
 );
-
-// PipelineDebugger.propTypes = {
-//   debuggerId: PropTypes.string.isRequired,
-//   pipelineId: PropTypes.string.isRequired,
-// };
 
 export default enhance(PipelineDebugger);

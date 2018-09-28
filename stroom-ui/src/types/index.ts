@@ -75,6 +75,12 @@ export interface ExpressionItem extends ItemWithId {
   enabled: boolean;
 }
 
+export enum OperatorType {
+  AND,
+  OR,
+  NOT
+}
+
 export interface ExpressionOperatorType
   extends ExpressionItem,
     Tree<ExpressionTermType | ExpressionOperatorType> {

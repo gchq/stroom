@@ -18,35 +18,80 @@ import * as React from "react";
 import { compose, withProps, withHandlers } from "recompose";
 import { connect } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { DragSource } from "react-dnd";
+import { DragSource, DragSourceSpec } from "react-dnd";
 
 import SelectBox from "../SelectBox";
 import Button from "../Button";
-import ItemTypes from "./dragDropTypes";
+import {
+  DragDropTypes,
+  DragObject,
+  dragCollect,
+  DragCollectedProps
+} from "./dragDropTypes";
 import { displayValues } from "./conditions";
 import ValueWidget from "./ValueWidget";
 import { actionCreators } from "./redux";
-import withValueType from "./withValueType";
+import withValueType, {
+  WithProps as WithValueTypeProps
+} from "./withValueType";
+import {
+  ExpressionTermType,
+  DataSourceType,
+  ConditionType,
+  DataSourceFieldType,
+  SelectOptionType
+} from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { expressionItemUpdated, expressionItemDeleteRequested } = actionCreators;
 
-const dragSource = {
+export interface Props {
+  dataSource: DataSourceType;
+  expressionId: string;
+  term: ExpressionTermType;
+  isEnabled: boolean;
+}
+export interface ConnectState {}
+export interface ConnectDispatch {
+  expressionItemUpdated: typeof expressionItemUpdated;
+  expressionItemDeleteRequested: typeof expressionItemDeleteRequested;
+}
+
+export interface DndProps extends Props, ConnectState, ConnectDispatch {}
+
+export interface WithHandlers {
+  onRequestDeleteTerm: () => void;
+  onEnabledToggled: () => void;
+  onFieldChange: (field: string) => void;
+  onConditionChange: (condition: ConditionType) => void;
+  onValueChange: (value: any) => void;
+}
+
+export interface WithProps {
+  conditionOptions: Array<SelectOptionType>;
+  fieldOptions: Array<SelectOptionType>;
+  className: string;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    DragCollectedProps,
+    WithHandlers,
+    WithProps,
+    WithValueTypeProps {}
+
+const dragSource: DragSourceSpec<DndProps, DragObject> = {
   beginDrag(props) {
     return {
-      ...props.term
+      expressionItem: props.term
     };
   }
 };
 
-function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging()
-  };
-}
-
-const enhance = compose(
-  connect(
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     state => ({
       // state
     }),
@@ -55,8 +100,8 @@ const enhance = compose(
       expressionItemDeleteRequested
     }
   ),
-  DragSource(ItemTypes.TERM, dragSource, dragCollect),
-  withHandlers({
+  DragSource(DragDropTypes.TERM, dragSource, dragCollect),
+  withHandlers<Props & ConnectDispatch & ConnectState, WithHandlers>({
     onRequestDeleteTerm: ({
       expressionItemDeleteRequested,
       expressionId,
@@ -108,16 +153,18 @@ const enhance = compose(
       classNames.push("expression-item--disabled");
     }
 
-    const fieldOptions = dataSource.fields.map(f => ({
+    const fieldOptions = dataSource.fields.map((f: DataSourceFieldType) => ({
       value: f.name,
       text: f.name
     }));
 
-    const thisField = dataSource.fields.find(f => f.name === term.field);
+    const thisField = dataSource.fields.find(
+      (f: DataSourceFieldType) => f.name === term.field
+    );
 
     let conditionOptions = [];
     if (thisField) {
-      conditionOptions = thisField.conditions.map(c => ({
+      conditionOptions = thisField.conditions.map((c: ConditionType) => ({
         value: c,
         text: displayValues[c]
       }));
@@ -135,9 +182,6 @@ const enhance = compose(
 const ExpressionTerm = ({
   connectDragSource,
   term,
-  enabledButtonColour,
-  dataSource,
-  expressionId,
   className,
 
   onRequestDeleteTerm,
@@ -149,7 +193,7 @@ const ExpressionTerm = ({
   fieldOptions,
   conditionOptions,
   valueType
-}) => (
+}: EnhancedProps) => (
   <div className={`expression-term ${className}`}>
     {connectDragSource(
       <span>
@@ -186,12 +230,5 @@ const ExpressionTerm = ({
     </div>
   </div>
 );
-
-// ExpressionTerm.propTypes = {
-//   dataSource: PropTypes.object.isRequired, // complete definition of the data source
-//   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
-//   term: PropTypes.object.isRequired, // the operator that this particular element is to represent
-//   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
-// };
 
 export default enhance(ExpressionTerm);

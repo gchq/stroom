@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { testTree } from "../FolderExplorer/test";
+import * as uuidv4 from "uuid/v4";
 
-const testExpression = {
+import { testTree } from "../FolderExplorer/test";
+import { ExpressionOperatorType } from "../../types";
+
+const testExpression: ExpressionOperatorType = {
+  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
+      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -28,6 +33,7 @@ const testExpression = {
       enabled: true
     },
     {
+      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN",
@@ -36,19 +42,22 @@ const testExpression = {
       enabled: true
     },
     {
+      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN_DICTIONARY",
       value: null,
-      dictionary: testTree.children[0].children[0].children[1],
+      dictionary: testTree.children![0].children![0].children![1],
       enabled: true
     },
     {
+      uuid: uuidv4(),
       type: "operator",
       op: "AND",
       enabled: true,
       children: [
         {
+          uuid: uuidv4(),
           type: "term",
           field: "numberOfDoors",
           condition: "BETWEEN",
@@ -57,6 +66,7 @@ const testExpression = {
           enabled: true
         },
         {
+          uuid: uuidv4(),
           type: "term",
           field: "createUser",
           condition: "EQUALS",
@@ -67,11 +77,13 @@ const testExpression = {
       ]
     },
     {
+      uuid: uuidv4(),
       type: "operator",
       op: "OR",
       enabled: false,
       children: [
         {
+          uuid: uuidv4(),
           type: "term",
           field: "id",
           condition: "CONTAINS",
@@ -80,6 +92,7 @@ const testExpression = {
           enabled: false
         },
         {
+          uuid: uuidv4(),
           type: "term",
           field: "updateTime",
           condition: "BETWEEN",
@@ -93,7 +106,7 @@ const testExpression = {
   enabled: true
 };
 
-const simplestExpression = {
+const simplestExpression: ExpressionOperatorType = {
   uuid: "root",
   type: "operator",
   op: "AND",
@@ -101,19 +114,25 @@ const simplestExpression = {
   enabled: true
 };
 
-const testAndOperator = {
+const testAndOperator: ExpressionOperatorType = {
+  uuid: uuidv4(),
   type: "operator",
   op: "AND",
+  enabled: true,
   children: []
 };
-const testOrOperator = {
+const testOrOperator: ExpressionOperatorType = {
+  uuid: uuidv4(),
   type: "operator",
   op: "AND",
+  enabled: true,
   children: []
 };
-const testNotOperator = {
+const testNotOperator: ExpressionOperatorType = {
+  uuid: uuidv4(),
   type: "operator",
   op: "AND",
+  enabled: true,
   children: []
 };
 export {

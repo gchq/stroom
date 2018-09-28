@@ -1,7 +1,7 @@
-import PipelineDebugger from './PipelineDebugger'
+import PipelineDebugger from "./PipelineDebugger";
 
-import { reducer } from './redux'
+import { reducer, StoreState } from "./redux";
 
 export default PipelineDebugger;
 
-export { reducer };
+export { reducer, StoreState };

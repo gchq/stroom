@@ -14,27 +14,49 @@
  * limitations under the License.
  */
 
-import { createActions, handleActions } from 'redux-actions';
+import { Action, ActionCreator } from "redux";
 
-import { createActionHandlerPerId } from '../../lib/reduxFormUtils';
+import {
+  prepareReducerById,
+  ActionId,
+  StateById
+} from "../../lib/redux-actions-ts";
 
-const actionCreators = createActions({
-  START_DEBUGGING: (debuggerId, pipelineId) => ({ debuggerId, pipelineId }),
-});
+export const START_DEBUGGING = "START_DEBUGGING";
 
-const defaultState = {};
+export interface StartDebuggingAction
+  extends Action<"START_DEBUGGING">,
+    ActionId {
+  pipelineId: string;
+}
 
-const byDebuggerId = createActionHandlerPerId(
-  ({ payload: { debuggerId } }) => debuggerId,
-  defaultState,
-);
+export interface ActionCreators {
+  startDebugging: ActionCreator<StartDebuggingAction>;
+}
 
-const reducer = handleActions({
-  START_DEBUGGING: byDebuggerId((state, { payload: { pipelineId } }) => ({
+export interface StoreStateById {
+  pipelineId?: string;
+}
+
+export interface StoreState extends StateById<StoreStateById> {}
+
+export const actionCreators: ActionCreators = {
+  startDebugging: (id, pipelineId) => ({
+    type: START_DEBUGGING,
+    id,
     pipelineId
-  })),
-},
-  defaultState,
-);
+  })
+};
 
-export { actionCreators, reducer };
+export const defaulStatePerId: StoreStateById = {
+  pipelineId: undefined
+};
+
+export const reducer = prepareReducerById(defaulStatePerId)
+  .handleAction<StartDebuggingAction>(
+    START_DEBUGGING,
+    (state, { pipelineId }) => ({
+      pipelineId
+    })
+  )
+  .getReducer();

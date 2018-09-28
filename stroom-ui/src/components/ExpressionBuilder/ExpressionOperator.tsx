@@ -17,15 +17,34 @@ import * as React from "react";
 import { compose, withHandlers, withProps } from "recompose";
 import { connect } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { DragSource, DropTarget } from "react-dnd";
+import {
+  DragSource,
+  DropTarget,
+  DropTargetCollector,
+  DropTargetSpec,
+  DragSourceSpec
+} from "react-dnd";
 
 import { canMove } from "../../lib/treeUtils";
-import ItemTypes from "./dragDropTypes";
+import {
+  DragDropTypes,
+  DragObject,
+  dragCollect,
+  DragCollectedProps,
+  DropCollectedProps
+} from "./dragDropTypes";
 import ExpressionTerm from "./ExpressionTerm";
 import { actionCreators } from "./redux";
 import { LineTo } from "../LineTo";
-import { LOGICAL_OPERATORS } from "./logicalOperators";
 import Button from "../Button";
+import {
+  DataSourceType,
+  ExpressionOperatorType,
+  ExpressionTermType,
+  OperatorType,
+  ExpressionItem
+} from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const {
   expressionTermAdded,
@@ -35,59 +54,87 @@ const {
   expressionItemDeleteRequested
 } = actionCreators;
 
-// EnhancedExpressionOperator.propTypes = {
-//   dataSource: PropTypes.object.isRequired, // complete definition of the data source
-//   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
-//   operator: PropTypes.object.isRequired, // the operator that this particular element is to represent
-//   isRoot: PropTypes.bool.isRequired, // used to prevent deletion of root nodes
-//   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
-// };
+export interface Props {
+  dataSource: DataSourceType;
+  expressionId: string;
+  operator: ExpressionOperatorType;
+  isRoot?: boolean;
+  isEnabled: boolean;
+}
 
-// EnhancedExpressionOperator.defaultProps = {
-//   isRoot: false,
-// };
+export interface ConnectState {}
+export interface ConnectDispatch {
+  expressionTermAdded: typeof expressionTermAdded;
+  expressionOperatorAdded: typeof expressionOperatorAdded;
+  expressionItemUpdated: typeof expressionItemUpdated;
+  expressionItemMoved: typeof expressionItemMoved;
+  expressionItemDeleteRequested: typeof expressionItemDeleteRequested;
+}
 
-const dragSource = {
+export interface DndProps extends Props, ConnectState, ConnectDispatch {}
+
+export interface WithHandlers {
+  onAddOperator: () => void;
+  onAddTerm: () => void;
+  onOperatorUpdated: (
+    updates: ExpressionTermType | ExpressionOperatorType
+  ) => void;
+  onOpChange: (op: OperatorType) => void;
+  onRequestDeleteOperator: () => void;
+  onEnabledToggled: () => void;
+}
+
+export interface WithProps {
+  enabledColour: string;
+  dndBarColour: string;
+  className: string;
+}
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    DragCollectedProps,
+    DropCollectedProps,
+    WithHandlers,
+    WithProps {}
+
+const dragSource: DragSourceSpec<DndProps, DragObject> = {
   canDrag(props) {
     return true;
   },
   beginDrag(props) {
     return {
-      ...props.operator
+      expressionItem: props.operator
     };
   }
 };
 
-function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging()
-  };
-}
-
-const dropTarget = {
+const dropTarget: DropTargetSpec<Props & ConnectState & ConnectDispatch> = {
   canDrop(props, monitor) {
     return canMove(monitor.getItem(), props.operator);
   },
   drop(props, monitor) {
     props.expressionItemMoved(
       props.expressionId,
-      monitor.getItem(),
+      monitor.getItem().expressionItem,
       props.operator
     );
   }
 };
 
-function dropCollect(connect, monitor) {
+let dropCollect: DropTargetCollector<DropCollectedProps> = function dropCollect(
+  connect,
+  monitor
+) {
   return {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
     canDrop: monitor.canDrop()
   };
-}
+};
 
-const enhance = compose(
-  connect(
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     state => ({
       // operators are nested, so take all their props from parent
     }),
@@ -99,14 +146,18 @@ const enhance = compose(
       expressionItemDeleteRequested
     }
   ),
-  DragSource(ItemTypes.OPERATOR, dragSource, dragCollect),
-  DropTarget([ItemTypes.OPERATOR, ItemTypes.TERM], dropTarget, dropCollect),
-  withHandlers({
+  DragSource(DragDropTypes.OPERATOR, dragSource, dragCollect),
+  DropTarget(
+    [DragDropTypes.OPERATOR, DragDropTypes.TERM],
+    dropTarget,
+    dropCollect
+  ),
+  withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
     onAddOperator: ({
       expressionOperatorAdded,
       expressionId,
       operator: { uuid }
-    }) => {
+    }) => () => {
       expressionOperatorAdded(expressionId, uuid);
     },
 
@@ -207,7 +258,7 @@ const ExpressionOperator = ({
   onEnabledToggled,
 
   enabledColour
-}) => (
+}: EnhancedProps) => (
   <div className={className}>
     {connectDropTarget(
       <div>
@@ -217,14 +268,14 @@ const ExpressionOperator = ({
           </span>
         )}
 
-        {LOGICAL_OPERATORS.map((l, i) => (
+        {Object.values(OperatorType).map((l, i) => (
           <Button
             selected={operator.op === l}
             key={l}
             groupPosition={
               i === 0
                 ? "left"
-                : LOGICAL_OPERATORS.length - 1 === i
+                : Object.keys(OperatorType).length - 1 === i
                   ? "right"
                   : "middle"
             }
@@ -268,53 +319,56 @@ const ExpressionOperator = ({
     <div className="operator__children">
       {isOver &&
         dropTarget.canDrop && <div className="operator__placeholder" />}
-      {operator.children
-        .map(c => {
-          let itemElement;
-          switch (c.type) {
-            case "term":
-              itemElement = (
-                <div key={c.uuid} id={`expression-item${c.uuid}`}>
-                  <ExpressionTerm
+      {operator.children &&
+        operator.children
+          .map((c: ExpressionItem) => {
+            let itemElement;
+            switch (c.type) {
+              case "term":
+                itemElement = (
+                  <div key={c.uuid} id={`expression-item${c.uuid}`}>
+                    <ExpressionTerm
+                      dataSource={dataSource}
+                      expressionId={expressionId}
+                      isEnabled={isEnabled && c.enabled}
+                      term={c as ExpressionTermType}
+                    />
+                  </div>
+                );
+                break;
+              case "operator":
+                itemElement = (
+                  <EnhancedExpressionOperator
                     dataSource={dataSource}
                     expressionId={expressionId}
                     isEnabled={isEnabled && c.enabled}
-                    term={c}
+                    operator={c as ExpressionOperatorType}
                   />
-                </div>
-              );
-              break;
-            case "operator":
-              itemElement = (
-                <EnhancedExpressionOperator
-                  dataSource={dataSource}
-                  expressionId={expressionId}
-                  isEnabled={isEnabled && c.enabled}
-                  operator={c}
-                />
-              );
-              break;
-            default:
-              throw new Error(`Invalid operator type: ${c.type}`);
-          }
+                );
+                break;
+              default:
+                throw new Error(`Invalid operator type: ${c.type}`);
+            }
 
-          // Wrap it with a line to
-          return (
-            <div key={c.uuid}>
-              <LineTo
-                lineId={c.uuid}
-                lineType="downRightElbow"
-                fromId={`expression-item${operator.uuid}`}
-                toId={`expression-item${c.uuid}`}
-              />
-              {itemElement}
-            </div>
-          );
-        })
-        .filter(c => !!c) // null filter
+            // Wrap it with a line to
+            return (
+              <div key={c.uuid}>
+                <LineTo
+                  lineId={c.uuid}
+                  lineType="downRightElbow"
+                  fromId={`expression-item${operator.uuid}`}
+                  toId={`expression-item${c.uuid}`}
+                />
+                {itemElement}
+              </div>
+            );
+          })
+          .filter(c => !!c) // null filter
       }
     </div>
   </div>
 );
 
-export default enhance(ExpressionOperator);
+const EnhancedExpressionOperator = enhance(ExpressionOperator);
+
+export default EnhancedExpressionOperator;
