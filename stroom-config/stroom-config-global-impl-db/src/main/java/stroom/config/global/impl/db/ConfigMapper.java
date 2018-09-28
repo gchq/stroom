@@ -87,7 +87,7 @@ public class ConfigMapper {
         addConfigObjectMethods(configObject, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
     }
 
-    boolean validatePropertyPath(final String fullPath) {
+    public boolean validatePropertyPath(final String fullPath) {
         return propertyMap.get(fullPath) != null;
     }
 

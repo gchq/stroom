@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.impl.db.ConfigMapper;
 import stroom.config.impl.db.stroom.tables.records.ConfigRecord;
+import stroom.util.logging.LambdaLogger;
 
 import java.sql.Connection;
 import java.util.Comparator;
@@ -250,21 +251,37 @@ class V7_0_0_2__property_rename implements JdbcMigration {
             FROM_TO_MAP.entrySet().stream()
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .forEach(entry -> {
-                        String from = entry.getKey();
-                        String to = entry.getValue();
-                        LOGGER.info("Renaming DB property {} to {}", from, to);
+                        final String from = entry.getKey();
+                        final String to = entry.getValue();
 
                         Optional<ConfigRecord> optRec = create
                                 .selectFrom(CONFIG)
                                 .where(CONFIG.NAME.eq(from))
                                 .fetchOptional();
 
-                        // TODO make sure new prop key is a valid path
-                        // if not throw an error as the migration script is wrong
+                        optRec.ifPresent(rec -> {
+                            LOGGER.info("Renaming DB property {} to {}", from, to);
+                            boolean isToPathValid = configMapper.validatePropertyPath(to);
+                            if (!isToPathValid) {
+                                throw new RuntimeException(LambdaLogger.buildMessage(
+                                        "Property name {} is not valid in the object model",
+                                        to));
+                            }
+                            rec.setName(to);
+                            rec.store();
+                        });
                     });
 
-            // TODO now loop over all props in the DB and validate their path
-            // if not valid delete them.
+            create
+                    .selectFrom(CONFIG)
+                    .fetch()
+                    .forEach(configRecord -> {
+                        boolean isToPathValid = configMapper.validatePropertyPath(configRecord.getName());
+                        LOGGER.warn("Property {} with value [{}] is not valid a valid property " +
+                                "in the object model. It will be deleted.",
+                                configRecord.getName(), configRecord.getVal());
+                        configRecord.delete();
+                    });
 
         } catch (final RuntimeException e) {
             LOGGER.error("Error renaming property", e);

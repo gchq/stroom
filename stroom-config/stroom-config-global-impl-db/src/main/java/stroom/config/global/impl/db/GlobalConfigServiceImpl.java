@@ -278,8 +278,9 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     private void deleteFromDb(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            LAMBDA_LOGGER.info(() ->
-                    LambdaLogger.buildMessage("Deleting property [{}]", name));
+            LAMBDA_LOGGER.warn(() ->
+                    LambdaLogger.buildMessage("Deleting property {} as it is not valid " +
+                            "in the object model", name));
             create
                     .deleteFrom(CONFIG)
                     .where(CONFIG.NAME.eq(name))
