@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.0] - 2018-09-28
+
 ## [v5.5.0-beta.10] - 2018-09-26
 
 * Issue **#732** : Added `host-address` and `host-name` XSLT functions.
@@ -932,7 +934,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0...HEAD
+[v5.5.0]: https://github.com/gchq/stroom/compare/v5.5.0-beta.10...v5.5.0
 [v5.5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.5.0-beta.9...v5.5.0-beta.10
 [v5.5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.5.0-beta.8...v5.5.0-beta.9
 [v5.5.0-beta.8]: https://github.com/gchq/stroom/compare/v5.5.0-beta.7...v5.5.0-beta.8
