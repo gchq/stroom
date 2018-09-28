@@ -18,7 +18,6 @@ package stroom.pipeline.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.stepping.RecordDetector;
 import stroom.pipeline.stepping.SteppingController;
@@ -32,6 +31,7 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
 
     private static final int MAX_COUNT = 10000;
     private final char[] buffer = new char[1024];
+
     private SteppingController controller;
     private long currentStepNo;
     private int offset;
@@ -47,6 +47,10 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
 
     @Override
     public int read(final char buf[], final int off, final int len) throws IOException {
+        if (controller == null) {
+            return super.read(buf, off, len);
+        }
+
         if (end) {
             return -1;
         }
@@ -73,9 +77,6 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
                 return 0;
             } catch (final ProcessException e) {
                 throw e;
-            } catch (final SAXException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw e;

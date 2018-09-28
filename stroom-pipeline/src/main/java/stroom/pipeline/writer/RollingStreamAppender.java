@@ -90,6 +90,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 streamStore,
@@ -128,6 +129,13 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(
+            description = "The stream type that the output stream should be written as. This must be specified.",
+            displayPriority = 1)
+    public void setStreamType(final String streamType) {
+        this.streamType = streamType;
+    }
+
+    @PipelineProperty(
             description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
             displayPriority = 2)
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
@@ -135,11 +143,24 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         this.feedRef = feedRef;
     }
 
-    @PipelineProperty(
-            description = "The stream type that the output stream should be written as. This must be specified.",
-            displayPriority = 1)
-    public void setStreamType(final String streamType) {
-        this.streamType = streamType;
+    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.",
+            defaultValue = "100M",
+            displayPriority = 3)
+    public void setRollSize(final String rollSize) {
+        super.setRollSize(rollSize);
+    }
+
+    @PipelineProperty(description = "Choose how frequently streams are rolled.",
+            defaultValue = "1h",
+            displayPriority = 4)
+    public void setFrequency(final String frequency) {
+        super.setFrequency(frequency);
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when streams are rolled.",
+            displayPriority = 5)
+    public void setSchedule(final String expression) {
+        super.setSchedule(expression);
     }
 
     @PipelineProperty(
@@ -148,12 +169,5 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
-    }
-
-    @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.",
-            defaultValue = "100M",
-            displayPriority = 3)
-    public void setRollSize(final String rollSize) {
-        super.setRollSize(rollSize);
     }
 }

@@ -18,7 +18,6 @@ package stroom.pipeline.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.stepping.RecordDetector;
 import stroom.pipeline.stepping.SteppingController;
@@ -41,7 +40,7 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
     private int count;
     private boolean end;
 
-    public InputStreamRecordDetector(final InputStream inputStream) {
+    InputStreamRecordDetector(final InputStream inputStream) {
         super(inputStream);
     }
 
@@ -73,9 +72,6 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
                 return 0;
             } catch (final ProcessException e) {
                 throw e;
-            } catch (final SAXException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw e;

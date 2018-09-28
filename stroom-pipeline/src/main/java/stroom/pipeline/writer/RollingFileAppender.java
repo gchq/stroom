@@ -91,6 +91,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
         return new RollingFileDestination(key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 fileName,
@@ -133,7 +134,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
 
         // Get a path to use.
-        String path = null;
+        String path;
         if (outputPaths.length == 1) {
             path = outputPaths[0];
         } else {
@@ -181,9 +182,22 @@ public class RollingFileAppender extends AbstractRollingAppender {
         this.rolledFileNamePattern = rolledFileNamePattern;
     }
 
+    @PipelineProperty(description = "Choose how frequently files are rolled.",
+            defaultValue = "1h",
+            displayPriority = 4)
+    public void setFrequency(final String frequency) {
+        super.setFrequency(frequency);
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when files are rolled.",
+            displayPriority = 5)
+    public void setSchedule(final String expression) {
+        super.setSchedule(expression);
+    }
+
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.",
             defaultValue = "100M",
-            displayPriority = 4)
+            displayPriority = 6)
     public void setRollSize(final String rollSize) {
         super.setRollSize(rollSize);
     }

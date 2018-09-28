@@ -28,9 +28,6 @@ import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -177,8 +174,8 @@ public class PathCreator {
     }
 
     public static String replace(final String path,
-                                  final String type,
-                                  final Supplier<String> replacementSupplier) {
+                                 final String type,
+                                 final Supplier<String> replacementSupplier) {
         String newPath = path;
         final String param = "${" + type + "}";
         int start = newPath.indexOf(param);
@@ -208,6 +205,9 @@ public class PathCreator {
         }
         if (streamHolder != null && streamHolder.getStream() != null) {
             path = replace(path, "streamId", () -> streamHolder.getStream().getId(), 0);
+        }
+        if (streamHolder != null) {
+            path = replace(path, "streamNo", () -> String.valueOf(streamHolder.getStreamNo()));
         }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
             path = replace(path, "searchId", searchIdHolder::getSearchId);

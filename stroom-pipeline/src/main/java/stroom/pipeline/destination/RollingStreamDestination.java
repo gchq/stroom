@@ -21,6 +21,7 @@ import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,13 +36,14 @@ public class RollingStreamDestination extends RollingDestination {
     private final boolean segmentOutput;
 
     public RollingStreamDestination(final StreamKey key,
-                                    final long frequency,
+                                    final Long frequency,
+                                    final SimpleCron schedule,
                                     final long rollSize,
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
                                     final String nodeName) {
-        super(key, frequency, rollSize, creationTime);
+        super(key, frequency, schedule, rollSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
