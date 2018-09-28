@@ -185,7 +185,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     private void read() {
-        if (entity != null && entity instanceof HasData) {
+        if (entity instanceof HasData) {
             final HasData hasData = (HasData) entity;
             setCode(hasData.getData(), codeIndicators);
         } else {
