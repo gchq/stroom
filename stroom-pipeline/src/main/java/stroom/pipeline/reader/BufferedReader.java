@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 import java.io.IOException;
 import java.io.Reader;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 class CharBuffer implements CharSequence {
     private static final int DEFAULT_INITIAL_SIZE = 1000;

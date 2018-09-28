@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.util.shared.Severity;
 
 import java.io.FilterReader;

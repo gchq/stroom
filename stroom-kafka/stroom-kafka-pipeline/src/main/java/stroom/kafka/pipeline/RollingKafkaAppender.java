@@ -77,6 +77,7 @@ class RollingKafkaAppender extends AbstractRollingAppender {
         return new RollingKafkaDestination(
                 key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 stroomKafkaProducer,
@@ -92,17 +93,30 @@ class RollingKafkaAppender extends AbstractRollingAppender {
     }
 
     @PipelineProperty(
+            description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.",
+            displayPriority = 2)
+    public void setTopic(final String topic) {
+        this.topic = pathCreator.replaceAll(topic);
+    }
+
+    @PipelineProperty(
             description = "The record key to apply to records, used to select partition. Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 3)
     public void setRecordKey(final String recordKey) {
         this.recordKey = pathCreator.replaceAll(recordKey);
     }
 
-    @PipelineProperty(
-            description = "The topic to send the record to. Replacement variables can be used in path strings such as ${feed}.",
-            displayPriority = 2)
-    public void setTopic(final String topic) {
-        this.topic = pathCreator.replaceAll(topic);
+    @PipelineProperty(description = "Choose how frequently files are rolled.",
+            defaultValue = "1h",
+            displayPriority = 4)
+    public void setFrequency(final String frequency) {
+        super.setFrequency(frequency);
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when files are rolled.",
+            displayPriority = 5)
+    public void setSchedule(final String expression) {
+        super.setSchedule(expression);
     }
 
     @PipelineProperty(

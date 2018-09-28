@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.task.server;
+package stroom.task;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.Sort.Direction;
 import stroom.node.shared.Node;
 import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskIdImpl;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.TaskId;
-import stroom.util.shared.TaskIdImpl;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.function.BiFunction;
 public class TestFindTaskProgressHandler {
     @Test
     public void testSortByAge() {
-        final FindTaskProgressHandler findTaskProgressHandler = new FindTaskProgressHandler(null);
+        final FindTaskProgressHandler findTaskProgressHandler = new FindTaskProgressHandler(null, null);
         final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
 
         final Map<TaskId, TaskProgress> totalMap = createMap(criteria);

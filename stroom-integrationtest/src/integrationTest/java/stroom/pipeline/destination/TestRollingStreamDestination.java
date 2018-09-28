@@ -18,25 +18,27 @@ package stroom.pipeline.destination;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
-import stroom.streamstore.server.MockStreamStore;
-import stroom.streamstore.server.StreamTarget;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.datafeed.TestBase;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
-public class TestRollingStreamDestination {
+public class TestRollingStreamDestination extends TestBase {
+    @Inject
+    private MockStreamStore streamStore;
+
     @Test
     public void testFrequency() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
-        final MockStreamStore streamStore = new MockStreamStore();
-        final Stream stream = Stream.createStream(StreamType.EVENTS, null, 1L);
-        final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
-        final Feed feed = new Feed();
-        final StreamKey streamKey = new StreamKey(feed, StreamType.EVENTS.getDisplayValue(), false);
+        final DataProperties dataProperties = new DataProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
+        final StreamTarget streamTarget = streamStore.openStreamTarget(dataProperties);
+        final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 60000L,
                 null,
@@ -54,11 +56,9 @@ public class TestRollingStreamDestination {
     @Test
     public void testSchedule() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
-        final MockStreamStore streamStore = new MockStreamStore();
-        final Stream stream = Stream.createStream(StreamType.EVENTS, null, 1L);
-        final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
-        final Feed feed = new Feed();
-        final StreamKey streamKey = new StreamKey(feed, StreamType.EVENTS.getDisplayValue(), false);
+        final DataProperties dataProperties = new DataProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
+        final StreamTarget streamTarget = streamStore.openStreamTarget(dataProperties);
+        final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 null,
                 SimpleCron.compile("* * *"),

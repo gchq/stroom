@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.server.factory.ConfigurableElement;
-import stroom.pipeline.server.factory.PipelineProperty;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -30,8 +28,6 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.io.Reader;
 
-@Component
-@Scope("prototype")
 @ConfigurableElement(
         type = "FindReplaceFilter",
         category = Category.READER,
@@ -90,17 +86,20 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
         textReplacementFilterReader.clear();
     }
 
-    @PipelineProperty(description = "The text or regex pattern to find and replace.")
+    @PipelineProperty(description = "The text or regex pattern to find and replace.",
+            displayPriority = 1)
     public void setFind(final String find) {
         this.find = find;
     }
 
-    @PipelineProperty(description = "The replacement text.")
+    @PipelineProperty(description = "The replacement text.",
+            displayPriority = 2)
     public void setReplacement(final String replacement) {
         this.replacement = replacement;
     }
 
-    @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.")
+    @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.",
+            displayPriority = 3)
     public void setMaxReplacements(final String maxReplacements) {
         try {
             this.maxReplacements = Integer.parseInt(maxReplacements);
@@ -111,19 +110,22 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
     }
 
     @PipelineProperty(description = "Whether the pattern should be treated as a literal or a regex.",
-            defaultValue = "false")
+            defaultValue = "false",
+            displayPriority = 4)
     public void setRegex(final boolean regex) {
         this.regex = regex;
     }
 
     @PipelineProperty(description = "Let '.' match all characters in a regex.",
-            defaultValue = "false")
+            defaultValue = "false",
+            displayPriority = 5)
     public void setDotAll(final boolean dotAll) {
         this.dotAll = dotAll;
     }
 
     @PipelineProperty(description = "The number of characters to buffer when matching the regex.",
-            defaultValue = "1000")
+            defaultValue = "1000",
+            displayPriority = 6)
     public void setBufferSize(final int bufferSize) {
         this.bufferSize = bufferSize;
     }

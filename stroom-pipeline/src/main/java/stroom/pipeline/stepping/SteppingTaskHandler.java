@@ -19,15 +19,13 @@ package stroom.pipeline.stepping;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
-import stroom.data.store.api.NestedInputStream;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
@@ -47,7 +45,6 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
@@ -56,20 +53,17 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.security.util.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
+import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.Highlight;
 
 import javax.inject.Inject;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -206,20 +200,19 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     // memory.
                     stepData = steppingResponseCache.getStepData(currentLocation);
 
-                    // Fill in the source data if it hasn't been already.
-                    for (final ElementData elementData : stepData.getElementMap().values()) {
-                        if (elementData.getElementType().hasRole(PipelineElementType.ROLE_PARSER)
-                                && elementData.getInput() == null) {
-                            final String data = getSourceData(currentLocation, stepData.getSourceHighlights());
-                            elementData.setInput(data);
-                        }
-                    }
+//                // Fill in the source data if it hasn't been already.
+//                for (final ElementData elementData : stepData.getElementMap().values()) {
+//                    if (elementData.getElementType().hasRole(PipelineElementType.ROLE_PARSER)
+//                            && elementData.getInput() == null) {
+//                        final String data = getSourceData(currentLocation, stepData.getSourceHighlights());
+//                        elementData.setInput(data);
+//                    }
+//                }
 
                 } else {
                     // Pick up any step data that remains so we can deliver any errors
                     // that caused the system not to step.
-                    stepData = new StepData();
-                    controller.storeStepData(stepData);
+                    stepData = controller.createStepData(null);
                 }
 
                 return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
@@ -569,7 +562,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                     // Process the boundary making sure to use the right
                     // encoding.
-                    controller.clearAllFilters();
+                    controller.clearAllFilters(null);
 
                     // Get the stream.
                     final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo - 1);
@@ -615,7 +608,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         }
                     }
                 }
-            } catch (final SAXException | IOException | RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 error(e);
             }
         } catch (final RuntimeException e) {
@@ -662,86 +655,86 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 stream.getId();
     }
 
-    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
-        String data = null;
-        if (location != null && highlights != null && highlights.size() > 0) {
-            try {
-                final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
-                if (streamSource != null) {
-                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
-
-                    try {
-                        // Skip to the appropriate stream.
-                        if (inputStream.getEntry(location.getStreamNo() - 1)) {
-                            // Load the feed.
-                            final String feedName = streamSource.getStream().getFeedName();
-
-                            // Get the stream type.
-                            final String streamTypeName = streamSource.getStreamTypeName();
-
-                            // Get the appropriate encoding for the stream type.
-                            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
-
-                            final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
-                            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                            final StringBuilder sb = new StringBuilder();
-
-                            int i;
-                            boolean found = false;
-                            int lineNo = 1;
-                            int colNo = 0;
-                            boolean inRecord = false;
-
-                            while ((i = bufferedReader.read()) != -1 && !found) {
-                                final char c = (char) i;
-
-                                if (c == '\n') {
-                                    lineNo++;
-                                    colNo = 0;
-                                } else {
-                                    colNo++;
-                                }
-
-                                for (final Highlight highlight : highlights) {
-                                    if (!inRecord) {
-                                        if (lineNo > highlight.getLineFrom() || (lineNo >= highlight.getLineFrom()
-                                                && colNo >= highlight.getColFrom())) {
-                                            inRecord = true;
-                                            break;
-                                        }
-                                    } else if (lineNo > highlight.getLineTo()
-                                            || (lineNo >= highlight.getLineTo() && colNo >= highlight.getColTo())) {
-                                        inRecord = false;
-                                        found = true;
-                                        break;
-                                    }
-                                }
-
-                                if (inRecord) {
-                                    sb.append(c);
-                                }
-                            }
-
-                            inputStream.closeEntry();
-                            bufferedReader.close();
-
-                            data = sb.toString();
-                        }
-                    } finally {
-                        try {
-                            inputStream.close();
-                        } finally {
-                            streamStore.closeStreamSource(streamSource);
-                        }
-                    }
-                }
-            } catch (final IOException e) {
-                error(e);
-            }
-        }
-
-        return data;
-    }
+//    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
+//        String data = null;
+//        if (location != null && highlights != null && highlights.size() > 0) {
+//            try {
+//                final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
+//                if (streamSource != null) {
+//                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
+//
+//                    try {
+//                        // Skip to the appropriate stream.
+//                        if (inputStream.getEntry(location.getStreamNo() - 1)) {
+//                            // Load the feed.
+//                            final String feedName = streamSource.getStream().getFeedName();
+//
+//                            // Get the stream type.
+//                            final String streamTypeName = streamSource.getStreamTypeName();
+//
+//                            // Get the appropriate encoding for the stream type.
+//                            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
+//
+//                            final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
+//                            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+//                            final StringBuilder sb = new StringBuilder();
+//
+//                            int i;
+//                            boolean found = false;
+//                            int lineNo = 1;
+//                            int colNo = 0;
+//                            boolean inRecord = false;
+//
+//                            while ((i = bufferedReader.read()) != -1 && !found) {
+//                                final char c = (char) i;
+//
+//                                if (c == '\n') {
+//                                    lineNo++;
+//                                    colNo = 0;
+//                                } else {
+//                                    colNo++;
+//                                }
+//
+//                                for (final Highlight highlight : highlights) {
+//                                    if (!inRecord) {
+//                                        if (lineNo > highlight.getLineFrom() || (lineNo >= highlight.getLineFrom()
+//                                                && colNo >= highlight.getColFrom())) {
+//                                            inRecord = true;
+//                                            break;
+//                                        }
+//                                    } else if (lineNo > highlight.getLineTo()
+//                                            || (lineNo >= highlight.getLineTo() && colNo >= highlight.getColTo())) {
+//                                        inRecord = false;
+//                                        found = true;
+//                                        break;
+//                                    }
+//                                }
+//
+//                                if (inRecord) {
+//                                    sb.append(c);
+//                                }
+//                            }
+//
+//                            inputStream.closeEntry();
+//                            bufferedReader.close();
+//
+//                            data = sb.toString();
+//                        }
+//                    } finally {
+//                        try {
+//                            inputStream.close();
+//                        } finally {
+//                            streamStore.closeStreamSource(streamSource);
+//                        }
+//                    }
+//                }
+//            } catch (final IOException e) {
+//                error(e);
+//            }
+//        }
+//
+//        return data;
+//    }
 
     private void error(final Exception e) {
         LOGGER.debug(e.getMessage(), e);

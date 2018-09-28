@@ -31,7 +31,11 @@ public class SteppingResponseCache {
     private final Map<StepLocation, StepData> locationMap = new HashMap<>();
     private Deque<StepLocation> recents = new ArrayDeque<>();
 
-    public StepData getStepData(final StepLocation location) {
+    StepData getStepData(final StepLocation location) {
+        return locationMap.get(location);
+    }
+
+    void setStepData(final StepLocation location, final StepData stepData) {
         // Cleanup code to remove old data.
         final StepLocation existing = recents.peekLast();
         if (existing == null || !existing.equals(location)) {
@@ -43,12 +47,6 @@ public class SteppingResponseCache {
             }
         }
 
-        StepData data = locationMap.get(location);
-        if (data == null) {
-            data = new StepData();
-            locationMap.put(location, data);
-        }
-
-        return data;
+        locationMap.put(location, stepData);
     }
 }

@@ -303,9 +303,16 @@ public class HDFSFileAppender extends AbstractAppender {
 
     @SuppressWarnings("unused")
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created.",
-    displayPriority = 4)
+            displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);
+    }
+
+    @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output files.",
+            defaultValue = "false",
+            displayPriority = 5)
+    public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
+        super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
 
     /**
