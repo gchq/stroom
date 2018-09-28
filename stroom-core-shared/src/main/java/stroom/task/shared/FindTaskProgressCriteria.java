@@ -21,15 +21,21 @@ import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.util.shared.CompareUtil;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
 public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements Comparator<TaskProgress> {
+    private static final long serialVersionUID = 2014515855795611224L;
+
+    public static final String FIELD_NODE = "Node";
+    public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";
     public static final String FIELD_SUBMIT_TIME = "Submit Time";
     public static final String FIELD_AGE = "Age";
-    private static final long serialVersionUID = 2014515855795611224L;
+    public static final String FIELD_INFO = "Info";
+
     private FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
     private String sessionId;
     private Set<TaskProgress> expandedTasks;
@@ -63,15 +69,27 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
                 final String field = sort.getField();
 
                 int compare = 0;
-                if (FIELD_NAME.equals(field)) {
-                    compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
-                } else if (FIELD_USER.equals(field)) {
-                    compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
-                } else if (FIELD_SUBMIT_TIME.equals(field)) {
-                    compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
-                } else if (FIELD_AGE.equals(field)) {
-                    compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
+                switch (field) {
+                    case FIELD_NAME:
+                        compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
+                        break;
+                    case FIELD_USER:
+                        compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
+                        break;
+                    case FIELD_SUBMIT_TIME:
+                        compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
+                        break;
+                    case FIELD_AGE:
+                        compare = CompareUtil.compareLong(o1.getAgeMs(), o2.getAgeMs());
+                        break;
+                    case FIELD_INFO:
+                        compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
+                        break;
+                    case FIELD_NODE:
+                        compare = CompareUtil.compareString(o1.getNode().getName(), o2.getNode().getName());
+                        break;
                 }
+
                 if (Direction.DESCENDING.equals(sort.getDirection())) {
                     compare = compare * -1;
                 }
@@ -106,5 +124,25 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
             return expandedTasks.contains(taskProgress);
         }
         return false;
+    }
+
+    public void validateSortField() {
+        if (this.getSortList().isEmpty()) {
+            Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.ASCENDING, true);
+            this.getSortList().add(defaultSort);
+        } else {
+            for (Sort sort : this.getSortList()) {
+                if (!Arrays.asList(
+                        FindTaskProgressCriteria.FIELD_AGE,
+                        FindTaskProgressCriteria.FIELD_INFO,
+                        FindTaskProgressCriteria.FIELD_NAME,
+                        FindTaskProgressCriteria.FIELD_NODE,
+                        FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
+                        FindTaskProgressCriteria.FIELD_USER).contains(sort.getField())) {
+                    throw new IllegalArgumentException(
+                            "A sort field of " + sort.getField() + " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
+                }
+            }
+        }
     }
 }
