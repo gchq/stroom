@@ -1,15 +1,25 @@
-import { actionCreators } from './redux';
-import { wrappedGet, wrappedPatch } from '../../lib/fetchTracker.redux';
+import { actionCreators } from "./redux";
+import { wrappedGet, wrappedPatch } from "../../lib/fetchTracker.redux";
+import { StreamTasksResponseType } from "../../types";
+import { Dispatch } from "redux";
+import { GlobalStoreState } from "../../startup/reducers";
 
-export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', none: 'none' });
+export enum TrackerSelection {
+  first = "first",
+  last = "last",
+  none = "none"
+}
 
-export const fetchTrackers = trackerSelection => (dispatch, getState) => {
+export const fetchTrackers = (trackerSelection: TrackerSelection) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
 
   const rowsToFetch = state.processing.pageSize;
   dispatch(actionCreators.updatePageSize(rowsToFetch));
 
-  let url = `${state.config.stroomBaseServiceUrl}/streamtasks/v1/?`;
+  let url = `${state.config.values.stroomBaseServiceUrl}/streamtasks/v1/?`;
   url += `pageSize=${rowsToFetch}`;
   url += `&offset=${state.processing.pageOffset}`;
   if (state.processing.sortBy !== undefined) {
@@ -17,7 +27,10 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     url += `&sortDirection=${state.processing.sortDirection}`;
   }
 
-  if (state.processing.searchCriteria !== '' && state.processing.searchCriteria !== undefined) {
+  if (
+    state.processing.searchCriteria !== "" &&
+    state.processing.searchCriteria !== undefined
+  ) {
     url += `&filter=${state.processing.searchCriteria}`;
   }
 
@@ -25,9 +38,14 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    (response) => {
-      response.json().then((trackers) => {
-        dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+    response => {
+      response.json().then((trackers: StreamTasksResponseType) => {
+        dispatch(
+          actionCreators.updateTrackers(
+            trackers.streamTasks,
+            trackers.totalStreamTasks
+          )
+        );
         switch (trackerSelection) {
           case TrackerSelection.first:
             dispatch(actionCreators.selectFirst());
@@ -43,12 +61,15 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
         }
       });
     },
-    null,
-    true,
+    {},
+    true
   );
 };
 
-export const fetchMore = trackerSelection => (dispatch, getState) => {
+export const fetchMore = (trackerSelection: TrackerSelection) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
 
   const rowsToFetch = state.processing.pageSize;
@@ -57,7 +78,7 @@ export const fetchMore = trackerSelection => (dispatch, getState) => {
   const nextPageOffset = state.processing.pageOffset + 1;
   dispatch(actionCreators.changePage(nextPageOffset));
 
-  let url = `${state.config.stroomBaseServiceUrl}/streamtasks/v1/?`;
+  let url = `${state.config.values.stroomBaseServiceUrl}/streamtasks/v1/?`;
   url += `pageSize=${rowsToFetch}`;
   url += `&offset=${nextPageOffset}`;
   if (state.processing.sortBy !== undefined) {
@@ -65,7 +86,10 @@ export const fetchMore = trackerSelection => (dispatch, getState) => {
     url += `&sortDirection=${state.processing.sortDirection}`;
   }
 
-  if (state.processing.searchCriteria !== '' && state.processing.searchCriteria !== undefined) {
+  if (
+    state.processing.searchCriteria !== "" &&
+    state.processing.searchCriteria !== undefined
+  ) {
     url += `&filter=${state.processing.searchCriteria}`;
   }
 
@@ -73,9 +97,14 @@ export const fetchMore = trackerSelection => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    (response) => {
-      response.json().then((trackers) => {
-        dispatch(actionCreators.addTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+    response => {
+      response.json().then((trackers: StreamTasksResponseType) => {
+        dispatch(
+          actionCreators.addTrackers(
+            trackers.streamTasks,
+            trackers.totalStreamTasks
+          )
+        );
         switch (trackerSelection) {
           case TrackerSelection.first:
             dispatch(actionCreators.selectFirst());
@@ -91,18 +120,32 @@ export const fetchMore = trackerSelection => (dispatch, getState) => {
         }
       });
     },
-    null,
-    true,
+    {},
+    true
   );
 };
 
-export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getState) => {
+export const enableToggle = (filterId: string, isCurrentlyEnabled: boolean) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
   const state = getState();
-  const url = `${state.config.stroomBaseServiceUrl}/streamtasks/v1/${filterId}`;
-  const body = JSON.stringify({ op: 'replace', path: 'enabled', value: !isCurrentlyEnabled });
+  const url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/streamtasks/v1/${filterId}`;
+  const body = JSON.stringify({
+    op: "replace",
+    path: "enabled",
+    value: !isCurrentlyEnabled
+  });
 
-  wrappedPatch(dispatch, state, url, body, r =>
-    dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled)));
+  wrappedPatch(
+    dispatch,
+    state,
+    url,
+    () => dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled)),
+    { body }
+  );
 };
 
 // TODO: This isn't currently used.

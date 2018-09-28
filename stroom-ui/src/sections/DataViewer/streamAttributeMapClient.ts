@@ -2,9 +2,10 @@ import { actionCreators } from "./redux";
 import { wrappedGet, wrappedPost } from "../../lib/fetchTracker.redux";
 import {
   StreamAttributeMapResult,
-  ExpressionOperator,
+  ExpressionOperatorType,
   DataSourceType,
-  DataRow
+  DataRow,
+  ExpressionItem
 } from "../../types";
 import { Dispatch } from "redux";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -115,10 +116,10 @@ export const searchWithExpression = (
  * generate JSON compatible with the resource's endpoints. I.e. jackson binding
  * fails if we have these uuids.
  */
-const cleanExpression = (expression: ExpressionOperator) => {
+const cleanExpression = (expression: ExpressionOperatorType) => {
   // UUIDs are not part of Expression
   delete expression.uuid;
-  expression.children!.forEach(child => {
+  expression.children!.forEach((child: ExpressionItem) => {
     delete child.uuid;
   });
 

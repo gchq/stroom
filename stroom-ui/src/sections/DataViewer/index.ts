@@ -1,6 +1,6 @@
-import { reducer } from './redux';
-import DataViewer from './DataViewer';
+import { reducer, StoreState } from "./redux";
+import DataViewer from "./DataViewer";
 
 export default DataViewer;
 
-export { reducer, DataViewer };
+export { reducer, DataViewer, StoreState };

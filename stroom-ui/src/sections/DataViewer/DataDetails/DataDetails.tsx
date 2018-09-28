@@ -23,8 +23,13 @@ import "brace/keybinding/vim";
 
 import ErrorTable from "./Views/ErrorTable";
 import EventView from "./Views/EventView";
+import { AbstractFetchDataResult } from "../../../types";
 
-const DataDetails = ({ data }) => {
+export interface Props {
+  data: AbstractFetchDataResult;
+}
+
+const DataDetails = ({ data }: Props) => {
   const streamType = path(["streamType", "path"], data);
   const eventData = path(["data"], data);
   const markerData = path(["markers"], data);
@@ -33,9 +38,5 @@ const DataDetails = ({ data }) => {
   else if (streamType === "EVENTS") return <EventView events={eventData} />;
   return <div>TODO</div>;
 };
-
-// DataDetails.propTypes = {
-//   data: PropTypes.object,
-// };
 
 export default DataDetails;

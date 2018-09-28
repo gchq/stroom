@@ -36,7 +36,11 @@ const {
   updateSearchCriteria
 } = actionCreators;
 
-const enhance = compose(
+export interface Props {}
+
+export interface EnhancedProps extends Props {}
+
+const enhance = compose<EnhancedProps, Props>(
   connect(
     ({ processing: { trackers, searchCriteria, selectedTrackerId } }) => ({
       trackers,
@@ -114,7 +118,7 @@ const ProcessingContainer = ({
   showDetails,
   onHandleTrackerSelection,
   onHandleSearchChange
-}) => (
+}: EnhancedProps) => (
   <React.Fragment>
     <div className="processing__header-container">
       <IconHeader icon="play" text="Processing" />
@@ -196,9 +200,5 @@ const ProcessingContainer = ({
     </div>
   </React.Fragment>
 );
-
-// ProcessingContainer.contextTypes = {
-//   store: PropTypes.object.isRequired,
-// };
 
 export default enhance(ProcessingContainer);

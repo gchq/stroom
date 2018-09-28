@@ -48,11 +48,11 @@ export const actionCreators: ActionCreators = {
   })
 };
 
-export const defaulStatePerId: StoreStateById = {
+export const defaultStatePerId: StoreStateById = {
   pipelineId: undefined
 };
 
-export const reducer = prepareReducerById(defaulStatePerId)
+export const reducer = prepareReducerById(defaultStatePerId)
   .handleAction<StartDebuggingAction>(
     START_DEBUGGING,
     (state, { pipelineId }) => ({

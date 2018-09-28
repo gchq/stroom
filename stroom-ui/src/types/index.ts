@@ -249,3 +249,79 @@ export enum PermissionInheritance {
   DESTINATION = "Destination",
   COMBINED = "Combined"
 }
+
+export interface OffsetRange {
+  offset: number;
+  length: number;
+}
+export interface RowCount {
+  count: number;
+  exact: boolean;
+}
+
+export interface AbstractFetchDataResult {
+  streamType: string;
+  classification: string;
+  streamRange: OffsetRange;
+  streamRowCount: RowCount;
+  pageRange: OffsetRange;
+  pageRowCount: RowCount;
+  availableChildStreamType: Array<string>;
+}
+
+export type Severity = "INFO" | "WARN" | "ERROR" | "FATAL";
+
+export interface Marker {
+  severity: Severity;
+}
+export interface FetchMarkerResult extends AbstractFetchDataResult {
+  markers: Array<Marker>;
+}
+
+export interface FetchDataResult extends AbstractFetchDataResult {
+  data: string;
+  html: boolean;
+}
+
+export interface LimitsType {
+  streamCount: number;
+  eventCount: number;
+  durationMs: number;
+}
+
+export interface QueryDataType {
+  dataSource: DocRefType;
+  expression: ExpressionOperatorType;
+  limits: LimitsType;
+}
+
+export interface StreamTaskType {
+  // Most important data, probably
+  filterName: string;
+  pipelineName: string;
+  pipelineId: number;
+  trackerMs: number;
+  trackerPercent: number;
+  lastPollAge: string;
+  taskCount: number;
+  priority: number;
+  streamCount: number;
+  eventCount: number;
+  status: string;
+  enabled: boolean;
+  filter: QueryDataType;
+
+  // supporting data
+  filterId: number;
+  createUser: string;
+  createdOn: number;
+  updateUser: string;
+  updatedOn: number;
+  minStreamId: number;
+  minEventId: number;
+}
+
+export interface StreamTasksResponseType {
+  streamTasks: Array<StreamTaskType>;
+  totalStreamTasks: number;
+}
