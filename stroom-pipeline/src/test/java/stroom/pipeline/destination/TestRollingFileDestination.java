@@ -21,7 +21,6 @@ import org.junit.Test;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,16 +31,17 @@ public class TestRollingFileDestination {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
+
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
                 "test",
-                "test.tmp",
-                "test.log",
                 60000L,
                 null,
                 100,
-                dir.toFile(),
-                file.toFile(),
-                time);
+                time,
+                "test.tmp",
+                "test.log",
+                dir,
+                file);
 
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time));
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time + 60000));
@@ -55,14 +55,14 @@ public class TestRollingFileDestination {
         final Path file = dir.resolve("test.log");
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
                 "test",
-                "test.tmp",
-                "test.log",
                 null,
                 SimpleCron.compile("* * *"),
                 100,
-                dir.toFile(),
-                file.toFile(),
-                time);
+                time,
+                "test.tmp",
+                "test.log",
+                dir,
+                file);
 
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time));
         Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time + 60000));

@@ -91,6 +91,7 @@ class RollingFileAppender extends AbstractRollingAppender {
 
         return new RollingFileDestination(key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 fileName,
@@ -146,32 +147,20 @@ class RollingFileAppender extends AbstractRollingAppender {
 
     @Override
     void validateSpecificSettings() {
-        if (!validatedSettings) {
-            validatedSettings = true;
+        if (outputPaths == null || outputPaths.length == 0) {
+            throw new ProcessException("No output paths have been specified");
+        }
 
-            if (outputPaths == null || outputPaths.length == 0) {
-                throw new ProcessException("No output paths have been specified");
-            }
+        if (fileNamePattern == null || fileNamePattern.length() == 0) {
+            throw new ProcessException("No file name has been specified");
+        }
 
-            if (fileNamePattern == null || fileNamePattern.length() == 0) {
-                throw new ProcessException("No file name has been specified");
-            }
+        if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
+            throw new ProcessException("No rolled file name has been specified");
+        }
 
-            if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
-                throw new ProcessException("No rolled file name has been specified");
-            }
-
-            if (fileNamePattern.equals(rolledFileNamePattern)) {
-                throw new ProcessException("File name and rolled file name cannot be the same");
-            }
-
-            if (frequency != null && frequency <= 0) {
-                throw new ProcessException("Rolling frequency must be greater than 0");
-            }
-
-            if (rollSize <= 0) {
-                throw new ProcessException("Roll size must be greater than 0");
-            }
+        if (fileNamePattern.equals(rolledFileNamePattern)) {
+            throw new ProcessException("File name and rolled file name cannot be the same");
         }
     }
 
@@ -192,48 +181,16 @@ class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
     public void setFrequency(final String frequency) {
-        if (frequency == null || frequency.trim().length() == 0) {
-            this.frequency = null;
-        } else {
-            try {
-                final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null || value <= 0) {
-                    throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-                }
-
-                this.frequency = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-            }
-        }
+        super.setFrequency(frequency);
     }
 
     @PipelineProperty(description = "Provide a cron expression to determine when files are rolled.")
     public void setSchedule(final String expression) {
-        if (expression == null || expression.trim().length() == 0) {
-            this.schedule = null;
-        } else {
-            try {
-                this.schedule = SimpleCron.compile(expression);
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
-            }
-        }
+        super.setSchedule(expression);
     }
 
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.", defaultValue = "100M")
     public void setRollSize(final String rollSize) {
-        if (rollSize != null && rollSize.trim().length() > 0) {
-            try {
-                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
-                if (value == null) {
-                    throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
-                }
-
-                this.rollSize = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
-            }
-        }
+        super.setRollSize(rollSize);
     }
 }

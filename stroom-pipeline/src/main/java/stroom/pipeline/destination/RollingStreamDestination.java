@@ -22,6 +22,7 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;

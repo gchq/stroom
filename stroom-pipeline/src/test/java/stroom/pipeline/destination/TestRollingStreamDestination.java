@@ -41,10 +41,10 @@ public class TestRollingStreamDestination {
                 60000L,
                 null,
                 100,
+                time,
                 streamStore,
                 streamTarget,
-                "test",
-                time);
+                "test");
 
         Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time));
         Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time + 60000));
@@ -63,10 +63,10 @@ public class TestRollingStreamDestination {
                 null,
                 SimpleCron.compile("* * *"),
                 100,
+                time,
                 streamStore,
                 streamTarget,
-                "test",
-                time);
+                "test");
 
         Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time));
         Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time + 60000));

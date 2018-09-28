@@ -15,7 +15,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -59,7 +58,7 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     }
 
     @Override
-    Object getKey() throws IOException {
+    Object getKey() {
         if (key == null) {
             //this allows us to have two destinations for the same key and topic but with different
             //flush semantics
@@ -69,13 +68,14 @@ public class RollingKafkaAppender extends AbstractRollingAppender {
     }
 
     @Override
-    public RollingDestination createDestination() throws IOException {
+    public RollingDestination createDestination() {
         StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector()
                 .orElseThrow(() -> new ProcessException("No kafka producer available to use"));
 
         return new RollingKafkaDestination(
                 key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 stroomKafkaProducer,

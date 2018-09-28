@@ -43,7 +43,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 /**
  * Joins text instances into a single text instance.
@@ -54,13 +53,6 @@ import java.io.IOException;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
-    private static final int MB = 1024 * 1024;
-    private static final int DEFAULT_ROLL_SIZE = 100 * MB;
-
-    private static final long SECOND = 1000;
-    private static final long MINUTE = 60 * SECOND;
-    private static final long HOUR = 60 * MINUTE;
-
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
     private final FeedService feedService;
@@ -71,11 +63,6 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     private Feed feed;
     private String streamType;
     private boolean segmentOutput = true;
-    private Long frequency = HOUR;
-    private SimpleCron schedule;
-    private long rollSize = DEFAULT_ROLL_SIZE;
-
-    private boolean validatedSettings;
 
     private StreamKey key;
 
@@ -89,7 +76,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    public RollingDestination createDestination() throws IOException {
+    public RollingDestination createDestination() {
         if (key.getStreamType() == null) {
             throw new ProcessException("Stream type not specified");
         }
@@ -107,6 +94,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         return new RollingStreamDestination(key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 streamStore,
@@ -139,17 +127,8 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             }
         }
 
-            if (streamType == null) {
-                throw new ProcessException("Stream type not specified");
-            }
-
-            if (frequency != null && frequency <= 0) {
-                throw new ProcessException("Rolling frequency must be greater than 0");
-            }
-
-            if (rollSize <= 0) {
-                throw new ProcessException("Roll size must be greater than 0");
-            }
+        if (streamType == null) {
+            throw new ProcessException("Stream type not specified");
         }
     }
 
@@ -171,33 +150,12 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     @PipelineProperty(description = "Choose how frequently streams are rolled.", defaultValue = "1h")
     public void setFrequency(final String frequency) {
-        if (frequency == null || frequency.trim().length() == 0) {
-            this.frequency = null;
-        } else {
-            try {
-                final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null || value <= 0) {
-                    throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-                }
-
-                this.frequency = value;
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-            }
-        }
+        super.setFrequency(frequency);
     }
 
     @PipelineProperty(description = "Provide a cron expression to determine when streams are rolled.")
     public void setSchedule(final String expression) {
-        if (expression == null || expression.trim().length() == 0) {
-            this.schedule = null;
-        } else {
-            try {
-                this.schedule = SimpleCron.compile(expression);
-            } catch (final NumberFormatException e) {
-                throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
-            }
-        }
+        super.setSchedule(expression);
     }
 
     @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100M")
