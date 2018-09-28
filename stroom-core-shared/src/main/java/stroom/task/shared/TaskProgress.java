@@ -17,12 +17,13 @@
 package stroom.task.shared;
 
 import stroom.node.shared.Node;
-import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.TreeRow;
+
+import java.util.Objects;
 
 public class TaskProgress implements SharedObject, TreeRow {
     private static final long serialVersionUID = 7903893715149262619L;
@@ -37,7 +38,6 @@ public class TaskProgress implements SharedObject, TreeRow {
     private Node node;
     private long submitTimeMs;
     private long timeNowMs;
-    private boolean orphan;
 
     private Expander expander;
 
@@ -118,14 +118,6 @@ public class TaskProgress implements SharedObject, TreeRow {
         return timeNowMs - submitTimeMs;
     }
 
-    public boolean isOrphan() {
-        return orphan;
-    }
-
-    public void setOrphan(final boolean orphan) {
-        this.orphan = orphan;
-    }
-
     public String getThreadName() {
         return threadName;
     }
@@ -135,22 +127,16 @@ public class TaskProgress implements SharedObject, TreeRow {
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof TaskProgress)) {
-            return false;
-        }
-        final TaskProgress other = (TaskProgress) obj;
-        final EqualsBuilder equalsBuilder = new EqualsBuilder();
-        equalsBuilder.append(this.id, other.id);
-        return equalsBuilder.isEquals();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final TaskProgress that = (TaskProgress) o;
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        if (id != null) {
-            return id.hashCode();
-        }
-        return 0;
+        return Objects.hash(id);
     }
 
     @Override

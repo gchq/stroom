@@ -35,6 +35,7 @@ import stroom.pipeline.server.parser.AbstractParser;
 import stroom.pipeline.server.reader.InputStreamElement;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
+import stroom.pipeline.server.reader.ReaderRecorder;
 import stroom.pipeline.server.source.SourceElement;
 import stroom.pipeline.server.task.ElementMonitor;
 import stroom.pipeline.server.task.Recorder;
@@ -333,7 +334,7 @@ public class PipelineFactory {
             // Finally insert a record detector if appropriate for the current
             // element to control stepping.
             if (controller != null) {
-                if (parentElement != null && parentElement instanceof OutputRecorder) {
+                if (parentElement instanceof OutputRecorder) {
                     // If the parent element is already an output recorder used
                     // to replace a destination then reuse the same output recorder
                     // for any downstream elements.
@@ -464,6 +465,20 @@ public class PipelineFactory {
                 outputRecorder.setElementId(elementId);
                 result = new Fragment(outputRecorder);
 
+            } else if (in instanceof AbstractIOElement) {
+                final AbstractIOElement filter = (AbstractIOElement) in;
+                final ReaderRecorder recorder = new ReaderRecorder();
+                recorder.setElementId(elementId);
+                recorder.setTarget((Target) filter);
+                result = new Fragment(recorder, fragment.getOut());
+
+            } else if (in instanceof AbstractParser) {
+                final AbstractParser parser = (AbstractParser) in;
+                final ReaderRecorder recorder = new ReaderRecorder();
+                recorder.setElementId(elementId);
+                recorder.setTarget(parser);
+                result = new Fragment(recorder, fragment.getOut());
+
             } else if (in instanceof XMLFilter && elementType.hasRole(PipelineElementType.ROLE_MUTATOR)) {
                 final XMLFilter filter = (XMLFilter) in;
 
@@ -486,6 +501,13 @@ public class PipelineFactory {
                 final OutputRecorder outputRecorder = elementFactory.getElementInstance(OutputRecorder.class);
                 outputRecorder.setElementId(elementId);
                 result = new Fragment(outputRecorder);
+
+            } else if (out instanceof AbstractIOElement) {
+                final AbstractIOElement filter = (AbstractIOElement) out;
+                final ReaderRecorder recorder = new ReaderRecorder();
+                recorder.setElementId(elementId);
+                filter.setTarget(recorder);
+                result = new Fragment(fragment.getIn(), recorder);
 
             } else if (out instanceof AbstractParser) {
                 final AbstractParser parser = (AbstractParser) out;

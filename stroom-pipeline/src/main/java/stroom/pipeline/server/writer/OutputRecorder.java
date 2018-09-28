@@ -92,7 +92,7 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         }
 
         @Override
-        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             this.header = header;
             this.footer = footer;
             return outputStream;

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.writer.PathCreator;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -42,7 +43,8 @@ public class RollingFileDestination extends RollingDestination {
     private final Path file;
 
     public RollingFileDestination(final String key,
-                                  final long frequency,
+                                  final Long frequency,
+                                  final SimpleCron schedule,
                                   final long rollSize,
                                   final long creationTime,
                                   final String fileName,
@@ -50,7 +52,7 @@ public class RollingFileDestination extends RollingDestination {
                                   final Path dir,
                                   final Path file)
             throws IOException {
-        super(key, frequency, rollSize, creationTime);
+        super(key, frequency, schedule, rollSize, creationTime);
 
         this.fileName = fileName;
         this.rolledFileName = rolledFileName;

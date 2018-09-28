@@ -16,6 +16,8 @@
 
 package stroom.pipeline.server.task;
 
+import stroom.util.shared.Highlight;
+
 /**
  * A recorder collects data from either the input or output of a pipeline
  * element.
@@ -26,10 +28,10 @@ public interface Recorder {
      *
      * @return Any data that has been captured by this recorder.
      */
-    Object getData();
+    Object getData(Highlight highlight);
 
     /**
      * Clear the current data from this recorder.
      */
-    void clear();
+    void clear(Highlight highlight);
 }

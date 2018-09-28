@@ -33,6 +33,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     private byte[] footer;
     private String size;
     private Long sizeBytes = null;
+    private boolean splitAggregatedStreams;
 
     AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;
@@ -42,6 +43,14 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     public void endProcessing() {
         closeCurrentOutputStream();
         super.endProcessing();
+    }
+
+    @Override
+    public void endStream() {
+        if (splitAggregatedStreams) {
+            closeCurrentOutputStream();
+        }
+        super.endStream();
     }
 
     @Override
@@ -158,5 +167,9 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     protected void setRollSize(final String size) {
         this.size = size;
+    }
+
+    protected void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
+        this.splitAggregatedStreams = splitAggregatedStreams;
     }
 }

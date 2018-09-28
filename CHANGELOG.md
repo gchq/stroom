@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#732** : Added `host-address` and `host-name` XSLT functions.
+
+* Issue **#338** : Added `splitAggregatedStreams` property to `StreamAppender`, `FileAppender` and `HDFSFileAppender` so that aggregated streams can be split into separate streams on output.
+
+* Issue **#338** : Added `streamNo` path replacement variable for files to record the stream number within an aggregate.
+
+* Added tests and fixed sorting of server tasks.
+
+* Improved the way text input and output is buffered and recorded when stepping.
+
+* The find and replace filter now resets the match count in between nested streams so that each stream is treated the same way, i.e. it can have the same number of text replacements.
+
+* Added multiple fixes and improvements to the find and replace filter including limited support of input/output recording when stepping.
+
+* Issue **#827** : Added `TextReplacementFilterReader` pipeline element.
+
+* Issue **#736** : Added sorting to server tasks table.
+
+* Inverted the behaviour of `disableQueryInfo` to now be `requireQueryInfo`.
+
+* Issue **#596** : Rolling stream and file appenders can now roll on a cron schedule in addition to a frequency.
+
 * The accept button now enabled on splash screen.
 
 * Added additional event logging to stepping.

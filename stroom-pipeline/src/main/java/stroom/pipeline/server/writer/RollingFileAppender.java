@@ -49,7 +49,6 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILES)
 class RollingFileAppender extends AbstractRollingAppender {
-
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
@@ -134,7 +133,7 @@ class RollingFileAppender extends AbstractRollingAppender {
         }
 
         // Get a path to use.
-        String path = null;
+        String path;
         if (outputPaths.length == 1) {
             path = outputPaths[0];
         } else {
@@ -147,20 +146,32 @@ class RollingFileAppender extends AbstractRollingAppender {
 
     @Override
     void validateSpecificSettings() {
-        if (outputPaths == null || outputPaths.length == 0) {
-            throw new ProcessException("No output paths have been specified");
-        }
+        if (!validatedSettings) {
+            validatedSettings = true;
 
-        if (fileNamePattern == null || fileNamePattern.length() == 0) {
-            throw new ProcessException("No file name has been specified");
-        }
+            if (outputPaths == null || outputPaths.length == 0) {
+                throw new ProcessException("No output paths have been specified");
+            }
 
-        if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
-            throw new ProcessException("No rolled file name has been specified");
-        }
+            if (fileNamePattern == null || fileNamePattern.length() == 0) {
+                throw new ProcessException("No file name has been specified");
+            }
 
-        if (fileNamePattern.equals(rolledFileNamePattern)) {
-            throw new ProcessException("File name and rolled file name cannot be the same");
+            if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
+                throw new ProcessException("No rolled file name has been specified");
+            }
+
+            if (fileNamePattern.equals(rolledFileNamePattern)) {
+                throw new ProcessException("File name and rolled file name cannot be the same");
+            }
+
+            if (frequency != null && frequency <= 0) {
+                throw new ProcessException("Rolling frequency must be greater than 0");
+            }
+
+            if (rollSize <= 0) {
+                throw new ProcessException("Roll size must be greater than 0");
+            }
         }
     }
 
@@ -179,8 +190,50 @@ class RollingFileAppender extends AbstractRollingAppender {
         this.rolledFileNamePattern = rolledFileNamePattern;
     }
 
+    @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
+    public void setFrequency(final String frequency) {
+        if (frequency == null || frequency.trim().length() == 0) {
+            this.frequency = null;
+        } else {
+            try {
+                final Long value = ModelStringUtil.parseDurationString(frequency);
+                if (value == null || value <= 0) {
+                    throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
+                }
+
+                this.frequency = value;
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
+            }
+        }
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when files are rolled.")
+    public void setSchedule(final String expression) {
+        if (expression == null || expression.trim().length() == 0) {
+            this.schedule = null;
+        } else {
+            try {
+                this.schedule = SimpleCron.compile(expression);
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
+            }
+        }
+    }
+
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.", defaultValue = "100M")
     public void setRollSize(final String rollSize) {
-        super.setRollSize(rollSize);
+        if (rollSize != null && rollSize.trim().length() > 0) {
+            try {
+                final Long value = ModelStringUtil.parseIECByteSizeString(rollSize);
+                if (value == null) {
+                    throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
+                }
+
+                this.rollSize = value;
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for max size: " + rollSize);
+            }
+        }
     }
 }

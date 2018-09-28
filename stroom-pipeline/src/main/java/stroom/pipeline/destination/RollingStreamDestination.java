@@ -35,13 +35,14 @@ public class RollingStreamDestination extends RollingDestination {
     private final RASegmentOutputStream segmentOutputStream;
 
     public RollingStreamDestination(final StreamKey key,
-                                    final long frequency,
+                                    final Long frequency,
+                                    final SimpleCron schedule,
                                     final long rollSize,
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
                                     final String nodeName) {
-        super(key, frequency, rollSize, creationTime);
+        super(key, frequency, schedule, rollSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;
