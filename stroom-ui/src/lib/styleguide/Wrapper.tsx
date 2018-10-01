@@ -8,7 +8,7 @@ import HTML5Backend from "react-dnd-html5-backend";
 import FontAwesomeProvider from "../../startup/FontAwesomeProvider";
 import KeyIsDown from "../../lib/KeyIsDown";
 import createStore from "../../startup/store";
-import setupTestServer from "./PollyDecorator";
+import setupTestServer, { TestData } from "./PollyDecorator";
 import { GlobalStoreState } from "../../startup/reducers";
 
 import { fromSetupSampleData } from "../../components/FolderExplorer/test";
@@ -23,7 +23,7 @@ import { testDictionaries } from "../../components/DictionaryEditor/test";
 import { generateGenericTracker } from "../../sections/Processing/tracker.testData";
 import { dataList, dataSource } from "../../sections/DataViewer/test";
 
-const testData = {
+const testData: TestData = {
   docRefTypes: testDocRefsTypes,
   documentTree: fromSetupSampleData,
   elements,

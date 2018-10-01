@@ -1,3 +1,5 @@
+import { DocRefTree } from "../../../types";
+
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -1311,4 +1313,4 @@ export default {
       ]
     }
   ]
-};
+} as DocRefTree;
