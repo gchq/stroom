@@ -18,24 +18,52 @@ import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { splitAt } from "ramda";
 import { compose, withProps } from "recompose";
-// eslint-disable-next-line
-import brace from "brace";
-import "brace/mode/xml";
-import "brace/theme/github";
-import "brace/keybinding/vim";
 
-import ReactTable from "react-table";
+import ReactTable, { RowInfo, Column } from "react-table";
 import "react-table/react-table.css";
 
 import Tooltip from "../../../../components/Tooltip";
 
-const enhance = compose(
+interface Location {
+  streamNo: number;
+  lineNo: number;
+  colNo: number;
+}
+interface ErrorData {
+  elementId: string;
+  location: Location;
+  message: string;
+  severity: number;
+}
+
+interface TableData {
+  elementId: string;
+  stream: string;
+  line: number;
+  col: number;
+  message: string;
+  severity: number;
+}
+
+export interface Props {
+  errors: ErrorData[];
+}
+
+interface WithProps {
+  tableColumns: Column[];
+  tableData: TableData[];
+  metaAndErrors: any[];
+}
+
+interface EnhancedProps extends Props, WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
   withProps(({ errors }) => ({
     tableColumns: [
       {
         Header: "",
         accessor: "severity",
-        Cell: row => {
+        Cell: (row: RowInfo) => {
           const location = (
             <React.Fragment>
               <p>Stream: {row.original.stream}</p>
@@ -44,43 +72,41 @@ const enhance = compose(
             </React.Fragment>
           );
 
-          const position = "right center";
-          if (row.value === "INFO") {
+          //TODO TS upgrade: row.value => row.rowValues. Is this really a RowInfo?
+          if (row.rowValues === "INFO") {
             return (
               <Tooltip
                 trigger={<FontAwesomeIcon color="blue" icon="info-circle" />}
                 content={location}
-                position={position}
               />
             );
-          } else if (row.value === "WARNING") {
+          } else if (row.rowValues === "WARNING") {
             return (
               <Tooltip
                 trigger={
                   <FontAwesomeIcon color="orange" icon="exclamation-circle" />
                 }
                 content={location}
-                position={position}
               />
             );
-          } else if (row.value === "ERROR") {
+          } else if (row.rowValues === "ERROR") {
             return (
               <Tooltip
                 trigger={
                   <FontAwesomeIcon color="red" icon="exclamation-circle" />
                 }
                 content={location}
-                position={position}
               />
             );
-          } else if (row.value === "FATAL") {
+          } else if (row.rowValues === "FATAL") {
             return (
               <Tooltip
                 trigger={<FontAwesomeIcon color="red" icon="bomb" />}
                 content={location}
-                position={position}
               />
             );
+          } else {
+            return undefined;
           }
         },
         width: 35
@@ -98,7 +124,7 @@ const enhance = compose(
     metaAndErrors: splitAt(1, errors)
   })),
   withProps(({ metaAndErrors }) => ({
-    tableData: metaAndErrors[1].map(error => ({
+    tableData: metaAndErrors[1].map((error: ErrorData) => ({
       elementId: error.elementId,
       stream: error.location.streamNo,
       line: error.location.lineNo,
@@ -109,7 +135,12 @@ const enhance = compose(
   }))
 );
 
-const ErrorTable = ({ tableColumns, tableData, errors, metaAndErrors }) => (
+const ErrorTable = ({
+  tableColumns,
+  tableData,
+  errors,
+  metaAndErrors
+}: EnhancedProps) => (
   <div className="ErrorTable__container">
     <div className="ErrorTable__reactTable__container">
       <ReactTable
@@ -122,9 +153,5 @@ const ErrorTable = ({ tableColumns, tableData, errors, metaAndErrors }) => (
     </div>
   </div>
 );
-
-ErrorTable.propTypes = {
-  errors: PropTypes.array.isRequired
-};
 
 export default enhance(ErrorTable);

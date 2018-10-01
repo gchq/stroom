@@ -15,11 +15,6 @@
  */
 
 import * as React from "react";
-import brace from "brace";
-import "brace/mode/xml";
-import "brace/theme/github";
-import "brace/theme/ambiance";
-import "brace/keybinding/vim";
 
 import ThemedAceEditor from "../../../../components/ThemedAceEditor";
 

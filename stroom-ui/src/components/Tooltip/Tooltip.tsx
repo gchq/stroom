@@ -21,7 +21,7 @@ import * as uuidv4 from "uuid/v4";
 
 export interface Props {
   trigger: React.ReactNode;
-  content: string;
+  content: React.ReactNode;
 }
 
 interface WithProps {
