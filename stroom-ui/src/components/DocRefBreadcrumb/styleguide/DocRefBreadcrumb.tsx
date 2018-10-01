@@ -25,7 +25,7 @@ export interface Props {
   docRefUuid: string;
 }
 
-export interface StateProps {
+interface StateProps {
   openDocRef: DocRefType;
   setOpenDocRef: DocRefConsumer;
 }

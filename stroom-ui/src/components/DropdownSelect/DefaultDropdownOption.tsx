@@ -3,13 +3,13 @@ import { withProps } from "recompose";
 
 import { DropdownOptionProps } from "./DropdownSelect";
 
-export interface AddedProps {
+interface WithProps {
   className: string;
 }
 
-export interface EnhancedProps extends DropdownOptionProps, AddedProps {}
+export interface EnhancedProps extends DropdownOptionProps, WithProps {}
 
-const enhance = withProps<AddedProps, DropdownOptionProps>(
+const enhance = withProps<WithProps, DropdownOptionProps>(
   ({ inFocus }: DropdownOptionProps) => {
     let classNames = ["hoverable"];
 

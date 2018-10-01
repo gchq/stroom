@@ -37,16 +37,16 @@ export interface Props {
   listingId: string;
 }
 
-export interface ConnectState extends RenameStoreState {
+interface ConnectState extends RenameStoreState {
   renameDocRefForm: FormState;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   completeDocRefRename: typeof completeDocRefRename;
   renameDocument: typeof renameDocument;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onConfirm: () => void;
   onCancel: () => void;
 }

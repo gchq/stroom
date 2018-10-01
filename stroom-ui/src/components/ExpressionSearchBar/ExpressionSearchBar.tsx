@@ -42,15 +42,15 @@ export interface Props {
   onSearch: (expressionId: string) => void;
 }
 
-export interface ConnectState {
+interface ConnectState {
   expressionState: ExpressionBuilderStoreState;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   expressionChanged: typeof expressionChanged;
 }
 
-export interface WithState {
+interface WithState {
   isExpression: boolean;
   isExpressionVisible: boolean;
   searchString: string;
@@ -59,11 +59,11 @@ export interface WithState {
   searchStringValidationMessages: Array<string>;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onChange: React.ChangeEventHandler<HTMLInputElement>;
 }
 
-export interface WithStateHandlers {
+interface WithStateHandlers {
   setIsExpression: (isExpression: boolean) => WithState;
   setIsExpressionVisible: (isExpressionVisible: boolean) => WithState;
   setSearchString: (searchString: string) => WithState;

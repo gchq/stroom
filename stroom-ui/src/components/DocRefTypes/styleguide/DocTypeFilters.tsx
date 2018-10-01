@@ -27,8 +27,8 @@ export interface Props {
   thisForm: FormState;
 }
 
-export interface ConnectState {}
-export interface ConnectDispatch {}
+interface ConnectState {}
+interface ConnectDispatch {}
 
 const enhance = compose<Props, {}>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(

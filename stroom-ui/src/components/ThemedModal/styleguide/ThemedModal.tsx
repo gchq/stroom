@@ -20,7 +20,7 @@ import { compose, withState } from "recompose";
 import Button from "../../Button";
 import ThemedModal from "../";
 
-export interface StateProps {
+interface StateProps {
   modalIsOpen: boolean;
   setModalIsOpen: (a: boolean) => void;
 }

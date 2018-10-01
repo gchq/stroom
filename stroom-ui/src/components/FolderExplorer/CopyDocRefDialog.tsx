@@ -43,19 +43,19 @@ export interface Props {
   listingId: string;
 }
 
-export interface ConnectState extends CopyStoreState {
+interface ConnectState extends CopyStoreState {
   copyDocRefDialogForm: FormState;
   initialValues: {
     destination?: Tree<DocRefType>;
   };
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   completeDocRefCopy: typeof completeDocRefCopy;
   copyDocuments: typeof copyDocuments;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onCancel: React.MouseEventHandler;
   onConfirm: React.MouseEventHandler;
 }

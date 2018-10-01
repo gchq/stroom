@@ -37,15 +37,15 @@ const themeOptions = [
 
 export interface Props {}
 
-export interface ConnectState {
+interface ConnectState {
   theme: string;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   themeChanged: typeof themeChanged;
 }
 
-export interface Handlers {
+interface Handlers {
   onThemeChanged: React.ChangeEventHandler<HTMLSelectElement>;
 }
 

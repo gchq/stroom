@@ -18,10 +18,10 @@ const { docRefOpened } = actionCreators;
 export interface Props {
   docRef: DocRefType;
 }
-export interface ConnectState {
+interface ConnectState {
   documentTree: DocumentTreeStoreState;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   docRefOpened: typeof docRefOpened;
 }
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}

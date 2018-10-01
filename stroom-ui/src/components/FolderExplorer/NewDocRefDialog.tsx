@@ -42,16 +42,16 @@ export interface Props {
   listingId: string;
 }
 
-export interface ConnectState extends NewDocStoreState {
+interface ConnectState extends NewDocStoreState {
   newDocRefForm: FormState;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   completeDocRefCreation: typeof completeDocRefCreation;
   createDocument: typeof createDocument;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onConfirm: () => void;
   onCancel: () => void;
 }

@@ -22,8 +22,8 @@ import { GlobalStoreState } from "../../../startup/reducers";
 import { StoreState } from "../redux";
 
 export interface Props {}
-export interface ConnectState extends StoreState {}
-export interface ConnectDispatch {}
+interface ConnectState extends StoreState {}
+interface ConnectDispatch {}
 const enhance = compose<{}, StoreState>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ keyIsDown }) => ({ ...keyIsDown })

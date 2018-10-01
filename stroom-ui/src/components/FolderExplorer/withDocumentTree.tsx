@@ -9,11 +9,11 @@ import { DocRefTree } from "../../types";
 
 export interface Props {}
 
-export interface ConnectState {
+interface ConnectState {
   documentTree: DocRefTree;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchDocTree: typeof fetchDocTree;
 }
 

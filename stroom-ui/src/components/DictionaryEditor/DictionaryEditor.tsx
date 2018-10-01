@@ -22,21 +22,21 @@ export interface Props {
   dictionaryUuid: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   dictionaryState: StoreStatePerId;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchDictionary: typeof fetchDictionary;
   dictionaryUpdated: typeof dictionaryUpdated;
   saveDictionary: typeof saveDictionary;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onDataChange: React.ChangeEventHandler<HTMLTextAreaElement>;
   onClickSave: React.MouseEventHandler;
 }
 
-export interface WithProps {
+interface WithProps {
   actionBarItems: Array<ButtonProps>;
 }
 

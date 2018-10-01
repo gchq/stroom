@@ -64,16 +64,16 @@ export interface Props {
   folderUuid: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   folder: DocRefWithLineage;
   selectableItemListing: SelectableItemListingState;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   openDocRef: DocRefConsumer;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   prepareDocRefCreation: typeof prepareDocRefCreation;
   prepareDocRefDelete: typeof prepareDocRefDelete;
   prepareDocRefCopy: typeof prepareDocRefCopy;
@@ -82,7 +82,7 @@ export interface ConnectDispatch {
   fetchDocInfo: typeof fetchDocInfo;
 }
 
-export interface WithProps {
+interface WithProps {
   actionBarItems: Array<ButtonProps>;
 }
 

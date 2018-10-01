@@ -48,14 +48,14 @@ export interface Props {
   editMode?: boolean;
 }
 
-export interface ConnectState {
+interface ConnectState {
   expressionState: StoreStateById;
 }
-export interface ConnectDispatch {}
-export interface WithState {
+interface ConnectDispatch {}
+interface WithState {
   inEditMode: boolean;
 }
-export interface WithStateHandlers {
+interface WithStateHandlers {
   setEditableByUser: (v: boolean) => void;
 }
 

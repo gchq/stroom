@@ -29,13 +29,13 @@ export interface Props {
   docRefs: Array<DocRefType>;
 }
 
-export interface StateProps {
+interface StateProps {
   enteredFolder: DocRefType;
   openedDocRef: DocRefType;
   wentBack: boolean;
 }
 
-export interface StateHandlers {
+interface StateHandlers {
   enterFolder: DocRefConsumer;
   openDocRef: DocRefConsumer;
   goBack: () => void;

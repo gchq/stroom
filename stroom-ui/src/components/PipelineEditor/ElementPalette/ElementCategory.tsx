@@ -26,7 +26,7 @@ export interface WithCategoryIsOpen {
   setIsOpen: (value: boolean) => any;
 }
 
-export interface WithProps {
+interface WithProps {
   displayTitle: string;
 }
 

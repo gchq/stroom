@@ -26,12 +26,12 @@ enum ConfirmState {
   CANCELLED = "cancelled"
 }
 
-export interface StateProps {
+interface StateProps {
   modalIsOpen: boolean;
   isConfirmed: ConfirmState;
 }
 
-export interface StateHandlers {
+interface StateHandlers {
   setModalIsOpen: (a: boolean) => void;
   setIsConfirmed: (a: ConfirmState) => void;
 }

@@ -46,7 +46,7 @@ const isArraysEqual = (a: Array<any>, b: Array<any>) => {
   return a.filter(aItem => b.indexOf(aItem) === -1).length === 0;
 };
 
-export interface AddedProps<TItem> {
+interface WithProps<TItem> {
   listingId: string;
   getKey: (x: TItem) => string;
   items: Array<TItem>;
@@ -56,22 +56,22 @@ export interface AddedProps<TItem> {
   selectionBehaviour?: SelectionBehaviour;
 }
 
-export interface ConnectState {}
-export interface ConnectDispatch {
+interface ConnectState {}
+interface ConnectDispatch {
   selectableListingMounted: typeof selectableListingMounted;
   selectFocussed: typeof selectFocussed;
   focusUp: typeof focusUp;
   focusDown: typeof focusDown;
 }
 
-export type PropsFunc<TItem> = (a: any) => AddedProps<TItem>;
+export type PropsFunc<TItem> = (a: any) => WithProps<TItem>;
 
-export interface Handlers {
+interface Handlers {
   onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
 }
 
-export interface LifecycleProps<TItem>
-  extends AddedProps<TItem>,
+interface LifecycleProps<TItem>
+  extends WithProps<TItem>,
     ConnectState,
     ConnectDispatch,
     Handlers {
@@ -103,10 +103,10 @@ const withSelectableItemListing = <TItem extends any>(
         goBack: goBack || (() => console.log("Going back not implemented"))
       };
     }),
-    connect<ConnectState, ConnectDispatch, AddedProps<TItem>, GlobalStoreState>(
+    connect<ConnectState, ConnectDispatch, WithProps<TItem>, GlobalStoreState>(
       (
         { selectableItemListings, keyIsDown },
-        { listingId }: AddedProps<TItem>
+        { listingId }: WithProps<TItem>
       ) => ({
         selectableItemListing: selectableItemListings.byId[listingId],
         keyIsDown

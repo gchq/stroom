@@ -22,8 +22,8 @@ import { GlobalStoreState } from "../../startup/reducers";
 import ErrorSection from "./ErrorSection";
 
 export interface Props {}
-export interface ConnectState extends ErrorStoreState {}
-export interface ConnectDispatch {}
+interface ConnectState extends ErrorStoreState {}
+interface ConnectDispatch {}
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(

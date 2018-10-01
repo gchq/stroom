@@ -33,12 +33,12 @@ export interface Props {
   openDocRef: DocRefConsumer;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   prepareDocRefCopy: typeof prepareDocRefCopy;
   prepareDocRefMove: typeof prepareDocRefMove;
 }
 
-export interface ConnectState {
+interface ConnectState {
   selectableItemListing: SelectableItemListingState;
   keyIsDown: KeyIsDownStoreState;
 }

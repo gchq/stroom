@@ -31,11 +31,11 @@ export interface Props extends ReactModal.Props {
   onCancel: () => void;
 }
 
-export interface ConnectState {
+interface ConnectState {
   theme: string;
 }
-export interface ConnectDispatch {}
-export interface AddedProps {
+interface ConnectDispatch {}
+interface WithProps {
   dimmer: "inverted" | true;
 }
 
@@ -43,7 +43,7 @@ export interface EnhancedProps
   extends Props,
     ConnectState,
     ConnectDispatch,
-    AddedProps {}
+    WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(

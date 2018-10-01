@@ -26,11 +26,11 @@ export interface Props {
   value: string;
 }
 
-export interface AddedProps {
+interface WithProps {
   options: Array<OptionType>;
 }
 
-export interface EnhancedProps extends Props, WithDocRefTypeProps, AddedProps {}
+export interface EnhancedProps extends Props, WithDocRefTypeProps, WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocRefTypes,

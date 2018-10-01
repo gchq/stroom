@@ -39,22 +39,22 @@ export interface Props {
   xsltUuid: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   xsltState: StoreStateById;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchXslt: typeof fetchXslt;
   xsltUpdated: typeof xsltUpdated;
   saveXslt: typeof saveXslt;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onContentChange: (a: string) => any;
   onClickSave: React.MouseEventHandler;
 }
 
-export interface WithProps {
+interface WithProps {
   actionBarItems: Array<ButtonProps>;
 }
 

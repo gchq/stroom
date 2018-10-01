@@ -56,13 +56,13 @@ const withElementDetailsOpen = withState(
 export interface Props {
   pipelineId: string;
 }
-export interface WithHandlers {
+interface WithHandlers {
   openDocRef: DocRefConsumer;
 }
-export interface ConnectState {
+interface ConnectState {
   pipelineState: PipelineStatesStoreStateById;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchPipeline: typeof fetchPipeline;
   savePipeline: typeof savePipeline;
   startInheritPipeline: typeof startInheritPipeline;

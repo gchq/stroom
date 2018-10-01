@@ -22,10 +22,10 @@ import { fetchDocRefTypes } from "../FolderExplorer/explorerClient";
 
 export interface Props {}
 
-export interface ConnectState {
+interface ConnectState {
   docRefTypes: DocRefTypeList;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchDocRefTypes: typeof fetchDocRefTypes;
 }
 

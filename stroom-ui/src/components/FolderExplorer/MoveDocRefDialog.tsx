@@ -45,19 +45,19 @@ export interface Props {
   listingId: string;
 }
 
-export interface ConnectState extends MoveStoreState {
+interface ConnectState extends MoveStoreState {
   moveDocRefDialogForm: FormState;
   initialValues: {
     destination?: DocRefType;
   };
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   completeDocRefMove: typeof completeDocRefMove;
   moveDocuments: typeof moveDocuments;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onConfirm: () => void;
   onCancel: () => void;
 }

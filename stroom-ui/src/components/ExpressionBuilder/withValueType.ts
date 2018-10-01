@@ -10,7 +10,7 @@ export interface Props {
   dataSource: DataSourceType;
 }
 
-export interface WithProps {
+interface WithProps {
   valueType: string;
 }
 

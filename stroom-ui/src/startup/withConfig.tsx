@@ -8,10 +8,10 @@ import { fetchConfig, Config } from "./config";
 
 export interface Props {}
 
-export interface ConnectState {
+interface ConnectState {
   config: Config;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchConfig: typeof fetchConfig;
 }
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}

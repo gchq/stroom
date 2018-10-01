@@ -18,15 +18,15 @@ export interface Props {
   pipelineId: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   elements: ElementStoreState;
   pipelineState: PipelineStatesStoreStateById;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   pipelineElementDeleteCancelled: typeof pipelineElementDeleteCancelled;
   pipelineElementDeleteConfirmed: typeof pipelineElementDeleteConfirmed;
 }
-export interface WithHandlers {
+interface WithHandlers {
   onCancelDelete: () => void;
   onConfirmDelete: () => void;
 }

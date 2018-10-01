@@ -30,8 +30,8 @@ const { completeDocRefDelete } = actionCreators;
 export interface Props {
   listingId: string;
 }
-export interface ConnectState extends DeleteStoreState {}
-export interface ConnectDispatch {
+interface ConnectState extends DeleteStoreState {}
+interface ConnectDispatch {
   completeDocRefDelete: typeof completeDocRefDelete;
   deleteDocuments: typeof deleteDocuments;
 }

@@ -33,18 +33,18 @@ export interface Props {
   onChange: (a: DocRefTypeList) => any;
 }
 
-export interface AddedProps {
+interface WithProps {
   allSelectState: AllSelectState;
 }
 
-export interface Handlers {
+interface Handlers {
   onAllCheckboxChanged: React.ChangeEventHandler<HTMLInputElement>;
 }
 
 export interface EnhancedProps
   extends Props,
     WithDocRefTypeProps,
-    AddedProps,
+    WithProps,
     Handlers {}
 
 const enhance = compose<EnhancedProps, Props>(

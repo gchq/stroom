@@ -50,16 +50,16 @@ export interface Props {
   pipelineId: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   pipelineState: PipelineStatesStatePerId;
   debuggerState: DebuggerStoreStatePerId;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   startDebugging: typeof startDebugging;
   pipelineElementSelected: typeof pipelineElementSelected;
   fetchPipeline: typeof fetchPipeline;
 }
-export interface WithHandlers {
+interface WithHandlers {
   onNext: () => void;
   onPrevious: () => void;
 }

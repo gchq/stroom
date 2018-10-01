@@ -52,24 +52,22 @@ export interface Props {
   pipelineId: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   elements: ElementStoreState;
   pipelineState: PipelineStatesStoreStateById;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   fetchPipeline: typeof fetchPipeline;
   fetchElements: typeof fetchElements;
   fetchElementProperties: typeof fetchElementProperties;
 }
 
-export interface WithProps {
+interface WithProps {
   elementStyles: {
     [uuid: string]: React.HTMLAttributes<HTMLDivElement>;
   };
 }
-
-export interface ElementStyles {}
 
 export interface EnhancedProps
   extends Props,

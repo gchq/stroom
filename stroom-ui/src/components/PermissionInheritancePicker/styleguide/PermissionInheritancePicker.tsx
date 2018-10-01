@@ -22,10 +22,10 @@ import { GlobalStoreState } from "../../../startup/reducers";
 import { PermissionInheritancePicker } from "../";
 
 export interface Props {}
-export interface ConnectState {
+interface ConnectState {
   thisForm: FormState;
 }
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(

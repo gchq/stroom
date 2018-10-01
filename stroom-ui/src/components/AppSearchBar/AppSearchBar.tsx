@@ -34,11 +34,11 @@ import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 const { searchTermUpdated, navigateToFolder } = appSearchBarActionCreators;
 
-export interface FocusStateProps {
+interface FocusStateProps {
   textFocus: boolean;
 }
 
-export interface FocusHandlerProps {
+interface FocusHandlerProps {
   onSearchFocus: (a: any) => any;
   onSearchBlur: (a: any) => any;
 }
@@ -51,7 +51,7 @@ interface Props {
   className?: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   searchTerm: string;
   searchMode: SearchMode;
   valueToShow: string;
@@ -64,22 +64,22 @@ export interface ConnectState {
   parentFolder?: DocRefType;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   searchApp: typeof searchApp;
   searchTermUpdated: typeof searchTermUpdated;
   navigateToFolder: typeof navigateToFolder;
 }
 
-export interface WithHandlers1 {
+interface WithHandlers1 {
   onThisChange: DocRefConsumer;
 }
 
-export interface WithHandlers2 {
+interface WithHandlers2 {
   onSearchTermChange: React.ChangeEventHandler<HTMLInputElement>;
   thisNavigateToFolder: DocRefConsumer;
 }
 
-export interface WithProps {
+interface WithProps {
   headerTitle: string;
   headerIcon: IconProp;
   headerAction: () => any;

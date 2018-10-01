@@ -16,8 +16,8 @@ export interface Props {
   pickerId: string;
 }
 
-export interface ConnectState {}
-export interface ConnectDispatch {
+interface ConnectState {}
+interface ConnectDispatch {
   switchMode: typeof switchMode;
 }
 

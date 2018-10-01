@@ -16,17 +16,17 @@ export interface Props {
   pipelineId: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   pipelineSettingsForm: FormState;
   settings: PipelineSettingsStoreStatePerId;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   pipelineSettingsClosed: typeof pipelineSettingsClosed;
   pipelineSettingsUpdated: typeof pipelineSettingsUpdated;
 }
 
-export interface WithProps {
+interface WithProps {
   onConfirm: () => any;
   onCancel: () => any;
 }

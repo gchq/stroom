@@ -24,11 +24,11 @@ export interface Props {
   content: string;
 }
 
-export interface AddedProps {
+interface WithProps {
   uuid: string;
 }
 
-export interface EnhancedProps extends Props, AddedProps {}
+export interface EnhancedProps extends Props, WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   // It'd be nice to use the simpler form of tooltip, the one where

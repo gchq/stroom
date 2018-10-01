@@ -24,23 +24,23 @@ export interface Props {
   enterFolder?: DocRefConsumer;
 }
 
-export interface ConnectState {
+interface ConnectState {
   keyIsDown: KeyIsDownStoreState;
   inFocus: boolean;
   isSelected: boolean;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   selectionToggled: typeof selectionToggled;
 }
 
-export interface Handlers {
+interface Handlers {
   onSelect: React.MouseEventHandler<HTMLDivElement>;
   onOpenDocRef: React.MouseEventHandler<HTMLDivElement>;
   onEnterFolder: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export interface AddedProps {
+interface WithProps {
   className: string;
   canEnterFolder: boolean;
 }
@@ -50,7 +50,7 @@ export interface EnhancedProps
     ConnectState,
     ConnectDispatch,
     Handlers,
-    AddedProps {}
+    WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -91,7 +91,7 @@ const enhance = compose<EnhancedProps, Props>(
       e.preventDefault();
     }
   }),
-  withProps<AddedProps, Props & ConnectState & ConnectDispatch & Handlers>(
+  withProps<WithProps, Props & ConnectState & ConnectDispatch & Handlers>(
     ({ dndIsOver, dndCanDrop, isSelected, inFocus, docRef }) => {
       const additionalClasses = [];
       additionalClasses.push("DocRefListingEntry");

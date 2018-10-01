@@ -31,28 +31,26 @@ export interface Props {
   OptionComponent?: React.ComponentType<DropdownOptionProps>;
 }
 
-export interface StateProps {
+interface StateProps {
   textFocus: boolean;
   searchTerm: string;
 }
 
-export interface StateHandlers {
+interface StateHandlers {
   onSearchFocus: () => StateProps;
   onSearchBlur: () => StateProps;
   onSearchTermChange: (x: any) => StateProps;
 }
 
-export interface StateUpdaters
-  extends StateHandlerMap<StateProps>,
-    StateHandlers {}
+interface StateUpdaters extends StateHandlerMap<StateProps>, StateHandlers {}
 
-export interface ConnectState {
+interface ConnectState {
   valueToShow: string;
   selectableItemListing: StoreStatePerId;
 }
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 
-export interface Handlers {
+interface Handlers {
   onSearchKeyDown: React.ChangeEventHandler<HTMLInputElement>;
 }
 

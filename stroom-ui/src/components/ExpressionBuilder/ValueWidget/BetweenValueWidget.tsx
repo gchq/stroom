@@ -7,12 +7,12 @@ export interface Props extends ControlledInput<any> {
   valueType: string;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onFromValueChange: React.ChangeEventHandler<HTMLInputElement>;
   onToValueChange: React.ChangeEventHandler<HTMLInputElement>;
 }
 
-export interface WithProps {
+interface WithProps {
   fromValue: string;
   toValue: string;
 }

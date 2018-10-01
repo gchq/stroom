@@ -13,18 +13,18 @@ const {
 export interface Props {
   expressionId: string;
 }
-export interface ConnectState {
+interface ConnectState {
   expressionState: ExpressionState;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   expressionItemDeleteCancelled: typeof expressionItemDeleteCancelled;
   expressionItemDeleteConfirmed: typeof expressionItemDeleteConfirmed;
 }
-export interface WithHandlers {
+interface WithHandlers {
   onCancel: () => void;
   onConfirm: () => void;
 }
-export interface WithProps {
+interface WithProps {
   isOpen: boolean;
   question: string;
 }

@@ -21,17 +21,17 @@ export interface Props {
   pipelineId: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   byCategory: ElementDefinitionsByCategory;
   recycleBinItems: Array<RecycleBinItem>;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   pipelineElementDeleteRequested: typeof pipelineElementDeleteRequested;
 }
 
 export interface DndProps extends Props, ConnectDispatch, ConnectState {}
 
-export interface WithProps {
+interface WithProps {
   binColour: string;
 }
 

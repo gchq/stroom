@@ -32,8 +32,8 @@ import { GlobalStoreState } from "../../startup/reducers";
 if (brace) console.log("Brace found");
 
 export interface Props extends AceEditorProps {}
-export interface ConnectState extends AceEditorProps {}
-export interface ConnectDispatch {}
+interface ConnectState extends AceEditorProps {}
+interface ConnectDispatch {}
 
 const enhance = connect<
   ConnectState,

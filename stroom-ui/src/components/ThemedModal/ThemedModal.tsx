@@ -28,16 +28,16 @@ export interface Props extends ReactModal.Props {
   actions: JSX.Element;
 }
 
-export interface ConnectState {
+interface ConnectState {
   theme: string;
 }
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 
-export interface AddedProps {
+interface WithProps {
   dimmer: string | boolean;
 }
 
-export interface EnhancedProps extends Props, ConnectState, AddedProps {}
+export interface EnhancedProps extends Props, ConnectState, WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(

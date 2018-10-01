@@ -6,8 +6,8 @@ import { GlobalStoreState } from "../../startup/reducers";
 export interface Props {
   debuggerId: string;
 }
-export interface ConnectState {}
-export interface ConnectDispatch {}
+interface ConnectState {}
+interface ConnectDispatch {}
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(

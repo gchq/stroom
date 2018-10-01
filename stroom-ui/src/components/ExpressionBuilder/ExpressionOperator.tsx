@@ -62,8 +62,8 @@ export interface Props {
   isEnabled: boolean;
 }
 
-export interface ConnectState {}
-export interface ConnectDispatch {
+interface ConnectState {}
+interface ConnectDispatch {
   expressionTermAdded: typeof expressionTermAdded;
   expressionOperatorAdded: typeof expressionOperatorAdded;
   expressionItemUpdated: typeof expressionItemUpdated;
@@ -73,7 +73,7 @@ export interface ConnectDispatch {
 
 export interface DndProps extends Props, ConnectState, ConnectDispatch {}
 
-export interface WithHandlers {
+interface WithHandlers {
   onAddOperator: () => void;
   onAddTerm: () => void;
   onOperatorUpdated: (
@@ -84,7 +84,7 @@ export interface WithHandlers {
   onEnabledToggled: () => void;
 }
 
-export interface WithProps {
+interface WithProps {
   enabledColour: string;
   dndBarColour: string;
   className: string;

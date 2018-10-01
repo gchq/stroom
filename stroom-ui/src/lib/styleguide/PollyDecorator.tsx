@@ -380,11 +380,11 @@ export interface Props {
   testData: TestData;
 }
 
-export interface ConnectState {
+interface ConnectState {
   config: Config;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   resetAllUrls: typeof resetAllUrls;
 }
 

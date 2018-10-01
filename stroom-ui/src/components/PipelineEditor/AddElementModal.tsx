@@ -22,7 +22,7 @@ export interface Props {
   pipelineId: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   newElementForm: FormState;
   initialValues?: {
     name: string;
@@ -31,18 +31,18 @@ export interface ConnectState {
   pendingNewElement: ElementDefinition;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   pipelineElementAddConfirmed: typeof pipelineElementAddConfirmed;
   pipelineElementAddCancelled: typeof pipelineElementAddCancelled;
 }
 
-export interface WithHandlers {
+interface WithHandlers {
   onConfirmNewElement: () => void;
   onCancelNewElement: () => void;
   onUniqueNameCheck: (value: string) => boolean;
 }
 
-export interface WithProps {
+interface WithProps {
   submitDisabled: boolean;
   isOpen: boolean;
 }

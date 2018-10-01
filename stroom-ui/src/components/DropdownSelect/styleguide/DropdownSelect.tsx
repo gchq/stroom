@@ -11,11 +11,11 @@ export interface Props {
   thisForm: FormState;
 }
 
-export interface ConnectState {
+interface ConnectState {
   thisForm: FormState;
 }
 
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 

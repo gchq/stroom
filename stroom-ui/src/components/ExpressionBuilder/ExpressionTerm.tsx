@@ -51,15 +51,15 @@ export interface Props {
   term: ExpressionTermType;
   isEnabled: boolean;
 }
-export interface ConnectState {}
-export interface ConnectDispatch {
+interface ConnectState {}
+interface ConnectDispatch {
   expressionItemUpdated: typeof expressionItemUpdated;
   expressionItemDeleteRequested: typeof expressionItemDeleteRequested;
 }
 
 export interface DndProps extends Props, ConnectState, ConnectDispatch {}
 
-export interface WithHandlers {
+interface WithHandlers {
   onRequestDeleteTerm: () => void;
   onEnabledToggled: () => void;
   onFieldChange: (field: string) => void;
@@ -67,7 +67,7 @@ export interface WithHandlers {
   onValueChange: (value: any) => void;
 }
 
-export interface WithProps {
+interface WithProps {
   conditionOptions: Array<SelectOptionType>;
   fieldOptions: Array<SelectOptionType>;
   className: string;

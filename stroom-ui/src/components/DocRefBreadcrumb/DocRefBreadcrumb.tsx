@@ -13,11 +13,11 @@ export interface Props {
   className?: string;
 }
 
-export interface ConnectState {
+interface ConnectState {
   docRefWithLineage: DocRefWithLineage;
 }
 
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 

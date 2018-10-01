@@ -28,7 +28,7 @@ export interface Props extends LineType {
   lineId: string;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   lineCreated: typeof lineCreated;
   lineDestroyed: typeof lineDestroyed;
 }

@@ -40,10 +40,10 @@ const testData = {
 export interface Props {
   children: React.ReactNode;
 }
-export interface ConnectState {
+interface ConnectState {
   theme: string;
 }
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const WrappedComponent = ({ children, theme = "light" }: EnhancedProps) => (

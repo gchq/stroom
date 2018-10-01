@@ -96,16 +96,16 @@ export interface Props {
   lineElementCreators?: LineElementCreators;
 }
 
-export interface ConnectState {
+interface ConnectState {
   lineContainer: StoreStatePerId;
 }
 
-export interface ConnectDispatch {
+interface ConnectDispatch {
   lineContainerCreated: typeof lineContainerCreated;
   lineContainerDestroyed: typeof lineContainerDestroyed;
 }
 
-export interface AddedProps {
+interface WithProps {
   lines: Array<LineDefinition>;
   thisRect: DOMRect;
 }
@@ -114,7 +114,7 @@ export interface EnhancedProps
   extends Props,
     ConnectState,
     ConnectDispatch,
-    AddedProps {}
+    WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(

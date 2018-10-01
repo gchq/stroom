@@ -34,14 +34,14 @@ import { GlobalStoreState } from "../../startup/reducers";
 const { docRefInfoClosed } = actionCreators;
 
 export interface Props {}
-export interface ConnectState {
+interface ConnectState {
   isOpen: boolean;
   docRefInfo?: DocRefInfoType;
 }
-export interface ConnectDispatch {
+interface ConnectDispatch {
   docRefInfoClosed: typeof docRefInfoClosed;
 }
-export interface WithProps {
+interface WithProps {
   formattedCreateTime: string;
   formattedUpdateTime: string;
 }

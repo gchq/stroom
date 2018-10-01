@@ -27,7 +27,7 @@ export interface Props {
   render: (p: any) => any;
 }
 
-export interface ConnectState {
+interface ConnectState {
   idToken?: string;
   // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
   advertisedUrl?: string;
@@ -35,7 +35,7 @@ export interface ConnectState {
   authenticationServiceUrl?: string;
   authorisationServiceUrl?: string;
 }
-export interface ConnectDispatch {}
+interface ConnectDispatch {}
 
 export interface EnhancedProps extends Props {
   advertisedUrl: string;

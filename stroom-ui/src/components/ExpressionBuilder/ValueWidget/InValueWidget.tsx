@@ -21,21 +21,21 @@ import Button from "../../Button";
 import { ControlledInput } from "../../../types";
 
 export interface Props extends ControlledInput<any> {}
-export interface WithProps {
+interface WithProps {
   valueToShow: string;
   splitValues: Array<string>;
 }
-export interface StateProps {
+interface StateProps {
   composingValue: string;
   inputHasFocus: boolean;
 }
-export interface StateHandlers {
+interface StateHandlers {
   onInputFocus: () => void;
   onInputBlur: () => void;
   onInputChange: React.ChangeEventHandler<HTMLInputElement>;
   onInputSubmit: () => void;
 }
-export interface WithHandlers {
+interface WithHandlers {
   onInputKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
   onTermDelete: (term: string) => void;
 }

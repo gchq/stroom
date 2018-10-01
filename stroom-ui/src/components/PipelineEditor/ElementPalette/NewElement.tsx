@@ -33,7 +33,7 @@ export interface Props {
   elementWithData: RecycleBinItem;
 }
 
-export interface WithFocus {
+interface WithFocus {
   hasFocus: boolean;
   setHasFocus: (value: boolean) => any;
 }
