@@ -51,50 +51,52 @@ public class AppConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         // Bind the application config.        
-        bind(AppConfig.class).toProvider(() -> appConfig);
+        bind(AppConfig.class).toInstance(appConfig);
 
-        bind(BenchmarkClusterConfig.class).toProvider(appConfig::getBenchmarkClusterConfig);
-        bind(ClusterConfig.class).toProvider(appConfig::getClusterConfig);
-        bind(ContentPackImportConfig.class).toProvider(appConfig::getContentPackImportConfig);
-        bind(CoreConfig.class).toProvider(appConfig::getCoreConfig);
-        bind(DataConfig.class).toProvider(appConfig::getDataConfig);
-        bind(DataMetaServiceConfig.class).toProvider(() -> appConfig.getDataConfig().getDataMetaServiceConfig());
-        bind(DataStoreServiceConfig.class).toProvider(() -> appConfig.getDataConfig().getDataStoreServiceConfig());
-        bind(DataFeedConfig.class).toProvider(appConfig::getDataFeedConfig);
-        bind(DataSourceUrlConfig.class).toProvider(appConfig::getDataSourceUrlConfig);
-        bind(ExplorerConfig.class).toProvider(appConfig::getExplorerConfig);
-        bind(ExportConfig.class).toProvider(appConfig::getExportConfig);
-        bind(LifecycleConfig.class).toProvider(appConfig::getLifecycleConfig);
-        bind(NodeConfig.class).toProvider(appConfig::getNodeConfig);
-        bind(StatusConfig.class).toProvider(() -> appConfig.getNodeConfig().getStatusConfig());
-        bind(HeapHistogramConfig.class).toProvider(() -> appConfig.getNodeConfig().getStatusConfig().getHeapHistogramConfig());
-        bind(PipelineConfig.class).toProvider(appConfig::getPipelineConfig);
-        bind(AppenderConfig.class).toProvider(() -> appConfig.getPipelineConfig().getAppenderConfig());
-        bind(XsltConfig.class).toProvider(() -> appConfig.getPipelineConfig().getXsltConfig());
-        bind(PolicyConfig.class).toProvider(appConfig::getPolicyConfig);
-        bind(ProcessConfig.class).toProvider(appConfig::getProcessConfig);
-        bind(PropertyServiceConfig.class).toProvider(appConfig::getPropertyServiceConfig);
-        bind(ProxyAggregationConfig.class).toProvider(appConfig::getProxyAggregationConfig);
-        bind(QueryHistoryConfig.class).toProvider(appConfig::getQueryHistoryConfig);
-        bind(RefDataStoreConfig.class).toProvider(appConfig::getRefDataStoreConfig);
-        bind(SearchConfig.class).toProvider(appConfig::getSearchConfig);
-        bind(ExtractionConfig.class).toProvider(() -> appConfig.getSearchConfig().getExtractionConfig());
-        bind(IndexShardSearchConfig.class).toProvider(() -> appConfig.getSearchConfig().getShardConfig());
-        bind(SecurityConfig.class).toProvider(appConfig::getSecurityConfig);
-        bind(AuthenticationConfig.class).toProvider(() -> appConfig.getSecurityConfig().getAuthenticationConfig());
-        bind(ServiceDiscoveryConfig.class).toProvider(appConfig::getServiceDiscoveryConfig);
-        bind(StatisticsConfig.class).toProvider(appConfig::getStatisticsConfig);
-        bind(HBaseStatisticsConfig.class).toProvider(() -> appConfig.getStatisticsConfig().getHbaseStatisticsConfig());
-        bind(InternalStatisticsConfig.class).toProvider(() -> appConfig.getStatisticsConfig().getInternalStatisticsConfig());
-        bind(SQLStatisticsConfig.class).toProvider(() -> appConfig.getStatisticsConfig().getSqlStatisticsConfig());
-        bind(stroom.statistics.sql.search.SearchConfig.class).toProvider(() -> appConfig.getStatisticsConfig().getSqlStatisticsConfig().getSearchConfig());
-        bind(UiConfig.class).toProvider(appConfig::getUiConfig);
-        bind(stroom.ui.config.shared.ProcessConfig.class).toProvider(() -> appConfig.getUiConfig().getProcessConfig());
-        bind(ThemeConfig.class).toProvider(() -> appConfig.getUiConfig().getThemeConfig());
-        bind(QueryConfig.class).toProvider(() -> appConfig.getUiConfig().getQueryConfig());
-        bind(SplashConfig.class).toProvider(() -> appConfig.getUiConfig().getSplashConfig());
-        bind(ActivityConfig.class).toProvider(() -> appConfig.getUiConfig().getActivityConfig());
-        bind(UrlConfig.class).toProvider(() -> appConfig.getUiConfig().getUrlConfig());
-        bind(VolumeConfig.class).toProvider(appConfig::getVolumeConfig);
+        // AppConfig will instantiate all of its child config objects so
+        // bind each of these instances so we can inject these objects on their own
+        bind(ActivityConfig.class).toInstance(appConfig.getUiConfig().getActivityConfig());
+        bind(AppenderConfig.class).toInstance(appConfig.getPipelineConfig().getAppenderConfig());
+        bind(AuthenticationConfig.class).toInstance(appConfig.getSecurityConfig().getAuthenticationConfig());
+        bind(BenchmarkClusterConfig.class).toInstance(appConfig.getBenchmarkClusterConfig());
+        bind(ClusterConfig.class).toInstance(appConfig.getClusterConfig());
+        bind(ContentPackImportConfig.class).toInstance(appConfig.getContentPackImportConfig());
+        bind(CoreConfig.class).toInstance(appConfig.getCoreConfig());
+        bind(DataConfig.class).toInstance(appConfig.getDataConfig());
+        bind(DataFeedConfig.class).toInstance(appConfig.getDataFeedConfig());
+        bind(DataMetaServiceConfig.class).toInstance(appConfig.getDataConfig().getDataMetaServiceConfig());
+        bind(DataSourceUrlConfig.class).toInstance(appConfig.getDataSourceUrlConfig());
+        bind(DataStoreServiceConfig.class).toInstance(appConfig.getDataConfig().getDataStoreServiceConfig());
+        bind(ExplorerConfig.class).toInstance(appConfig.getExplorerConfig());
+        bind(ExportConfig.class).toInstance(appConfig.getExportConfig());
+        bind(ExtractionConfig.class).toInstance(appConfig.getSearchConfig().getExtractionConfig());
+        bind(HBaseStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getHbaseStatisticsConfig());
+        bind(HeapHistogramConfig.class).toInstance(appConfig.getNodeConfig().getStatusConfig().getHeapHistogramConfig());
+        bind(IndexShardSearchConfig.class).toInstance(appConfig.getSearchConfig().getShardConfig());
+        bind(InternalStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getInternalStatisticsConfig());
+        bind(LifecycleConfig.class).toInstance(appConfig.getLifecycleConfig());
+        bind(NodeConfig.class).toInstance(appConfig.getNodeConfig());
+        bind(PipelineConfig.class).toInstance(appConfig.getPipelineConfig());
+        bind(PolicyConfig.class).toInstance(appConfig.getPolicyConfig());
+        bind(ProcessConfig.class).toInstance(appConfig.getProcessConfig());
+        bind(PropertyServiceConfig.class).toInstance(appConfig.getPropertyServiceConfig());
+        bind(ProxyAggregationConfig.class).toInstance(appConfig.getProxyAggregationConfig());
+        bind(QueryConfig.class).toInstance(appConfig.getUiConfig().getQueryConfig());
+        bind(QueryHistoryConfig.class).toInstance(appConfig.getQueryHistoryConfig());
+        bind(RefDataStoreConfig.class).toInstance(appConfig.getRefDataStoreConfig());
+        bind(SQLStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig());
+        bind(SearchConfig.class).toInstance(appConfig.getSearchConfig());
+        bind(SecurityConfig.class).toInstance(appConfig.getSecurityConfig());
+        bind(ServiceDiscoveryConfig.class).toInstance(appConfig.getServiceDiscoveryConfig());
+        bind(SplashConfig.class).toInstance(appConfig.getUiConfig().getSplashConfig());
+        bind(StatisticsConfig.class).toInstance(appConfig.getStatisticsConfig());
+        bind(StatusConfig.class).toInstance(appConfig.getNodeConfig().getStatusConfig());
+        bind(ThemeConfig.class).toInstance(appConfig.getUiConfig().getThemeConfig());
+        bind(UiConfig.class).toInstance(appConfig.getUiConfig());
+        bind(UrlConfig.class).toInstance(appConfig.getUiConfig().getUrlConfig());
+        bind(VolumeConfig.class).toInstance(appConfig.getVolumeConfig());
+        bind(XsltConfig.class).toInstance(appConfig.getPipelineConfig().getXsltConfig());
+        bind(stroom.statistics.sql.search.SearchConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig().getSearchConfig());
+        bind(stroom.ui.config.shared.ProcessConfig.class).toInstance(appConfig.getUiConfig().getProcessConfig());
     }
 }

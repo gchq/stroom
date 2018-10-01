@@ -1,11 +1,14 @@
 package stroom.volume;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class VolumeConfig {
+public class VolumeConfig implements IsConfig {
+
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
@@ -20,7 +23,8 @@ public class VolumeConfig {
         this.resilientReplicationCount = resilientReplicationCount;
     }
 
-    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to remote ones?")
+    @JsonPropertyDescription("Should the stream store always attempt to write to local volumes before writing to " +
+            "remote ones?")
     public boolean isPreferLocalVolumes() {
         return preferLocalVolumes;
     }
@@ -29,7 +33,10 @@ public class VolumeConfig {
         this.preferLocalVolumes = preferLocalVolumes;
     }
 
-    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', 'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') default is 'RoundRobin'")
+    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
+            "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
+            "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
+            "default is 'RoundRobin'")
     public String getVolumeSelector() {
         return volumeSelector;
     }
@@ -38,12 +45,24 @@ public class VolumeConfig {
         this.volumeSelector = volumeSelector;
     }
 
-    @JsonPropertyDescription("If no existing volumes are present a default volume will be created on application start. The volume will live in the volumes sub directory of the Stroom installation directory")
+    @RequiresRestart(RequiresRestart.RestartScope.UI)
+    @JsonPropertyDescription("If no existing volumes are present a default volume will be created on application " +
+            "start. The volume will live in the volumes sub directory of the Stroom installation directory")
     public boolean isCreateDefaultOnStart() {
         return createDefaultOnStart;
     }
 
     public void setCreateDefaultOnStart(final boolean createDefaultOnStart) {
         this.createDefaultOnStart = createDefaultOnStart;
+    }
+
+    @Override
+    public String toString() {
+        return "VolumeConfig{" +
+                "resilientReplicationCount=" + resilientReplicationCount +
+                ", preferLocalVolumes=" + preferLocalVolumes +
+                ", volumeSelector='" + volumeSelector + '\'' +
+                ", createDefaultOnStart=" + createDefaultOnStart +
+                '}';
     }
 }

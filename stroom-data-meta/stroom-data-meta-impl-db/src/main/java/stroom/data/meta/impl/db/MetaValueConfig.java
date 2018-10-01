@@ -2,12 +2,13 @@ package stroom.data.meta.impl.db;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class MetaValueConfig {
+public class MetaValueConfig implements IsConfig {
     private String deleteAge = "30d";
     private int deleteBatchSize = 1000;
     private int flushBatchSize = 1000;
@@ -50,5 +51,15 @@ public class MetaValueConfig {
 
     public void setAddAsync(final boolean addAsync) {
         this.addAsync = addAsync;
+    }
+
+    @Override
+    public String toString() {
+        return "MetaValueConfig{" +
+                "deleteAge='" + deleteAge + '\'' +
+                ", deleteBatchSize=" + deleteBatchSize +
+                ", flushBatchSize=" + flushBatchSize +
+                ", addAsync=" + addAsync +
+                '}';
     }
 }

@@ -25,12 +25,13 @@ import stroom.servlet.HttpServletRequestHolder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
-    private final Map<String, String> urlMap;
+    private final Map<String, Supplier<String>> urlMap;
 
     private final SecurityContext securityContext;
     private HttpServletRequestHolder httpServletRequestHolder;
@@ -51,10 +52,10 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
         //TODO the path strings are defined in ResourcePaths but this is not accessible from here
         //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
         urlMap = new HashMap<>();
-        urlMap.put("Index", dataSourceUrlConfig.getIndex());
-        urlMap.put("StatisticStore", dataSourceUrlConfig.getStatisticStore());
-        urlMap.put("AnnotationsIndex", dataSourceUrlConfig.getAnnotations());
-        urlMap.put("ElasticIndex", dataSourceUrlConfig.getElasticIndex());
+        urlMap.put("Index", dataSourceUrlConfig::getIndex);
+        urlMap.put("StatisticStore", dataSourceUrlConfig::getStatisticStore);
+        urlMap.put("AnnotationsIndex", dataSourceUrlConfig::getAnnotations);
+        urlMap.put("ElasticIndex", dataSourceUrlConfig::getElasticIndex);
         //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
         //you can run service discovery
 
@@ -64,7 +65,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
 
         LOGGER.info("Using the following local URLs for services:\n" +
                 urlMap.entrySet().stream()
-                        .map(entry -> "    " + entry.getKey() + " - " + entry.getValue())
+                        .map(entry -> "    " + entry.getKey() + " - " + entry.getValue().get())
                         .sorted()
                         .collect(Collectors.joining("\n"))
         );
@@ -89,7 +90,8 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url, httpServletRequestHolder));
+                .map(urlProvider ->
+                        new RemoteDataSourceProvider(securityContext, urlProvider.get(), httpServletRequestHolder));
     }
 
     /**

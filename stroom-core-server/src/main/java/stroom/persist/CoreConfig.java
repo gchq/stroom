@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.util.shared.IsConfig;
+import stroom.util.config.annotations.ReadOnly;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Singleton;
@@ -11,12 +13,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Singleton
-public class CoreConfig {
+public class CoreConfig implements IsConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
     private HibernateConfig hibernateConfig = new HibernateConfig();
-    private String node;
-    private String rack;
     private String temp;
     private int databaseMultiInsertMaxBatchSize = 500;
 
@@ -47,22 +47,7 @@ public class CoreConfig {
         this.hibernateConfig = hibernateConfig;
     }
 
-    public String getNode() {
-        return node;
-    }
-
-    public void setNode(final String node) {
-        this.node = node;
-    }
-
-    public String getRack() {
-        return rack;
-    }
-
-    public void setRack(final String rack) {
-        this.rack = rack;
-    }
-
+    @ReadOnly
     @JsonPropertyDescription("Temp folder to write stuff to. Should only be set per node in application property file")
     public String getTemp() {
         return temp;
@@ -84,5 +69,13 @@ public class CoreConfig {
 
     public void setDatabaseMultiInsertMaxBatchSize(final int databaseMultiInsertMaxBatchSize) {
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
+    }
+
+    @Override
+    public String toString() {
+        return "CoreConfig{" +
+                "temp='" + temp + '\'' +
+                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
+                '}';
     }
 }

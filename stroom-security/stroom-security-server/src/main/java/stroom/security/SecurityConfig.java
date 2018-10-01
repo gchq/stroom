@@ -1,12 +1,14 @@
 package stroom.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class SecurityConfig {
+public class SecurityConfig implements IsConfig {
+
     private AuthenticationConfig authenticationConfig;
 
     public SecurityConfig() {

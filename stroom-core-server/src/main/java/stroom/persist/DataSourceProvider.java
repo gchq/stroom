@@ -3,6 +3,7 @@ package stroom.persist;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
@@ -188,15 +189,15 @@ public class DataSourceProvider implements Provider<DataSource> {
 
             if (version == null) {
                 // If we have no version then this is a new Stroom instance so perform full FlyWay migration.
-                flyway.migrate();
+                migrateDatabase(flyway);
             } else if (usingFlyWay) {
                 // If we are already using FlyWay then allow FlyWay to attempt migration.
-                flyway.migrate();
+                migrateDatabase(flyway);
             } else if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
                 // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
                 flyway.setBaselineVersionAsString("4.0.60");
                 flyway.baseline();
-                flyway.migrate();
+                migrateDatabase(flyway);
             } else {
                 final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
                 LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
@@ -204,10 +205,20 @@ public class DataSourceProvider implements Provider<DataSource> {
             }
 
             return flyway;
-
         }
 
         return null;
+    }
+
+    private void migrateDatabase(final Flyway flyway) {
+        LOGGER.info("Applying Flyway migrations to stroom-config in {} from {}", flyway.getTable(), flyway.getLocations());
+        try {
+            flyway.migrate();
+        } catch (FlywayException e) {
+            LOGGER.error("Error migrating stroom-config database", e);
+            throw e;
+        }
+        LOGGER.info("Completed Flyway migrations for stroom-config in {}", flyway.getTable());
     }
 
     @Override

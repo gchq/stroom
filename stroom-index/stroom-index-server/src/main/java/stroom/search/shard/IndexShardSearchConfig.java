@@ -1,11 +1,13 @@
 package stroom.search.shard;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexShardSearchConfig {
+public class IndexShardSearchConfig implements IsConfig {
+
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 
@@ -38,5 +40,14 @@ public class IndexShardSearchConfig {
 
     public void setMaxThreadsPerTask(final int maxThreadsPerTask) {
         this.maxThreadsPerTask = maxThreadsPerTask;
+    }
+
+    @Override
+    public String toString() {
+        return "IndexShardSearchConfig{" +
+                "maxDocIdQueueSize=" + maxDocIdQueueSize +
+                ", maxThreads=" + maxThreads +
+                ", maxThreadsPerTask=" + maxThreadsPerTask +
+                '}';
     }
 }

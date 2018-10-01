@@ -2,11 +2,13 @@ package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class SplashConfig implements SharedObject {
+public class SplashConfig implements SharedObject, IsConfig {
+
     private boolean enabled;
     private String title = "Splash Screen";
     private String body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";

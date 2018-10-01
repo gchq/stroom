@@ -3,12 +3,13 @@ package stroom.config.app;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.data.meta.impl.db.DataMetaServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataConfig {
+public class DataConfig implements IsConfig {
     private DataMetaServiceConfig dataMetaServiceConfig = new DataMetaServiceConfig();
     private DataStoreServiceConfig dataStoreServiceConfig = new DataStoreServiceConfig();
 

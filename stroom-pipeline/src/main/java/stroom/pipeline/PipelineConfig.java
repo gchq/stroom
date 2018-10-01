@@ -3,12 +3,13 @@ package stroom.pipeline;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XsltConfig;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PipelineConfig {
+public class PipelineConfig implements IsConfig {
     private XsltConfig xsltConfig;
     private AppenderConfig appenderConfig;
 

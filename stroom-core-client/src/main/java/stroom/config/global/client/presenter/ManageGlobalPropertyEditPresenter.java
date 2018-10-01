@@ -122,7 +122,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().getValue().setText(getEntity().getValue());
         getView().getDescription().setText(getEntity().getDescription());
         getView().getDefaultValue().setText(getEntity().getDefaultValue());
-        getView().getSource().setText(getEntity().getSource());
+        getView().getSource().setText(getEntity().getSource().getName());
     }
 
     private void write(final boolean hideOnSave) {
