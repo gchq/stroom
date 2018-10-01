@@ -29,14 +29,13 @@ import { StoreStateById as PipelineStateStoreById } from "./redux/pipelineStates
 import { StoreState as ElementsStoreState } from "./redux/elementReducer";
 import ElementImage from "../ElementImage";
 import { actionCreators } from "./redux";
-import { canMovePipelineElement } from "./pipelineUtils";
+import { canMovePipelineElement, getInitialValues } from "./pipelineUtils";
 import {
   DragDropTypes,
   DragCollectedProps,
   DropCollectedProps
 } from "./dragDropTypes";
 import { isValidChildType } from "./elementUtils";
-import { getInitialValues } from "./ElementDetails";
 import Button from "../Button";
 import {
   ElementDefinition,

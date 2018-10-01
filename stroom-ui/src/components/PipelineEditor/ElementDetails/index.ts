@@ -1,4 +1,3 @@
-import ElementDetails from './ElementDetails';
-import { getInitialValues } from './elementDetailsUtils';
+import ElementDetails from "./ElementDetails";
 
-export { ElementDetails, getInitialValues };
+export { ElementDetails };

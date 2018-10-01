@@ -1,15 +1,16 @@
 package stroom.node;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class StatusConfig {
+public class StatusConfig implements IsConfig {
     private HeapHistogramConfig heapHistogramConfig;
 
-    public StatusConfig() {
+    StatusConfig() {
         heapHistogramConfig = new HeapHistogramConfig();
     }
 
@@ -25,5 +26,12 @@ public class StatusConfig {
 
     public void setHeapHistogramConfig(final HeapHistogramConfig heapHistogramConfig) {
         this.heapHistogramConfig = heapHistogramConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "StatusConfig{" +
+                "heapHistogramConfig=" + heapHistogramConfig +
+                '}';
     }
 }

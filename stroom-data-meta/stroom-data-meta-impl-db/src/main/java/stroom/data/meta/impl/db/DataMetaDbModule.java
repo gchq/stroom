@@ -5,6 +5,9 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.data.meta.api.DataMetaService;
@@ -16,6 +19,7 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class DataMetaDbModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataMetaDbModule.class);
     private static final String FLYWAY_LOCATIONS = "stroom/data/meta/impl/db";
     private static final String FLYWAY_TABLE = "data_meta_schema_history";
 
@@ -59,7 +63,14 @@ public class DataMetaDbModule extends AbstractModule {
         flyway.setLocations(FLYWAY_LOCATIONS);
         flyway.setTable(FLYWAY_TABLE);
         flyway.setBaselineOnMigrate(true);
-        flyway.migrate();
+        LOGGER.info("Applying Flyway migrations to stroom-data-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
+        try {
+            flyway.migrate();
+        } catch (FlywayException e) {
+            LOGGER.error("Error migrating stroom-data-meta database",e);
+            throw e;
+        }
+        LOGGER.info("Completed Flyway migrations for stroom-data-meta in {}", FLYWAY_TABLE);
         return flyway;
     }
 

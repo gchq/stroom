@@ -16,13 +16,17 @@
 
 package stroom.config.common;
 
+import stroom.util.shared.IsConfig;
+import stroom.util.config.annotations.RequiresRestart;
+
 import java.util.Objects;
 
-public class ConnectionPoolConfig {
+public class ConnectionPoolConfig implements IsConfig {
     private boolean cachePrepStmts = true;
     private int prepStmtCacheSize = 250;
     private int prepStmtCacheSqlLimit = 2048;
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public boolean isCachePrepStmts() {
         return cachePrepStmts;
     }
@@ -31,6 +35,7 @@ public class ConnectionPoolConfig {
         this.cachePrepStmts = cachePrepStmts;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public int getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
@@ -39,6 +44,7 @@ public class ConnectionPoolConfig {
         this.prepStmtCacheSize = prepStmtCacheSize;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public int getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
     }
@@ -61,5 +67,14 @@ public class ConnectionPoolConfig {
     public int hashCode() {
 
         return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
+    }
+
+    @Override
+    public String toString() {
+        return "ConnectionPoolConfig{" +
+                "cachePrepStmts=" + cachePrepStmts +
+                ", prepStmtCacheSize=" + prepStmtCacheSize +
+                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
+                '}';
     }
 }

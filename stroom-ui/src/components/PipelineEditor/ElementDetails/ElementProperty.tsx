@@ -18,22 +18,17 @@ import * as React from "react";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 
-import { actionCreators } from "../redux";
 import {
   getParentProperty,
   getChildValue,
+  getCurrentValue,
   getElementValue
 } from "../pipelineUtils";
-import { getDetails } from "./elementDetailsUtils";
+import ElementPropertyFieldDetails from "./ElementPropertyInheritanceInfo";
 import ElementPropertyField from "./ElementPropertyField";
 import { ElementPropertyType } from "../../../types";
 import { GlobalStoreState } from "../../../startup/reducers";
 import { StoreStateById as PipelineStateStoreById } from "../../PipelineEditor/redux/pipelineStatesReducer";
-
-const {
-  pipelineElementPropertyRevertToParent,
-  pipelineElementPropertyRevertToDefault
-} = actionCreators;
 
 export interface Props {
   pipelineId: string;
@@ -44,17 +39,17 @@ export interface Props {
 interface ConnectState {
   pipelineState: PipelineStateStoreById;
 }
-interface ConnectDispatch {
-  pipelineElementPropertyRevertToParent: typeof pipelineElementPropertyRevertToParent;
-  pipelineElementPropertyRevertToDefault: typeof pipelineElementPropertyRevertToDefault;
-}
+interface ConnectDispatch {}
 interface WithProps {
   type: string;
   value: any;
-  inheritanceAdvice: string;
   docRefTypes?: Array<string>;
   name: string;
   description: string;
+  childValue: any;
+  parentValue: any;
+  currentValue: any;
+  defaultValue: any;
 }
 
 export interface EnhancedProps
@@ -65,26 +60,15 @@ export interface EnhancedProps
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
+    ({ pipelineEditor: { pipelineStates } }, { pipelineId }) => {
       const pipelineState = pipelineStates[pipelineId];
       return {
         pipelineState
       };
-    },
-    {
-      pipelineElementPropertyRevertToParent,
-      pipelineElementPropertyRevertToDefault
     }
   ),
   withProps(
-    ({
-      pipelineElementPropertyRevertToParent,
-      pipelineElementPropertyRevertToDefault,
-      pipelineState: { pipeline },
-      elementId,
-      pipelineId,
-      elementPropertyType
-    }) => {
+    ({ pipelineState: { pipeline }, elementId, elementPropertyType }) => {
       const value = getElementValue(
         pipeline,
         elementId,
@@ -101,23 +85,19 @@ const enhance = compose<EnhancedProps, Props>(
         elementPropertyType.name
       );
 
-      const details = getDetails({
+      const currentValue = getCurrentValue(
         value,
         parentValue,
-        defaultValue: elementPropertyType.defaultValue,
-        type: elementPropertyType.type,
-        pipelineElementPropertyRevertToParent,
-        pipelineElementPropertyRevertToDefault,
-        elementId,
-        name: elementPropertyType.name,
-        pipelineId,
-        childValue
-      });
+        elementPropertyType.defaultValue,
+        elementPropertyType.type
+      );
 
       return {
         type: elementPropertyType.type.toLowerCase(),
-        value: details.actualValue,
-        inheritanceAdvice: details.info,
+        currentValue,
+        defaultValue: elementPropertyType.defaultValue,
+        parentValue,
+        childValue,
         docRefTypes: elementPropertyType.docRefTypes,
         name: elementPropertyType.name,
         description: elementPropertyType.description
@@ -134,13 +114,16 @@ const ElementProperty = ({
   pipelineId,
   elementId,
   value,
-  inheritanceAdvice
+  currentValue,
+  parentValue,
+  childValue,
+  defaultValue
 }: EnhancedProps) => (
   <React.Fragment>
     <label>{description}</label>
     <ElementPropertyField
       {...{
-        value,
+        value: currentValue,
         name,
         pipelineId,
         elementId,
@@ -152,7 +135,16 @@ const ElementProperty = ({
       <p>
         The <em>field name</em> of this property is <strong>{name}</strong>
       </p>
-      {inheritanceAdvice}
+      <ElementPropertyFieldDetails
+        pipelineId={pipelineId}
+        elementId={elementId}
+        name={name}
+        value={value}
+        defaultValue={defaultValue}
+        childValue={childValue}
+        parentValue={parentValue}
+        type={type}
+      />
     </div>
   </React.Fragment>
 );

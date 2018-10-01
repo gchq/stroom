@@ -4,6 +4,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 
@@ -12,6 +15,8 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class ExplorerDbModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerDbModule.class);
+
     private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db";
     private static final String FLYWAY_TABLE = "explorer_schema_history";
 
@@ -45,8 +50,15 @@ public class ExplorerDbModule extends AbstractModule {
         flyway.setDataSource(dataSource);
         flyway.setLocations(FLYWAY_LOCATIONS);
         flyway.setTable(FLYWAY_TABLE);
+        LOGGER.info("Applying Flyway migrations to stroom-explorer in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         flyway.setBaselineOnMigrate(true);
-        flyway.migrate();
+        try {
+            flyway.migrate();
+        } catch (FlywayException e) {
+            LOGGER.error("Error migrating stroom-explorer database",e);
+            throw e;
+        }
+        LOGGER.info("Completed Flyway migrations for stroom-explorer in {}", FLYWAY_TABLE);
         return flyway;
     }
 

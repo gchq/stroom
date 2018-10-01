@@ -48,7 +48,7 @@ interface ConnectDispatch {}
 interface WithProps {
   icon: string;
   typeName: string;
-  elementTypeProperties: Array<ElementPropertiesType>;
+  elementTypeProperties: Array<ElementPropertyType>;
 }
 
 export interface EnhancedProps
@@ -90,13 +90,18 @@ const enhance = compose<EnhancedProps, Props>(
   ),
   withProps<WithProps, Props & ConnectState & ConnectDispatch>(
     ({ pipelineState: { pipeline }, elements, selectedElementId }) => {
-      const elementType = pipeline!.merged.elements.add.find(
-        (element: PipelineElementType) => element.id === selectedElementId
-      )!.type;
-      const elementTypeProperties = elements.elementProperties[elementType];
-      const sortedElementTypeProperties = Object.values(
-        elementTypeProperties
-      ).sort(
+      const elementType: string =
+        (pipeline &&
+          pipeline.merged.elements.add &&
+          pipeline.merged.elements.add.find(
+            (element: PipelineElementType) => element.id === selectedElementId
+          )!.type) ||
+        "";
+      const elementTypeProperties: ElementPropertiesType =
+        elements.elementProperties[elementType];
+      const sortedElementTypeProperties: Array<
+        ElementPropertyType
+      > = Object.values(elementTypeProperties).sort(
         (a: ElementPropertyType, b: ElementPropertyType) =>
           a.displayPriority > b.displayPriority ? 1 : -1
       );
@@ -139,14 +144,16 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-          elementTypeProperties.map(elementType => (
-            <ElementProperty
-              key={elementType.name}
-              pipelineId={pipelineId}
-              elementId={selectedElementId}
-              elementType={elementType}
-            />
-          ))
+          elementTypeProperties.map(
+            (elementTypeProperty: ElementPropertyType) => (
+              <ElementProperty
+                key={elementTypeProperty.name}
+                pipelineId={pipelineId}
+                elementId={selectedElementId}
+                elementPropertyType={elementTypeProperty}
+              />
+            )
+          )
         )}
       </form>
     </React.Fragment>

@@ -2,11 +2,12 @@ package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ThemeConfig implements SharedObject {
+public class ThemeConfig implements SharedObject, IsConfig {
     private String backgroundAttachment = "scroll";
     private String backgroundColor = "#1E88E5";
     private String backgroundImage = "none";
@@ -100,5 +101,20 @@ public class ThemeConfig implements SharedObject {
 
     public void setLabelColours(final String labelColours) {
         this.labelColours = labelColours;
+    }
+
+    @Override
+    public String toString() {
+        return "ThemeConfig{" +
+                "backgroundAttachment='" + backgroundAttachment + '\'' +
+                ", backgroundColor='" + backgroundColor + '\'' +
+                ", backgroundImage='" + backgroundImage + '\'' +
+                ", backgroundPosition='" + backgroundPosition + '\'' +
+                ", backgroundRepeat='" + backgroundRepeat + '\'' +
+                ", backgroundOpacity='" + backgroundOpacity + '\'' +
+                ", tubeVisible='" + tubeVisible + '\'' +
+                ", tubeOpacity='" + tubeOpacity + '\'' +
+                ", labelColours='" + labelColours + '\'' +
+                '}';
     }
 }

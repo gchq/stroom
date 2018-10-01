@@ -41,7 +41,7 @@ logging:
       logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
       timeZone: UTC
 
-mode: "proxy"
+mode: "PROXY"
 proxyConfig:
   proxyConfigDir: "/tmp/stroom-proxy/config"
 

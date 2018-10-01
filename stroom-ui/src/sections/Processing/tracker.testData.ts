@@ -1,272 +1,276 @@
-import loremIpsum from 'lorem-ipsum';
+import * as loremIpsum from "lorem-ipsum";
+import { StreamTaskType, QueryDataType } from "../../types";
 
-const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+const getRandomInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min)) + min;
 
-const LOREM_CONFIG = { count: 3, units: 'words' };
+const LOREM_CONFIG = { count: 3, units: "words" };
 
-const createTestFilter = () => ({
+const createTestFilter = (): QueryDataType => ({
   dataSource: {
-    type: 'StreamStore',
-    uuid: '0',
-    name: 'StreamStore',
+    type: "StreamStore",
+    uuid: "0",
+    name: "StreamStore"
   },
   expression: {
-    type: 'operator',
-    op: 'AND',
+    type: "operator",
+    op: "AND",
     children: [
       {
-        type: 'term',
-        field: 'feedName',
-        condition: 'EQUALS',
-        value: loremIpsum(LOREM_CONFIG),
+        type: "term",
+        field: "feedName",
+        condition: "EQUALS",
+        value: loremIpsum(LOREM_CONFIG as any),
         dictionary: null,
-        enabled: true,
+        enabled: true
       },
       {
-        type: 'operator',
-        op: 'OR',
+        type: "operator",
+        op: "OR",
         children: [
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'pipelineUuid',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "pipelineUuid",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'pipelineUuid',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "pipelineUuid",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'pipelineUuid',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "pipelineUuid",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           },
           {
-            type: 'term',
-            field: 'streamTypeName',
-            condition: 'EQUALS',
-            value: loremIpsum(LOREM_CONFIG),
+            type: "term",
+            field: "streamTypeName",
+            condition: "EQUALS",
+            value: loremIpsum(LOREM_CONFIG as any),
             dictionary: null,
-            enabled: true,
+            enabled: true
           }
         ],
-        enabled: true,
-      },
+        enabled: true
+      }
     ],
-    enabled: true,
+    enabled: true
   },
-  limits: true,
+  limits: true
 });
 
 const minimalTracker_undefinedLastPollAge = {
   filterId: 1,
   enabled: true,
   lastPollAge: undefined,
-  pipelineName: loremIpsum(LOREM_CONFIG),
+  pipelineName: loremIpsum(LOREM_CONFIG as any),
   priority: getRandomInt(1, 99),
   filter: createTestFilter(),
-  createUser: 'tester',
-  createdOn: 87134234234,
+  createUser: "tester",
+  createdOn: 87134234234
 };
 
 const minimalTracker_nullLastPollAge = {
   filterId: 2,
   enabled: true,
   lastPollAge: null,
-  pipelineName: loremIpsum(LOREM_CONFIG),
+  pipelineName: loremIpsum(LOREM_CONFIG as any),
   priority: getRandomInt(1, 99),
   filter: createTestFilter(),
-  createUser: 'tester',
-  createdOn: 87134234234,
+  createUser: "tester",
+  createdOn: 87134234234
 };
 
 const minimalTracker_emptyLastPollAge = {
   filterId: 3,
   enabled: true,
-  lastPollAge: '',
-  pipelineName: loremIpsum(LOREM_CONFIG),
+  lastPollAge: "",
+  pipelineName: loremIpsum(LOREM_CONFIG as any),
   priority: getRandomInt(1, 99),
   filter: createTestFilter(),
-  createUser: 'tester',
-  createdOn: 87134234234,
+  createUser: "tester",
+  createdOn: 87134234234
 };
 
 const maximalTracker = {
   filterId: 4,
   enabled: true,
-  pipelineName: loremIpsum(LOREM_CONFIG),
+  pipelineName: loremIpsum(LOREM_CONFIG as any),
   trackerPercent: getRandomInt(0, 100),
   priority: getRandomInt(1, 99),
   filter: createTestFilter(),
-  lastPollAge: '1.5d',
+  lastPollAge: "1.5d",
   taskCount: 4,
   trackerMs: 87834234234,
-  status: 'Active',
+  status: "Active",
   streamCount: 5,
   eventCount: 6,
-  createUser: 'tester',
+  createUser: "tester",
   createdOn: 87134234234,
-  updateUser: 'tester2',
-  updatedOn: 87934234234,
+  updateUser: "tester2",
+  updatedOn: 87934234234
 };
 
 const maximalTracker_withLongName = {
   filterId: 5,
   enabled: true,
-  pipelineName: loremIpsum({ count: 10, units: 'words' }),
+  pipelineName: loremIpsum({ count: 10, units: "words" }),
   trackerPercent: getRandomInt(0, 100),
   priority: getRandomInt(1, 99),
   filter: createTestFilter(),
-  lastPollAge: '1.5d',
+  lastPollAge: "1.5d",
   taskCount: 4,
   trackerMs: 87834234234,
-  status: 'Active',
+  status: "Active",
   streamCount: 5,
   eventCount: 6,
-  createUser: 'tester',
+  createUser: "tester",
   createdOn: 87134234234,
-  updateUser: 'tester2',
-  updatedOn: 87934234234,
+  updateUser: "tester2",
+  updatedOn: 87934234234
 };
 
-export const generateGenericTracker = filterId => ({
+export const generateGenericTracker = (filterId: number): StreamTaskType => ({
   filterId,
   enabled: true,
-  pipelineName: loremIpsum(LOREM_CONFIG),
+  pipelineId: 1,
+  pipelineName: loremIpsum(LOREM_CONFIG as any),
   trackerPercent: getRandomInt(0, 100),
   priority: getRandomInt(1, 99),
+  filterName: loremIpsum(LOREM_CONFIG as any),
   filter: createTestFilter(),
-  lastPollAge: '1.5d',
+  lastPollAge: "1.5d",
   taskCount: 4,
   trackerMs: 87834234234,
-  status: 'Active',
+  status: "Active",
   streamCount: 5,
   eventCount: 6,
-  createUser: 'tester',
+  createUser: "tester",
   createdOn: 87134234234,
-  updateUser: 'tester2',
-  updatedOn: 87934234234,
+  updateUser: "tester2",
+  updatedOn: 87934234234
 });
 
 export const trackers = {
@@ -274,5 +278,5 @@ export const trackers = {
   minimalTracker_nullLastPollAge,
   minimalTracker_emptyLastPollAge,
   maximalTracker,
-  maximalTracker_withLongName,
+  maximalTracker_withLongName
 };

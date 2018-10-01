@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@Singleton
 public class ServiceDiscovererImpl implements ServiceDiscoverer {
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
@@ -30,7 +32,7 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
     removed in Zookeeper 3.4.x, creating a fresh service provider for each call to the same service will
     eventually exhaust the memory of the JVM.
      */
-    private Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
+    private final Map<ExternalService, ServiceProvider<String>> serviceProviders = new HashMap<>();
 
     @Inject
     ServiceDiscovererImpl(final ServiceDiscoveryManager serviceDiscoveryManager) {

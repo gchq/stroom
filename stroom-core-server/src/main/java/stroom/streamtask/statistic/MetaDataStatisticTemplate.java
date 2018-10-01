@@ -16,6 +16,8 @@
 
 package stroom.streamtask.statistic;
 
+import stroom.statistics.internal.InternalStatisticKey;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,7 +27,7 @@ import java.util.List;
 class MetaDataStatisticTemplate implements Serializable {
     private static final long serialVersionUID = -2347332113575225973L;
 
-    private String key;
+    private InternalStatisticKey key;
     private String timeMsAttribute;
     private String incrementAttribute;
     private List<String> tagAttributeList;
@@ -33,12 +35,12 @@ class MetaDataStatisticTemplate implements Serializable {
     MetaDataStatisticTemplate() {
     }
 
-    MetaDataStatisticTemplate(final String key, final String timeMsAttribute,
+    MetaDataStatisticTemplate(final InternalStatisticKey key, final String timeMsAttribute,
                               final List<String> tagAttributeList) {
         this(key, timeMsAttribute, null, tagAttributeList);
     }
 
-    MetaDataStatisticTemplate(final String key, final String timeMsAttribute, final String incrementAttribute,
+    MetaDataStatisticTemplate(final InternalStatisticKey key, final String timeMsAttribute, final String incrementAttribute,
                               final List<String> tagAttributeList) {
         this.key = key;
         this.timeMsAttribute = timeMsAttribute;
@@ -62,11 +64,11 @@ class MetaDataStatisticTemplate implements Serializable {
         this.tagAttributeList = tagAttributeList;
     }
 
-    public String getKey() {
+    public InternalStatisticKey getKey() {
         return key;
     }
 
-    public void setKey(final String key) {
+    public void setKey(final InternalStatisticKey key) {
         this.key = key;
     }
 

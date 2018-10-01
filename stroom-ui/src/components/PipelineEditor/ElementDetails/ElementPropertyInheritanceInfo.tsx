@@ -15,42 +15,47 @@
  */
 
 import * as React from "react";
+import { compose } from "recompose";
+import { connect } from "react-redux";
+
 import Button from "../../Button";
-import { ElementPropertiesType, PipelinePropertyType } from "../../../types";
 
-const getActualValue = (value: PipelinePropertyType, type: string) => {
-  // In case the type of the element doesn't match the type in the data.
-  type = type === "int" ? "integer" : type;
+import { actionCreators } from "../redux";
+import { GlobalStoreState } from "../../../startup/reducers";
 
-  let actualValue;
+const {
+  pipelineElementPropertyRevertToParent,
+  pipelineElementPropertyRevertToDefault
+} = actionCreators;
 
-  if (value !== undefined && value.value[type] !== undefined) {
-    actualValue = value.value[type];
-  } else {
-    actualValue = undefined;
-  }
+export interface Props {
+  pipelineId: string;
+  elementId: string;
+  name: string;
+  value: any;
+  parentValue: any;
+  childValue: any;
+  defaultValue: any;
+  type: string;
+}
 
-  return actualValue;
-};
+interface ConnectState {}
+interface ConnectDispatch {
+  pipelineElementPropertyRevertToParent: typeof pipelineElementPropertyRevertToParent;
+  pipelineElementPropertyRevertToDefault: typeof pipelineElementPropertyRevertToDefault;
+}
 
-const getInitialValues = (
-  elementTypeProperties: ElementPropertiesType,
-  elementProperties: Array<PipelinePropertyType>
-) => {
-  const initialValues = {};
-  Object.keys(elementTypeProperties).map(key => {
-    const elementsProperty = elementProperties.find(
-      element => element.name === key
-    );
-    initialValues[key] = getActualValue(
-      elementsProperty,
-      elementTypeProperties[key].defaultValue,
-      elementTypeProperties[key].type
-    );
-    return null;
-  });
-  return initialValues;
-};
+interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    undefined,
+    {
+      pipelineElementPropertyRevertToParent,
+      pipelineElementPropertyRevertToDefault
+    }
+  )
+);
 
 /**
  * Gets a value for display from the property.
@@ -80,7 +85,7 @@ const getDisplayValue = (value: any, type: string): string => {
  * @param {string} defaultValue The default property
  * @param {string} type The type of the property
  */
-const getDetails = ({
+const ElementPropertyFieldDetails = ({
   pipelineId,
   elementId,
   name,
@@ -91,7 +96,7 @@ const getDetails = ({
   type,
   pipelineElementPropertyRevertToParent,
   pipelineElementPropertyRevertToDefault
-}) => {
+}: EnhancedProps) => {
   const RevertToDefaultButton = (
     <Button
       text="Revert to default"
@@ -117,10 +122,7 @@ const getDetails = ({
   // The property.value object uses integer so we might need to convert
   type = type === "int" ? "integer" : type;
 
-  const isSet = value => value !== undefined && value !== "";
-
-  let actualValue;
-  let info;
+  const isSet = (value: any) => value !== undefined && value !== "";
 
   // We never use the parentValue to set the actualValue -- if there's a parentValue then it'll appear in
   // the merged picture. We just need the parentValue so we know where we are regards inheritance.
@@ -128,8 +130,7 @@ const getDetails = ({
   // we deduce that's the value we want we need to set it as such.
 
   if (value === undefined && parentValue === undefined && isSet(defaultValue)) {
-    actualValue = defaultValue;
-    info = (
+    return (
       <div>
         <p>
           This property is using the default value of{" "}
@@ -146,8 +147,7 @@ const getDetails = ({
     parentValue === undefined &&
     isSet(defaultValue)
   ) {
-    actualValue = value.value[type];
-    info = (
+    return (
       <div>
         <p>
           This property has a default value of{" "}
@@ -163,8 +163,7 @@ const getDetails = ({
     parentValue !== undefined &&
     isSet(defaultValue)
   ) {
-    actualValue = defaultValue;
-    info = (
+    return (
       <div>
         <p>
           This property is currently set to the default value. It's parent has a
@@ -180,11 +179,10 @@ const getDetails = ({
     parentValue !== undefined &&
     isSet(defaultValue)
   ) {
-    actualValue = value.value[type];
     const setByChild =
       childValue !== undefined && childValue.value[type] === value.value[type];
     if (setByChild) {
-      info = (
+      return (
         <div>
           <p>
             This property has a default value of{" "}
@@ -207,7 +205,7 @@ const getDetails = ({
         </div>
       );
     } else {
-      info = (
+      return (
         <div>
           <p>
             This property has a default value of{" "}
@@ -225,8 +223,7 @@ const getDetails = ({
     parentValue === undefined &&
     !isSet(defaultValue)
   ) {
-    actualValue = undefined;
-    info = (
+    return (
       <p>
         This property has no default value, it is not inheriting anything, and
         hasn't been set to anything by a user.
@@ -237,8 +234,7 @@ const getDetails = ({
     parentValue === undefined &&
     !isSet(defaultValue)
   ) {
-    actualValue = value.value[type];
-    info = (
+    return (
       <p>
         This property has no default value and it is not inheriting anything. It
         has been set by the user.
@@ -249,8 +245,7 @@ const getDetails = ({
     parentValue !== undefined &&
     !isSet(defaultValue)
   ) {
-    actualValue = undefined;
-    info = (
+    return (
       <p>
         This property has no default value and has not been set to anything by
         the user, but it is inheriting a value of{" "}
@@ -262,11 +257,10 @@ const getDetails = ({
     parentValue !== undefined &&
     !isSet(defaultValue)
   ) {
-    actualValue = value.value[type];
     const setByChild =
       childValue !== undefined && childValue.value[type] === value.value[type];
     if (setByChild) {
-      info = (
+      return (
         <div>
           <p>This property has no default value.</p>
 
@@ -280,7 +274,7 @@ const getDetails = ({
         </div>
       );
     } else {
-      info = (
+      return (
         <div>
           <p>This property has no default value.</p>
 
@@ -290,7 +284,11 @@ const getDetails = ({
     }
   }
 
-  return { actualValue, info };
+  return (
+    <div>
+      <p>This property is in a weird state</p>
+    </div>
+  );
 };
 
-export { getActualValue, getInitialValues, getDetails };
+export default enhance(ElementPropertyFieldDetails);

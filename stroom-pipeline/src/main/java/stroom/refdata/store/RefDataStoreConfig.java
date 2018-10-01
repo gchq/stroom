@@ -2,12 +2,14 @@ package stroom.refdata.store;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class RefDataStoreConfig {
+public class RefDataStoreConfig implements IsConfig {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
     private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1000;
@@ -20,6 +22,7 @@ public class RefDataStoreConfig {
     private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
     private boolean isReadAheadEnabled = true;
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The full directory path to use for storing the reference data store. It MUST be on " +
             "local disk, NOT network storage, due to use of memory mapped files. The directory will be created " +
             "if it doesn't exist.")
@@ -41,6 +44,7 @@ public class RefDataStoreConfig {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
     public int getMaxReaders() {
         return maxReaders;
@@ -50,10 +54,16 @@ public class RefDataStoreConfig {
         this.maxReaders = maxReaders;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum size in bytes for the ref loader off heap store. There must be " +
             "available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
     public String getMaxStoreSize() {
         return maxStoreSize;
+    }
+
+    @JsonIgnore
+    public long getMaxStoreSizeBytes() {
+        return ModelStringUtil.parseIECByteSizeString(maxStoreSize);
     }
 
     public void setMaxStoreSize(final String maxStoreSize) {
@@ -87,11 +97,7 @@ public class RefDataStoreConfig {
         this.valueBufferCapacity = valueBufferCapacity;
     }
 
-    @JsonIgnore
-    public long getMaxStoreSizeBytes() {
-        return ModelStringUtil.parseIECByteSizeString(maxStoreSize);
-    }
-
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
             "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
@@ -103,5 +109,18 @@ public class RefDataStoreConfig {
 
     public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
         this.isReadAheadEnabled = isReadAheadEnabled;
+    }
+
+    @Override
+    public String toString() {
+        return "RefDataStoreConfig{" +
+                "localDir='" + localDir + '\'' +
+                ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
+                ", maxReaders=" + maxReaders +
+                ", maxStoreSize='" + maxStoreSize + '\'' +
+                ", purgeAge='" + purgeAge + '\'' +
+                ", valueBufferCapacity=" + valueBufferCapacity +
+                ", isReadAheadEnabled=" + isReadAheadEnabled +
+                '}';
     }
 }

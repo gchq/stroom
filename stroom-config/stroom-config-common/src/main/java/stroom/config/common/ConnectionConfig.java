@@ -17,15 +17,18 @@
 package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
+import stroom.util.config.annotations.ReadOnly;
 
 import java.util.Objects;
 
-public class ConnectionConfig {
+public class ConnectionConfig implements IsConfig {
     private String jdbcDriverClassName;
     private String jdbcDriverUrl;
     private String jdbcDriverUsername;
     private String jdbcDriverPassword;
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverClassName() {
         return jdbcDriverClassName;
@@ -35,6 +38,7 @@ public class ConnectionConfig {
         this.jdbcDriverClassName = jdbcDriverClassName;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverUrl() {
         return jdbcDriverUrl;
@@ -44,6 +48,7 @@ public class ConnectionConfig {
         this.jdbcDriverUrl = jdbcDriverUrl;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverUsername() {
         return jdbcDriverUsername;
@@ -53,6 +58,7 @@ public class ConnectionConfig {
         this.jdbcDriverUsername = jdbcDriverUsername;
     }
 
+    @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverPassword() {
         return jdbcDriverPassword;
@@ -91,5 +97,15 @@ public class ConnectionConfig {
     @Override
     public int hashCode() {
         return Objects.hash(jdbcDriverClassName, jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
+    }
+
+    @Override
+    public String toString() {
+        return "ConnectionConfig{" +
+                "jdbcDriverClassName='" + jdbcDriverClassName + '\'' +
+                ", jdbcDriverUrl='" + jdbcDriverUrl + '\'' +
+                ", jdbcDriverUsername='" + jdbcDriverUsername + '\'' +
+                ", jdbcDriverPassword='" + jdbcDriverPassword + '\'' +
+                '}';
     }
 }

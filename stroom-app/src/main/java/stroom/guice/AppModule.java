@@ -4,7 +4,6 @@ import com.google.inject.AbstractModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
-import stroom.proxy.guice.ProxyConfig;
 
 public class AppModule extends AbstractModule {
     private final AppConfig appConfig;
