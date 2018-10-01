@@ -1,6 +1,5 @@
 export interface ItemWithId {
-  // A thing may be of a type but not yet have an assigned ID so it should be nullable
-  uuid?: string;
+  uuid: string;
 }
 
 export interface DocRefType extends ItemWithId {

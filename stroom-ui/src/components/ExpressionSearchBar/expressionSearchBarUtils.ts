@@ -15,10 +15,11 @@
  */
 
 import { DataSourceType, ExpressionItem } from "../../types";
+import * as uuidv4 from "uuid/v4";
 
 interface ValidationResult {
   original: string;
-  parsed: string[];
+  parsed?: string[];
   fieldIsValid: boolean;
   conditionIsValid: boolean;
   valueIsValid: boolean;
@@ -74,11 +75,9 @@ export const processSearchString = (
       // a result with false for everything.
       validationResult = {
         original: criterionObj.criterion,
-        parsed: criterionObj.splitCriterion,
         fieldIsValid: false,
         conditionIsValid: false,
-        valueIsValid: false,
-        term: undefined
+        valueIsValid: false
       };
     }
     validationResults.push(validationResult);
@@ -143,7 +142,8 @@ const toTerm = (field: string, condition: string, value: string) => ({
   condition,
   value,
   dictionary: null,
-  enabled: true
+  enabled: true,
+  uuid: `unsaved_${uuidv4()}` //TODO: A lot relies on uuid existing, so we need to populate this with something.
 });
 
 /**
