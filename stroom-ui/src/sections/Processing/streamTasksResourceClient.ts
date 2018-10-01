@@ -10,7 +10,7 @@ export enum TrackerSelection {
   none = "none"
 }
 
-export const fetchTrackers = (trackerSelection: TrackerSelection) => (
+export const fetchTrackers = (trackerSelection?: TrackerSelection) => (
   dispatch: Dispatch,
   getState: () => GlobalStoreState
 ) => {
