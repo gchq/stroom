@@ -53,7 +53,7 @@ const enhance = compose<EnhancedProps, Props>(
       {
         Header: "",
         accessor: "severity",
-        Cell: (row: RowInfo) => {
+        Cell: (row: RowInfo): React.ReactNode => {
           const location = (
             <React.Fragment>
               <p>Stream: {row.original.stream}</p>
