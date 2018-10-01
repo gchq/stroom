@@ -29,6 +29,8 @@ export const PIPELINE_SAVE_REQUESTED = "PIPELINE_SAVE_REQUESTED";
 export const PIPELINE_SAVED = "PIPELINE_SAVED";
 export const PIPELINE_SETTINGS_UPDATED = "PIPELINE_SETTINGS_UPDATED";
 export const PIPELINE_ELEMENT_SELECTED = "PIPELINE_ELEMENT_SELECTED";
+export const PIPELINE_ELEMENT_SELECTION_CLEARED =
+  "PIPELINE_ELEMENT_SELECTION_CLEARED";
 export const PIPELINE_ELEMENT_MOVED = "PIPELINE_ELEMENT_MOVED";
 export const PIPELINE_ELEMENT_ADD_REQUESTED = "PIPELINE_ELEMENT_ADD_REQUESTED";
 export const PIPELINE_ELEMENT_ADD_CANCELLED = "PIPELINE_ELEMENT_ADD_CANCELLED";
@@ -69,6 +71,9 @@ export interface PipelineElementSelectedAction
   elementId: string;
   initialValues: object; // TODO
 }
+export interface PipelineElementSelectionCleared
+  extends Action<"PIPELINE_ELEMENT_SELECTION_CLEARED">,
+    ActionId {}
 export interface PipelineElementMovedAction
   extends Action<"PIPELINE_ELEMENT_MOVED">,
     ActionId {
@@ -133,6 +138,9 @@ export interface ActionCreators {
   pipelineSaved: ActionCreator<PipelineSavedAction>;
   pipelineSettingsUpdated: ActionCreator<PipelineSettingsUpdatedAction>;
   pipelineElementSelected: ActionCreator<PipelineElementSelectedAction>;
+  pipelineElementSelectionCleared: ActionCreator<
+    PipelineElementSelectionCleared
+  >;
   pipelineElementMoved: ActionCreator<PipelineElementMovedAction>;
   pipelineElementAddRequested: ActionCreator<PipelineElementAddRequestedAction>;
   pipelineElementAddCancelled: ActionCreator<PipelineElementAddCancelledAction>;
@@ -182,6 +190,10 @@ export const actionCreators: ActionCreators = {
     id,
     elementId,
     initialValues
+  }),
+  pipelineElementSelectionCleared: id => ({
+    type: PIPELINE_ELEMENT_SELECTION_CLEARED,
+    id
   }),
   pipelineElementMoved: (id, itemToMove, destination) => ({
     type: PIPELINE_ELEMENT_MOVED,
@@ -323,6 +335,14 @@ export const reducer = prepareReducerById(defaultStatePerId)
       ...state,
       selectedElementId: elementId,
       selectedElementInitialValues: initialValues
+    })
+  )
+  .handleAction<PipelineElementSelectionCleared>(
+    PIPELINE_ELEMENT_SELECTION_CLEARED,
+    (state = defaultStatePerId) => ({
+      ...state,
+      selectedElementId: undefined,
+      selectedElementInitialValues: {}
     })
   )
   .handleAction<PipelineElementDeleteRequestedAction>(

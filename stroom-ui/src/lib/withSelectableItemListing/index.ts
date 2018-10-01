@@ -1,5 +1,5 @@
 import withSelectableItemListing, {
-  LifecycleProps
+  EnhancedProps
 } from "./withSelectableItemListing";
 import {
   actionCreators,
@@ -18,7 +18,7 @@ export {
   reducer,
   StoreState,
   StoreStatePerId,
-  LifecycleProps,
+  EnhancedProps,
   SelectionBehaviour,
   defaultStatePerId
 };

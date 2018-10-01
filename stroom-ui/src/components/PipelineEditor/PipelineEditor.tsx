@@ -18,7 +18,6 @@ import * as React from "react";
 import {
   compose,
   lifecycle,
-  withState,
   branch,
   renderComponent,
   withHandlers
@@ -45,13 +44,11 @@ import { GlobalStoreState } from "../../startup/reducers";
 import { DocRefConsumer } from "../../types";
 import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
 
-const { startInheritPipeline, pipelineSettingsOpened } = actionCreators;
-
-const withElementDetailsOpen = withState(
-  "isElementDetailsOpen",
-  "setElementDetailsOpen",
-  false
-);
+const {
+  startInheritPipeline,
+  pipelineSettingsOpened,
+  pipelineElementSelectionCleared
+} = actionCreators;
 
 export interface Props {
   pipelineId: string;
@@ -67,10 +64,7 @@ interface ConnectDispatch {
   savePipeline: typeof savePipeline;
   startInheritPipeline: typeof startInheritPipeline;
   pipelineSettingsOpened: typeof pipelineSettingsOpened;
-}
-export interface WithElementDetailsOpen {
-  isElementDetailsOpen: boolean;
-  setElementDetailsOpen: (v: boolean) => void;
+  pipelineElementSelectionCleared: typeof pipelineElementSelectionCleared;
 }
 
 export interface EnhancedProps
@@ -78,8 +72,7 @@ export interface EnhancedProps
     RouteComponentProps<any>,
     WithHandlers,
     ConnectState,
-    ConnectDispatch,
-    WithElementDetailsOpen {}
+    ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   withRouter,
@@ -95,7 +88,8 @@ const enhance = compose<EnhancedProps, Props>(
       fetchPipeline,
       savePipeline,
       startInheritPipeline,
-      pipelineSettingsOpened
+      pipelineSettingsOpened,
+      pipelineElementSelectionCleared
     }
   ),
   lifecycle<Props & ConnectState & ConnectDispatch, {}>({
@@ -107,19 +101,17 @@ const enhance = compose<EnhancedProps, Props>(
   branch(
     ({ pipelineState }) => !(pipelineState && pipelineState.pipeline),
     renderComponent(() => <Loader message="Loading pipeline..." />)
-  ),
-  withElementDetailsOpen
+  )
 );
 
 const PipelineEditor = ({
   pipelineId,
-  pipelineState: { pipeline, isDirty },
-  isElementDetailsOpen,
-  setElementDetailsOpen,
+  pipelineState: { selectedElementId, pipeline, isDirty },
   openDocRef,
   savePipeline,
   startInheritPipeline,
-  pipelineSettingsOpened
+  pipelineSettingsOpened,
+  pipelineElementSelectionCleared
 }: EnhancedProps) => (
   <div className="pipeline-editor__container">
     <div className="pipeline-editor__header">
@@ -161,21 +153,17 @@ const PipelineEditor = ({
           {},
           {
             resize: "dynamic",
-            size: isElementDetailsOpen ? "50%" : 0
+            size: selectedElementId !== undefined ? "50%" : 0
           }
         ]}
       >
         <div className="Pipeline-editor__topPanel">
-          <Pipeline
-            pipelineId={pipelineId}
-            onElementSelected={() => setElementDetailsOpen(true)}
-          />
+          <Pipeline pipelineId={pipelineId} />
         </div>
-        {isElementDetailsOpen ? (
+        {selectedElementId !== undefined ? (
           <ElementDetails
             pipelineId={pipelineId}
-            className="Pipeline-editor__details"
-            onClose={() => setElementDetailsOpen(false)}
+            onClose={() => pipelineElementSelectionCleared(false)}
           />
         ) : (
           <div />

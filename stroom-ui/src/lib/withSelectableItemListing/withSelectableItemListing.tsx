@@ -70,7 +70,7 @@ interface Handlers {
   onKeyDownWithShortcuts: React.KeyboardEventHandler<HTMLDivElement>;
 }
 
-interface LifecycleProps<TItem>
+export interface EnhancedProps<TItem>
   extends WithProps<TItem>,
     ConnectState,
     ConnectDispatch,
@@ -81,7 +81,7 @@ interface LifecycleProps<TItem>
 const withSelectableItemListing = <TItem extends any>(
   propsFunc: PropsFunc<TItem>
 ) =>
-  compose<LifecycleProps<TItem>, {}>(
+  compose<EnhancedProps<TItem>, {}>(
     withProps(props => {
       const {
         listingId,
@@ -118,7 +118,7 @@ const withSelectableItemListing = <TItem extends any>(
         focusDown
       }
     ),
-    lifecycle<LifecycleProps<TItem>, {}>({
+    lifecycle<EnhancedProps<TItem>, {}>({
       componentDidUpdate(prevProps, prevState) {
         const {
           selectableListingMounted,

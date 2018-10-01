@@ -15,8 +15,8 @@
  */
 
 import * as React from "react";
-import Button from "../Button";
-import { ElementPropertyType, PipelinePropertyType } from "../../../types";
+import Button from "../../Button";
+import { ElementPropertiesType, PipelinePropertyType } from "../../../types";
 
 const getActualValue = (value: PipelinePropertyType, type: string) => {
   // In case the type of the element doesn't match the type in the data.
@@ -34,7 +34,7 @@ const getActualValue = (value: PipelinePropertyType, type: string) => {
 };
 
 const getInitialValues = (
-  elementTypeProperties: ElementPropertyType,
+  elementTypeProperties: ElementPropertiesType,
   elementProperties: Array<PipelinePropertyType>
 ) => {
   const initialValues = {};

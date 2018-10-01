@@ -32,7 +32,7 @@ import { displayValues } from "./conditions";
 import ValueWidget from "./ValueWidget";
 import { actionCreators } from "./redux";
 import withValueType, {
-  WithProps as WithValueTypeProps
+  EnhancedProps as WithValueTypeProps
 } from "./withValueType";
 import {
   ExpressionTermType,

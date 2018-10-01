@@ -20,7 +20,7 @@ import { searchApp } from "../FolderExplorer/explorerClient";
 import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 import DocRefListingEntry from "../DocRefListingEntry";
 import withSelectableItemListing, {
-  LifecycleProps as SelectableItemListingProps,
+  EnhancedProps as SelectableItemListingProps,
   defaultStatePerId as selectableItemListingDefaultStatePerId,
   StoreStatePerId as SelectableItemListingState
 } from "../../lib/withSelectableItemListing";

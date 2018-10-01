@@ -1,4 +1,4 @@
-import { ElementPropertyTypes } from "../../../types";
+import { ElementPropertiesByElementIdType } from "../../../types";
 
 export default {
   JSONWriter: {
@@ -1331,4 +1331,4 @@ export default {
       displayPriority: 3
     }
   }
-} as ElementPropertyTypes;
+} as ElementPropertiesByElementIdType;

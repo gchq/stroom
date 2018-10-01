@@ -18,7 +18,7 @@ import { compose, withStateHandlers } from "recompose";
 
 import { DocRefType, DocRefConsumer } from "../../../types";
 import withSelectableItemListing, {
-  LifecycleProps as SelectableItemListingHandlers
+  EnhancedProps as SelectableItemListingHandlers
 } from "../../../lib/withSelectableItemListing";
 import DocRefListingEntry from "../DocRefListingEntry";
 
@@ -38,7 +38,7 @@ interface StateProps {
 interface StateHandlers {
   enterFolder: DocRefConsumer;
   openDocRef: DocRefConsumer;
-  goBack: () => void;
+  setWentBack: () => void;
   onClickClear: React.MouseEventHandler<HTMLButtonElement>;
 }
 
@@ -46,7 +46,7 @@ export interface EnhancedProps
   extends Props,
     StateProps,
     StateHandlers,
-    SelectableItemListingHandlers {}
+    SelectableItemListingHandlers<DocRefType> {}
 
 const enhance = compose<EnhancedProps, Props>(
   withStateHandlers(
@@ -58,7 +58,7 @@ const enhance = compose<EnhancedProps, Props>(
     {
       enterFolder: () => (enteredFolder: DocRefType) => ({ enteredFolder }),
       openDocRef: () => (openedDocRef: DocRefType) => ({ openedDocRef }),
-      goBack: () => () => ({ wentBack: true }),
+      setWentBack: () => () => ({ wentBack: true }),
       onClickClear: () => () => ({
         enteredFolder: undefined,
         openedDocRef: undefined,
@@ -67,13 +67,13 @@ const enhance = compose<EnhancedProps, Props>(
     }
   ),
   withSelectableItemListing<DocRefType>(
-    ({ listingId, docRefs, openDocRef, goBack, enterFolder }) => ({
+    ({ listingId, docRefs, openDocRef, setWentBack, enterFolder }) => ({
       listingId,
       items: docRefs,
       openItem: openDocRef,
       getKey: d => d.uuid,
       enterItem: enterFolder,
-      goBack
+      goBack: setWentBack
     })
   )
 );

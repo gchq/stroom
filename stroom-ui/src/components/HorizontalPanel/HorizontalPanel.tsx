@@ -5,11 +5,11 @@ import * as Mousetrap from "mousetrap";
 import Button from "../Button";
 
 export interface Props {
-  contents: React.ReactNode;
   title: React.ReactNode;
   headerMenuItems?: React.ReactNode;
   content: React.ReactNode;
   onClose: (a?: any) => any;
+  className?: string;
 }
 
 export interface EnhancedProps extends Props {}
@@ -30,9 +30,10 @@ const HorizontalPanel = ({
   title,
   headerMenuItems,
   content,
-  onClose
+  onClose,
+  className
 }: EnhancedProps) => (
-  <div className="horizontal-panel">
+  <div className={`horizontal-panel ${className}`}>
     <div className="horizontal-panel__header flat">
       <div className="horizontal-panel__header__title">{title}</div>
       {headerMenuItems}

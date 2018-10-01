@@ -11,7 +11,7 @@ import { GlobalStoreState } from "../../startup/reducers";
 import withSelectableItemListing, {
   defaultStatePerId,
   StoreStatePerId,
-  LifecycleProps as SelectableItemListingHandlers
+  EnhancedProps as SelectableItemListingHandlers
 } from "../../lib/withSelectableItemListing";
 
 import DefaultDropdownOption from "./DefaultDropdownOption";

@@ -16,7 +16,37 @@
 
 import * as React from "react";
 
+import { compose, withProps } from "recompose";
+import { connect } from "react-redux";
+
 import AppSearchBar from "../../AppSearchBar";
+import { actionCreators } from "../redux";
+import { GlobalStoreState } from "../../../startup/reducers";
+
+const { pipelineElementPropertyUpdated } = actionCreators;
+
+export interface Props {
+  value: any;
+  name: string;
+  pipelineId: string;
+  elementId: string;
+  type: string;
+  docRefTypes?: Array<string>;
+}
+interface ConnectState {}
+interface ConnectDispatch {
+  pipelineElementPropertyUpdated: typeof pipelineElementPropertyUpdated;
+}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+    undefined,
+    {
+      pipelineElementPropertyUpdated
+    }
+  )
+);
 
 /**
  *
@@ -35,7 +65,7 @@ const ElementPropertyField = ({
   elementId,
   type,
   docRefTypes
-}) => {
+}: EnhancedProps) => {
   let elementField;
   switch (type) {
     case "boolean":
@@ -143,14 +173,4 @@ const ElementPropertyField = ({
   return elementField;
 };
 
-// ElementPropertyField.propTypes = {
-//   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
-//   value: PropTypes.any,
-//   name: PropTypes.string.isRequired,
-//   pipelineId: PropTypes.string.isRequired,
-//   elementId: PropTypes.string.isRequired,
-//   type: PropTypes.string.isRequired,
-//   docRefTypes: PropTypes.array,
-// }
-
-export default ElementPropertyField;
+export default enhance(ElementPropertyField);

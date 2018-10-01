@@ -2,7 +2,10 @@ import { actionCreators } from "./redux";
 import { wrappedGet } from "../../lib/fetchTracker.redux";
 import { Dispatch } from "redux";
 import { GlobalStoreState } from "../../startup/reducers";
-import { ElementPropertyTypes, ElementDefinition } from "../../types";
+import {
+  ElementPropertiesByElementIdType,
+  ElementDefinition
+} from "../../types";
 
 const { elementsReceived, elementPropertiesReceived } = actionCreators;
 
@@ -34,7 +37,7 @@ export const fetchElementProperties = () => (
   wrappedGet(dispatch, state, url, response =>
     response
       .json()
-      .then((elementProperties: ElementPropertyTypes) =>
+      .then((elementProperties: ElementPropertiesByElementIdType) =>
         dispatch(elementPropertiesReceived(elementProperties))
       )
   );

@@ -21,7 +21,7 @@ export interface Props {
   elementsWithData: Array<RecycleBinItem>;
 }
 
-export interface WithCategoryIsOpen {
+interface WithCategoryIsOpen {
   isOpen: boolean;
   setIsOpen: (value: boolean) => any;
 }

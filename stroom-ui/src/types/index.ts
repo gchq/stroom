@@ -105,24 +105,26 @@ export interface ElementDefinition {
 
 export type ElementDefinitions = Array<ElementDefinition>;
 export type ElementDefinitionsByCategory = {
-  [category: string]: Array<ElementDefinition>;
+  [category: string]: Array<ElementPropertyType>;
 };
 export type ElementDefinitionsByType = { [type: string]: ElementDefinition };
 
 export interface ElementPropertyType {
-  [propName: string]: {
-    elementType: ElementDefinition;
-    name: string;
-    type: string;
-    description: string;
-    defaultValue: string;
-    pipelineReference: boolean;
-    docRefTypes: Array<string> | null;
-    displayPriority: number;
-  };
+  elementType: ElementDefinition;
+  name: string;
+  type: string;
+  description: string;
+  defaultValue: string;
+  pipelineReference: boolean;
+  docRefTypes: Array<string> | null;
+  displayPriority: number;
 }
-export interface ElementPropertyTypes {
-  [pipelineElementType: string]: ElementPropertyType;
+
+export interface ElementPropertiesType {
+  [propName: string]: {};
+}
+export interface ElementPropertiesByElementIdType {
+  [pipelineElementType: string]: ElementPropertiesType;
 }
 
 export interface ControlledInput<T> {

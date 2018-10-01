@@ -43,7 +43,7 @@ import withDocumentTree, {
 import withSelectableItemListing, {
   SelectionBehaviour,
   StoreState as SelectableItemListingState,
-  LifecycleProps as SelectableItemListingProps,
+  EnhancedProps as SelectableItemListingProps,
   defaultStatePerId as defaultSelectableItemListing
 } from "../../lib/withSelectableItemListing";
 import { Props as ButtonProps } from "../Button";

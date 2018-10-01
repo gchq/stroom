@@ -4,7 +4,7 @@ import { prepareReducer } from "../../../lib/redux-actions-ts";
 import { groupByCategory, keyByType } from "../elementUtils";
 import {
   ElementDefinitions,
-  ElementPropertyTypes,
+  ElementPropertiesByElementIdType,
   ElementDefinitionsByCategory,
   ElementDefinitionsByType
 } from "../../../types";
@@ -18,7 +18,7 @@ export interface ElementsReceivedAction extends Action<"ELEMENTS_RECEIVED"> {
 
 export interface ElementPropertiesReceivedAction
   extends Action<"ELEMENT_PROPERTIES_RECEIVED"> {
-  elementProperties: ElementPropertyTypes;
+  elementProperties: ElementPropertiesByElementIdType;
 }
 
 export interface ActionCreators {
@@ -28,7 +28,7 @@ export interface ActionCreators {
 
 export interface StoreState {
   elements: ElementDefinitions;
-  elementProperties: ElementPropertyTypes;
+  elementProperties: ElementPropertiesByElementIdType;
   byCategory: ElementDefinitionsByCategory;
   byType: ElementDefinitionsByType;
 }

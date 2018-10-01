@@ -26,15 +26,45 @@ import {
 } from "../pipelineUtils";
 import { getDetails } from "./elementDetailsUtils";
 import ElementPropertyField from "./ElementPropertyField";
+import { ElementPropertyType } from "../../../types";
+import { GlobalStoreState } from "../../../startup/reducers";
+import { StoreStateById as PipelineStateStoreById } from "../../PipelineEditor/redux/pipelineStatesReducer";
 
 const {
-  pipelineElementPropertyUpdated,
   pipelineElementPropertyRevertToParent,
   pipelineElementPropertyRevertToDefault
 } = actionCreators;
 
-const enhance = compose(
-  connect(
+export interface Props {
+  pipelineId: string;
+  elementId: string;
+  elementPropertyType: ElementPropertyType;
+}
+
+interface ConnectState {
+  pipelineState: PipelineStateStoreById;
+}
+interface ConnectDispatch {
+  pipelineElementPropertyRevertToParent: typeof pipelineElementPropertyRevertToParent;
+  pipelineElementPropertyRevertToDefault: typeof pipelineElementPropertyRevertToDefault;
+}
+interface WithProps {
+  type: string;
+  value: any;
+  inheritanceAdvice: string;
+  docRefTypes?: Array<string>;
+  name: string;
+  description: string;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
       const pipelineState = pipelineStates[pipelineId];
       return {
@@ -42,7 +72,6 @@ const enhance = compose(
       };
     },
     {
-      pipelineElementPropertyUpdated,
       pipelineElementPropertyRevertToParent,
       pipelineElementPropertyRevertToDefault
     }
@@ -54,36 +83,44 @@ const enhance = compose(
       pipelineState: { pipeline },
       elementId,
       pipelineId,
-      elementType
+      elementPropertyType
     }) => {
-      const value = getElementValue(pipeline, elementId, elementType.name);
-      const childValue = getChildValue(pipeline, elementId, elementType.name);
+      const value = getElementValue(
+        pipeline,
+        elementId,
+        elementPropertyType.name
+      );
+      const childValue = getChildValue(
+        pipeline,
+        elementId,
+        elementPropertyType.name
+      );
       const parentValue = getParentProperty(
         pipeline.configStack,
         elementId,
-        elementType.name
+        elementPropertyType.name
       );
 
       const details = getDetails({
         value,
         parentValue,
-        defaultValue: elementType.defaultValue,
-        type: elementType.type,
+        defaultValue: elementPropertyType.defaultValue,
+        type: elementPropertyType.type,
         pipelineElementPropertyRevertToParent,
         pipelineElementPropertyRevertToDefault,
         elementId,
-        name: elementType.name,
+        name: elementPropertyType.name,
         pipelineId,
         childValue
       });
 
       return {
-        type: elementType.type.toLowerCase(),
+        type: elementPropertyType.type.toLowerCase(),
         value: details.actualValue,
         inheritanceAdvice: details.info,
-        docRefTypes: elementType.docRefTypes,
-        name: elementType.name,
-        description: elementType.description
+        docRefTypes: elementPropertyType.docRefTypes,
+        name: elementPropertyType.name,
+        description: elementPropertyType.description
       };
     }
   )
@@ -95,16 +132,14 @@ const ElementProperty = ({
   type,
   docRefTypes,
   pipelineId,
-  pipelineElementPropertyUpdated,
   elementId,
   value,
   inheritanceAdvice
-}) => (
+}: EnhancedProps) => (
   <React.Fragment>
     <label>{description}</label>
     <ElementPropertyField
       {...{
-        pipelineElementPropertyUpdated,
         value,
         name,
         pipelineId,
@@ -121,11 +156,5 @@ const ElementProperty = ({
     </div>
   </React.Fragment>
 );
-
-// ElementProperty.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-//   elementId: PropTypes.string.isRequired,
-//   elementType: PropTypes.object.isRequired,
-// };
 
 export default enhance(ElementProperty);

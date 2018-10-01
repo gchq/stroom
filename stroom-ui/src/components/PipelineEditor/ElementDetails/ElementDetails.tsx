@@ -22,9 +22,43 @@ import { reduxForm } from "redux-form";
 import ElementImage from "../../ElementImage";
 import HorizontalPanel from "../../HorizontalPanel";
 import ElementProperty from "./ElementProperty";
+import { StoreStateById as PipelineStateStoreById } from "../../PipelineEditor/redux/pipelineStatesReducer";
+import { StoreState as ElementStoreState } from "../redux/elementReducer";
+import { GlobalStoreState } from "../../../startup/reducers";
+import {
+  PipelineElementType,
+  ElementPropertiesType,
+  ElementDefinition,
+  ElementPropertyType
+} from "../../../types";
 
-const enhance = compose(
-  connect(
+export interface Props {
+  pipelineId: string;
+  onClose: () => void;
+}
+
+interface ConnectState {
+  elements: ElementStoreState;
+  selectedElementId: string;
+  pipelineState: PipelineStateStoreById;
+  form: string;
+  initialValues: object;
+}
+interface ConnectDispatch {}
+interface WithProps {
+  icon: string;
+  typeName: string;
+  elementTypeProperties: Array<ElementPropertiesType>;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithProps {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ pipelineEditor: { pipelineStates, elements } }, { pipelineId }) => {
       const pipelineState = pipelineStates[pipelineId];
       let initialValues;
@@ -54,22 +88,29 @@ const enhance = compose(
       </div>
     ))
   ),
-  withProps(({ pipelineState: { pipeline }, elements, selectedElementId }) => {
-    const elementType = pipeline.merged.elements.add.find(
-      element => element.id === selectedElementId
-    ).type;
-    const elementTypeProperties = elements.elementProperties[elementType];
-    const sortedElementTypeProperties = Object.values(
-      elementTypeProperties
-    ).sort((a, b) => a.displayPriority > b.displayPriority);
+  withProps<WithProps, Props & ConnectState & ConnectDispatch>(
+    ({ pipelineState: { pipeline }, elements, selectedElementId }) => {
+      const elementType = pipeline!.merged.elements.add.find(
+        (element: PipelineElementType) => element.id === selectedElementId
+      )!.type;
+      const elementTypeProperties = elements.elementProperties[elementType];
+      const sortedElementTypeProperties = Object.values(
+        elementTypeProperties
+      ).sort(
+        (a: ElementPropertyType, b: ElementPropertyType) =>
+          a.displayPriority > b.displayPriority ? 1 : -1
+      );
 
-    return {
-      icon: elements.elements.find(e => e.type === elementType).icon,
-      typeName: elementType,
-      elementTypeProperties: sortedElementTypeProperties,
-      selectedElementId
-    };
-  })
+      return {
+        icon: elements.elements.find(
+          (e: ElementDefinition) => e.type === elementType
+        )!.icon,
+        typeName: elementType,
+        elementTypeProperties: sortedElementTypeProperties,
+        selectedElementId
+      };
+    }
+  )
 );
 
 const ElementDetails = ({
@@ -79,7 +120,7 @@ const ElementDetails = ({
   elementTypeProperties,
   selectedElementId,
   typeName
-}) => {
+}: EnhancedProps) => {
   const title = (
     <div className="element-details__title">
       <ElementImage icon={icon} />
@@ -100,9 +141,9 @@ const ElementDetails = ({
         ) : (
           elementTypeProperties.map(elementType => (
             <ElementProperty
+              key={elementType.name}
               pipelineId={pipelineId}
               elementId={selectedElementId}
-              key={elementType.name}
               elementType={elementType}
             />
           ))
@@ -117,16 +158,8 @@ const ElementDetails = ({
       title={title}
       onClose={() => onClose()}
       content={content}
-      titleColumns={6}
-      menuColumns={10}
-      headerSize="h3"
     />
   );
 };
-
-// ElementDetails.propTypes = {
-//   pipelineId: PropTypes.string.isRequired,
-//   onClose: PropTypes.func,
-// };
 
 export default enhance(ElementDetails);
