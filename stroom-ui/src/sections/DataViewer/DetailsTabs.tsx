@@ -19,7 +19,13 @@ import * as moment from "moment";
 
 import DataDetails from "./DataDetails";
 
-const DetailsTabs = ({ data, details, dataViewerId }) => {
+export interface Props {
+  data: any;
+  details: any;
+  dataViewerId: string;
+}
+
+const DetailsTabs = ({ data, details, dataViewerId }: Props) => {
   const panes = [
     {
       menuItem: "Data",
@@ -109,7 +115,7 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
         <div className="tab-pane">
           <div className="StreamDetails__container">
             <div className="StreamDetails__table__container">
-              <table definition compact="very" className="StreamDetails__table">
+              <table className="StreamDetails__table">
                 <tbody>
                   TODO
                   {/* {Object.keys(details.nameValueMap).map((key, index) => {
@@ -138,11 +144,7 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
         <div className="tab-pane">
           <div className="RetentionDetails__container">
             <div className="RetentionDetails__table__container">
-              <table
-                definition
-                compact="very"
-                className="RetentionDetails__table"
-              >
+              <table className="RetentionDetails__table">
                 <tbody>
                   <tr>
                     <td>Age</td>
@@ -173,11 +175,5 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
     </div>
   );
 };
-
-// DetailsTabs.propTypes = {
-//   data: PropTypes.object,
-//   details: PropTypes.object,
-//   dataViewerId: PropTypes.string.isRequired,
-// };
 
 export default DetailsTabs;
