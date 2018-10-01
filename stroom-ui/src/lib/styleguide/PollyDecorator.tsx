@@ -15,10 +15,12 @@
  */
 import * as uuidv4 from "uuid/v4";
 import { connect } from "react-redux";
-import { compose, lifecycle, branch, renderComponent } from "recompose";
 import { compose, lifecycle } from "recompose";
 import { Polly } from "@pollyjs/core";
-import FetchAdapter from "@pollyjs/adapter-fetch";
+import FetchAdapter, {
+  HttpRequest,
+  HttpResponse
+} from "@pollyjs/adapter-fetch";
 
 // Register the fetch adapter so its accessible by all future polly instances
 Polly.register(FetchAdapter);
@@ -37,6 +39,18 @@ import { actionCreators as fetchActionCreators } from "../../lib/fetchTracker.re
 import withConfig from "../../startup/withConfig";
 import { Config } from "../../startup/config";
 import { DocRefTypeList } from "../../components/DocRefTypes/redux";
+import {
+  DocRefType,
+  DocRefTree,
+  DocRefWithLineage,
+  PipelineModelType,
+  ElementDefinitions,
+  ElementPropertiesByElementIdType,
+  Dictionary,
+  DataSourceType,
+  StreamAttributeMapResult,
+  StreamTaskType
+} from "../../types";
 
 const { resetAllUrls } = fetchActionCreators;
 
@@ -53,34 +67,23 @@ const testConfig: Config = {
 };
 
 export interface TestData {
-  docRefTypes?: DocRefTypeList;
+  docRefTypes: DocRefTypeList;
+  documentTree: DocRefTree;
+  pipelines: {
+    [pipelineId: string]: PipelineModelType;
+  };
+  elements: ElementDefinitions;
+  elementProperties: ElementPropertiesByElementIdType;
+  xslt: {
+    [xsltId: string]: string;
+  };
+  dictionaries: {
+    [dictionaryId: string]: Dictionary;
+  };
+  trackers: Array<StreamTaskType>;
+  dataList: StreamAttributeMapResult;
+  dataSource: DataSourceType;
 }
-
-// PollyComponent.propTypes = {
-//   documentTree: PropTypes.object.isRequired,
-//   docRefTypes: PropTypes.array.isRequired,
-//   pipelines: PropTypes.object.isRequired,
-//   elements: PropTypes.array.isRequired,
-//   elementProperties: PropTypes.object.isRequired,
-//   xslt: PropTypes.object.isRequired,
-//   dictionaries: PropTypes.object.isRequired,
-//   trackers: PropTypes.array.isRequired,
-//   dataList: PropTypes.object.isRequired,
-//   dataSource: PropTypes.object.isRequired,
-// };
-
-// PollyComponent.defaultProps = {
-//   documentTree: {},
-//   docRefTypes: [],
-//   pipelines: {},
-//   elements: [],
-//   elementProperties: {},
-//   xslt: {},
-//   dictionaries: {},
-//   trackers: [],
-//   dataList: {},
-//   dataSource: {},
-// };
 
 // The server is created as a singular thing for the whole app
 // Much easier to manage it this way
@@ -93,19 +96,17 @@ const { server } = polly;
 
 // The cache acts as a singular global object who's contents are replaced
 export interface TestCache {
-  data: TestData;
+  data?: TestData;
 }
 
-const testCache: TestCache = {
-  data: {}
-};
+const testCache: TestCache = {};
 
 const startTime = Date.now();
 
 // This is normally deployed as part of the server
 server.get("*.hot-update.json").passthrough();
 
-server.get("/config.json").intercept((req: any, res: any) => {
+server.get("/config.json").intercept((req: HttpRequest, res: any) => {
   res.json(testConfig);
 });
 
@@ -113,21 +114,26 @@ server.get("/config.json").intercept((req: any, res: any) => {
 // // Get Explorer Tree
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/all`)
-  .intercept((req, res) => {
-    res.json(testCache.data.documentTree);
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.documentTree);
   });
 // Search
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/search`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const { searchTerm, docRefType, pageOffset, pageSize } = req.query;
 
-    let searchResults = [];
+    interface TempType extends DocRefType {
+      lineage: Array<DocRefType>;
+      lineageNames: string;
+    }
+
+    let searchResults: Array<TempType> = [];
     const searchTermValid = searchTerm && searchTerm.length > 1;
     const docRefTypeValid = docRefType && docRefType.length > 1;
 
     if (searchTermValid || docRefTypeValid) {
-      iterateNodes(testCache.data.documentTree, (lineage, node) => {
+      iterateNodes(testCache.data!.documentTree, (lineage, node) => {
         searchResults.push({
           name: node.name,
           type: node.type,
@@ -143,7 +149,7 @@ server
         search.addIndex("lineageNames");
         search.addDocuments(searchResults);
 
-        searchResults = search.search(searchTerm);
+        searchResults = search.search(searchTerm) as Array<TempType>;
       }
 
       if (docRefTypeValid) {
@@ -168,11 +174,11 @@ server
       testConfig.stroomBaseServiceUrl
     }/explorer/v1/info/:docRefType/:docRefUuid`
   )
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const { node: docRef } = findItem(
-      testCache.data.documentTree,
+      testCache.data!.documentTree,
       req.params.docRefUuid
-    );
+    )!;
     const info = {
       docRef,
       createTime: startTime,
@@ -186,18 +192,18 @@ server
 // Get Document Types
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/docRefTypes`)
-  .intercept((req: any, res: any) => {
-    res.json(testCache.data.docRefTypes);
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.docRefTypes);
   });
 // // Create Document
 server
   .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/create`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const {
       docRefType,
       docRefName,
-      destinationFolderRef,
-      permissionInheritance
+      destinationFolderRef
+      //permissionInheritance
     } = JSON.parse(req.body);
 
     const newDocRef = {
@@ -206,17 +212,17 @@ server
       name: docRefName,
       children: docRefType === "Folder" ? [] : undefined
     };
-    testCache.data.documentTree = addItemsToTree(
-      testCache.data.documentTree,
+    testCache.data!.documentTree = addItemsToTree(
+      testCache.data!.documentTree,
       destinationFolderRef.uuid,
       [newDocRef]
     );
 
-    res.json(testCache.data.documentTree);
+    res.json(testCache.data!.documentTree);
   });
 
 // Copies need to be deep
-const copyDocRef = docRef => ({
+const copyDocRef = (docRef: DocRefTree): DocRefTree => ({
   uuid: uuidv4(),
   type: docRef.type,
   name: `${docRef.name}-copy-${uuidv4()}`,
@@ -226,76 +232,76 @@ const copyDocRef = docRef => ({
 // Copy Document
 server
   .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/copy`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
     const copies = docRefs
-      .map(d => findItem(testCache.data.documentTree, d.uuid))
-      .map(d => d.node)
+      .map((d: DocRefType) => findItem(testCache.data!.documentTree, d.uuid))
+      .map((d: DocRefWithLineage) => d.node)
       .map(copyDocRef);
-    testCache.data.documentTree = addItemsToTree(
-      testCache.data.documentTree,
+    testCache.data!.documentTree = addItemsToTree(
+      testCache.data!.documentTree,
       destinationFolderRef.uuid,
       copies
     );
 
-    res.json(testCache.data.documentTree);
+    res.json(testCache.data!.documentTree);
   });
 // Move Document
 server
   .put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/move`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-    const docRefUuidsToDelete = docRefs.map(d => d.uuid);
+    const docRefUuidsToDelete = docRefs.map((d: DocRefType) => d.uuid);
     const itemsToMove = findByUuids(
-      testCache.data.documentTree,
+      testCache.data!.documentTree,
       docRefUuidsToDelete
     );
-    testCache.data.documentTree = deleteItemsFromTree(
-      testCache.data.documentTree,
+    testCache.data!.documentTree = deleteItemsFromTree(
+      testCache.data!.documentTree,
       docRefUuidsToDelete
     );
-    testCache.data.documentTree = addItemsToTree(
-      testCache.data.documentTree,
+    testCache.data!.documentTree = addItemsToTree(
+      testCache.data!.documentTree,
       destinationFolderRef.uuid,
       itemsToMove
     );
 
-    res.json(testCache.data.documentTree);
+    res.json(testCache.data!.documentTree);
   });
 // Rename Document
 server
   .put(`${testConfig.stroomBaseServiceUrl}/explorer/v1/rename`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const { docRef, name } = JSON.parse(req.body);
     res.json({ ...docRef, name });
   });
 // Delete Document
 server
   .delete(`${testConfig.stroomBaseServiceUrl}/explorer/v1/delete`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     const docRefs = JSON.parse(req.body);
-    res.json(testCache.data.documentTree);
+    res.json(testCache.data!.documentTree);
   });
 
 // Elements Resource
 server
   .get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elements`)
-  .intercept((req, res) => {
-    res.json(testCache.data.elements);
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.elements);
   });
 server
   .get(`${testConfig.stroomBaseServiceUrl}/elements/v1/elementProperties`)
-  .intercept((req, res) => {
-    res.json(testCache.data.elementProperties);
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.elementProperties);
   });
 
 // Pipeline Resource
 server
   .get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
-  .intercept((req, res) => {
-    const pipeline = testCache.data.pipelines[req.params.pipelineId];
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    const pipeline = testCache.data!.pipelines[req.params.pipelineId];
     if (pipeline) {
       res.json(pipeline);
     } else {
@@ -304,10 +310,10 @@ server
   });
 server
   .get(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/`)
-  .intercept((req, res) => {
+  .intercept((req: HttpRequest, res: HttpResponse) => {
     res.json({
-      total: Object.keys(testCache.data.pipelines).length,
-      pipelines: Object.keys(testCache.data.pipelines).map(p => ({
+      total: Object.keys(testCache.data!.pipelines).length,
+      pipelines: Object.keys(testCache.data!.pipelines).map(p => ({
         uuid: p,
         name: p,
         type: "Pipeline"
@@ -316,13 +322,13 @@ server
   });
 server
   .post(`${testConfig.stroomBaseServiceUrl}/pipelines/v1/:pipelineId`)
-  .intercept((req, res) => res.sendStatus(200));
+  .intercept((req: HttpRequest, res: HttpResponse) => res.sendStatus(200));
 
 // XSLT Resource
 server
   .get(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
-  .intercept((req, res) => {
-    const xslt = testCache.data.xslt[req.params.xsltUuid];
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    const xslt = testCache.data!.xslt[req.params.xsltUuid];
     if (xslt) {
       res.setHeader("Content-Type", "application/xml");
       res.send(xslt);
@@ -332,13 +338,13 @@ server
   });
 server
   .post(`${testConfig.stroomBaseServiceUrl}/xslt/v1/:xsltUuid`)
-  .intercept((req, res) => res.sendStatus(200));
+  .intercept((req: HttpRequest, res: HttpResponse) => res.sendStatus(200));
 
 // Dictionary Resource
 server
   .get(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`)
-  .intercept((req, res) => {
-    const dict = testCache.data.dictionaries[req.params.dictionaryUuid];
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    const dict = testCache.data!.dictionaries[req.params.dictionaryUuid];
     if (dict) {
       res.json(dict);
     } else {
@@ -347,16 +353,16 @@ server
   });
 server
   .post(`${testConfig.stroomBaseServiceUrl}/dictionary/v1/:dictionaryUuid`)
-  .intercept((req, res) => res.sendStatus(200));
+  .intercept((req: HttpRequest, res: HttpResponse) => res.sendStatus(200));
 
 // Stream Task Resource (for Tracker Dashboard)
 server
   .get(`${testConfig.stroomBaseServiceUrl}/streamTasks/v1/`)
-  .intercept((req, res) =>
+  .intercept((req: HttpRequest, res: HttpResponse) =>
     res.json({
-      streamTasks: testCache.data.trackers || [],
-      totalStreamTasks: testCache.data.trackers
-        ? testCache.data.trackers.length
+      streamTasks: testCache.data!.trackers || [],
+      totalStreamTasks: testCache.data!.trackers
+        ? testCache.data!.trackers.length
         : 0
     })
   );
@@ -367,14 +373,18 @@ server
  */
 server
   .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/dataSource`)
-  .intercept((req, res) => res.json(testCache.data.dataSource));
+  .intercept((req: HttpRequest, res: HttpResponse) =>
+    res.json(testCache.data!.dataSource)
+  );
 
 /**
  * This responds with a list of streamAttributeMaps
  */
 server
   .get(`${testConfig.stroomBaseServiceUrl}/streamattributemap/v1/`)
-  .intercept((req, res) => res.json(testCache.data.dataList));
+  .intercept((req: HttpRequest, res: HttpResponse) =>
+    res.json(testCache.data!.dataList)
+  );
 
 export interface Props {
   testData: TestData;
@@ -408,7 +418,7 @@ const setupTestServer = (testData: TestData) =>
         // Replace all the 'server side data' with the properties passed in
         testCache.data = {
           documentTree: { ...testData.documentTree },
-          docRefTypes: testData.docRefTypes
+          docRefTypes: testData.docRefTypes,
           pipelines: { ...testData.pipelines },
           elements: [...testData.elements],
           elementProperties: { ...testData.elementProperties },

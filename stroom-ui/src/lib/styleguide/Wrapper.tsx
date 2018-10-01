@@ -26,7 +26,6 @@ import { dataList, dataSource } from "../../sections/DataViewer/test";
 const testData = {
   docRefTypes: testDocRefsTypes,
   documentTree: fromSetupSampleData,
-
   elements,
   elementProperties,
   pipelines: testPipelines,

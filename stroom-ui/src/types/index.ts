@@ -314,13 +314,13 @@ export interface StreamTaskType {
   filter: QueryDataType;
 
   // supporting data
-  filterId: number;
-  createUser: string;
-  createdOn: number;
-  updateUser: string;
-  updatedOn: number;
-  minStreamId: number;
-  minEventId: number;
+  filterId?: number;
+  createUser?: string;
+  createdOn?: number;
+  updateUser?: string;
+  updatedOn?: number;
+  minStreamId?: number;
+  minEventId?: number;
 }
 
 export interface StreamTasksResponseType {
