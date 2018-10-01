@@ -46,7 +46,6 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.process.client.presenter.ExpressionPresenter;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;

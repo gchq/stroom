@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.process.client.presenter;
+package stroom.streamstore.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -23,11 +23,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;
+import stroom.streamstore.client.presenter.ExpressionPresenter.ExpressionView;
 
 import java.util.List;
 
