@@ -281,7 +281,7 @@ server
 server
   .delete(`${testConfig.stroomBaseServiceUrl}/explorer/v1/delete`)
   .intercept((req: HttpRequest, res: HttpResponse) => {
-    const docRefs = JSON.parse(req.body);
+    //const docRefs = JSON.parse(req.body);
     res.json(testCache.data!.documentTree);
   });
 
