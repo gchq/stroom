@@ -98,36 +98,14 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             }
         };
 
-//        // Show the processor creation dialog.
-//        final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
-//        if (filter != null) {
-//            ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
-//                    popupUiHandlers);
-//        } else {
-//            ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Filter",
-//                    popupUiHandlers);
-//        }
-
         // Show the processor creation dialog.
         final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
         if (filter != null) {
-            ShowPopupEvent.fire(this,
-                    this,
-                    PopupType.OK_CANCEL_DIALOG,
-                    null,
-                    popupSize,
-                    "Edit Filter",
-                    popupUiHandlers,
-                    false);
+            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
+                    popupUiHandlers);
         } else {
-            ShowPopupEvent.fire(this,
-                    this,
-                    PopupType.OK_CANCEL_DIALOG,
-                    null,
-                    popupSize,
-                    "Add Filter",
-                    popupUiHandlers,
-                    false);
+            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Filter",
+                    popupUiHandlers);
         }
     }
 
