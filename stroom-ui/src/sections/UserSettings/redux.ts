@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../lib/redux-actions-ts";
 
@@ -27,12 +27,11 @@ export interface ThemeChangedAction extends Action<"THEME_CHANGED"> {
   theme: string;
 }
 
-export interface ActionCreators {
-  themeChanged: ActionCreator<ThemeChangedAction>;
-}
-
-const actionCreators: ActionCreators = {
-  themeChanged: (theme: string) => ({ type: THEME_CHANGED, theme })
+const actionCreators = {
+  themeChanged: (theme: string): ThemeChangedAction => ({
+    type: THEME_CHANGED,
+    theme
+  })
 };
 
 const defaultState = {

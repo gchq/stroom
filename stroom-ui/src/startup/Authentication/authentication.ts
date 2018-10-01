@@ -17,7 +17,7 @@ import * as jwtDecode from "jwt-decode";
 import * as uuidv4 from "uuid";
 import * as sjcl from "sjcl";
 import { push } from "react-router-redux";
-import { Dispatch, Action, ActionCreator } from "redux";
+import { Dispatch, Action } from "redux";
 
 import { GlobalStoreState } from "../reducers";
 import { LocationDescriptor } from "history";
@@ -33,12 +33,11 @@ export interface TokenIdChangeAction extends Action<"TOKEN_ID_CHANGE"> {
   idToken: string;
 }
 
-export interface ActionCreators {
-  tokenIdChange: ActionCreator<TokenIdChangeAction>;
-}
-
-const actionCreators: ActionCreators = {
-  tokenIdChange: (idToken: string) => ({ type: TOKEN_ID_CHANGE, idToken })
+const actionCreators = {
+  tokenIdChange: (idToken: string): TokenIdChangeAction => ({
+    type: TOKEN_ID_CHANGE,
+    idToken
+  })
 };
 
 const defaultState = {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -67,18 +67,14 @@ export interface UpdateDataSourceAction
   dataSource: DataSourceType;
 }
 
-export interface ActionCreators {
-  add: ActionCreator<AddAction>;
-  updateStreamAttributeMaps: ActionCreator<UpdateStreamAttributeMapsAction>;
-  selectRow: ActionCreator<SelectRowAction>;
-  deselectRow: ActionCreator<DeselectRowAction>;
-  updateDataForSelectedRow: ActionCreator<UpdateDataForSelectedRowAction>;
-  updateDetailsForSelectedRow: ActionCreator<UpdateDetailsForSelectedRowAction>;
-  updateDataSource: ActionCreator<UpdateDataSourceAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  add: (id, streamAttributeMaps, total, pageSize, pageOffset) => ({
+export const actionCreators = {
+  add: (
+    id: string,
+    streamAttributeMaps: Array<DataRow>,
+    total: number,
+    pageSize: number,
+    pageOffset: number
+  ): AddAction => ({
     type: ADD,
     id,
     streamAttributeMaps,
@@ -87,12 +83,12 @@ export const actionCreators: ActionCreators = {
     pageOffset
   }),
   updateStreamAttributeMaps: (
-    id,
-    streamAttributeMaps,
-    total,
-    pageSize,
-    pageOffset
-  ) => ({
+    id: string,
+    streamAttributeMaps: Array<DataRow>,
+    total: number,
+    pageSize: number,
+    pageOffset: number
+  ): UpdateStreamAttributeMapsAction => ({
     type: UPDATE_STREAM_ATTRIBUTE_MAPS,
     id,
     streamAttributeMaps,
@@ -100,27 +96,36 @@ export const actionCreators: ActionCreators = {
     pageSize,
     pageOffset
   }),
-  selectRow: (id, selectedRow) => ({
+  selectRow: (id: string, selectedRow: number): SelectRowAction => ({
     type: SELECT_ROW,
     id,
     selectedRow
   }),
-  deselectRow: id => ({
+  deselectRow: (id: string): DeselectRowAction => ({
     type: DESELECT_ROW,
     id,
     selectedRow: undefined
   }),
-  updateDataForSelectedRow: (id, dataForSelectedRow) => ({
+  updateDataForSelectedRow: (
+    id: string,
+    dataForSelectedRow: AbstractFetchDataResult
+  ): UpdateDataForSelectedRowAction => ({
     type: UPDATE_DATA_FOR_SELECTED_ROW,
     id,
     dataForSelectedRow
   }),
-  updateDetailsForSelectedRow: (id, detailsForSelectedRow) => ({
+  updateDetailsForSelectedRow: (
+    id: string,
+    detailsForSelectedRow: DataRow
+  ): UpdateDetailsForSelectedRowAction => ({
     type: UPDATE_DETAILS_FOR_SELECTED_ROW,
     id,
     detailsForSelectedRow
   }),
-  updateDataSource: (id, dataSource) => ({
+  updateDataSource: (
+    id: string,
+    dataSource: DataSourceType
+  ): UpdateDataSourceAction => ({
     type: UPDATE_DATA_SOURCE,
     id,
     dataSource

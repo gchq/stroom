@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../../lib/redux-actions-ts";
 import { groupByCategory, keyByType } from "../elementUtils";
@@ -21,11 +21,6 @@ export interface ElementPropertiesReceivedAction
   elementProperties: ElementPropertiesByElementIdType;
 }
 
-export interface ActionCreators {
-  elementsReceived: ActionCreator<ElementsReceivedAction>;
-  elementPropertiesReceived: ActionCreator<ElementPropertiesReceivedAction>;
-}
-
 export interface StoreState {
   elements: ElementDefinitions;
   elementProperties: ElementPropertiesByElementIdType;
@@ -40,12 +35,14 @@ export const defaultState: StoreState = {
   byType: {}
 };
 
-export const actionCreators: ActionCreators = {
-  elementsReceived: elements => ({
+export const actionCreators = {
+  elementsReceived: (elements: ElementDefinitions): ElementsReceivedAction => ({
     type: ELEMENTS_RECEIVED,
     elements
   }),
-  elementPropertiesReceived: elementProperties => ({
+  elementPropertiesReceived: (
+    elementProperties: ElementPropertiesByElementIdType
+  ): ElementPropertiesReceivedAction => ({
     type: ELEMENT_PROPERTIES_RECEIVED,
     elementProperties
   })

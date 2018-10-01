@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -52,17 +52,22 @@ export interface LineDestroyedAction
   lineId: string;
 }
 
-export interface ActionCreators {
-  lineContainerCreated: ActionCreator<LineContainerCreatedAction>;
-  lineContainerDestroyed: ActionCreator<LineContainerDestroyedAction>;
-  lineCreated: ActionCreator<LineCreatedAction>;
-  lineDestroyed: ActionCreator<LineDestroyedAction>;
-}
-
-const actionCreators: ActionCreators = {
-  lineContainerCreated: id => ({ type: LINE_CONTAINER_CREATED, id }),
-  lineContainerDestroyed: id => ({ type: LINE_CONTAINER_DESTROYED, id }),
-  lineCreated: (id, lineId, lineType, fromId, toId) => ({
+const actionCreators = {
+  lineContainerCreated: (id: string): LineContainerCreatedAction => ({
+    type: LINE_CONTAINER_CREATED,
+    id
+  }),
+  lineContainerDestroyed: (id: string): LineContainerDestroyedAction => ({
+    type: LINE_CONTAINER_DESTROYED,
+    id
+  }),
+  lineCreated: (
+    id: string,
+    lineId: string,
+    lineType: string,
+    fromId: string,
+    toId: string
+  ): LineCreatedAction => ({
     type: LINE_CREATED,
     id,
     lineId,
@@ -70,7 +75,7 @@ const actionCreators: ActionCreators = {
     fromId,
     toId
   }),
-  lineDestroyed: (id, lineId) => ({
+  lineDestroyed: (id: string, lineId: string): LineDestroyedAction => ({
     type: LINE_DESTROYED,
     id,
     lineId

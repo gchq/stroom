@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -41,26 +41,26 @@ export interface DictionarySavedAction
   extends Action<"DICTIONARY_SAVED">,
     ActionId {}
 
-export interface ActionCreators {
-  dictionaryReceived: ActionCreator<DictionaryReceivedAction>;
-  dictionaryUpdated: ActionCreator<DictionaryUpdatedAction>;
-  dictionarySaved: ActionCreator<DictionarySavedAction>;
-}
-
 export const actionCreators = {
-  dictionaryReceived: (id: string, dictionary: Dictionary) => ({
+  dictionaryReceived: (
+    id: string,
+    dictionary: Dictionary
+  ): DictionaryReceivedAction => ({
     type: DICTIONARY_RECEIVED,
     id,
     dictionary,
     isDirty: false
   }),
-  dictionaryUpdated: (id: string, dictionary: Dictionary) => ({
+  dictionaryUpdated: (
+    id: string,
+    dictionary: Dictionary
+  ): DictionaryUpdatedAction => ({
     type: DICTIONARY_UPDATED,
     id,
     dictionary,
     isDirty: true
   }),
-  dictionarySaved: (id: string) => ({
+  dictionarySaved: (id: string): DictionarySavedAction => ({
     type: DICTIONARY_SAVED,
     id
   })

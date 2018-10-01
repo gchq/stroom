@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ActionCreator, Action } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -36,26 +36,20 @@ export interface XsltReceivedAction
 export interface XsltUpdatedAction extends Action<"XSLT_UPDATED">, XsltAction {}
 export interface XsltSavedAction extends Action<"XSLT_SAVED">, ActionId {}
 
-export interface ActionCreators {
-  xsltReceived: ActionCreator<XsltReceivedAction>;
-  xsltUpdated: ActionCreator<XsltUpdatedAction>;
-  xsltSaved: ActionCreator<XsltSavedAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  xsltReceived: (id: string, xsltData: string) => ({
+export const actionCreators = {
+  xsltReceived: (id: string, xsltData: string): XsltReceivedAction => ({
     type: XSLT_RECEIVED,
     id,
     xsltData,
     isDirty: false
   }),
-  xsltUpdated: (id: string, xsltData: string) => ({
+  xsltUpdated: (id: string, xsltData: string): XsltUpdatedAction => ({
     type: XSLT_UPDATED,
     id,
     xsltData,
     isDirty: true
   }),
-  xsltSaved: (id: string) => ({ type: XSLT_SAVED, id })
+  xsltSaved: (id: string): XsltSavedAction => ({ type: XSLT_SAVED, id })
 };
 
 export interface StoreStateById {

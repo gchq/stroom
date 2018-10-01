@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../../lib/redux-actions-ts";
 import { updateItemInTree } from "../../../lib/treeUtils";
@@ -37,65 +37,74 @@ export interface DocTreeReceived extends Action<"DOC_TREE_RECEIVED"> {
 export interface UpdateTreeAction {
   updatedTree: DocRefTree;
 }
-export interface DocRefsMoved
+export interface DocRefsMovedAction
   extends Action<"DOC_REFS_MOVED">,
     UpdateTreeAction {
   docRefs: Array<DocRefType>;
   destination: DocRefType;
 }
-export interface DocRefsCopied
+export interface DocRefsCopiedAction
   extends Action<"DOC_REFS_COPIED">,
     UpdateTreeAction {
   docRefs: Array<DocRefType>;
   destination: DocRefType;
 }
-export interface DocRefsDeleted
+export interface DocRefsDeletedAction
   extends Action<"DOC_REFS_DELETED">,
     UpdateTreeAction {
   docRefs: Array<DocRefType>;
 }
-export interface DocRefCreated
+export interface DocRefCreatedAction
   extends Action<"DOC_REF_CREATED">,
     UpdateTreeAction {}
-export interface DocRefRenamed extends Action<"DOC_REF_RENAMED"> {
+export interface DocRefRenamedAction extends Action<"DOC_REF_RENAMED"> {
   docRef: DocRefType;
   name: string;
   resultDocRef: DocRefType;
 }
 
-export interface ActionCreators {
-  docTreeReceived: ActionCreator<DocTreeReceived>;
-  docRefsMoved: ActionCreator<DocRefsMoved>;
-  docRefsCopied: ActionCreator<DocRefsCopied>;
-  docRefsDeleted: ActionCreator<DocRefsDeleted>;
-  docRefCreated: ActionCreator<DocRefCreated>;
-  docRefRenamed: ActionCreator<DocRefRenamed>;
-}
-
-export const actionCreators: ActionCreators = {
-  docTreeReceived: documentTree => ({ type: DOC_TREE_RECEIVED, documentTree }),
-  docRefsMoved: (docRefs, destination, updatedTree) => ({
+export const actionCreators = {
+  docTreeReceived: (documentTree: DocRefTree): DocTreeReceived => ({
+    type: DOC_TREE_RECEIVED,
+    documentTree
+  }),
+  docRefsMoved: (
+    docRefs: Array<DocRefType>,
+    destination: DocRefType,
+    updatedTree: DocRefTree
+  ): DocRefsMovedAction => ({
     type: DOC_REFS_MOVED,
     docRefs,
     destination,
     updatedTree
   }),
-  docRefsCopied: (docRefs, destination, updatedTree) => ({
+  docRefsCopied: (
+    docRefs: Array<DocRefType>,
+    destination: DocRefType,
+    updatedTree: DocRefTree
+  ): DocRefsCopiedAction => ({
     type: DOC_REFS_COPIED,
     docRefs,
     destination,
     updatedTree
   }),
-  docRefsDeleted: (docRefs, updatedTree) => ({
+  docRefsDeleted: (
+    docRefs: Array<DocRefType>,
+    updatedTree: DocRefTree
+  ): DocRefsDeletedAction => ({
     type: DOC_REFS_DELETED,
     docRefs,
     updatedTree
   }),
-  docRefCreated: updatedTree => ({
+  docRefCreated: (updatedTree: DocRefTree): DocRefCreatedAction => ({
     type: DOC_REF_CREATED,
     updatedTree
   }),
-  docRefRenamed: (docRef, name, resultDocRef) => ({
+  docRefRenamed: (
+    docRef: DocRefType,
+    name: string,
+    resultDocRef: DocRefType
+  ): DocRefRenamedAction => ({
     type: DOC_REF_RENAMED,
     docRef,
     name,
@@ -115,7 +124,7 @@ export const reducer = prepareReducer(defaultState)
     DOC_TREE_RECEIVED,
     (state, { documentTree }) => documentTree
   )
-  .handleAction<DocRefRenamed>(
+  .handleAction<DocRefRenamedAction>(
     DOC_REF_RENAMED,
     (state, { docRef, resultDocRef }) =>
       updateItemInTree(state as DocRefTree, docRef.uuid, resultDocRef)

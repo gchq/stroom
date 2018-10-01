@@ -283,7 +283,7 @@ const enhance = compose<EnhancedProps, Props>(
           {
             Header: "",
             accessor: "type",
-            Cell: (row: RowInfo) => {
+            Cell: (row: RowInfo): React.ReactNode => {
               // This block of code is mostly about making a sensible looking popup.
               const stream = streamAttributeMaps.find(
                 (streamAttributeMap: StreamAttributeMap) =>

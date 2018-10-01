@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -132,116 +132,118 @@ export interface PipelineElementPropertyRevertToDefaultAction
   name: string;
 }
 
-export interface ActionCreators {
-  pipelineReceived: ActionCreator<PipelineReceivedAction>;
-  pipelineSaveRequested: ActionCreator<PipelineSaveRequestedAction>;
-  pipelineSaved: ActionCreator<PipelineSavedAction>;
-  pipelineSettingsUpdated: ActionCreator<PipelineSettingsUpdatedAction>;
-  pipelineElementSelected: ActionCreator<PipelineElementSelectedAction>;
-  pipelineElementSelectionCleared: ActionCreator<
-    PipelineElementSelectionCleared
-  >;
-  pipelineElementMoved: ActionCreator<PipelineElementMovedAction>;
-  pipelineElementAddRequested: ActionCreator<PipelineElementAddRequestedAction>;
-  pipelineElementAddCancelled: ActionCreator<PipelineElementAddCancelledAction>;
-  pipelineElementAddConfirmed: ActionCreator<PipelineElementAddConfirmedAction>;
-  pipelineElementDeleteRequested: ActionCreator<
-    PipelineElementDeleteRequestedAction
-  >;
-  pipelineElementDeleteCancelled: ActionCreator<
-    PipelineElementDeleteCancelledAction
-  >;
-  pipelineElementDeleteConfirmed: ActionCreator<
-    PipelineElementDeleteConfirmedAction
-  >;
-  pipelineElementReinstated: ActionCreator<PipelineElementReinstatedAction>;
-  pipelineElementPropertyUpdated: ActionCreator<
-    PipelineElementPropertyUpdatedAction
-  >;
-  pipelineElementPropertyRevertToParent: ActionCreator<
-    PipelineElementPropertyRevertToParentAction
-  >;
-  pipelineElementPropertyRevertToDefault: ActionCreator<
-    PipelineElementPropertyRevertToDefaultAction
-  >;
-}
-
-export const actionCreators: ActionCreators = {
-  pipelineReceived: (id, pipeline) => ({
+export const actionCreators = {
+  pipelineReceived: (
+    id: string,
+    pipeline: PipelineModelType
+  ): PipelineReceivedAction => ({
     type: PIPELINE_RECEIVED,
     id,
     pipeline
   }),
-  pipelineSaveRequested: id => ({
+  pipelineSaveRequested: (id: string): PipelineSaveRequestedAction => ({
     type: PIPELINE_SAVE_REQUESTED,
     id
   }),
-  pipelineSaved: id => ({
+  pipelineSaved: (id: string): PipelineSavedAction => ({
     type: PIPELINE_SAVED,
     id
   }),
-  pipelineSettingsUpdated: (id, description) => ({
+  pipelineSettingsUpdated: (
+    id: string,
+    description: string
+  ): PipelineSettingsUpdatedAction => ({
     type: PIPELINE_SETTINGS_UPDATED,
     id,
     description
   }),
-  pipelineElementSelected: (id, elementId, initialValues) => ({
+  pipelineElementSelected: (
+    id: string,
+    elementId: string,
+    initialValues: object
+  ): PipelineElementSelectedAction => ({
     type: PIPELINE_ELEMENT_SELECTED,
     id,
     elementId,
     initialValues
   }),
-  pipelineElementSelectionCleared: id => ({
+  pipelineElementSelectionCleared: (
+    id: string
+  ): PipelineElementSelectionCleared => ({
     type: PIPELINE_ELEMENT_SELECTION_CLEARED,
     id
   }),
-  pipelineElementMoved: (id, itemToMove, destination) => ({
+  pipelineElementMoved: (
+    id: string,
+    itemToMove: string,
+    destination: string
+  ): PipelineElementMovedAction => ({
     type: PIPELINE_ELEMENT_MOVED,
     id,
     itemToMove,
     destination
   }),
-  pipelineElementAddRequested: (id, parentId, elementDefinition) => ({
+  pipelineElementAddRequested: (
+    id: string,
+    parentId: string,
+    elementDefinition: ElementDefinition
+  ): PipelineElementAddRequestedAction => ({
     type: PIPELINE_ELEMENT_ADD_REQUESTED,
     id,
     parentId,
     elementDefinition
   }),
-  pipelineElementAddCancelled: id => ({
+  pipelineElementAddCancelled: (
+    id: string
+  ): PipelineElementAddCancelledAction => ({
     type: PIPELINE_ELEMENT_ADD_CANCELLED,
     id
   }),
-  pipelineElementAddConfirmed: (id, name) => ({
+  pipelineElementAddConfirmed: (
+    id: string,
+    name: string
+  ): PipelineElementAddConfirmedAction => ({
     type: PIPELINE_ELEMENT_ADD_CONFIRMED,
     id,
     name
   }),
-  pipelineElementDeleteRequested: (id, elementId) => ({
+  pipelineElementDeleteRequested: (
+    id: string,
+    elementId: string
+  ): PipelineElementDeleteRequestedAction => ({
     type: PIPELINE_ELEMENT_DELETE_REQUESTED,
     id,
     elementId
   }),
-  pipelineElementDeleteCancelled: id => ({
+  pipelineElementDeleteCancelled: (
+    id: string
+  ): PipelineElementDeleteCancelledAction => ({
     type: PIPELINE_ELEMENT_DELETE_CANCELLED,
     id
   }),
-  pipelineElementDeleteConfirmed: id => ({
+  pipelineElementDeleteConfirmed: (
+    id: string
+  ): PipelineElementDeleteConfirmedAction => ({
     type: PIPELINE_ELEMENT_DELETE_CONFIRMED,
     id
   }),
-  pipelineElementReinstated: (id, parentId, recycleData) => ({
+  pipelineElementReinstated: (
+    id: string,
+    parentId: string,
+    recycleData: PipelineElementType
+  ): PipelineElementReinstatedAction => ({
     type: PIPELINE_ELEMENT_REINSTATED,
     id,
     parentId,
     recycleData
   }),
   pipelineElementPropertyUpdated: (
-    id,
-    element,
-    name,
-    propertyType,
-    propertyValue
-  ) => ({
+    id: string,
+    element: string,
+    name: string,
+    propertyType: string,
+    propertyValue: any
+  ): PipelineElementPropertyUpdatedAction => ({
     type: PIPELINE_ELEMENT_PROPERTY_UPDATED,
     id,
     element,
@@ -249,13 +251,21 @@ export const actionCreators: ActionCreators = {
     propertyType,
     propertyValue
   }),
-  pipelineElementPropertyRevertToParent: (id, elementId, name) => ({
+  pipelineElementPropertyRevertToParent: (
+    id: string,
+    elementId: string,
+    name: string
+  ): PipelineElementPropertyRevertToParentAction => ({
     type: PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT,
     id,
     elementId,
     name
   }),
-  pipelineElementPropertyRevertToDefault: (id, elementId, name) => ({
+  pipelineElementPropertyRevertToDefault: (
+    id: string,
+    elementId: string,
+    name: string
+  ): PipelineElementPropertyRevertToDefaultAction => ({
     type: PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT,
     id,
     elementId,

@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -6,34 +6,35 @@ import {
   StateById
 } from "../../../lib/redux-actions-ts";
 
-import { DOC_REF_CREATED, DocRefCreated } from "./documentTree";
+import { DOC_REF_CREATED, DocRefCreatedAction } from "./documentTree";
 import { DocRefType } from "../../../types";
 
 export const PREPARE_DOC_REF_CREATION = "PREPARE_DOC_REF_CREATION";
 export const COMPLETE_DOC_REF_CREATION = "COMPLETE_DOC_REF_CREATION";
 
-export interface PrepareDocRefCreation
+export interface PrepareDocRefCreationAction
   extends ActionId,
     Action<"PREPARE_DOC_REF_CREATION"> {
   destination: DocRefType;
 }
 
-export interface CompleteDocRefCreation
+export interface CompleteDocRefCreationAction
   extends ActionId,
     Action<"COMPLETE_DOC_REF_CREATION"> {}
 
-export interface ActionCreators {
-  prepareDocRefCreation: ActionCreator<PrepareDocRefCreation>;
-  completeDocRefCreation: ActionCreator<CompleteDocRefCreation>;
-}
-
-export const actionCreators: ActionCreators = {
-  prepareDocRefCreation: (id, destination) => ({
+export const actionCreators = {
+  prepareDocRefCreation: (
+    id: string,
+    destination: DocRefType
+  ): PrepareDocRefCreationAction => ({
     type: PREPARE_DOC_REF_CREATION,
     id,
     destination
   }),
-  completeDocRefCreation: id => ({ type: COMPLETE_DOC_REF_CREATION, id })
+  completeDocRefCreation: (id: string): CompleteDocRefCreationAction => ({
+    type: COMPLETE_DOC_REF_CREATION,
+    id
+  })
 };
 
 export interface StoreStatePerId {
@@ -49,16 +50,19 @@ export const defaultStatePerId: StoreStatePerId = {
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
-  .handleAction<PrepareDocRefCreation>(
+  .handleAction<PrepareDocRefCreationAction>(
     PREPARE_DOC_REF_CREATION,
     (_, { destination }) => ({
       isOpen: true,
       destination
     })
   )
-  .handleAction<CompleteDocRefCreation>(
+  .handleAction<CompleteDocRefCreationAction>(
     COMPLETE_DOC_REF_CREATION,
     () => defaultStatePerId
   )
-  .handleForeignAction<DocRefCreated>(DOC_REF_CREATED, () => defaultStatePerId)
+  .handleForeignAction<DocRefCreatedAction>(
+    DOC_REF_CREATED,
+    () => defaultStatePerId
+  )
   .getReducer();

@@ -3,36 +3,31 @@ import { combineReducers } from "redux";
 import {
   actionCreators as inheritPipelineActionCreators,
   reducer as inheritPipelineReducer,
-  StoreState as InheritPipelineStoreState,
-  ActionCreators as InheritPipelineActionCreators
+  StoreState as InheritPipelineStoreState
 } from "./inheritPipelineReducer";
 
 import {
   actionCreators as elementActionCreators,
   reducer as elementReducer,
-  StoreState as ElementStoreState,
-  ActionCreators as ElementActionCreators
+  StoreState as ElementStoreState
 } from "./elementReducer";
 
 import {
   actionCreators as pipelineSettingsActionCreators,
   reducer as pipelineSettingsReducer,
-  StoreState as PipelineSettingsStoreState,
-  ActionCreators as PipelineSettingsActionCreators
+  StoreState as PipelineSettingsStoreState
 } from "./pipelineSettingsReducer";
 
 import {
   actionCreators as pipelineActionCreators,
   reducer as pipelineStatesReducer,
-  StoreState as PipelineStatesStoreState,
-  ActionCreators as PipelineStatesActionCreators
+  StoreState as PipelineStatesStoreState
 } from "./pipelineStatesReducer";
 
 import {
   actionCreators as pipelineSearchActionCreators,
   reducer as pipelineSearchReducer,
-  StoreState as PipelineSearchStoreState,
-  ActionCreators as PipelineSearchActionCreators
+  StoreState as PipelineSearchStoreState
 } from "./pipelineSearchReducer";
 
 export interface StoreState {
@@ -43,14 +38,7 @@ export interface StoreState {
   inheritPipeline: InheritPipelineStoreState;
 }
 
-export interface ActionCreators
-  extends ElementActionCreators,
-    PipelineStatesActionCreators,
-    PipelineSearchActionCreators,
-    PipelineSettingsActionCreators,
-    InheritPipelineActionCreators {}
-
-export const actionCreators: ActionCreators = {
+export const actionCreators = {
   ...elementActionCreators,
   ...pipelineActionCreators,
   ...pipelineSearchActionCreators,

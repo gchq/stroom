@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../../lib/redux-actions-ts";
 import {
@@ -22,11 +22,6 @@ export interface UpdateCriteriaAction extends Action<"UPDATE_CRITERIA"> {
   criteria: PipelineSearchCriteriaType;
 }
 
-export interface ActionCreators {
-  pipelinesReceived: ActionCreator<PipelinesReceivedAction>;
-  updateCriteria: ActionCreator<UpdateCriteriaAction>;
-}
-
 const defaultState: StoreState = {
   results: {
     total: 0,
@@ -39,12 +34,16 @@ const defaultState: StoreState = {
   }
 };
 
-export const actionCreators: ActionCreators = {
-  pipelinesReceived: results => ({
+export const actionCreators = {
+  pipelinesReceived: (
+    results: PipelineSearchResultType
+  ): PipelinesReceivedAction => ({
     type: PIPELINES_RECEIVED,
     results
   }),
-  updateCriteria: criteria => ({
+  updateCriteria: (
+    criteria: PipelineSearchCriteriaType
+  ): UpdateCriteriaAction => ({
     type: UPDATE_CRITERIA,
     criteria
   })

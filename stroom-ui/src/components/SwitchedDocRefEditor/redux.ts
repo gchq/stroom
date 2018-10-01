@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../lib/redux-actions-ts";
 import { DocRefType } from "../../types";
@@ -24,12 +24,8 @@ export interface DocRefOpenedAction extends Action<"DOC_REF_OPENED"> {
   docRef: DocRefType;
 }
 
-export interface ActionCreators {
-  docRefOpened: ActionCreator<DocRefOpenedAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  docRefOpened: docRef => ({
+export const actionCreators = {
+  docRefOpened: (docRef: DocRefType): DocRefOpenedAction => ({
     type: DOC_REF_OPENED,
     docRef
   })

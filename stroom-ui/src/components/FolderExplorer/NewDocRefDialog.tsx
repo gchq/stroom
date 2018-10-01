@@ -101,7 +101,7 @@ let NewDocRefDialog = ({
 }: EnhancedProps) => (
   <ThemedModal
     isOpen={isOpen}
-    onRequestClose={completeDocRefCreation}
+    onRequestClose={onCancel}
     header={
       <IconHeader
         icon="plus"

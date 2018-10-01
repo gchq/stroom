@@ -1,5 +1,5 @@
 import { push } from "react-router-redux";
-import { Dispatch, Action, ActionCreator } from "redux";
+import { Dispatch, Action } from "redux";
 
 import { actionCreators as errorActionCreators } from "../components/ErrorPage";
 import { GlobalStoreState } from "../startup/reducers";
@@ -35,36 +35,28 @@ export type UrlRespondedAction = UrlAction & Action<"URL_RESPONDED">;
 export type UrlFailedAction = UrlAction & Action<"URL_FAILED">;
 export type ResetAllUrlsAction = Action<"RESET_ALL_URLS">;
 
-export interface ActionCreators {
-  resetAllUrls: ActionCreator<ResetAllUrlsAction>;
-  urlReset: ActionCreator<UrlResetAction>;
-  urlRequested: ActionCreator<UrlRequestedAction>;
-  urlResponded: ActionCreator<UrlRespondedAction>;
-  urlFailed: ActionCreator<UrlFailedAction>;
-}
-
 const defaultState: StoreState = {};
 
-export const actionCreators: ActionCreators = {
-  resetAllUrls: () => ({
+export const actionCreators = {
+  resetAllUrls: (): ResetAllUrlsAction => ({
     type: RESET_ALL_URLS
   }),
-  urlReset: (url: string) => ({
+  urlReset: (url: string): UrlResetAction => ({
     type: URL_RESET,
     url,
     fetchState: FetchState.UNREQUESTED
   }),
-  urlRequested: (url: string) => ({
+  urlRequested: (url: string): UrlRequestedAction => ({
     type: URL_REQUESTED,
     url,
     fetchState: FetchState.REQUESTED
   }),
-  urlResponded: (url: string) => ({
+  urlResponded: (url: string): UrlRespondedAction => ({
     type: URL_RESPONDED,
     url,
     fetchState: FetchState.RESPONDED
   }),
-  urlFailed: (url: string) => ({
+  urlFailed: (url: string): UrlFailedAction => ({
     type: URL_FAILED,
     url,
     fetchState: FetchState.FAILED

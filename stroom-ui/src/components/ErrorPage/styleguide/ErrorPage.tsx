@@ -18,7 +18,8 @@ import { compose, lifecycle } from "recompose";
 import { connect } from "react-redux";
 
 import ErrorPage from "../ErrorPage";
-import { actionCreators, ActionCreators } from "../redux";
+import { actionCreators } from "../redux";
+import { GlobalStoreState } from "../../../startup/reducers";
 
 const { setErrorMessage, setStackTrace, setHttpErrorCode } = actionCreators;
 
@@ -53,8 +54,14 @@ export interface Props {
   includeHttpErrorCode: boolean;
 }
 
+interface ConnectDispatch {
+  setErrorMessage: typeof setErrorMessage;
+  setStackTrace: typeof setStackTrace;
+  setHttpErrorCode: typeof setHttpErrorCode;
+}
+
 const enhance = compose<{}, Props>(
-  connect(
+  connect<{}, ConnectDispatch, Props, GlobalStoreState>(
     undefined,
     { setErrorMessage, setStackTrace, setHttpErrorCode }
   ),
@@ -67,7 +74,7 @@ const enhance = compose<{}, Props>(
         includeErrorMessage,
         includeStackTrace,
         includeHttpErrorCode
-      } = this.props as Props & ActionCreators;
+      } = this.props as Props & ConnectDispatch;
 
       if (includeErrorMessage) {
         setErrorMessage(errorMessage);
