@@ -1,67 +1,50 @@
 @import "./DataDetails/Views/ErrorTable";
 @import "./DataDetails/Views/EventView";
 @import "./DetailsTabs";
-.DataTable__container {
-  height: calc(100% - 40px);
-  position: relative;
-}
 
-.DataTable__reactTable__container {
-  position: absolute;
-  top: 0; // If you want to push the top of the table down a bit, e.g. for a toolbar, do it here.
-  right: 0;
-  left: 0;
-  bottom: 0;
-}
-
-.DataTable__reactTable {
-  position: absolute;
-  top: 0px;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  border: none;
-}
-
-.DataTable__reactTable .rt-td {
-  padding: 2px 2px;
-}
-
-.DataTable__reactTable .rt-tbody .rt-td {
-  border-right: none; // Make the table much more compact
-}
-
-.DataTable__reactTable .rt-table .rt-body .rt-tr-group {
-  max-height: 23px;
-}
-
-.ReactTable .rt-tbody .rt-tr-group {
-  max-height: 23px;
-}
-
-.ReactTable .rt-thead.-header {
-  box-shadow: none;
-  border-bottom: solid 1px lightgrey;
-}
-
-.DataTable__selectedRow {
-  background-color: $selected-item-colour;
-}
-
-.StreamDetails__table {
-  font-size: 11px;
-}
-
-.load-more-button {
+.data-viewer {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
 }
-
 
 .data-viewer__header {
+  height: 50px;
   width: 100%;
   display: inline-flex;
+  align-items: center;
 }
 
-.data-viewer__search-bar {
+.data-viewer__header__search-bar {
   flex-grow: 1;
+}
+
+.data-viewer__content {
+  flex-grow: 1;
+}
+
+
+.data-list__table {
+  width:100%;
+}
+
+
+
+
+.data-viewer__content_2 {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+
+.data-viewer__content__table_2 {
+  position: relative;
+  height: calc(100% - 50px);
+  width: 100%;
+}
+
+.data-viewer__content__table_2 .table__reactTable .rt-table {
+  height: calc(100% - 50px);
 }

@@ -36,6 +36,7 @@ import withLocalStorage from 'lib/withLocalStorage';
 import { actionCreators } from '../redux';
 import Loader from 'components/Loader';
 import Button from 'components/Button';
+import ReactTableWrapper from '../ReactTableWrapper';
 
 const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
 const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
@@ -262,46 +263,47 @@ const DataList = ({
 }) => {
 
   return (
-    <ReactTable
-      manual
-      sortable={false}
-      showPagination={false}
-      className="table__reactTable"
-      data={tableData}
-      columns={tableColumns}
-      getTdProps={(state, rowInfo, column, instance) => ({
-        onClick: (e, handleOriginal) => {
-          const index = path(['index'], rowInfo);
-          const streamId = path(['original', 'streamId'], rowInfo);
-          if (index !== undefined && streamId !== undefined) {
-            onRowSelected(dataViewerId, rowInfo.index);
-          }
+    <ReactTableWrapper tableColumns={tableColumns} tableData={tableData} />
+    // <ReactTable
+    //   manual
+    //   sortable={false}
+    //   showPagination={false}
+    //   className="table__reactTable"
+    //   data={tableData}
+    //   columns={tableColumns}
+    //   getTdProps={(state, rowInfo, column, instance) => ({
+    //     onClick: (e, handleOriginal) => {
+    //       const index = path(['index'], rowInfo);
+    //       const streamId = path(['original', 'streamId'], rowInfo);
+    //       if (index !== undefined && streamId !== undefined) {
+    //         onRowSelected(dataViewerId, rowInfo.index);
+    //       }
 
-          // IMPORTANT! React-Table uses onClick internally to trigger
-          // events like expanding SubComponents and pivots.
-          // By default a custom 'onClick' handler will override this functionality.
-          // If you want to fire the original onClick handler, call the
-          // 'handleOriginal' function.
-          if (handleOriginal) {
-            handleOriginal();
-          }
-        },
-      })}
-      getTrProps={(state, rowInfo, column) => {
-        // We don't want to see a hover on a row without data.
-        // If a row is selected we want to see the selected color.
-        const isSelected = selectedRow !== undefined &&
-          path(['index'], rowInfo) === selectedRow;
-        const hasData = path(['original', 'created'], rowInfo) !== undefined;
-        let className;
-        if (hasData) {
-          className = isSelected ? 'selected hoverable' : 'hoverable';
-        }
-        return {
-          className,
-        };
-      }}
-    />
+    //       // IMPORTANT! React-Table uses onClick internally to trigger
+    //       // events like expanding SubComponents and pivots.
+    //       // By default a custom 'onClick' handler will override this functionality.
+    //       // If you want to fire the original onClick handler, call the
+    //       // 'handleOriginal' function.
+    //       if (handleOriginal) {
+    //         handleOriginal();
+    //       }
+    //     },
+    //   })}
+    //   getTrProps={(state, rowInfo, column) => {
+    //     // We don't want to see a hover on a row without data.
+    //     // If a row is selected we want to see the selected color.
+    //     const isSelected = selectedRow !== undefined &&
+    //       path(['index'], rowInfo) === selectedRow;
+    //     const hasData = path(['original', 'created'], rowInfo) !== undefined;
+    //     let className;
+    //     if (hasData) {
+    //       className = isSelected ? 'selected hoverable' : 'hoverable';
+    //     }
+    //     return {
+    //       className,
+    //     };
+    //   }}
+    // />
   );
 };
 

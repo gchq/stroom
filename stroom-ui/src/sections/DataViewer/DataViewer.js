@@ -204,51 +204,72 @@ const DataViewer = ({
   );
 
   return (
-    <React.Fragment>
-      <div className="content-tabs__grid">
-        <div className="data-viewer__header">
-          <IconHeader icon="database" text="Data" />
-          <ExpressionSearchBar
-            className="data-viewer__search-bar"
-            dataSource={dataSource}
-            expressionId={dataViewerId}
-            onSearch={() => {
-              searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
+    <div className="data-viewer">
+      <div className="data-viewer__header">
+        <IconHeader icon="database" text="Data" />
+        <ExpressionSearchBar
+          className="data-viewer__header__search-bar"
+          dataSource={dataSource}
+          expressionId={dataViewerId}
+          onSearch={() => {
+            searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
+          }}
+        />
+      </div>
+      <div className="data-viewer__content_2">
+        <div className="data-viewer__content__table_2">
+          {table}
+        </div>
+      </div>
+      {/* {selectedRow === undefined ? (
+        <div className="data-viewer__content">
+          <PanelGroup
+            direction="column"
+            panelWidths={[
+              {
+                resize: 'dynamic',
+                minSize: 100,
+                size: listHeight,
+              },
+              {
+                resize: 'dynamic',
+                minSize: 1,
+                maxSize: 1,
+                size: 1,
+              },
+            ]}
+            className="data-viewer__content"
+          >
+            {table}
+            <div>TODO: can this possibly be done any better?</div>
+          </PanelGroup>
+        </div>
+      ) : (
+          <PanelGroup
+            direction="column"
+            panelWidths={[
+              {
+                resize: 'dynamic',
+                minSize: 100,
+                size: listHeight,
+              },
+              {
+                resize: 'dynamic',
+                minSize: 100,
+                size: detailsHeight,
+              },
+            ]}
+            onUpdate={(panelWidths) => {
+              setListHeight(panelWidths[0].size);
+              setDetailsHeight(panelWidths[1].size);
             }}
-          />
-        </div>
-      </div>
-      <div className="DataTable__container">
-        <div className="DataTable__reactTable__container">
-          {selectedRow === undefined ? (
-            table
-          ) : (
-              <PanelGroup
-                direction="column"
-                panelWidths={[
-                  {
-                    resize: 'dynamic',
-                    minSize: 100,
-                    size: listHeight,
-                  },
-                  {
-                    resize: 'dynamic',
-                    minSize: 100,
-                    size: detailsHeight,
-                  },
-                ]}
-                onUpdate={(panelWidths) => {
-                  setListHeight(panelWidths[0].size);
-                  setDetailsHeight(panelWidths[1].size);
-                }}
-              >
-                {table}
-                {details}
-              </PanelGroup>
-            )}
-        </div>
-      </div>
-    </React.Fragment>
+            className="data-viewer__content"
+          >
+            {table}
+            {details}
+          </PanelGroup>
+        )} */}
+    </div>
   );
 };
 
