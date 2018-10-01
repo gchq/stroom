@@ -27,7 +27,7 @@ import {
 import * as moment from "moment";
 import { path } from "ramda";
 import * as Mousetrap from "mousetrap";
-import ReactTable from "react-table";
+import ReactTable, { RowInfo, Column } from "react-table";
 import "react-table/react-table.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -40,8 +40,58 @@ import {
 import { getDataForSelectedRow } from "../dataResourceClient";
 import withLocalStorage from "../../../lib/withLocalStorage";
 import { actionCreators } from "../redux";
+
+import { GlobalStoreState } from "../../../startup/reducers";
 import Loader from "../../../components/Loader";
 import Button from "../../../components/Button";
+
+export interface Props {
+  dataViewerId: string;
+  fetchDataSource: typeof fetchDataSource;
+}
+
+interface ConnectState {
+  dataViewer: string;
+  selectedRow: number;
+}
+interface ConnectDispatch {}
+
+interface StreamAttributeMap {
+  data: StreamAttributeMapData;
+}
+
+interface TableData {
+  streamId?: string;
+  created?: string;
+  type?: string;
+  feed?: string;
+  pipeline?: string;
+}
+
+interface StreamAttributeMapData {
+  id: string;
+  createMs: number;
+  typeName: string;
+  feedName: string;
+  pipelineUuid: string;
+}
+
+interface WithHandlers {
+  onMoveSelection: (direction: string) => void;
+  onRowSelected: (dataViewerId: string, selectedRow: number) => void;
+}
+
+interface WithProps {
+  tableData: TableData[];
+  tableColumns: Column[];
+}
+
+export interface EnhancedProps
+  extends Props,
+    WithHandlers,
+    WithProps,
+    ConnectState,
+    ConnectDispatch {}
 
 const withListHeight = withLocalStorage("listHeight", "setListHeight", 500);
 const withDetailsHeight = withLocalStorage(
@@ -51,13 +101,14 @@ const withDetailsHeight = withLocalStorage(
 );
 
 const { selectRow, deselectRow } = actionCreators;
+
 const startPage = 0;
 const defaultPageSize = 20;
 
-const enhance = compose(
+const enhance = compose<EnhancedProps, Props>(
   withListHeight,
   withDetailsHeight,
-  connect(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (state, props) => {
       const dataView = state.dataViewers[props.dataViewerId];
 
@@ -80,7 +131,9 @@ const enhance = compose(
       searchWithExpression,
       fetchDataSource,
       selectRow,
+
       deselectRow,
+
       getDataForSelectedRow,
       getDetailsForSelectedRow
     }
@@ -88,10 +141,12 @@ const enhance = compose(
   withHandlers({
     onRowSelected: ({
       selectRow,
+
       getDataForSelectedRow,
       getDetailsForSelectedRow
-    }) => (dataViewerId, selectedRow) => {
+    }) => (dataViewerId: string, selectedRow: string) => {
       selectRow(dataViewerId, selectedRow);
+
       getDataForSelectedRow(dataViewerId);
       getDetailsForSelectedRow(dataViewerId);
     },
@@ -107,6 +162,7 @@ const enhance = compose(
     },
     onMoveSelection: ({
       selectRow,
+
       streamAttributeMaps,
       selectedRow,
       getDataForSelectedRow,
@@ -116,7 +172,7 @@ const enhance = compose(
       pageOffset,
       pageSize,
       searchWithExpression
-    }) => direction => {
+    }) => (direction: string) => {
       const isAtEndOfList = selectedRow === streamAttributeMaps.length - 1;
       if (isAtEndOfList) {
         searchWithExpression(
@@ -136,12 +192,13 @@ const enhance = compose(
 
         // TODO: stop repeating onRowSelected here
         selectRow(dataViewerId, selectedRow);
+
         getDataForSelectedRow(dataViewerId);
         getDetailsForSelectedRow(dataViewerId);
       }
     }
   }),
-  lifecycle({
+  lifecycle<Props & WithHandlers & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         // search,
@@ -193,21 +250,32 @@ const enhance = compose(
       listHeight,
       detailsHeight
     }) => {
-      let tableData = streamAttributeMaps.map(streamAttributeMap => {
-        return {
-          streamId: streamAttributeMap.data.id,
-          created: moment(streamAttributeMap.data.createMs).format(
-            "MMMM Do YYYY, h:mm:ss a"
-          ),
-          type: streamAttributeMap.data.typeName,
-          feed: streamAttributeMap.data.feedName,
-          pipeline: streamAttributeMap.data.pipelineUuid
-        };
-      });
+      let tableData: TableData[] = streamAttributeMaps.map(
+        (streamAttributeMap: StreamAttributeMap) => {
+          return {
+            streamId: streamAttributeMap.data.id,
+            created: moment(streamAttributeMap.data.createMs).format(
+              "MMMM Do YYYY, h:mm:ss a"
+            ),
+            type: streamAttributeMap.data.typeName,
+            feed: streamAttributeMap.data.feedName,
+            pipeline: streamAttributeMap.data.pipelineUuid
+          };
+        }
+      );
 
       // Just keep rows with data, more 'load more' rows
-      tableData = tableData.filter(row => row.streamId !== undefined);
-      tableData.push({});
+      tableData = tableData.filter(
+        (row: TableData) => row.streamId !== undefined
+      );
+      const dummyRowForLoadMore = {
+        streamId: undefined,
+        created: undefined,
+        type: undefined,
+        feed: undefined,
+        pipeline: undefined
+      };
+      tableData.push(dummyRowForLoadMore);
 
       return {
         tableData,
@@ -215,10 +283,10 @@ const enhance = compose(
           {
             Header: "",
             accessor: "type",
-            Cell: row => {
+            Cell: (row: RowInfo) => {
               // This block of code is mostly about making a sensible looking popup.
               const stream = streamAttributeMaps.find(
-                streamAttributeMap =>
+                (streamAttributeMap: StreamAttributeMap) =>
                   streamAttributeMap.data.id === row.original.streamId
               );
 
@@ -234,6 +302,8 @@ const enhance = compose(
                 } else {
                   icon = eventIcon;
                 }
+              } else {
+                icon = <span />;
               }
 
               return icon;
@@ -247,16 +317,19 @@ const enhance = compose(
           {
             Header: "Created",
             accessor: "created",
-            Cell: row =>
-              row.original.streamId ? (
-                row.original.created
-              ) : (
-                <Button
-                  className="border hoverable load-more-button"
-                  onClick={() => onHandleLoadMoreRows()}
-                  text="Load more rows"
-                />
-              )
+            Cell: (row: RowInfo) => {
+              if (row.original.streamId) {
+                return <span>{row.original.created}</span>;
+              } else {
+                return (
+                  <Button
+                    className="border hoverable load-more-button"
+                    onClick={() => onHandleLoadMoreRows()}
+                    text="Load more rows"
+                  />
+                );
+              }
+            }
           },
           {
             Header: "Feed",
@@ -278,22 +351,22 @@ const enhance = compose(
 
 const DataList = ({
   dataViewerId,
-  pageOffset,
-  pageSize,
-  deselectRow,
+  // pageOffset,
+  // pageSize,
+  // deselectRow,
   selectedRow,
-  dataForSelectedRow,
-  detailsForSelectedRow,
-  listHeight,
-  setListHeight,
-  detailsHeight,
-  setDetailsHeight,
-  dataSource,
-  searchWithExpression,
+  // dataForSelectedRow,
+  // detailsForSelectedRow,
+  // listHeight,
+  // setListHeight,
+  // detailsHeight,
+  // setDetailsHeight,
+  // dataSource,
+  // searchWithExpression,
   onRowSelected,
   tableColumns,
   tableData
-}) => {
+}: EnhancedProps) => {
   return (
     <ReactTable
       manual
@@ -302,8 +375,8 @@ const DataList = ({
       className="table__reactTable"
       data={tableData}
       columns={tableColumns}
-      getTdProps={(state, rowInfo, column, instance) => ({
-        onClick: (e, handleOriginal) => {
+      getTdProps={(_: any, rowInfo: RowInfo) => ({
+        onClick: (_: any, handleOriginal: () => void) => {
           const index = path(["index"], rowInfo);
           const streamId = path(["original", "streamId"], rowInfo);
           if (index !== undefined && streamId !== undefined) {
@@ -320,7 +393,7 @@ const DataList = ({
           }
         }
       })}
-      getTrProps={(state, rowInfo, column) => {
+      getTrProps={(_: any, rowInfo: RowInfo) => {
         // We don't want to see a hover on a row without data.
         // If a row is selected we want to see the selected color.
         const isSelected =

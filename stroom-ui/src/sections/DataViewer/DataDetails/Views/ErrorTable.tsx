@@ -22,19 +22,9 @@ import { compose, withProps } from "recompose";
 import ReactTable, { RowInfo, Column } from "react-table";
 import "react-table/react-table.css";
 
-import Tooltip from "../../../../components/Tooltip";
+import { ErrorData } from "../DataDetails";
 
-interface Location {
-  streamNo: number;
-  lineNo: number;
-  colNo: number;
-}
-interface ErrorData {
-  elementId: string;
-  location: Location;
-  message: string;
-  severity: number;
-}
+import Tooltip from "../../../../components/Tooltip";
 
 interface TableData {
   elementId: string;
