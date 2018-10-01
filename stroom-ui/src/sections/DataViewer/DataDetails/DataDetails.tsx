@@ -16,10 +16,6 @@
 
 import * as React from "react";
 import { path } from "ramda";
-// eslint-disable-next-line
-import "brace/mode/xml";
-import "brace/theme/github";
-import "brace/keybinding/vim";
 
 import ErrorTable from "./Views/ErrorTable";
 import EventView from "./Views/EventView";

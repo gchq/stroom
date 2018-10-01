@@ -331,3 +331,8 @@ export interface StreamTasksResponseType {
 export interface StyledComponentProps {
   className?: string;
 }
+
+export enum Direction {
+  UP = "up",
+  DOWN = "down"
+}

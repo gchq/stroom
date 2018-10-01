@@ -44,17 +44,25 @@ import { actionCreators } from "../redux";
 import { GlobalStoreState } from "../../../startup/reducers";
 import Loader from "../../../components/Loader";
 import Button from "../../../components/Button";
+import { Direction } from "../../../types";
 
 export interface Props {
   dataViewerId: string;
-  fetchDataSource: typeof fetchDataSource;
 }
 
 interface ConnectState {
   dataViewer: string;
   selectedRow: number;
 }
-interface ConnectDispatch {}
+interface ConnectDispatch {
+  fetchDataSource: typeof fetchDataSource;
+  search: typeof search;
+  searchWithExpression: typeof searchWithExpression;
+  selectRow: typeof selectRow;
+  deselectRow: typeof deselectRow;
+  getDataForSelectedRow: typeof getDataForSelectedRow;
+  getDetailsForSelectedRow: typeof getDetailsForSelectedRow;
+}
 
 interface StreamAttributeMap {
   data: StreamAttributeMapData;
@@ -77,7 +85,7 @@ interface StreamAttributeMapData {
 }
 
 interface WithHandlers {
-  onMoveSelection: (direction: string) => void;
+  onMoveSelection: (direction: Direction) => void;
   onRowSelected: (dataViewerId: string, selectedRow: number) => void;
 }
 
@@ -172,7 +180,7 @@ const enhance = compose<EnhancedProps, Props>(
       pageOffset,
       pageSize,
       searchWithExpression
-    }) => (direction: string) => {
+    }) => (direction: Direction) => {
       const isAtEndOfList = selectedRow === streamAttributeMaps.length - 1;
       if (isAtEndOfList) {
         searchWithExpression(
@@ -227,8 +235,8 @@ const enhance = compose<EnhancedProps, Props>(
       //   // search(dataViewerId, pageOffset, pageSize);
       // }
 
-      Mousetrap.bind("up", () => onMoveSelection("up"));
-      Mousetrap.bind("down", () => onMoveSelection("down"));
+      Mousetrap.bind("up", () => onMoveSelection(Direction.UP));
+      Mousetrap.bind("down", () => onMoveSelection(Direction.DOWN));
     },
     componentWillUnmount() {
       Mousetrap.unbind("up");

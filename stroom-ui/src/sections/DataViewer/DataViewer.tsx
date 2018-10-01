@@ -42,6 +42,49 @@ import DetailsTabs from "./DetailsTabs";
 import withLocalStorage from "../../lib/withLocalStorage";
 import DataList from "./DataList/DataList";
 import { actionCreators } from "./redux";
+import { GlobalStoreState } from "../../startup/reducers";
+import { Direction } from "../../types";
+
+export interface Props {
+  dataViewerId: string;
+  fetchDataSource: typeof fetchDataSource;
+}
+interface EnhancedProps
+  extends Props,
+    WithHandlers,
+    WithLocalStorage,
+    ConnectState,
+    ConnectDispatch {}
+
+interface ConnectState {
+  selectedRow: number;
+  pageOffset: number;
+  pageSize: number;
+  dataForSelectedRow: any; //TODO
+  detailsForSelectedRow: any; //TODO
+  dataSource: any;
+}
+interface ConnectDispatch {
+  search: typeof search;
+  searchWithExpression: typeof searchWithExpression;
+  fetchDataSource: typeof fetchDataSource;
+  selectRow: typeof selectRow;
+  deselectRow: typeof deselectRow;
+  getDataForSelectedRow: typeof getDataForSelectedRow;
+  getDetailsForSelectedRow: typeof getDetailsForSelectedRow;
+}
+
+interface WithHandlers {
+  onMoveSelection: (direction: Direction) => void;
+  onRowSelected: (dataViewerId: string, selectedRow: number) => void;
+}
+
+interface WithLocalStorage {
+  listHeight: number;
+  detailsHeight: number;
+  setListHeight: (listHeight: number) => void;
+  setDetailsHeight: (detailsHeight: number) => void;
+}
 
 const withListHeight = withLocalStorage("listHeight", "setListHeight", 500);
 const withDetailsHeight = withLocalStorage(
@@ -52,10 +95,10 @@ const withDetailsHeight = withLocalStorage(
 
 const { selectRow, deselectRow } = actionCreators;
 
-const enhance = compose(
+const enhance = compose<EnhancedProps, Props>(
   withListHeight,
   withDetailsHeight,
-  connect(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     (state, props) => {
       let dataSource,
         streamAttributeMaps,
@@ -103,7 +146,7 @@ const enhance = compose(
       selectRow,
       getDataForSelectedRow,
       getDetailsForSelectedRow
-    }) => (dataViewerId, selectedRow) => {
+    }) => (dataViewerId: string, selectedRow: string) => {
       selectRow(dataViewerId, selectedRow);
       getDataForSelectedRow(dataViewerId);
       getDetailsForSelectedRow(dataViewerId);
@@ -129,7 +172,7 @@ const enhance = compose(
       pageOffset,
       pageSize,
       searchWithExpression
-    }) => direction => {
+    }) => (direction: Direction) => {
       const isAtEndOfList = selectedRow === streamAttributeMaps.length - 1;
       if (isAtEndOfList) {
         searchWithExpression(
@@ -154,7 +197,7 @@ const enhance = compose(
       }
     }
   }),
-  lifecycle({
+  lifecycle<Props & WithHandlers & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         search,
@@ -183,8 +226,8 @@ const enhance = compose(
         search(dataViewerId, 0, 400);
       }
 
-      Mousetrap.bind("up", () => onMoveSelection("up"));
-      Mousetrap.bind("down", () => onMoveSelection("down"));
+      Mousetrap.bind("up", () => onMoveSelection(Direction.UP));
+      Mousetrap.bind("down", () => onMoveSelection(Direction.DOWN));
     },
     componentWillUnmount() {
       Mousetrap.unbind("up");
@@ -210,17 +253,17 @@ const DataViewer = ({
   detailsHeight,
   setDetailsHeight,
   dataSource,
-  searchWithExpression,
-  onRowSelected,
-  tableColumns,
-  tableData
-}) => {
+  searchWithExpression
+}: // onRowSelected,
+// tableColumns,
+// tableData
+EnhancedProps) => {
   const table = <DataList dataViewerId={dataViewerId} />;
 
   const details = (
     <HorizontalPanel
       className="element-details__panel"
-      // title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
+      title=""
       onClose={() => deselectRow(dataViewerId)}
       content={
         <DetailsTabs
@@ -229,9 +272,6 @@ const DataViewer = ({
           dataViewerId={dataViewerId}
         />
       }
-      titleColumns={6}
-      menuColumns={10}
-      headerSize="h3"
     />
   );
 
@@ -274,7 +314,7 @@ const DataViewer = ({
                   size: detailsHeight
                 }
               ]}
-              onUpdate={panelWidths => {
+              onUpdate={(panelWidths: any[]) => {
                 setListHeight(panelWidths[0].size);
                 setDetailsHeight(panelWidths[1].size);
               }}
@@ -288,9 +328,5 @@ const DataViewer = ({
     </React.Fragment>
   );
 };
-
-// DataViewer.propTypes = {
-//   dataViewerId: PropTypes.string.isRequired,
-// };
 
 export default enhance(DataViewer);

@@ -31,12 +31,12 @@ import {
 } from "../ExpressionBuilder";
 import { processSearchString } from "./expressionSearchBarUtils";
 import Button from "../Button";
-import { DataSourceType } from "../../types";
+import { DataSourceType, StyledComponentProps } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
-export interface Props {
+export interface Props extends StyledComponentProps {
   expressionId: string;
   dataSource: DataSourceType;
   onSearch: (expressionId: string) => void;

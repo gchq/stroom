@@ -14,7 +14,7 @@ export const search = (
   dataViewerId: string,
   pageOffset: number,
   pageSize: number,
-  addResults: boolean
+  addResults?: boolean
 ) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
 
@@ -63,7 +63,7 @@ export const searchWithExpression = (
   pageOffset: number,
   pageSize: number,
   expressionId: string,
-  addResults: boolean
+  addResults?: boolean
 ) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
   const expressionState = state.expressionBuilder[expressionId];
