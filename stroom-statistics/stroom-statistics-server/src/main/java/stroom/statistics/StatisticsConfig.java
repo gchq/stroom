@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.statistics.internal.InternalStatisticsConfig;
 import stroom.statistics.sql.SQLStatisticsConfig;
 import stroom.statistics.stroomstats.internal.HBaseStatisticsConfig;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class StatisticsConfig {
+public class StatisticsConfig implements IsConfig {
+
     private SQLStatisticsConfig sqlStatisticsConfig;
     private HBaseStatisticsConfig hbaseStatisticsConfig;
     private InternalStatisticsConfig internalStatisticsConfig;

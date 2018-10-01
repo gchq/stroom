@@ -7,6 +7,7 @@ import stroom.task.api.TaskHandler;
 public class GlobalConfigModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(ConfigMapper.class).toProvider(ConfigMapper.ConfigMapperFactory.class);
         bind(ConfigInitialiser.class).asEagerSingleton();
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);

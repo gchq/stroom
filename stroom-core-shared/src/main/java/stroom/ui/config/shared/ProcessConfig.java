@@ -2,11 +2,12 @@ package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ProcessConfig implements SharedObject {
+public class ProcessConfig implements SharedObject, IsConfig {
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
 
@@ -33,5 +34,13 @@ public class ProcessConfig implements SharedObject {
 
     public void setDefaultRecordLimit(final long defaultRecordLimit) {
         this.defaultRecordLimit = defaultRecordLimit;
+    }
+
+    @Override
+    public String toString() {
+        return "ProcessConfig{" +
+                "defaultTimeLimit=" + defaultTimeLimit +
+                ", defaultRecordLimit=" + defaultRecordLimit +
+                '}';
     }
 }

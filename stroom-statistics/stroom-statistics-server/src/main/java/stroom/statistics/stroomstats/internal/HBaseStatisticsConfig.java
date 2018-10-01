@@ -2,11 +2,12 @@ package stroom.statistics.stroomstats.internal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class HBaseStatisticsConfig {
+public class HBaseStatisticsConfig implements IsConfig {
     private String docRefType = "StroomStatsStore";
     private KafkaTopicsConfig kafkaTopicsConfig = new KafkaTopicsConfig();
     private String kafkaConfigUuid;
@@ -46,5 +47,14 @@ public class HBaseStatisticsConfig {
 
     public void setEventsPerMessage(final int eventsPerMessage) {
         this.eventsPerMessage = eventsPerMessage;
+    }
+
+    @Override
+    public String toString() {
+        return "HBaseStatisticsConfig{" +
+                "docRefType='" + docRefType + '\'' +
+                ", kafkaConfigUuid='" + kafkaConfigUuid + '\'' +
+                ", eventsPerMessage=" + eventsPerMessage +
+                '}';
     }
 }

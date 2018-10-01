@@ -1,11 +1,13 @@
 package stroom.datafeed;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
+import stroom.util.config.annotations.RequiresRestart;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataFeedConfig {
+public class DataFeedConfig implements IsConfig {
     /**
      * Same size as JDK's Buffered Output Stream.
      */
@@ -25,6 +27,7 @@ public class DataFeedConfig {
         this.receiptPolicyUuid = receiptPolicyUuid;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("If set the default buffer size to use")
     public int getBufferSize() {
         return bufferSize;
@@ -50,5 +53,15 @@ public class DataFeedConfig {
 
     public void setFeedNamePattern(final String feedNamePattern) {
         this.feedNamePattern = feedNamePattern;
+    }
+
+    @Override
+    public String toString() {
+        return "DataFeedConfig{" +
+                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
+                ", bufferSize=" + bufferSize +
+                ", unknownClassification='" + unknownClassification + '\'' +
+                ", feedNamePattern='" + feedNamePattern + '\'' +
+                '}';
     }
 }

@@ -1,11 +1,12 @@
 package stroom.statistics.sql.search;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class SearchConfig {
+public class SearchConfig implements IsConfig {
     private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
 
     private String storeSize = "1000000,100,10,1";
@@ -47,5 +48,15 @@ public class SearchConfig {
 
     public void setFetchSize(final int fetchSize) {
         this.fetchSize = fetchSize;
+    }
+
+    @Override
+    public String toString() {
+        return "SearchConfig{" +
+                "storeSize='" + storeSize + '\'' +
+                ", resultHandlerBatchSize=" + resultHandlerBatchSize +
+                ", maxResults=" + maxResults +
+                ", fetchSize=" + fetchSize +
+                '}';
     }
 }

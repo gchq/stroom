@@ -1,11 +1,12 @@
 package stroom.dashboard;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class QueryHistoryConfig {
+public class QueryHistoryConfig implements IsConfig {
     private int itemsRetention = 100;
     private int daysRetention = 365;
 
@@ -25,5 +26,13 @@ public class QueryHistoryConfig {
 
     public void setDaysRetention(final int daysRetention) {
         this.daysRetention = daysRetention;
+    }
+
+    @Override
+    public String toString() {
+        return "QueryHistoryConfig{" +
+                "itemsRetention=" + itemsRetention +
+                ", daysRetention=" + daysRetention +
+                '}';
     }
 }

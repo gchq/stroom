@@ -806,7 +806,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private Path getStoreDir() {
-        String storeDirStr = refDataStoreConfig.getLocalDir();
+        String storeDirStr = PathCreator.replaceSystemProperties(refDataStoreConfig.getLocalDir());
         Path storeDir;
         if (storeDirStr == null) {
             LOGGER.info("Off heap store dir is not set, falling back to {}", FileUtil.getTempDir());

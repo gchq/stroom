@@ -1,11 +1,12 @@
 package stroom.search.extraction;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ExtractionConfig {
+public class ExtractionConfig implements IsConfig {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 
@@ -28,5 +29,13 @@ public class ExtractionConfig {
 
     public void setMaxThreadsPerTask(final int maxThreadsPerTask) {
         this.maxThreadsPerTask = maxThreadsPerTask;
+    }
+
+    @Override
+    public String toString() {
+        return "ExtractionConfig{" +
+                "maxThreads=" + maxThreads +
+                ", maxThreadsPerTask=" + maxThreadsPerTask +
+                '}';
     }
 }

@@ -18,6 +18,7 @@ package stroom.node;
 
 import com.google.common.collect.ImmutableMap;
 import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticKey;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -100,7 +101,7 @@ public class NodeStatusServiceUtil {
         }
     }
 
-    private InternalStatisticEvent buildStatisticEvent(String key, long timeMs, Map<String, String> tags, String typeTagValue, double value) {
+    private InternalStatisticEvent buildStatisticEvent(InternalStatisticKey key, long timeMs, Map<String, String> tags, String typeTagValue, double value) {
         // These stat events are being generated every minute so use a precision
         // of 60s
         final Map<String, String> newTags = new HashMap<>(tags);
@@ -127,22 +128,22 @@ public class NodeStatusServiceUtil {
         final long nonHeapMax = nonHeapUsage.getMax();
 
         if (heapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_MEMORY, now, tags, "Heap Used", heapUsed));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Heap Used", heapUsed));
         }
         if (heapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_MEMORY, now, tags, "Heap Committed", heapComitted));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Heap Committed", heapComitted));
         }
         if (heapMax > 0) {
-            statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_MEMORY, now, tags, "Heap Max", heapMax));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Heap Max", heapMax));
         }
         if (nonHeapUsed > 0) {
-            statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_MEMORY, now, tags, "Non Heap Used", nonHeapUsed));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Non Heap Used", nonHeapUsed));
         }
         if (nonHeapComitted > 0) {
-            statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_MEMORY, now, tags, "Non Heap Committed", nonHeapComitted));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Non Heap Committed", nonHeapComitted));
         }
         if (nonHeapMax > 0) {
-            statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_MEMORY, now, tags, "Non Heap Max", nonHeapMax));
+            statisticEventList.add(buildStatisticEvent(InternalStatisticKey.MEMORY, now, tags, "Non Heap Max", nonHeapMax));
         }
 
         // Get the current CPU stats.
@@ -159,14 +160,14 @@ public class NodeStatusServiceUtil {
                 final CPUStats diff = cpuStats.subtract(previousCPUStats);
                 final double inc = 1000D / diff.getTotal();
 
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "Idle (%)", ((diff.idle * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "IO Wait (%)", ((diff.ioWait * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "User (%)", ((diff.user * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "Irq (%)", ((diff.irq * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "Soft Irq (%)", ((diff.softirq * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "System (%)", ((diff.system * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "Nice (%)", ((diff.nice * inc)) / 10F));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_CPU, now, tags, "Total (%)", ((diff.getTotal() * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Idle (%)", ((diff.idle * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "IO Wait (%)", ((diff.ioWait * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "User (%)", ((diff.user * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Irq (%)", ((diff.irq * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Soft Irq (%)", ((diff.softirq * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "System (%)", ((diff.system * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Nice (%)", ((diff.nice * inc)) / 10F));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.CPU, now, tags, "Total (%)", ((diff.getTotal() * inc)) / 10F));
             }
 
             // Calculate the eps values.
@@ -176,8 +177,8 @@ public class NodeStatusServiceUtil {
                 final long readEps = (long) (read / duration);
                 final long writeEps = (long) (written / duration);
 
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_EVENTS_PER_SECOND, now, tags, "Read", readEps));
-                statisticEventList.add(buildStatisticEvent(INTERNAL_STAT_KEY_EVENTS_PER_SECOND, now, tags, "Write", writeEps));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.EVENTS_PER_SECOND, now, tags, "Read", readEps));
+                statisticEventList.add(buildStatisticEvent(InternalStatisticKey.EVENTS_PER_SECOND, now, tags, "Write", writeEps));
             }
         }
 

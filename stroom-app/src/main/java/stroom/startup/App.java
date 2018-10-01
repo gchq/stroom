@@ -86,6 +86,7 @@ import stroom.servlet.StroomServlet;
 import stroom.statistics.sql.search.SqlStatisticsQueryResource;
 import stroom.streamstore.StreamAttributeMapResource;
 import stroom.streamtask.resource.StreamTaskResource;
+import stroom.util.logging.LambdaLogger;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -133,12 +134,21 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        if ("proxy".equalsIgnoreCase(configuration.getMode())) {
-            startProxy(configuration, environment);
-        } else {
-//            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
+        LOGGER.info("Starting up in {} mode", configuration.getMode());
+
+        switch (configuration.getMode()) {
+            case PROXY:
+                startProxy(configuration, environment);
+                break;
+            case APP:
+              // Adding asset bundles this way is not normal but it is done so that
+              // proxy can serve it's own root page for now.
 //            new AssetsBundle("/ui", "/", "stroom", "ui").run(environment);
-            startApp(configuration, environment);
+                startApp(configuration, environment);
+                break;
+            default:
+                throw new RuntimeException(LambdaLogger.buildMessage(
+                        "Unexpected mode {}", configuration.getMode()));
         }
     }
 

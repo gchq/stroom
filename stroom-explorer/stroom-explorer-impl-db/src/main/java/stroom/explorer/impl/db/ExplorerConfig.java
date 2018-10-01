@@ -3,11 +3,12 @@ package stroom.explorer.impl.db;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ExplorerConfig {
+public class ExplorerConfig implements IsConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
 

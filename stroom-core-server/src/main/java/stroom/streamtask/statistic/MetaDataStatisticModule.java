@@ -18,6 +18,7 @@ package stroom.streamtask.statistic;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.statistics.internal.InternalStatisticKey;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 
 import javax.inject.Provider;
@@ -34,11 +35,11 @@ public class MetaDataStatisticModule extends AbstractModule {
         final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl(internalStatisticsReceiverProvider);
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaDataStatisticTemplate(
-                        "Meta Data-Streams Received",
+                        InternalStatisticKey.METADATA_STREAMS_RECEIVED,
                         "receivedTime",
                         Arrays.asList("Feed")),
                 new MetaDataStatisticTemplate(
-                        "Meta Data-Stream Size",
+                        InternalStatisticKey.METADATA_STREAM_SIZE,
                         "receivedTime",
                         "StreamSize",
                         Arrays.asList("Feed"))));

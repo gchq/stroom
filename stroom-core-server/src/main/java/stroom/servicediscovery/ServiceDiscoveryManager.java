@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+@Singleton
 public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);

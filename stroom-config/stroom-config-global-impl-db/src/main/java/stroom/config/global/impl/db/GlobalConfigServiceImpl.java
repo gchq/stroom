@@ -23,25 +23,26 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.impl.db.stroom.tables.records.ConfigRecord;
 import stroom.config.global.api.ConfigProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import static stroom.config.impl.db.stroom.tables.Config.CONFIG;
 import static stroom.config.impl.db.stroom.tables.ConfigHistory.CONFIG_HISTORY;
@@ -49,6 +50,7 @@ import static stroom.config.impl.db.stroom.tables.ConfigHistory.CONFIG_HISTORY;
 @Singleton
 class GlobalConfigServiceImpl implements GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigServiceImpl.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigServiceImpl.class);
 
     private final ConnectionProvider connectionProvider;
     private final Security security;
@@ -70,23 +72,23 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     }
 
 
-    private void update(final String key, final String value) {
-        configMapper.update(key, value);
+    private Object updateConfigObject(final String key, final String value) {
+        return configMapper.updateConfigObject(key, value);
     }
 
     private void initialise() {
         // Setup DB properties.
-        LOGGER.info("Adding global properties to the DB");
+        LOGGER.info("Setting up configuration properties");
         loadMappedProperties();
         loadDBProperties();
     }
 
     private void loadMappedProperties() {
         try {
-            final List<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
+            final Collection<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
             for (final ConfigProperty configProperty : configPropertyList) {
                 globalProperties.put(configProperty.getName(), configProperty);
-                update(configProperty.getName(), configProperty.getValue());
+                updateConfigObject(configProperty.getName(), configProperty.getValue());
             }
         } catch (final RuntimeException e) {
             e.printStackTrace();
@@ -107,33 +109,21 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                             if (configProperty != null) {
                                 configProperty.setId(record.getId());
                                 configProperty.setValue(record.getVal());
-                                configProperty.setSource("Database");
+                                configProperty.setSource(ConfigProperty.SourceType.DATABASE);
 
-                                update(record.getName(), record.getVal());
+                                updateConfigObject(record.getName(), record.getVal());
                             } else {
-                                // Delete old property.
-                                delete(record.getName());
+                                // Delete old property that is not in the object model
+                                deleteFromDb(record.getName());
                             }
                         }
                     });
-
-
-            // Add remaining properties to the db.
-            final List<ConfigRecord> records = map.values().stream()
-                    .map(v -> new ConfigRecord(null, v.getName(), v.getValue()))
-                    .collect(Collectors.toList());
-            create.batchInsert(records).execute();
-
-
-//            // Add remaining properties to the db.
-//            map.forEach((k, v) -> create(v));
-
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private void updatePropertiesFromDB() {
+    private synchronized void updateConfigObjectsFromDB() {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
@@ -147,9 +137,10 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                             if (configProperty != null) {
                                 configProperty.setId(record.getId());
                                 configProperty.setValue(record.getVal());
-                                configProperty.setSource("Database");
+                                configProperty.setSource(ConfigProperty.SourceType.DATABASE);
 
-                                update(record.getName(), record.getVal());
+                                Object typedValue = updateConfigObject(record.getName(), record.getVal());
+//                                configProperty.setTypedValue(typedValue);
                             }
                         }
                     });
@@ -161,16 +152,17 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     /**
      * Refresh in background
      */
+    @SuppressWarnings("unused") // Called by scheduler
     @StroomFrequencySchedule("1m")
     @JobTrackedSchedule(jobName = "Property Cache Reload", description = "Reload properties in the cluster")
-    public void update() {
-        updatePropertiesFromDB();
+    public void updateConfigObjects() {
+        updateConfigObjectsFromDB();
     }
 
     @Override
     public List<ConfigProperty> list() {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            updatePropertiesFromDB();
+            updateConfigObjectsFromDB();
 
             final List<ConfigProperty> list = new ArrayList<>(globalProperties.values());
             list.sort(Comparator.comparing(ConfigProperty::getName));
@@ -195,7 +187,7 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
                                 if (loaded != null) {
                                     loaded.setId(record.getId());
                                     loaded.setValue(record.getVal());
-                                    loaded.setSource("Database");
+                                    loaded.setSource(ConfigProperty.SourceType.DATABASE);
                                 }
                             }
                         });
@@ -237,17 +229,44 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
             try (final Connection connection = connectionProvider.getConnection()) {
                 final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 
-                // Change value.
-                create
+                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                        "Saving property [{}] with new value [{}]",
+                        configProperty.getName(), configProperty.getValue()));
+
+
+                // Change value in DB
+                int rowsAffected = create
                         .update(CONFIG)
                         .set(CONFIG.VAL, configProperty.getValue())
-                        .where(CONFIG.NAME.eq(configProperty.getName()));
+                        .where(CONFIG.NAME.eq(configProperty.getName()))
+                        .execute();
+
+                if (rowsAffected == 0) {
+                    LOGGER.debug("No record to update with key {}, so inserting new record", configProperty.getName());
+                    create
+                            .insertInto(CONFIG,
+                                    CONFIG.NAME,
+                                    CONFIG.VAL)
+                            .values(configProperty.getName(), configProperty.getValue())
+                            .execute();
+                }
 
                 // Record history.
                 recordHistory(configProperty);
 
-                // Update property.
-                update(configProperty.getName(), configProperty.getValue());
+                // Update property in the config object tree
+                updateConfigObject(configProperty.getName(), configProperty.getValue());
+
+                // update the property in
+                final ConfigProperty configPropertyFromMap = globalProperties.get(configProperty.getName());
+                if (configPropertyFromMap != null) {
+                    configPropertyFromMap.setSource(ConfigProperty.SourceType.DATABASE);
+                    configPropertyFromMap.setValue(configProperty.getValue());
+                } else {
+                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
+                    globalProperties.put(configProperty.getName(), configProperty);
+                }
+
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -256,14 +275,18 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
         });
     }
 
-    private void delete(final String name) {
+    private void deleteFromDb(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            LAMBDA_LOGGER.warn(() ->
+                    LambdaLogger.buildMessage("Deleting property {} as it is not valid " +
+                            "in the object model", name));
             create
                     .deleteFrom(CONFIG)
-                    .where(CONFIG.NAME.eq(name));
+                    .where(CONFIG.NAME.eq(name))
+                    .execute();
         } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("Error deleting property {}: {}", name, e.getMessage(), e);
         }
     }
 
@@ -272,8 +295,16 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
-                    .insertInto(CONFIG_HISTORY, CONFIG_HISTORY.UPDATE_TIME, CONFIG_HISTORY.UPDATE_USER, CONFIG_HISTORY.NAME, CONFIG_HISTORY.VAL)
-                    .values(System.currentTimeMillis(), securityContext.getUserId(), configProperty.getName(), configProperty.getValue())
+                    .insertInto(CONFIG_HISTORY,
+                            CONFIG_HISTORY.UPDATE_TIME,
+                            CONFIG_HISTORY.UPDATE_USER,
+                            CONFIG_HISTORY.NAME,
+                            CONFIG_HISTORY.VAL)
+                    .values(
+                            System.currentTimeMillis(),
+                            securityContext.getUserId(),
+                            configProperty.getName(),
+                            configProperty.getValue())
                     .execute();
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);

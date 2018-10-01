@@ -2,11 +2,13 @@ package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
+import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class InfoPopupConfig implements SharedObject {
+public class InfoPopupConfig implements SharedObject, IsConfig {
+
     private boolean enabled;
     private String title = "Please Provide Query Info";
     private String validationRegex = "^[\\s\\S]{3,}$";
@@ -40,5 +42,14 @@ public class InfoPopupConfig implements SharedObject {
 
     public void setValidationRegex(final String validationRegex) {
         this.validationRegex = validationRegex;
+    }
+
+    @Override
+    public String toString() {
+        return "InfoPopupConfig{" +
+                "enabled=" + enabled +
+                ", title='" + title + '\'' +
+                ", validationRegex='" + validationRegex + '\'' +
+                '}';
     }
 }

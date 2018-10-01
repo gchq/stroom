@@ -9,20 +9,23 @@ dependencies {
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
-    //compile project(':stroom-util-shared')
+    compile project(':stroom-util-shared')
 
-    //compile libs.commons_text
+    compile libs.stroomDocRef
+
     compile libs.flyway_core
+    compile libs.guava
     compile libs.guice4
     compile libs.hikari
     compile libs.jackson_annotations
-    //compile libs.jackson_core
-    //compile libs.jackson_databind
-    //compile libs.jackson_dataformat_yaml
     compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api
 
     testCompile libs.assertj_core
+    testCompile libs.dropwizard_configuration
+    testCompile libs.dropwizard_core
+    testCompile libs.dropwizard_jersey
+    testCompile libs.dropwizard_jackson
     testCompile libs.junit_jupiter
 }

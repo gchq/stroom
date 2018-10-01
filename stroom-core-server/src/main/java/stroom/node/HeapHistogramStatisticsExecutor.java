@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.statistics.internal.InternalStatisticKey;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -109,7 +110,7 @@ public class HeapHistogramStatisticsExecutor {
                                                           final Map.Entry<String, String> nodeTag,
                                                           final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
         return InternalStatisticEvent.createValueStat(
-                INTERNAL_STAT_KEY_HEAP_HISTOGRAM_BYTES,
+                InternalStatisticKey.HEAP_HISTOGRAM_BYTES,
                 statTimeMs,
                 buildTags(nodeTag, heapHistogramEntry),
                 (double) heapHistogramEntry.getBytes());
@@ -119,7 +120,7 @@ public class HeapHistogramStatisticsExecutor {
                                                               final Map.Entry<String, String> nodeTag,
                                                               final HeapHistogramService.HeapHistogramEntry heapHistogramEntry) {
         return InternalStatisticEvent.createValueStat(
-                INTERNAL_STAT_KEY_HEAP_HISTOGRAM_INSTANCES,
+                InternalStatisticKey.HEAP_HISTOGRAM_INSTANCES,
                 statTimeMs,
                 buildTags(nodeTag, heapHistogramEntry),
                 (double) heapHistogramEntry.getInstances());

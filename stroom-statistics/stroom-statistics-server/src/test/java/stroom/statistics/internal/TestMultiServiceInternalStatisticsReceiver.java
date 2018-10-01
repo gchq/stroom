@@ -23,8 +23,8 @@ public class TestMultiServiceInternalStatisticsReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMultiServiceInternalStatisticsReceiver.class);
 
-    private static final String STAT_KEY_A = "MyKeyA";
-    private static final String STAT_KEY_B = "MyKeyB";
+    private static final InternalStatisticKey STAT_KEY_A = InternalStatisticKey.CPU;
+    private static final InternalStatisticKey STAT_KEY_B = InternalStatisticKey.MEMORY;
     private static final String DOC_REF_TYPE_1 = "DocRefType1";
     private static final String DOC_REF_TYPE_2 = "DocRefType2";
     private static final String STAT_NAME_A1 = "MyStatA1";
@@ -51,7 +51,7 @@ public class TestMultiServiceInternalStatisticsReceiver {
     @Captor
     private ArgumentCaptor<Map<DocRef, List<InternalStatisticEvent>>> argCaptor2;
 
-    private static InternalStatisticEvent createEvent(final String key, final Long timeMs) {
+    private static InternalStatisticEvent createEvent(final InternalStatisticKey key, final Long timeMs) {
         return InternalStatisticEvent.createPlusOneCountStat(key, timeMs, null);
     }
 

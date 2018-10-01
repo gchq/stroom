@@ -38,6 +38,7 @@ import stroom.search.EventSearchTask;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
+import stroom.statistics.internal.InternalStatisticKey;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
@@ -944,7 +945,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                     if (internalStatisticsReceiver != null) {
                         // Value type event as the queue size is not additive
                         internalStatisticsReceiver.putEvent(InternalStatisticEvent.createValueStat(
-                                INTERNAL_STAT_KEY_STREAM_TASK_QUEUE_SIZE,
+                                InternalStatisticKey.STREAM_TASK_QUEUE_SIZE,
                                 System.currentTimeMillis(),
                                 null,
                                 queueSize));

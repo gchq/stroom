@@ -18,10 +18,14 @@
 package stroom.config.global.impl.db;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.CaseFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,30 +45,39 @@ public final class BeanUtil {
         for (final Method method : methods) {
             final String methodName = method.getName();
 
-            if (methodName.startsWith("is")) {
-                // Boolean Getter.
+            if (method.getDeclaredAnnotation(JsonIgnore.class) == null) {
+                if (methodName.startsWith("is")) {
+                    // Boolean Getter.
 
-                if (methodName.length() > 2 && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
-                    final String name = getPropertyName(methodName, 2);
-                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                    prop.getter = method;
-                }
+                    if (methodName.length() > 2
+                            && method.getParameterTypes().length == 0
+                            && !method.getReturnType().equals(Void.TYPE)) {
+                        final String name = getPropertyName(methodName, 2);
+                        final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                        prop.getter = method;
+                    }
 
-            } else if (methodName.startsWith("get")) {
-                // Getter.
+                } else if (methodName.startsWith("get")) {
+                    // Getter.
 
-                if (methodName.length() > 3 && !methodName.equals("getClass") && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
-                    final String name = getPropertyName(methodName, 3);
-                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                    prop.getter = method;
-                }
-            } else if (methodName.startsWith("set")) {
-                // Setter.
+                    if (methodName.length() > 3
+                            && !methodName.equals("getClass")
+                            && method.getParameterTypes().length == 0
+                            && !method.getReturnType().equals(Void.TYPE)) {
+                        final String name = getPropertyName(methodName, 3);
+                        final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                        prop.getter = method;
+                    }
+                } else if (methodName.startsWith("set")) {
+                    // Setter.
 
-                if (methodName.length() > 3 && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE)) {
-                    final String name = getPropertyName(methodName, 3);
-                    final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                    prop.setter = method;
+                    if (methodName.length() > 3
+                            && method.getParameterTypes().length == 1
+                            && method.getReturnType().equals(Void.TYPE)) {
+                        final String name = getPropertyName(methodName, 3);
+                        final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                        prop.setter = method;
+                    }
                 }
             }
         }
@@ -84,26 +97,26 @@ public final class BeanUtil {
 
     private static String getPropertyName(final String methodName, final int len) {
         final String name = methodName.substring(len);
-        return name.substring(0, 1).toLowerCase() + name.substring(1);
+        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, name);
     }
 
     public static class Prop {
         private final String name;
-        private final Object object;
+        private final Object parentObject;
         private Method getter;
         private Method setter;
 
-        Prop(final String name, final Object object) {
+        Prop(final String name, final Object parentObject) {
             this.name = name;
-            this.object = object;
+            this.parentObject = parentObject;
         }
 
         public String getName() {
             return name;
         }
 
-        public Object getObject() {
-            return object;
+        public Object getParentObject() {
+            return parentObject;
         }
 
         public Method getGetter() {
@@ -112,6 +125,30 @@ public final class BeanUtil {
 
         public Method getSetter() {
             return setter;
+        }
+
+        public Object getValueFromConfigObject() throws InvocationTargetException, IllegalAccessException {
+            return getter.invoke(parentObject);
+        }
+
+        public void setValueOnConfigObject(final Object value) throws InvocationTargetException, IllegalAccessException {
+            setter.invoke(parentObject, value);
+        }
+
+        public Type getValueType() {
+            return setter.getGenericParameterTypes()[0];
+        }
+
+        public Class<?> getValueClass() {
+            return getter.getReturnType();
+        }
+
+        @Override
+        public String toString() {
+            return "Prop{" +
+                    "name='" + name + '\'' +
+                    ", parentObject=" + parentObject +
+                    '}';
         }
     }
 }

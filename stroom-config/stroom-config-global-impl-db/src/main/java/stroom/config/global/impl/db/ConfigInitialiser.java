@@ -5,10 +5,10 @@ import javax.inject.Provider;
 
 class ConfigInitialiser {
     @Inject
-    ConfigInitialiser(final Provider<ConfigMapper> configMapperProvider,
+//    ConfigInitialiser(final Provider<ConfigMapper> configMapperProvider,
+    ConfigInitialiser(final ConfigMapper configMapper,
                       final Provider<GlobalConfigService> globalPropertyServiceProvider) {
         // The order these services are initialised is important.
-        configMapperProvider.get();
         globalPropertyServiceProvider.get();
     }
 }
