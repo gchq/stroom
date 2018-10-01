@@ -1,5 +1,3 @@
-import { DataSourceType } from "../../types";
-
 /*
  * Copyright 2018 Crown Copyright
  *
@@ -16,18 +14,32 @@ import { DataSourceType } from "../../types";
  * limitations under the License.
  */
 
+import { DataSourceType, ExpressionItem } from "../../types";
+
+interface ValidationResult {
+  original: string;
+  parsed: string[];
+  fieldIsValid: boolean;
+  conditionIsValid: boolean;
+  valueIsValid: boolean;
+  term?: ExpressionItem;
+}
+
 /**
  * Takes a search string from the input box and checks that the fields
  * exist in the data source.
  * @param {object} dataSource The data source for the expression
  * @param {string} criteria The search string
  */
-export const processSearchString = (dataSource: DataSourceType, criteria) => {
+export const processSearchString = (
+  dataSource: DataSourceType,
+  criteria: string
+) => {
   const splitted = split(criteria);
 
-  const validationResults = [];
-  splitted.forEach(criterionObj => {
-    let validationResult;
+  const validationResults: ValidationResult[] = [];
+  splitted.forEach((criterionObj: any) => {
+    let validationResult: ValidationResult;
     if (criterionObj.splitCriterion !== undefined) {
       // Field validation
       const field = criterionObj.splitCriterion[0];
@@ -90,7 +102,7 @@ export const processSearchString = (dataSource: DataSourceType, criteria) => {
  * e.g. = becomes 'EQUALS'
  * @param {array} criterion The search criterion as an array.
  */
-const parse = criterion => {
+const parse = (criterion: string) => {
   let split;
   Object.keys(operatorMap).forEach(key => {
     if (criterion.includes(key)) {
@@ -106,7 +118,7 @@ const parse = criterion => {
  * operators with ExpressionBuilder conditions.
  * @param {string} criteria The string from the search input box
  */
-const split = criteria =>
+const split = (criteria: string) =>
   criteria
     .split(" ")
     .filter(criterion => criterion !== "" && criterion !== " ")
@@ -116,7 +128,8 @@ const split = criteria =>
  * Creates an ExpressionBuilder term from the passed array. The array must look like ['foo', 'EQUALS', 'bar'].
  * @param {array} asArray The term as an array
  */
-const toTermFromArray = asArray => toTerm(asArray[0], asArray[1], asArray[2]);
+const toTermFromArray = (asArray: string[]) =>
+  toTerm(asArray[0], asArray[1], asArray[2]);
 
 /**
  * Returns an ExpressionBuilder term
@@ -124,7 +137,7 @@ const toTermFromArray = asArray => toTerm(asArray[0], asArray[1], asArray[2]);
  * @param {string} condition
  * @param {string} value
  */
-const toTerm = (field, condition, value) => ({
+const toTerm = (field: string, condition: string, value: string) => ({
   type: "term",
   field,
   condition,
