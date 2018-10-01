@@ -105,7 +105,7 @@ export interface ElementDefinition {
 
 export type ElementDefinitions = Array<ElementDefinition>;
 export type ElementDefinitionsByCategory = {
-  [category: string]: Array<ElementPropertyType>;
+  [category: string]: Array<ElementDefinition>;
 };
 export type ElementDefinitionsByType = { [type: string]: ElementDefinition };
 
@@ -121,7 +121,7 @@ export interface ElementPropertyType {
 }
 
 export interface ElementPropertiesType {
-  [propName: string]: {};
+  [propName: string]: ElementPropertyType;
 }
 export interface ElementPropertiesByElementIdType {
   [pipelineElementType: string]: ElementPropertiesType;
@@ -132,8 +132,8 @@ export interface ControlledInput<T> {
   value: T;
 }
 export interface AddRemove<T> {
-  add: Array<T>;
-  remove: Array<T>;
+  add?: Array<T>;
+  remove?: Array<T>;
 }
 
 export interface SourcePipeline {
@@ -194,7 +194,7 @@ export interface PipelineDataType {
 
 export interface PipelineModelType {
   docRef: DocRefType;
-  description: string;
+  description?: string;
   parentPipeline?: DocRefType;
   configStack: Array<PipelineDataType>;
   merged: PipelineDataType;

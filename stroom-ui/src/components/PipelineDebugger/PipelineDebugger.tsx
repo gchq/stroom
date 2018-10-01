@@ -124,7 +124,7 @@ const PipelineDebugger = ({
       <Button icon="chevron-left" text="Previous" onClick={onPrevious} />
       <Button icon="chevron-right" text="Next" onClick={onNext} />
     </div>
-    <Pipeline pipelineId={pipelineId} onElementSelected={() => {}} />
+    <Pipeline pipelineId={pipelineId} />
     <DebuggerStep debuggerId={debuggerId} />
   </div>
 );

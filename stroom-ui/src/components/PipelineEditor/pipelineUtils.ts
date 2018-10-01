@@ -19,8 +19,6 @@ import {
   PipelineModelType,
   PipelineAsTreeType,
   PipelineElementType,
-  ItemWithId,
-  Tree,
   ElementDefinitionsByType,
   ElementDefinition,
   PipelineDataType,
@@ -40,10 +38,12 @@ export function getBinItems(
 ): Array<RecycleBinItem> {
   const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
 
-  return thisConfigStack.elements.remove.map(e => ({
-    recycleData: e,
-    element: elementsByType[e.type]
-  }));
+  return thisConfigStack.elements.remove
+    ? thisConfigStack.elements.remove.map(e => ({
+        recycleData: e,
+        element: elementsByType[e.type]
+      }))
+    : [];
 }
 
 /**
@@ -62,18 +62,22 @@ export function getPipelineAsTree(
   } = {};
 
   // Put all the elements into an object, keyed on id
-  pipeline.merged.elements.add.forEach(e => {
-    elements[e.id] = {
-      uuid: e.id,
-      type: e.type,
-      children: []
-    };
-  });
+  if (pipeline.merged.elements.add) {
+    pipeline.merged.elements.add.forEach(e => {
+      elements[e.id] = {
+        uuid: e.id,
+        type: e.type,
+        children: []
+      };
+    });
+  }
 
   // Create the tree using links
-  pipeline.merged.links.add.filter(l => !!elements[l.from]).forEach(l => {
-    elements[l.from].children.push(elements[l.to]);
-  });
+  if (pipeline.merged.links.add) {
+    pipeline.merged.links.add.filter(l => !!elements[l.from]).forEach(l => {
+      elements[l.from].children.push(elements[l.to]);
+    });
+  }
 
   // Figure out the root
   let rootId;
@@ -83,16 +87,21 @@ export function getPipelineAsTree(
     rootId = "Source";
   } else {
     // if a link doesn't have anything going to it then it may be a root.
-    const rootLinks = pipeline.merged.links.add.filter(fromLink => {
-      const toLinks = pipeline.merged.links.add.filter(
-        l => fromLink.from === l.to
-      );
-      return toLinks.length === 0;
-    });
+    const rootLinks = pipeline.merged.links.add
+      ? pipeline.merged.links.add.filter(fromLink => {
+          const toLinks = pipeline.merged.links.add!.filter(
+            l => fromLink.from === l.to
+          );
+          return toLinks.length === 0;
+        })
+      : [];
 
     if (rootLinks.length === 0) {
       // Maybe there's only one thing and therefore no links?
-      if (pipeline.merged.elements.add.length !== 0) {
+      if (
+        pipeline.merged.elements.add &&
+        pipeline.merged.elements.add.length !== 0
+      ) {
         // If there're no links then we can use the first element.
         rootId = pipeline.merged.elements.add[0].id;
       } else {
@@ -178,15 +187,17 @@ export function getPipelineLayoutInformation(
 export function getAllElementNames(pipeline: PipelineModelType): Array<string> {
   const names: Array<string> = [];
 
-  pipeline.merged.elements.add
-    .map(e => e.id)
-    .map(id => id.toLowerCase())
-    .forEach(id => names.push(id));
-  pipeline.configStack.forEach(cs => {
-    cs.elements.add
+  pipeline.merged.elements.add &&
+    pipeline.merged.elements.add
       .map(e => e.id)
       .map(id => id.toLowerCase())
       .forEach(id => names.push(id));
+  pipeline.configStack.forEach(cs => {
+    cs.elements.add &&
+      cs.elements.add
+        .map(e => e.id)
+        .map(id => id.toLowerCase())
+        .forEach(id => names.push(id));
   });
 
   return names;
@@ -245,11 +256,14 @@ export function createNewElementInPipeline(
       ...pipeline.merged,
       elements: {
         ...pipeline.merged.elements,
-        add: pipeline.merged.elements.add.concat([newElement])
+        add: (pipeline.merged.elements.add
+          ? pipeline.merged.elements.add
+          : []
+        ).concat([newElement])
       },
       links: {
         ...pipeline.merged.links,
-        add: pipeline.merged.links.add
+        add: (pipeline.merged.links.add ? pipeline.merged.links.add : [])
           // add the new link
           .concat([newLink])
       }
@@ -307,10 +321,12 @@ function addPropertyToStackItem(
     properties: {
       ...stackItem.properties,
       add: stackItem.properties.add
-        .filter(
-          p => !(p.element === property.element && p.name === property.name)
-        )
-        .concat([property])
+        ? stackItem.properties.add
+            .filter(
+              p => !(p.element === property.element && p.name === property.name)
+            )
+            .concat([property])
+        : []
     }
   };
 
@@ -330,11 +346,12 @@ export function revertPropertyToParent(
   if (name === undefined)
     throw new Error("This function requires a property name");
 
-  const childAdd =
-    pipeline.configStack[pipeline.configStack.length - 1].properties.add;
-  const parentAdd =
-    pipeline.configStack[pipeline.configStack.length - 2].properties.add;
-  const mergedAdd = pipeline.merged.properties.add;
+  const childAdd: Array<PipelinePropertyType> =
+    pipeline.configStack[pipeline.configStack.length - 1].properties.add || [];
+  const parentAdd: Array<PipelinePropertyType> =
+    pipeline.configStack[pipeline.configStack.length - 2].properties.add || [];
+  const mergedAdd: Array<PipelinePropertyType> =
+    pipeline.merged.properties.add || [];
 
   const indexToRemove = childAdd.findIndex(addItem => addItem.name === name);
   const parentProperty = parentAdd.find(addItem => addItem.name === name)!;
@@ -361,8 +378,12 @@ export function revertPropertyToParent(
         ...pipeline.merged.properties,
         add: [
           // We want to remove the property from the merged stack...
-          ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
-          ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1),
+          ...(pipeline.merged.properties.add
+            ? pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged)
+            : []),
+          ...(pipeline.merged.properties.add
+            ? pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1)
+            : []),
           // ... and replace it with the paren'ts property
           parentProperty
         ]
@@ -384,9 +405,10 @@ export function revertPropertyToDefault(
   if (name === undefined)
     throw new Error("This function requires a property name");
 
-  const childAdd =
-    pipeline.configStack[pipeline.configStack.length - 1].properties.add;
-  const mergedAdd = pipeline.merged.properties.add;
+  const childAdd: Array<PipelinePropertyType> =
+    pipeline.configStack[pipeline.configStack.length - 1].properties.add || [];
+  const mergedAdd: Array<PipelinePropertyType> =
+    pipeline.merged.properties.add || [];
   const indexToRemoveFromMerged = mergedAdd.findIndex(
     addItem => addItem.name === name
   );
@@ -419,8 +441,14 @@ export function revertPropertyToDefault(
           ...pipeline.merged.properties,
           add: [
             // Merged shouldn't have this property at all, and it doesn't need a remove either
-            ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
-            ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1)
+            ...(pipeline.merged.properties.add
+              ? pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged)
+              : []),
+            ...(pipeline.merged.properties.add
+              ? pipeline.merged.properties.add.slice(
+                  indexToRemoveFromMerged + 1
+                )
+              : [])
           ]
         }
       }
@@ -452,8 +480,12 @@ export function revertPropertyToDefault(
         ...pipeline.merged.properties,
         add: [
           // Merged shouldn't have this property at all, and it doesn't need a remove either
-          ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
-          ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1)
+          ...(pipeline.merged.properties.add
+            ? pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged)
+            : []),
+          ...(pipeline.merged.properties.add
+            ? pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1)
+            : [])
         ]
       }
     }
@@ -495,14 +527,17 @@ export function reinstateElementToPipeline(
     merged: {
       ...pipeline.merged,
       elements: {
-        add: pipeline.merged.elements.add.concat([recycleData]),
-        remove: pipeline.merged.elements.remove.filter(
-          e => e.id !== recycleData.id
-        )
+        add: (pipeline.merged.elements.add
+          ? pipeline.merged.elements.add
+          : []
+        ).concat([recycleData]),
+        remove: pipeline.merged.elements.remove
+          ? pipeline.merged.elements.remove.filter(e => e.id !== recycleData.id)
+          : []
       },
       links: {
         ...pipeline.merged.links,
-        add: pipeline.merged.links.add
+        add: (pipeline.merged.links.add ? pipeline.merged.links.add : [])
           // add the new link
           .concat([newLink])
       }
@@ -525,15 +560,17 @@ export function removeElementFromPipeline(
   const configStackThis = pipeline.configStack[pipeline.configStack.length - 1];
 
   // Find the element in the merged picture (it should be there)
-  const elementFromMerged: PipelineElementType = pipeline.merged.elements.add.find(
-    e => e.id === itemToDelete
-  )!;
-  const linkFromMerged: PipelineLinkType = pipeline.merged.links.add.find(
-    l => l.to === itemToDelete
-  )!;
+  const elementFromMerged: PipelineElementType | undefined =
+    pipeline.merged.elements.add &&
+    pipeline.merged.elements.add.find(e => e.id === itemToDelete)!;
+  const linkFromMerged: PipelineLinkType | undefined =
+    pipeline.merged.links.add &&
+    pipeline.merged.links.add.find(l => l.to === itemToDelete)!;
 
   // Find the element and link from our config stack (they may not be from our stack)
-  const linkIsOurs = configStackThis.links.add.find(l => l.to === itemToDelete);
+  const linkIsOurs =
+    configStackThis.links.add &&
+    configStackThis.links.add.find(l => l.to === itemToDelete);
 
   // Determine the behaviour for removing the link, based on if it was ours or not
   let calcNewLinks: (
@@ -542,14 +579,19 @@ export function removeElementFromPipeline(
   if (linkIsOurs) {
     // we can simply filter out the add
     calcNewLinks = ourStackLinks => ({
-      add: ourStackLinks.add.filter(l => l.to !== itemToDelete),
+      add: ourStackLinks.add
+        ? ourStackLinks.add.filter(l => l.to !== itemToDelete)
+        : undefined,
       remove: ourStackLinks.remove
     });
   } else {
     // we will need to shadow the link we inherited
     calcNewLinks = ourStackLinks => ({
       add: ourStackLinks.add,
-      remove: ourStackLinks.remove.concat([linkFromMerged])
+      remove:
+        ourStackLinks.remove && linkFromMerged
+          ? ourStackLinks.remove.concat([linkFromMerged])
+          : undefined
     });
   }
 
@@ -569,11 +611,15 @@ export function removeElementFromPipeline(
       ...pipeline.merged,
       elements: {
         ...pipeline.merged.elements,
-        add: pipeline.merged.elements.add.filter(e => e.id !== itemToDelete) // simply remove itemToDelete
+        add:
+          pipeline.merged.elements.add &&
+          pipeline.merged.elements.add.filter(e => e.id !== itemToDelete) // simply remove itemToDelete
       },
       links: {
         ...pipeline.merged.links,
-        add: pipeline.merged.links.add.filter(l => l.to !== itemToDelete) // simply remove the link where to=itemToDelete
+        add:
+          pipeline.merged.links.add &&
+          pipeline.merged.links.add.filter(l => l.to !== itemToDelete) // simply remove the link where to=itemToDelete
       }
     }
   };
@@ -644,16 +690,18 @@ export function moveElementInPipeline(
       elements: pipeline.merged.elements,
       links: {
         ...pipeline.merged.links,
-        add: pipeline.merged.links.add
-          // Remove any existing link that goes into the moving item
-          .filter(l => l.to !== itemToMove)
-          // add the new link
-          .concat([
-            {
-              from: destination,
-              to: itemToMove
-            }
-          ])
+        add:
+          pipeline.merged.links.add &&
+          pipeline.merged.links.add
+            // Remove any existing link that goes into the moving item
+            .filter(l => l.to !== itemToMove)
+            // add the new link
+            .concat([
+              {
+                from: destination,
+                to: itemToMove
+              }
+            ])
       }
     }
   };
@@ -672,12 +720,14 @@ export function getAllChildren(
   let allChildren: Array<string> = [];
 
   const getAllChildren = (pipeline: PipelineModelType, element: string) => {
-    const thisElementsChildren = pipeline.merged.links.add
-      .filter(p => p.from === element)
-      .map(p => p.to);
-    allChildren = allChildren.concat(thisElementsChildren);
-    for (const childIndex in thisElementsChildren) {
-      getAllChildren(pipeline, thisElementsChildren[childIndex]);
+    const thisElementsChildren =
+      pipeline.merged.links.add &&
+      pipeline.merged.links.add.filter(p => p.from === element).map(p => p.to);
+    if (thisElementsChildren) {
+      allChildren = allChildren.concat(thisElementsChildren);
+      for (const childIndex in thisElementsChildren) {
+        getAllChildren(pipeline, thisElementsChildren[childIndex]);
+      }
     }
   };
 
@@ -701,14 +751,19 @@ export function getParentProperty(
   propertyName: string
 ) {
   const getFromParent = (index: number): PipelinePropertyType | undefined => {
-    const property = stack[index].properties.add.find(
-      (element: PipelinePropertyType) =>
-        element.element === elementId && element.name === propertyName
-    );
-    const removeProperty = stack[index].properties.remove.find(
-      (element: PipelinePropertyType) =>
-        element.element === elementId && element.name === propertyName
-    );
+    const thisStack: PipelineDataType = stack[index];
+    const property =
+      thisStack.properties.add &&
+      thisStack.properties.add.find(
+        (element: PipelinePropertyType) =>
+          element.element === elementId && element.name === propertyName
+      );
+    const removeProperty =
+      thisStack.properties.remove &&
+      thisStack.properties.remove.find(
+        (element: PipelinePropertyType) =>
+          element.element === elementId && element.name === propertyName
+      );
     if (property !== undefined) {
       // We return the first matching property we find.
       return property;
@@ -736,13 +791,17 @@ export function getChildValue(
   pipeline: PipelineModelType,
   elementId: string,
   elementTypeName: string
-) {
-  const elementPropertiesInChild = pipeline.configStack[
-    pipeline.configStack.length - 1
-  ].properties.add.filter(property => property.element === elementId);
-  const childValue = elementPropertiesInChild.find(
-    element => element.name === elementTypeName
-  );
+): PipelinePropertyType | undefined {
+  const lastStackItem: PipelineDataType =
+    pipeline.configStack[pipeline.configStack.length - 1];
+  const elementPropertiesInChild =
+    lastStackItem.properties.add &&
+    lastStackItem.properties.add.filter(
+      property => property.element === elementId
+    );
+  const childValue =
+    elementPropertiesInChild &&
+    elementPropertiesInChild.find(element => element.name === elementTypeName);
   return childValue;
 }
 
@@ -758,11 +817,13 @@ export function getElementValue(
   elementId: string,
   elementTypeName: string
 ) {
-  const elementProperties = pipeline.merged.properties.add.filter(
-    property => property.element === elementId
-  );
-  const value = elementProperties.find(
-    element => element.name === elementTypeName
-  );
+  const elementProperties =
+    pipeline.merged.properties.add &&
+    pipeline.merged.properties.add.filter(
+      property => property.element === elementId
+    );
+  const value =
+    elementProperties &&
+    elementProperties.find(element => element.name === elementTypeName);
   return value;
 }
