@@ -30,7 +30,7 @@ import { LineContainer } from "../LineTo";
 import DeleteExpressionItem from "./DeleteExpressionItem";
 import lineElementCreators from "./expressionLineCreators";
 import { GlobalStoreState } from "../../startup/reducers";
-import { DataSourceType } from "../../types";
+import { DataSourceType, StyledComponentProps } from "../../types";
 import { StoreStateById } from "./redux";
 import ROExpressionBuilder from "./ROExpressionBuilder";
 
@@ -40,7 +40,7 @@ const withSetEditableByUser = withState(
   false
 );
 
-export interface Props {
+export interface Props extends StyledComponentProps {
   dataSource: DataSourceType;
   expressionId: string;
   showModeToggle: boolean;

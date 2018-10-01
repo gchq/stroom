@@ -1,5 +1,6 @@
 export interface ItemWithId {
-  uuid: string;
+  // A thing may be of a type but not yet have an assigned ID so it should be nullable
+  uuid?: string;
 }
 
 export interface DocRefType extends ItemWithId {
@@ -326,4 +327,8 @@ export interface StreamTaskType {
 export interface StreamTasksResponseType {
   streamTasks: Array<StreamTaskType>;
   totalStreamTasks: number;
+}
+
+export interface StyledComponentProps {
+  className?: string;
 }
