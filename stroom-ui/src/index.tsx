@@ -13,7 +13,7 @@ import createStore from "./startup/store";
 import FontAwesomeProvider from "./startup/FontAwesomeProvider";
 import { history } from "./startup/middleware";
 
-import "styles/main.css";
+import "./styles/main.css";
 
 const DndRoutes = compose(
   FontAwesomeProvider,

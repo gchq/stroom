@@ -15,8 +15,25 @@
  */
 import * as uuidv4 from "uuid/v4";
 
-import { testTree } from "../FolderExplorer/test";
-import { ExpressionOperatorType } from "../../types";
+import { ExpressionOperatorType, Dictionary } from "../../types";
+
+const colourDictionary: Dictionary = {
+  docRef: {
+    type: "Dictionary",
+    uuid: "colourDict123",
+    name: "Colours"
+  },
+  description: "All the colours of the rainbow",
+  data: `red
+  orange
+  yellow
+  green
+  blue
+  indigo
+  violet
+  `,
+  imports: []
+};
 
 const testExpression: ExpressionOperatorType = {
   uuid: uuidv4(),
@@ -47,7 +64,7 @@ const testExpression: ExpressionOperatorType = {
       field: "colour",
       condition: "IN_DICTIONARY",
       value: null,
-      dictionary: testTree.children![0].children![0].children![1],
+      dictionary: colourDictionary,
       enabled: true
     },
     {

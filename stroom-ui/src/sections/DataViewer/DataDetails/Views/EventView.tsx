@@ -15,7 +15,6 @@
  */
 
 import * as React from "react";
-// eslint-disable-next-line
 import brace from "brace";
 import "brace/mode/xml";
 import "brace/theme/github";
@@ -24,7 +23,11 @@ import "brace/keybinding/vim";
 
 import ThemedAceEditor from "../../../../components/ThemedAceEditor";
 
-const EventView = ({ events }) => (
+export interface Props {
+  events: string;
+}
+
+const EventView = ({ events }: Props) => (
   <div className="EventView__container">
     <div className="EventView__aceEditor__container">
       <ThemedAceEditor
@@ -37,9 +40,5 @@ const EventView = ({ events }) => (
     </div>
   </div>
 );
-
-// EventView.propTypes = {
-//   events: PropTypes.string.isRequired
-// };
 
 export default EventView;
