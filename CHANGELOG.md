@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#848** : Fixed various issues related to stream processor filter editor.
+
 * Issue **#815** : `stroom.pageTitle` property changed to `stroom.htmlTitle`.
 
 * Issue **#732** : Added `host-address` and `host-name` XSLT functions.
