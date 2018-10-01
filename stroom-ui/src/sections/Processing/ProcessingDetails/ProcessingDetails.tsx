@@ -29,31 +29,60 @@ import { actionCreators } from "../redux";
 import { enableToggle } from "../streamTasksResourceClient";
 import HorizontalPanel from "../../../components/HorizontalPanel";
 import { ExpressionBuilder } from "../../../components/ExpressionBuilder";
+import { GlobalStoreState } from "../../../startup/reducers";
 
-const { updateTrackerSelection } = actionCreators;
+export interface Props {}
 
-const enhance = compose(
-  connect(
+interface ConnectState {
+  trackers: any[];
+  selectedTrackerId?: number;
+}
+interface ConnectDispatch {
+  enableToggle: typeof enableToggle;
+  selectNone: typeof selectNone;
+}
+
+interface WithHandlers {
+  onHandleEnableToggle: (filterId: number, enabled: boolean) => void;
+  onDeselectTracker: () => void;
+}
+
+interface WithProps {
+  title: string;
+  selectedTracker: any; //TODO TS define tracker
+  lastPollAgeIsDefined: boolean;
+}
+interface EnhancedProps
+  extends Props,
+    WithHandlers,
+    WithProps,
+    ConnectState,
+    ConnectDispatch {}
+
+const { selectNone } = actionCreators;
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ processing: { trackers, selectedTrackerId } }) => ({
       trackers,
       selectedTrackerId
     }),
-    { enableToggle, updateTrackerSelection }
+    { enableToggle, selectNone }
   ),
   withHandlers({
     onHandleEnableToggle: ({ enableToggle }) => (
-      filterId,
-      isCurrentlyEnabled
+      filterId: number,
+      isCurrentlyEnabled: boolean
     ) => {
       enableToggle(filterId, isCurrentlyEnabled);
     },
-    onHandleTrackerSelection: ({ updateTrackerSelection }) => filterId => {
-      updateTrackerSelection(filterId);
+    onDeselectTracker: ({ selectNone }) => () => {
+      selectNone();
     }
   }),
   withProps(({ trackers, selectedTrackerId }) => ({
     selectedTracker: trackers.find(
-      tracker => tracker.filterId === selectedTrackerId
+      (tracker: any) => tracker.filterId === selectedTrackerId
     )
   })),
   withProps(({ selectedTracker }) => ({
@@ -76,17 +105,15 @@ const ProcessingDetails = ({
   selectedTracker,
   lastPollAgeIsDefined,
   onHandleEnableToggle,
-  onHandleTrackerSelection
-}) => (
+  onDeselectTracker
+}: EnhancedProps) => (
   <HorizontalPanel
     title={title}
     content={
       <div className="processing-details__content">
-        <div
-          className="processing-details__content__expression-builder"
-          expressionId="trackerDetailsExpression"
-        >
-          <ExpressionBuilder />
+        <div className="processing-details__content__expression-builder">
+          {/* TODO TS: Get the expression builder working again */}
+          {/* <ExpressionBuilder expressionId="trackerDetailsExpression" /> */}
         </div>
         <div className="processing-details__content__properties">
           This tracker:
@@ -162,9 +189,7 @@ const ProcessingDetails = ({
         </div>
       </div>
     }
-    onClose={() => onHandleTrackerSelection(null)}
-    titleColumns={6}
-    menuColumns={10}
+    onClose={() => onDeselectTracker()}
     headerMenuItems={
       <label>
         <input
@@ -181,14 +206,7 @@ const ProcessingDetails = ({
         &nbsp;Enabled?
       </label>
     }
-    headerSize="h3"
   />
 );
-
-// ProcessingDetails.propTypes = {
-//   selectedTracker: PropTypes.object.isRequired,
-//   onHandleEnableToggle: PropTypes.func.isRequired,
-//   onHandleTrackerSelection: PropTypes.func.isRequired,
-// };
 
 export default enhance(ProcessingDetails);
