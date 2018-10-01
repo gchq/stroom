@@ -58,6 +58,7 @@ describe("Pipeline Utils", () => {
       const asTree = getPipelineAsTree(testPipelines.multiBranchChild);
 
       // Then
+      expect(asTree).toBeDefined();
       //console.log('Multi Branch Child', JSON.stringify(asTree, null, 2));
     });
     test("should convert a pipeline to a tree and detect the correct root", () => {

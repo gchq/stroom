@@ -1,4 +1,4 @@
-import { Dispatch, Action } from "redux";
+import { Dispatch } from "redux";
 
 import { actionCreators as folderExplorerActionCreators } from "./redux";
 import { actionCreators as docRefTypesActionCreators } from "../DocRefTypes/redux";

@@ -26,7 +26,6 @@ import { connect } from "react-redux";
 
 import Loader from "../Loader";
 import ExpressionOperator from "./ExpressionOperator";
-import ROExpressionOperator from "./ROExpressionOperator";
 import { LineContainer } from "../LineTo";
 import DeleteExpressionItem from "./DeleteExpressionItem";
 import lineElementCreators from "./expressionLineCreators";

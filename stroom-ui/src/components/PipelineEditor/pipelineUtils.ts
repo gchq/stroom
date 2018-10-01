@@ -24,7 +24,8 @@ import {
   PipelineDataType,
   PipelinePropertyType,
   AddRemove,
-  PipelineLinkType
+  PipelineLinkType,
+  ElementPropertiesType
 } from "../../types";
 
 export interface RecycleBinItem {
@@ -827,3 +828,117 @@ export function getElementValue(
     elementProperties.find(element => element.name === elementTypeName);
   return value;
 }
+
+/**
+ * Gets the details for display and processing.
+ *
+ * There's a matrix of outcomes depending on what value we have, and this function
+ * produces output specific to the combination of these values.
+ *
+ * @param {property} value The property from the top of the stack
+ * @param {property} parentValue The property from the parent
+ * @param {string} defaultValue The default property
+ * @param {string} type The type of the property
+ */
+export const getCurrentValue = (
+  value: any,
+  parentValue: any,
+  defaultValue: any,
+  type: string
+) => {
+  // Parse the value if it's a boolean.
+  if (type === "boolean") {
+    defaultValue = defaultValue === "true";
+  }
+
+  // The property.value object uses integer so we might need to convert
+  type = type === "int" ? "integer" : type;
+
+  const isSet = (value: any) => value !== undefined && value !== "";
+
+  // We never use the parentValue to set the actualValue -- if there's a parentValue then it'll appear in
+  // the merged picture. We just need the parentValue so we know where we are regards inheritance.
+  // This doesn't apply with the defaultValue -- it is never in the merged picture so if
+  // we deduce that's the value we want we need to set it as such.
+
+  if (value === undefined && parentValue === undefined && isSet(defaultValue)) {
+    return defaultValue;
+  } else if (
+    value !== undefined &&
+    parentValue === undefined &&
+    isSet(defaultValue)
+  ) {
+    return value.value[type];
+  } else if (
+    value === undefined &&
+    parentValue !== undefined &&
+    isSet(defaultValue)
+  ) {
+    return defaultValue;
+  } else if (
+    value !== undefined &&
+    parentValue !== undefined &&
+    isSet(defaultValue)
+  ) {
+    return value.value[type];
+  } else if (
+    value === undefined &&
+    parentValue === undefined &&
+    !isSet(defaultValue)
+  ) {
+    return undefined;
+  } else if (
+    value !== undefined &&
+    parentValue === undefined &&
+    !isSet(defaultValue)
+  ) {
+    return value.value[type];
+  } else if (
+    value === undefined &&
+    parentValue !== undefined &&
+    !isSet(defaultValue)
+  ) {
+    return undefined;
+  } else if (
+    value !== undefined &&
+    parentValue !== undefined &&
+    !isSet(defaultValue)
+  ) {
+    return value.value[type];
+  }
+
+  return undefined;
+};
+
+const getActualValue = (value: PipelinePropertyType, type: string) => {
+  // In case the type of the element doesn't match the type in the data.
+  type = type === "int" ? "integer" : type;
+
+  let actualValue;
+
+  if (value !== undefined && value.value[type] !== undefined) {
+    actualValue = value.value[type];
+  } else {
+    actualValue = undefined;
+  }
+
+  return actualValue;
+};
+
+export const getInitialValues = (
+  elementTypeProperties: ElementPropertiesType,
+  elementProperties: Array<PipelinePropertyType>
+) => {
+  const initialValues = {};
+  Object.keys(elementTypeProperties).map(key => {
+    const elementsProperty: PipelinePropertyType = elementProperties.find(
+      element => element.name === key
+    )!;
+    initialValues[key] = getActualValue(
+      elementsProperty!,
+      elementTypeProperties[key].type
+    );
+    return null;
+  });
+  return initialValues;
+};
