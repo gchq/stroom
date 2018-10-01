@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 import { prepareReducer } from "../redux-actions-ts";
 
 export interface StoreState {
@@ -17,14 +17,17 @@ export interface KeyDownAction extends KeyChangeAction, Action<"KEY_DOWN"> {}
 const KEY_UP = "KEY_UP";
 const KEY_DOWN = "KEY_DOWN";
 
-export interface ActionCreators {
-  keyDown: ActionCreator<KeyDownAction>;
-  keyUp: ActionCreator<KeyUpAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  keyDown: (keyCode: string) => ({ type: KEY_DOWN, keyCode, isDown: true }),
-  keyUp: (keyCode: string) => ({ type: KEY_UP, keyCode, isDown: false })
+export const actionCreators = {
+  keyDown: (keyCode: string): KeyDownAction => ({
+    type: KEY_DOWN,
+    keyCode,
+    isDown: true
+  }),
+  keyUp: (keyCode: string): KeyUpAction => ({
+    type: KEY_UP,
+    keyCode,
+    isDown: false
+  })
 };
 
 export const reducer = prepareReducer(defaultState)

@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../../lib/redux-actions-ts";
 
@@ -13,12 +13,8 @@ export interface StartInheritPipelineAction
   pipelineId: string;
 }
 
-export interface ActionCreators {
-  startInheritPipeline: ActionCreator<StartInheritPipelineAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  startInheritPipeline: pipelineId => ({
+export const actionCreators = {
+  startInheritPipeline: (pipelineId: string): StartInheritPipelineAction => ({
     type: START_INHERITED_PIPELINE,
     pipelineId
   })

@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -18,22 +18,17 @@ export interface PipelineSettingsAction extends ActionId {
   isOpen: boolean;
 }
 
-export interface ActionCreators {
-  pipelineSettingsOpened: ActionCreator<
-    Action<"PIPELINE_SETTINGS_OPENED"> & PipelineSettingsAction
-  >;
-  pipelineSettingsClosed: ActionCreator<
-    Action<"PIPELINE_SETTINGS_CLOSED"> & PipelineSettingsAction
-  >;
-}
-
-export const actionCreators: ActionCreators = {
-  pipelineSettingsOpened: id => ({
+export const actionCreators = {
+  pipelineSettingsOpened: (
+    id: string
+  ): Action<"PIPELINE_SETTINGS_OPENED"> & PipelineSettingsAction => ({
     type: PIPELINE_SETTINGS_OPENED,
     id,
     isOpen: true
   }),
-  pipelineSettingsClosed: id => ({
+  pipelineSettingsClosed: (
+    id: string
+  ): Action<"PIPELINE_SETTINGS_CLOSED"> & PipelineSettingsAction => ({
     type: PIPELINE_SETTINGS_CLOSED,
     id,
     isOpen: false

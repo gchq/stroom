@@ -13,42 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
   StateById,
   ActionId
 } from "../../../lib/redux-actions-ts";
-import { DOC_REFS_COPIED, DocRefsMoved } from "./documentTree";
+import { DOC_REFS_COPIED, DocRefsMovedAction } from "./documentTree";
 
 const PREPARE_DOC_REF_MOVE = "PREPARE_DOC_REF_MOVE";
 const COMPLETE_DOC_REF_MOVE = "COMPLETE_DOC_REF_MOVE";
 
-export interface PrepareDocRefMove
+export interface PrepareDocRefMoveAction
   extends ActionId,
     Action<"PREPARE_DOC_REF_MOVE"> {
   uuids: Array<string>;
   destinationUuid: string;
 }
 
-export interface CompleteDocRefMove
+export interface CompleteDocRefMoveAction
   extends ActionId,
     Action<"COMPLETE_DOC_REF_MOVE"> {}
 
-export interface ActionCreators {
-  prepareDocRefMove: ActionCreator<PrepareDocRefMove>;
-  completeDocRefMove: ActionCreator<CompleteDocRefMove>;
-}
-
-export const actionCreators: ActionCreators = {
-  prepareDocRefMove: (id, uuids, destinationUuid) => ({
+export const actionCreators = {
+  prepareDocRefMove: (
+    id: string,
+    uuids: Array<string>,
+    destinationUuid: string
+  ): PrepareDocRefMoveAction => ({
     type: PREPARE_DOC_REF_MOVE,
     id,
     uuids,
     destinationUuid
   }),
-  completeDocRefMove: id => ({ type: COMPLETE_DOC_REF_MOVE, id })
+  completeDocRefMove: (id: string): CompleteDocRefMoveAction => ({
+    type: COMPLETE_DOC_REF_MOVE,
+    id
+  })
 };
 
 export interface StoreStatePerId {
@@ -68,17 +70,20 @@ export const defaultStatePerId: StoreStatePerId = {
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
-  .handleAction<PrepareDocRefMove>(
+  .handleAction<PrepareDocRefMoveAction>(
     PREPARE_DOC_REF_MOVE,
-    (state, { uuids, destinationUuid }: PrepareDocRefMove) => ({
+    (state, { uuids, destinationUuid }: PrepareDocRefMoveAction) => ({
       isMoving: uuids.length > 0,
       uuids,
       destinationUuid
     })
   )
-  .handleAction<CompleteDocRefMove>(
+  .handleAction<CompleteDocRefMoveAction>(
     COMPLETE_DOC_REF_MOVE,
     () => defaultStatePerId
   )
-  .handleForeignAction<DocRefsMoved>(DOC_REFS_COPIED, () => defaultStatePerId)
+  .handleForeignAction<DocRefsMovedAction>(
+    DOC_REFS_COPIED,
+    () => defaultStatePerId
+  )
   .getReducer();

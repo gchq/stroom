@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
   StateById,
   ActionId
 } from "../../../lib/redux-actions-ts";
-import { DOC_REFS_DELETED, DocRefsDeleted } from "./documentTree";
+import { DOC_REFS_DELETED, DocRefsDeletedAction } from "./documentTree";
 
 const PREPARE_DOC_REF_DELETE = "PREPARE_DOC_REF_DELETE";
 const COMPLETE_DOC_REF_DELETE = "COMPLETE_DOC_REF_DELETE";
@@ -36,19 +36,21 @@ export interface CompleteDocRefDelete
   extends ActionId,
     Action<"COMPLETE_DOC_REF_DELETE"> {}
 
-export interface ActionCreators {
-  prepareDocRefDelete: ActionCreator<PrepareDocRefDelete>;
-  completeDocRefDelete: ActionCreator<CompleteDocRefDelete>;
-}
-
-export const actionCreators: ActionCreators = {
-  prepareDocRefDelete: (id, uuids, destinationUuid) => ({
+export const actionCreators = {
+  prepareDocRefDelete: (
+    id: string,
+    uuids: Array<string>,
+    destinationUuid: string
+  ): PrepareDocRefDelete => ({
     type: PREPARE_DOC_REF_DELETE,
     id,
     uuids,
     destinationUuid
   }),
-  completeDocRefDelete: id => ({ type: COMPLETE_DOC_REF_DELETE, id })
+  completeDocRefDelete: (id: string): CompleteDocRefDelete => ({
+    type: COMPLETE_DOC_REF_DELETE,
+    id
+  })
 };
 
 export interface StoreStatePerId {
@@ -78,7 +80,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
     COMPLETE_DOC_REF_DELETE,
     () => defaultStatePerId
   )
-  .handleForeignAction<DocRefsDeleted>(
+  .handleForeignAction<DocRefsDeletedAction>(
     DOC_REFS_DELETED,
     () => defaultStatePerId
   )

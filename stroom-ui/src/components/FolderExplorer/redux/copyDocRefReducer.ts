@@ -13,42 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
   StateById,
   ActionId
 } from "../../../lib/redux-actions-ts";
-import { DOC_REFS_COPIED, DocRefsCopied } from "./documentTree";
+import { DOC_REFS_COPIED, DocRefsCopiedAction } from "./documentTree";
 
 const PREPARE_DOC_REF_COPY = "PREPARE_DOC_REF_COPY";
 const COMPLETE_DOC_REF_COPY = "COMPLETE_DOC_REF_COPY";
 
-export interface PrepareDocRefCopy
+export interface PrepareDocRefCopyAction
   extends ActionId,
     Action<"PREPARE_DOC_REF_COPY"> {
   uuids: Array<string>;
   destinationUuid: string;
 }
 
-export interface CompleteDocRefCopy
+export interface CompleteDocRefCopyAction
   extends ActionId,
     Action<"COMPLETE_DOC_REF_COPY"> {}
 
-export interface ActionCreators {
-  prepareDocRefCopy: ActionCreator<PrepareDocRefCopy>;
-  completeDocRefCopy: ActionCreator<CompleteDocRefCopy>;
-}
-
-export const actionCreators: ActionCreators = {
-  prepareDocRefCopy: (id, uuids, destinationUuid) => ({
+export const actionCreators = {
+  prepareDocRefCopy: (
+    id: string,
+    uuids: Array<string>,
+    destinationUuid: string
+  ): PrepareDocRefCopyAction => ({
     type: PREPARE_DOC_REF_COPY,
     id,
     uuids,
     destinationUuid
   }),
-  completeDocRefCopy: id => ({ type: COMPLETE_DOC_REF_COPY, id })
+  completeDocRefCopy: (id: string): CompleteDocRefCopyAction => ({
+    type: COMPLETE_DOC_REF_COPY,
+    id
+  })
 };
 
 export interface StoreStatePerId {
@@ -68,17 +70,20 @@ export const defaultStatePerId: StoreStatePerId = {
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
-  .handleAction<PrepareDocRefCopy>(
+  .handleAction<PrepareDocRefCopyAction>(
     PREPARE_DOC_REF_COPY,
-    (state, { uuids, destinationUuid }: PrepareDocRefCopy) => ({
+    (state, { uuids, destinationUuid }: PrepareDocRefCopyAction) => ({
       isCopying: uuids.length > 0,
       uuids,
       destinationUuid
     })
   )
-  .handleAction<CompleteDocRefCopy>(
+  .handleAction<CompleteDocRefCopyAction>(
     COMPLETE_DOC_REF_COPY,
     () => defaultStatePerId
   )
-  .handleForeignAction<DocRefsCopied>(DOC_REFS_COPIED, () => defaultStatePerId)
+  .handleForeignAction<DocRefsCopiedAction>(
+    DOC_REFS_COPIED,
+    () => defaultStatePerId
+  )
   .getReducer();

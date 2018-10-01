@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Dispatch, Action, ActionCreator } from "redux";
+import { Dispatch, Action } from "redux";
 import { GlobalStoreState } from "../startup/reducers";
 import { prepareReducer } from "../lib/redux-actions-ts";
 import { wrappedGet } from "../lib/fetchTracker.redux";
@@ -41,12 +41,11 @@ export interface UpdateConfigAction extends Action<"UPDATE_CONFIG"> {
   values: Config;
 }
 
-export interface ActionCreators {
-  updateConfig: ActionCreator<UpdateConfigAction>;
-}
-
-const actionCreators: ActionCreators = {
-  updateConfig: values => ({ type: UPDATE_CONFIG, values })
+const actionCreators = {
+  updateConfig: (values: Config): UpdateConfigAction => ({
+    type: UPDATE_CONFIG,
+    values
+  })
 };
 
 const reducer = prepareReducer(initialState)

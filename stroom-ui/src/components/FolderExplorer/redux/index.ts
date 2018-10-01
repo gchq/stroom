@@ -18,49 +18,35 @@ import { combineReducers } from "redux";
 import {
   actionCreators as moveDocRefActionCreators,
   reducer as moveDocRefReducer,
-  StoreState as MoveDocRefStoreState,
-  ActionCreators as MoveDocRefActionCreators
+  StoreState as MoveDocRefStoreState
 } from "./moveDocRefReducer";
 import {
   actionCreators as documentTreeActionCreators,
   reducer as documentTreeReducer,
-  StoreState as DocumentTreeStoreState,
-  ActionCreators as DocumentTreeActionCreators
+  StoreState as DocumentTreeStoreState
 } from "./documentTree";
 import {
   actionCreators as renameDocRefActionCreators,
   reducer as renameDocRefReducer,
-  StoreState as RenameDocRefStoreState,
-  ActionCreators as RenameDocRefActionCreators
+  StoreState as RenameDocRefStoreState
 } from "./renameDocRefReducer";
 import {
   actionCreators as deleteDocRefActionCreators,
   reducer as deleteDocRefReducer,
-  StoreState as DeleteDocRefStoreState,
-  ActionCreators as DeleteDocRefActionCreators
+  StoreState as DeleteDocRefStoreState
 } from "./deleteDocRefReducer";
 import {
   actionCreators as copyDocRefActionCreators,
   reducer as copyDocRefReducer,
-  StoreState as CopyDocRefStoreState,
-  ActionCreators as CopyDocRefActionCreators
+  StoreState as CopyDocRefStoreState
 } from "./copyDocRefReducer";
 import {
   actionCreators as newDocActionCreators,
   reducer as newDocReducer,
-  StoreState as NewDocStoreState,
-  ActionCreators as NewDocActionCreators
+  StoreState as NewDocStoreState
 } from "./newDocReducer";
 
-export interface ActionCreators
-  extends MoveDocRefActionCreators,
-    DocumentTreeActionCreators,
-    RenameDocRefActionCreators,
-    DeleteDocRefActionCreators,
-    CopyDocRefActionCreators,
-    NewDocActionCreators {}
-
-export const actionCreators: ActionCreators = {
+export const actionCreators = {
   ...documentTreeActionCreators,
   ...moveDocRefActionCreators,
   ...renameDocRefActionCreators,

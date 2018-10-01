@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 import * as uuidv4 from "uuid/v4";
 
 import {
@@ -103,75 +103,82 @@ export interface ExpressionItemMovedAction
   destination: ExpressionItem;
 }
 
-export interface ActionCreators {
-  expressionEditorCreated: ActionCreator<ExpressionEditorCreatedAction>;
-  expressionEditorDestroyed: ActionCreator<ExpressionEditorDestroyedAction>;
-  expressionSetEditableByUser: ActionCreator<ExpressionSetEditableByUserAction>;
-  expressionChanged: ActionCreator<ExpressionChangedAction>;
-  expressionTermAdded: ActionCreator<ExpressionTermAddedAction>;
-  expressionOperatorAdded: ActionCreator<ExpressionOperatorAddedAction>;
-  expressionItemUpdated: ActionCreator<ExpressionItemUpdatedAction>;
-  expressionItemDeleteRequested: ActionCreator<
-    ExpressionItemDeleteRequestedAction
-  >;
-  expressionItemDeleteCancelled: ActionCreator<
-    ExpressionItemDeleteCancelledAction
-  >;
-  expressionItemDeleteConfirmed: ActionCreator<
-    ExpressionItemDeleteConfirmedAction
-  >;
-  expressionItemMoved: ActionCreator<ExpressionItemMovedAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  expressionEditorCreated: id => ({
+export const actionCreators = {
+  expressionEditorCreated: (id: string): ExpressionEditorCreatedAction => ({
     type: EXPRESSION_EDITOR_CREATED,
     id
   }),
-  expressionEditorDestroyed: id => ({
+  expressionEditorDestroyed: (id: string): ExpressionEditorDestroyedAction => ({
     type: EXPRESSION_EDITOR_DESTROYED,
     id
   }),
-  expressionSetEditableByUser: (id, isEditableUserSet) => ({
+  expressionSetEditableByUser: (
+    id: string,
+    isEditableUserSet: boolean
+  ): ExpressionSetEditableByUserAction => ({
     type: EXPRESSION_SET_EDITABLE_BY_USER,
     id,
     isEditableUserSet
   }),
-  expressionChanged: (id, expression) => ({
+  expressionChanged: (
+    id: string,
+    expression: ExpressionOperatorType
+  ): ExpressionChangedAction => ({
     type: EXPRESSION_CHANGED,
     id,
     expression
   }),
-  expressionTermAdded: (id, operatorId) => ({
+  expressionTermAdded: (
+    id: string,
+    operatorId: string
+  ): ExpressionTermAddedAction => ({
     type: EXPRESSION_TERM_ADDED,
     id,
     operatorId
   }),
-  expressionOperatorAdded: (id, operatorId) => ({
+  expressionOperatorAdded: (
+    id: string,
+    operatorId: string
+  ): ExpressionOperatorAddedAction => ({
     type: EXPRESSION_OPERATOR_ADDED,
     id,
     operatorId
   }),
-  expressionItemUpdated: (id, itemId, updates) => ({
+  expressionItemUpdated: (
+    id: string,
+    itemId: string,
+    updates: ExpressionOperatorType | ExpressionTermType
+  ): ExpressionItemUpdatedAction => ({
     type: EXPRESSION_ITEM_UPDATED,
     id,
     itemId,
     updates
   }),
-  expressionItemDeleteRequested: (id, pendingDeletionOperatorId) => ({
+  expressionItemDeleteRequested: (
+    id: string,
+    pendingDeletionOperatorId: string
+  ): ExpressionItemDeleteRequestedAction => ({
     type: EXPRESSION_ITEM_DELETE_REQUESTED,
     id,
     pendingDeletionOperatorId
   }),
-  expressionItemDeleteCancelled: id => ({
+  expressionItemDeleteCancelled: (
+    id: string
+  ): ExpressionItemDeleteCancelledAction => ({
     type: EXPRESSION_ITEM_DELETE_CANCELLED,
     id
   }),
-  expressionItemDeleteConfirmed: id => ({
+  expressionItemDeleteConfirmed: (
+    id: string
+  ): ExpressionItemDeleteConfirmedAction => ({
     type: EXPRESSION_ITEM_DELETE_CONFIRMED,
     id
   }),
-  expressionItemMoved: (id, itemToMove, destination) => ({
+  expressionItemMoved: (
+    id: string,
+    itemToMove: ExpressionItem,
+    destination: ExpressionItem
+  ): ExpressionItemMovedAction => ({
     type: EXPRESSION_ITEM_MOVED,
     id,
     itemToMove,

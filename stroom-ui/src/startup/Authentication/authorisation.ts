@@ -1,4 +1,4 @@
-import { Dispatch, Action, ActionCreator } from "redux";
+import { Dispatch, Action } from "redux";
 
 import { prepareReducer } from "../../lib/redux-actions-ts";
 
@@ -14,16 +14,15 @@ export interface SetAppPermissionAction
   hasAppPermission: boolean;
 }
 
-export interface ActionCreators {
-  setAppPermission: ActionCreator<SetAppPermissionAction>;
-}
-
 const defaultState = {
   appPermissions: []
 };
 
-export const actionCreators: ActionCreators = {
-  setAppPermission: (appPermission, hasAppPermission) => ({
+export const actionCreators = {
+  setAppPermission: (
+    appPermission: string,
+    hasAppPermission: boolean
+  ): SetAppPermissionAction => ({
     type: SET_APP_PERMISSION,
     appPermission,
     hasAppPermission

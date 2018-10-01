@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 import { prepareReducer } from "../../lib/redux-actions-ts";
 
 export type DocRefTypeList = Array<string>;
@@ -25,12 +25,8 @@ export interface DocRefTypesReceived extends Action<"DOC_REF_TYPES_RECEIVED"> {
 
 const DOC_REF_TYPES_RECEIVED = "DOC_REF_TYPES_RECEIVED";
 
-export interface ActionCreators {
-  docRefTypesReceived: ActionCreator<DocRefTypesReceived>;
-}
-
-export const actionCreators: ActionCreators = {
-  docRefTypesReceived: (docRefTypes: DocRefTypeList) => ({
+export const actionCreators = {
+  docRefTypesReceived: (docRefTypes: DocRefTypeList): DocRefTypesReceived => ({
     type: DOC_REF_TYPES_RECEIVED,
     docRefTypes
   })

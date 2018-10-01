@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -38,26 +38,32 @@ export interface SearchResultsReturnedAction
   searchResults: Array<DocRefType>;
 }
 
-export interface ActionCreators {
-  switchMode: ActionCreator<SwitchModeAction>;
-  navigateToFolder: ActionCreator<NavigateToFolderAction>;
-  searchTermUpdated: ActionCreator<SearchTermUpdatedAction>;
-  searchResultsReturned: ActionCreator<SearchResultsReturnedAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  switchMode: (id, searchMode) => ({ type: SWITCH_MODE, id, searchMode }),
-  navigateToFolder: (id, navFolder) => ({
+export const actionCreators = {
+  switchMode: (id: string, searchMode: SearchMode): SwitchModeAction => ({
+    type: SWITCH_MODE,
+    id,
+    searchMode
+  }),
+  navigateToFolder: (
+    id: string,
+    navFolder: DocRefType
+  ): NavigateToFolderAction => ({
     type: NAVIGATE_TO_FOLDER,
     id,
     navFolder
   }),
-  searchTermUpdated: (id, searchTerm) => ({
+  searchTermUpdated: (
+    id: string,
+    searchTerm: string
+  ): SearchTermUpdatedAction => ({
     type: SEARCH_TERM_UPDATED,
     id,
     searchTerm
   }),
-  searchResultsReturned: (id, searchResults) => ({
+  searchResultsReturned: (
+    id: string,
+    searchResults: Array<DocRefType>
+  ): SearchResultsReturnedAction => ({
     type: SEARCH_RESULTS_RETURNED,
     id,
     searchResults

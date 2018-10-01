@@ -13,41 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
   ActionId,
   StateById
 } from "../../../lib/redux-actions-ts";
-import { DOC_REF_RENAMED, DocRefRenamed } from "./documentTree";
+import { DOC_REF_RENAMED, DocRefRenamedAction } from "./documentTree";
 import { DocRefType } from "../../../types";
 
 export const PREPARE_DOC_REF_RENAME = "PREPARE_DOC_REF_RENAME";
 export const COMPLETE_DOC_REF_RENAME = "COMPLETE_DOC_REF_RENAME";
 
-export interface PrepareDocRefRename
+export interface PrepareDocRefRenameAction
   extends ActionId,
     Action<"PREPARE_DOC_REF_RENAME"> {
   docRef: DocRefType;
 }
 
-export interface CompleteDocRefRename
+export interface CompleteDocRefRenameAction
   extends ActionId,
     Action<"COMPLETE_DOC_REF_RENAME"> {}
 
-export interface ActionCreators {
-  prepareDocRefRename: ActionCreator<PrepareDocRefRename>;
-  completeDocRefRename: ActionCreator<CompleteDocRefRename>;
-}
-
-export const actionCreators: ActionCreators = {
-  prepareDocRefRename: (id, docRef) => ({
+export const actionCreators = {
+  prepareDocRefRename: (
+    id: string,
+    docRef: DocRefType
+  ): PrepareDocRefRenameAction => ({
     type: PREPARE_DOC_REF_RENAME,
     id,
     docRef
   }),
-  completeDocRefRename: id => ({ type: COMPLETE_DOC_REF_RENAME, id })
+  completeDocRefRename: (id: string): CompleteDocRefRenameAction => ({
+    type: COMPLETE_DOC_REF_RENAME,
+    id
+  })
 };
 
 export interface StoreStateById {
@@ -65,13 +66,16 @@ export const defaultStatePerId: StoreStateById = {
 };
 
 export const reducer = prepareReducerById(defaultStatePerId)
-  .handleAction<PrepareDocRefRename>(
+  .handleAction<PrepareDocRefRenameAction>(
     PREPARE_DOC_REF_RENAME,
     (_, { docRef }) => ({ isRenaming: true, docRef, name: "" })
   )
-  .handleAction<CompleteDocRefRename>(
+  .handleAction<CompleteDocRefRenameAction>(
     COMPLETE_DOC_REF_RENAME,
     () => defaultStatePerId
   )
-  .handleForeignAction<DocRefRenamed>(DOC_REF_RENAMED, () => defaultStatePerId)
+  .handleForeignAction<DocRefRenamedAction>(
+    DOC_REF_RENAMED,
+    () => defaultStatePerId
+  )
   .getReducer();

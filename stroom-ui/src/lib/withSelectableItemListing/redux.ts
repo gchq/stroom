@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { StoreState as KeyIsDownStoreState } from "../KeyIsDown/redux";
 import { prepareReducerById, StateById, ActionId } from "../redux-actions-ts";
@@ -45,42 +45,36 @@ const FOCUS_DOWN = "FOCUS_DOWN";
 const SELECT_FOCUSSED = "SELECT_FOCUSSED";
 const SELECTION_TOGGLED = "SELECTION_TOGGLED";
 
-export interface ActionCreators {
-  selectableListingMounted: ActionCreator<
-    SelectableListingMounted & Action<"SELECTABLE_LISTING_MOUNTED">
-  >;
-  focusUp: ActionCreator<FocusChange & Action<"FOCUS_UP">>;
-  focusDown: ActionCreator<FocusChange & Action<"FOCUS_DOWN">>;
-  selectFocussed: ActionCreator<SelectionChange & Action<"SELECT_FOCUSSED">>;
-  selectionToggled: ActionCreator<
-    SelectionChange & Action<"SELECTION_TOGGLED">
-  >;
-}
-
-export const actionCreators: ActionCreators = {
+export const actionCreators = {
   selectableListingMounted: (
     id: string,
     items: Array<any>,
     selectionBehaviour: SelectionBehaviour,
     getKey: (a: any) => string
-  ) => ({
+  ): SelectableListingMounted & Action<"SELECTABLE_LISTING_MOUNTED"> => ({
     type: SELECTABLE_LISTING_MOUNTED,
     id,
     items,
     selectionBehaviour,
     getKey
   }),
-  focusUp: (id: string) => ({
+  focusUp: (id: string): FocusChange & Action<"FOCUS_UP"> => ({
     type: FOCUS_UP,
     id,
     direction: -1
   }),
-  focusDown: (id: string, direction: number) => ({
+  focusDown: (
+    id: string,
+    direction: number
+  ): FocusChange & Action<"FOCUS_DOWN"> => ({
     type: FOCUS_DOWN,
     id,
     direction: 1
   }),
-  selectFocussed: (id: string, keyIsDown: KeyIsDownStoreState) => ({
+  selectFocussed: (
+    id: string,
+    keyIsDown: KeyIsDownStoreState
+  ): SelectionChange & Action<"SELECT_FOCUSSED"> => ({
     type: SELECT_FOCUSSED,
     id,
     keyIsDown
@@ -89,7 +83,7 @@ export const actionCreators: ActionCreators = {
     id: string,
     itemKey: string,
     keyIsDown: KeyIsDownStoreState
-  ) => ({
+  ): SelectionChange & Action<"SELECTION_TOGGLED"> => ({
     type: SELECTION_TOGGLED,
     id,
     itemKey,

@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../../lib/redux-actions-ts";
 
@@ -9,12 +9,8 @@ export interface MenuItemOpenedAction extends Action<"MENU_ITEM_OPENED"> {
   isOpen: boolean;
 }
 
-export interface ActionCreators {
-  menuItemOpened: ActionCreator<MenuItemOpenedAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  menuItemOpened: (key, isOpen) => ({
+export const actionCreators = {
+  menuItemOpened: (key: string, isOpen: boolean): MenuItemOpenedAction => ({
     type: MENU_ITEM_OPENED,
     key,
     isOpen

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import { prepareReducer } from "../../lib/redux-actions-ts";
 import { StreamTaskType } from "../../types";
@@ -84,71 +84,64 @@ export interface SelectFirstAction extends Action<"SELECT_FIRST"> {}
 export interface SelectLastAction extends Action<"SELECT_LAST"> {}
 export interface SelectNoneAction extends Action<"SELECT_NONE"> {}
 
-export interface ActionCreators {
-  addTrackers: ActionCreator<AddTrackersAction>;
-  updateSort: ActionCreator<UpdateSortAction>;
-  updateTrackers: ActionCreator<UpdateTrackersAction>;
-  updateEnabled: ActionCreator<UpdateEnabledAction>;
-  moveSelection: ActionCreator<MoveSelectionAction>;
-  updateTrackerSelection: ActionCreator<UpdateTrackerSelectionAction>;
-  updateSearchCriteria: ActionCreator<UpdateSearchCriteriaAction>;
-  changePage: ActionCreator<ChangePageAction>;
-  updatePageSize: ActionCreator<UpdatePageSizeAction>;
-  resetPaging: ActionCreator<ResetPagingAction>;
-  pageRight: ActionCreator<PageRightAction>;
-  pageLeft: ActionCreator<PageLeftAction>;
-  selectFirst: ActionCreator<SelectFirstAction>;
-  selectLast: ActionCreator<SelectLastAction>;
-  selectNone: ActionCreator<SelectNoneAction>;
-}
-
-export const actionCreators: ActionCreators = {
-  addTrackers: (streamTasks, totalStreamTasks) => ({
+export const actionCreators = {
+  addTrackers: (
+    streamTasks: Array<StreamTaskType>,
+    totalStreamTasks: number
+  ): AddTrackersAction => ({
     type: ADD_TRACKERS,
     streamTasks,
     totalStreamTasks
   }),
-  updateSort: (sortBy, sortDirection) => ({
+  updateSort: (
+    sortBy: SortByOptions,
+    sortDirection: Directions
+  ): UpdateSortAction => ({
     type: UPDATE_SORT,
     sortBy,
     sortDirection
   }),
-  updateTrackers: (streamTasks, totalStreamTasks) => ({
+  updateTrackers: (
+    streamTasks: Array<StreamTaskType>,
+    totalStreamTasks: number
+  ): UpdateTrackersAction => ({
     type: UPDATE_TRACKERS,
     streamTasks,
     totalStreamTasks
   }),
-  moveSelection: direction => ({
+  moveSelection: (direction: Directions): MoveSelectionAction => ({
     type: MOVE_SELECTION,
     direction
   }),
-  updateEnabled: (filterId, enabled) => ({
+  updateEnabled: (filterId: number, enabled: boolean): UpdateEnabledAction => ({
     type: UPDATE_ENABLED,
     filterId,
     enabled
   }),
-  updateTrackerSelection: filterId => ({
+  updateTrackerSelection: (filterId: number): UpdateTrackerSelectionAction => ({
     type: UPDATE_TRACKER_SELECTION,
     filterId
   }),
-  updateSearchCriteria: searchCriteria => ({
+  updateSearchCriteria: (
+    searchCriteria: string
+  ): UpdateSearchCriteriaAction => ({
     type: UPDATE_SEARCH_CRITERIA,
     searchCriteria
   }),
-  changePage: pageOffset => ({
+  changePage: (pageOffset: number): ChangePageAction => ({
     type: CHANGE_PAGE,
     pageOffset
   }),
-  updatePageSize: pageSize => ({
+  updatePageSize: (pageSize: number): UpdatePageSizeAction => ({
     type: UPDATE_PAGE_SIZE,
     pageSize
   }),
-  resetPaging: () => ({ type: RESET_PAGING }),
-  pageRight: () => ({ type: PAGE_RIGHT }),
-  pageLeft: () => ({ type: PAGE_LEFT }),
-  selectFirst: () => ({ type: SELECT_FIRST }),
-  selectLast: () => ({ type: SELECT_LAST }),
-  selectNone: () => ({ type: SELECT_NONE })
+  resetPaging: (): ResetPagingAction => ({ type: RESET_PAGING }),
+  pageRight: (): PageRightAction => ({ type: PAGE_RIGHT }),
+  pageLeft: (): PageLeftAction => ({ type: PAGE_LEFT }),
+  selectFirst: (): SelectFirstAction => ({ type: SELECT_FIRST }),
+  selectLast: (): SelectLastAction => ({ type: SELECT_LAST }),
+  selectNone: (): SelectNoneAction => ({ type: SELECT_NONE })
 };
 export interface StoreState {
   trackers: Array<StreamTaskType>;

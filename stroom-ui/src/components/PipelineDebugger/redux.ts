@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Action, ActionCreator } from "redux";
+import { Action } from "redux";
 
 import {
   prepareReducerById,
@@ -30,18 +30,14 @@ export interface StartDebuggingAction
   pipelineId: string;
 }
 
-export interface ActionCreators {
-  startDebugging: ActionCreator<StartDebuggingAction>;
-}
-
 export interface StoreStateById {
   pipelineId?: string;
 }
 
 export interface StoreState extends StateById<StoreStateById> {}
 
-export const actionCreators: ActionCreators = {
-  startDebugging: (id, pipelineId) => ({
+export const actionCreators = {
+  startDebugging: (id: string, pipelineId: string): StartDebuggingAction => ({
     type: START_DEBUGGING,
     id,
     pipelineId
