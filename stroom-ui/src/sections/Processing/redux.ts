@@ -277,7 +277,6 @@ export const reducer = prepareReducer(defaultState)
   .handleAction<ResetPagingAction>(RESET_PAGING, (state = defaultState) => ({
     ...state,
     pageOffset: defaultState.pageOffset
-    // This does not reset pageSize because that is managed to be the size of the viewport
   }))
   .handleAction<PageRightAction>(PAGE_RIGHT, (state = defaultState) => {
     // We don't want to page further than is possible

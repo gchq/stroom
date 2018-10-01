@@ -16,6 +16,7 @@
 
 import * as React from "react";
 import { connect } from "react-redux";
+
 import { compose, lifecycle, withProps, withHandlers } from "recompose";
 import * as Mousetrap from "mousetrap";
 import PanelGroup from "react-panelgroup";
@@ -28,6 +29,7 @@ import { actionCreators as expressionActionCreators } from "../../../components/
 import { fetchTrackers } from "../streamTasksResourceClient";
 import ProcessingDetails from "../ProcessingDetails/ProcessingDetails";
 import ProcessingList from "../ProcessingList/ProcessingList";
+import { GlobalStoreState } from "../../../startup/reducers";
 
 const { expressionChanged } = expressionActionCreators;
 const {
@@ -37,11 +39,37 @@ const {
 } = actionCreators;
 
 export interface Props {}
+interface ConnectState {
+  searchCriteria: string;
+  selectedTrackerId?: number;
+  // TODO TS shouldn't be any
+  trackers: any[];
+}
+interface ConnectDispatch {
+  updateTrackerSelection: typeof updateTrackerSelection;
+  fetchTrackers: typeof fetchTrackers;
+  resetPaging: typeof resetPaging;
+  expressionChanged: typeof expressionChanged;
+  updateSearchCriteria: typeof updateSearchCriteria;
+}
+interface WithProps {
+  showDetails: boolean;
+}
 
-export interface EnhancedProps extends Props {}
+interface WithHandlers {
+  onHandleTrackerSelection: (filterId: number, trackers?: any[]) => void;
+  onHandleSearchChange: React.ChangeEventHandler<HTMLInputElement>;
+}
+
+export interface EnhancedProps
+  extends Props,
+    WithHandlers,
+    WithProps,
+    ConnectState,
+    ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
-  connect(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ processing: { trackers, searchCriteria, selectedTrackerId } }) => ({
       trackers,
       searchCriteria,
@@ -55,15 +83,19 @@ const enhance = compose<EnhancedProps, Props>(
       updateSearchCriteria
     }
   ),
-  withHandlers({
+  withHandlers<
+    Props & ConnectState & ConnectDispatch & WithHandlers,
+    WithHandlers
+  >({
     onHandleTrackerSelection: ({
       updateTrackerSelection,
       expressionChanged
-    }) => (filterId, trackers) => {
+      //TODO TS not 'any'
+    }) => (filterId: number, trackers?: any[]) => {
       updateTrackerSelection(filterId);
 
       let expression;
-      if (filterId !== undefined) {
+      if (filterId !== undefined && trackers !== undefined) {
         const tracker = trackers.find(t => t.filterId === filterId);
         if (tracker && tracker.filter) {
           expression = tracker.filter.expression;
@@ -87,7 +119,7 @@ const enhance = compose<EnhancedProps, Props>(
   withProps(({ selectedTracker }) => ({
     showDetails: selectedTracker !== undefined
   })),
-  lifecycle({
+  lifecycle<Props & WithHandlers & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         fetchTrackers,
@@ -97,7 +129,7 @@ const enhance = compose<EnhancedProps, Props>(
 
       fetchTrackers();
 
-      Mousetrap.bind("esc", () => onHandleTrackerSelection(undefined));
+      Mousetrap.bind("esc", () => onHandleTrackerSelection(-1, undefined));
 
       // This component monitors window size. For every change it will fetch the
       // trackers. The fetch trackers function will only fetch trackers that fit
@@ -180,14 +212,14 @@ const ProcessingContainer = ({
           >
             {selectedTrackerId === undefined || selectedTrackerId === null ? (
               <ProcessingList
-                onSelection={(filterId, trackers) =>
+                onSelection={(filterId: number, trackers: any[]) =>
                   onHandleTrackerSelection(filterId, trackers)
                 }
               />
             ) : (
               <PanelGroup direction="column">
                 <ProcessingList
-                  onSelection={(filterId, trackers) =>
+                  onSelection={(filterId: number, trackers: any[]) =>
                     onHandleTrackerSelection(filterId, trackers)
                   }
                 />
