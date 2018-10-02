@@ -15,10 +15,8 @@
  */
 
 import { ExpressionOperatorType } from "../../types";
-import * as uuidv4 from "uuid/v4";
 
 const emptyExpression: ExpressionOperatorType = {
-  uuid: "root",
   type: "operator",
   op: "AND",
   children: [],
@@ -26,12 +24,10 @@ const emptyExpression: ExpressionOperatorType = {
 };
 
 const singleTermExpression: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "AND",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -44,12 +40,10 @@ const singleTermExpression: ExpressionOperatorType = {
 };
 
 const simpleAndExpression: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "AND",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -58,7 +52,6 @@ const simpleAndExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN",
@@ -71,12 +64,10 @@ const simpleAndExpression: ExpressionOperatorType = {
 };
 
 const simpleOrExpression: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -85,7 +76,6 @@ const simpleOrExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "EQUALS",
@@ -98,12 +88,10 @@ const simpleOrExpression: ExpressionOperatorType = {
 };
 
 const nestedExpression: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -112,7 +100,6 @@ const nestedExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN",
@@ -121,13 +108,11 @@ const nestedExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "operator",
       op: "AND",
       enabled: true,
       children: [
         {
-          uuid: uuidv4(),
           type: "term",
           field: "numberOfDoors",
           condition: "BETWEEN",
@@ -136,7 +121,6 @@ const nestedExpression: ExpressionOperatorType = {
           enabled: true
         },
         {
-          uuid: uuidv4(),
           type: "term",
           field: "createUser",
           condition: "EQUALS",
@@ -151,12 +135,10 @@ const nestedExpression: ExpressionOperatorType = {
 };
 
 const deeplyNestedExpression: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -165,7 +147,6 @@ const deeplyNestedExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN",
@@ -174,13 +155,11 @@ const deeplyNestedExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "operator",
       op: "AND",
       enabled: true,
       children: [
         {
-          uuid: uuidv4(),
           type: "term",
           field: "numberOfDoors",
           condition: "BETWEEN",
@@ -189,7 +168,6 @@ const deeplyNestedExpression: ExpressionOperatorType = {
           enabled: true
         },
         {
-          uuid: uuidv4(),
           type: "term",
           field: "createUser",
           condition: "EQUALS",
@@ -198,13 +176,11 @@ const deeplyNestedExpression: ExpressionOperatorType = {
           enabled: true
         },
         {
-          uuid: uuidv4(),
           type: "operator",
           op: "OR",
           enabled: true,
           children: [
             {
-              uuid: uuidv4(),
               type: "term",
               field: "id",
               condition: "CONTAINS",
@@ -213,7 +189,6 @@ const deeplyNestedExpression: ExpressionOperatorType = {
               enabled: true
             },
             {
-              uuid: uuidv4(),
               type: "term",
               field: "updateTime",
               condition: "BETWEEN",
@@ -230,12 +205,10 @@ const deeplyNestedExpression: ExpressionOperatorType = {
 };
 
 const partlyDisabledExpression01: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -244,7 +217,6 @@ const partlyDisabledExpression01: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "EQUALS",
@@ -257,12 +229,10 @@ const partlyDisabledExpression01: ExpressionOperatorType = {
 };
 
 const partlyDisabledExpression02: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -271,7 +241,6 @@ const partlyDisabledExpression02: ExpressionOperatorType = {
       enabled: false
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "EQUALS",
@@ -284,12 +253,10 @@ const partlyDisabledExpression02: ExpressionOperatorType = {
 };
 
 const partlyDisabledExpression03: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -298,7 +265,6 @@ const partlyDisabledExpression03: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN",
@@ -307,13 +273,11 @@ const partlyDisabledExpression03: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "operator",
       op: "AND",
       enabled: true,
       children: [
         {
-          uuid: uuidv4(),
           type: "term",
           field: "numberOfDoors",
           condition: "BETWEEN",
@@ -322,7 +286,6 @@ const partlyDisabledExpression03: ExpressionOperatorType = {
           enabled: true
         },
         {
-          uuid: uuidv4(),
           type: "term",
           field: "createUser",
           condition: "EQUALS",
@@ -337,12 +300,10 @@ const partlyDisabledExpression03: ExpressionOperatorType = {
 };
 
 const hugeExpression: ExpressionOperatorType = {
-  uuid: uuidv4(),
   type: "operator",
   op: "OR",
   children: [
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "CONTAINS",
@@ -351,7 +312,6 @@ const hugeExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "term",
       field: "colour",
       condition: "IN",
@@ -360,13 +320,11 @@ const hugeExpression: ExpressionOperatorType = {
       enabled: true
     },
     {
-      uuid: uuidv4(),
       type: "operator",
       op: "AND",
       enabled: true,
       children: [
         {
-          uuid: uuidv4(),
           type: "term",
           field: "numberOfDoors",
           condition: "BETWEEN",
@@ -375,7 +333,6 @@ const hugeExpression: ExpressionOperatorType = {
           enabled: true
         },
         {
-          uuid: uuidv4(),
           type: "term",
           field: "createUser",
           condition: "EQUALS",
@@ -386,13 +343,11 @@ const hugeExpression: ExpressionOperatorType = {
       ]
     },
     {
-      uuid: uuidv4(),
       type: "operator",
       op: "OR",
       enabled: false,
       children: [
         {
-          uuid: uuidv4(),
           type: "term",
           field: "id",
           condition: "CONTAINS",
@@ -401,7 +356,6 @@ const hugeExpression: ExpressionOperatorType = {
           enabled: false
         },
         {
-          uuid: uuidv4(),
           type: "term",
           field: "updateTime",
           condition: "BETWEEN",

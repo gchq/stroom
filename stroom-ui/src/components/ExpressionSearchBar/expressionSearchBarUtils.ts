@@ -18,9 +18,9 @@ import {
   DataSourceType,
   ExpressionItem,
   ExpressionOperatorType,
-  ExpressionTermType
+  ExpressionTermType,
+  ConditionType
 } from "../../types";
-import * as uuidv4 from "uuid/v4";
 
 interface ValidationResult {
   original: string;
@@ -92,7 +92,6 @@ export const processSearchString = (
   });
 
   const expression: ExpressionOperatorType = {
-    uuid: "root",
     type: "operator",
     op: "AND",
     children: validationResults
@@ -141,8 +140,8 @@ const split = (criteria: string) =>
  * Creates an ExpressionBuilder term from the passed array. The array must look like ['foo', 'EQUALS', 'bar'].
  * @param {array} asArray The term as an array
  */
-const toTermFromArray = (asArray: string[]) =>
-  toTerm(asArray[0], asArray[1], asArray[2]);
+const toTermFromArray = (asArray: string[]): ExpressionTermType =>
+  toTerm(asArray[0], asArray[1] as ConditionType, asArray[2]);
 
 /**
  * Returns an ExpressionBuilder term
@@ -150,14 +149,17 @@ const toTermFromArray = (asArray: string[]) =>
  * @param {string} condition
  * @param {string} value
  */
-const toTerm = (field: string, condition: string, value: string) => ({
+const toTerm = (
+  field: string,
+  condition: ConditionType,
+  value: string
+): ExpressionTermType => ({
   type: "term",
   field,
   condition,
   value,
   dictionary: null,
-  enabled: true,
-  uuid: `unsaved_${uuidv4()}` //TODO: A lot relies on uuid existing, so we need to populate this with something.
+  enabled: true
 });
 
 /**

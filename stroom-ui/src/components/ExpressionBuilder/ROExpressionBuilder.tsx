@@ -18,11 +18,11 @@ import * as React from "react";
 import ROExpressionOperator from "./ROExpressionOperator";
 import { LineContainer } from "../LineTo";
 import lineElementCreators from "./expressionLineCreators";
-import { ExpressionOperatorType } from "../../types";
+import { ExpressionOperatorWithUuid } from "../../types";
 
 export interface Props {
   expressionId: string;
-  expression: ExpressionOperatorType;
+  expression: ExpressionOperatorWithUuid;
 }
 
 const ROExpressionBuilder = ({ expressionId, expression }: Props) => (

@@ -6,14 +6,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { LineTo } from "../LineTo";
 import {
-  ExpressionOperatorType,
-  ExpressionItem,
-  ExpressionTermType
+  ExpressionOperatorWithUuid,
+  ExpressionItemWithUuid,
+  ExpressionTermWithUuid
 } from "../../types";
 
 export interface Props {
   expressionId: string;
-  operator: ExpressionOperatorType;
+  operator: ExpressionOperatorWithUuid;
   isRoot?: boolean;
   isEnabled: boolean;
 }
@@ -46,7 +46,7 @@ const ROExpressionOperator = ({
       <div className="operator__children">
         {operator.children &&
           operator.children
-            .map((c: ExpressionItem) => {
+            .map((c: ExpressionItemWithUuid) => {
               let itemElement;
               const cIsEnabled = isEnabled && c.enabled;
               switch (c.type) {
@@ -56,7 +56,7 @@ const ROExpressionOperator = ({
                       <ROExpressionTerm
                         expressionId={expressionId}
                         isEnabled={cIsEnabled}
-                        term={c as ExpressionTermType}
+                        term={c as ExpressionTermWithUuid}
                       />
                     </div>
                   );
@@ -66,7 +66,7 @@ const ROExpressionOperator = ({
                     <ROExpressionOperator
                       expressionId={expressionId}
                       isEnabled={cIsEnabled}
-                      operator={c as ExpressionOperatorType}
+                      operator={c as ExpressionOperatorWithUuid}
                     />
                   );
                   break;
