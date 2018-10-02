@@ -18,7 +18,6 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { compose, withProps, withHandlers } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 import Button from "../../components/Button";
 import {
@@ -29,7 +28,7 @@ import {
 import { actionCreators as appChromeActionCreators } from "./redux";
 import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
 import withLocalStorage from "../../lib/withLocalStorage";
-import MenuItem from "./MenuItem";
+import MenuItem, { MenuItemType } from "./MenuItem";
 import {
   MoveDocRefDialog,
   RenameDocRefDialog,
@@ -54,24 +53,12 @@ const withIsExpanded = withLocalStorage("isExpanded", "setIsExpanded", true);
 const LISTING_ID = "app-chrome-menu";
 const pathPrefix = "/s";
 
-interface MenuItem {
-  key: string;
-  title?: string;
-  onClick: () => void;
-  icon: IconProp;
-  style: "doc" | "nav";
-  skipInContractedMenu?: boolean;
-  children?: Array<MenuItem>;
-  docRef?: DocRefTree;
-  parentDocRef?: DocRefType;
-}
-
 const getDocumentTreeMenuItems = (
   openDocRef: DocRefConsumer,
   parentDocRef: DocRefType | undefined,
   treeNode: DocRefTree,
   skipInContractedMenu = false
-): MenuItem => ({
+): MenuItemType => ({
   key: treeNode.uuid,
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
@@ -130,7 +117,7 @@ interface WithIsExpanded {
   setIsExpanded: (value: boolean) => any;
 }
 interface WithProps {
-  menuItems: Array<MenuItem>;
+  menuItems: Array<MenuItemType>;
   openMenuItems: { [key: string]: boolean };
 }
 
@@ -143,7 +130,7 @@ interface EnhancedProps
     ConnectDispatch,
     WithIsExpanded,
     WithProps,
-    WithSelectableItemListingProps<MenuItem> {}
+    WithSelectableItemListingProps<MenuItemType> {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -189,7 +176,7 @@ const enhance = compose<EnhancedProps, Props>(
       areMenuItemsOpen,
       menuItemOpened
     }) => {
-      const menuItems: Array<MenuItem> = [
+      const menuItems: Array<MenuItemType> = [
         {
           key: "welcome",
           title: "Welcome",
@@ -252,7 +239,7 @@ const enhance = compose<EnhancedProps, Props>(
       };
     }
   ),
-  withSelectableItemListing<MenuItem>(
+  withSelectableItemListing<MenuItemType>(
     ({
       openMenuItems,
       menuItemOpened,
@@ -271,7 +258,7 @@ const enhance = compose<EnhancedProps, Props>(
           } else if (m.parentDocRef) {
             // Can we bubble back up to the parent folder of the current selection?
             let newSelection = openMenuItems.find(
-              ({ key }: MenuItem) => key === m.parentDocRef!.uuid
+              ({ key }: MenuItemType) => key === m.parentDocRef!.uuid
             );
             selectionToggled(LISTING_ID, newSelection.key);
             menuItemOpened(m.parentDocRef.uuid, false);
@@ -283,7 +270,7 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 const getExpandedMenuItems = (
-  menuItems: Array<MenuItem>,
+  menuItems: Array<MenuItemType>,
   areMenuItemsOpen: MenuItemsOpenStoreState,
   depth: number = 0
 ) =>
@@ -302,7 +289,7 @@ const getExpandedMenuItems = (
     </React.Fragment>
   ));
 
-const getContractedMenuItems = (menuItems: Array<MenuItem>) =>
+const getContractedMenuItems = (menuItems: Array<MenuItemType>) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
