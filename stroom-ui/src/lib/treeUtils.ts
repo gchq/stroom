@@ -182,9 +182,9 @@ export function iterateNodes<T extends ItemWithUuid>(
 ) {
   const thisLineage = lineage || [];
 
-  const skipChildren = callback(thisLineage, tree);
+  callback(thisLineage, tree);
 
-  if (tree.children && !skipChildren) {
+  if (tree.children) {
     tree.children.forEach(c =>
       iterateNodes(c, callback, thisLineage.concat([tree]))
     );
