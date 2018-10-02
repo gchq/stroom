@@ -59,6 +59,18 @@ export type ConditionType =
   | "LESS_THAN"
   | "LESS_THAN_OR_EQUAL_TO";
 
+export const ConditionDisplayValues = {
+  CONTAINS: "contains",
+  EQUALS: "=",
+  GREATER_THAN: ">",
+  GREATER_THAN_OR_EQUAL_TO: ">=",
+  LESS_THAN: "<",
+  LESS_THAN_OR_EQUAL_TO: "<=",
+  BETWEEN: "between",
+  IN: "in",
+  IN_DICTIONARY: "in dictionary"
+};
+
 export interface DataSourceFieldType {
   type: "ID" | "FIELD" | "NUMERIC_FIELD" | "DATE_FIELD";
   name: string;
@@ -75,17 +87,13 @@ export interface ExpressionItem extends ItemWithId {
   enabled: boolean;
 }
 
-export enum OperatorType {
-  AND,
-  OR,
-  NOT
-}
+export type OperatorType = "AND" | "OR" | "NOT";
 
 export interface ExpressionOperatorType
   extends ExpressionItem,
     Tree<ExpressionTermType | ExpressionOperatorType> {
   type: "operator";
-  op: "AND" | "OR" | "NOT";
+  op: OperatorType;
 }
 
 export interface ExpressionTermType extends ExpressionItem {
@@ -213,11 +221,7 @@ export interface PageResponse {
   exact: boolean;
 }
 
-export enum DataStatus {
-  UNLOCKED = "Unlocked",
-  LOCKED = "Locked",
-  DELETED = "Deleted"
-}
+export type DataStatus = "UNLOCKED" | "LOCKED" | "DELETED";
 
 export interface DataItem {
   id: number;
@@ -235,7 +239,7 @@ export interface DataItem {
 
 export interface DataRow {
   data: DataItem;
-  attributes: {
+  attributes?: {
     [key: string]: string;
   };
 }

@@ -1,89 +1,123 @@
-import * as React from 'react';
-import { connect } from 'react-redux';
+import * as React from "react";
+import { connect } from "react-redux";
 
-import { AppChrome } from '.';
-import { Processing } from 'sections/Processing';
-import SwitchedDocRefEditor from '../SwitchedDocRefEditor';
-import IconHeader from '../IconHeader';
-import Welcome from 'sections/Welcome';
-import DataViewer from 'sections/DataViewer';
-import UserSettings from 'sections/UserSettings';
-import PathNotFound from '../PathNotFound';
-import IFrame from '../IFrame';
-import ErrorPage from '../ErrorPage';
+import { AppChrome } from ".";
+import { Processing } from "../Processing";
+import SwitchedDocRefEditor from "../../components/SwitchedDocRefEditor";
+import IconHeader from "../../components/IconHeader";
+import Welcome from "../Welcome";
+import DataViewer from "../DataViewer";
+import UserSettings from "../UserSettings";
+import PathNotFound from "../../components/PathNotFound";
+import IFrame from "../../components/IFrame";
+import ErrorPage from "../../components/ErrorPage";
 
-const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
+import { Config } from "../../startup/config";
+import { GlobalStoreState } from "../../startup/reducers";
+import { RouteComponentProps } from "react-router";
 
-const withConfig = connect(({ config }) => ({ config }));
+const renderWelcome = () => (
+  <AppChrome activeMenuItem="Welcome" content={<Welcome />} />
+);
 
-const UsersIFrame = withConfig(({ config: { authUsersUiUrl } }) => (
+interface ConnectState {
+  config: Config;
+}
+interface ConnectDispatch {}
+
+interface WithConfig extends ConnectState, ConnectDispatch {}
+
+const withConfig = connect<ConnectState, ConnectDispatch, {}, GlobalStoreState>(
+  ({ config: { values } }) => ({ config: values })
+);
+
+const UsersIFrame = withConfig(({ config: { authUsersUiUrl } }: WithConfig) => (
   <React.Fragment>
     <IconHeader icon="users" text="Users" />
-    <IFrame key="users" url={authUsersUiUrl} />
+    {authUsersUiUrl ? (
+      <IFrame key="users" url={authUsersUiUrl} />
+    ) : (
+      <div>No Users URL in Config</div>
+    )}
   </React.Fragment>
 ));
 
-const ApiTokensIFrame = withConfig(({ config: { authTokensUiUrl } }) => (
-  <React.Fragment>
-    <IconHeader icon="key" text="API keys" />
-    <IFrame key="apikeys" url={authTokensUiUrl} />
-  </React.Fragment>
-));
+const ApiTokensIFrame = withConfig(
+  ({ config: { authTokensUiUrl } }: WithConfig) => (
+    <React.Fragment>
+      <IconHeader icon="key" text="API keys" />
+      {authTokensUiUrl ? (
+        <IFrame key="apikeys" url={authTokensUiUrl} />
+      ) : (
+        <div>No Api Keys URL in Config</div>
+      )}
+    </React.Fragment>
+  )
+);
 
 export default [
   {
     exact: true,
-    path: '/',
-    render: renderWelcome,
+    path: "/",
+    render: renderWelcome
   },
   {
     exact: true,
-    path: '/s/welcome',
-    render: renderWelcome,
+    path: "/s/welcome",
+    render: renderWelcome
   },
   {
     exact: true,
-    path: '/s/data',
-    render: props => (
-      <AppChrome activeMenuItem="Data" content={<DataViewer dataViewerId="system" />} />
-    ),
+    path: "/s/data",
+    render: () => (
+      <AppChrome
+        activeMenuItem="Data"
+        content={<DataViewer dataViewerId="system" />}
+      />
+    )
   },
   {
     exact: true,
-    path: '/s/processing',
-    render: props => <AppChrome activeMenuItem="Processing" content={<Processing />} />,
+    path: "/s/processing",
+    render: () => (
+      <AppChrome activeMenuItem="Processing" content={<Processing />} />
+    )
   },
   {
     exact: true,
-    path: '/s/me',
-    render: props => <AppChrome activeMenuItem="Me" content={<UserSettings />} />,
+    path: "/s/me",
+    render: () => <AppChrome activeMenuItem="Me" content={<UserSettings />} />
   },
   {
     exact: true,
-    path: '/s/users',
-    render: props => <AppChrome activeMenuItem="Users" content={<UsersIFrame />} />,
+    path: "/s/users",
+    render: () => <AppChrome activeMenuItem="Users" content={<UsersIFrame />} />
   },
   {
     exact: true,
-    path: '/s/apikeys',
-    render: props => <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrame />} />,
+    path: "/s/apikeys",
+    render: () => (
+      <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrame />} />
+    )
   },
   {
     exact: true,
-    path: '/s/error',
-    render: props => <AppChrome activeMenuItem="Error" content={<ErrorPage />} />,
+    path: "/s/error",
+    render: () => <AppChrome activeMenuItem="Error" content={<ErrorPage />} />
   },
   {
     exact: true,
-    path: '/s/doc/:type/:uuid',
-    render: props => (
+    path: "/s/doc/:type/:uuid",
+    render: (props: RouteComponentProps<any>) => (
       <AppChrome
         activeMenuItem="Explorer"
         content={<SwitchedDocRefEditor docRef={{ ...props.match.params }} />}
       />
-    ),
+    )
   },
   {
-    render: () => <AppChrome activeMenuItem="Welcome" content={<PathNotFound />} />,
-  },
+    render: () => (
+      <AppChrome activeMenuItem="Welcome" content={<PathNotFound />} />
+    )
+  }
 ];

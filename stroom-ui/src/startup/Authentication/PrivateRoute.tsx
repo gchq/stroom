@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { Route } from "react-router-dom";
+import { Route, RouteComponentProps } from "react-router-dom";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -23,8 +23,7 @@ import { GlobalStoreState } from "../../startup/reducers";
 import AuthenticationRequest from "./AuthenticationRequest";
 
 export interface Props {
-  isLoggedIn: boolean;
-  render: (p: any) => any;
+  render: (p: RouteComponentProps<any>) => any;
 }
 
 interface ConnectState {
@@ -37,7 +36,15 @@ interface ConnectState {
 }
 interface ConnectDispatch {}
 
-export interface EnhancedProps extends Props {
+interface WithProps {
+  isLoggedIn: boolean;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithProps {
   advertisedUrl: string;
   appClientId: string;
   authenticationServiceUrl: string;

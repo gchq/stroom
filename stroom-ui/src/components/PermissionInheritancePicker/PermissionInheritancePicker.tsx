@@ -1,9 +1,9 @@
 import * as React from "react";
 
 import SelectBox, { ControlledInputProps } from "../SelectBox";
-import permissionInheritanceValues from "./permissionInheritanceValues";
+import { PermissionInheritance } from "../../types";
 
-const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
+const piOptions = Object.values(PermissionInheritance).map(pi => ({
   value: pi,
   text: pi
 }));

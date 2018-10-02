@@ -52,7 +52,7 @@ interface WithProps<TItem> {
   items: Array<TItem>;
   openItem: (i: TItem) => void;
   enterItem?: (i: TItem) => void;
-  goBack?: () => void;
+  goBack?: (i: TItem) => void;
   selectionBehaviour?: SelectionBehaviour;
 }
 

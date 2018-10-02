@@ -49,13 +49,13 @@ export const actionCreators = {
   selectableListingMounted: (
     id: string,
     items: Array<any>,
-    selectionBehaviour: SelectionBehaviour,
+    selectionBehaviour: SelectionBehaviour | undefined,
     getKey: (a: any) => string
   ): SelectableListingMounted & Action<"SELECTABLE_LISTING_MOUNTED"> => ({
     type: SELECTABLE_LISTING_MOUNTED,
     id,
     items,
-    selectionBehaviour,
+    selectionBehaviour: selectionBehaviour || SelectionBehaviour.NONE,
     getKey
   }),
   focusUp: (id: string): FocusChange & Action<"FOCUS_UP"> => ({

@@ -122,14 +122,14 @@ export interface GlobalStoreState {
   folderExplorer: FolderExplorerStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
   xsltEditor: XsltEditorStoreState;
-  processing: ProcessingStoreState;
   expressionBuilder: ExpressionBuilderStoreState;
   pipelineEditor: PipelineEditorStoreState;
   recentItems: RecentItemsStoreState;
-  dataViewers: DataViewersStoreState;
   appChrome: AppChromeStoreState;
   docRefInfo: DocRefInfoStoreState;
   debuggers: DebuggersStoreState;
+  processing: ProcessingStoreState;
+  dataViewers: DataViewersStoreState;
 }
 
 export default combineReducers({
@@ -149,12 +149,12 @@ export default combineReducers({
   lineContainer,
   appSearch,
   dictionaryEditor,
-  processing,
   expressionBuilder,
   pipelineEditor,
   recentItems,
-  dataViewers,
   appChrome,
   docRefInfo,
-  debuggers
+  debuggers,
+  processing,
+  dataViewers
 });

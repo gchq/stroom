@@ -17,11 +17,17 @@ import * as React from "react";
 
 import { connect } from "react-redux";
 import { compose, withProps, withHandlers } from "recompose";
-import { withRouter } from "react-router-dom";
+import { withRouter, RouteComponentProps } from "react-router-dom";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 import Button from "../../components/Button";
-import { actionCreators as selectableItemListingActionCreators } from "../../lib/withSelectableItemListing";
+import {
+  actionCreators as selectableItemListingActionCreators,
+  EnhancedProps as WithSelectableItemListingProps,
+  StoreStatePerId as WithSelectableItemListingStatePerId
+} from "../../lib/withSelectableItemListing";
 import { actionCreators as appChromeActionCreators } from "./redux";
+import { StoreState as MenuItemsOpenStoreState } from "./redux/menuItemsOpenReducer";
 import withLocalStorage from "../../lib/withLocalStorage";
 import MenuItem from "./MenuItem";
 import {
@@ -30,11 +36,14 @@ import {
   CopyDocRefDialog,
   DeleteDocRefDialog,
   NewDocRefDialog,
-  withDocumentTree
+  withDocumentTree,
+  WithDocumentTreeProps
 } from "../../components/FolderExplorer";
 
 import { actionCreators as userSettingsActionCreators } from "../UserSettings";
 import withSelectableItemListing from "../../lib/withSelectableItemListing";
+import { DocRefType, DocRefConsumer, DocRefTree } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { selectionToggled } = selectableItemListingActionCreators;
 const { menuItemOpened } = appChromeActionCreators;
@@ -45,12 +54,24 @@ const withIsExpanded = withLocalStorage("isExpanded", "setIsExpanded", true);
 const LISTING_ID = "app-chrome-menu";
 const pathPrefix = "/s";
 
+interface MenuItem {
+  key: string;
+  title?: string;
+  onClick: () => void;
+  icon: IconProp;
+  style: "doc" | "nav";
+  skipInContractedMenu?: boolean;
+  children?: Array<MenuItem>;
+  docRef?: DocRefTree;
+  parentDocRef?: DocRefType;
+}
+
 const getDocumentTreeMenuItems = (
-  openDocRef,
-  parentDocRef,
-  treeNode,
+  openDocRef: DocRefConsumer,
+  parentDocRef: DocRefType | undefined,
+  treeNode: DocRefTree,
   skipInContractedMenu = false
-) => ({
+): MenuItem => ({
   key: treeNode.uuid,
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
@@ -60,14 +81,23 @@ const getDocumentTreeMenuItems = (
   docRef: treeNode,
   parentDocRef,
   children:
-    treeNode.children &&
-    treeNode.children.length > 0 &&
-    treeNode.children
-      .filter(t => t.type === "Folder")
-      .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
+    treeNode.children && treeNode.children.length > 0
+      ? treeNode.children
+          .filter(t => t.type === "Folder")
+          .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
+      : undefined
 });
 
-const getOpenMenuItems = (menuItems, areMenuItemsOpen, openMenuItems = []) => {
+const getOpenMenuItems = function<
+  T extends {
+    key: string;
+    children?: Array<T>;
+  }
+>(
+  menuItems: Array<T>,
+  areMenuItemsOpen: MenuItemsOpenStoreState,
+  openMenuItems: Array<T> = []
+) {
   menuItems.forEach(menuItem => {
     openMenuItems.push(menuItem);
     if (menuItem.children && areMenuItemsOpen[menuItem.key]) {
@@ -78,23 +108,61 @@ const getOpenMenuItems = (menuItems, areMenuItemsOpen, openMenuItems = []) => {
   return openMenuItems;
 };
 
-const enhance = compose(
+interface Props {
+  content: React.ReactNode;
+  activeMenuItem: string;
+}
+interface WithHandlers {
+  openDocRef: DocRefConsumer;
+}
+interface ConnectState {
+  areMenuItemsOpen: MenuItemsOpenStoreState;
+  theme: string;
+  selectableItemListing: WithSelectableItemListingStatePerId;
+}
+interface ConnectDispatch {
+  menuItemOpened: typeof menuItemOpened;
+  themeChanged: typeof themeChanged;
+  selectionToggled: typeof selectionToggled;
+}
+interface WithIsExpanded {
+  isExpanded: boolean;
+  setIsExpanded: (value: boolean) => any;
+}
+interface WithProps {
+  menuItems: Array<MenuItem>;
+  openMenuItems: { [key: string]: boolean };
+}
+
+interface EnhancedProps
+  extends Props,
+    WithDocumentTreeProps,
+    RouteComponentProps<any>,
+    WithHandlers,
+    ConnectState,
+    ConnectDispatch,
+    WithIsExpanded,
+    WithProps,
+    WithSelectableItemListingProps<MenuItem> {}
+
+const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
   withRouter,
   withHandlers({
-    openDocRef: ({ history }) => d => history.push(`/s/doc/${d.type}/${d.uuid}`)
+    openDocRef: ({ history }) => (d: DocRefType) =>
+      history.push(`/s/doc/${d.type}/${d.uuid}`)
   }),
-  connect(
-    (
-      {
-        selectableItemListings,
-        userSettings: { theme },
-        folderExplorer: { documentTree },
-        appChrome: { areMenuItemsOpen }
-      },
-      props
-    ) => ({
-      documentTree,
+  connect<
+    ConnectState,
+    ConnectDispatch,
+    Props & WithDocumentTreeProps & RouteComponentProps<any> & WithHandlers,
+    GlobalStoreState
+  >(
+    ({
+      selectableItemListings,
+      userSettings: { theme },
+      appChrome: { areMenuItemsOpen }
+    }) => ({
       areMenuItemsOpen,
       theme,
       selectableItemListing: selectableItemListings[LISTING_ID]
@@ -121,7 +189,7 @@ const enhance = compose(
       areMenuItemsOpen,
       menuItemOpened
     }) => {
-      const menuItems = [
+      const menuItems: Array<MenuItem> = [
         {
           key: "welcome",
           title: "Welcome",
@@ -129,7 +197,7 @@ const enhance = compose(
           icon: "home",
           style: "nav"
         },
-        getDocumentTreeMenuItems(openDocRef, null, documentTree),
+        getDocumentTreeMenuItems(openDocRef, undefined, documentTree),
         {
           key: "data",
           title: "Data",
@@ -184,7 +252,7 @@ const enhance = compose(
       };
     }
   ),
-  withSelectableItemListing(
+  withSelectableItemListing<MenuItem>(
     ({
       openMenuItems,
       menuItemOpened,
@@ -203,7 +271,7 @@ const enhance = compose(
           } else if (m.parentDocRef) {
             // Can we bubble back up to the parent folder of the current selection?
             let newSelection = openMenuItems.find(
-              ({ key }) => key === m.parentDocRef.uuid
+              ({ key }: MenuItem) => key === m.parentDocRef!.uuid
             );
             selectionToggled(LISTING_ID, newSelection.key);
             menuItemOpened(m.parentDocRef.uuid, false);
@@ -214,7 +282,11 @@ const enhance = compose(
   )
 );
 
-const getExpandedMenuItems = (menuItems, areMenuItemsOpen, depth = 0) =>
+const getExpandedMenuItems = (
+  menuItems: Array<MenuItem>,
+  areMenuItemsOpen: MenuItemsOpenStoreState,
+  depth: number = 0
+) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
@@ -230,7 +302,7 @@ const getExpandedMenuItems = (menuItems, areMenuItemsOpen, depth = 0) =>
     </React.Fragment>
   ));
 
-const getContractedMenuItems = menuItems =>
+const getContractedMenuItems = (menuItems: Array<MenuItem>) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
@@ -246,18 +318,15 @@ const getContractedMenuItems = menuItems =>
   ));
 
 const AppChrome = ({
-  headerContent,
-  icon,
   content,
   isExpanded,
   menuItems,
   areMenuItemsOpen,
-  menuItemOpened,
   setIsExpanded,
   theme,
   themeChanged,
   onKeyDownWithShortcuts
-}) => {
+}: EnhancedProps) => {
   if (theme === undefined) {
     theme = "theme-dark";
     themeChanged(theme);
@@ -276,7 +345,6 @@ const AppChrome = ({
               <div className="app-chrome__sidebar_header header">
                 <Button
                   aria-label="Show/hide the sidebar"
-                  size="large"
                   className="app-chrome__sidebar__toggle raised-high borderless "
                   icon="bars"
                   onClick={() => setIsExpanded(!isExpanded)}
@@ -296,15 +364,14 @@ const AppChrome = ({
               </div>
             </React.Fragment>
           ) : (
-            <Button.Group vertical className="app-chrome__sidebar__buttons">
+            <div className="app-chrome__sidebar__buttons">
               <Button
-                size="large"
                 icon="bars"
                 className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
                 onClick={() => setIsExpanded(!isExpanded)}
               />
               {getContractedMenuItems(menuItems)}
-            </Button.Group>
+            </div>
           )}
         </div>
         <div className="app-chrome__content">
@@ -315,18 +382,6 @@ const AppChrome = ({
       </div>
     </div>
   );
-};
-
-AppChrome.contextTypes = {
-  store: PropTypes.object,
-  router: PropTypes.shape({
-    history: object.isRequired
-  })
-};
-
-AppChrome.propTypes = {
-  activeMenuItem: PropTypes.string.isRequired,
-  content: PropTypes.object.isRequired
 };
 
 export default enhance(AppChrome);

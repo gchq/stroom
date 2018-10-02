@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import { DataSourceType, ExpressionItem } from "../../types";
+import {
+  DataSourceType,
+  ExpressionItem,
+  ExpressionOperatorType,
+  ExpressionTermType
+} from "../../types";
 import * as uuidv4 from "uuid/v4";
 
 interface ValidationResult {
@@ -35,7 +40,10 @@ interface ValidationResult {
 export const processSearchString = (
   dataSource: DataSourceType,
   criteria: string
-) => {
+): {
+  expression: ExpressionOperatorType;
+  fields: ValidationResult[];
+} => {
   const splitted = split(criteria);
 
   const validationResults: ValidationResult[] = [];
@@ -83,13 +91,19 @@ export const processSearchString = (
     validationResults.push(validationResult);
   });
 
-  const expression = {
+  const expression: ExpressionOperatorType = {
     uuid: "root",
     type: "operator",
     op: "AND",
     children: validationResults
-      .filter(validationResult => validationResult.term !== undefined)
-      .map(validationResult => validationResult.term),
+      .filter(
+        (validationResult: ValidationResult) =>
+          validationResult.term !== undefined
+      )
+      .map(
+        (validationResult: ValidationResult) =>
+          validationResult.term as ExpressionTermType
+      ),
     enabled: true
   };
 

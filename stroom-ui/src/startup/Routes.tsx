@@ -26,24 +26,22 @@ import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 
 // TODO
-// import ErrorPage from "../components/ErrorPage";
-// import { appChromeRoutes } from "../sections/AppChrome";
+import ErrorPage from "../components/ErrorPage";
+import { appChromeRoutes } from "../sections/AppChrome";
 // import { Processing } from "../sections/Processing";
 import { HandleAuthenticationResponse } from "./Authentication";
 import { GlobalStoreState } from "./reducers";
 
 import withConfig from "./withConfig";
 
-// import { PrivateRoute } from "./Authentication";
+import { PrivateRoute } from "./Authentication";
+import PathNotFound from "../components/PathNotFound";
 
 export interface Props {}
 
 export interface EnhancedProps extends Props, RouteComponentProps {
-  isLoggedIn: boolean;
-  appClientId: string;
   authenticationServiceUrl: string;
   authorisationServiceUrl: string;
-  advertisedUrl: string;
   authUsersUiUrl: string;
   authTokensUiUrl: string;
 }
@@ -59,18 +57,7 @@ const enhance = compose<EnhancedProps, Props>(
     {}
   ),
   withProps(
-    ({
-      idToken,
-      config: {
-        advertisedUrl,
-        appClientId,
-        authenticationServiceUrl,
-        authorisationServiceUrl
-      }
-    }) => ({
-      isLoggedIn: !!idToken,
-      advertisedUrl,
-      appClientId,
+    ({ config: { authenticationServiceUrl, authorisationServiceUrl } }) => ({
       authenticationServiceUrl,
       authorisationServiceUrl
     })
@@ -78,14 +65,9 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 const Routes = ({
-  isLoggedIn,
-  appClientId,
   history,
   authenticationServiceUrl,
-  authorisationServiceUrl,
-  advertisedUrl,
-  authUsersUiUrl,
-  authTokensUiUrl
+  authorisationServiceUrl
 }: EnhancedProps) => (
   <Router history={history}>
     {/* basename="/"> TODO */}
@@ -101,13 +83,11 @@ const Routes = ({
         )}
       />
 
-      {/* TODO */}
-      {/* <Route exact path="/error" component={ErrorPage} /> */}
+      <Route exact path="/error" component={ErrorPage} />
 
-      {/* TODO */}
-      {/* {appChromeRoutes.map((p, i) => (
+      {appChromeRoutes.map((p, i) => (
         <PrivateRoute key={i} {...p} />
-      ))} */}
+      ))}
 
       {/* TODO Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
@@ -118,8 +98,8 @@ const Routes = ({
         render={() => <Processing />}
       /> */}
 
-      {/* Default route TODO */}
-      {/* <Route render={appChromeRoutes.notFound} /> */}
+      {/* Default route */}
+      <Route render={() => <PathNotFound message="Invalid path" />} />
     </Switch>
   </Router>
 );

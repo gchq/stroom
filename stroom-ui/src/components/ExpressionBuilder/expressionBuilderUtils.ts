@@ -1,7 +1,8 @@
 import {
   ExpressionItem,
   ExpressionTermType,
-  ExpressionOperatorType
+  ExpressionOperatorType,
+  ConditionDisplayValues
 } from "../../types";
 
 /**
@@ -26,9 +27,8 @@ function childrenToString(
       if (child.enabled) {
         if (child.type === "term") {
           let childTerm = child as ExpressionTermType;
-          asString += `${childTerm.field} ${childTerm.condition} ${
-            childTerm.value
-          }`;
+          asString += `${childTerm.field} ${childTerm.condition &&
+            ConditionDisplayValues[childTerm.condition]} ${childTerm.value}`;
           if (
             expression.children!.length > i + 1 &&
             expression.children![i + 1].enabled

@@ -47,7 +47,6 @@ import { Direction } from "../../types";
 
 export interface Props {
   dataViewerId: string;
-  fetchDataSource: typeof fetchDataSource;
 }
 interface EnhancedProps
   extends Props,

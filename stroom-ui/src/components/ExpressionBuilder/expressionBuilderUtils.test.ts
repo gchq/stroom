@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  toString
-} from './expressionBuilderUtils';
+import { toString } from "./expressionBuilderUtils";
 
 import {
   emptyExpression,
@@ -28,80 +26,88 @@ import {
   partlyDisabledExpression01,
   partlyDisabledExpression02,
   partlyDisabledExpression03,
-  hugeExpression,
-} from './expressionBuilderUtils.testData';
+  hugeExpression
+} from "./expressionBuilderUtils.testData";
 
-describe('ExpressionBuilter Utils', () => {
-  describe('#toString', () => {
-    test('can convert an empty expression', () => {
+describe("ExpressionBuilter Utils", () => {
+  describe("#toString", () => {
+    test("can convert an empty expression", () => {
       // When
       const asString = toString(emptyExpression);
 
       // Then
-      expect(asString).toBe('');
+      expect(asString).toBe("");
     });
-    test('can convert a single term expression', () => {
+    test("can convert a single term expression", () => {
       // When
       const asString = toString(singleTermExpression);
 
       // Then
-      expect(asString).toBe('colour CONTAINS red');
+      expect(asString).toBe("colour contains red");
     });
-    test('can convert a simple AND expression', () => {
+    test("can convert a simple AND expression", () => {
       // When
       const asString = toString(simpleAndExpression);
 
       // Then
-      expect(asString).toBe('colour CONTAINS red AND colour IN blue');
+      expect(asString).toBe("colour contains red AND colour in blue");
     });
-    test('can convert a simple OR expression', () => {
+    test("can convert a simple OR expression", () => {
       // When
       const asString = toString(simpleOrExpression);
 
       // Then
-      expect(asString).toBe('colour LIKE red OR colour = blue');
+      expect(asString).toBe("colour contains red OR colour = blue");
     });
-    test('can convert a nested expression', () => {
+    test("can convert a nested expression", () => {
       // When
       const asString = toString(nestedExpression);
 
       // Then
-      expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me)')
+      expect(asString).toBe(
+        "colour contains red OR colour in blue OR (numberOfDoors between 1,5 AND createUser = me)"
+      );
     });
-    test('can convert a deeply nested expression', () => {
+    test("can convert a deeply nested expression", () => {
       // When
       const asString = toString(deeplyNestedExpression);
 
       // Then
-      expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me AND (id CONTAINS bob OR updateTime BETWEEN me))')
+      expect(asString).toBe(
+        "colour contains red OR colour in blue OR (numberOfDoors between 1,5 AND createUser = me AND (id contains bob OR updateTime between me))"
+      );
     });
-    test('can convert a partly disabled expression 01', () => {
+    test("can convert a partly disabled expression 01", () => {
       // When
       const asString = toString(partlyDisabledExpression01);
 
       // Then
-      expect(asString).toBe('colour LIKE red');
+      expect(asString).toBe("colour contains red");
     });
-    test('can convert a partly disabled expression 02', () => {
+    test("can convert a partly disabled expression 02", () => {
       // When
       const asString = toString(partlyDisabledExpression02);
 
       // Then
-      expect(asString).toBe('colour = blue');
+      expect(asString).toBe("colour = blue");
     });
-    test('can convert a partly disabled expression 03', () => {
+    test("can convert a partly disabled expression 03", () => {
       // When
       const asString = toString(partlyDisabledExpression03);
 
       // Then
-      expect(asString).toBe('colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5)')
+      expect(asString).toBe(
+        "colour contains red OR colour in blue OR (numberOfDoors between 1,5)"
+      );
     });
-    test('can convert a huge expression', () => {
+    test("can convert a huge expression", () => {
       // When
       const asString = toString(hugeExpression);
 
       // Then
-      expect(asString).toBe("colour CONTAINS red OR colour IN blue OR (numberOfDoors BETWEEN 1,5 AND createUser EQUALS me)")
+      expect(asString).toBe(
+        "colour contains red OR colour in blue OR (numberOfDoors between 1,5 AND createUser = me)"
+      );
     });
   });
 });
