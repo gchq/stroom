@@ -64,9 +64,9 @@ const actionCreators = {
   lineCreated: (
     id: string,
     lineId: string,
-    lineType: string,
     fromId: string,
-    toId: string
+    toId: string,
+    lineType?: string
   ): LineCreatedAction => ({
     type: LINE_CREATED,
     id,
