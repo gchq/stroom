@@ -64,10 +64,6 @@ const actionCreators = {
   lineCreated: (
     id: string,
     lineId: string,
-<<<<<<< HEAD
-    lineType: string | undefined,
-=======
->>>>>>> dfc9e81a8213d96bcefdd25b0d778510f03346f9
     fromId: string,
     toId: string,
     lineType?: string
