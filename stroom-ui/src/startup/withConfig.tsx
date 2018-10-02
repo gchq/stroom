@@ -4,12 +4,12 @@ import { connect } from "react-redux";
 import { GlobalStoreState } from "./reducers";
 
 import Loader from "../components/Loader";
-import { fetchConfig, Config } from "./config";
+import { fetchConfig, StoreState as ConfigState } from "./config";
 
 export interface Props {}
 
 interface ConnectState {
-  config: Config;
+  config: ConfigState;
 }
 interface ConnectDispatch {
   fetchConfig: typeof fetchConfig;
@@ -23,8 +23,8 @@ export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
  */
 export default compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ config: { values } }) => ({
-      config: values
+    ({ config }) => ({
+      config
     }),
     {
       fetchConfig
