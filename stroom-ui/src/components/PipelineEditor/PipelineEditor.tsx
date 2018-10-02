@@ -163,7 +163,7 @@ const PipelineEditor = ({
         {selectedElementId !== undefined ? (
           <ElementDetails
             pipelineId={pipelineId}
-            onClose={() => pipelineElementSelectionCleared(false)}
+            onClose={() => pipelineElementSelectionCleared(pipelineId)}
           />
         ) : (
           <div />

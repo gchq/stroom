@@ -100,7 +100,9 @@ const enhance = compose<EnhancedProps, Props>(
   withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
     onNext: ({ pipelineState, pipelineElementSelected, pipelineId }) => () => {
       const nextElementId = getNext(pipelineState);
-      pipelineElementSelected(pipelineId, nextElementId);
+      if (nextElementId) {
+        pipelineElementSelected(pipelineId, nextElementId, {});
+      }
     },
     onPrevious: ({
       pipelineState,
@@ -108,7 +110,9 @@ const enhance = compose<EnhancedProps, Props>(
       pipelineId
     }) => () => {
       const nextElementId = getPrevious(pipelineState);
-      pipelineElementSelected(pipelineId, nextElementId);
+      if (nextElementId) {
+        pipelineElementSelected(pipelineId, nextElementId, {});
+      }
     }
   })
 );

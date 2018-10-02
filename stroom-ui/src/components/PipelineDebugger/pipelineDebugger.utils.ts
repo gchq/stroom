@@ -5,9 +5,11 @@ export function getNext(
 ): string | undefined {
   const currentElementId = pipelineState.selectedElementId;
   if (currentElementId && pipelineState.pipeline) {
-    const nextLink = pipelineState.pipeline.merged.links.add.find(
-      link => link.from === currentElementId
-    );
+    const nextLink =
+      pipelineState.pipeline.merged.links.add &&
+      pipelineState.pipeline.merged.links.add.find(
+        link => link.from === currentElementId
+      );
     return nextLink ? nextLink.to : currentElementId;
   } else if (!!pipelineState.asTree) {
     return pipelineState.asTree.uuid;
@@ -20,9 +22,11 @@ export function getPrevious(
 ): string | undefined {
   const currentElementId = pipelineState.selectedElementId;
   if (currentElementId && pipelineState.pipeline) {
-    const previousLink = pipelineState.pipeline.merged.links.add.find(
-      link => link.to === currentElementId
-    );
+    const previousLink =
+      pipelineState.pipeline.merged.links.add &&
+      pipelineState.pipeline.merged.links.add.find(
+        link => link.to === currentElementId
+      );
     return previousLink ? previousLink.from : currentElementId;
   } else if (!!pipelineState.asTree) {
     return pipelineState.asTree.uuid;

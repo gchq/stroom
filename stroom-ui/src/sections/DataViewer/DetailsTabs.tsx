@@ -169,6 +169,9 @@ const DetailsTabs = ({ data, details, dataViewerId }: Props) => {
       )
     }
   ];
+  if (panes) {
+    console.log("Panes defined"); // TODO
+  }
   return (
     <div className="DetailsTabs__container">
       <div className="DetailsTabs__contained" />

@@ -141,6 +141,7 @@ const Pipeline = ({
           .map(
             es =>
               pipeline &&
+              pipeline.merged.elements.add &&
               pipeline.merged.elements.add.find(
                 (e: PipelineElementType) => e.id === es
               )
@@ -154,6 +155,7 @@ const Pipeline = ({
       </div>
       <div className="Pipeline-editor__lines">
         {pipeline &&
+          pipeline.merged.links.add &&
           pipeline.merged.links.add
             .filter(l => elementStyles[l.from] && elementStyles[l.to])
             .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
