@@ -1,12 +1,12 @@
 import { withProps } from "recompose";
 import {
   DataSourceFieldType,
-  ExpressionTermType,
+  ExpressionTermWithUuid,
   DataSourceType
 } from "../../types";
 
 export interface Props {
-  term: ExpressionTermType;
+  term: ExpressionTermWithUuid;
   dataSource: DataSourceType;
 }
 

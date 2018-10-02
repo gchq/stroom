@@ -28,7 +28,6 @@ import * as moment from "moment";
 import { actionCreators } from "../redux";
 import { enableToggle } from "../streamTasksResourceClient";
 import HorizontalPanel from "../../../components/HorizontalPanel";
-import { ExpressionBuilder } from "../../../components/ExpressionBuilder";
 import { GlobalStoreState } from "../../../startup/reducers";
 
 export interface Props {}

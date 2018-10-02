@@ -28,18 +28,18 @@ import {
   dragCollect,
   DragCollectedProps
 } from "./dragDropTypes";
-import { displayValues } from "./conditions";
 import ValueWidget from "./ValueWidget";
 import { actionCreators } from "./redux";
 import withValueType, {
   EnhancedProps as WithValueTypeProps
 } from "./withValueType";
 import {
-  ExpressionTermType,
   DataSourceType,
   ConditionType,
   DataSourceFieldType,
-  SelectOptionType
+  SelectOptionType,
+  ConditionDisplayValues,
+  ExpressionTermWithUuid
 } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
@@ -48,7 +48,7 @@ const { expressionItemUpdated, expressionItemDeleteRequested } = actionCreators;
 export interface Props {
   dataSource: DataSourceType;
   expressionId: string;
-  term: ExpressionTermType;
+  term: ExpressionTermWithUuid;
   isEnabled: boolean;
 }
 interface ConnectState {}
@@ -166,7 +166,7 @@ const enhance = compose<EnhancedProps, Props>(
     if (thisField) {
       conditionOptions = thisField.conditions.map((c: ConditionType) => ({
         value: c,
-        text: displayValues[c]
+        text: ConditionDisplayValues[c]
       }));
     }
 

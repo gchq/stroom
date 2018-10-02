@@ -1,8 +1,8 @@
-export interface ItemWithId {
+export interface ItemWithUuid {
   uuid: string;
 }
 
-export interface DocRefType extends ItemWithId {
+export interface DocRefType extends ItemWithUuid {
   type: string;
   name?: string;
 }
@@ -16,13 +16,13 @@ export interface DocRefInfoType {
   otherInfo: string;
 }
 
-export interface Tree<T extends ItemWithId> {
+export interface Tree<T> {
   children?: Array<T & Tree<T>>;
 }
 
 export interface DocRefTree extends DocRefType, Tree<DocRefType> {}
 
-export interface TWithLineage<T extends ItemWithId> {
+export interface TWithLineage<T extends ItemWithUuid> {
   node: Tree<T> & T;
   lineage: Array<T>;
 }
@@ -82,18 +82,18 @@ export interface DataSourceType {
   fields: Array<DataSourceFieldType>;
 }
 
-export interface ExpressionItem extends ItemWithId {
-  type: string;
+export interface ExpressionItem {
+  type: "operator" | "term";
   enabled: boolean;
 }
 
 export type OperatorType = "AND" | "OR" | "NOT";
+export const OperatorTypeValues: Array<OperatorType> = ["AND", "OR", "NOT"];
 
-export interface ExpressionOperatorType
-  extends ExpressionItem,
-    Tree<ExpressionTermType | ExpressionOperatorType> {
+export interface ExpressionOperatorType extends ExpressionItem {
   type: "operator";
   op: OperatorType;
+  children: Array<ExpressionTermType | ExpressionOperatorType>;
 }
 
 export interface ExpressionTermType extends ExpressionItem {
@@ -103,6 +103,19 @@ export interface ExpressionTermType extends ExpressionItem {
   value?: any;
   dictionary?: Dictionary | null;
 }
+
+export interface ExpressionItemWithUuid extends ExpressionItem, ItemWithUuid {}
+
+export interface ExpressionOperatorWithUuid
+  extends ExpressionOperatorType,
+    ItemWithUuid {
+  enabled: boolean;
+  children: Array<ExpressionOperatorWithUuid | ExpressionTermWithUuid>;
+}
+
+export interface ExpressionTermWithUuid
+  extends ExpressionTermType,
+    ItemWithUuid {}
 
 export interface ElementDefinition {
   type: string;
@@ -298,7 +311,7 @@ export interface LimitsType {
 export interface QueryDataType {
   dataSource: DocRefType;
   expression: ExpressionOperatorType;
-  limits: LimitsType;
+  limits?: LimitsType;
 }
 
 export interface StreamTaskType {

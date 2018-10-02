@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ExpressionOperatorType, ExpressionTermType } from "../../types";
+import {
+  ExpressionOperatorWithUuid,
+  ExpressionTermWithUuid
+} from "../../types";
 import {
   DragSourceCollector,
   ConnectDragSource,
@@ -36,7 +39,7 @@ export interface DropCollectedProps {
 }
 
 export interface DragObject {
-  expressionItem: ExpressionOperatorType | ExpressionTermType;
+  expressionItem: ExpressionOperatorWithUuid | ExpressionTermWithUuid;
 }
 
 export const dragCollect: DragSourceCollector<

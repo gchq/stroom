@@ -42,7 +42,10 @@ import {
   ExpressionOperatorType,
   ExpressionTermType,
   OperatorType,
-  ExpressionItem
+  ExpressionOperatorWithUuid,
+  OperatorTypeValues,
+  ExpressionItemWithUuid,
+  ExpressionTermWithUuid
 } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
@@ -57,7 +60,7 @@ const {
 export interface Props {
   dataSource: DataSourceType;
   expressionId: string;
-  operator: ExpressionOperatorType;
+  operator: ExpressionOperatorWithUuid;
   isRoot?: boolean;
   isEnabled: boolean;
 }
@@ -268,14 +271,14 @@ const ExpressionOperator = ({
           </span>
         )}
 
-        {Object.values(OperatorType).map((l, i) => (
+        {OperatorTypeValues.map((l, i) => (
           <Button
             selected={operator.op === l}
             key={l}
             groupPosition={
               i === 0
                 ? "left"
-                : Object.keys(OperatorType).length - 1 === i
+                : OperatorTypeValues.length - 1 === i
                   ? "right"
                   : "middle"
             }
@@ -321,7 +324,7 @@ const ExpressionOperator = ({
         dropTarget.canDrop && <div className="operator__placeholder" />}
       {operator.children &&
         operator.children
-          .map((c: ExpressionItem) => {
+          .map((c: ExpressionItemWithUuid) => {
             let itemElement;
             switch (c.type) {
               case "term":
@@ -331,7 +334,7 @@ const ExpressionOperator = ({
                       dataSource={dataSource}
                       expressionId={expressionId}
                       isEnabled={isEnabled && c.enabled}
-                      term={c as ExpressionTermType}
+                      term={c as ExpressionTermWithUuid}
                     />
                   </div>
                 );
@@ -342,7 +345,7 @@ const ExpressionOperator = ({
                     dataSource={dataSource}
                     expressionId={expressionId}
                     isEnabled={isEnabled && c.enabled}
-                    operator={c as ExpressionOperatorType}
+                    operator={c as ExpressionOperatorWithUuid}
                   />
                 );
                 break;

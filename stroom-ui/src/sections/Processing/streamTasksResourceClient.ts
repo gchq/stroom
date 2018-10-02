@@ -125,7 +125,7 @@ export const fetchMore = (trackerSelection: TrackerSelection) => (
   );
 };
 
-export const enableToggle = (filterId: string, isCurrentlyEnabled: boolean) => (
+export const enableToggle = (filterId: number, isCurrentlyEnabled: boolean) => (
   dispatch: Dispatch,
   getState: () => GlobalStoreState
 ) => {

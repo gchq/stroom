@@ -1,6 +1,5 @@
-import PermissionInheritancePicker from './PermissionInheritancePicker';
-import permissionInheritanceValues from './permissionInheritanceValues';
+import PermissionInheritancePicker from "./PermissionInheritancePicker";
 
-export { PermissionInheritancePicker, permissionInheritanceValues };
+export { PermissionInheritancePicker };
 
 export default PermissionInheritancePicker;

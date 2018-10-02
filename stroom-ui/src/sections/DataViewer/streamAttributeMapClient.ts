@@ -5,7 +5,8 @@ import {
   ExpressionOperatorType,
   DataSourceType,
   DataRow,
-  ExpressionItem
+  ExpressionOperatorWithUuid,
+  ExpressionItemWithUuid
 } from "../../types";
 import { Dispatch } from "redux";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -116,10 +117,12 @@ export const searchWithExpression = (
  * generate JSON compatible with the resource's endpoints. I.e. jackson binding
  * fails if we have these uuids.
  */
-const cleanExpression = (expression: ExpressionOperatorType) => {
+const cleanExpression = (
+  expression: ExpressionOperatorWithUuid
+): ExpressionOperatorType => {
   // UUIDs are not part of Expression
   delete expression.uuid;
-  expression.children!.forEach((child: ExpressionItem) => {
+  expression.children!.forEach((child: ExpressionItemWithUuid) => {
     delete child.uuid;
   });
 

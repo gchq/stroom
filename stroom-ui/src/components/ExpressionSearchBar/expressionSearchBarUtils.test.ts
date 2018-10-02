@@ -17,7 +17,11 @@
 import { processSearchString } from "./expressionSearchBarUtils";
 
 import { testDataSource } from "../ExpressionBuilder/dataSource.testData";
-import { ConditionType, ExpressionTermType } from "../../types";
+import {
+  ConditionType,
+  ExpressionTermType,
+  ExpressionOperatorType
+} from "../../types";
 
 describe("ExpressionSearchBarUtils", () => {
   describe("#processSearchString", () => {
@@ -76,28 +80,28 @@ describe("ExpressionSearchBarUtils", () => {
       // When
       const results = processSearchString(testDataSource, basic);
       const get = (fieldName: string) =>
-        results.fields.find(field => field.parsed[0] === fieldName);
+        results.fields.find(field => field.parsed![0] === fieldName);
 
       // Then
       expect(results.fields.length).toBe(9);
-      expect(get("foo1").fieldIsValid).toBeFalsy();
-      expect(get("foo1").conditionIsValid).toBeFalsy();
-      expect(get("id").fieldIsValid).toBeTruthy();
-      expect(get("id").conditionIsValid).toBeTruthy();
-      expect(get("colour").fieldIsValid).toBeTruthy();
-      expect(get("colour").conditionIsValid).toBeTruthy();
-      expect(get("numberOfDoors").fieldIsValid).toBeTruthy();
-      expect(get("numberOfDoors").conditionIsValid).toBeTruthy();
-      expect(get("createUser").fieldIsValid).toBeTruthy();
-      expect(get("createUser").conditionIsValid).toBeTruthy();
-      expect(get("createTime").fieldIsValid).toBeTruthy();
-      expect(get("createTime").conditionIsValid).toBeTruthy();
-      expect(get("updateUser").fieldIsValid).toBeTruthy();
-      expect(get("updateUser").conditionIsValid).toBeTruthy();
-      expect(get("updateTime").fieldIsValid).toBeTruthy();
-      expect(get("updateTime").conditionIsValid).toBeTruthy();
-      expect(get("beKind").fieldIsValid).toBeFalsy();
-      expect(get("beKind").conditionIsValid).toBeFalsy();
+      expect(get("foo1")!.fieldIsValid).toBeFalsy();
+      expect(get("foo1")!.conditionIsValid).toBeFalsy();
+      expect(get("id")!.fieldIsValid).toBeTruthy();
+      expect(get("id")!.conditionIsValid).toBeTruthy();
+      expect(get("colour")!.fieldIsValid).toBeTruthy();
+      expect(get("colour")!.conditionIsValid).toBeTruthy();
+      expect(get("numberOfDoors")!.fieldIsValid).toBeTruthy();
+      expect(get("numberOfDoors")!.conditionIsValid).toBeTruthy();
+      expect(get("createUser")!.fieldIsValid).toBeTruthy();
+      expect(get("createUser")!.conditionIsValid).toBeTruthy();
+      expect(get("createTime")!.fieldIsValid).toBeTruthy();
+      expect(get("createTime")!.conditionIsValid).toBeTruthy();
+      expect(get("updateUser")!.fieldIsValid).toBeTruthy();
+      expect(get("updateUser")!.conditionIsValid).toBeTruthy();
+      expect(get("updateTime")!.fieldIsValid).toBeTruthy();
+      expect(get("updateTime")!.conditionIsValid).toBeTruthy();
+      expect(get("beKind")!.fieldIsValid).toBeFalsy();
+      expect(get("beKind")!.conditionIsValid).toBeFalsy();
     });
 
     test("Field and condition but no value is invalid", () => {
@@ -127,9 +131,11 @@ describe("ExpressionSearchBarUtils", () => {
 
       // Then
       expect(results.expression.children.length).toBe(1);
-      expect(results.expression.children[0].field).toBe("foo1");
-      expect(results.expression.children[0].value).toBe("bar1");
-      expect(results.expression.children[0].condition).toBe("EQUALS");
+      const term: ExpressionTermType = results.expression
+        .children[0] as ExpressionTermType;
+      expect(term.field).toBe("foo1");
+      expect(term.value).toBe("bar1");
+      expect(term.condition).toBe("EQUALS");
     });
 
     test("Can map a query with all operators", () => {
@@ -141,27 +147,32 @@ describe("ExpressionSearchBarUtils", () => {
 
       // Then
       expect(results.expression.children.length).toBe(5);
-      expectForTerm(results.expression.children[0], "foo1", "EQUALS", "bar1");
       expectForTerm(
-        results.expression.children[1],
+        results.expression.children[0] as ExpressionTermType,
+        "foo1",
+        "EQUALS",
+        "bar1"
+      );
+      expectForTerm(
+        results.expression.children[1] as ExpressionTermType,
         "foo2",
         "GREATER_THAN",
         "bar2"
       );
       expectForTerm(
-        results.expression.children[2],
+        results.expression.children[2] as ExpressionTermType,
         "foo3",
         "LESS_THAN",
         "bar3"
       );
       expectForTerm(
-        results.expression.children[3],
+        results.expression.children[3] as ExpressionTermType,
         "foo4",
         "GREATER_THAN_OR_EQUAL_TO",
         "bar4"
       );
       expectForTerm(
-        results.expression.children[4],
+        results.expression.children[4] as ExpressionTermType,
         "foo5",
         "LESS_THAN_OR_EQUAL_TO",
         "bar5"
@@ -183,21 +194,26 @@ describe("ExpressionSearchBarUtils", () => {
         results.fields.filter(field => field.parsed === undefined)[0].original
       ).toBe("foo2~bar2");
       expect(results.expression.children.length).toBe(4);
-      expectForTerm(results.expression.children[0], "foo1", "EQUALS", "bar1");
       expectForTerm(
-        results.expression.children[1],
+        results.expression.children[0] as ExpressionTermType,
+        "foo1",
+        "EQUALS",
+        "bar1"
+      );
+      expectForTerm(
+        results.expression.children[1] as ExpressionTermType,
         "foo3",
         "LESS_THAN",
         "bar3"
       );
       expectForTerm(
-        results.expression.children[2],
+        results.expression.children[2] as ExpressionTermType,
         "foo4",
         "GREATER_THAN_OR_EQUAL_TO",
         "bar4"
       );
       expectForTerm(
-        results.expression.children[3],
+        results.expression.children[3] as ExpressionTermType,
         "foo5",
         "LESS_THAN_OR_EQUAL_TO",
         "bar5"
@@ -274,13 +290,30 @@ describe("ExpressionSearchBarUtils", () => {
   });
 });
 
-const expectForHealthy = (children: Array<ExpressionTermType>) => {
+const expectForHealthy = (
+  children: Array<ExpressionTermType | ExpressionOperatorType>
+) => {
   expect(children.length).toBe(5);
-  expectForTerm(children[0], "foo4", "GREATER_THAN_OR_EQUAL_TO", "bar4");
-  expectForTerm(children[1], "foo5", "LESS_THAN_OR_EQUAL_TO", "bar5");
-  expectForTerm(children[2], "foo1", "EQUALS", "bar1");
-  expectForTerm(children[3], "foo2", "GREATER_THAN", "bar2");
-  expectForTerm(children[4], "foo3", "LESS_THAN", "bar3");
+  expectForTerm(
+    children[0] as ExpressionTermType,
+    "foo4",
+    "GREATER_THAN_OR_EQUAL_TO",
+    "bar4"
+  );
+  expectForTerm(
+    children[1] as ExpressionTermType,
+    "foo5",
+    "LESS_THAN_OR_EQUAL_TO",
+    "bar5"
+  );
+  expectForTerm(children[2] as ExpressionTermType, "foo1", "EQUALS", "bar1");
+  expectForTerm(
+    children[3] as ExpressionTermType,
+    "foo2",
+    "GREATER_THAN",
+    "bar2"
+  );
+  expectForTerm(children[4] as ExpressionTermType, "foo3", "LESS_THAN", "bar3");
 };
 
 const expectForTerm = (

@@ -93,7 +93,7 @@ export const searchPipelines = () => (
       response
         .json()
         .then((response: PipelineSearchResultType) =>
-          dispatch(pipelinesReceived(response.total, response.pipelines))
+          dispatch(pipelinesReceived(response))
         ),
     {},
     forceGet

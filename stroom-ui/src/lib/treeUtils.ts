@@ -23,7 +23,7 @@
  * @param {function} mapper Mapping function to apply to each value in the object
  */
 import * as uuidv4 from "uuid/v4";
-import { Tree, TWithLineage, ItemWithId } from "../types";
+import { Tree, TWithLineage, ItemWithUuid } from "../types";
 
 export function mapObject<OUT>(
   input: { [id: string]: object },
@@ -35,9 +35,9 @@ export function mapObject<OUT>(
   }, {});
 }
 
-export type Filter<T extends ItemWithId> = (t: Tree<T> & T) => boolean;
+export type Filter<T extends ItemWithUuid> = (t: Tree<T> & T) => boolean;
 
-export function filterTree<T extends ItemWithId>(
+export function filterTree<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   filterFunction: Filter<T>
 ): T | undefined {
@@ -63,7 +63,7 @@ export function filterTree<T extends ItemWithId>(
  * @param {treeNode} treeNode
  * @param {array of strings} uuids
  */
-export function findByUuids<T extends ItemWithId>(
+export function findByUuids<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   uuids: Array<string>
 ): Array<T> {
@@ -84,7 +84,7 @@ export function findByUuids<T extends ItemWithId>(
  * @param {treeNode} treeNode The node we are looking into, this will be recursed through children
  * @param {treeNode} itemToFind The item to find
  */
-export function itemIsInSubtree<T extends ItemWithId>(
+export function itemIsInSubtree<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   itemToFind: T
 ): boolean {
@@ -112,7 +112,7 @@ export function itemIsInSubtree<T extends ItemWithId>(
  * @param {treeNode} itemToMove The item that we may want to move
  * @param {treeNode} destinationFolder The potential destination folder
  */
-export function canMove<T extends ItemWithId>(
+export function canMove<T extends ItemWithUuid>(
   itemToMove: Tree<T> & T,
   destinationFolder: Tree<T> & T
 ) {
@@ -138,10 +138,12 @@ export function canMove<T extends ItemWithId>(
  * @param {treeNode} tree The input tree, will not be modified
  * @return {treeNode} the copied tree plus the UUID values
  */
-export function assignRandomUuids<T extends ItemWithId>(tree: Tree<T> & T): T {
+export function assignRandomUuids<T>(
+  tree: Tree<T> & T
+): T & ItemWithUuid & Tree<T & ItemWithUuid> {
   return tree
     ? {
-        uuid: tree.uuid ? tree.uuid : uuidv4(), // assign a UUID if there isn't already one
+        uuid: uuidv4(), // assign a UUID if there isn't already one
         ...(tree as any),
         children: tree.children
           ? tree.children.map(c => assignRandomUuids(c))
@@ -157,7 +159,7 @@ export function assignRandomUuids<T extends ItemWithId>(tree: Tree<T> & T): T {
  * @param {treeNode} tree The input tree, will not be modified
  * @return {treeNode} the copied tree minus the UUID values
  */
-export function stripUuids<T extends ItemWithId>(tree: Tree<T> & T): T {
+export function stripUuids<T extends ItemWithUuid>(tree: Tree<T> & T): T {
   return {
     ...(tree as any),
     children: tree.children ? tree.children.map(c => stripUuids(c)) : undefined,
@@ -173,7 +175,7 @@ export function stripUuids<T extends ItemWithId>(tree: Tree<T> & T): T {
  * @param {function} callback Called for each node in the tree, first arg is an array of parents, second arg is the node
  * @param {array} lineage Contains the nodes in the lineage of the node given
  */
-export function iterateNodes<T extends ItemWithId>(
+export function iterateNodes<T extends ItemWithUuid>(
   tree: Tree<T> & T,
   callback: (l: Array<Tree<T> & T>, t: Tree<T> & T) => void,
   lineage?: Array<Tree<T> & T>
@@ -196,7 +198,7 @@ export function iterateNodes<T extends ItemWithId>(
  * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
  * @return {object} Containing { node, lineage} of picked item
  */
-export function pickRandomItem<T extends ItemWithId>(
+export function pickRandomItem<T extends ItemWithUuid>(
   tree: Tree<T> & T,
   filterFunction: (l: Array<Tree<T> & T>, t: Tree<T> & T) => boolean
 ) {
@@ -221,7 +223,7 @@ export function pickRandomItem<T extends ItemWithId>(
  * @param {treeNode} tree
  * @param {string} uuid
  */
-export function findItem<T extends ItemWithId>(
+export function findItem<T extends ItemWithUuid>(
   tree: Tree<T> & T,
   uuid: string
 ): TWithLineage<T> | undefined {
@@ -251,10 +253,10 @@ export function findItem<T extends ItemWithId>(
  * @param {object} updates The updates to apply to the matching node
  * @return {treeNode} The modified tree
  */
-export function updateItemInTree<T extends ItemWithId>(
+export function updateItemInTree<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   uuid: string,
-  updates: T
+  updates: object
 ): T {
   let children;
   if (treeNode.children) {
@@ -298,7 +300,7 @@ export function deleteItemFromObject(input: object, key: any) {
  *
  * @return {treeNode} Copy of the input tree with the input item removed.
  */
-export function deleteItemFromTree<T extends ItemWithId>(
+export function deleteItemFromTree<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   uuid: string
 ): T {
@@ -323,7 +325,7 @@ export function deleteItemFromTree<T extends ItemWithId>(
  *
  * @return {treeNode} Copy of the input tree with the input item removed.
  */
-export function deleteItemsFromTree<T extends ItemWithId>(
+export function deleteItemsFromTree<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   uuids: Array<string>
 ): T {
@@ -347,7 +349,7 @@ export function deleteItemsFromTree<T extends ItemWithId>(
  * @param {string} parentUuid
  * @param {array of items} items
  */
-export function addItemsToTree<T extends ItemWithId>(
+export function addItemsToTree<T extends ItemWithUuid>(
   treeNode: Tree<T> & T,
   parentUuid: string,
   items: Array<Tree<T> & T>
@@ -381,7 +383,7 @@ export function addItemsToTree<T extends ItemWithId>(
  * @param {treeNode} itemToMove The item being moved
  * @param {treeNode} destination The destination tree node
  */
-export function moveItemsInTree<T extends ItemWithId>(
+export function moveItemsInTree<T extends ItemWithUuid>(
   rootNode: Tree<T> & T,
   destination: Tree<T> & T,
   itemsToMove: Array<Tree<T> & T>
@@ -415,7 +417,7 @@ export function moveItemsInTree<T extends ItemWithId>(
  * @param {treeNode} itemToMove The item being moved
  * @param {treeNode} destination The destination tree node
  */
-export function copyItemsInTree<T extends ItemWithId>(
+export function copyItemsInTree<T extends ItemWithUuid>(
   rootNode: Tree<T> & T,
   destination: Tree<T> & T,
   itemsToCopy: Array<Tree<T> & T>

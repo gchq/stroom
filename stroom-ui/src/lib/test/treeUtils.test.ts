@@ -13,7 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { itemIsInSubtree, canMove, findItem, Tree } from "../treeUtils";
+import {
+  itemIsInSubtree,
+  canMove,
+  findItem,
+  assignRandomUuids
+} from "../treeUtils";
+import {
+  Tree,
+  ExpressionOperatorType,
+  ExpressionOperatorWithUuid
+} from "../../types";
 
 type DocRef = {
   uuid: string;
@@ -101,7 +111,20 @@ const testTree: Folder = {
   children: [oneOne, oneTwo, oneThree, oneFour, oneFive]
 };
 
+const testExpression: ExpressionOperatorType = {
+  type: "operator",
+  op: "AND",
+  enabled: true,
+  children: []
+};
+
 describe("Tree Utils", () => {
+  describe("#assignRandomUuids()", () => {
+    const withUuids: ExpressionOperatorWithUuid = assignRandomUuids(
+      testExpression
+    ) as ExpressionOperatorWithUuid;
+    expect(withUuids.uuid).toBeDefined();
+  });
   describe("#itemIsInSubtree()", () => {
     test("should find a match when is root", () => {
       const found = itemIsInSubtree(testTree, testTree);

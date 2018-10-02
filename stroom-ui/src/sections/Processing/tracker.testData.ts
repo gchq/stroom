@@ -177,8 +177,8 @@ const createTestFilter = (): QueryDataType => ({
       }
     ],
     enabled: true
-  },
-  limits: true
+  }
+  //limits: true, this should be LimitsType?
 });
 
 const minimalTracker_undefinedLastPollAge = {
