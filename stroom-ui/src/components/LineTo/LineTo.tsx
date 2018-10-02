@@ -60,7 +60,7 @@ class LineTo extends React.Component<EnhancedProps> {
       toId
     } = this.props;
 
-    lineCreated(lineContextId, lineId, lineType, fromId, toId);
+    lineCreated(lineContextId, lineId, fromId, toId, lineType);
   }
 
   componentWillUnmount() {
