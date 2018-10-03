@@ -318,6 +318,10 @@ const AppChrome = ({
     theme = "theme-dark";
     themeChanged(theme);
   }
+
+  const sidebarClassName = isExpanded
+    ? "app-chrome__sidebar--expanded"
+    : "app-chrome__sidebar--collapsed";
   return (
     <div className={`app-container ${theme}`}>
       <div className="app-chrome flat">
@@ -326,7 +330,7 @@ const AppChrome = ({
         <RenameDocRefDialog listingId={LISTING_ID} />
         <DeleteDocRefDialog listingId={LISTING_ID} />
         <CopyDocRefDialog listingId={LISTING_ID} />
-        <div className="raised-high">
+        <div className={`app-chrome__sidebar raised-high ${sidebarClassName}`}>
           {isExpanded ? (
             <React.Fragment>
               <div className="app-chrome__sidebar_header header">

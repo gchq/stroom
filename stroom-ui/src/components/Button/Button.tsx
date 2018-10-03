@@ -68,12 +68,8 @@ export const Button = ({
   ...rest
 }: Props) => (
   <button className={className} {...rest}>
-    {icon ? (
-      <FontAwesomeIcon className="button__icon" icon={icon} />
-    ) : (
-      undefined
-    )}
-    {text}
+    {icon ? <FontAwesomeIcon icon={icon} /> : undefined}
+    {text ? <span className="button__text">{text}</span> : undefined}
   </button>
 );
 
