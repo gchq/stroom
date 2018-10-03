@@ -336,7 +336,7 @@ const AppChrome = ({
               <div className="app-chrome__sidebar_header header">
                 <Button
                   aria-label="Show/hide the sidebar"
-                  className="app-chrome__sidebar__toggleS raised-high borderless "
+                  className="app-chrome__sidebar__toggle raised-high borderless "
                   icon="bars"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />

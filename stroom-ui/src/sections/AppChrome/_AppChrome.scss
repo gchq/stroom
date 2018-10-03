@@ -83,6 +83,10 @@
   font-weight: italic;
 }
 
+.sidebar__menu-item.doc {
+  font-size: 0.85rem;
+}
+
 .sidebar__menu-item.doc.can-drop {
   color: green;
 }
@@ -156,3 +160,6 @@
 .menu-item__text{
 
 }
+
+
+
