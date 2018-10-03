@@ -15,6 +15,7 @@
  */
 
 import { Component } from "react";
+import { func } from "prop-types";
 
 import { sendAuthenticationRequest } from "./authentication";
 
@@ -27,6 +28,10 @@ export interface Props {
 }
 
 class AuthenticationRequest extends Component<Props, object> {
+  static contextTypes = {
+    store: func.isRequired
+  };
+
   componentDidMount() {
     this.context.store.dispatch(
       sendAuthenticationRequest(
@@ -43,9 +48,5 @@ class AuthenticationRequest extends Component<Props, object> {
     return null;
   }
 }
-
-// AuthenticationRequest.contextTypes = {
-//   store: PropTypes.object.isRequired,
-// };
 
 export default AuthenticationRequest;

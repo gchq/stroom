@@ -15,6 +15,7 @@
  */
 
 import { Component } from "react";
+import { object } from "prop-types";
 
 import * as queryString from "qs";
 
@@ -26,10 +27,17 @@ export interface Props {
 }
 
 class HandleAuthenticationResponse extends Component<Props, {}> {
+  static contextTypes = {
+    store: object.isRequired,
+    router: object.isRequired
+  };
+
   componentDidMount() {
-    const accessCode = queryString.parse(
-      this.context.router.route.location.search
-    ).accessCode;
+    let query = this.context.router.route.location.search;
+    if (query[0] == "?") {
+      query = query.substring(1);
+    }
+    const accessCode = queryString.parse(query).accessCode;
     this.context.store.dispatch(
       handleAuthenticationResponse(
         accessCode,
@@ -43,12 +51,5 @@ class HandleAuthenticationResponse extends Component<Props, {}> {
     return null;
   }
 }
-
-// HandleAuthenticationResponse.contextTypes = {
-//   store: PropTypes.object.isRequired,
-//   router: PropTypes.shape({
-//     history: object.isRequired
-//   })
-// };
 
 export default HandleAuthenticationResponse;
