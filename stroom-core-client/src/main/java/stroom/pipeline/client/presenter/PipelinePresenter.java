@@ -64,12 +64,12 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             }
         });
 
-        tabContentProvider.add(SETTINGS, settingsPresenter);
-        addTab(SETTINGS);
+        TabData selectedTab = SETTINGS;
 
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             tabContentProvider.add(DATA, streamPresenterProvider);
             addTab(DATA);
+            selectedTab = DATA;
         }
 
         tabContentProvider.add(STRUCTURE, structurePresenter);
@@ -82,9 +82,14 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             addTab(PROCESSORS);
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
             addTab(TASKS);
+
+            selectedTab = PROCESSORS;
         }
 
-        selectTab(SETTINGS);
+        tabContentProvider.add(SETTINGS, settingsPresenter);
+        addTab(SETTINGS);
+
+        selectTab(selectedTab);
     }
 
     @Override

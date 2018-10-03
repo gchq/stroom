@@ -69,11 +69,11 @@ import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
 import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
 import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
-import stroom.process.client.presenter.ExpressionPresenter;
-import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
+import stroom.process.client.presenter.ProcessorEditPresenter;
+import stroom.process.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.process.client.presenter.ProcessorPresenter;
 import stroom.process.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.process.client.view.ExpressionViewImpl;
+import stroom.process.client.view.ProcessorEditViewImpl;
 import stroom.process.client.view.ProcessorViewImpl;
 
 public class PipelineModule extends PluginModule {
@@ -115,7 +115,7 @@ public class PipelineModule extends PluginModule {
 
         // Add processor bindings.
         bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);
-        bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
+        bindPresenterWidget(ProcessorEditPresenter.class, ProcessorEditView.class, ProcessorEditViewImpl.class);
 
         bind(EditorMenuPresenter.class).in(Singleton.class);
     }

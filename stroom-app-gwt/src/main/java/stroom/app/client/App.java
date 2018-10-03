@@ -34,6 +34,9 @@ public class App implements EntryPoint {
         // This is required for Gwt-Platform proxy's generator.
         DelayedBindRegistry.bind(ginjector);
 
+        // Show the application panel.
+        ginjector.getAppPresenter().get().forceReveal();
+
         // Register all plugins that will respond to
 
         // Start the login manager. This will attempt to auto login with PKI and

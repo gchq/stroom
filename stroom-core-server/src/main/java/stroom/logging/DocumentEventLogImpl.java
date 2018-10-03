@@ -459,18 +459,26 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private Event createAction(final String typeId, final String description, final java.lang.Object object) {
+        String type = typeId;
         String desc = description;
         if (object != null) {
+            String objectType = getObjectType(object);
+            if (objectType == null) {
+                objectType = "";
+            } else {
+                objectType = " " + objectType;
+            }
+
             if (object instanceof NamedEntity) {
                 final NamedEntity namedEntity = (NamedEntity) object;
-                desc = description + " " + getObjectType(object) + " \"" + namedEntity.getName() + "\" id="
+                desc = description + objectType + " \"" + namedEntity.getName() + "\" id="
                         + getObjectId(object);
             } else {
-                desc = description + " " + getObjectType(object) + " id=" + getObjectId(object);
+                desc = description + objectType + " id=" + getObjectId(object);
             }
         }
 
-        return eventLoggingService.createAction(typeId, desc);
+        return eventLoggingService.createAction(type, desc);
     }
 
     private Event createAction(final String typeId, final String description, final String objectType,
