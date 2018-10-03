@@ -50,12 +50,6 @@
   position: absolute;
 }
 
-.AppChrome__MenuItemIcon {
-  display: inline-block;
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-}
-
 .sidebar__menu-item {
   display: inline-flex;
 }
@@ -141,7 +135,24 @@
   align-items: center;
   position: absolute;
   left: 40px;
-  // position: relative;
-  // top: 0.3rem;
-  // width: 90px !important;
+}
+
+
+.menu-item__has-children-icon {
+  padding-left:0.625rem;
+  width: 0.625rem;
+}
+
+.menu-item__has-no-children-spacer {
+  display: inline-block;
+  margin-left: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.menu-item__menu-icon {
+  padding: 0 0.3125rem 0 0.3125rem;
+  width: 1.1rem !important;
+}
+.menu-item__text{
+
 }

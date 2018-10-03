@@ -252,16 +252,21 @@ let MenuItem = ({
     connectDropTarget(
       <div className={className} style={style}>
         {hasChildren ? (
-          <div onClick={onCaretClick}>
+          <div className="menu-item__has-children-icon" onClick={onCaretClick}>
             <FontAwesomeIcon icon={hasChildrenIcon} />
           </div>
         ) : isHeader ? (
-          <div className="AppChrome__MenuItemIcon" />
+          <div className="menu-item__has-no-children-spacer" />
         ) : (
           undefined
         )}
-        <FontAwesomeIcon icon={menuItem.icon} />
-        <span onClick={onTitleClick}>{menuItem.title}</span>
+        <FontAwesomeIcon
+          className="menu-item__menu-icon"
+          icon={menuItem.icon}
+        />
+        <span onClick={onTitleClick} className="menu-item__text">
+          {menuItem.title}
+        </span>
       </div>
     )
   );
