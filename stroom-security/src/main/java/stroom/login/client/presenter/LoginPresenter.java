@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Place;
 import com.gwtplatform.mvp.client.proxy.ProxyPlace;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.alert.client.event.AlertEvent;
 import stroom.app.client.KeyboardInterceptor;
 import stroom.app.client.NameTokens;
@@ -109,7 +108,10 @@ public class LoginPresenter extends MyPresenter<LoginPresenter.LoginView, LoginP
 
     @Override
     protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
+        final RootPanel mainPage = RootPanel.get("stroom-main-page");
+        mainPage.clear();
+        mainPage.add(this.getWidget());
+
         RootPanel.get("logo").setVisible(true);
     }
 
