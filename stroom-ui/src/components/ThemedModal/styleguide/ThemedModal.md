@@ -1,5 +1,0 @@
-Themed Modal
-
-```jsx
-<ThemedModal />
-```
