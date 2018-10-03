@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#852** : Fix for more required permissions when logging other 'find' events.
+
 ## [v5.5.1] - 2018-10-03
 
 * Issue **#730** : Changed the default initial page for some document types.
 
-* Issue **#852** : Fix for required permission when logging 'find' events
+* Issue **#852** : Fix for required permission when logging 'find' events.
 
 * Changed the way the root pane loads so that error popups that appear when the main page is loading are not hidden.
 

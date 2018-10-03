@@ -23,6 +23,8 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.logging.EntityEventLog;
+import stroom.pool.SecurityHelper;
+import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedLong;
@@ -37,25 +39,29 @@ class EntityServiceFindDeleteHandler
         extends AbstractTaskHandler<EntityServiceFindDeleteAction<BaseCriteria, SharedObject>, SharedLong> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final EntityEventLog entityEventLog;
+    private final SecurityContext securityContext;
 
     @Inject
-    EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+    EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry,
+                                   final EntityEventLog entityEventLog,
+                                   final SecurityContext securityContext) {
         this.beanRegistry = beanRegistry;
         this.entityEventLog = entityEventLog;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public SharedLong exec(final EntityServiceFindDeleteAction<BaseCriteria, SharedObject> action) {
-        Long result = null;
+        Long result;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
         final Query query = new Query();
-        query.setAdvanced(advanced);
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            query.setAdvanced(advanced);
 
-        try {
             final Object entityService = beanRegistry.getEntityService(action.getCriteria().getClass());
             if (entityService != null) {
                 final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;

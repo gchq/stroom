@@ -57,7 +57,6 @@ class EntityServiceFindHandler
         BaseResultList<SharedObject> result;
 
         final Query query = new Query();
-
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final And and = new And();
             final Advanced advanced = new Advanced();
