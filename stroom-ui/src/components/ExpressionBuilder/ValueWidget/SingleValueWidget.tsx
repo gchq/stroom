@@ -5,7 +5,7 @@ export interface Props extends ControlledInput<any> {
   valueType: string;
 }
 
-const SingleValueWidget = ({ value, onChange, valueType }: Props) => (
+export const SingleValueWidget = ({ value, onChange, valueType }: Props) => (
   <input
     placeholder="value"
     type={valueType}

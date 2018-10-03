@@ -1,6 +1,6 @@
 import { Action, Reducer, AnyAction } from "redux";
 
-class TypeSafeReducer<TState> {
+class TypeSafeReducer<TState extends object> {
   reducers: {
     [s: string]: Reducer<TState, Action>;
   } = {};
@@ -39,7 +39,7 @@ class TypeSafeReducer<TState> {
   }
 }
 
-const prepareReducer = <TState>(initialState: TState) =>
+const prepareReducer = <TState extends object>(initialState: TState) =>
   new TypeSafeReducer(initialState);
 
 export default prepareReducer;

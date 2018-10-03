@@ -1,26 +1,15 @@
-import * as React from "react";
-import { compose } from "recompose";
-import { connect } from "react-redux";
-import { reduxForm, Field, FormState } from "redux-form";
+Drop Down Select in a Form
 
-import { GlobalStoreState } from "../../../startup/reducers";
-import DropdownSelect from "../DropdownSelect";
-import { DropdownOptionProps } from "../";
+```jsx
+const { compose } = require("recompose");
+const { connect } = require("react-redux");
+const { reduxForm, Field, FormState } = require("redux-form");
 
-export interface Props {
-  thisForm: FormState;
-}
+const { GlobalStoreState } = require("../../startup/reducers");
+const { DropdownOptionProps } = require("./DropdownSelect");
 
-interface ConnectState {
-  thisForm: FormState;
-}
-
-interface ConnectDispatch {}
-
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
-
-const enhance = compose<Props, EnhancedProps>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
+const enhance = compose(
+  connect(
     ({ form }) => ({
       thisForm: form.dropdownSelectTest
     }),
@@ -31,7 +20,7 @@ const enhance = compose<Props, EnhancedProps>(
   })
 );
 
-const toSimpleOption = (c: string) => ({
+const toSimpleOption = c => ({
   value: c.toLowerCase(),
   text: c
 });
@@ -46,11 +35,7 @@ const colourOptions = [
   "Violet"
 ].map(toSimpleOption);
 
-const ColorOption = ({
-  option: { text, value },
-  onClick,
-  inFocus
-}: DropdownOptionProps) => (
+const ColorOption = ({ option: { text, value }, onClick, inFocus }) => (
   <div className={`hoverable ${inFocus ? "inFocus" : ""}`} onClick={onClick}>
     <span style={{ backgroundColor: value, width: "2rem" }}>&nbsp;</span>
     {text}
@@ -67,7 +52,7 @@ const weekdayOptions = [
   "Sunday"
 ].map(toSimpleOption);
 
-let TestForm = ({ thisForm }: EnhancedProps) => (
+let TestForm = ({ thisForm }) => (
   <div>
     <form>
       <div>
@@ -125,4 +110,7 @@ let TestForm = ({ thisForm }: EnhancedProps) => (
   </div>
 );
 
-export default enhance(TestForm);
+TestForm = enhance(TestForm);
+
+<TestForm />;
+```

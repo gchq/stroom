@@ -1,4 +1,5 @@
 import { Action, Reducer, AnyAction } from "redux";
+import { mapObject } from "../treeUtils";
 
 export interface StateById<TStatePerId> {
   [s: string]: TStatePerId;
@@ -8,7 +9,7 @@ export interface ActionId {
   id: string;
 }
 
-class TypeSafeReducer<TStatePerId> {
+class TypeSafeReducer<TStatePerId extends object> {
   reducers: {
     domestic: {
       [s: string]: Reducer<TStatePerId, Action & ActionId>;
@@ -56,9 +57,7 @@ class TypeSafeReducer<TStatePerId> {
       state: StateById<TStatePerId> = {},
       action: Action & ActionId
     ): StateById<TStatePerId> => {
-      let reducer =
-        this.reducers.domestic[action.type] ||
-        this.reducers.foreign[action.type];
+      let reducer = this.reducers.domestic[action.type];
 
       if (reducer) {
         let currentThisId: TStatePerId =
@@ -68,6 +67,14 @@ class TypeSafeReducer<TStatePerId> {
           ...state,
           [action.id]: stateThisId
         };
+      } else {
+        reducer = this.reducers.foreign[action.type];
+
+        if (reducer) {
+          return mapObject<TStatePerId>(state, (stateOfId: TStatePerId) =>
+            reducer(stateOfId, action)
+          );
+        }
       }
 
       return state;
@@ -75,7 +82,8 @@ class TypeSafeReducer<TStatePerId> {
   }
 }
 
-const prepareReducerById = <TStatePerId>(initialState: TStatePerId) =>
-  new TypeSafeReducer(initialState);
+const prepareReducerById = <TStatePerId extends object>(
+  initialState: TStatePerId
+) => new TypeSafeReducer(initialState);
 
 export default prepareReducerById;

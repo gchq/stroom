@@ -216,7 +216,11 @@ const enhance = compose<EnhancedProps, Props>(
       docRef: DocRefType
     ) => {
       if (docRef.type === "Folder") {
-        if (typeFilters.length === 0 || typeFilters.includes("Folder")) {
+        if (
+          !typeFilters ||
+          typeFilters.length === 0 ||
+          typeFilters.includes("Folder")
+        ) {
           onChange(docRef);
         } else {
           navigateToFolder(pickerId, docRef);
