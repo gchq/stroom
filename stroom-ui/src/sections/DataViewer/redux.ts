@@ -20,7 +20,8 @@ import {
   ActionId,
   StateById
 } from "../../lib/redux-actions-ts";
-import { DataRow, AbstractFetchDataResult, DataSourceType } from "../../types";
+import { AbstractFetchDataResult, DataSourceType } from "../../types";
+import { DataRow } from "./types";
 
 export const ADD = "ADD";
 export const UPDATE_STREAM_ATTRIBUTE_MAPS = "UPDATE_STREAM_ATTRIBUTE_MAPS";

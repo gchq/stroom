@@ -1,14 +1,13 @@
 import { actionCreators } from "./redux";
 import { wrappedGet, wrappedPost } from "../../lib/fetchTracker.redux";
 import {
-  StreamAttributeMapResult,
   ExpressionOperatorType,
   DataSourceType,
-  DataRow,
   ExpressionOperatorWithUuid,
   ExpressionItemWithUuid
 } from "../../types";
 import { Dispatch } from "redux";
+import { DataRow, StreamAttributeMapResult } from "./types";
 import { GlobalStoreState } from "../../startup/reducers";
 
 export const search = (
