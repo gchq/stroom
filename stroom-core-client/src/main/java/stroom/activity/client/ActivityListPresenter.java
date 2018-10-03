@@ -83,12 +83,6 @@ public class ActivityListPresenter
     }
 
     @Override
-    protected void onReveal() {
-        super.onReveal();
-        refresh();
-    }
-
-    @Override
     public void refresh() {
         dataProvider.refresh();
     }

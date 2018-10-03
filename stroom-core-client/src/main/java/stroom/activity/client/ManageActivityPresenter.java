@@ -131,6 +131,8 @@ public class ManageActivityPresenter extends
     }
 
     public void show(final Consumer<Activity> consumer) {
+        listPresenter.refresh();
+
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
