@@ -84,8 +84,6 @@
     </div>
     <div class="tubeEffect">
     </div>
-    <div id="stroom-main-page" class="stroom-main-page">
-    </div>
     <div id="loading">
 	  <div id="loadingBox">
 		<div id="loadingImage" class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active is-upgraded" style="width:32px;height:32px" data-upgraded=",MaterialSpinner">
