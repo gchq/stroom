@@ -6,8 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v5.5.2] - 2018-10-03
-
 * Improved loading of activity list prior to showing the chooser dialog.
 
 * Issue **#852** : Fix for more required permissions when logging other 'find' events.
