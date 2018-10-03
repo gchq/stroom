@@ -66,6 +66,9 @@ interface WithHandlers {
 
 interface WithProps {
   style: React.CSSProperties;
+  hasChildren: boolean;
+  hasChildrenIcon: IconProp;
+  isHeader: boolean;
 }
 
 export interface DndProps
@@ -187,7 +190,16 @@ const enhance = compose<EnhancedProps, Props>(
   DropTarget([DragDropTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
   DragSource(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect),
   withProps(
-    ({ menuItem, isOver, canDrop, inFocus, isSelected, depth, className }) => {
+    ({
+      menuItem,
+      isOver,
+      canDrop,
+      inFocus,
+      isSelected,
+      depth,
+      className,
+      areMenuItemsOpen
+    }) => {
       const classNames = [];
 
       if (className) classNames.push(className);
@@ -213,7 +225,12 @@ const enhance = compose<EnhancedProps, Props>(
 
       return {
         style: { paddingLeft: `${depth * 0.7}rem` },
-        className: classNames.join(" ")
+        className: classNames.join(" "),
+        hasChildren: menuItem.children && menuItem.children.length > 0,
+        hasChildrenIcon: `caret-${
+          areMenuItemsOpen[menuItem.key] ? "down" : "right"
+        }` as IconProp,
+        isHeader: menuItem.key !== "stroom"
       };
     }
   )
@@ -221,7 +238,9 @@ const enhance = compose<EnhancedProps, Props>(
 
 let MenuItem = ({
   menuItem,
-  areMenuItemsOpen,
+  hasChildren,
+  hasChildrenIcon,
+  isHeader,
   connectDropTarget,
   connectDragSource,
   onTitleClick,
@@ -232,17 +251,11 @@ let MenuItem = ({
   connectDragSource(
     connectDropTarget(
       <div className={className} style={style}>
-        {menuItem.children && menuItem.children.length > 0 ? (
+        {hasChildren ? (
           <div onClick={onCaretClick}>
-            <FontAwesomeIcon
-              icon={
-                `caret-${
-                  areMenuItemsOpen[menuItem.key] ? "down" : "right"
-                }` as IconProp
-              }
-            />
+            <FontAwesomeIcon icon={hasChildrenIcon} />
           </div>
-        ) : menuItem.key !== "stroom" ? (
+        ) : isHeader ? (
           <div className="AppChrome__MenuItemIcon" />
         ) : (
           undefined

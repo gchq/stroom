@@ -18,10 +18,19 @@
   position: relative;
 }
 
+.app-chrome__sidebar--expanded{
+  width:200px;
+}
+
+.app-chrome__sidebar--collapsed{
+  width: 40px;
+}
+
 .app-chrome__sidebar-menu {
-  width: 15rem;
   overflow-y: auto;
   padding-top: 40px;
+  display: flex;
+  flex-direction:column;
 }
 
 .app-chrome__sidebar__toggle {
@@ -45,6 +54,10 @@
   display: inline-block;
   margin-left: 0.5rem;
   margin-right: 0.5rem;
+}
+
+.sidebar__menu-item {
+  display: inline-flex;
 }
 
 .sidebar__menu-item.nav {
