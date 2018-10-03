@@ -142,16 +142,16 @@
 }
 
 
-.menu-item__has-children-icon {
-  padding-left:0.625rem;
-  width: 0.625rem;
-}
+// .menu-item__has-children-icon {
+//   padding-left:0.625rem;
+//   width: 1.5rem;
+// }
 
-.menu-item__has-no-children-spacer {
-  display: inline-block;
-  margin-left: 0.75rem;
-  margin-right: 0.5rem;
-}
+// .menu-item__has-no-children-spacer {
+//   display: inline-block;
+//   margin-left: 0.75rem;
+//   margin-right: 0.5rem;
+// }
 
 .menu-item__menu-icon {
   padding: 0 0.3125rem 0 0.3125rem;
@@ -163,3 +163,6 @@
 
 
 
+.sidebar__menu-item.nav:hover{
+  background-color:red;
+} 
