@@ -39,10 +39,10 @@ export interface Props {
 
 interface ConnectState {
   elements: ElementStoreState;
-  selectedElementId: string;
-  pipelineState: PipelineStateStoreById;
+  selectedElementId?: string;
+  pipelineState?: PipelineStateStoreById;
   form: string;
-  initialValues: object;
+  initialValues?: object;
 }
 interface ConnectDispatch {}
 interface WithProps {
@@ -89,11 +89,12 @@ const enhance = compose<EnhancedProps, Props>(
     ))
   ),
   withProps<WithProps, Props & ConnectState & ConnectDispatch>(
-    ({ pipelineState: { pipeline }, elements, selectedElementId }) => {
+    ({ pipelineState, elements, selectedElementId }) => {
       const elementType: string =
-        (pipeline &&
-          pipeline.merged.elements.add &&
-          pipeline.merged.elements.add.find(
+        (pipelineState &&
+          pipelineState.pipeline &&
+          pipelineState.pipeline.merged.elements.add &&
+          pipelineState.pipeline.merged.elements.add.find(
             (element: PipelineElementType) => element.id === selectedElementId
           )!.type) ||
         "";
@@ -144,6 +145,7 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
+          selectedElementId &&
           elementTypeProperties.map(
             (elementTypeProperty: ElementPropertyType) => (
               <ElementProperty

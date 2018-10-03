@@ -39,7 +39,11 @@ import {
 } from "../streamAttributeMapClient";
 import { getDataForSelectedRow } from "../dataResourceClient";
 import withLocalStorage from "../../../lib/withLocalStorage";
-import { actionCreators } from "../redux";
+import {
+  actionCreators,
+  defaultStatePerId,
+  StoreStatePerId as DataListStoreStatePerId
+} from "../redux";
 
 import { GlobalStoreState } from "../../../startup/reducers";
 import Loader from "../../../components/Loader";
@@ -50,10 +54,7 @@ export interface Props {
   dataViewerId: string;
 }
 
-interface ConnectState {
-  dataViewer: string;
-  selectedRow: number;
-}
+interface ConnectState extends DataListStoreStatePerId {}
 interface ConnectDispatch {
   fetchDataSource: typeof fetchDataSource;
   search: typeof search;
@@ -110,30 +111,12 @@ const withDetailsHeight = withLocalStorage(
 
 const { selectRow, deselectRow } = actionCreators;
 
-const startPage = 0;
-const defaultPageSize = 20;
-
 const enhance = compose<EnhancedProps, Props>(
   withListHeight,
   withDetailsHeight,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    (state, props) => {
-      const dataView = state.dataViewers[props.dataViewerId];
-
-      if (dataView !== undefined) {
-        return dataView;
-      }
-
-      return {
-        streamAttributeMaps: [],
-        pageSize: defaultPageSize,
-        pageOffset: startPage,
-        selectedRow: undefined,
-        dataForSelectedRow: undefined,
-        detailsForSelectedRow: undefined,
-        dataSource: undefined
-      };
-    },
+    (state, props) =>
+      state.dataViewers[props.dataViewerId] || defaultStatePerId,
     {
       search,
       searchWithExpression,

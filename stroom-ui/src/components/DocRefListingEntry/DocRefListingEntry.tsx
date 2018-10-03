@@ -56,7 +56,7 @@ const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ keyIsDown, selectableItemListings }, { listingId, docRef }) => {
       const { selectedItems = [], focussedItem } =
-        selectableItemListings.byId[listingId] || defaultStatePerId;
+        selectableItemListings[listingId] || defaultStatePerId;
       const isSelected =
         selectedItems.map((d: DocRefType) => d.uuid).indexOf(docRef.uuid) !==
         -1;

@@ -278,14 +278,16 @@ export interface PipelineWithTree {
   asTree?: PipelineAsTreeType;
 }
 
+export interface PendingNewElementType {
+  parentId: string;
+  elementDefinition: ElementDefinition;
+}
+
 // pipelines, keyed on ID, there may be several expressions on a page
 export interface StoreStateById extends PipelineWithTree {
   isDirty: boolean;
   isSaving: boolean;
-  pendingNewElement?: {
-    parentId: string;
-    elementDefinition: ElementDefinition;
-  };
+  pendingNewElement?: PendingNewElementType;
   pendingElementIdToDelete?: string;
   selectedElementId?: string;
   selectedElementInitialValues?: object;

@@ -33,7 +33,7 @@ import DialogActionButtons from "./DialogActionButtons";
 import ThemedModal from "../ThemedModal";
 import AppSearchBar from "../AppSearchBar";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
-import { DocRefType, Tree } from "../../types";
+import { DocRefType, Tree, DocRefWithLineage } from "../../types";
 
 const { completeDocRefCopy } = actionCreators;
 
@@ -70,16 +70,18 @@ const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ folderExplorer: { documentTree, copyDocRef }, form }, { listingId }) => {
-      const thisCopyState = copyDocRef[listingId] || defaultStatePerId;
+      const thisState: CopyStoreState =
+        copyDocRef[listingId] || defaultStatePerId;
 
-      const initialDestination = findItem(
-        documentTree,
-        thisCopyState.destinationUuid
-      );
+      const initialDestination:
+        | DocRefWithLineage
+        | undefined = thisState.destinationUuid
+        ? findItem(documentTree, thisState.destinationUuid)
+        : undefined;
 
       return {
         copyDocRefDialogForm: form.copyDocRefDialog,
-        ...thisCopyState,
+        ...thisState,
         initialValues: {
           destination: initialDestination && initialDestination.node
         }

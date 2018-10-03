@@ -7,11 +7,13 @@ import IconHeader from "../IconHeader";
 import Button from "../Button";
 import ThemedModal from "../ThemedModal";
 import { actionCreators } from "./redux";
-import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
+import {
+  StoreStateById as PipelineStatesStoreStateById,
+  PendingNewElementType
+} from "./redux/pipelineStatesReducer";
 import { getAllElementNames } from "./pipelineUtils";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
 import { GlobalStoreState } from "../../startup/reducers";
-import { ElementDefinition } from "../../types";
 
 const {
   pipelineElementAddConfirmed,
@@ -28,7 +30,7 @@ interface ConnectState {
     name: string;
   };
   pipelineState: PipelineStatesStoreStateById;
-  pendingNewElement: ElementDefinition;
+  pendingNewElement?: PendingNewElementType;
 }
 
 interface ConnectDispatch {
@@ -57,7 +59,8 @@ export interface EnhancedProps
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ form, pipelineEditor: { pipelineStates } }, { pipelineId }) => {
-      const pipelineState = pipelineStates[pipelineId];
+      const pipelineState: PipelineStatesStoreStateById =
+        pipelineStates[pipelineId];
       let initialValues;
 
       const { pendingNewElement } = pipelineState;

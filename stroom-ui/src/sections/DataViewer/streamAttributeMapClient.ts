@@ -61,8 +61,8 @@ export const search = (
 
 export const searchWithExpression = (
   dataViewerId: string,
-  pageOffset: number,
-  pageSize: number,
+  pageOffset: number = 0,
+  pageSize: number = 10,
   expressionId: string,
   addResults?: boolean
 ) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
@@ -161,7 +161,12 @@ export const getDetailsForSelectedRow = (dataViewerId: string) => (
 ) => {
   const state = getState();
   const dataView = state.dataViewers[dataViewerId];
-  const streamId = dataView.streamAttributeMaps[dataView.selectedRow].data.id;
+  const streamId =
+    dataView.streamAttributeMaps &&
+    dataView.selectedRow &&
+    dataView.streamAttributeMaps[dataView.selectedRow]
+      ? dataView.streamAttributeMaps[dataView.selectedRow]!.data.id
+      : undefined;
   const url = `${
     state.config.values.stroomBaseServiceUrl
   }/streamattributemap/v1/${streamId}`;

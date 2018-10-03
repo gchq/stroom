@@ -3,7 +3,7 @@ import { Dictionary } from "../../../types";
 export default {
   docRef: {
     type: "Dictionary",
-    uuid: "rainbowColoursUuid12345",
+    uuid: "rainbow",
     name: "Colours"
   },
   description: "All the colours of the rainbow",

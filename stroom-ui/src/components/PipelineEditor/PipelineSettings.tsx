@@ -50,7 +50,10 @@ const enhance = compose<EnhancedProps, Props>(
       settings: settings[pipelineId],
       pipelineSettingsForm: pipelineSettings,
       initialValues: {
-        description: pipelineStates[pipelineId].pipeline.description
+        description:
+          pipelineStates[pipelineId] && pipelineStates[pipelineId].pipeline
+            ? pipelineStates[pipelineId]!.pipeline!.description
+            : ""
       }
     }),
     {
