@@ -28,8 +28,10 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;
 import stroom.about.client.view.AboutViewImpl;
-import stroom.app.client.presenter.AppPresenter;
-import stroom.app.client.view.AppViewImpl;
+import stroom.core.client.presenter.CorePresenter;
+import stroom.core.client.presenter.CorePresenter.CoreProxy;
+import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.view.CoreViewImpl;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneProxy;
 import stroom.core.client.ContentManager;
@@ -97,7 +99,7 @@ public class AppModule extends AbstractPresenterModule {
         bindConstant().annotatedWith(DefaultPlace.class).to(NameTokens.LOGIN);
 
         // Presenters
-        bindPresenter(AppPresenter.class, AppPresenter.AppView.class, AppViewImpl.class, AppPresenter.AppProxy.class);
+        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
         bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainProxy.class);
         bindPresenter(MenubarPresenter.class, MenubarView.class, MenubarViewImpl.class, MenubarProxy.class);

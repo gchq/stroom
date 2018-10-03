@@ -25,8 +25,14 @@ import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 import stroom.core.client.gin.InactivePlaceManager;
-import stroom.dashboard.client.main.DashboardAppPresenter;
-import stroom.dashboard.client.main.DashboardAppViewImpl;
+import stroom.core.client.presenter.CorePresenter;
+import stroom.core.client.presenter.CorePresenter.CoreProxy;
+import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.view.CoreViewImpl;
+import stroom.dashboard.client.main.DashboardMainPresenter;
+import stroom.dashboard.client.main.DashboardMainViewImpl;
+import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
+import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -52,7 +58,10 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
 
-        bindPresenter(DashboardAppPresenter.class, DashboardAppPresenter.DashboardAppView.class, DashboardAppViewImpl.class, DashboardAppPresenter.DashboardAppProxy.class);
+        // Presenters
+        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
+
+        bindPresenter(DashboardMainPresenter.class, DashboardMainView.class, DashboardMainViewImpl.class, DashboardMainProxy.class);
 
         bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
