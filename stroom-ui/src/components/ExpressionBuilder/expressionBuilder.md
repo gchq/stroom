@@ -1,5 +1,4 @@
 ```jsx
-const PropTypes = require("prop-types");
 const { connect } = require("react-redux");
 const { compose, lifecycle } = require("recompose");
 

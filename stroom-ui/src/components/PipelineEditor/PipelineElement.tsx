@@ -323,7 +323,7 @@ const PipelineElement = ({
         className={`${className} raised-low borderless `}
         onClick={onElementClick}
       >
-        <ElementImage icon={elementDefinition!.icon} />
+        {elementDefinition && <ElementImage icon={elementDefinition.icon} />}
         <Button className="Pipeline-element__type" text={elementId} />
       </div>
     )

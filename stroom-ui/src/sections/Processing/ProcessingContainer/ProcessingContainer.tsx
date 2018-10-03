@@ -30,6 +30,7 @@ import { fetchTrackers } from "../streamTasksResourceClient";
 import ProcessingDetails from "../ProcessingDetails/ProcessingDetails";
 import ProcessingList from "../ProcessingList/ProcessingList";
 import { GlobalStoreState } from "../../../startup/reducers";
+import { StreamTaskType } from "../../../types";
 
 const { expressionChanged } = expressionActionCreators;
 const {
@@ -43,7 +44,7 @@ interface ConnectState {
   searchCriteria: string;
   selectedTrackerId?: number;
   // TODO TS shouldn't be any
-  trackers: any[];
+  trackers: Array<StreamTaskType>;
 }
 interface ConnectDispatch {
   updateTrackerSelection: typeof updateTrackerSelection;
@@ -91,7 +92,7 @@ const enhance = compose<EnhancedProps, Props>(
       updateTrackerSelection,
       expressionChanged
       //TODO TS not 'any'
-    }) => (filterId: number, trackers?: any[]) => {
+    }) => (filterId: number, trackers?: Array<StreamTaskType>) => {
       updateTrackerSelection(filterId);
 
       let expression;
@@ -102,7 +103,9 @@ const enhance = compose<EnhancedProps, Props>(
         }
       }
 
-      expressionChanged("trackerDetailsExpression", expression);
+      if (expression) {
+        expressionChanged("trackerDetailsExpression", expression);
+      }
     },
     onHandleSearchChange: ({
       resetPaging,
@@ -144,7 +147,6 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 const ProcessingContainer = ({
-  trackers,
   searchCriteria,
   selectedTrackerId,
   showDetails,

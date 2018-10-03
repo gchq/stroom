@@ -18,7 +18,7 @@ export interface Props {
 
 interface ConnectState {
   pipelineSettingsForm: FormState;
-  settings: PipelineSettingsStoreStatePerId;
+  settings?: PipelineSettingsStoreStatePerId;
 }
 
 interface ConnectDispatch {
@@ -91,15 +91,14 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 const PipelineSettings = ({
-  pipelineId,
   onConfirm,
   onCancel,
-  settings: { isOpen },
+  settings,
   invalid,
   submitting
 }: EnhancedProps) => (
   <ThemedModal
-    isOpen={isOpen}
+    isOpen={!!settings && settings.isOpen}
     onRequestClose={onCancel}
     header={<IconHeader icon="cog" text="Pipeline Settings" />}
     content={
