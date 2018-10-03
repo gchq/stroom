@@ -24,30 +24,19 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.DocRefUtil;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionItem;
+import stroom.docref.SharedObject;
+import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.MetaDataSource;
-import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterRow;
 import stroom.streamtask.shared.ProcessorRow;
 import stroom.svg.client.SvgPresets;
-import stroom.docref.SharedObject;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
@@ -203,7 +192,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void addProcessor() {
         if (pipelineDoc != null) {
-            processorEditPresenterProvider.get().show(DocRefUtil.create(pipelineEntity), null, result -> {
+            processorEditPresenterProvider.get().show(docRef, null, result -> {
                 if (result != null) {
                     refresh(result);
                 }
@@ -216,7 +205,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             if (selectedProcessor instanceof ProcessorFilterRow) {
                 final ProcessorFilterRow streamProcessorFilterRow = (ProcessorFilterRow) selectedProcessor;
                 final ProcessorFilter filter = streamProcessorFilterRow.getEntity();
-                processorEditPresenterProvider.get().show(DocRefUtil.create(pipelineEntity), filter, result -> {
+                processorEditPresenterProvider.get().show(docRef, filter, result -> {
                     if (result != null) {
                         refresh(result);
                     }
