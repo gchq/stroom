@@ -25,6 +25,8 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.logging.EntityEventLog;
+import stroom.pool.SecurityHelper;
+import stroom.security.SecurityContext;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedObject;
@@ -38,25 +40,30 @@ class EntityServiceFindHandler
         extends AbstractTaskHandler<EntityServiceFindAction<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final EntityEventLog entityEventLog;
+    private final SecurityContext securityContext;
 
     @Inject
-    EntityServiceFindHandler(final EntityServiceBeanRegistry beanRegistry, final EntityEventLog entityEventLog) {
+    EntityServiceFindHandler(final EntityServiceBeanRegistry beanRegistry,
+                             final EntityEventLog entityEventLog,
+                             final SecurityContext securityContext) {
         this.beanRegistry = beanRegistry;
         this.entityEventLog = entityEventLog;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<SharedObject> exec(final EntityServiceFindAction<BaseCriteria, SharedObject> action) {
-        BaseResultList<SharedObject> result = null;
+        BaseResultList<SharedObject> result;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
         final Query query = new Query();
-        query.setAdvanced(advanced);
 
-        try {
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            query.setAdvanced(advanced);
+
             final Object entityService = beanRegistry.getEntityService(action.getCriteria().getClass());
             if (entityService != null) {
                 final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
