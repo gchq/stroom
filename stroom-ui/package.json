@@ -49,7 +49,7 @@
     "react-panelgroup": "^1.0.7",
     "react-redux": "^5.0.7",
     "react-router-dom": "^4.3.1",
-    "react-router-redux": "^4.0.8",
+    "react-router-redux": "^5.0.0-alpha.9",
     "react-scripts-ts": "2.17.0",
     "react-sweet-progress": "^1.1.2",
     "react-table": "^6.8.6",
@@ -66,7 +66,7 @@
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "node-sass-chokidar src/ -o src/ --watch --recursive",
-    "start-js": "./config.template.sh && BROWSER=NONE react-scripts-ts start",
+    "start-js": "./config.template.sh && BROWSER=NONE PORT=5001 react-scripts-ts start",
     "start": "npm-run-all -p watch-css start-js",
     "build-js": "react-scripts-ts build",
     "build": "npm-run-all build-css build-js",
