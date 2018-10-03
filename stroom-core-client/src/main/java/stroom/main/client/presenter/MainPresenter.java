@@ -42,7 +42,6 @@ import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTest;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
-
     @ContentSlot
     public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
@@ -84,7 +83,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         });
         registerHandler(clientPropertyCache.addPropertyChangeHandler(
                 event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))
-                ));
+        ));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {
