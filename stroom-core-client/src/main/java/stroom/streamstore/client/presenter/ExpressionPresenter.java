@@ -24,10 +24,10 @@ import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;
+import stroom.streamstore.client.presenter.ExpressionPresenter.ExpressionView;
 
 import java.util.List;
 
