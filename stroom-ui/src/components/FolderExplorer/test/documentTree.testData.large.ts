@@ -1,4 +1,4 @@
-import { DocRefTree } from "../../../types";
+import { DocRefTree, Dictionary } from "../../../types";
 
 /*
  * Copyright 2018 Crown Copyright
@@ -16,9 +16,9 @@ import { DocRefTree } from "../../../types";
  * limitations under the License.
  */
 
-// import { testPipelines } from "../../PipelineEditor/test";
-// import { testXslt } from "../../XsltEditor/test";
-// import { testDictionaries } from "../../DictionaryEditor/test";
+import { testPipelines } from "../../PipelineEditor/test";
+import { testXslt } from "../../XsltEditor/test";
+import { testDictionaries } from "../../DictionaryEditor/test";
 
 export default {
   uuid: "0",
@@ -34,49 +34,39 @@ export default {
           uuid: "pipelines1234567890",
           name: "Pipelines",
           type: "Folder",
-          children: [] // TODO
-          // Object.entries(testPipelines)
-          //   .map(k => ({
-          //     uuid: k[0],
-          //     data: k[1]
-          //   }))
-          //   .map(pipeline => ({
-          //     uuid: pipeline.uuid,
-          //     type: "Pipeline",
-          //     name: pipeline.uuid
-          //   }))
+          children: Object.entries(testPipelines)
+            .map(k => ({
+              uuid: k[0],
+              data: k[1]
+            }))
+            .map(pipeline => ({
+              uuid: pipeline.uuid,
+              type: "Pipeline",
+              name: pipeline.uuid
+            }))
         },
         {
           uuid: "dictionaries1234567890",
           name: "Dictionaries",
           type: "Folder",
-          children: [] // TODO
-          // Object.entries(testDictionaries)
-          //   .map(k => ({
-          //     uuid: k[0],
-          //     data: k[1]
-          //   }))
-          //   .map(dict => ({
-          //     uuid: dict.uuid,
-          //     type: "Dictionary",
-          //     name: dict.data.docRef.name
-          //   }))
+          children: Object.values(testDictionaries).map(
+            (dict: Dictionary) => dict.docRef
+          )
         },
         {
           uuid: "xslt1234567890",
           name: "XSLT",
           type: "Folder",
-          children: [] // TODO
-          // Object.entries(testXslt)
-          //   .map(k => ({
-          //     uuid: k[0],
-          //     data: k[1]
-          //   }))
-          //   .map(xslt => ({
-          //     uuid: xslt.uuid,
-          //     type: "XSLT",
-          //     name: xslt.uuid
-          //   }))
+          children: Object.entries(testXslt)
+            .map(k => ({
+              uuid: k[0],
+              data: k[1]
+            }))
+            .map(xslt => ({
+              uuid: xslt.uuid,
+              type: "XSLT",
+              name: xslt.uuid
+            }))
         },
         {
           uuid: "empty12323435345",

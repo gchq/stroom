@@ -119,7 +119,7 @@ export interface EnhancedProps
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ lineContainer }, { lineContextId }) => ({
-      lineContainer: lineContainer.byId[lineContextId]
+      lineContainer: lineContainer[lineContextId]
     }),
     {
       lineContainerCreated,

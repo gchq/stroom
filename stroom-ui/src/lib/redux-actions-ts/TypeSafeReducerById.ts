@@ -1,11 +1,7 @@
 import { Action, Reducer, AnyAction } from "redux";
 
-// Putting the state values behind the 'byId' identifier prevents TypeScript from allowing access of
-// any old nonsense from this object.
 export interface StateById<TStatePerId> {
-  byId: {
-    [s: string]: TStatePerId;
-  };
+  [s: string]: TStatePerId;
 }
 
 export interface ActionId {
@@ -57,7 +53,7 @@ class TypeSafeReducer<TStatePerId> {
 
   getReducer(): Reducer<StateById<TStatePerId>, AnyAction> {
     return (
-      state: StateById<TStatePerId> = { byId: {} },
+      state: StateById<TStatePerId> = {},
       action: Action & ActionId
     ): StateById<TStatePerId> => {
       let reducer =
@@ -66,13 +62,11 @@ class TypeSafeReducer<TStatePerId> {
 
       if (reducer) {
         let currentThisId: TStatePerId =
-          state.byId[action.id] || this.initialStatePerId;
+          state[action.id] || this.initialStatePerId;
         let stateThisId: TStatePerId = reducer(currentThisId, action);
         return {
-          byId: {
-            ...state.byId,
-            [action.id]: stateThisId
-          }
+          ...state,
+          [action.id]: stateThisId
         };
       }
 

@@ -4,6 +4,7 @@ import { compose, withContext } from "recompose";
 import { connect } from "react-redux";
 import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
+import { MemoryRouter } from "react-router";
 
 import FontAwesomeProvider from "../../startup/FontAwesomeProvider";
 import KeyIsDown from "../../lib/KeyIsDown";
@@ -46,7 +47,9 @@ interface ConnectDispatch {}
 export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const WrappedComponent = ({ children, theme = "light" }: EnhancedProps) => (
-  <div className={`app-container ${theme}`}>{children}</div>
+  <MemoryRouter>
+    <div className={`app-container ${theme}`}>{children}</div>
+  </MemoryRouter>
 );
 
 const enhance = compose<EnhancedProps, Props>(

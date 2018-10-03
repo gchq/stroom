@@ -108,7 +108,7 @@ const withSelectableItemListing = <TItem extends any>(
         { selectableItemListings, keyIsDown },
         { listingId }: WithProps<TItem>
       ) => ({
-        selectableItemListing: selectableItemListings.byId[listingId],
+        selectableItemListing: selectableItemListings[listingId],
         keyIsDown
       }),
       {

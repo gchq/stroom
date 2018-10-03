@@ -1,11 +1,14 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { compose, branch, renderNothing } from "recompose";
+import { compose, branch, renderComponent } from "recompose";
 
-import withDocumentTree from "../FolderExplorer/withDocumentTree";
+import withDocumentTree, {
+  EnhancedProps as WithDocumentTreeProps
+} from "../FolderExplorer/withDocumentTree";
 import { findItem } from "../../lib/treeUtils";
 import { DocRefConsumer, DocRefWithLineage } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import Loader from "../Loader";
 
 export interface Props {
   docRefUuid: string;
@@ -19,19 +22,30 @@ interface ConnectState {
 
 interface ConnectDispatch {}
 
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+export interface EnhancedProps
+  extends Props,
+    WithDocumentTreeProps,
+    ConnectState,
+    ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { documentTree } }, { docRefUuid }) => ({
-      docRefWithLineage: findItem(documentTree, docRefUuid) as DocRefWithLineage // TODO, fix?
+  connect<
+    ConnectState,
+    ConnectDispatch,
+    Props & WithDocumentTreeProps,
+    GlobalStoreState
+  >(
+    ({}, { docRefUuid, documentTree }) => ({
+      docRefWithLineage: findItem(documentTree, docRefUuid) as DocRefWithLineage
     }),
     {}
   ),
   branch(
     ({ docRefWithLineage }) => !docRefWithLineage || !docRefWithLineage.node,
-    renderNothing
+    renderComponent<Props>(({ docRefUuid }) => (
+      <Loader message={`Loading Doc Ref ${docRefUuid}...`} />
+    ))
   )
 );
 

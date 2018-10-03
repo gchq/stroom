@@ -56,11 +56,11 @@ interface EnhancedProps
     ConnectDispatch {}
 
 interface ConnectState {
-  selectedRow: number;
-  pageOffset: number;
-  pageSize: number;
-  dataForSelectedRow: any; //TODO
-  detailsForSelectedRow: any; //TODO
+  selectedRow?: number;
+  pageOffset?: number;
+  pageSize?: number;
+  dataForSelectedRow?: any; //TODO
+  detailsForSelectedRow?: any; //TODO
   dataSource: any;
 }
 interface ConnectDispatch {

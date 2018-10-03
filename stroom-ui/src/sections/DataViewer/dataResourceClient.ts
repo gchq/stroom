@@ -13,7 +13,12 @@ export const getDataForSelectedRow = (dataViewerId: string) => (
   // TODO get other parms, e.g. for paging
   const selectedRow = state.dataViewers[dataViewerId].selectedRow;
   const streamId =
-    state.dataViewers[dataViewerId].streamAttributeMaps[selectedRow].data.id;
+    state.dataViewers[dataViewerId] &&
+    state.dataViewers[dataViewerId].streamAttributeMaps &&
+    selectedRow
+      ? state.dataViewers[dataViewerId]!.streamAttributeMaps![selectedRow].data
+          .id
+      : undefined;
   const params = `streamId=${streamId}&streamsOffset=0&streamsLength=1&pageOffset=0&pageSize=100`;
 
   const url = `${state.config.values.stroomBaseServiceUrl}/data/v1/?${params}`;

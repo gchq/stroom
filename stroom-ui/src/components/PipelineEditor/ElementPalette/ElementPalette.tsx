@@ -76,9 +76,10 @@ const enhance = compose<EnhancedProps, Props>(
 
       return {
         byCategory,
-        recycleBinItems: pipelineState
-          ? getBinItems(pipelineState.pipeline, byType)
-          : []
+        recycleBinItems:
+          pipelineState && pipelineState.pipeline
+            ? getBinItems(pipelineState.pipeline, byType)
+            : []
       };
     },
     {

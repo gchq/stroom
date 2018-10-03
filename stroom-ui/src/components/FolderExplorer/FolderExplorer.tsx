@@ -42,7 +42,7 @@ import withDocumentTree, {
 } from "./withDocumentTree";
 import withSelectableItemListing, {
   SelectionBehaviour,
-  StoreState as SelectableItemListingState,
+  StoreStatePerId as SelectableItemListingStatePerId,
   EnhancedProps as SelectableItemListingProps,
   defaultStatePerId as defaultSelectableItemListing
 } from "../../lib/withSelectableItemListing";
@@ -66,7 +66,7 @@ export interface Props {
 
 interface ConnectState {
   folder: DocRefWithLineage;
-  selectableItemListing: SelectableItemListingState;
+  selectableItemListing: SelectableItemListingStatePerId;
 }
 
 interface WithHandlers {

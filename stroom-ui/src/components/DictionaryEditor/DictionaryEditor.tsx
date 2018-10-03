@@ -67,7 +67,9 @@ const enhance = compose<EnhancedProps, Props>(
   }),
   branch(
     ({ dictionaryState }) => !dictionaryState,
-    renderComponent(() => <Loader message="Loading Dictionary" />)
+    renderComponent<Props>(({ dictionaryUuid }) => (
+      <Loader message={`Loading Dictionary ${dictionaryUuid}`} />
+    ))
   ),
   withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
     onDataChange: ({ dictionaryUuid, dictionaryUpdated }) => ({

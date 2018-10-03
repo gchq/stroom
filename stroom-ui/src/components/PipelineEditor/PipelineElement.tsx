@@ -207,9 +207,11 @@ const enhance = compose<EnhancedProps, Props>(
       if (element !== undefined) {
         if (pipelineState && pipelineState.pipeline) {
           selectedElementId = pipelineState.selectedElementId;
-          element = pipelineState.pipeline.merged.elements.add.find(
-            (e: PipelineElementType) => e.id === elementId
-          );
+          element =
+            pipelineState.pipeline.merged.elements.add &&
+            pipelineState.pipeline.merged.elements.add.find(
+              (e: PipelineElementType) => e.id === elementId
+            );
           if (element) {
             elementDefinition = Object.values(elements.elements).find(
               e => e.type === element!.type

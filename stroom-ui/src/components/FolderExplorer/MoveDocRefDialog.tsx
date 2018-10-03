@@ -35,7 +35,7 @@ import AppSearchBar from "../AppSearchBar";
 import ThemedModal from "../ThemedModal";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
 import { GlobalStoreState } from "../../startup/reducers";
-import { DocRefType } from "../../types";
+import { DocRefType, DocRefWithLineage } from "../../types";
 
 const { completeDocRefMove } = actionCreators;
 
@@ -86,10 +86,11 @@ const enhance = compose<EnhancedProps, Props>(
       { listingId }
     ) => {
       const thisState = moveDocRef[listingId] || defaultStatePerId;
-      const initialDestination = findItem(
-        documentTree,
-        thisState.destinationUuid
-      );
+      const initialDestination:
+        | DocRefWithLineage
+        | undefined = thisState.destinationUuid
+        ? findItem(documentTree, thisState.destinationUuid)
+        : undefined;
 
       return {
         moveDocRefDialogForm: form.moveDocRefDialog,

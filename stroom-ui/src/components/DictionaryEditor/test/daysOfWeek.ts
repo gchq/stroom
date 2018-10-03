@@ -3,7 +3,7 @@ import { Dictionary } from "../../../types";
 export default {
   docRef: {
     type: "Dictionary",
-    uuid: "daysOfWeekUuid12345",
+    uuid: "daysOfWeek",
     name: "Days of Week"
   },
   description: "All the days of the week",

@@ -146,7 +146,10 @@ export interface StoreStatePerId {
 
 export interface StoreState extends StateById<StoreStatePerId> {}
 
-export const defaultStatePerId: StoreStatePerId = {};
+export const defaultStatePerId: StoreStatePerId = {
+  pageOffset: 0,
+  pageSize: 20
+};
 
 export const reducer = prepareReducerById(defaultStatePerId)
   .handleActions<StreamAttributesMapAction>(
