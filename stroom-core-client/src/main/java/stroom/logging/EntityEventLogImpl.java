@@ -379,18 +379,28 @@ public class EntityEventLogImpl implements EntityEventLog {
     }
 
     private Event createAction(final String typeId, final String description, final BaseEntity entity, final PermissionInheritance permissionInheritance) {
+        String type = typeId;
         String desc = description;
         if (entity != null) {
+            String objectType = getObjectType(entity);
+            if (objectType == null) {
+                objectType = "";
+            } else {
+                objectType = " " + objectType;
+            }
+
+            type = type + objectType;
+
             if (entity instanceof NamedEntity) {
                 final NamedEntity namedEntity = (NamedEntity) entity;
-                desc = description + " " + getObjectType(entity) + " \"" + namedEntity.getName() + "\" id="
+                desc = description + objectType + " \"" + namedEntity.getName() + "\" id="
                         + entity.getId();
             } else {
-                desc = description + " " + getObjectType(entity) + " id=" + entity.getId();
+                desc = description + objectType + " id=" + entity.getId();
             }
         }
         desc += getPermissionString(permissionInheritance);
-        return eventLoggingService.createAction(typeId, desc);
+        return eventLoggingService.createAction(type, desc);
     }
 
     private Event createAction(final String typeId, final String description, final String entityType,
