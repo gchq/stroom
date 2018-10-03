@@ -9,15 +9,15 @@
 @import "../components/IconHeader/IconHeader";
 @import "../components/DropdownSelect/DropdownSelect";
 @import "../components/Loader/Loader";
-// @import "../components/DocRefEditor/DocRefEditor";
+@import "../components/DocRefEditor/DocRefEditor";
 @import "../components/AppSearchBar/AppSearchBar";
-// @import "../components/DictionaryEditor/DictionaryEditor";
-// @import "../components/PipelineEditor/PipelineEditor";
-// @import "../components/ExpressionSearchBar/ExpressionSearchBar";
+@import "../components/DictionaryEditor/DictionaryEditor";
+@import "../components/PipelineEditor/PipelineEditor";
+@import "../components/ExpressionSearchBar/ExpressionSearchBar";
 @import "../components/DocRefBreadcrumb/DocRefBreadcrumb";
 @import "../components/DocRefListingEntry/DocRefListingEntry";
-// @import "../components/XsltEditor/XsltEditor";
-// @import "../components/ExpressionBuilder/ExpressionBuilder";
+@import "../components/XsltEditor/XsltEditor";
+@import "../components/ExpressionBuilder/ExpressionBuilder";
 @import "../components/LineTo/LineTo";
 @import "../components/IFrame/IFrame";
 @import "../components/HorizontalPanel/HorizontalPanel";
@@ -26,12 +26,12 @@
 @import "../components/ThemedModal/ThemedModal";
 @import "../components/PathNotFound/PathNotFound";
 @import "../components/DocRefInfoModal/DocRefInfoModal";
-// @import "../components/PipelineDebugger/PipelineDebugger";
+@import "../components/PipelineDebugger/PipelineDebugger";
 
-// @import "../sections/DataViewer/DataViewer";
-// @import "../sections/AppChrome/AppChrome";
+@import "../sections/DataViewer/DataViewer";
+@import "../sections/AppChrome/AppChrome";
 @import "../sections/Welcome/Welcome";
-// @import "../sections/Processing/ProcessingContainer";
+@import "../sections/Processing/ProcessingContainer";
 @import "../sections/UserSettings/UserSettings";
 
 @import "./themes";

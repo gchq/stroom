@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
+ @font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./fonts/opensans/OpenSans-Regular.ttf');
+  src: local('Open Sans'), local('OpenSans'),
+       url('./fonts/opensans/OpenSans-Regular.ttf') format('truetype'),
+}
+
 body {
+  font-family: 'Open Sans';
   margin: 0;
   padding: 0;
 }
