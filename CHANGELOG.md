@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#851** : Added additional type info to type id when logging events.
+
 ## [v5.5.0] - 2018-09-28
 
 ## [v5.5.0-beta.10] - 2018-09-26
