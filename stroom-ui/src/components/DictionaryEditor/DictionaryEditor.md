@@ -1,7 +1,7 @@
 Dictionary Editor - Days of the Week
 
 ```jsx
-const { default: dict } = require("./test/daysOfWeek");
+const dict = require("./test/daysOfWeek").default;
 
 <DictionaryEditor dictionaryUuid={dict.docRef.uuid} />;
 ```
@@ -9,7 +9,7 @@ const { default: dict } = require("./test/daysOfWeek");
 Dictionary Editor - Colours of the Rainbow
 
 ```jsx
-const { default: dict } = require("./test/rainbow");
+const dict = require("./test/rainbow").default;
 
 <DictionaryEditor dictionaryUuid={dict.docRef.uuid} />;
 ```

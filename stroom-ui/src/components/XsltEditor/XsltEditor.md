@@ -1,0 +1,3 @@
+```jsx
+<XsltEditor xsltUuid="bitmapReference" />
+```
