@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.1] - 2018-10-03
+
 * Issue **#730** : Changed the default initial page for some document types.
 
 * Issue **#852** : Fix for required permission when logging 'find' events
@@ -942,7 +944,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.1...HEAD
+[v5.5.1]: https://github.com/gchq/stroom/compare/v5.5.0...v5.5.1
 [v5.5.0]: https://github.com/gchq/stroom/compare/v5.5.0-beta.10...v5.5.0
 [v5.5.0-beta.10]: https://github.com/gchq/stroom/compare/v5.5.0-beta.9...v5.5.0-beta.10
 [v5.5.0-beta.9]: https://github.com/gchq/stroom/compare/v5.5.0-beta.8...v5.5.0-beta.9
