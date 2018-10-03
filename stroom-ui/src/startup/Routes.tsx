@@ -57,7 +57,11 @@ const enhance = compose<EnhancedProps, Props>(
     {}
   ),
   withProps(
-    ({ config: { authenticationServiceUrl, authorisationServiceUrl } }) => ({
+    ({
+      config: {
+        values: { authenticationServiceUrl, authorisationServiceUrl }
+      }
+    }) => ({
       authenticationServiceUrl,
       authorisationServiceUrl
     })
