@@ -294,7 +294,7 @@ const getContractedMenuItems = (menuItems: Array<MenuItemType>) =>
     <React.Fragment key={menuItem.key}>
       {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
         <Button
-          className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
+          className="app-chrome__sidebar__toggle_collapsed raised-high circular borderless app-chrome__sidebar__toggle"
           key={menuItem.title}
           icon={menuItem.icon}
           onClick={menuItem.onClick}
@@ -336,7 +336,7 @@ const AppChrome = ({
               <div className="app-chrome__sidebar_header header">
                 <Button
                   aria-label="Show/hide the sidebar"
-                  className="app-chrome__sidebar__toggle raised-high borderless "
+                  className="app-chrome__sidebar__toggleS raised-high borderless "
                   icon="bars"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />
