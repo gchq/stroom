@@ -54,12 +54,13 @@ public class FeedPresenter extends EntityEditTabPresenter<LinkTabPanelView, Feed
             }
         });
 
-        addTab(SETTINGS);
-        tabContentProvider.add(SETTINGS, settingsPresenterProvider);
+        TabData selectedTab = SETTINGS;
 
         if (securityContext.hasAppPermission(Stream.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
             tabContentProvider.add(DATA, streamPresenterProvider);
+
+            selectedTab = DATA;
         }
 
         if (securityContext.hasAppPermission(StreamProcessor.MANAGE_PROCESSORS_PERMISSION)) {
@@ -67,7 +68,10 @@ public class FeedPresenter extends EntityEditTabPresenter<LinkTabPanelView, Feed
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
         }
 
-        selectTab(SETTINGS);
+        addTab(SETTINGS);
+        tabContentProvider.add(SETTINGS, settingsPresenterProvider);
+
+        selectTab(selectedTab);
     }
 
     @Override

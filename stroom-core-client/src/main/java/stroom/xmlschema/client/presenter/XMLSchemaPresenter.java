@@ -66,10 +66,10 @@ public class XMLSchemaPresenter extends EntityEditTabPresenter<LinkTabPanelView,
             }
         });
 
-        addTab(SETTINGS);
         addTab(GRAPHICAL);
         addTab(TEXT);
-        selectTab(SETTINGS);
+        addTab(SETTINGS);
+        selectTab(GRAPHICAL);
     }
 
     @Override

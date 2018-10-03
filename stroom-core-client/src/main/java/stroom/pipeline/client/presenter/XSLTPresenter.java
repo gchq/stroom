@@ -52,9 +52,9 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
             }
         });
 
-        addTab(SETTINGS_TAB);
         addTab(XSLT_TAB);
-        selectTab(SETTINGS_TAB);
+        addTab(SETTINGS_TAB);
+        selectTab(XSLT_TAB);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
         if (SETTINGS_TAB.equals(tab)) {
             callback.onReady(settingsPresenter);
         } else if (XSLT_TAB.equals(tab)) {
-            callback.onReady(codePresenter);
+            callback.onReady(getOrCreateCodePresenter());
         } else {
             callback.onReady(null);
         }
@@ -90,12 +90,8 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
     public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
-        codePresenter = editorPresenterProvider.get();
+        codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);
-
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
         }
@@ -104,5 +100,14 @@ public class XSLTPresenter extends EntityEditTabPresenter<LinkTabPanelView, XSLT
     @Override
     public String getType() {
         return XSLT.ENTITY_TYPE;
+    }
+
+    private EditorPresenter getOrCreateCodePresenter() {
+        if (codePresenter == null) {
+            codePresenter = editorPresenterProvider.get();
+            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        }
+        return codePresenter;
     }
 }

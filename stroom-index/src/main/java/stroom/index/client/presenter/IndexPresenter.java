@@ -48,13 +48,13 @@ public class IndexPresenter extends EntityEditTabPresenter<LinkTabPanelView, Ind
             }
         });
 
-        tabContentProvider.add(SETTINGS, indexSettingsPresenter);
-        tabContentProvider.add(FIELDS, indexFieldListPresenter);
         tabContentProvider.add(SHARDS, indexShardPresenter);
-        addTab(SETTINGS);
-        addTab(FIELDS);
+        tabContentProvider.add(FIELDS, indexFieldListPresenter);
+        tabContentProvider.add(SETTINGS, indexSettingsPresenter);
         addTab(SHARDS);
-        selectTab(SETTINGS);
+        addTab(FIELDS);
+        addTab(SETTINGS);
+        selectTab(SHARDS);
     }
 
     @Override
