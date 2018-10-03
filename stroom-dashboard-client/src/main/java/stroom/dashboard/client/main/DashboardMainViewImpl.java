@@ -16,29 +16,23 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 
-public class DashboardAppViewImpl extends ViewImpl implements DashboardAppPresenter.DashboardAppView {
-    private final Element loadingText;
-    private final Element loading;
+public class DashboardMainViewImpl extends ViewImpl implements DashboardMainView {
     private final Widget widget;
 
     @UiField
     ResizeLayoutPanel contentPanel;
 
     @Inject
-    public DashboardAppViewImpl(final Binder binder) {
-        loadingText = RootPanel.get("loadingText").getElement();
-        loading = RootPanel.get("loading").getElement();
-
+    public DashboardMainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         widget.sinkEvents(Event.KEYEVENTS);
     }
@@ -49,24 +43,10 @@ public class DashboardAppViewImpl extends ViewImpl implements DashboardAppPresen
     }
 
     @Override
-    public void showWorking(final String message) {
-        loading.getStyle().setOpacity(1);
-
-        if (message != null) {
-            loadingText.setInnerText(message);
-        }
-    }
-
-    @Override
-    public void hideWorking() {
-        loading.getStyle().setOpacity(0);
-    }
-
-    @Override
     public void setInSlot(final Object slot, final Widget content) {
         contentPanel.setWidget(content);
     }
 
-    public interface Binder extends UiBinder<Widget, DashboardAppViewImpl> {
+    public interface Binder extends UiBinder<Widget, DashboardMainViewImpl> {
     }
 }

@@ -30,7 +30,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
-import stroom.app.client.presenter.AppPresenter;
+import stroom.core.client.presenter.CorePresenter;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.node.client.ClientPropertyCache;
@@ -130,7 +130,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 
     @Override
     protected void revealInParent() {
-        RevealContentEvent.fire(this, AppPresenter.APP, this);
+        RevealContentEvent.fire(this, CorePresenter.CORE, this);
         RootPanel.get("logo").setVisible(false);
     }
 

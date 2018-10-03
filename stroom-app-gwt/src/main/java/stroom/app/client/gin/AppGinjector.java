@@ -29,7 +29,7 @@ import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
 import stroom.externaldoc.client.gin.ExternalDocRefGinjector;
 import stroom.externaldoc.client.gin.ExternalDocRefModule;
-import stroom.app.client.presenter.AppPresenter;
+import stroom.core.client.presenter.CorePresenter;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
@@ -144,7 +144,7 @@ public interface AppGinjector extends
     PlaceManager getPlaceManager();
 
     // Presenters
-    Provider<AppPresenter> getAppPresenter();
+    Provider<CorePresenter> getCorePresenter();
 
     AsyncProvider<MainPresenter> getMainPresenter();
 

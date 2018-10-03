@@ -35,7 +35,7 @@ public class App implements EntryPoint {
         DelayedBindRegistry.bind(ginjector);
 
         // Show the application panel.
-        ginjector.getAppPresenter().get().forceReveal();
+        ginjector.getCorePresenter().get().forceReveal();
 
         // Register all plugins that will respond to
 
