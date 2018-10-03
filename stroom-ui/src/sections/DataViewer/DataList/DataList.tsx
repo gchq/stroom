@@ -46,6 +46,8 @@ import Loader from "../../../components/Loader";
 import Button from "../../../components/Button";
 import { Direction } from "../../../types";
 
+import { DataRow } from "../types";
+
 export interface Props {
   dataViewerId: string;
 }
@@ -64,24 +66,12 @@ interface ConnectDispatch {
   getDetailsForSelectedRow: typeof getDetailsForSelectedRow;
 }
 
-interface StreamAttributeMap {
-  data: StreamAttributeMapData;
-}
-
 interface TableData {
   streamId?: string;
   created?: string;
   type?: string;
   feed?: string;
   pipeline?: string;
-}
-
-interface StreamAttributeMapData {
-  id: string;
-  createMs: number;
-  typeName: string;
-  feedName: string;
-  pipelineUuid: string;
 }
 
 interface WithHandlers {
@@ -259,7 +249,7 @@ const enhance = compose<EnhancedProps, Props>(
       detailsHeight
     }) => {
       let tableData: TableData[] = streamAttributeMaps.map(
-        (streamAttributeMap: StreamAttributeMap) => {
+        (streamAttributeMap: DataRow) => {
           return {
             streamId: streamAttributeMap.data.id,
             created: moment(streamAttributeMap.data.createMs).format(
@@ -294,7 +284,7 @@ const enhance = compose<EnhancedProps, Props>(
             Cell: (row: RowInfo): React.ReactNode => {
               // This block of code is mostly about making a sensible looking popup.
               const stream = streamAttributeMaps.find(
-                (streamAttributeMap: StreamAttributeMap) =>
+                (streamAttributeMap: DataRow) =>
                   streamAttributeMap.data.id === row.original.streamId
               );
 

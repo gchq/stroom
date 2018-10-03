@@ -48,9 +48,10 @@ import {
   ElementPropertiesByElementIdType,
   Dictionary,
   DataSourceType,
-  StreamAttributeMapResult,
   StreamTaskType
 } from "../../types";
+
+import { StreamAttributeMapResult } from "../../sections/DataViewer/types";
 
 const { resetAllUrls } = fetchActionCreators;
 
