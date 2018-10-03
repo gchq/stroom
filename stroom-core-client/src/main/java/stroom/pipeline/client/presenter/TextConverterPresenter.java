@@ -56,9 +56,9 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
             }
         });
 
-        addTab(SETTINGS);
         addTab(CONVERSION);
-        selectTab(SETTINGS);
+        addTab(SETTINGS);
+        selectTab(CONVERSION);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
         if (SETTINGS.equals(tab)) {
             callback.onReady(settingsPresenter);
         } else if (CONVERSION.equals(tab)) {
-            callback.onReady(codePresenter);
+            callback.onReady(getOrCreateCodePresenter());
 //        } else if (REFERENCES_TAB.equals(tab)) {
 //            entityReferenceListPresenter.read(getEntity());
 //            callback.onReady(entityReferenceListPresenter);
@@ -99,12 +99,8 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
-        codePresenter = editorPresenterProvider.get();
+        codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);
-
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
         }
@@ -113,5 +109,14 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Override
     public String getType() {
         return TextConverter.ENTITY_TYPE;
+    }
+
+    private EditorPresenter getOrCreateCodePresenter() {
+        if (codePresenter == null) {
+            codePresenter = editorPresenterProvider.get();
+            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        }
+        return codePresenter;
     }
 }

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#730** : Changed the default initial page for some document types.
+
+* Issue **#852** : Fix for required permission when logging 'find' events
+
+* Changed the way the root pane loads so that error popups that appear when the main page is loading are not hidden.
+
+* Issue **#851** : Added additional type info to type id when logging events.
+
 * Issue **#848** : Fixed various issues related to stream processor filter editor.
 
 * Issue **#815** : `stroom.pageTitle` property changed to `stroom.htmlTitle`.
