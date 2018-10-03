@@ -20,7 +20,6 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -28,6 +27,9 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
+import stroom.logging.DocumentEventLog;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.spring.StroomScope;
@@ -42,27 +44,31 @@ class EntityReferenceFindHandler
         extends AbstractTaskHandler<EntityReferenceFindAction<BaseCriteria>, ResultList<SharedDocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
+    private final SecurityContext securityContext;
 
     @Inject
-    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
+    EntityReferenceFindHandler(final EntityServiceBeanRegistry beanRegistry,
+                               final DocumentEventLog documentEventLog,
+                               final SecurityContext securityContext) {
         this.beanRegistry = beanRegistry;
         this.documentEventLog = documentEventLog;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public ResultList<SharedDocRef> exec(final EntityReferenceFindAction<BaseCriteria> action) {
-        BaseResultList<BaseEntity> resultList = null;
+        BaseResultList<BaseEntity> resultList;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
         final Query query = new Query();
-        query.setAdvanced(advanced);
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            query.setAdvanced(advanced);
 
-        try {
             final Object entityService = beanRegistry.getEntityService(action.getCriteria().getClass());
-            if (entityService != null && entityService instanceof SupportsCriteriaLogging) {
+            if (entityService instanceof SupportsCriteriaLogging) {
                 final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
                 logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
             }

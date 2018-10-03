@@ -16,13 +16,17 @@
 
 package stroom.app.client.presenter;
 
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ContentSlot;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
@@ -31,6 +35,9 @@ import stroom.task.client.TaskStartEvent.TaskStartHandler;
 
 public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter.AppProxy>
         implements TaskStartHandler, TaskEndHandler {
+    @ContentSlot
+    public static final Type<RevealContentHandler<?>> APP = new Type<>();
+
     private final ClientSecurityContext securityContext;
 
     @Inject
@@ -58,7 +65,7 @@ public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter
 
     @Override
     protected void revealInParent() {
-        // Do nothing as this presenter merely deals with the loading spinner.
+        RevealRootContentEvent.fire(this, this);
     }
 
     @ProxyStandard
