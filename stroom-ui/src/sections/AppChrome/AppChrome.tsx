@@ -294,7 +294,7 @@ const getContractedMenuItems = (menuItems: Array<MenuItemType>) =>
     <React.Fragment key={menuItem.key}>
       {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
         <Button
-          className="app-chrome__sidebar__toggle_collapsed raised-high circular borderless app-chrome__sidebar__toggle"
+          className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
           key={menuItem.title}
           icon={menuItem.icon}
           onClick={menuItem.onClick}
