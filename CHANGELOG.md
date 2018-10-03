@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#852** : Fix for required permission when logging 'find' events
+
 * Changed the way the root pane loads so that error popups that appear when the main page is loading are not hidden.
 
 * Issue **#851** : Added additional type info to type id when logging events.
