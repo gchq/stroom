@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.4]
+
+* Change base docker image to openjdk:8u171-jdk-alpine
+
 * Improved loading of activity list prior to showing the chooser dialog.
 
 * Issue **#852** : Fix for more required permissions when logging other 'find' events.
@@ -1069,7 +1073,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.3...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.4...6.0
+[v6.0-beta.4]: https://github.com/gchq/stroom/compare/v6.0-beta.3...v6.0-beta.4
 [v6.0-beta.3]: https://github.com/gchq/stroom/compare/v6.0-beta.2...v6.0-beta.3
 [v6.0-beta.2]: https://github.com/gchq/stroom/compare/v6.0-beta.1...v6.0-beta.2
 [v6.0-beta.1]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...v6.0-beta.1
