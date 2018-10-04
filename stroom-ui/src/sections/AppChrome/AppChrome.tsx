@@ -269,7 +269,8 @@ const enhance = compose<EnhancedProps, Props>(
   )
 );
 
-const getExpandedMenuItems = (
+const getMenuItems = (
+  isCollapsed: boolean = false,
   menuItems: Array<MenuItemType>,
   areMenuItemsOpen: MenuItemsOpenStoreState,
   depth: number = 0
@@ -277,29 +278,16 @@ const getExpandedMenuItems = (
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
-        className="sidebar__text-color"
+        className="sidebar__text-color collapsed"
         key={menuItem.key}
         menuItem={menuItem}
         depth={depth}
         listingId={LISTING_ID}
+        isCollapsed={isCollapsed}
       />
       {menuItem.children &&
         areMenuItemsOpen[menuItem.key] &&
-        getExpandedMenuItems(menuItem.children, areMenuItemsOpen, depth + 1)}
-    </React.Fragment>
-  ));
-
-const getContractedMenuItems = (menuItems: Array<MenuItemType>, areMenuItemsOpen: MenuItemsOpenStoreState) =>
-  menuItems.map(menuItem => (
-    <React.Fragment key={menuItem.key}>
-      <Button
-        size="xlarge"
-        className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
-        key={menuItem.title}
-        icon={menuItem.icon}
-        onClick={menuItem.onClick}
-      />
-      {menuItem.children && areMenuItemsOpen[menuItem.key] && getContractedMenuItems(menuItem.children, areMenuItemsOpen)}
+        getMenuItems(isCollapsed, menuItem.children, areMenuItemsOpen, depth + 1)}
     </React.Fragment>
   ));
 
@@ -352,7 +340,9 @@ const AppChrome = ({
                 onKeyDown={onKeyDownWithShortcuts}
                 className="app-chrome__sidebar-menu raised-high"
               >
-                {getExpandedMenuItems(menuItems, areMenuItemsOpen)}
+                <div className="app-chrome__sidebar-menu__container">
+                  {getMenuItems(false, menuItems, areMenuItemsOpen)}
+                </div>
               </div>
             </React.Fragment>
           ) : (
@@ -363,7 +353,7 @@ const AppChrome = ({
                   className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />
-                {getContractedMenuItems(menuItems, areMenuItemsOpen)}
+                {getMenuItems(true, menuItems, areMenuItemsOpen)}
               </div>
             )}
         </div>

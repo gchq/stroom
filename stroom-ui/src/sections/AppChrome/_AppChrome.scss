@@ -18,18 +18,24 @@
   position: relative;
 }
 
-.app-chrome__sidebar--expanded{
+.app-chrome__sidebar--expanded {
   width:20rem;
 }
 
-.app-chrome__sidebar--collapsed{
+.app-chrome__sidebar--collapsed {
   width: 2.25rem;
 }
 
 .app-chrome__sidebar-menu {
-  outline: none;
   overflow-y: auto;
-  padding-top: 40px;
+  position:absolute;
+  height:100%;
+  width:100%;
+}
+
+.app-chrome__sidebar-menu__container {
+  outline: none !important;
+  position:relative;
   display: flex;
   flex-direction:column;
 }
@@ -48,7 +54,8 @@
 }
 
 .app-chrome__sidebar_header {
-  position: absolute;
+  position: relative;
+  height:40px;
 }
 
 .sidebar__menu-item {
@@ -89,6 +96,10 @@
   font-size: 0.85rem;
 }
 
+.sidebar__menu-item.collapsed {
+  padding: 0 !important;
+}
+
 .sidebar__menu-item.doc.can-drop {
   color: green;
 }
@@ -99,6 +110,7 @@
   position: relative;
   width: 100%;
   height: 100%;
+  overflow-y: auto;
 }
 
 .content-tabs {

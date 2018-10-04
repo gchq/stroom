@@ -45,6 +45,7 @@ interface Props extends StyledComponentProps {
   listingId: string;
   menuItem: MenuItemType;
   depth: number;
+  isCollapsed?: boolean;
 }
 
 interface ConnectState {
@@ -246,7 +247,8 @@ let MenuItem = ({
   onTitleClick,
   onCaretClick,
   className,
-  style
+  style,
+  isCollapsed
 }: EnhancedProps) =>
   connectDragSource(
     connectDropTarget(
@@ -262,10 +264,12 @@ let MenuItem = ({
               <FontAwesomeIcon size='lg' icon={menuItem.icon} />
             </div>
           )}
-
-        <span onClick={onTitleClick} className="menu-item__text">
-          {menuItem.title}
-        </span>
+        {isCollapsed ? (undefined)
+          : (
+            <span onClick={onTitleClick} className="menu-item__text">
+              {menuItem.title}
+            </span>
+          )}
       </div>
     )
   );
