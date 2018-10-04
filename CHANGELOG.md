@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.3] - 2018-10-04
+
 * Issue **#854** : The activity screen no longer shows a permission error when shown to non admin users.
 
 * Issue **#853** : The activity chooser will no longer display on startup if activity tracking is not enabled.
@@ -956,7 +958,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.3...HEAD
+[v5.5.3]: https://github.com/gchq/stroom/compare/v5.5.2...v5.5.3
 [v5.5.2]: https://github.com/gchq/stroom/compare/v5.5.1...v5.5.2
 [v5.5.1]: https://github.com/gchq/stroom/compare/v5.5.0...v5.5.1
 [v5.5.0]: https://github.com/gchq/stroom/compare/v5.5.0-beta.10...v5.5.0
