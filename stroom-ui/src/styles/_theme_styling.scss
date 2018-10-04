@@ -236,7 +236,7 @@ input {
 .button {
   @include themify($themes) {
     border: themed("icon-button__border") !important;
-    background-color: themed("icon-button__background-color") !important;
+    background-color: themed("icon-button__background-color");
     color: themed("icon-button__color") !important;
   }
 }
@@ -254,6 +254,15 @@ input {
     background-color: themed("icon-button__background-color--hover") !important;
   }
 }
+
+.button.raised-high:hover:enabled,
+.button.raised-high:focus:enabled {
+  @include themify($themes) {
+    color: themed("text__color--deemphasised") !important;
+    background-color: themed("raised-high__selected-background-color") !important;
+  }
+}
+
 
 .button:disabled,
 .button[disabled]{

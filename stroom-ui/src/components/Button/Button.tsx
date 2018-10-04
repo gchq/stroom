@@ -16,8 +16,14 @@
 
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { IconProp, SizeProp } from "@fortawesome/fontawesome-svg-core";
 import { withProps } from "recompose";
+
+export type IconSize =
+  | "small"
+  | "medium"
+  | "large"
+  | "xlarge";
 
 /**
  * Button Properties
@@ -35,15 +41,21 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean;
   /** Custom additional class to apply to the button */
   className?: string;
+  /** The size of the icon*/
+  size?: IconSize;
 }
 
-interface ClassNameProps {
-  /** Composed className, using the other properties */
-  className: string;
+interface WithProps {
+  fontAwesomeSize: SizeProp;
 }
 
-const enhance = withProps<ClassNameProps, Props>(
-  ({ className, groupPosition, circular, text, selected }) => {
+interface EnhancedProps
+  extends Props,
+  WithProps { }
+
+
+const enhance = withProps<EnhancedProps, Props>(
+  ({ className, groupPosition, circular, text, selected, size }) => {
     let classNames = ["button"];
 
     if (className) classNames.push(className);
@@ -52,8 +64,26 @@ const enhance = withProps<ClassNameProps, Props>(
     if (text) classNames.push("has-text");
     if (selected) classNames.push("selected");
 
+    let fontAwesomeSize: SizeProp;
+    switch (size) {
+      case 'small':
+        fontAwesomeSize = 'sm';
+        break;
+      case 'medium':
+        fontAwesomeSize = '1x';
+        break;
+      case 'large':
+        fontAwesomeSize = 'lg';
+        break;
+      case 'xlarge':
+        fontAwesomeSize = '2x';
+        break;
+      default: fontAwesomeSize = '1x';
+    }
+
     return {
-      className: classNames.join(" ")
+      className: classNames.join(" "),
+      fontAwesomeSize
     };
   }
 );
@@ -64,13 +94,14 @@ export const Button = ({
   className,
   groupPosition,
   circular,
+  fontAwesomeSize,
   selected,
   ...rest
-}: Props) => (
-  <button className={className} {...rest}>
-    {icon ? <FontAwesomeIcon icon={icon} /> : undefined}
-    {text ? <span className="button__text">{text}</span> : undefined}
-  </button>
-);
+}: EnhancedProps) => (
+    <button className={className} {...rest}>
+      {icon ? <FontAwesomeIcon size={fontAwesomeSize} icon={icon} /> : undefined}
+      {text ? <span className="button__text">{text}</span> : undefined}
+    </button>
+  );
 
 export default enhance(Button);

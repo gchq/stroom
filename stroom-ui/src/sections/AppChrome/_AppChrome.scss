@@ -27,6 +27,7 @@
 }
 
 .app-chrome__sidebar-menu {
+  outline: none;
   overflow-y: auto;
   padding-top: 40px;
   display: flex;
@@ -52,6 +53,7 @@
 
 .sidebar__menu-item {
   display: inline-flex;
+  outline:none !important;
 }
 
 .sidebar__menu-item.nav {
@@ -81,6 +83,10 @@
 
 .sidebar__menu-item.doc.dnd-over {
   font-weight: italic;
+}
+
+.sidebar__menu-item.doc {
+  font-size: 0.85rem;
 }
 
 .sidebar__menu-item.doc.can-drop {
@@ -138,16 +144,16 @@
 }
 
 
-.menu-item__has-children-icon {
-  padding-left:0.625rem;
-  width: 0.625rem;
-}
+// .menu-item__has-children-icon {
+//   padding-left:0.625rem;
+//   width: 1.5rem;
+// }
 
-.menu-item__has-no-children-spacer {
-  display: inline-block;
-  margin-left: 0.75rem;
-  margin-right: 0.5rem;
-}
+// .menu-item__has-no-children-spacer {
+//   display: inline-block;
+//   margin-left: 0.75rem;
+//   margin-right: 0.5rem;
+// }
 
 .menu-item__menu-icon {
   padding: 0 0.3125rem 0 0.3125rem;
@@ -156,3 +162,9 @@
 .menu-item__text{
 
 }
+
+
+
+.sidebar__menu-item.nav:hover{
+  background-color:red;
+} 

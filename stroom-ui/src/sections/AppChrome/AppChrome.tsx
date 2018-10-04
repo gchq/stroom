@@ -70,21 +70,21 @@ const getDocumentTreeMenuItems = (
   children:
     treeNode.children && treeNode.children.length > 0
       ? treeNode.children
-          .filter(t => t.type === "Folder")
-          .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
+        .filter(t => t.type === "Folder")
+        .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
       : undefined
 });
 
-const getOpenMenuItems = function<
+const getOpenMenuItems = function <
   T extends {
     key: string;
     children?: Array<T>;
   }
->(
-  menuItems: Array<T>,
-  areMenuItemsOpen: MenuItemsOpenStoreState,
-  openMenuItems: Array<T> = []
-) {
+  >(
+    menuItems: Array<T>,
+    areMenuItemsOpen: MenuItemsOpenStoreState,
+    openMenuItems: Array<T> = []
+  ) {
   menuItems.forEach(menuItem => {
     openMenuItems.push(menuItem);
     if (menuItem.children && areMenuItemsOpen[menuItem.key]) {
@@ -123,14 +123,14 @@ interface WithProps {
 
 interface EnhancedProps
   extends Props,
-    WithDocumentTreeProps,
-    RouteComponentProps<any>,
-    WithHandlers,
-    ConnectState,
-    ConnectDispatch,
-    WithIsExpanded,
-    WithProps,
-    WithSelectableItemListingProps<MenuItemType> {}
+  WithDocumentTreeProps,
+  RouteComponentProps<any>,
+  WithHandlers,
+  ConnectState,
+  ConnectDispatch,
+  WithIsExpanded,
+  WithProps,
+  WithSelectableItemListingProps<MenuItemType> { }
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -144,22 +144,22 @@ const enhance = compose<EnhancedProps, Props>(
     ConnectDispatch,
     Props & WithDocumentTreeProps & RouteComponentProps<any> & WithHandlers,
     GlobalStoreState
-  >(
-    ({
-      selectableItemListings,
-      userSettings: { theme },
-      appChrome: { areMenuItemsOpen }
-    }) => ({
-      areMenuItemsOpen,
-      theme,
-      selectableItemListing: selectableItemListings[LISTING_ID]
-    }),
-    {
-      menuItemOpened,
-      themeChanged,
-      selectionToggled
-    }
-  ),
+    >(
+      ({
+        selectableItemListings,
+        userSettings: { theme },
+        appChrome: { areMenuItemsOpen }
+      }) => ({
+        areMenuItemsOpen,
+        theme,
+        selectableItemListing: selectableItemListings[LISTING_ID]
+      }),
+      {
+        menuItemOpened,
+        themeChanged,
+        selectionToggled
+      }
+    ),
   withIsExpanded,
   // We need to work out how to do these global shortcuts from scratch, now that we don't have dedicated pages
   // lifecycle({
@@ -338,6 +338,7 @@ const AppChrome = ({
                   aria-label="Show/hide the sidebar"
                   className="app-chrome__sidebar__toggle raised-high borderless "
                   icon="bars"
+                  size="xlarge"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />
                 <img
@@ -355,15 +356,15 @@ const AppChrome = ({
               </div>
             </React.Fragment>
           ) : (
-            <div className="app-chrome__sidebar__buttons">
-              <Button
-                icon="bars"
-                className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
-                onClick={() => setIsExpanded(!isExpanded)}
-              />
-              {getContractedMenuItems(menuItems)}
-            </div>
-          )}
+              <div className="app-chrome__sidebar__buttons">
+                <Button
+                  icon="bars"
+                  className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                />
+                {getContractedMenuItems(menuItems)}
+              </div>
+            )}
         </div>
         <div className="app-chrome__content">
           <div className="content-tabs">

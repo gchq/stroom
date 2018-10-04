@@ -227,8 +227,8 @@ const enhance = compose<EnhancedProps, Props>(
         style: { paddingLeft: `${depth * 0.7}rem` },
         className: classNames.join(" "),
         hasChildren: menuItem.children && menuItem.children.length > 0,
-        hasChildrenIcon: `caret-${
-          areMenuItemsOpen[menuItem.key] ? "down" : "right"
+        hasChildrenIcon: `folder${
+          areMenuItemsOpen[menuItem.key] ? "-open" : "-plus"
         }` as IconProp,
         isHeader: menuItem.key !== "stroom"
       };
@@ -252,18 +252,17 @@ let MenuItem = ({
     connectDropTarget(
       <div className={className} style={style}>
         {hasChildren ? (
-          <div className="menu-item__has-children-icon" onClick={onCaretClick}>
+          <div className="menu-item__menu-icon" onClick={onCaretClick}>
             <FontAwesomeIcon icon={hasChildrenIcon} />
           </div>
-        ) : isHeader ? (
-          <div className="menu-item__has-no-children-spacer" />
         ) : (
-          undefined
+          // ) : isHeader ? (
+          //   <div className="menu-item__has-no-children-spacer" />
+          <div className="menu-item__menu-icon">
+            <FontAwesomeIcon icon={menuItem.icon} />
+          </div>
         )}
-        <FontAwesomeIcon
-          className="menu-item__menu-icon"
-          icon={menuItem.icon}
-        />
+
         <span onClick={onTitleClick} className="menu-item__text">
           {menuItem.title}
         </span>

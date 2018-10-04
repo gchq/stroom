@@ -36,6 +36,12 @@ $button-margin: 3px;;
   width: auto;
 }
 
+// If there's no text then it's an icon button. Icon buttons don't need padding. 
+// In fact, if they do have padding larger icons don't display correctly.
+.button:not(.has-text) {
+  padding: 0 0 0 0;
+}
+
 .button.selected {
   // Selected is indicated by a colour and is configured as part of the theme.
 }

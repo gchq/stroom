@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import { lifecycle } from 'recompose';
-import { library } from '@fortawesome/fontawesome-svg-core';
+import { lifecycle } from "recompose";
+import { library } from "@fortawesome/fontawesome-svg-core";
 
 import {
   faFolder,
+  faFolderOpen,
+  faFolderPlus,
   faAngleRight,
   faAngleUp,
   faAngleDown,
@@ -58,13 +60,15 @@ import {
   faICursor,
   faSave,
   faChevronLeft,
-  faChevronRight,
-} from '@fortawesome/free-solid-svg-icons';
+  faChevronRight
+} from "@fortawesome/free-solid-svg-icons";
 
 export default lifecycle({
   componentWillMount() {
     library.add(
       faFolder,
+      faFolderOpen,
+      faFolderPlus,
       faAngleRight,
       faAngleUp,
       faAngleDown,
@@ -104,7 +108,7 @@ export default lifecycle({
       faICursor,
       faSave,
       faChevronLeft,
-      faChevronRight,
+      faChevronRight
     );
-  },
+  }
 });
