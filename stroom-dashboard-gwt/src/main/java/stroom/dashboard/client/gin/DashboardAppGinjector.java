@@ -24,7 +24,8 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.dashboard.client.main.DashboardAppPresenter;
+import stroom.core.client.presenter.CorePresenter;
+import stroom.dashboard.client.main.DashboardMainPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.ClientDispatchModule;
@@ -61,5 +62,7 @@ public interface DashboardAppGinjector extends
     PlaceManager getPlaceManager();
 
     // Presenters
-    Provider<DashboardAppPresenter> getDashboardMainPresenter();
+    Provider<CorePresenter> getCorePresenter();
+
+    Provider<DashboardMainPresenter> getDashboardMainPresenter();
 }

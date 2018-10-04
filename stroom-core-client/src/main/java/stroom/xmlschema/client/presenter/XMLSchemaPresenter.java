@@ -68,10 +68,10 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
             }
         });
 
-        addTab(SETTINGS);
         addTab(GRAPHICAL);
         addTab(TEXT);
-        selectTab(SETTINGS);
+        addTab(SETTINGS);
+        selectTab(GRAPHICAL);
     }
 
     @Override

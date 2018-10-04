@@ -24,16 +24,16 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
+import stroom.process.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 
-public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
+public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView {
     private final Widget widget;
 
     @UiField
     SimplePanel expression;
 
     @Inject
-    public ExpressionViewImpl(final ExpressionViewImpl.Binder binder) {
+    public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -47,6 +47,6 @@ public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
         expression.setWidget(view.asWidget());
     }
 
-    public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {
+    public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {
     }
 }

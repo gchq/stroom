@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improved loading of activity list prior to showing the chooser dialog.
+
+* Issue **#852** : Fix for more required permissions when logging other 'find' events.
+
+* Issue **#730** : Changed the default initial page for some document types.
+
+* Issue **#852** : Fix for required permission when logging 'find' events.
+
+* Changed the way the root pane loads so that error popups that appear when the main page is loading are not hidden.
+
+* Issue **#851** : Added additional type info to type id when logging events.
+
+* Issue **#848** : Fixed various issues related to stream processor filter editor.
+
+* Issue **#815** : `stroom.pageTitle` property changed to `stroom.htmlTitle`.
+
 * Issue **#732** : Added `host-address` and `host-name` XSLT functions.
 
 * Issue **#338** : Added `splitAggregatedStreams` property to `StreamAppender`, `FileAppender` and `HDFSFileAppender` so that aggregated streams can be split into separate streams on output.

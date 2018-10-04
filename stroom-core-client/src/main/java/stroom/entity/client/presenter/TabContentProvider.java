@@ -124,7 +124,7 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
     private void read(final PresenterWidget<?> presenter,
                       final DocRef docRef,
                       final E entity) {
-        if (presenter != null && presenter instanceof HasDocumentRead<?>) {
+        if (entity != null && presenter instanceof HasDocumentRead<?>) {
             final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
             hasDocumentRead.read(docRef, entity);
 
@@ -137,14 +137,14 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
 
     @SuppressWarnings("unchecked")
     private void write(final PresenterWidget<?> presenter, final E entity) {
-        if (entity != null && presenter != null && presenter instanceof HasWrite<?>) {
+        if (entity != null && presenter instanceof HasWrite<?>) {
             final HasWrite<E> hasWrite = (HasWrite<E>) presenter;
             hasWrite.write(entity);
         }
     }
 
     private void onPermissionsCheck(final PresenterWidget<?> presenter, final boolean readOnly) {
-        if (presenter != null && presenter instanceof HasPermissionCheck) {
+        if (presenter instanceof HasPermissionCheck) {
             final HasPermissionCheck hasPermissionsCheck = (HasPermissionCheck) presenter;
             hasPermissionsCheck.onPermissionsCheck(readOnly);
         }

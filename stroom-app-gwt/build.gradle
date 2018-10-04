@@ -18,7 +18,6 @@ dependencies {
     compile project(':stroom-externaldoc:stroom-externaldoc-client')
     compile project(':stroom-index:stroom-index-client')
     compile project(':stroom-security:stroom-security-client')
-    compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript

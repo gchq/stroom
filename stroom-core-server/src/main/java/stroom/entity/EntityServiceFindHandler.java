@@ -17,6 +17,7 @@
 
 package stroom.entity;
 
+import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
@@ -31,6 +32,7 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
+import java.util.List;
 
 @TaskHandlerBean(task = EntityServiceFindAction.class)
 class EntityServiceFindHandler
@@ -54,23 +56,15 @@ class EntityServiceFindHandler
         return security.secureResult(() -> {
             BaseResultList<SharedObject> result;
 
-            final And and = new And();
-            final Advanced advanced = new Advanced();
-            advanced.getAdvancedQueryItems().add(and);
             final Query query = new Query();
+            final Advanced advanced = new Advanced();
             query.setAdvanced(advanced);
+            final And and = new And();
+            advanced.getAdvancedQueryItems().add(and);
 
             try {
                 final FindService entityService = beanRegistry.getEntityServiceByCriteria(action.getCriteria().getClass());
-
-                try {
-                    if (entityService != null) {
-                        final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
-                        logging.appendCriteria(and.getAdvancedQueryItems(), action.getCriteria());
-                    }
-                } catch (final RuntimeException e) {
-                    // Ignore.
-                }
+                addCriteria(entityService, action.getCriteria(), and.getAdvancedQueryItems());
 
                 result = (BaseResultList<SharedObject>) beanRegistry.invoke(entityService, "find", action.getCriteria());
                 documentEventLog.search(action.getCriteria(), query, result);
@@ -82,6 +76,20 @@ class EntityServiceFindHandler
 
 
             return result;
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addCriteria(final FindService entityService, final BaseCriteria criteria, final List<BaseAdvancedQueryItem> items) {
+        security.asProcessingUser(() -> {
+            try {
+                if (entityService instanceof SupportsCriteriaLogging) {
+                    final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;
+                    logging.appendCriteria(items, criteria);
+                }
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
         });
     }
 }
