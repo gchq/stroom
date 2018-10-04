@@ -381,3 +381,16 @@ body ::-webkit-scrollbar-thumb {
     }
   }
 }
+
+
+.sidebar__menu-item.nav:hover{
+  @include themify($themes) {
+    background-color:themed('raised-high__selected-background-color');
+  }
+} 
+
+.sidebar__menu-item.doc:hover{
+  @include themify($themes) {
+    background-color:themed('raised-high__selected-background-color');
+  }
+} 
