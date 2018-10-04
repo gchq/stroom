@@ -1,9 +1,0 @@
-{
-  "authenticationServiceUrl": "https://10.211.223.124/authService/authentication/v1",
-  "authorisationServiceUrl": "http://10.211.223.124:8080/api/authorisation/v1",
-  "stroomBaseServiceUrl": "http://10.211.223.124:8080/api",
-  "advertisedUrl": "http://10.211.223.124:5001",
-  "authUsersUiUrl": "https://10.211.223.124:9443/userSearch",
-  "authTokensUiUrl": "https://10.211.223.124:9443/tokens",
-  "appClientId": "stroom-ui"
-}
