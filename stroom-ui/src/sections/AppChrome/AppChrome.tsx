@@ -289,21 +289,20 @@ const getExpandedMenuItems = (
     </React.Fragment>
   ));
 
-const getContractedMenuItems = (menuItems: Array<MenuItemType>) =>
+const getContractedMenuItems = (menuItems: Array<MenuItemType>, areMenuItemsOpen: MenuItemsOpenStoreState) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
-      {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
-        <Button
-          size="xlarge"
-          className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
-          key={menuItem.title}
-          icon={menuItem.icon}
-          onClick={menuItem.onClick}
-        />
-      )}
-      {menuItem.children && getContractedMenuItems(menuItem.children)}
+      <Button
+        size="xlarge"
+        className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
+        key={menuItem.title}
+        icon={menuItem.icon}
+        onClick={menuItem.onClick}
+      />
+      {menuItem.children && areMenuItemsOpen[menuItem.key] && getContractedMenuItems(menuItem.children, areMenuItemsOpen)}
     </React.Fragment>
   ));
+
 
 const AppChrome = ({
   content,
@@ -364,7 +363,7 @@ const AppChrome = ({
                   className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
                   onClick={() => setIsExpanded(!isExpanded)}
                 />
-                {getContractedMenuItems(menuItems)}
+                {getContractedMenuItems(menuItems, areMenuItemsOpen)}
               </div>
             )}
         </div>
