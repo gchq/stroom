@@ -7,9 +7,9 @@ import HTML5Backend from "react-dnd-html5-backend";
 import { MemoryRouter } from "react-router";
 
 import FontAwesomeProvider from "../../startup/FontAwesomeProvider";
-import KeyIsDown from "../../lib/KeyIsDown";
+import KeyIsDown from "../KeyIsDown";
 import createStore from "../../startup/store";
-import setupTestServer, { TestData } from "./PollyDecorator";
+import setupTestServer, { TestData } from "./PollyTestServer";
 import { GlobalStoreState } from "../../startup/reducers";
 
 import { fromSetupSampleData } from "../../components/FolderExplorer/test";

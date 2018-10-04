@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Dispatch, Action } from "redux";
-import { GlobalStoreState } from "../startup/reducers";
+import { GlobalStoreState } from "./reducers";
 import { prepareReducer } from "../lib/redux-actions-ts";
 import { wrappedGet } from "../lib/fetchTracker.redux";
 

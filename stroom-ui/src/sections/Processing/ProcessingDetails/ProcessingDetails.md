@@ -1,7 +1,8 @@
 Minimal tracker with undefined last poll age
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { trackers } = require("../tracker.testData");
 
 const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
@@ -15,7 +16,8 @@ const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
 Minimal tracker with null last poll age
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { trackers } = require("../tracker.testData");
 
 const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
@@ -28,7 +30,8 @@ const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
 Minimal tracker with empty last poll age
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { trackers } = require("../tracker.testData");
 
 const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
@@ -42,7 +45,8 @@ const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
 Maximal tracker
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { trackers } = require("../tracker.testData");
 
 const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
@@ -55,7 +59,8 @@ const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);
 Maximal tracker with a long name
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { trackers } = require("../tracker.testData");
 
 const TestProcessingDetails = enhanceWithTestTrackers(ProcessingDetails);

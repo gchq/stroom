@@ -18,7 +18,7 @@ import * as React from "react";
 import { compose, withStateHandlers } from "recompose";
 
 import Button from "../../Button";
-import ThemedConfirm from "../";
+import ThemedConfirm from "..";
 
 enum ConfirmState {
   UNUSED = "unused",

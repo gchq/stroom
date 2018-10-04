@@ -26,7 +26,7 @@ import {
   defaultStatePerId,
   StoreStateById as RenameStoreState
 } from "./redux/renameDocRefReducer";
-import { renameDocument } from "../FolderExplorer/explorerClient";
+import { renameDocument } from "./explorerClient";
 import ThemedModal from "../ThemedModal";
 import { required, minLength2 } from "../../lib/reduxFormUtils";
 import { GlobalStoreState } from "../../startup/reducers";

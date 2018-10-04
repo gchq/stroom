@@ -40,8 +40,6 @@ import {
 
 export const EXPRESSION_EDITOR_CREATED = "EXPRESSION_EDITOR_CREATED";
 export const EXPRESSION_EDITOR_DESTROYED = "EXPRESSION_EDITOR_DESTROYED";
-export const EXPRESSION_SET_EDITABLE_BY_USER =
-  "EXPRESSION_SET_EDITABLE_BY_USER";
 export const EXPRESSION_CHANGED = "EXPRESSION_CHANGED";
 export const EXPRESSION_TERM_ADDED = "EXPRESSION_TERM_ADDED";
 export const EXPRESSION_OPERATOR_ADDED = "EXPRESSION_OPERATOR_ADDED";
@@ -60,11 +58,6 @@ export interface ExpressionEditorCreatedAction
 export interface ExpressionEditorDestroyedAction
   extends Action<"EXPRESSION_EDITOR_DESTROYED">,
     ActionId {}
-export interface ExpressionSetEditableByUserAction
-  extends Action<"EXPRESSION_SET_EDITABLE_BY_USER">,
-    ActionId {
-  isEditableUserSet: boolean;
-}
 export interface ExpressionChangedAction
   extends Action<"EXPRESSION_CHANGED">,
     ActionId {
@@ -112,14 +105,6 @@ export const actionCreators = {
   expressionEditorDestroyed: (id: string): ExpressionEditorDestroyedAction => ({
     type: EXPRESSION_EDITOR_DESTROYED,
     id
-  }),
-  expressionSetEditableByUser: (
-    id: string,
-    isEditableUserSet: boolean
-  ): ExpressionSetEditableByUserAction => ({
-    type: EXPRESSION_SET_EDITABLE_BY_USER,
-    id,
-    isEditableUserSet
   }),
   expressionChanged: (
     id: string,

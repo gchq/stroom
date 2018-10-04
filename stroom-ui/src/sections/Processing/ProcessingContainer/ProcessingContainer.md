@@ -1,7 +1,8 @@
 basic
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { trackers } = require("../tracker.testData");
 
 const TestHarness = enhanceWithTestTrackers(ProcessingContainer);
@@ -17,7 +18,8 @@ const TestHarness = enhanceWithTestTrackers(ProcessingContainer);
 No trackers
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 
 const TestHarness = enhanceWithTestTrackers(ProcessingContainer);
 
@@ -27,7 +29,8 @@ const TestHarness = enhanceWithTestTrackers(ProcessingContainer);
 Lots of trackers
 
 ```jsx
-const enhanceWithTestTrackers = require("../enhanceWithTestTrackers").default;
+const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
+  .default;
 const { generateGenericTracker } = require("../tracker.testData");
 
 const lotsOfTrackers = [...Array(1000).keys()].map(i =>

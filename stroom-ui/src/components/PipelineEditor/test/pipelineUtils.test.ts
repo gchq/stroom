@@ -30,7 +30,7 @@ import {
 
 import { keyByType } from "../elementUtils";
 
-import { testPipelines, elements } from "./index";
+import { testPipelines, elements } from ".";
 import {
   PipelineModelType,
   PipelinePropertyType,

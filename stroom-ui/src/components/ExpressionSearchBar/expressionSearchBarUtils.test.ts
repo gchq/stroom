@@ -16,7 +16,7 @@
 
 import { processSearchString } from "./expressionSearchBarUtils";
 
-import { testDataSource } from "../ExpressionBuilder/dataSource.testData";
+import { testDataSource } from "../ExpressionBuilder/test";
 import {
   ConditionType,
   ExpressionTermType,

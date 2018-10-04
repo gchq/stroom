@@ -28,7 +28,7 @@ import ElementPropertyFieldDetails from "./ElementPropertyInheritanceInfo";
 import ElementPropertyField from "./ElementPropertyField";
 import { ElementPropertyType } from "../../../types";
 import { GlobalStoreState } from "../../../startup/reducers";
-import { StoreStateById as PipelineStateStoreById } from "../../PipelineEditor/redux/pipelineStatesReducer";
+import { StoreStateById as PipelineStateStoreById } from "../redux/pipelineStatesReducer";
 
 export interface Props {
   pipelineId: string;

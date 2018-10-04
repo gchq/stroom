@@ -19,8 +19,7 @@ import {
   withState,
   branch,
   renderComponent,
-  withProps,
-  lifecycle
+  withProps
 } from "recompose";
 import { connect } from "react-redux";
 
@@ -75,28 +74,9 @@ const enhance = compose<EnhancedProps, Props>(
     }
   ),
   withSetEditableByUser,
-  lifecycle<
-    Props & ConnectState & ConnectDispatch & WithState & WithStateHandlers,
-    {}
-  >({
-    componentDidMount() {
-      this.props.setEditableByUser(!!this.props.editMode);
-    }
-  }),
   branch(
     ({ expressionState }) => !expressionState,
     renderComponent(() => <Loader message="Loading expression state..." />)
-  ),
-  branch<Props & ConnectState & ConnectDispatch & WithState>(
-    ({ inEditMode }) => inEditMode,
-    renderComponent<Props & ConnectState & ConnectDispatch & WithState>(
-      ({ expressionId, expressionState: { expression } }) => (
-        <ROExpressionBuilder
-          expressionId={expressionId}
-          expression={expression}
-        />
-      )
-    )
   ),
   withProps(({ showModeToggle, dataSource }) => ({
     showModeToggle: showModeToggle && !!dataSource
@@ -129,13 +109,20 @@ const ExpressionBuilder = ({
     ) : (
       undefined
     )}
-    <ExpressionOperator
-      dataSource={dataSource}
-      expressionId={expressionId}
-      isRoot
-      isEnabled
-      operator={expression}
-    />
+    {inEditMode ? (
+      <ExpressionOperator
+        dataSource={dataSource}
+        expressionId={expressionId}
+        isRoot
+        isEnabled
+        operator={expression}
+      />
+    ) : (
+      <ROExpressionBuilder
+        expressionId={expressionId}
+        expression={expression}
+      />
+    )}
   </LineContainer>
 );
 

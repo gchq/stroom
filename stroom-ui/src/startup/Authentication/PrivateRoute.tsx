@@ -18,7 +18,7 @@ import * as React from "react";
 import { Route, RouteComponentProps } from "react-router-dom";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
-import { GlobalStoreState } from "../../startup/reducers";
+import { GlobalStoreState } from "../reducers";
 
 import AuthenticationRequest from "./AuthenticationRequest";
 

@@ -22,7 +22,7 @@ import {
   defaultStatePerId,
   StoreStatePerId as DeleteStoreState
 } from "./redux/deleteDocRefReducer";
-import { deleteDocuments } from "../FolderExplorer/explorerClient";
+import { deleteDocuments } from "./explorerClient";
 import ThemedConfirm, { Props as ConfirmProps } from "../ThemedConfirm";
 
 const { completeDocRefDelete } = actionCreators;

@@ -1,9 +1,9 @@
 import { compose, lifecycle } from "recompose";
 import { connect } from "react-redux";
 
-import { actionCreators } from "./redux";
-import { GlobalStoreState } from "../../startup/reducers";
-import { StreamTaskType } from "../../types";
+import { actionCreators } from "../redux";
+import { GlobalStoreState } from "../../../startup/reducers";
+import { StreamTaskType } from "../../../types";
 
 const { updateTrackerSelection, updateTrackers } = actionCreators;
 

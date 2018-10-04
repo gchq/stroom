@@ -21,7 +21,7 @@ import {
   LineTo,
   LineElementCreator,
   LineElementCreators
-} from "../";
+} from "..";
 
 let testBlockStyle: React.CSSProperties = {
   position: "absolute",

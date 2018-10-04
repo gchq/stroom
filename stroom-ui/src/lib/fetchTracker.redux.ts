@@ -3,7 +3,7 @@ import { Dispatch, Action } from "redux";
 
 import { actionCreators as errorActionCreators } from "../components/ErrorPage";
 import { GlobalStoreState } from "../startup/reducers";
-import { prepareReducer } from "../lib/redux-actions-ts";
+import { prepareReducer } from "./redux-actions-ts";
 
 import handleStatus from "./handleStatus";
 

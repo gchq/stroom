@@ -12,7 +12,7 @@ import {
 
 import { canMove } from "../../lib/treeUtils";
 import DocRefListingEntry from "../DocRefListingEntry";
-import { actionCreators as folderExplorerActionCreators } from "../FolderExplorer/redux";
+import { actionCreators as folderExplorerActionCreators } from "./redux";
 import {
   DragDropTypes,
   DragCollectedProps,

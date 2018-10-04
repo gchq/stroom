@@ -30,7 +30,7 @@ import {
   StoreStatePerId as NewDocStoreState
 } from "./redux/newDocReducer";
 import { DocRefTypePicker } from "../DocRefTypes";
-import explorerClient from "../FolderExplorer/explorerClient";
+import explorerClient from "./explorerClient";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
 import { GlobalStoreState } from "../../startup/reducers";
 

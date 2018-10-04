@@ -17,10 +17,9 @@ const {
   testAndOperator,
   testOrOperator,
   testNotOperator,
-  emptyDataSource
-} = require("../ExpressionBuilder/queryExpression.testData");
-
-const { testDataSource } = require("../ExpressionBuilder/dataSource.testData");
+  emptyDataSource,
+  testDataSource
+} = require("../ExpressionBuilder/test");
 
 const enhance = compose(
   connect(

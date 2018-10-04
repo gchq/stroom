@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { toString } from "./expressionBuilderUtils";
+import { toString } from "../expressionBuilderUtils";
 
 import {
   emptyExpression,

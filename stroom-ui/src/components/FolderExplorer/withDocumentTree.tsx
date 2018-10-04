@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 
 import { GlobalStoreState } from "../../startup/reducers";
 import Loader from "../Loader";
-import { fetchDocTree } from "../FolderExplorer/explorerClient";
+import { fetchDocTree } from "./explorerClient";
 import { DocRefTree } from "../../types";
 
 export interface Props {}

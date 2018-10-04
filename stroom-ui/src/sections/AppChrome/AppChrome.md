@@ -5,11 +5,13 @@ const appChromeRoutes = require("./appChromeRoutes").default;
 
 // This basically replicates the 'Routes' implementation, but for test
 const AppChromeWithRouter = () => (
-  <Switch>
-    {appChromeRoutes.map((p, i) => (
-      <Route key={i} {...p} />
-    ))}
-  </Switch>
+  <div style={{ height: "500px" }}>
+    <Switch>
+      {appChromeRoutes.map((p, i) => (
+        <Route key={i} {...p} />
+      ))}
+    </Switch>
+  </div>
 );
 
 <AppChromeWithRouter />;

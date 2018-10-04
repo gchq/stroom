@@ -22,7 +22,7 @@ import { reduxForm } from "redux-form";
 import ElementImage from "../../ElementImage";
 import HorizontalPanel from "../../HorizontalPanel";
 import ElementProperty from "./ElementProperty";
-import { StoreStateById as PipelineStateStoreById } from "../../PipelineEditor/redux/pipelineStatesReducer";
+import { StoreStateById as PipelineStateStoreById } from "../redux/pipelineStatesReducer";
 import { StoreState as ElementStoreState } from "../redux/elementReducer";
 import { GlobalStoreState } from "../../../startup/reducers";
 import {

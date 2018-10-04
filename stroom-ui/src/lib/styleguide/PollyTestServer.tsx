@@ -33,9 +33,9 @@ import {
   findByUuids,
   deleteItemsFromTree,
   iterateNodes
-} from "../../lib/treeUtils";
+} from "../treeUtils";
 import { GlobalStoreState } from "../../startup/reducers";
-import { actionCreators as fetchActionCreators } from "../../lib/fetchTracker.redux";
+import { actionCreators as fetchActionCreators } from "../fetchTracker.redux";
 import withConfig from "../../startup/withConfig";
 import { Config } from "../../startup/config";
 import { DocRefTypeList } from "../../components/DocRefTypes/redux";

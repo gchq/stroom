@@ -29,7 +29,7 @@ import DocRefEditor from "../DocRefEditor";
 import Loader from "../Loader";
 import { findItem } from "../../lib/treeUtils";
 import { actionCreators } from "./redux";
-import { fetchDocInfo } from "../FolderExplorer/explorerClient";
+import { fetchDocInfo } from "./explorerClient";
 import DndDocRefListingEntry from "./DndDocRefListingEntry";
 import NewDocRefDialog from "./NewDocRefDialog";
 import CopyDocRefDialog from "./CopyDocRefDialog";
