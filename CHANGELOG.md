@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#855** : Fixed stepping data that contains a BOM.
+
 ## [v5.5.2] - 2018-10-03
 
 * Improved loading of activity list prior to showing the chooser dialog.

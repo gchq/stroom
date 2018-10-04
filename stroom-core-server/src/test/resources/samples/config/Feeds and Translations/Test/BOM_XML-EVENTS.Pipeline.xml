@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2018 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<pipeline>
+   <description/>
+   <name>BOM_XML-EVENTS</name>
+   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+      &lt;doc&gt;
+      &lt;type&gt;Pipeline&lt;/type&gt;
+      &lt;uuid&gt;bd7be478-632b-40fe-8fda-f578ec57e959&lt;/uuid&gt;
+      &lt;name&gt;Common Test Event Pipeline&lt;/name&gt;
+      &lt;/doc&gt;
+   </parentPipelineXML>
+   <pipelineType>Event Data</pipelineType>
+   <uuid>e40dfda1-0210-49cf-9695-c3f6fa8c67d9</uuid>
+</pipeline>
