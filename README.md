@@ -33,3 +33,12 @@ Stroom and its associated libraries, services and content span several repositor
 - [`stroom-visualisations-dev`](https://github.com/gchq/stroom-visualisations-dev)
 - [`event-logging-schema`](https://github.com/gchq/event-logging-schema)
 - [`event-logging`](https://github.com/gchq/event-logging)
+
+Contributing
+------------
+
+We welcome contributions to the project. Detailed information on our ways of working can be found [here](https://gchq.github.io/gaffer-doc/other/ways-of-working.html). In brief:
+
+- Sign the [GCHQ Contributor Licence Agreement](https://cla-assistant.io/gchq/Gaffer);
+- Push your changes to a fork;
+- Submit a pull request.
