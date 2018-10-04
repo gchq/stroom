@@ -18,6 +18,13 @@ import * as storybook from "@storybook/react";
 import { setOptions } from "@storybook/addon-options";
 import StoryRouter from "storybook-react-router";
 
+// import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
+// import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+// import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
+// import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
+// import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+// import { ThemedDecorator } from "lib/storybook/ThemedDecorator.tsx";
+
 const req = require.context("../src", true, /\.stories\.tsx$/);
 
 function loadStories() {
