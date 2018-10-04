@@ -33,9 +33,7 @@ const enhanceWithTestTrackers = require("../test/enhanceWithTestTrackers")
   .default;
 const { generateGenericTracker } = require("../tracker.testData");
 
-const lotsOfTrackers = [...Array(1000).keys()].map(i =>
-  generateGenericTracker(i)
-);
+const lotsOfTrackers = Array(1000).map(i => generateGenericTracker(i));
 
 const TestHarness = enhanceWithTestTrackers(ProcessingContainer);
 
