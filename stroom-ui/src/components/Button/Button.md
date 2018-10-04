@@ -18,6 +18,42 @@ Clickable (check console)
 />
 ```
 
+Small icon
+```jsx
+<Button
+  className="raised-low"
+  size='small'
+  icon="save"
+/>
+```
+
+Medium (default) icon
+```jsx
+<Button
+  className="raised-low"
+  size='medium'
+  icon="save"
+/>
+```
+
+Large icon
+```jsx
+<Button
+  className="raised-low"
+  size='large'  
+  icon="save"
+/>
+```
+
+Extra large icon
+```jsx
+<Button
+  className="raised-low"
+  size='xlarge'  
+  icon="save"
+/>
+```
+
 button group - icon and text
 
 ```jsx

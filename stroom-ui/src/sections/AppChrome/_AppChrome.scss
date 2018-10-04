@@ -27,6 +27,7 @@
 }
 
 .app-chrome__sidebar-menu {
+  outline: none;
   overflow-y: auto;
   padding-top: 40px;
   display: flex;
@@ -52,6 +53,7 @@
 
 .sidebar__menu-item {
   display: inline-flex;
+  outline:none !important;
 }
 
 .sidebar__menu-item.nav {
