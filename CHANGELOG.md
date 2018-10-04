@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#854** : The activity screen no longer shows a permission error when shown to non admin users.
+
 * Issue **#853** : The activity chooser will no longer display on startup if activity tracking is not enabled.
 
 * Issue **#855** : Fixed stepping data that contains a BOM.
