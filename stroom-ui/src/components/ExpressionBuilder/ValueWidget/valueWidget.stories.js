@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import * as React from "react";
 import { withState } from "recompose";
 import { storiesOf, addDecorator } from "@storybook/react";
 

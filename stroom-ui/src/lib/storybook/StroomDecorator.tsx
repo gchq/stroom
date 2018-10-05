@@ -5,6 +5,7 @@ import { RenderFunction } from "@storybook/react";
 import { Provider } from "react-redux";
 import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
+import StoryRouter from "storybook-react-router";
 
 import { setupTestServer, TestData } from "../../lib/storybook/PollyDecorator";
 
@@ -74,6 +75,6 @@ const ThemedComponent = enhanceLocal(WrappedComponent);
 
 export default (storyFn: RenderFunction) => (
   <Provider store={store}>
-    <ThemedComponent>{storyFn()}</ThemedComponent>
+    <ThemedComponent>{StoryRouter()(storyFn)}</ThemedComponent>
   </Provider>
 );
