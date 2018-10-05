@@ -42,7 +42,7 @@ const withSetEditableByUser = withState(
 export interface Props extends StyledComponentProps {
   dataSource: DataSourceType;
   expressionId: string;
-  showModeToggle: boolean;
+  showModeToggle?: boolean;
   editMode?: boolean;
 }
 

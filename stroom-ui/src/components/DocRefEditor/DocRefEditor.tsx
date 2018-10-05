@@ -56,8 +56,8 @@ const DocRefEditor = ({
     />
 
     <div className="DocRefEditor__actionButtons">
-      {actionBarItems.map(actionBarItem => (
-        <Button circular {...actionBarItem} />
+      {actionBarItems.map((actionBarItem, i) => (
+        <Button key={i} circular {...actionBarItem} />
       ))}
     </div>
     <div className="DocRefEditor__main">{children}</div>

@@ -29,7 +29,6 @@ export interface PrepareDocRefDelete
   extends ActionId,
     Action<"PREPARE_DOC_REF_DELETE"> {
   uuids: Array<string>;
-  destinationUuid: string;
 }
 
 export interface CompleteDocRefDelete
@@ -39,13 +38,11 @@ export interface CompleteDocRefDelete
 export const actionCreators = {
   prepareDocRefDelete: (
     id: string,
-    uuids: Array<string>,
-    destinationUuid: string
+    uuids: Array<string>
   ): PrepareDocRefDelete => ({
     type: PREPARE_DOC_REF_DELETE,
     id,
-    uuids,
-    destinationUuid
+    uuids
   }),
   completeDocRefDelete: (id: string): CompleteDocRefDelete => ({
     type: COMPLETE_DOC_REF_DELETE,
@@ -70,10 +67,9 @@ export const defaultStatePerId: StoreStatePerId = {
 export const reducer = prepareReducerById(defaultStatePerId)
   .handleAction<PrepareDocRefDelete>(
     PREPARE_DOC_REF_DELETE,
-    (state, { uuids, destinationUuid }: PrepareDocRefDelete) => ({
+    (state, { uuids }: PrepareDocRefDelete) => ({
       isDeleting: uuids.length > 0,
-      uuids,
-      destinationUuid
+      uuids
     })
   )
   .handleAction<CompleteDocRefDelete>(

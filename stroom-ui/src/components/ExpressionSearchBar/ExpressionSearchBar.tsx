@@ -40,6 +40,7 @@ export interface Props extends StyledComponentProps {
   expressionId: string;
   dataSource: DataSourceType;
   onSearch: (expressionId: string) => void;
+  initialSearchString?: string;
 }
 
 interface ConnectState {
@@ -88,11 +89,15 @@ const enhance = compose<EnhancedProps, Props>(
     }),
     { expressionChanged }
   ),
-  withStateHandlers<WithState, WithStateHandlers & StateHandlerMap<WithState>>(
-    () => ({
+  withStateHandlers<
+    WithState,
+    WithStateHandlers & StateHandlerMap<WithState>,
+    Props
+  >(
+    ({ initialSearchString }) => ({
       isExpression: false,
       isExpressionVisible: false,
-      searchString: "",
+      searchString: initialSearchString || "",
       searchIsInvalid: false,
       isSearchStringValid: true,
       searchStringValidationMessages: []

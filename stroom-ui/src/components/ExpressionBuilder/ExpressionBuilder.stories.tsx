@@ -14,42 +14,41 @@
  * limitations under the License.
  */
 import * as React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { compose, lifecycle } from "recompose";
 
+import { actionCreators } from "./redux";
+import { ExpressionOperatorType } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
+
+const { expressionChanged } = actionCreators;
+
 import { storiesOf } from "@storybook/react";
 
-import {
-  ExpressionTerm,
-  ExpressionOperator,
-  ExpressionBuilder,
-  actionCreators as expressionBuilderActionCreators
-} from "./index";
-
-import { actionCreators as folderExplorerActionCreators } from "components/FolderExplorer";
-
-const { expressionChanged } = expressionBuilderActionCreators;
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import ExpressionBuilder, {
+  Props as ExpressionBuilderProps
+} from "./ExpressionBuilder";
 
 import "../../styles/main.css";
 
-import {
-  testExpression,
-  simplestExpression,
-  testAndOperator,
-  testOrOperator,
-  testNotOperator,
-  emptyDataSource
-} from "./queryExpression.testData";
+import { testExpression, simplestExpression, testDataSource } from "./test";
 
-import { testDataSource } from "./dataSource.testData";
+interface Props extends ExpressionBuilderProps {
+  testExpression: ExpressionOperatorType;
+}
 
-const enhance = compose(
-  connect(
+interface ConnectState {}
+interface ConnectDispatch {
+  expressionChanged: typeof expressionChanged;
+}
+
+const enhance = compose<ExpressionBuilderProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     undefined,
     { expressionChanged }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const { expressionChanged, expressionId, testExpression } = this.props;
       expressionChanged(expressionId, testExpression);
@@ -60,11 +59,11 @@ const enhance = compose(
 const TestExpressionBuilder = enhance(ExpressionBuilder);
 
 storiesOf("Expression Builder", module)
+  .addDecorator(StroomDecorator)
   .add("Populated Editable", () => (
     <TestExpressionBuilder
       testExpression={testExpression}
       showModeToggle
-      dataSourceUuid="testDs"
       expressionId="populatedExEdit"
       dataSource={testDataSource}
     />
@@ -72,7 +71,6 @@ storiesOf("Expression Builder", module)
   .add("Populated ReadOnly", () => (
     <TestExpressionBuilder
       testExpression={testExpression}
-      dataSourceUuid="testDs"
       expressionId="populatedExRO"
       dataSource={testDataSource}
     />
@@ -81,7 +79,6 @@ storiesOf("Expression Builder", module)
     <TestExpressionBuilder
       testExpression={simplestExpression}
       showModeToggle
-      dataSourceUuid="testDs"
       expressionId="simplestEx"
       dataSource={testDataSource}
     />
@@ -89,23 +86,17 @@ storiesOf("Expression Builder", module)
   .add("Missing Data Source (read only)", () => (
     <TestExpressionBuilder
       testExpression={testExpression}
-      dataSourceUuid="missingDs"
       expressionId="populatedExNoDs"
       dataSource={testDataSource}
     />
   ))
   .add("Missing Expression", () => (
-    <ExpressionBuilder
-      dataSourceUuid="testDs"
-      expressionId="missingEx"
-      dataSource={testDataSource}
-    />
+    <ExpressionBuilder expressionId="missingEx" dataSource={testDataSource} />
   ))
   .add("Hide mode toggle", () => (
     <TestExpressionBuilder
       testExpression={testExpression}
       showModeToggle={false}
-      dataSourceUuid="testDs"
       expressionId="simplestEx"
       dataSource={testDataSource}
     />
@@ -115,7 +106,6 @@ storiesOf("Expression Builder", module)
       testExpression={testExpression}
       showModeToggle={false}
       editMode
-      dataSourceUuid="testDs"
       expressionId="simplestEx"
       dataSource={testDataSource}
     />

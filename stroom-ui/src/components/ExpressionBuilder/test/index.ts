@@ -21,8 +21,6 @@ import {
 
 import { testDataSource, emptyDataSource } from "./dataSource.testData";
 
-import enhanceWithTestExpression from "./enhanceWithTestExpression";
-
 export {
   testExpression,
   simplestExpression,
@@ -40,6 +38,5 @@ export {
   partlyDisabledExpression03,
   hugeExpression,
   testDataSource,
-  emptyDataSource,
-  enhanceWithTestExpression
+  emptyDataSource
 };
