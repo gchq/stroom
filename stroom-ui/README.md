@@ -387,7 +387,7 @@ For example:
 ### `Button.js`
 
 ```js
-import React, { Component } from 'react';
+import * as React from 'react';
 
 class Button extends Component {
   render() {
@@ -402,7 +402,7 @@ export default Button; // Don’t forget to use export default!
 
 
 ```js
-import React, { Component } from 'react';
+import * as React from 'react';
 import Button from './Button'; // Import a component from another file
 
 class DangerButton extends Component {
@@ -444,7 +444,7 @@ export { moduleA };
 ### `App.js`
 
 ```js
-import React, { Component } from 'react';
+import * as React from 'react';
 
 class App extends Component {
   handleClick = () => {
@@ -494,7 +494,7 @@ This project setup uses [Webpack](https://webpack.js.org/) for handling all asse
 ### `Button.js`
 
 ```js
-import React, { Component } from 'react';
+import * as React from 'react';
 import './Button.css'; // Tell Webpack that Button.js uses these styles
 
 class Button extends Component {

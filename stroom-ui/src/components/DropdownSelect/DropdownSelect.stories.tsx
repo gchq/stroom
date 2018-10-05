@@ -18,14 +18,28 @@ import { compose } from "recompose";
 import { connect } from "react-redux";
 
 import { storiesOf } from "@storybook/react";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState } from "redux-form";
 
-import DropdownSelect from "./DropdownSelect";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import DropdownSelect, {
+  DropdownOptionProps,
+  PickerProps
+} from "./DropdownSelect";
 
 import "../../styles/main.css";
+import { GlobalStoreState } from "../../startup/reducers";
 
-const enhance = compose(
-  connect(
+interface Props {}
+
+interface ConnectState {
+  thisForm: FormState;
+}
+interface ConnectDispatch {}
+
+interface EnhancedProps extends Props, ConnectState {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ form }) => ({
       thisForm: form.dropdownSelectTest
     }),
@@ -36,7 +50,7 @@ const enhance = compose(
   })
 );
 
-const toSimpleOption = c => ({
+const toSimpleOption = (c: string) => ({
   value: c.toLowerCase(),
   text: c
 });
@@ -51,14 +65,18 @@ const colourOptions = [
   "Violet"
 ].map(toSimpleOption);
 
-const ColorOption = ({ option: { text, value }, onClick, inFocus }) => (
+const ColorOption = ({
+  option: { text, value },
+  onClick,
+  inFocus
+}: DropdownOptionProps) => (
   <div className={`hoverable ${inFocus ? "inFocus" : ""}`} onClick={onClick}>
     <span style={{ backgroundColor: value, width: "2rem" }}>&nbsp;</span>
     {text}
   </div>
 );
 
-const ColourPicker = ({ onChange, value, pickerId }) => (
+const ColourPicker = ({ onChange, value, pickerId }: PickerProps) => (
   <DropdownSelect
     pickerId="colourPicker"
     onChange={onChange}
@@ -78,11 +96,11 @@ const weekdayOptions = [
   "Sunday"
 ].map(toSimpleOption);
 
-const WeekdayPicker = props => (
+const WeekdayPicker = (props: PickerProps) => (
   <DropdownSelect {...props} options={weekdayOptions} />
 );
 
-let TestForm = ({ thisForm }) => (
+const TestForm = enhance(({ thisForm }: EnhancedProps) => (
   <div>
     <form>
       <div>
@@ -134,8 +152,8 @@ let TestForm = ({ thisForm }) => (
         </form>
       )}
   </div>
-);
+));
 
-TestForm = enhance(TestForm);
-
-storiesOf("Dropdown Select", module).add("simple pickers", () => <TestForm />);
+storiesOf("Dropdown Select", module)
+  .addDecorator(StroomDecorator)
+  .add("simple pickers", () => <TestForm />);

@@ -23,10 +23,13 @@ export interface DropdownOptionProps {
   onClick: () => void;
 }
 
-export interface Props {
+export interface PickerProps {
   pickerId: string;
   onChange: (x: string) => void;
   value: string;
+}
+
+export interface Props extends PickerProps {
   options: Array<OptionType>;
   OptionComponent?: React.ComponentType<DropdownOptionProps>;
 }

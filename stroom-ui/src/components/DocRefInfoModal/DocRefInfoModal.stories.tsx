@@ -19,24 +19,37 @@ import { storiesOf } from "@storybook/react";
 import { connect } from "react-redux";
 import { compose, lifecycle } from "recompose";
 
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { DocRefInfoModal } from ".";
 import { actionCreators } from "./redux";
 
 import "../../styles/main.css";
+import { DocRefInfoType } from "../../types";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
 
 const timeCreated = Date.now();
 
-const enhance = compose(
-  connect(
+interface Props {
+  testDocRefWithInfo: DocRefInfoType;
+}
+interface ConnectState {}
+interface ConnectDispatch {
+  docRefInfoOpened: typeof docRefInfoOpened;
+  docRefInfoReceived: typeof docRefInfoReceived;
+}
+interface PassedOnProps {}
+
+const enhance = compose<PassedOnProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     undefined,
     {
       docRefInfoOpened,
       docRefInfoReceived
     }
   ),
-  lifecycle({
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
       const {
         docRefInfoOpened,
@@ -51,19 +64,21 @@ const enhance = compose(
 
 const TestDocRefInfoModal = enhance(DocRefInfoModal);
 
-storiesOf("Doc Ref Info Modal", module).add("Doc Ref Info Modal", () => (
-  <TestDocRefInfoModal
-    testDocRefWithInfo={{
-      docRef: {
-        type: "Animal",
-        name: "Tiger",
-        uuid: "1234456789"
-      },
-      createTime: timeCreated,
-      updateTime: Date.now(),
-      createUser: "me",
-      updateUser: "you",
-      otherInfo: "I am test data"
-    }}
-  />
-));
+storiesOf("Doc Ref Info Modal", module)
+  .addDecorator(StroomDecorator)
+  .add("Doc Ref Info Modal", () => (
+    <TestDocRefInfoModal
+      testDocRefWithInfo={{
+        docRef: {
+          type: "Animal",
+          name: "Tiger",
+          uuid: "1234456789"
+        },
+        createTime: timeCreated,
+        updateTime: Date.now(),
+        createUser: "me",
+        updateUser: "you",
+        otherInfo: "I am test data"
+      }}
+    />
+  ));
