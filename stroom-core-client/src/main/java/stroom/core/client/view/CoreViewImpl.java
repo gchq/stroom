@@ -14,26 +14,36 @@
  * limitations under the License.
  */
 
-package stroom.app.client.view;
+package stroom.core.client.view;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.app.client.presenter.AppPresenter;
+import stroom.core.client.presenter.CorePresenter.CoreView;
 
-public class AppViewImpl extends ViewImpl implements AppPresenter.AppView {
+public class CoreViewImpl extends ViewImpl implements CoreView {
     private final Element loadingText;
     private final Element loading;
 
-    public AppViewImpl() {
+    private final SimplePanel appPanel;
+
+    public CoreViewImpl() {
+        appPanel = new SimplePanel();
+        appPanel.setStyleName("app-panel");
         loadingText = RootPanel.get("loadingText").getElement();
         loading = RootPanel.get("loading").getElement();
     }
 
     @Override
     public Widget asWidget() {
-        return null;
+        return appPanel;
+    }
+
+    @Override
+    public void setInSlot(final Object slot, final Widget content) {
+        appPanel.setWidget(content);
     }
 
     @Override

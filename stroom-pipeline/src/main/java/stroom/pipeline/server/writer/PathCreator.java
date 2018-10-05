@@ -210,6 +210,9 @@ public class PathCreator {
         if (streamHolder != null && streamHolder.getStream() != null) {
             path = replace(path, "streamId", () -> streamHolder.getStream().getId(), 0);
         }
+        if (streamHolder != null) {
+            path = replace(path, "streamNo", () -> String.valueOf(streamHolder.getStreamNo()));
+        }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
             path = replace(path, "searchId", () -> searchIdHolder.getSearchId());
         }

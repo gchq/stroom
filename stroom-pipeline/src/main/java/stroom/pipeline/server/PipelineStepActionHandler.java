@@ -17,8 +17,10 @@
 package stroom.pipeline.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.logging.StreamEventLog;
 import stroom.pipeline.server.task.SteppingTask;
 import stroom.pipeline.shared.PipelineStepAction;
+import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -31,30 +33,51 @@ import javax.inject.Inject;
 @Scope(value = StroomScope.TASK)
 public class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
+    private final StreamEventLog streamEventLog;
 
     @Inject
-    PipelineStepActionHandler(final TaskManager taskManager) {
+    PipelineStepActionHandler(final TaskManager taskManager,
+                              final StreamEventLog streamEventLog) {
         this.taskManager = taskManager;
+        this.streamEventLog = streamEventLog;
     }
 
     @Override
     public SteppingResult exec(final PipelineStepAction action) {
-        // Copy the action settings to the server task.
-        final SteppingTask task = new SteppingTask(action.getUserToken());
-        task.setCriteria(action.getCriteria());
-        task.setChildStreamType(action.getChildStreamType());
-        task.setStepLocation(action.getStepLocation());
-        task.setStepFilterMap(action.getStepFilterMap());
-        task.setStepType(action.getStepType());
-        task.setPipeline(action.getPipeline());
-        task.setCode(action.getCode());
+        SteppingResult result = null;
+        StepLocation stepLocation = action.getStepLocation();
 
-        // Make sure stepping can only happen on streams that are visible to
-        // the user.
-        // FIXME : Constrain available streams.
-        // folderValidator.constrainCriteria(task.getCriteria());
+        try {
+            // Copy the action settings to the server task.
+            final SteppingTask task = new SteppingTask(action.getUserToken());
+            task.setCriteria(action.getCriteria());
+            task.setChildStreamType(action.getChildStreamType());
+            task.setStepLocation(action.getStepLocation());
+            task.setStepFilterMap(action.getStepFilterMap());
+            task.setStepType(action.getStepType());
+            task.setPipeline(action.getPipeline());
+            task.setCode(action.getCode());
 
-        // Execute the stepping task.
-        return taskManager.exec(task);
+            // Make sure stepping can only happen on streams that are visible to
+            // the user.
+            // FIXME : Constrain available streams.
+            // folderValidator.constrainCriteria(task.getCriteria());
+
+            // Execute the stepping task.
+            result = taskManager.exec(task);
+            if (result.getStepLocation() != null) {
+                stepLocation = result.getStepLocation();
+            }
+
+            if (stepLocation != null) {
+                streamEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), null);
+            }
+        } catch (final RuntimeException e) {
+            if (stepLocation != null) {
+                streamEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), e);
+            }
+        }
+
+        return result;
     }
 }

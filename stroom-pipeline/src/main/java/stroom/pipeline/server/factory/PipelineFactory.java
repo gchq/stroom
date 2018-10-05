@@ -20,10 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import stroom.entity.server.GenericEntityService;
-import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.server.SupportsCodeInjection;
 import stroom.pipeline.server.errorhandler.TerminatedException;
@@ -32,9 +28,12 @@ import stroom.pipeline.server.filter.SAXRecordDetector;
 import stroom.pipeline.server.filter.SplitFilter;
 import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.parser.AbstractParser;
-import stroom.pipeline.server.reader.InputStreamElement;
+import stroom.pipeline.server.reader.AbstractInputElement;
+import stroom.pipeline.server.reader.AbstractReaderElement;
+import stroom.pipeline.server.reader.InputRecorder;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
+import stroom.pipeline.server.reader.ReaderRecorder;
 import stroom.pipeline.server.source.SourceElement;
 import stroom.pipeline.server.task.ElementMonitor;
 import stroom.pipeline.server.task.Recorder;
@@ -333,7 +332,7 @@ public class PipelineFactory {
             // Finally insert a record detector if appropriate for the current
             // element to control stepping.
             if (controller != null) {
-                if (parentElement != null && parentElement instanceof OutputRecorder) {
+                if (parentElement instanceof OutputRecorder) {
                     // If the parent element is already an output recorder used
                     // to replace a destination then reuse the same output recorder
                     // for any downstream elements.
@@ -464,6 +463,27 @@ public class PipelineFactory {
                 outputRecorder.setElementId(elementId);
                 result = new Fragment(outputRecorder);
 
+            } else if (in instanceof AbstractInputElement) {
+                final AbstractInputElement filter = (AbstractInputElement) in;
+                final InputRecorder recorder = new InputRecorder();
+                recorder.setElementId(elementId);
+                recorder.setTarget(filter);
+                result = new Fragment(recorder, fragment.getOut());
+
+            } else if (in instanceof AbstractReaderElement) {
+                final AbstractReaderElement filter = (AbstractReaderElement) in;
+                final ReaderRecorder recorder = new ReaderRecorder();
+                recorder.setElementId(elementId);
+                recorder.setTarget(filter);
+                result = new Fragment(recorder, fragment.getOut());
+
+            } else if (in instanceof AbstractParser) {
+                final AbstractParser parser = (AbstractParser) in;
+                final InputRecorder recorder = new InputRecorder();
+                recorder.setElementId(elementId);
+                recorder.setTarget(parser);
+                result = new Fragment(recorder, fragment.getOut());
+
             } else if (in instanceof XMLFilter && elementType.hasRole(PipelineElementType.ROLE_MUTATOR)) {
                 final XMLFilter filter = (XMLFilter) in;
 
@@ -486,6 +506,20 @@ public class PipelineFactory {
                 final OutputRecorder outputRecorder = elementFactory.getElementInstance(OutputRecorder.class);
                 outputRecorder.setElementId(elementId);
                 result = new Fragment(outputRecorder);
+
+            } else if (out instanceof AbstractInputElement) {
+                final AbstractInputElement filter = (AbstractInputElement) out;
+                final InputRecorder recorder = new InputRecorder();
+                recorder.setElementId(elementId);
+                filter.setTarget(recorder);
+                result = new Fragment(fragment.getIn(), recorder);
+
+            } else if (out instanceof AbstractReaderElement) {
+                final AbstractReaderElement filter = (AbstractReaderElement) out;
+                final ReaderRecorder recorder = new ReaderRecorder();
+                recorder.setElementId(elementId);
+                filter.setTarget(recorder);
+                result = new Fragment(fragment.getIn(), recorder);
 
             } else if (out instanceof AbstractParser) {
                 final AbstractParser parser = (AbstractParser) out;

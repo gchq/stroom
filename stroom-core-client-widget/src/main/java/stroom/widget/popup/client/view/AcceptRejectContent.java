@@ -49,7 +49,7 @@ public class AcceptRejectContent extends Composite implements HasEnabled {
 
     public void setContent(final Widget widget) {
         content.setWidget(widget);
-        accept.setEnabled(false);
+        accept.setEnabled(true);
         reject.setEnabled(true);
     }
 

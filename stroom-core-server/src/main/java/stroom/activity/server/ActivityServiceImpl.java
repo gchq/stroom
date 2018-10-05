@@ -30,6 +30,7 @@ import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceException;
+import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 
 @Transactional
 @Component
+@Insecure
 public class ActivityServiceImpl extends SystemEntityServiceImpl<Activity, FindActivityCriteria> implements ActivityService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityServiceImpl.class);
 

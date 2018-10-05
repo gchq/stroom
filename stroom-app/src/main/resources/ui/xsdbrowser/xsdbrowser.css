@@ -50,6 +50,7 @@
 	border-bottom: 1px solid #c5cde2;
 	overflow: auto;
 	background-color: white;
+	padding: 5px;
 }
 
 .xsdBrowser .constraints {

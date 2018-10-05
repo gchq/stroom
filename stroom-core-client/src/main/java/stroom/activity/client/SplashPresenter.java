@@ -16,7 +16,6 @@
 
 package stroom.activity.client;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -28,7 +27,6 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.security.client.event.LogoutEvent;
-import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -40,7 +38,7 @@ import java.util.function.Consumer;
 public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
     private final ClientPropertyCache clientPropertyCache;
     private final ClientDispatchAsync dispatcher;
-    private boolean enabled;
+//    private boolean enabled;
 
     @Inject
     public SplashPresenter(final EventBus eventBus,
@@ -52,21 +50,21 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
         this.dispatcher = dispatcher;
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getScrollPanel().addScrollHandler(event -> testScroll()));
-    }
-
-    private boolean testScroll() {
-        if (!enabled) {
-            if (getView().getScrollPanel().getVerticalScrollPosition() >= getView().getScrollPanel().getMaximumVerticalScrollPosition()) {
-                EnablePopupEvent.fire(SplashPresenter.this, SplashPresenter.this);
-                enabled = true;
-            }
-        }
-        return enabled;
-    }
+//    @Override
+//    protected void onBind() {
+//        super.onBind();
+//        registerHandler(getView().getScrollPanel().addScrollHandler(event -> testScroll()));
+//    }
+//
+//    private boolean testScroll() {
+//        if (!enabled) {
+//            if (getView().getScrollPanel().getVerticalScrollPosition() >= getView().getScrollPanel().getMaximumVerticalScrollPosition()) {
+//                EnablePopupEvent.fire(SplashPresenter.this, SplashPresenter.this);
+//                enabled = true;
+//            }
+//        }
+//        return enabled;
+//    }
 
     public void show(final Consumer<Boolean> consumer) {
         clientPropertyCache.get().onSuccess(clientProperties -> {
@@ -97,7 +95,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                     }
                 };
 
-                Scheduler.get().scheduleFixedDelay(this::testScroll, 2000);
+//                Scheduler.get().scheduleFixedDelay(this::testScroll, 2000);
 
                 final PopupSize popupSize = new PopupSize(800, 600, true);
                 ShowPopupEvent.fire(SplashPresenter.this, SplashPresenter.this, PopupType.ACCEPT_REJECT_DIALOG, null, popupSize, title, popupUiHandlers, true);

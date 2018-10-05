@@ -84,7 +84,7 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
 
     /**
      * @param node
-     * @return true iff the node is in the tree
+     * @return true if the node is in the tree
      */
     public boolean hasNode(final TreeNode node) {
         return node == getRoot() || parents.containsKey(node);
@@ -98,12 +98,7 @@ public class DefaultTreeForTreeLayout<TreeNode> extends AbstractTreeForTreeLayou
         checkArg(hasNode(parentNode), "parentNode is not in the tree");
         checkArg(!hasNode(node), "node is already in the tree");
 
-        List<TreeNode> list = childrenMap.get(parentNode);
-        if (list == null) {
-            list = new ArrayList<>();
-            childrenMap.put(parentNode, list);
-        }
-        list.add(node);
+        childrenMap.computeIfAbsent(parentNode, k -> new ArrayList<>()).add(node);
         parents.put(node, parentNode);
     }
 

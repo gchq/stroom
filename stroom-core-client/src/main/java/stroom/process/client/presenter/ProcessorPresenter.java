@@ -18,6 +18,7 @@
 package stroom.process.client.presenter;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -27,33 +28,23 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.process.shared.CreateProcessorAction;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
 import stroom.query.api.v2.DocRef;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.SharedObject;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<BaseEntity> {
     private final ProcessorListPresenter processorListPresenter;
-    private final ExpressionPresenter filterPresenter;
+    private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
     private final ExpressionTreePresenter expressionPresenter;
     private final ClientDispatchAsync dispatcher;
 
@@ -69,12 +60,12 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
                               final ProcessorListPresenter processorListPresenter,
-                              final ExpressionPresenter filterPresenter,
+                              final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
                               final ExpressionTreePresenter expressionPresenter,
                               final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
-        this.filterPresenter = filterPresenter;
+        this.processorEditPresenterProvider = processorEditPresenterProvider;
         this.expressionPresenter = expressionPresenter;
         this.dispatcher = dispatcher;
 
@@ -201,7 +192,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void addProcessor() {
         if (pipelineEntity != null) {
-            addOrEditProcessor(null);
+            processorEditPresenterProvider.get().show(DocRefUtil.create(pipelineEntity), null, result -> {
+                if (result != null) {
+                    refresh(result);
+                }
+            });
         }
     }
 
@@ -210,144 +205,12 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             if (selectedProcessor instanceof StreamProcessorFilterRow) {
                 final StreamProcessorFilterRow streamProcessorFilterRow = (StreamProcessorFilterRow) selectedProcessor;
                 final StreamProcessorFilter filter = streamProcessorFilterRow.getEntity();
-                addOrEditProcessor(filter);
-            }
-        }
-    }
-
-    private void addOrEditProcessor(final StreamProcessorFilter filter) {
-        final QueryData queryData = getOrCreateQueryData(filter);
-        filterPresenter.read(queryData.getExpression(), StreamDataSource.STREAM_STORE_DOC_REF, StreamDataSource.getFields());
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ExpressionOperator expression = filterPresenter.write();
-                    queryData.setDataSource(StreamDataSource.STREAM_STORE_DOC_REF);
-                    queryData.setExpression(expression);
-
-                    if (filter != null) {
-                        ConfirmEvent.fire(ProcessorPresenter.this,
-                                "You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?",
-                                result -> {
-                                    if (result) {
-                                        validateFeed(filter, queryData);
-                                    }
-                                });
-                    } else {
-                        validateFeed(null, queryData);
+                processorEditPresenterProvider.get().show(DocRefUtil.create(pipelineEntity), filter, result -> {
+                    if (result != null) {
+                        refresh(result);
                     }
-
-                } else {
-                    HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
-                }
+                });
             }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        };
-
-        // Show the processor creation dialog.
-        final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
-        if (filter != null) {
-            ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Filter",
-                    popupUiHandlers);
-        } else {
-            ShowPopupEvent.fire(this, filterPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Filter",
-                    popupUiHandlers);
-        }
-    }
-
-    private QueryData getOrCreateQueryData(final StreamProcessorFilter filter) {
-        if (filter != null && filter.getQueryData() != null) {
-            return filter.getQueryData();
-        }
-        return new QueryData();
-    }
-
-    private void validateFeed(final StreamProcessorFilter filter, final QueryData queryData) {
-        final int feedCount = termCount(queryData, StreamDataSource.FEED_NAME);
-        final int streamIdCount = termCount(queryData, StreamDataSource.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, StreamDataSource.PARENT_STREAM_ID);
-
-        if (streamIdCount == 0
-                && parentStreamIdCount == 0
-                && feedCount == 0) {
-            ConfirmEvent.fire(ProcessorPresenter.this,
-                    "You are about to process all feeds. Are you sure you wish to do this?", result -> {
-                        if (result) {
-                            validateStreamType(filter, queryData);
-                        }
-                    });
-        } else {
-            createOrUpdateProcessor(filter, queryData);
-        }
-    }
-
-    private void validateStreamType(final StreamProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, StreamDataSource.STREAM_TYPE_NAME);
-        final int streamIdCount = termCount(queryData, StreamDataSource.STREAM_ID);
-        final int parentStreamIdCount = termCount(queryData, StreamDataSource.PARENT_STREAM_ID);
-
-        if (streamIdCount == 0
-                && parentStreamIdCount == 0
-                && streamTypeCount == 0) {
-            ConfirmEvent.fire(ProcessorPresenter.this,
-                    "You are about to process all stream types. Are you sure you wish to do this?",
-                    result -> {
-                        if (result) {
-                            createOrUpdateProcessor(filter, queryData);
-                        }
-                    });
-        } else {
-            createOrUpdateProcessor(filter, queryData);
-        }
-    }
-
-    private int termCount(final QueryData queryData, final String field) {
-        if (queryData == null || queryData.getExpression() == null) {
-            return 0;
-        }
-        return termCount(queryData.getExpression(), field);
-    }
-
-    private int termCount(final ExpressionOperator expressionOperator, final String field) {
-        int count = 0;
-        if (expressionOperator.enabled()) {
-            for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
-                    if (item instanceof ExpressionTerm) {
-                        if (field.equals(((ExpressionTerm) item).getField())) {
-                            count++;
-                        }
-                    } else if (item instanceof ExpressionOperator) {
-                        count += termCount((ExpressionOperator) item, field);
-                    }
-                }
-            }
-        }
-        return count;
-    }
-
-    private void createOrUpdateProcessor(final StreamProcessorFilter filter,
-                                         final QueryData queryData) {
-        if (filter != null) {
-            // Now update the processor filter using the find stream criteria.
-            filter.setQueryData(queryData);
-            dispatcher.exec(new EntityServiceSaveAction<>(filter)).onSuccess(result -> {
-                refresh(result);
-                HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
-            });
-
-        } else {
-            // Now create the processor filter using the find stream criteria.
-            dispatcher.exec(new CreateProcessorAction(DocRefUtil.create(pipelineEntity), queryData, false, 10)).onSuccess(result -> {
-                refresh(result);
-                HidePopupEvent.fire(ProcessorPresenter.this, filterPresenter);
-            });
         }
     }
 

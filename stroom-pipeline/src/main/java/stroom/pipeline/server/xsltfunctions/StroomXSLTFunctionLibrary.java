@@ -170,6 +170,30 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("host-address")
+                .library(this)
+                .delegateClass(HostAddress.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("host-name")
+                .library(this)
+                .delegateClass(HostName.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("hex-to-dec")
                 .library(this)
                 .delegateClass(HexToDec.class)

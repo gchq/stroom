@@ -19,6 +19,7 @@ package stroom.pipeline.destination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,9 +35,8 @@ public abstract class RollingDestination implements Destination {
     private static final int ONE_MINUTE = 60000;
 
     private final Object key;
-    private final long frequency;
+    private final Long oldestAllowed;
     private final long rollSize;
-    private final long creationTime;
     private volatile byte[] footer;
 
     private volatile long lastFlushTime;
@@ -48,13 +48,25 @@ public abstract class RollingDestination implements Destination {
     private ByteCountOutputStream outputStream;
 
     protected RollingDestination(final Object key,
-                                 final long frequency,
+                                 final Long frequency,
+                                 final SimpleCron schedule,
                                  final long rollSize,
                                  final long creationTime) {
         this.key = key;
-        this.frequency = frequency;
         this.rollSize = rollSize;
-        this.creationTime = creationTime;
+
+        // Determine the oldest this destination can be.
+        Long time = null;
+        if (schedule != null) {
+            time = schedule.getNextTime(creationTime);
+        }
+        if (frequency != null) {
+            final long value = creationTime + frequency;
+            if (time == null || time > value) {
+                time = value;
+            }
+        }
+        oldestAllowed = time;
     }
 
     void lock() {
@@ -152,8 +164,8 @@ public abstract class RollingDestination implements Destination {
     }
 
     private boolean shouldRoll(final long currentTime) {
-        final long oldestAllowed = currentTime - frequency;
-        return creationTime < oldestAllowed || outputStream.getCount() > rollSize;
+        return (oldestAllowed != null && currentTime > oldestAllowed) ||
+                outputStream.getCount() > rollSize;
     }
 
     protected final void roll() throws IOException {

@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.activity.client.CurrentActivity;
 import stroom.alert.client.event.AlertEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
@@ -35,13 +36,18 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     private static final String DEFAULT_QUERY_INFO_POPUP_TITLE = "Please Provide Query Info";
     private static final String DEFAULT_QUERY_INFO_VALIDATION_REGEX = "^[\\s\\S]{3,}$";
 
+    private final CurrentActivity currentActivity;
     private boolean queryInfoPopupEnabled = false;
     private String queryInfoPopupTitle = DEFAULT_QUERY_INFO_POPUP_TITLE;
     private String queryInfoPopupValidationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
 
     @Inject
-    public QueryInfoPresenter(final EventBus eventBus, final QueryInfoView view, final ClientPropertyCache clientPropertyCache) {
+    public QueryInfoPresenter(final EventBus eventBus,
+                              final QueryInfoView view,
+                              final ClientPropertyCache clientPropertyCache,
+                              final CurrentActivity currentActivity) {
         super(eventBus, view);
+        this.currentActivity = currentActivity;
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -53,7 +59,15 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     }
 
     public void show(final String queryInfo, final Consumer<State> consumer) {
-        if (queryInfoPopupEnabled) {
+        boolean required = true;
+        if (currentActivity.getActivity() != null && currentActivity.getActivity().getDetails() != null) {
+            final String value = currentActivity.getActivity().getDetails().value("requireQueryInfo");
+            if (value != null && value.equalsIgnoreCase("false")) {
+                required = false;
+            }
+        }
+
+        if (queryInfoPopupEnabled && required) {
             getView().setQueryInfo(queryInfo);
             final PopupSize popupSize = new PopupSize(640, 480, true);
             ShowPopupEvent.fire(this,

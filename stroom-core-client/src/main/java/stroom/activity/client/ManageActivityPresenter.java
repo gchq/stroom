@@ -119,9 +119,10 @@ public class ManageActivityPresenter extends
         super.onBind();
     }
 
-    public void showInitial(final Consumer<Activity> consumer) {
+    void showInitial(final Consumer<Activity> consumer) {
         clientPropertyCache.get().onSuccess(clientProperties -> {
-            final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false);
+            final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false) &&
+                    clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false);
             if (show) {
                 show(consumer);
             } else {
@@ -131,6 +132,8 @@ public class ManageActivityPresenter extends
     }
 
     public void show(final Consumer<Activity> consumer) {
+        listPresenter.refresh();
+
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -156,7 +159,11 @@ public class ManageActivityPresenter extends
     }
 
     private void enableButtons() {
-        final boolean enabled = getSelected() != null;
+        final Activity activity = getSelected();
+        final boolean enabled = activity != null &&
+                activity.getDetails() != null &&
+                activity.getDetails().getProperties() != null &&
+                activity.getDetails().getProperties().size() > 0;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
         if (enabled) {

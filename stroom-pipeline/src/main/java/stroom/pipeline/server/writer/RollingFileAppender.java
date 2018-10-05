@@ -49,7 +49,6 @@ import java.nio.file.Paths;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.FILES)
 class RollingFileAppender extends AbstractRollingAppender {
-
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
@@ -92,6 +91,7 @@ class RollingFileAppender extends AbstractRollingAppender {
 
         return new RollingFileDestination(key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 fileName,
@@ -134,7 +134,7 @@ class RollingFileAppender extends AbstractRollingAppender {
         }
 
         // Get a path to use.
-        String path = null;
+        String path;
         if (outputPaths.length == 1) {
             path = outputPaths[0];
         } else {
@@ -177,6 +177,16 @@ class RollingFileAppender extends AbstractRollingAppender {
     @PipelineProperty(description = "Choose the name that files will be renamed to when they are rolled.")
     public void setRolledFileName(final String rolledFileNamePattern) {
         this.rolledFileNamePattern = rolledFileNamePattern;
+    }
+
+    @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
+    public void setFrequency(final String frequency) {
+        super.setFrequency(frequency);
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when files are rolled.")
+    public void setSchedule(final String expression) {
+        super.setSchedule(expression);
     }
 
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed and a new one created, e.g. 10M, 1G.", defaultValue = "100M")

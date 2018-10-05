@@ -133,7 +133,7 @@ public class SteppingController {
      *
      * @return True if the step detector should terminate stepping.
      */
-    public boolean endRecord(final Locator locator, final long currentRecordNo) throws SAXException {
+    public boolean endRecord(final Locator locator, final long currentRecordNo) {
         // Get the current stream number.
         final long currentStreamNo = streamHolder.getStreamNo() + 1;
 
@@ -147,6 +147,9 @@ public class SteppingController {
 
         // Move source location.
         moveSourceLocation(locator);
+
+        // Figure out what the highlighted portion of the input stream should be.
+        final Highlight highlight = createHighlight((int) currentStreamNo);
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
@@ -175,30 +178,13 @@ public class SteppingController {
             // have found the record we are interested in and any filter matches
             // if one has been specified.
             if (allMatch || filterMatch) {
+                // Create step data for the current step.
+                final StepData stepData = createStepData(highlight);
+
                 // Create a location for each monitoring filter to store data
                 // against.
                 foundLocation = new StepLocation(streamHolder.getStream().getId(), currentStreamNo, currentRecordNo);
-                final StepData stepData = steppingResponseCache.getStepData(foundLocation);
-
-                // Record the current source location.
-                final Location start = locationFactory.create(currentStartLocation.getLineNo(),
-                        currentStartLocation.getColNo());
-                final Location end = locationFactory.create(currentEndLocation.getLineNo(),
-                        currentEndLocation.getColNo());
-
-                final int startLineNo = start.getLineNo() > 1 ? start.getLineNo() : 1;
-                final int startColNo = start.getColNo() > 1 ? start.getColNo() : 1;
-                final int endLineNo = end.getLineNo() > 1 ? end.getLineNo() : 1;
-                final int endColNo = end.getColNo() > 1 ? end.getColNo() : 1;
-
-                final Highlight highlight = new Highlight((int) currentStreamNo, startLineNo, startColNo,
-                        (int) currentStreamNo, endLineNo, endColNo);
-                final List<Highlight> highlights = new ArrayList<>(1);
-                highlights.add(highlight);
-                stepData.setSourceHighlights(highlights);
-
-                // Stores all data for the current step.
-                storeStepData(stepData);
+                steppingResponseCache.setStepData(foundLocation, stepData);
 
                 // We want to exit early if we have found a record and are
                 // stepping first, forward or refreshing.
@@ -209,7 +195,7 @@ public class SteppingController {
         }
 
         // Reset all filters.
-        clearAllFilters();
+        clearAllFilters(highlight);
 
         // We want to exit early from backward stepping if we have got to the
         // previous record number.
@@ -218,19 +204,47 @@ public class SteppingController {
 
     }
 
-    public void storeStepData(final StepData stepData) {
-        // Store the current data and reset for each filter.
-        for (final ElementMonitor monitor : monitors) {
-            stepData.getElementMap().put(monitor.getElementId(), monitor.getElementData(getErrorReceiver()));
+    Highlight createHighlight(final int currentStreamNo) {
+        // Record the current source location.
+        final Location start = locationFactory.create(currentStartLocation.getLineNo(), currentStartLocation.getColNo());
+        final Location end = locationFactory.create(currentEndLocation.getLineNo(), currentEndLocation.getColNo());
+
+        final int startLineNo = start.getLineNo() > 1 ? start.getLineNo() : 1;
+        final int startColNo = start.getColNo() > 1 ? start.getColNo() : 1;
+        final int endLineNo = end.getLineNo() > 1 ? end.getLineNo() : 1;
+        final int endColNo = end.getColNo() > 1 ? end.getColNo() : 1;
+
+        return new Highlight(currentStreamNo, startLineNo, startColNo, currentStreamNo, endLineNo, endColNo);
+    }
+
+    StepData createStepData(final Highlight highlight) {
+        List<Highlight> highlights;
+        if (highlight != null) {
+            highlights = new ArrayList<>(1);
+            highlights.add(highlight);
+        } else {
+            highlights = new ArrayList<>(0);
         }
+
+        final StepData stepData = new StepData();
+        stepData.setSourceHighlights(highlights);
+
+        // Store the current data and reset for each filter.
+        final LoggingErrorReceiver errorReceiver = getErrorReceiver();
+        for (final ElementMonitor monitor : monitors) {
+            final ElementData elementData = monitor.getElementData(errorReceiver, highlight);
+            stepData.getElementMap().put(monitor.getElementId(), elementData);
+        }
+
+        return stepData;
     }
 
     /**
      * This method resets all filters so they are ready for the next record.
      */
-    public void clearAllFilters() throws SAXException {
+    void clearAllFilters(final Highlight highlight) {
         // Store the current data for each filter.
-        monitors.forEach(ElementMonitor::clear);
+        monitors.forEach(elementMonitor -> elementMonitor.clear(highlight));
 
         // Clear all indicators.
         final LoggingErrorReceiver loggingErrorReceiver = getErrorReceiver();
@@ -241,9 +255,8 @@ public class SteppingController {
 
     private LoggingErrorReceiver getErrorReceiver() {
         final ErrorReceiver errorReceiver = errorReceiverProxy.getErrorReceiver();
-        if (errorReceiver != null && errorReceiver instanceof LoggingErrorReceiver) {
-            final LoggingErrorReceiver loggingErrorReceiver = (LoggingErrorReceiver) errorReceiver;
-            return loggingErrorReceiver;
+        if (errorReceiver instanceof LoggingErrorReceiver) {
+            return (LoggingErrorReceiver) errorReceiver;
         }
         return null;
     }
@@ -251,8 +264,6 @@ public class SteppingController {
     /**
      * Used to decide if we have found a record that is in the appropriate
      * location, e.g. after the last returned record when stepping forward.
-     *
-     * @return
      */
     private boolean isRecordPositionOk(final long currentRecordNo) {
         // final PipelineStepTask request = controller.getRequest();

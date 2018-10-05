@@ -14,28 +14,37 @@
  * limitations under the License.
  */
 
-package stroom.app.client.presenter;
+package stroom.core.client.presenter;
 
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ContentSlot;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
+import stroom.core.client.presenter.CorePresenter.CoreProxy;
+import stroom.core.client.presenter.CorePresenter.CoreView;
 import stroom.security.client.ClientSecurityContext;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
 
-public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter.AppProxy>
+public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
         implements TaskStartHandler, TaskEndHandler {
+    @ContentSlot
+    public static final Type<RevealContentHandler<?>> CORE = new Type<>();
+
     private final ClientSecurityContext securityContext;
 
     @Inject
-    public AppPresenter(final EventBus eventBus, final AppView view, final AppProxy proxy,
-                        final ClientSecurityContext securityContext) {
+    public CorePresenter(final EventBus eventBus, final CoreView view, final CoreProxy proxy,
+                         final ClientSecurityContext securityContext) {
         super(eventBus, view, proxy);
         this.securityContext = securityContext;
     }
@@ -58,14 +67,14 @@ public class AppPresenter extends MyPresenter<AppPresenter.AppView, AppPresenter
 
     @Override
     protected void revealInParent() {
-        // Do nothing as this presenter merely deals with the loading spinner.
+        RevealRootContentEvent.fire(this, this);
     }
 
     @ProxyStandard
-    public interface AppProxy extends Proxy<AppPresenter> {
+    public interface CoreProxy extends Proxy<CorePresenter> {
     }
 
-    public interface AppView extends View {
+    public interface CoreView extends View {
         void showWorking(final String message);
 
         void hideWorking();

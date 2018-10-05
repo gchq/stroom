@@ -6,7 +6,69 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0-beta.3]
+* Issue **#854** : The activity screen no longer shows a permission error when shown to non admin users.
+
+* Issue **#853** : The activity chooser will no longer display on startup if activity tracking is not enabled.
+
+* Issue **#855** : Fixed stepping data that contains a BOM.
+
+## [v6.0-beta.4]
+
+* Change base docker image to openjdk:8u171-jdk-alpine
+
+* Improved loading of activity list prior to showing the chooser dialog.
+
+* Issue **#852** : Fix for more required permissions when logging other 'find' events.
+
+* Issue **#730** : Changed the default initial page for some document types.
+
+* Issue **#852** : Fix for required permission when logging 'find' events.
+
+* Changed the way the root pane loads so that error popups that appear when the main page is loading are not hidden.
+
+* Issue **#851** : Added additional type info to type id when logging events.
+
+* Issue **#848** : Fixed various issues related to stream processor filter editor.
+
+* Issue **#815** : `stroom.pageTitle` property changed to `stroom.htmlTitle`.
+
+* Issue **#732** : Added `host-address` and `host-name` XSLT functions.
+
+* Issue **#338** : Added `splitAggregatedStreams` property to `StreamAppender`, `FileAppender` and `HDFSFileAppender` so that aggregated streams can be split into separate streams on output.
+
+* Issue **#338** : Added `streamNo` path replacement variable for files to record the stream number within an aggregate.
+
+* Added tests and fixed sorting of server tasks.
+
+* Improved the way text input and output is buffered and recorded when stepping.
+
+* The find and replace filter now resets the match count in between nested streams so that each stream is treated the same way, i.e. it can have the same number of text replacements.
+
+* Added multiple fixes and improvements to the find and replace filter including limited support of input/output recording when stepping.
+
+* Issue **#827** : Added `TextReplacementFilterReader` pipeline element.
+
+* Issue **#736** : Added sorting to server tasks table.
+
+* Inverted the behaviour of `disableQueryInfo` to now be `requireQueryInfo`.
+
+* Issue **#596** : Rolling stream and file appenders can now roll on a cron schedule in addition to a frequency.
+
+* The accept button now enabled on splash screen.
+
+* Added additional event logging to stepping.
+
+* An activity property with an id of `disableQueryInfo` can now be used to disable the query info popup on a per activity basis.
+
+* Activity properties can now include the attributes `id`, `name`, `showInSelection` and `showInList` to determine their appearance and behaviour;
+
+* Nested elements are now usable in the activity editor HTML.
+
+* Record counts are now recorded on a per output stream basis even when splitting output streams.
+
+* Splash presenter buttons are now always enabled.
+
+* Fix background colour to white on activity pane.
 
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 
@@ -1017,7 +1079,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.3...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.4...6.0
+[v6.0-beta.4]: https://github.com/gchq/stroom/compare/v6.0-beta.3...v6.0-beta.4
 [v6.0-beta.3]: https://github.com/gchq/stroom/compare/v6.0-beta.2...v6.0-beta.3
 [v6.0-beta.2]: https://github.com/gchq/stroom/compare/v6.0-beta.1...v6.0-beta.2
 [v6.0-beta.1]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...v6.0-beta.1

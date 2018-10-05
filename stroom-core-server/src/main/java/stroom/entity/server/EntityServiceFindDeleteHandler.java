@@ -21,9 +21,11 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import org.springframework.context.annotation.Scope;
-import stroom.logging.DocumentEventLog;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
+import stroom.logging.DocumentEventLog;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.shared.SharedLong;
@@ -38,25 +40,29 @@ class EntityServiceFindDeleteHandler
         extends AbstractTaskHandler<EntityServiceFindDeleteAction<BaseCriteria, SharedObject>, SharedLong> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog documentEventLog;
+    private final SecurityContext securityContext;
 
     @Inject
-    EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry, final DocumentEventLog documentEventLog) {
+    EntityServiceFindDeleteHandler(final EntityServiceBeanRegistry beanRegistry,
+                                   final DocumentEventLog documentEventLog,
+                                   final SecurityContext securityContext) {
         this.beanRegistry = beanRegistry;
         this.documentEventLog = documentEventLog;
+        this.securityContext = securityContext;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public SharedLong exec(final EntityServiceFindDeleteAction<BaseCriteria, SharedObject> action) {
-        Long result = null;
+        Long result;
 
-        final And and = new And();
-        final Advanced advanced = new Advanced();
-        advanced.getAdvancedQueryItems().add(and);
         final Query query = new Query();
-        query.setAdvanced(advanced);
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            final And and = new And();
+            final Advanced advanced = new Advanced();
+            advanced.getAdvancedQueryItems().add(and);
+            query.setAdvanced(advanced);
 
-        try {
             final Object entityService = beanRegistry.getEntityService(action.getCriteria().getClass());
             if (entityService != null) {
                 final SupportsCriteriaLogging<BaseCriteria> logging = (SupportsCriteriaLogging<BaseCriteria>) entityService;

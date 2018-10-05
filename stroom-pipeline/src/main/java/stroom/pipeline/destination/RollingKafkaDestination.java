@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.scheduler.SimpleCron;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,14 +26,15 @@ public class RollingKafkaDestination extends RollingDestination {
     private final Consumer<Throwable> logOnlyExceptionHandler;
 
     public RollingKafkaDestination(final String key,
-                                   final long frequency,
+                                   final Long frequency,
+                                   final SimpleCron schedule,
                                    final long rollSize,
                                    final long creationTime,
                                    final StroomKafkaProducer stroomKafkaProducer,
                                    final String recordKey,
                                    final String topic,
                                    final boolean flushOnSend) {
-        super(key, frequency, rollSize, creationTime);
+        super(key, frequency, schedule, rollSize, creationTime);
         this.stroomKafkaProducer = stroomKafkaProducer;
         this.recordKey = recordKey;
         this.topic = topic;

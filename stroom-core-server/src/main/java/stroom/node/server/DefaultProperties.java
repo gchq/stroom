@@ -655,9 +655,9 @@ public class DefaultProperties {
 
         // Welcome text 
         list.add(new GlobalProperty.Builder()
-                .name("stroom.pageTitle")
+                .name("stroom.htmlTitle")
                 .value("Stroom")
-                .description("The page title for Stroom shown in the browser tab")
+                .description("The title for Stroom shown in the browser tab")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()

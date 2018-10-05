@@ -43,7 +43,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 /**
  * Joins text instances into a single text instance.
@@ -54,7 +53,6 @@ import java.io.IOException;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class RollingStreamAppender extends AbstractRollingAppender implements RollingDestinationFactory {
-
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
     private final FeedService feedService;
@@ -78,7 +76,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    public RollingDestination createDestination() throws IOException {
+    public RollingDestination createDestination() {
         if (key.getStreamType() == null) {
             throw new ProcessException("Stream type not specified");
         }
@@ -96,6 +94,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         return new RollingStreamDestination(key,
                 getFrequency(),
+                getSchedule(),
                 getRollSize(),
                 System.currentTimeMillis(),
                 streamStore,
@@ -104,7 +103,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @Override
-    Object getKey() throws IOException {
+    Object getKey() {
         if (key == null) {
             key = new StreamKey(feed, streamType, segmentOutput);
         }
@@ -144,9 +143,19 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         this.streamType = streamType;
     }
 
-    @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
+    @PipelineProperty(description = "Should the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
+    }
+
+    @PipelineProperty(description = "Choose how frequently streams are rolled.", defaultValue = "1h")
+    public void setFrequency(final String frequency) {
+        super.setFrequency(frequency);
+    }
+
+    @PipelineProperty(description = "Provide a cron expression to determine when streams are rolled.")
+    public void setSchedule(final String expression) {
+        super.setSchedule(expression);
     }
 
     @PipelineProperty(description = "Choose the maximum size that a stream can be before it is rolled.", defaultValue = "100M")

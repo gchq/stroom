@@ -28,8 +28,9 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ContentSlot;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
+import stroom.core.client.presenter.CorePresenter;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.node.client.ClientPropertyCache;
@@ -41,7 +42,6 @@ import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTest;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
-
     @ContentSlot
     public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
@@ -83,7 +83,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         });
         registerHandler(clientPropertyCache.addPropertyChangeHandler(
                 event -> getView().setBanner(event.getProperties().get(ClientProperties.MAINTENANCE_MESSAGE))
-                ));
+        ));
 
         registerHandler(view.getSpinner().addClickHandler(event -> {
             if (click) {
@@ -130,7 +130,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 
     @Override
     protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
+        RevealContentEvent.fire(this, CorePresenter.CORE, this);
         RootPanel.get("logo").setVisible(false);
     }
 

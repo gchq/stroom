@@ -19,7 +19,6 @@ package stroom.dashboard.client.main;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -28,9 +27,12 @@ import com.gwtplatform.mvp.client.annotations.ContentSlot;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.presenter.CorePresenter;
+import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
+import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.DocRefUtil;
@@ -38,53 +40,29 @@ import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.event.CurrentUserChangedEvent;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
+import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 
 import javax.inject.Inject;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class DashboardAppPresenter
-        extends MyPresenter<DashboardAppPresenter.DashboardAppView, DashboardAppPresenter.DashboardAppProxy>
-        implements TaskStartEvent.TaskStartHandler, TaskEndEvent.TaskEndHandler {
-    private static final Logger logger = Logger.getLogger(DashboardAppPresenter.class.getName());
-
+public class DashboardMainPresenter
+        extends MyPresenter<DashboardMainView, DashboardMainProxy>
+        implements CurrentUserChangedHandler {
     @ContentSlot
     public static final GwtEvent.Type<RevealContentHandler<?>> CONTENT = new GwtEvent.Type<>();
 
-    private final ClientSecurityContext securityContext;
     private final DashboardPresenter dashboardPresenter;
+    private final ClientDispatchAsync dispatcher;
 
     private Dashboard dashboard;
     private String params;
 
     @Inject
-    public DashboardAppPresenter(final EventBus eventBus, final DashboardAppView view, final DashboardAppProxy proxy,
-                                 final ClientSecurityContext securityContext, final ClientDispatchAsync dispatcher,
-                                 final DashboardPresenter dashboardPresenter) {
+    public DashboardMainPresenter(final EventBus eventBus, final DashboardMainView view, final DashboardMainProxy proxy,
+                                  final ClientSecurityContext securityContext, final ClientDispatchAsync dispatcher,
+                                  final DashboardPresenter dashboardPresenter) {
         super(eventBus, view, proxy);
-        this.securityContext = securityContext;
         this.dashboardPresenter = dashboardPresenter;
-
-        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> {
-            RootLayoutPanel.get().clear();
-            RootPanel.get().clear();
-
-            final String type = Window.Location.getParameter("type");
-            final String uuid = Window.Location.getParameter("uuid");
-            params = Window.Location.getParameter("params");
-
-            if (type == null || uuid == null) {
-                AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
-
-            } else {
-                final DocRef docRef = new DocRef(type, uuid);
-                dispatcher.exec(new DocumentServiceReadAction<Dashboard>(docRef))
-                        .onSuccess(this::onLoadSuccess)
-                        .onFailure(this::onLoadFailure);
-            }
-        });
+        this.dispatcher = dispatcher;
 
         dashboardPresenter.addDirtyHandler(event -> {
             if (dashboard != null) {
@@ -108,6 +86,24 @@ public class DashboardAppPresenter
         });
     }
 
+    @ProxyEvent
+    @Override
+    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
+        final String type = Window.Location.getParameter("type");
+        final String uuid = Window.Location.getParameter("uuid");
+        params = Window.Location.getParameter("params");
+
+        if (type == null || uuid == null) {
+            AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
+
+        } else {
+            final DocRef docRef = new DocRef(type, uuid);
+            dispatcher.exec(new DocumentServiceReadAction<Dashboard>(docRef))
+                    .onSuccess(this::onLoadSuccess)
+                    .onFailure(this::onLoadFailure);
+        }
+    }
+
     private void onLoadSuccess(final Dashboard dashboard) {
         if (dashboard == null) {
             AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
@@ -116,8 +112,7 @@ public class DashboardAppPresenter
             this.dashboard = dashboard;
 
             setInSlot(CONTENT, dashboardPresenter);
-            RevealRootContentEvent.fire(DashboardAppPresenter.this, DashboardAppPresenter.this);
-            RootPanel.get("logo").setVisible(false);
+            forceReveal();
 
             dashboardPresenter.setParams(params);
             dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard);
@@ -131,33 +126,14 @@ public class DashboardAppPresenter
 
     @Override
     protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
+        RevealContentEvent.fire(this, CorePresenter.CORE, this);
         RootPanel.get("logo").setVisible(false);
     }
 
-    @ProxyEvent
-    @Override
-    public void onTaskStart(final TaskStartEvent event) {
-        if (!securityContext.isLoggedIn()) {
-            getView().showWorking(event.getMessage());
-        }
-    }
-
-    @ProxyEvent
-    @Override
-    public void onTaskEnd(final TaskEndEvent event) {
-        if (event.getTaskCount() == 0) {
-            getView().hideWorking();
-        }
-    }
-
     @ProxyStandard
-    public interface DashboardAppProxy extends Proxy<DashboardAppPresenter> {
+    public interface DashboardMainProxy extends Proxy<DashboardMainPresenter> {
     }
 
-    public interface DashboardAppView extends View {
-        void showWorking(final String message);
-
-        void hideWorking();
+    public interface DashboardMainView extends View {
     }
 }

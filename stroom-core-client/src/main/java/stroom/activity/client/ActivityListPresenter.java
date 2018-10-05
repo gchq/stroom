@@ -16,12 +16,15 @@
 
 package stroom.activity.client;
 
-import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -42,14 +45,32 @@ public class ActivityListPresenter
     public ActivityListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<Activity>(true));
 
-        // Name.
-        getView().addResizableColumn(new Column<Activity, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<Activity, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public String getValue(final Activity activity) {
-                if (activity == null) {
+            public SafeHtml getValue(final Activity activity) {
+                if (activity == null || activity.getDetails() == null || activity.getDetails().getProperties() == null) {
                     return null;
                 }
-                return activity.toString();
+
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                boolean doneOne = false;
+                for (final Prop prop : activity.getDetails().getProperties()) {
+                    if (prop.isShowInList()) {
+                        if (doneOne) {
+                            builder.appendHtmlConstant("<br/>");
+                        }
+                        doneOne = true;
+
+                        builder.appendHtmlConstant("<b>");
+                        builder.appendEscaped(prop.getName());
+                        builder.appendEscaped(":");
+                        builder.appendHtmlConstant("</b>");
+                        builder.appendEscaped(" ");
+                        builder.appendEscaped(prop.getValue());
+                    }
+                }
+
+                return builder.toSafeHtml();
             }
         }, "Activity", 600);
         getView().addEndColumn(new EndColumn<Activity>());
@@ -59,12 +80,6 @@ public class ActivityListPresenter
 
     public ButtonView addButton(final SvgPreset preset) {
         return getView().addButton(preset);
-    }
-
-    @Override
-    protected void onReveal() {
-        super.onReveal();
-        refresh();
     }
 
     @Override

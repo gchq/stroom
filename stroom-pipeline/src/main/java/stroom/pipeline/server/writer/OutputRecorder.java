@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.task.Recorder;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.Highlight;
 import stroom.util.spring.StroomScope;
 
 import java.io.ByteArrayOutputStream;
@@ -53,21 +54,21 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
     }
 
     @Override
-    public Destination borrowDestination() throws IOException {
+    public Destination borrowDestination() {
         return destination;
     }
 
     @Override
-    public void returnDestination(final Destination destination) throws IOException {
+    public void returnDestination(final Destination destination) {
     }
 
     @Override
-    public Object getData() {
+    public Object getData(final Highlight highlight) {
         return destination.getData();
     }
 
     @Override
-    public void clear() {
+    public void clear(final Highlight highlight) {
         destination.clear();
     }
 
@@ -87,12 +88,12 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         private byte[] footer;
 
         @Override
-        public OutputStream getByteArrayOutputStream() throws IOException {
+        public OutputStream getByteArrayOutputStream() {
             return outputStream;
         }
 
         @Override
-        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             this.header = header;
             this.footer = footer;
             return outputStream;
