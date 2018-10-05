@@ -290,14 +290,21 @@ const getMenuItems = (
         listingId={LISTING_ID}
         isCollapsed={isCollapsed}
       />
-      {menuItem.children &&
-        areMenuItemsOpen[menuItem.key] &&
-        getMenuItems(
-          isCollapsed,
-          menuItem.children,
-          areMenuItemsOpen,
-          depth + 1
-        )}
+      {/* TODO: we only want the 'children' class on the first set of children. We're using it to pad the bottom. Any better ideas? */}
+      {menuItem.children ? (
+        <div className={`${depth === 0 ? "sidebar__children" : ""}`}>
+          {menuItem.children &&
+            areMenuItemsOpen[menuItem.key] &&
+            getMenuItems(
+              isCollapsed,
+              menuItem.children,
+              areMenuItemsOpen,
+              depth + 1
+            )}
+        </div>
+      ) : (
+        undefined
+      )}
     </React.Fragment>
   ));
 

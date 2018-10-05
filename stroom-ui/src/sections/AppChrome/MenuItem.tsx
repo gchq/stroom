@@ -61,7 +61,7 @@ interface ConnectDispatch {
 }
 
 interface WithHandlers {
-  onCaretClick: React.MouseEventHandler<HTMLDivElement>;
+  onExpand: React.MouseEventHandler<HTMLDivElement>;
   onTitleClick: React.MouseEventHandler<HTMLDivElement>;
 }
 
@@ -74,18 +74,18 @@ interface WithProps {
 
 export interface DndProps
   extends Props,
-  ConnectDispatch,
-  ConnectState,
-  WithHandlers { }
+    ConnectDispatch,
+    ConnectState,
+    WithHandlers {}
 
 interface EnhancedProps
   extends Props,
-  ConnectState,
-  ConnectDispatch,
-  WithHandlers,
-  DragCollectedProps,
-  DropCollectedProps,
-  WithProps { }
+    ConnectState,
+    ConnectDispatch,
+    WithHandlers,
+    DragCollectedProps,
+    DropCollectedProps,
+    WithProps {}
 
 const dropTarget: DropTargetSpec<DndProps> = {
   canDrop({ menuItem: { docRef } }, monitor) {
@@ -118,13 +118,13 @@ const dropTarget: DropTargetSpec<DndProps> = {
 
 const dropCollect: DropTargetCollector<
   DropCollectedProps
-  > = function dropCollect(connect, monitor) {
-    return {
-      connectDropTarget: connect.dropTarget(),
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop()
-    };
+> = function dropCollect(connect, monitor) {
+  return {
+    connectDropTarget: connect.dropTarget(),
+    isOver: monitor.isOver(),
+    canDrop: monitor.canDrop()
   };
+};
 
 const dragSource: DragSourceSpec<DndProps, DragObject> = {
   canDrag({ menuItem: { docRef } }) {
@@ -140,12 +140,12 @@ const dragSource: DragSourceSpec<DndProps, DragObject> = {
 
 const dragCollect: DragSourceCollector<
   DragCollectedProps
-  > = function dragCollect(connect, monitor) {
-    return {
-      connectDragSource: connect.dragSource(),
-      isDragging: monitor.isDragging()
-    };
+> = function dragCollect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
   };
+};
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -175,7 +175,7 @@ const enhance = compose<EnhancedProps, Props>(
     }
   ),
   withHandlers({
-    onCaretClick: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (
+    onExpand: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (
       e: MouseEvent
     ) => {
       menuItemOpened(menuItem.key, !areMenuItemsOpen[menuItem.key]);
@@ -199,7 +199,8 @@ const enhance = compose<EnhancedProps, Props>(
       isSelected,
       depth,
       className,
-      areMenuItemsOpen
+      areMenuItemsOpen,
+      isCollapsed
     }) => {
       const classNames = [];
 
@@ -224,13 +225,19 @@ const enhance = compose<EnhancedProps, Props>(
         classNames.push("selected");
       }
 
+      const hasChildren = menuItem.children && menuItem.children.length > 0;
+      const isShowingChildren = areMenuItemsOpen[menuItem.key];
+      if (hasChildren && isShowingChildren) {
+        classNames.push("has-children--open");
+      }
+
       return {
         style: { paddingLeft: `${depth * 0.7}rem` },
         className: classNames.join(" "),
-        hasChildren: menuItem.children && menuItem.children.length > 0,
+        hasChildren,
         hasChildrenIcon: `folder${
-          areMenuItemsOpen[menuItem.key] ? "-open" : "-plus"
-          }` as IconProp,
+          isShowingChildren ? "-open" : "-plus"
+        }` as IconProp,
         isHeader: menuItem.key !== "stroom"
       };
     }
@@ -245,7 +252,7 @@ let MenuItem = ({
   connectDropTarget,
   connectDragSource,
   onTitleClick,
-  onCaretClick,
+  onExpand,
   className,
   style,
   isCollapsed
@@ -254,22 +261,21 @@ let MenuItem = ({
     connectDropTarget(
       <div className={className} style={style}>
         {hasChildren ? (
-          <div className="menu-item__menu-icon" onClick={onCaretClick}>
-            <FontAwesomeIcon size='lg' icon={hasChildrenIcon} />
+          <div className="menu-item__menu-icon" onClick={onExpand}>
+            <FontAwesomeIcon size="lg" icon={hasChildrenIcon} />
           </div>
         ) : (
-            // ) : isHeader ? (
-            //   <div className="menu-item__has-no-children-spacer" />
-            <div className="menu-item__menu-icon">
-              <FontAwesomeIcon size='lg' icon={menuItem.icon} />
-            </div>
-          )}
-        {isCollapsed ? (undefined)
-          : (
-            <span onClick={onTitleClick} className="menu-item__text">
-              {menuItem.title}
-            </span>
-          )}
+          <div className="menu-item__menu-icon">
+            <FontAwesomeIcon size="lg" icon={menuItem.icon} />
+          </div>
+        )}
+        {isCollapsed ? (
+          undefined
+        ) : (
+          <span onClick={onTitleClick} className="menu-item__text">
+            {menuItem.title}
+          </span>
+        )}
       </div>
     )
   );

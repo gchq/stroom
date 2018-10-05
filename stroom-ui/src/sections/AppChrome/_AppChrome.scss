@@ -106,6 +106,10 @@
   width: 1.5rem !important;
 }
 
+.sidebar__children {
+  margin-bottom: 0.4rem;
+}
+
 .app-chrome__content {
   position: relative;
   width: 100%;
@@ -158,6 +162,11 @@
 .menu-item__menu-icon {
   padding: 0 0.3125rem 0 0.4125rem;
 }
+
+.sidebar__menu-item.has-children--open{
+  padding-bottom: 0;
+}
+
 .menu-item__text{
   padding-left: 0.65rem;
 }
