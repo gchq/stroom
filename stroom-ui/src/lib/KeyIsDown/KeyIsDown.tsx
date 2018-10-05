@@ -11,7 +11,7 @@ export interface Props {
 }
 
 const KeyIsDown = (
-  filters: Array<String> = ["Control", "Shift", "Alt", "Meta"]
+  filters: Array<string> = ["Control", "Shift", "Alt", "Meta"]
 ) =>
   compose(
     connect(

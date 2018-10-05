@@ -21,10 +21,6 @@ import FetchAdapter, {
   HttpRequest,
   HttpResponse
 } from "@pollyjs/adapter-fetch";
-
-// Register the fetch adapter so its accessible by all future polly instances
-Polly.register(FetchAdapter);
-
 import * as JsSearch from "js-search";
 
 import {
@@ -33,12 +29,10 @@ import {
   findByUuids,
   deleteItemsFromTree,
   iterateNodes
-} from "../treeUtils";
-import { GlobalStoreState } from "../../startup/reducers";
-import { actionCreators as fetchActionCreators } from "../fetchTracker.redux";
+} from "../../lib/treeUtils";
+import { actionCreators as fetchActionCreators } from "../../lib/fetchTracker.redux";
 import withConfig from "../../startup/withConfig";
 import { Config } from "../../startup/config";
-import { DocRefTypeList } from "../../components/DocRefTypes/redux";
 import {
   DocRefType,
   DocRefTree,
@@ -50,10 +44,19 @@ import {
   DataSourceType,
   StreamTaskType
 } from "../../types";
-
 import { StreamAttributeMapResult } from "../../sections/DataViewer/types";
+import { DocRefTypeList } from "../../components/DocRefTypes/redux";
+import { GlobalStoreState } from "../../startup/reducers";
 
 const { resetAllUrls } = fetchActionCreators;
+
+// Register the fetch adapter so its accessible by all future polly instances
+Polly.register(FetchAdapter);
+
+// Whats this?
+// export const DevServerDecorator = (storyFn: RenderFunction) => (
+//   <DevServerComponent>{storyFn()}</DevServerComponent>
+// );
 
 const testConfig: Config = {
   authenticationServiceUrl: "/authService/authentication/v1",
@@ -104,10 +107,11 @@ const testCache: TestCache = {};
 
 const startTime = Date.now();
 
-// This is normally deployed as part of the server
+// Hot loading should pass through
 server.get("*.hot-update.json").passthrough();
 
-server.get("/config.json").intercept((req: HttpRequest, res: any) => {
+// This is normally deployed as part of the server
+server.get("/config.json").intercept((req: HttpRequest, res: HttpResponse) => {
   res.json(testConfig);
 });
 
@@ -190,7 +194,7 @@ server
     };
     res.json(info);
   });
-// Get Document Types
+// // Get Document Types
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/docRefTypes`)
   .intercept((req: HttpRequest, res: HttpResponse) => {
@@ -200,12 +204,9 @@ server
 server
   .post(`${testConfig.stroomBaseServiceUrl}/explorer/v1/create`)
   .intercept((req: HttpRequest, res: HttpResponse) => {
-    const {
-      docRefType,
-      docRefName,
-      destinationFolderRef
-      //permissionInheritance
-    } = JSON.parse(req.body);
+    const { docRefType, docRefName, destinationFolderRef } = JSON.parse(
+      req.body
+    );
 
     const newDocRef = {
       uuid: uuidv4(),
@@ -221,7 +222,6 @@ server
 
     res.json(testCache.data!.documentTree);
   });
-
 // Copies need to be deep
 const copyDocRef = (docRef: DocRefTree): DocRefTree => ({
   uuid: uuidv4(),
@@ -401,7 +401,7 @@ interface ConnectDispatch {
 
 export interface EnhancedProps extends ConnectState, ConnectDispatch {}
 
-const setupTestServer = (testData: TestData) =>
+export const setupTestServer = (testData: TestData) =>
   compose<EnhancedProps, Props>(
     connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
       ({ config: { values } }) => ({ config: values }),
@@ -433,5 +433,3 @@ const setupTestServer = (testData: TestData) =>
     }),
     withConfig
   );
-
-export default setupTestServer;
