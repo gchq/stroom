@@ -7,22 +7,56 @@ server:
   adminConnectors:
     - type: http
       port: ${STROOM_ADMIN_PORT:-8081}
-  #The following two lines stop the logging of requests to the web server as this gets quite noisy with
-  #lots of background rpc calls going on
+
   requestLog:
-    appenders: []
+    appenders:
+    - type: file
+      currentLogFilename: ${HOME}/.stroom/logs/access.log
+      threshold: ALL
+      queueSize: 256
+      discardingThreshold: 0
+      archive: true
+      archivedLogFilenamePattern: ${HOME}/.stroom/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedFileCount: 100
+      timeZone: UTC
+      logFormat: "%-5p [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] %c: %m%n%rEx"
 
 logging:
-  level: ERROR
+  level: ${STROOM_LOGGING_LEVEL:- ERROR}
   loggers:
     stroom: INFO
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
+    "event-logger":
+      level: INFO
+      additive: false
+      appenders:
+      - type: file
+        currentLogFilename: ${HOME}/.stroom/logs/event.log
+        threshold: ALL
+        queueSize: 256
+        discardingThreshold: 0
+        archive: true
+        archivedLogFilenamePattern: ${HOME}/.stroom/logs/event-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedFileCount: 100
+        timeZone: UTC
+        logFormat: "%msg%n"
+
   appenders:
-    - type: console
-      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
-      timeZone: UTC
+  - type: console
+    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger{5} - %X{code} %msg %n"
+    timeZone: UTC
+  - type: file
+    currentLogFilename: ${HOME}/.stroom/logs/app.log
+    threshold: ALL
+    queueSize: 256
+    discardingThreshold: 0
+    archive: true
+    archivedLogFilenamePattern: ${HOME}/.stroom/logs/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedFileCount: 100
+    timeZone: UTC
+    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
   benchmark:

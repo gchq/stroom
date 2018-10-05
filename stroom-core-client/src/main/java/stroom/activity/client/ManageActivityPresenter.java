@@ -120,7 +120,8 @@ public class ManageActivityPresenter extends
 
     public void showInitial(final Consumer<Activity> consumer) {
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final boolean show = uiConfig.getActivityConfig().isChooseOnStartup();
+            final boolean show = uiConfig.getActivityConfig().isChooseOnStartup() &&
+                    uiConfig.getActivityConfig().isEnabled();
             if (show) {
                 show(consumer);
             } else {
