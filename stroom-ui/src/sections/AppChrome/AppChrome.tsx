@@ -291,16 +291,14 @@ const getMenuItems = (
         isCollapsed={isCollapsed}
       />
       {/* TODO: we only want the 'children' class on the first set of children. We're using it to pad the bottom. Any better ideas? */}
-      {menuItem.children ? (
+      {menuItem.children && areMenuItemsOpen[menuItem.key] ? (
         <div className={`${depth === 0 ? "sidebar__children" : ""}`}>
-          {menuItem.children &&
-            areMenuItemsOpen[menuItem.key] &&
-            getMenuItems(
-              isCollapsed,
-              menuItem.children,
-              areMenuItemsOpen,
-              depth + 1
-            )}
+          {getMenuItems(
+            isCollapsed,
+            menuItem.children,
+            areMenuItemsOpen,
+            depth + 1
+          )}
         </div>
       ) : (
         undefined
