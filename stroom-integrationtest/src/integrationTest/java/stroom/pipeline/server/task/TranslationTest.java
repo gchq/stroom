@@ -434,6 +434,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             request.setStepType(direction);
             final SteppingResult stepResponse = taskManager.exec(request);
 
+            if (stepResponse.getGeneralErrors() != null && stepResponse.getGeneralErrors().size() > 0) {
+                throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
+            }
+
             if (stepResponse.isFoundRecord()) {
                 final SharedStepData stepData = stepResponse.getStepData();
                 for (final String elementId : stepData.getElementMap().keySet()) {
