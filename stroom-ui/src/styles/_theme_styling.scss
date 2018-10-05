@@ -285,11 +285,7 @@ input {
     color: themed("text__color--deemphasised");
   }
 }
-.app-chrome__sidebar__toggle {
-  @include themify($themes) {
-    color: themed("sidebar__header-color") !important;
-  }
-}
+
 
 .tooltip-popup {
   @include themify($themes) {
@@ -382,6 +378,11 @@ body ::-webkit-scrollbar-thumb {
   }
 }
 
+.app-chrome__sidebar_header:hover {
+  @include themify($themes) {
+    background-color:themed('raised-high__selected-background-color');
+  }
+}
 
 .sidebar__menu-item.nav:hover{
   @include themify($themes) {

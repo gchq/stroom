@@ -22,7 +22,6 @@ import { withRouter, RouteComponentProps } from "react-router-dom";
 import "simplebar";
 import "simplebar/dist/simplebar.css";
 
-import Button from "../../components/Button";
 import {
   actionCreators as selectableItemListingActionCreators,
   EnhancedProps as WithSelectableItemListingProps,
@@ -46,6 +45,7 @@ import { actionCreators as userSettingsActionCreators } from "../UserSettings";
 import withSelectableItemListing from "../../lib/withSelectableItemListing";
 import { DocRefType, DocRefConsumer, DocRefTree } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const { selectionToggled } = selectableItemListingActionCreators;
 const { menuItemOpened } = appChromeActionCreators;
@@ -329,13 +329,15 @@ const AppChrome = ({
         <CopyDocRefDialog listingId={LISTING_ID} />
         <div className={`app-chrome__sidebar raised-high ${sidebarClassName}`}>
           <React.Fragment>
-            <div className="app-chrome__sidebar_header header">
-              <Button
+            <div
+              className="app-chrome__sidebar_header header"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <FontAwesomeIcon
                 aria-label="Show/hide the sidebar"
-                className="app-chrome__sidebar__toggle raised-high borderless "
+                className="menu-item__menu-icon sidebar__toggle sidebar__menu-item borderless "
                 icon="bars"
-                size="xlarge"
-                onClick={() => setIsExpanded(!isExpanded)}
+                size="2x"
               />
               {isExpanded ? (
                 <img

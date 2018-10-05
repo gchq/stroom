@@ -29,7 +29,7 @@
 .app-chrome__sidebar-menu {
   overflow-y: auto;
   position:absolute;
-  height: calc(100% - 30px);
+  height: calc(100% - 2.2rem);
   width: 100%;
 }
 
@@ -40,22 +40,13 @@
   flex-direction:column;
 }
 
-.app-chrome__sidebar__toggle {
-  color: #ff6f00 !important;
-  position: absolute;
-}
-
-.app-chrome__sidebar__toggle_collapsed {
-  position: relative;
-}
-
 .app-chrome__sidebar__buttons .button {
   color: white !important;
 }
 
 .app-chrome__sidebar_header {
   position: relative;
-  height: 1.85rem;
+  height: 2.2rem;
 }
 
 .sidebar__menu-item {
@@ -64,7 +55,7 @@
 }
 
 .sidebar__menu-item.nav {
-  padding: 0.7rem 0 0 0.1rem ;
+  padding: 0.35rem 0 0.35rem 0.1rem ;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -111,6 +102,10 @@
 .sidebar__menu-item.doc.cannot-drop {
   color: red;
 }
+.sidebar__toggle {
+  width: 1.5rem !important;
+}
+
 .app-chrome__content {
   position: relative;
   width: 100%;
