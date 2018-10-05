@@ -158,7 +158,7 @@ input {
 
 :focus .inFocus {
   @include themify($themes) {
-    border: solid thick themed("selected-color") !important;
+    background-color: themed("raised-high__selected-background-color") !important;
   }
 }
 
@@ -172,7 +172,7 @@ input {
 
 :focus .raised-high .inFocus {
   @include themify($themes) {
-    border: solid thick themed("raised-high__selected-background-color") !important;
+    background-color: themed("raised-high__selected-background-color") !important;
   }
 }
 
