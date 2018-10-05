@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.server.reader;
+package stroom.pipeline.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.server.task.Recorder;
+import stroom.pipeline.stepping.Recorder;
 import stroom.util.shared.Highlight;
 
 import java.io.ByteArrayOutputStream;
