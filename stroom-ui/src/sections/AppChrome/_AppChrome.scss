@@ -23,7 +23,7 @@
 }
 
 .app-chrome__sidebar--collapsed {
-  width: 2.25rem;
+  width: 2.7rem;
 }
 
 .app-chrome__sidebar-menu {
@@ -55,7 +55,7 @@
 
 .app-chrome__sidebar_header {
   position: relative;
-  height:40px;
+  height: 1.85rem;
 }
 
 .sidebar__menu-item {
@@ -64,7 +64,7 @@
 }
 
 .sidebar__menu-item.nav {
-  padding: 0.4rem;
+  padding: 0.7rem 0 0 0.1rem ;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -75,7 +75,7 @@
 
 .sidebar__menu-item.doc {
   color: #cacbcb;
-  padding: 0.1rem;
+  // padding: 0.1rem;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -96,8 +96,11 @@
   font-size: 0.85rem;
 }
 
-.sidebar__menu-item.collapsed {
-  padding: 0 !important;
+.sidebar__menu-item.doc.collapsed {
+  padding: 0 0 0 0.1rem !important ;
+}
+
+.sidebar__menu-item.nav.collapsed {
 }
 
 .sidebar__menu-item.doc.can-drop {
@@ -157,7 +160,6 @@
 
 .menu-item__menu-icon {
   padding: 0 0.3125rem 0 0.4125rem;
-  width: 1.1rem !important;
 }
 .menu-item__text{
   padding-left: 0.65rem;
