@@ -60,6 +60,7 @@
     "redux-localstorage": "^0.4.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.3.0",
+    "simplebar": "^3.0.0-beta.5",
     "sjcl": "^1.0.7",
     "uuid": "^3.3.2"
   },

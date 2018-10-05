@@ -19,7 +19,9 @@ import { connect } from "react-redux";
 import { compose, withProps, withHandlers } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 
-import Button from "../../components/Button";
+import "simplebar";
+import "simplebar/dist/simplebar.css";
+
 import {
   actionCreators as selectableItemListingActionCreators,
   EnhancedProps as WithSelectableItemListingProps,
@@ -43,6 +45,7 @@ import { actionCreators as userSettingsActionCreators } from "../UserSettings";
 import withSelectableItemListing from "../../lib/withSelectableItemListing";
 import { DocRefType, DocRefConsumer, DocRefTree } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const { selectionToggled } = selectableItemListingActionCreators;
 const { menuItemOpened } = appChromeActionCreators;
@@ -70,21 +73,21 @@ const getDocumentTreeMenuItems = (
   children:
     treeNode.children && treeNode.children.length > 0
       ? treeNode.children
-        .filter(t => t.type === "Folder")
-        .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
+          .filter(t => t.type === "Folder")
+          .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
       : undefined
 });
 
-const getOpenMenuItems = function <
+const getOpenMenuItems = function<
   T extends {
     key: string;
     children?: Array<T>;
   }
-  >(
-    menuItems: Array<T>,
-    areMenuItemsOpen: MenuItemsOpenStoreState,
-    openMenuItems: Array<T> = []
-  ) {
+>(
+  menuItems: Array<T>,
+  areMenuItemsOpen: MenuItemsOpenStoreState,
+  openMenuItems: Array<T> = []
+) {
   menuItems.forEach(menuItem => {
     openMenuItems.push(menuItem);
     if (menuItem.children && areMenuItemsOpen[menuItem.key]) {
@@ -123,14 +126,14 @@ interface WithProps {
 
 interface EnhancedProps
   extends Props,
-  WithDocumentTreeProps,
-  RouteComponentProps<any>,
-  WithHandlers,
-  ConnectState,
-  ConnectDispatch,
-  WithIsExpanded,
-  WithProps,
-  WithSelectableItemListingProps<MenuItemType> { }
+    WithDocumentTreeProps,
+    RouteComponentProps<any>,
+    WithHandlers,
+    ConnectState,
+    ConnectDispatch,
+    WithIsExpanded,
+    WithProps,
+    WithSelectableItemListingProps<MenuItemType> {}
 
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
@@ -144,22 +147,22 @@ const enhance = compose<EnhancedProps, Props>(
     ConnectDispatch,
     Props & WithDocumentTreeProps & RouteComponentProps<any> & WithHandlers,
     GlobalStoreState
-    >(
-      ({
-        selectableItemListings,
-        userSettings: { theme },
-        appChrome: { areMenuItemsOpen }
-      }) => ({
-        areMenuItemsOpen,
-        theme,
-        selectableItemListing: selectableItemListings[LISTING_ID]
-      }),
-      {
-        menuItemOpened,
-        themeChanged,
-        selectionToggled
-      }
-    ),
+  >(
+    ({
+      selectableItemListings,
+      userSettings: { theme },
+      appChrome: { areMenuItemsOpen }
+    }) => ({
+      areMenuItemsOpen,
+      theme,
+      selectableItemListing: selectableItemListings[LISTING_ID]
+    }),
+    {
+      menuItemOpened,
+      themeChanged,
+      selectionToggled
+    }
+  ),
   withIsExpanded,
   // We need to work out how to do these global shortcuts from scratch, now that we don't have dedicated pages
   // lifecycle({
@@ -269,7 +272,8 @@ const enhance = compose<EnhancedProps, Props>(
   )
 );
 
-const getExpandedMenuItems = (
+const getMenuItems = (
+  isCollapsed: boolean = false,
   menuItems: Array<MenuItemType>,
   areMenuItemsOpen: MenuItemsOpenStoreState,
   depth: number = 0
@@ -277,30 +281,28 @@ const getExpandedMenuItems = (
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
-        className="sidebar__text-color"
+        className={`sidebar__text-color ${isCollapsed ? "collapsed" : ""} ${
+          depth > 0 ? "child" : ""
+        }`}
         key={menuItem.key}
         menuItem={menuItem}
         depth={depth}
         listingId={LISTING_ID}
+        isCollapsed={isCollapsed}
       />
-      {menuItem.children &&
-        areMenuItemsOpen[menuItem.key] &&
-        getExpandedMenuItems(menuItem.children, areMenuItemsOpen, depth + 1)}
-    </React.Fragment>
-  ));
-
-const getContractedMenuItems = (menuItems: Array<MenuItemType>) =>
-  menuItems.map(menuItem => (
-    <React.Fragment key={menuItem.key}>
-      {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
-        <Button
-          className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
-          key={menuItem.title}
-          icon={menuItem.icon}
-          onClick={menuItem.onClick}
-        />
+      {/* TODO: we only want the 'children' class on the first set of children. We're using it to pad the bottom. Any better ideas? */}
+      {menuItem.children && areMenuItemsOpen[menuItem.key] ? (
+        <div className={`${depth === 0 ? "sidebar__children" : ""}`}>
+          {getMenuItems(
+            isCollapsed,
+            menuItem.children,
+            areMenuItemsOpen,
+            depth + 1
+          )}
+        </div>
+      ) : (
+        undefined
       )}
-      {menuItem.children && getContractedMenuItems(menuItem.children)}
     </React.Fragment>
   ));
 
@@ -331,40 +333,38 @@ const AppChrome = ({
         <DeleteDocRefDialog listingId={LISTING_ID} />
         <CopyDocRefDialog listingId={LISTING_ID} />
         <div className={`app-chrome__sidebar raised-high ${sidebarClassName}`}>
-          {isExpanded ? (
-            <React.Fragment>
-              <div className="app-chrome__sidebar_header header">
-                <Button
-                  aria-label="Show/hide the sidebar"
-                  className="app-chrome__sidebar__toggle raised-high borderless "
-                  icon="bars"
-                  size="xlarge"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                />
+          <React.Fragment>
+            <div
+              className="app-chrome__sidebar_header header"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <FontAwesomeIcon
+                aria-label="Show/hide the sidebar"
+                className="menu-item__menu-icon sidebar__toggle sidebar__menu-item borderless "
+                icon="bars"
+                size="2x"
+              />
+              {isExpanded ? (
                 <img
                   className="sidebar__logo"
                   alt="Stroom logo"
                   src={require("../../images/logo.svg")}
                 />
+              ) : (
+                undefined
+              )}
+            </div>
+            <div
+              tabIndex={0}
+              onKeyDown={onKeyDownWithShortcuts}
+              className="app-chrome__sidebar-menu raised-high"
+              data-simplebar
+            >
+              <div className="app-chrome__sidebar-menu__container">
+                {getMenuItems(!isExpanded, menuItems, areMenuItemsOpen)}
               </div>
-              <div
-                tabIndex={0}
-                onKeyDown={onKeyDownWithShortcuts}
-                className="app-chrome__sidebar-menu raised-high"
-              >
-                {getExpandedMenuItems(menuItems, areMenuItemsOpen)}
-              </div>
-            </React.Fragment>
-          ) : (
-              <div className="app-chrome__sidebar__buttons">
-                <Button
-                  icon="bars"
-                  className="app-chrome__sidebar__toggle_collapsed raised-high borderless app-chrome__sidebar__toggle"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                />
-                {getContractedMenuItems(menuItems)}
-              </div>
-            )}
+            </div>
+          </React.Fragment>
         </div>
         <div className="app-chrome__content">
           <div className="content-tabs">

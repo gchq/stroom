@@ -45,6 +45,7 @@ interface Props extends StyledComponentProps {
   listingId: string;
   menuItem: MenuItemType;
   depth: number;
+  isCollapsed?: boolean;
 }
 
 interface ConnectState {
@@ -60,7 +61,7 @@ interface ConnectDispatch {
 }
 
 interface WithHandlers {
-  onCaretClick: React.MouseEventHandler<HTMLDivElement>;
+  onExpand: React.MouseEventHandler<HTMLDivElement>;
   onTitleClick: React.MouseEventHandler<HTMLDivElement>;
 }
 
@@ -174,7 +175,7 @@ const enhance = compose<EnhancedProps, Props>(
     }
   ),
   withHandlers({
-    onCaretClick: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (
+    onExpand: ({ menuItem, menuItemOpened, areMenuItemsOpen }) => (
       e: MouseEvent
     ) => {
       menuItemOpened(menuItem.key, !areMenuItemsOpen[menuItem.key]);
@@ -198,7 +199,8 @@ const enhance = compose<EnhancedProps, Props>(
       isSelected,
       depth,
       className,
-      areMenuItemsOpen
+      areMenuItemsOpen,
+      isCollapsed
     }) => {
       const classNames = [];
 
@@ -223,12 +225,18 @@ const enhance = compose<EnhancedProps, Props>(
         classNames.push("selected");
       }
 
+      const hasChildren = menuItem.children && menuItem.children.length > 0;
+      const isShowingChildren = areMenuItemsOpen[menuItem.key];
+      if (hasChildren && isShowingChildren) {
+        classNames.push("has-children--open");
+      }
+
       return {
         style: { paddingLeft: `${depth * 0.7}rem` },
         className: classNames.join(" "),
-        hasChildren: menuItem.children && menuItem.children.length > 0,
+        hasChildren,
         hasChildrenIcon: `folder${
-          areMenuItemsOpen[menuItem.key] ? "-open" : "-plus"
+          isShowingChildren ? "-open" : "-plus"
         }` as IconProp,
         isHeader: menuItem.key !== "stroom"
       };
@@ -244,28 +252,30 @@ let MenuItem = ({
   connectDropTarget,
   connectDragSource,
   onTitleClick,
-  onCaretClick,
+  onExpand,
   className,
-  style
+  style,
+  isCollapsed
 }: EnhancedProps) =>
   connectDragSource(
     connectDropTarget(
       <div className={className} style={style}>
         {hasChildren ? (
-          <div className="menu-item__menu-icon" onClick={onCaretClick}>
-            <FontAwesomeIcon icon={hasChildrenIcon} />
+          <div className="menu-item__menu-icon" onClick={onExpand}>
+            <FontAwesomeIcon size="lg" icon={hasChildrenIcon} />
           </div>
         ) : (
-          // ) : isHeader ? (
-          //   <div className="menu-item__has-no-children-spacer" />
           <div className="menu-item__menu-icon">
-            <FontAwesomeIcon icon={menuItem.icon} />
+            <FontAwesomeIcon size="lg" icon={menuItem.icon} />
           </div>
         )}
-
-        <span onClick={onTitleClick} className="menu-item__text">
-          {menuItem.title}
-        </span>
+        {isCollapsed ? (
+          undefined
+        ) : (
+          <span onClick={onTitleClick} className="menu-item__text">
+            {menuItem.title}
+          </span>
+        )}
       </div>
     )
   );
