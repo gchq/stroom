@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as React from "react";
-import { RenderFunction } from "@storybook/react";
-import { DragDropContext } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { storiesOf, addDecorator } from '@storybook/react';
 
-class WrappedComponent extends React.Component {
-  render() {
-    return this.props.children;
-  }
-}
+import DataDetails from 'sections/DataViewer/DataDetails';
+import { errorData, eventData } from './DataDetails.testData';
 
-const DragDropComponent = DragDropContext(HTML5Backend)(WrappedComponent);
-
-export const DragDropDecorator = (storyFn: RenderFunction) => (
-  <DragDropComponent>{storyFn()}</DragDropComponent>
-);
+storiesOf('DataDetails', module)
+  .add('Showing errors', props => <DataDetails data={errorData} />)
+  .add('Showing events', props => <DataDetails data={eventData} />);

@@ -93,6 +93,7 @@ export interface TestData {
 // Much easier to manage it this way
 const polly = new Polly("Mock Stroom API");
 polly.configure({
+  adapters: ["fetch"],
   logging: true
 });
 const { server } = polly;

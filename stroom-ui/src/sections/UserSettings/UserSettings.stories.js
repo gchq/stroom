@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as React from "react";
-import { RenderFunction } from "@storybook/react";
 
-import KeyIsDown from "../../lib/KeyIsDown";
+import * as React from 'react';
 
-class WrappedComponent extends React.Component {
-  render() {
-    return this.props.children;
-  }
-}
+import { storiesOf, addDecorator } from '@storybook/react';
 
-export const KeyIsDownDecorator = (filters: Array<string>) => (
-  storyFn: RenderFunction
-) => {
-  const KeyDownComponent = KeyIsDown(filters)(WrappedComponent);
-  return <KeyDownComponent>{storyFn()}</KeyDownComponent>;
-};
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+
+import UserSettings from './UserSettings';
+
+const PollyDecoratorWithTestData = PollyDecorator({});
+
+const stories = storiesOf('User Settings', module)
+  .addDecorator(PollyDecoratorWithTestData)
+  .add('Logged in', () => <UserSettings />);

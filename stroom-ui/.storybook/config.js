@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from "react";
+import * as React from "react";
 import * as storybook from "@storybook/react";
 import { setOptions } from "@storybook/addon-options";
 import StoryRouter from "storybook-react-router";
-
-// import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
-// import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-// import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-// import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
-// import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-// import { ThemedDecorator } from "lib/storybook/ThemedDecorator.tsx";
 
 const req = require.context("../src", true, /\.stories\.tsx$/);
 
@@ -107,13 +100,5 @@ setOptions({
    */
   enableShortcuts: false // true by default
 });
-
-// storybook.addDecorator(ThemedDecorator);
-// storybook.addDecorator(KeyIsDownDecorator());
-// storybook.addDecorator(PollyDecoratorWithTestData);
-// storybook.addDecorator(DragDropDecorator);
-// storybook.addDecorator(ReduxDecorator);
-// storybook.addDecorator(FontAwesomeDecorator);
-// storybook.addDecorator(StoryRouter());
 
 storybook.configure(loadStories, module);

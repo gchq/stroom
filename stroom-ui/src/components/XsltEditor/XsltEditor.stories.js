@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { RenderFunction } from "@storybook/react";
 import * as React from "react";
-import { Provider } from "react-redux";
+import { storiesOf } from "@storybook/react";
 
-import createStore from "../../startup/store";
+import { testXslt } from "./test";
+import XsltEditor from "./XsltEditor";
 
-const store = createStore();
+import "../../styles/main.css";
 
-export const ReduxDecorator = (storyFn: RenderFunction) => (
-  <Provider store={store}>{storyFn()}</Provider>
-);
+const stories = storiesOf("XSLT Editor", module);
+
+Object.entries(testXslt)
+  .map(k => ({
+    name: k[0],
+    data: k[1]
+  }))
+  .forEach(xslt =>
+    stories.add(xslt.name, () => <XsltEditor xsltUuid={xslt.name} />)
+  );

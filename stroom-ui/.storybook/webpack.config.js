@@ -9,9 +9,39 @@ module.exports = (config, configType) => {
 
   // Make whatever fine-grained changes you need
   config.module.rules.push({
-    test: /\.scss$/,
-    loaders: ["style-loader", "css-loader", "sass-loader"],
+    test: /\.(css)$/,
+    loaders: ["style-loader", "css-loader"],
     include: path.resolve(__dirname, "../")
+  });
+
+  // Fonts
+  config.module.rules.push({
+    test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    loader: "url-loader?limit=10000&mimetype=application/font-woff",
+    query: {
+      name: "static/media/files/[name].[hash:8].[ext]"
+    }
+  });
+  config.module.rules.push({
+    test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    loader: "file-loader",
+    query: {
+      name: "static/media/fonts/[name].[hash:8].[ext]"
+    }
+  });
+  // Load images.
+  config.module.rules.push({
+    test: /\.(gif|jpe?g|png)$/,
+    loader: "url-loader?limit=25000",
+    query: {
+      limit: 10000,
+      name: "static/media/images/[name].[hash:8].[ext]"
+    }
+  });
+  // jSon Loader
+  config.module.rules.push({
+    test: /\.json$/,
+    loader: "json-loader"
   });
 
   config.module.rules.push({

@@ -75,7 +75,8 @@
     "styleguide-js": "styleguidist server",
     "styleguide": "npm-run-all -p styleguide-js watch-css",
     "styleguide:build": "styleguidist build",
-    "storybook": "start-storybook -p 9001 -c .storybook"
+    "storybook-js": "start-storybook -p 9001 -c .storybook",
+    "storybook": "npm-run-all -p storybook-js watch-css"
   },
   "devDependencies": {
     "@storybook/addon-info": "^3.4.11",

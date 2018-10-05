@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as React from "react";
-import { RenderFunction } from "@storybook/react";
-import FontAwesomeProvider from "../../startup/FontAwesomeProvider";
 
-class WrappedComponent extends React.Component {
-  render() {
-    return this.props.children;
-  }
-}
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { storiesOf } from '@storybook/react';
 
-const FontAwesomeComponent = FontAwesomeProvider(WrappedComponent);
+import Pipeline from './Pipeline';
+import { testPipelines } from './test';
 
-export const FontAwesomeDecorator = (storyFn: RenderFunction) => (
-  <FontAwesomeComponent>{storyFn()}</FontAwesomeComponent>
-);
+const pipelineStories = storiesOf('Pipeline', module);
+
+Object.keys(testPipelines).forEach((k) => {
+  pipelineStories.add(k, () =>
+    <Pipeline
+      pipelineId={k}
+      onElementSelected={
+        () => console.log('Element has been selected')
+      }
+    />
+  );
+});
