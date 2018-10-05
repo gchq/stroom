@@ -121,7 +121,8 @@ public class ManageActivityPresenter extends
 
     void showInitial(final Consumer<Activity> consumer) {
         clientPropertyCache.get().onSuccess(clientProperties -> {
-            final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false);
+            final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false) &&
+                    clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false);
             if (show) {
                 show(consumer);
             } else {

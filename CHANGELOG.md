@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#854** : The activity screen no longer shows a permission error when shown to non admin users.
+
+* Issue **#853** : The activity chooser will no longer display on startup if activity tracking is not enabled.
+
+* Issue **#855** : Fixed stepping data that contains a BOM.
+
 ## [v6.0-beta.4]
 
 * Change base docker image to openjdk:8u171-jdk-alpine
