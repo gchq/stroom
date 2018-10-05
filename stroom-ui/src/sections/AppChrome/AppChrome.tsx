@@ -19,6 +19,9 @@ import { connect } from "react-redux";
 import { compose, withProps, withHandlers } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 
+import "simplebar";
+import "simplebar/dist/simplebar.css";
+
 import Button from "../../components/Button";
 import {
   actionCreators as selectableItemListingActionCreators,
@@ -348,6 +351,7 @@ const AppChrome = ({
               tabIndex={0}
               onKeyDown={onKeyDownWithShortcuts}
               className="app-chrome__sidebar-menu raised-high"
+              data-simplebar
             >
               <div className="app-chrome__sidebar-menu__container">
                 {getMenuItems(!isExpanded, menuItems, areMenuItemsOpen)}
