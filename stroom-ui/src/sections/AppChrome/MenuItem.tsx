@@ -39,6 +39,7 @@ export interface MenuItemType {
   children?: Array<MenuItemType>;
   docRef?: DocRefType;
   parentDocRef?: DocRefType;
+  isActive?: boolean;
 }
 
 interface Props extends StyledComponentProps {
@@ -204,7 +205,10 @@ const enhance = compose<EnhancedProps, Props>(
     }) => {
       const classNames = [];
 
-      if (className) classNames.push(className);
+      if (className) {
+        classNames.push(className);
+      }
+
       classNames.push("sidebar__menu-item");
       classNames.push(menuItem.style);
 
@@ -229,6 +233,10 @@ const enhance = compose<EnhancedProps, Props>(
       const isShowingChildren = areMenuItemsOpen[menuItem.key];
       if (hasChildren && isShowingChildren) {
         classNames.push("has-children--open");
+      }
+
+      if (menuItem.isActive) {
+        classNames.push("is-active");
       }
 
       return {

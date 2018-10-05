@@ -15,7 +15,7 @@
  */
 
 import { combineReducers } from "redux";
-import { routerReducer } from "react-router-redux";
+import { routerReducer, RouterState } from "react-router-redux";
 import { reducer as formReducer, FormStateMap } from "redux-form";
 import {
   reducer as keyIsDown,
@@ -130,6 +130,7 @@ export interface GlobalStoreState {
   debuggers: DebuggersStoreState;
   processing: ProcessingStoreState;
   dataViewers: DataViewersStoreState;
+  routing: RouterState;
 }
 
 export default combineReducers({

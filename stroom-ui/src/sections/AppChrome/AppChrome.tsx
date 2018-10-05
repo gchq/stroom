@@ -149,13 +149,15 @@ const enhance = compose<EnhancedProps, Props>(
     GlobalStoreState
   >(
     ({
+      routing: { location },
       selectableItemListings,
       userSettings: { theme },
       appChrome: { areMenuItemsOpen }
     }) => ({
       areMenuItemsOpen,
       theme,
-      selectableItemListing: selectableItemListings[LISTING_ID]
+      selectableItemListing: selectableItemListings[LISTING_ID],
+      location
     }),
     {
       menuItemOpened,
@@ -177,7 +179,8 @@ const enhance = compose<EnhancedProps, Props>(
       openDocRef,
       documentTree,
       areMenuItemsOpen,
-      menuItemOpened
+      menuItemOpened,
+      location
     }) => {
       const menuItems: Array<MenuItemType> = [
         {
@@ -185,7 +188,8 @@ const enhance = compose<EnhancedProps, Props>(
           title: "Welcome",
           onClick: () => history.push(`${pathPrefix}/welcome/`),
           icon: "home",
-          style: "nav"
+          style: "nav",
+          isActive: location.pathname.includes("/s/welcome")
         },
         getDocumentTreeMenuItems(openDocRef, undefined, documentTree),
         {
@@ -193,14 +197,16 @@ const enhance = compose<EnhancedProps, Props>(
           title: "Data",
           onClick: () => history.push(`${pathPrefix}/data`),
           icon: "database",
-          style: "nav"
+          style: "nav",
+          isActive: location.pathname.includes("/s/data")
         },
         {
           key: "processing",
           title: "Processing",
           onClick: () => history.push(`${pathPrefix}/processing`),
           icon: "play",
-          style: "nav"
+          style: "nav",
+          isActive: location.pathname.includes("/s/processing")
         },
         {
           key: "admin",
@@ -209,27 +215,34 @@ const enhance = compose<EnhancedProps, Props>(
           icon: "cogs",
           style: "nav",
           skipInContractedMenu: true,
+          isActive:
+            location.pathname.includes("/s/me") ||
+            location.pathname.includes("/s/users") ||
+            location.pathname.includes("/s/apikeys"),
           children: [
             {
               key: "admin-me",
               title: "Me",
               onClick: () => history.push(`${pathPrefix}/me`),
               icon: "user",
-              style: "nav"
+              style: "nav",
+              isActive: location.pathname.includes("/s/me")
             },
             {
               key: "admin-users",
               title: "Users",
               onClick: () => history.push(`${pathPrefix}/users`),
               icon: "users",
-              style: "nav"
+              style: "nav",
+              isActive: location.pathname.includes("/s/users")
             },
             {
               key: "admin-apikeys",
               title: "API Keys",
               onClick: () => history.push(`${pathPrefix}/apikeys`),
               icon: "key",
-              style: "nav"
+              style: "nav",
+              isActive: location.pathname.includes("/s/apikeys")
             }
           ]
         }
