@@ -7,6 +7,9 @@ import MoveDocRefDialog from "./MoveDocRefDialog";
 import { fromSetupSampleData } from "./test";
 import { actionCreators } from "./redux";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
+
+import "../../styles/main.css";
+
 const { prepareDocRefMove } = actionCreators;
 
 const testFolder2 = fromSetupSampleData.children![1];

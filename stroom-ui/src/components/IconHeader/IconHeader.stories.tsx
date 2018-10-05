@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { storiesOf } from '@storybook/react';
+import * as React from "react";
+import { storiesOf } from "@storybook/react";
 
-import { addThemedStories } from 'lib/themedStoryGenerator';
-import IconHeader from './IconHeader';
-import DocRefIconHeader from './DocRefIconHeader';
+import { addThemedStories } from "../../lib/themedStoryGenerator";
+import IconHeader from "./IconHeader";
 
-const iconHeaderStories = storiesOf('IconHeader', module);
+import "../../styles/main.css";
+
+const iconHeaderStories = storiesOf("IconHeader", module);
 addThemedStories(
   iconHeaderStories,
   <IconHeader icon="angle-up" text="Good morrow fellow human" />,
-  true,
-);
-
-const docRefIconHeaderStories = storiesOf('DocRefIconHeader', module);
-addThemedStories(
-  docRefIconHeaderStories,
-  <DocRefIconHeader docRefType="XSLT" text="Would anyone like any toast?" />,
-  true,
+  true
 );

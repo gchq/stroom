@@ -8,6 +8,8 @@ import { actionCreators } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
 import CopyDocRefDialog from "./CopyDocRefDialog";
 
+import "../../styles/main.css";
+
 const { prepareDocRefCopy } = actionCreators;
 
 const testFolder2 = fromSetupSampleData.children![1];

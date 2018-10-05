@@ -21,8 +21,6 @@ import { actionCreators } from "./redux";
 import { ExpressionOperatorType } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
-const { expressionChanged } = actionCreators;
-
 import { storiesOf } from "@storybook/react";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
@@ -30,9 +28,11 @@ import ExpressionBuilder, {
   Props as ExpressionBuilderProps
 } from "./ExpressionBuilder";
 
+import { testExpression, simplestExpression, testDataSource } from "./test";
+
 import "../../styles/main.css";
 
-import { testExpression, simplestExpression, testDataSource } from "./test";
+const { expressionChanged } = actionCreators;
 
 interface Props extends ExpressionBuilderProps {
   testExpression: ExpressionOperatorType;

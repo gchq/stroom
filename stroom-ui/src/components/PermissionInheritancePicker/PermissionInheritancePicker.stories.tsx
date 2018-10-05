@@ -16,17 +16,24 @@
 import * as React from "react";
 import { compose } from "recompose";
 import { connect } from "react-redux";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState } from "redux-form";
 import { storiesOf } from "@storybook/react";
 
-import {
-  PermissionInheritancePicker,
-  permissionInheritanceValues
-} from "components/PermissionInheritancePicker";
+import PermissionInheritancePicker from "./PermissionInheritancePicker";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import { GlobalStoreState } from "../../startup/reducers";
+import { addThemedStories } from "../../lib/themedStoryGenerator";
 import "../../styles/main.css";
 
-const enhance = compose(
-  connect(
+interface Props {}
+interface ConnectState {
+  thisForm: FormState;
+}
+interface ConnectDispatch {}
+interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+
+const enhance = compose<EnhancedProps, Props>(
+  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ form }) => ({ thisForm: form.permissionInheritanceTest }),
     {}
   ),
@@ -35,7 +42,7 @@ const enhance = compose(
   })
 );
 
-let TestForm = ({ thisForm }) => (
+const TestForm = enhance(({ thisForm }: EnhancedProps) => (
   <form>
     <div>
       <label>Chosen Permission Inheritance</label>
@@ -55,11 +62,10 @@ let TestForm = ({ thisForm }) => (
         </div>
       )}
   </form>
+));
+
+const stories = storiesOf("Permission Inheritance Picker", module).addDecorator(
+  StroomDecorator
 );
 
-TestForm = enhance(TestForm);
-
-storiesOf("Permission Inheritance Picker", module).add(
-  "Permission Inheritance Picker",
-  () => <TestForm />
-);
+addThemedStories(stories, <TestForm />);

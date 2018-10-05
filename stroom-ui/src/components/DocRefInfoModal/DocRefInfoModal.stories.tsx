@@ -23,9 +23,10 @@ import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { DocRefInfoModal } from ".";
 import { actionCreators } from "./redux";
 
-import "../../styles/main.css";
 import { DocRefInfoType } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+
+import "../../styles/main.css";
 
 const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
 

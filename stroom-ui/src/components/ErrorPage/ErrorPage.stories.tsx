@@ -18,12 +18,13 @@ import * as React from "react";
 import { compose, lifecycle } from "recompose";
 import { connect } from "react-redux";
 import { storiesOf } from "@storybook/react";
-import "../../styles/main.css";
 
 import ErrorPage from "./ErrorPage";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { actionCreators } from "./redux";
 import { GlobalStoreState } from "../../startup/reducers";
+
+import "../../styles/main.css";
 
 const { setErrorMessage, setStackTrace, setHttpErrorCode } = actionCreators;
 

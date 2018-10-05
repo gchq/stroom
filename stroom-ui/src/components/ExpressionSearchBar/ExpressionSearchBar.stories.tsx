@@ -28,9 +28,10 @@ import ExpressionSearchBar, {
   Props as ExpressionSearchBarProps
 } from "./ExpressionSearchBar";
 
-import "../../styles/main.css";
 import { ExpressionOperatorType } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+
+import "../../styles/main.css";
 
 const { expressionChanged } = expressionBuilderActionCreators;
 

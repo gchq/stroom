@@ -1,5 +1,0 @@
-Themed Confirm
-
-```jsx
-<ThemedConfirm />
-```

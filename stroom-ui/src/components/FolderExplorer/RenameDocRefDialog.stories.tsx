@@ -10,6 +10,8 @@ import { fromSetupSampleData } from "./test";
 import { actionCreators } from "./redux";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
+import "../../styles/main.css";
+
 const { prepareDocRefRename } = actionCreators;
 
 const testDocRef = fromSetupSampleData.children![0].children![0].children![0];

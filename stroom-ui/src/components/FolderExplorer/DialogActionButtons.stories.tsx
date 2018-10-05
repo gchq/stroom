@@ -6,6 +6,8 @@ import { storiesOf } from "@storybook/react";
 import DialogActionButtons from "./DialogActionButtons";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
+import "../../styles/main.css";
+
 interface Props {}
 interface WithStateHandlers {
   hasConfirmed: boolean;

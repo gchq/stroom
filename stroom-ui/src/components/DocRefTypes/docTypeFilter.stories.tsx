@@ -24,8 +24,9 @@ import { Field, reduxForm, FormState } from "redux-form";
 import DocTypeFilters from "./DocTypeFilters";
 import DocRefTypePicker from "./DocRefTypePicker";
 
-import "../../styles/main.css";
 import { GlobalStoreState } from "../../startup/reducers";
+
+import "../../styles/main.css";
 
 interface Props {}
 interface ConnectState {

@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as React from "react";
+import { storiesOf } from "@storybook/react";
 
-import * as React from 'react';
-import { storiesOf, addDecorator } from '@storybook/react';
+import PipelineEditor from "./PipelineEditor";
 
-import PathNotFound from './PathNotFound';
+import { testPipelines } from "./test";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
-const pipelineStories = storiesOf('Path not found', module)
-  .add('basic', () => <PathNotFound />);
+import "../../styles/main.css";
+
+const pipelineStories = storiesOf("Pipeline Editor", module).addDecorator(
+  StroomDecorator
+);
+
+Object.keys(testPipelines).forEach(k => {
+  pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />);
+});

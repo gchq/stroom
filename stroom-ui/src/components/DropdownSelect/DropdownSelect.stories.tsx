@@ -26,8 +26,9 @@ import DropdownSelect, {
   PickerProps
 } from "./DropdownSelect";
 
-import "../../styles/main.css";
 import { GlobalStoreState } from "../../startup/reducers";
+
+import "../../styles/main.css";
 
 interface Props {}
 

@@ -8,6 +8,8 @@ import { fromSetupSampleData } from "./test";
 import { actionCreators } from "./redux";
 import { DocRefType } from "../../types";
 
+import "../../styles/main.css";
+
 const { prepareDocRefDelete } = actionCreators;
 
 const testFolder2 = fromSetupSampleData.children![1];

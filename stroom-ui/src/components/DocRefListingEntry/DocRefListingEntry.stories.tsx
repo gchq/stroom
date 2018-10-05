@@ -25,6 +25,8 @@ import withSelectableItemListing, {
 import DocRefListingEntry from "./DocRefListingEntry";
 import { DocRefType, DocRefConsumer } from "../../types";
 
+import "../../styles/main.css";
+
 const testFolder = fromSetupSampleData.children![0];
 const testDocRef = fromSetupSampleData.children![0].children![0].children![0];
 

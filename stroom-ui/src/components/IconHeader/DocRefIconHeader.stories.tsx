@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import { testXslt } from "./test";
-import XsltEditor from "./XsltEditor";
+import { addThemedStories } from "../../lib/themedStoryGenerator";
+import DocRefIconHeader from "./DocRefIconHeader";
 
 import "../../styles/main.css";
 
-const stories = storiesOf("XSLT Editor", module);
-
-Object.entries(testXslt)
-  .map(k => ({
-    name: k[0],
-    data: k[1]
-  }))
-  .forEach(xslt =>
-    stories.add(xslt.name, () => <XsltEditor xsltUuid={xslt.name} />)
-  );
+const docRefIconHeaderStories = storiesOf("DocRefIconHeader", module);
+addThemedStories(
+  docRefIconHeaderStories,
+  <DocRefIconHeader docRefType="XSLT" text="Would anyone like any toast?" />,
+  true
+);

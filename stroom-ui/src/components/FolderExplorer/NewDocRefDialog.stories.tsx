@@ -9,6 +9,8 @@ import { DocRefType } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
+import "../../styles/main.css";
+
 const { prepareDocRefCreation } = actionCreators;
 
 const testFolder2 = fromSetupSampleData.children![1];

@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as React from "react";
+import { storiesOf } from "@storybook/react";
 
-import * as React from 'react';
-import { storiesOf, addDecorator } from '@storybook/react';
+import { testXslt } from "./test";
+import XsltEditor from "./XsltEditor";
 
-import PipelineDebugger from './PipelineDebugger';
+import "../../styles/main.css";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
-import { testPipelines } from 'components/PipelineEditor';
+const stories = storiesOf("XSLT Editor", module).addDecorator(StroomDecorator);
 
-const pipelineStories = storiesOf('Pipeline Debugger', module);
-
-Object.keys(testPipelines).forEach((k) => {
-  pipelineStories.add(k, () => <PipelineDebugger pipelineId={k} debuggerId='testDebugger' />);
-});
+Object.entries(testXslt)
+  .map(k => ({
+    name: k[0],
+    data: k[1]
+  }))
+  .forEach(xslt =>
+    stories.add(xslt.name, () => <XsltEditor xsltUuid={xslt.name} />)
+  );

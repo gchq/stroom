@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import { storiesOf } from '@storybook/react';
+import * as React from "react";
+import { storiesOf } from "@storybook/react";
 
-import Pipeline from './Pipeline';
-import { testPipelines } from './test';
+import PathNotFound from "./PathNotFound";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import { addThemedStories } from "../../lib/themedStoryGenerator";
 
-const pipelineStories = storiesOf('Pipeline', module);
+import "../../styles/main.css";
 
-Object.keys(testPipelines).forEach((k) => {
-  pipelineStories.add(k, () =>
-    <Pipeline
-      pipelineId={k}
-      onElementSelected={
-        () => console.log('Element has been selected')
-      }
-    />
-  );
-});
+const pipelineStories = storiesOf("Path not found", module).addDecorator(
+  StroomDecorator
+);
+
+addThemedStories(pipelineStories, <PathNotFound />);

@@ -1,5 +1,0 @@
-Line To
-
-```jsx
-<LineTo />
-```
