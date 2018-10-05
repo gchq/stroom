@@ -35,6 +35,11 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     @Test
+    public void testBOMXMLEvents() throws IOException {
+        testStepping("BOM_XML-EVENTS");
+    }
+
+    @Test
     public void testDataSplitterEvents() throws IOException {
         testStepping("DATA_SPLITTER-EVENTS");
     }
