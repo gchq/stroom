@@ -278,7 +278,9 @@ const getMenuItems = (
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <MenuItem
-        className={`sidebar__text-color ${isCollapsed ? "collapsed" : ""}`}
+        className={`sidebar__text-color ${isCollapsed ? "collapsed" : ""} ${
+          depth > 0 ? "child" : ""
+        }`}
         key={menuItem.key}
         menuItem={menuItem}
         depth={depth}

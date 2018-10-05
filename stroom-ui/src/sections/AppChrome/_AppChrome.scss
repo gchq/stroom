@@ -23,7 +23,7 @@
 }
 
 .app-chrome__sidebar--collapsed {
-  width: 2.7rem;
+  width: 2.5rem;
 }
 
 .app-chrome__sidebar-menu {
@@ -74,8 +74,6 @@
 }
 
 .sidebar__menu-item.doc {
-  color: #cacbcb;
-  // padding: 0.1rem;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -98,6 +96,10 @@
 
 .sidebar__menu-item.doc.collapsed {
   padding: 0 0 0 0.1rem !important ;
+}
+
+.sidebar__menu-item.child.collapsed {
+  padding-left: 0 !important ;
 }
 
 .sidebar__menu-item.nav.collapsed {
