@@ -29,8 +29,8 @@
 .app-chrome__sidebar-menu {
   overflow-y: auto;
   position:absolute;
-  height:100%;
-  width:100%;
+  height: calc(100% - 30px);
+  width: 100%;
 }
 
 .app-chrome__sidebar-menu__container {
