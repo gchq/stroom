@@ -73,9 +73,6 @@
     "build": "npm-run-all build-css build-js",
     "test": "react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
-    "styleguide-js": "styleguidist server",
-    "styleguide": "npm-run-all -p styleguide-js watch-css",
-    "styleguide:build": "styleguidist build",
     "storybook-js": "start-storybook -p 9001 -c .storybook",
     "storybook": "npm-run-all -p storybook-js watch-css"
   },
@@ -96,7 +93,6 @@
     "react-docgen-typescript": "^1.8.1",
     "react-docgen-typescript-loader": "^3.0.0",
     "react-docgen-typescript-webpack-plugin": "^1.1.0",
-    "react-styleguidist": "^7.3.8",
     "storybook-react-router": "^1.0.1",
     "typescript": "^3.0.3"
   }

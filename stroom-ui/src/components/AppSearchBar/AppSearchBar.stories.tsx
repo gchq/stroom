@@ -16,17 +16,32 @@
 import * as React from "react";
 import { connect } from "react-redux";
 import { compose, withState } from "recompose";
-import { Field, reduxForm } from "redux-form";
+import { Field, reduxForm, FormState } from "redux-form";
 
 import { storiesOf } from "@storybook/react";
 
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { addThemedStories } from "../../lib/themedStoryGenerator";
 import AppSearchBar from "./AppSearchBar";
 
 import "../../styles/main.css";
+import { GlobalStoreState } from "../../startup/reducers";
+import { DocRefType, DocRefConsumer } from "../../types";
 
-const enhanceForm = compose(
-  connect(
+interface Props {
+  pickerId: string;
+  typeFilters?: Array<string>;
+}
+
+interface ConnectState {
+  thisForm: FormState;
+}
+interface ConnectDispatch {}
+
+interface AsFormEnhancedProps extends Props, ConnectState, ConnectDispatch {}
+
+const enhanceForm = compose<AsFormEnhancedProps, Props>(
+  connect<ConnectState, {}, Props, GlobalStoreState>(
     ({ form }) => ({
       thisForm: form.appSearchBarTest
     }),
@@ -39,64 +54,77 @@ const enhanceForm = compose(
   })
 );
 
-let AppSearchAsForm = ({ pickerId, typeFilters, thisForm }) => (
-  <form>
-    <div>
-      <label htmlFor="someName">Some Name</label>
-      <Field name="someName" component="input" type="text" />
-    </div>
-    <div>
-      <label>Chosen Doc Ref</label>
-      <Field
-        name="chosenDocRef"
-        component={({ input: { onChange, value } }) => (
-          <AppSearchBar
-            pickerId={pickerId}
-            typeFilters={typeFilters}
-            onChange={onChange}
-            value={value}
-          />
+let AppSearchAsForm = enhanceForm(
+  ({ pickerId, typeFilters, thisForm }: AsFormEnhancedProps) => (
+    <form>
+      <div>
+        <label htmlFor="someName">Some Name</label>
+        <Field name="someName" component="input" type="text" />
+      </div>
+      <div>
+        <label>Chosen Doc Ref</label>
+        <Field
+          name="chosenDocRef"
+          component={({ input: { onChange, value } }) => (
+            <AppSearchBar
+              pickerId={pickerId}
+              typeFilters={typeFilters}
+              onChange={onChange}
+              value={value}
+            />
+          )}
+        />
+      </div>
+      {thisForm &&
+        thisForm.values && (
+          <div>
+            <h3>Form Values Observed</h3>
+            Name: {thisForm.values.someName}
+            <br />
+            Chosen Doc Ref:{" "}
+            {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
+          </div>
         )}
+    </form>
+  )
+);
+
+interface WithPickedDocRef {
+  pickedDocRef?: DocRefType | undefined;
+  setPickedDocRef: DocRefConsumer;
+}
+
+interface AsPickerEnhancedProps extends Props, WithPickedDocRef {}
+
+const enhancePicker = compose<AsPickerEnhancedProps, Props>(
+  withState("pickedDocRef", "setPickedDocRef", undefined)
+);
+
+const AppSearchAsPicker = enhancePicker(
+  ({
+    pickerId,
+    typeFilters,
+    pickedDocRef,
+    setPickedDocRef
+  }: AsPickerEnhancedProps) => (
+    <div>
+      <AppSearchBar
+        pickerId={pickerId}
+        typeFilters={typeFilters}
+        onChange={setPickedDocRef}
+        value={pickedDocRef}
       />
+      <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
     </div>
-    {thisForm &&
-      thisForm.values && (
-        <div>
-          <h3>Form Values Observed</h3>
-          Name: {thisForm.values.someName}
-          <br />
-          Chosen Doc Ref:{" "}
-          {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
-        </div>
-      )}
-  </form>
+  )
 );
 
-AppSearchAsForm = enhanceForm(AppSearchAsForm);
-
-const enhancePicker = withState("pickedDocRef", "setPickedDocRef", undefined);
-
-let AppSearchAsPicker = ({
-  pickerId,
-  typeFilters,
-  pickedDocRef,
-  setPickedDocRef
-}) => (
-  <div>
-    <AppSearchBar
-      pickerId={pickerId}
-      typeFilters={typeFilters}
-      onChange={setPickedDocRef}
-      value={pickedDocRef}
-    />
-    <div>Picked Doc Ref: {pickedDocRef && pickedDocRef.name}</div>
-  </div>
-);
-
-AppSearchAsPicker = enhancePicker(AppSearchAsPicker);
-
-class AppSearchAsNavigator extends React.Component {
-  constructor(props) {
+class AppSearchAsNavigator extends React.Component<
+  Props,
+  { chosenDocRef?: DocRefType }
+> {
+  displayRef: React.RefObject<HTMLDivElement>;
+  constructor(props: Props) {
     super(props);
 
     this.displayRef = React.createRef();
@@ -105,7 +133,7 @@ class AppSearchAsNavigator extends React.Component {
     };
   }
   render() {
-    const { pickerId, chosenDocRef, setChosenDocRef } = this.props;
+    const { pickerId } = this.props;
 
     return (
       <div>
@@ -114,7 +142,7 @@ class AppSearchAsNavigator extends React.Component {
           onChange={d => {
             console.log("App Search Bar Chose a Value", d);
             this.setState({ chosenDocRef: d });
-            this.displayRef.current.focus();
+            this.displayRef.current!.focus();
           }}
           value={this.state.chosenDocRef}
         />
@@ -131,6 +159,7 @@ class AppSearchAsNavigator extends React.Component {
 const stories = storiesOf("App Search Bar", module);
 
 stories
+  .addDecorator(StroomDecorator)
   .add("Search Bar (global)", () => (
     <AppSearchAsNavigator pickerId="global-search" />
   ))
