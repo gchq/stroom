@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import { storiesOf, addDecorator } from '@storybook/react';
 
-import DataDetails from 'sections/DataViewer/DataDetails';
-import { errorData, eventData } from './DataDetails.testData';
+import * as React from "react";
+import { storiesOf } from "@storybook/react";
 
-storiesOf('DataDetails', module)
-  .add('Showing errors', props => <DataDetails data={errorData} />)
-  .add('Showing events', props => <DataDetails data={eventData} />);
+import DataViewer from "./DataViewer";
+import { addThemedStories } from "../../lib/themedStoryGenerator";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+
+import "../../styles/main.css";
+
+const stories = storiesOf("DataViewer", module).addDecorator(StroomDecorator);
+
+addThemedStories(stories, <DataViewer dataViewerId="test" />);

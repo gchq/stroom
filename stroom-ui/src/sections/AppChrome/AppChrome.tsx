@@ -189,7 +189,7 @@ const enhance = compose<EnhancedProps, Props>(
           onClick: () => history.push(`${pathPrefix}/welcome/`),
           icon: "home",
           style: "nav",
-          isActive: location.pathname.includes("/s/welcome")
+          isActive: location && location.pathname.includes("/s/welcome")
         },
         getDocumentTreeMenuItems(openDocRef, undefined, documentTree),
         {
@@ -198,7 +198,7 @@ const enhance = compose<EnhancedProps, Props>(
           onClick: () => history.push(`${pathPrefix}/data`),
           icon: "database",
           style: "nav",
-          isActive: location.pathname.includes("/s/data")
+          isActive: location && location.pathname.includes("/s/data")
         },
         {
           key: "processing",
@@ -206,7 +206,7 @@ const enhance = compose<EnhancedProps, Props>(
           onClick: () => history.push(`${pathPrefix}/processing`),
           icon: "play",
           style: "nav",
-          isActive: location.pathname.includes("/s/processing")
+          isActive: location && location.pathname.includes("/s/processing")
         },
         {
           key: "admin",
@@ -216,9 +216,10 @@ const enhance = compose<EnhancedProps, Props>(
           style: "nav",
           skipInContractedMenu: true,
           isActive:
-            location.pathname.includes("/s/me") ||
-            location.pathname.includes("/s/users") ||
-            location.pathname.includes("/s/apikeys"),
+            location &&
+            (location.pathname.includes("/s/me") ||
+              location.pathname.includes("/s/users") ||
+              location.pathname.includes("/s/apikeys")),
           children: [
             {
               key: "admin-me",
@@ -226,7 +227,7 @@ const enhance = compose<EnhancedProps, Props>(
               onClick: () => history.push(`${pathPrefix}/me`),
               icon: "user",
               style: "nav",
-              isActive: location.pathname.includes("/s/me")
+              isActive: location && location.pathname.includes("/s/me")
             },
             {
               key: "admin-users",
@@ -234,7 +235,7 @@ const enhance = compose<EnhancedProps, Props>(
               onClick: () => history.push(`${pathPrefix}/users`),
               icon: "users",
               style: "nav",
-              isActive: location.pathname.includes("/s/users")
+              isActive: location && location.pathname.includes("/s/users")
             },
             {
               key: "admin-apikeys",
@@ -242,7 +243,7 @@ const enhance = compose<EnhancedProps, Props>(
               onClick: () => history.push(`${pathPrefix}/apikeys`),
               icon: "key",
               style: "nav",
-              isActive: location.pathname.includes("/s/apikeys")
+              isActive: location && location.pathname.includes("/s/apikeys")
             }
           ]
         }

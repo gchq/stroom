@@ -1,5 +1,0 @@
-Welcome
-
-```jsx
-<Welcome />
-```

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import { storiesOf } from '@storybook/react';
+import * as React from "react";
+import { storiesOf } from "@storybook/react";
 
-import Welcome from 'sections/Welcome';
+import Welcome from "./Welcome";
 
-storiesOf('Welcome', module).add('basic', () => (
-  <Welcome />
-));
+import "../../styles/main.css";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import { addThemedStories } from "../../lib/themedStoryGenerator";
+
+const stories = storiesOf("Welcome", module).addDecorator(StroomDecorator);
+
+addThemedStories(stories, <Welcome />);

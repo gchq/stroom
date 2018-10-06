@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 
-import { storiesOf, addDecorator } from '@storybook/react';
+import { storiesOf } from "@storybook/react";
 
-import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+import UserSettings from "./UserSettings";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import { addThemedStories } from "../../lib/themedStoryGenerator";
 
-import UserSettings from './UserSettings';
+import "../../styles/main.css";
 
-const PollyDecoratorWithTestData = PollyDecorator({});
+const stories = storiesOf("User Settings", module).addDecorator(
+  StroomDecorator
+);
 
-const stories = storiesOf('User Settings', module)
-  .addDecorator(PollyDecoratorWithTestData)
-  .add('Logged in', () => <UserSettings />);
+addThemedStories(stories, <UserSettings />);

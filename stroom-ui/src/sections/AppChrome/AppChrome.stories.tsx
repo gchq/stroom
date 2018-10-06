@@ -15,16 +15,12 @@
  */
 
 import * as React from "react";
-import PropTypes from "prop-types";
 
-import { storiesOf, addDecorator } from "@storybook/react";
+import { storiesOf } from "@storybook/react";
 import { Switch, Route } from "react-router-dom";
 
 import AppChrome, { appChromeRoutes } from ".";
-
-import { PollyDecoratorWithTestData } from "lib/storybook/PollyDecoratorWithTestData";
-import { KeyIsDownDecorator } from "lib/storybook/KeyIsDownDecorator";
-import { DragDropDecorator } from "lib/storybook/DragDropDecorator";
+import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
 import "../../styles/main.css";
 
@@ -38,15 +34,8 @@ const AppChromeWithRouter = () => (
 );
 
 storiesOf("App Chrome", module)
-  .addDecorator(KeyIsDownDecorator())
-  .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(DragDropDecorator)
-  .add("Just the chrome", props => (
-    <AppChrome
-      activeMenuItem="welcome"
-      headerContent={<h3>Stuff</h3>}
-      icon="cogs"
-      content={<div>Stuff goes here</div>}
-    />
+  .addDecorator(StroomDecorator)
+  .add("Just the chrome", () => (
+    <AppChrome activeMenuItem="welcome" content={<div>Stuff goes here</div>} />
   ))
   .add("With routing", () => <AppChromeWithRouter />);

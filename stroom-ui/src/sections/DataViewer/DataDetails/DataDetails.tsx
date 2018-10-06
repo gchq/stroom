@@ -39,7 +39,7 @@ export interface ErrorData {
   elementId: string;
   location: Location;
   message: string;
-  severity: number;
+  severity: string;
 }
 
 const DataDetails = ({ data }: Props) => {

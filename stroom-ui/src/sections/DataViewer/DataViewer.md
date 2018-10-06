@@ -1,3 +1,0 @@
-```jsx
-<DataViewer dataViewerId="test" />
-```

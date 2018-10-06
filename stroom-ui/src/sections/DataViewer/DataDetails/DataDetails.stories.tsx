@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as React from "react";
-import { storiesOf, addDecorator } from "@storybook/react";
-import "../../styles/main.css";
+import { storiesOf } from "@storybook/react";
 
-import DataViewer from "sections/DataViewer/DataViewer";
-import { actionCreators } from "./redux";
-import { testData } from "./test";
+import DataDetails from "./DataDetails";
+import { errorData, eventData } from "./DataDetails.testData";
+import StroomDecorator from "../../../lib/storybook/StroomDecorator";
 
-const { updateStreamAttributeMaps } = actionCreators;
+import "../../../styles/main.css";
 
-const stories = storiesOf("DataViewer", module).add("basic", () => (
-  <DataViewer dataViewerId="test" />
-));
+storiesOf("DataDetails", module)
+  .addDecorator(StroomDecorator)
+  .add("Showing errors", () => <DataDetails data={errorData} />)
+  .add("Showing events", () => <DataDetails data={eventData} />);
