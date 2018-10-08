@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#730** : Fixed bug related to changing the default initial page for some document types.
+## [v5.5.4] - 2018-10-08
+
+* Issue **#730** : The `System` folder now displays data and processors. This is a bug fix related to changing the default initial page for some document types.
 
 ## [v5.5.3] - 2018-10-04
 
@@ -960,7 +962,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.4...HEAD
+[v5.5.4]: https://github.com/gchq/stroom/compare/v5.5.3...v5.5.4
 [v5.5.3]: https://github.com/gchq/stroom/compare/v5.5.2...v5.5.3
 [v5.5.2]: https://github.com/gchq/stroom/compare/v5.5.1...v5.5.2
 [v5.5.1]: https://github.com/gchq/stroom/compare/v5.5.0...v5.5.1
