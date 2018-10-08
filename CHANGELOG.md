@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#730** : Fixed bug related to changing the default initial page for some document types.
+
 ## [v5.5.3] - 2018-10-04
 
 * Issue **#854** : The activity screen no longer shows a permission error when shown to non admin users.

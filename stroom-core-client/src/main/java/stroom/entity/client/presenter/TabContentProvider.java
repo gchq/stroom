@@ -119,7 +119,7 @@ public class TabContentProvider<E> implements HasRead<E>, HasWrite<E>, HasPermis
 
     @SuppressWarnings("unchecked")
     private void read(final PresenterWidget<?> presenter, final E entity) {
-        if (entity != null && presenter instanceof HasRead<?>) {
+        if (presenter instanceof HasRead<?>) {
             final HasRead<E> hasRead = (HasRead<E>) presenter;
             hasRead.read(entity);
 
