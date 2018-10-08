@@ -355,31 +355,33 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     @Override
     public void read(final DocRef docRef, final IndexDoc index) {
-        selectionCriteria.getIndexSet().add(docRef);
-        selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);
-        selectionCriteria.getFetchSet().add(VolumeEntity.ENTITY_TYPE);
+        if (index != null) {
+            selectionCriteria.getIndexSet().add(docRef);
+            selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);
+            selectionCriteria.getFetchSet().add(VolumeEntity.ENTITY_TYPE);
 
-        queryCriteria.getIndexSet().add(docRef);
-        queryCriteria.getFetchSet().add(Node.ENTITY_TYPE);
-        queryCriteria.getFetchSet().add(VolumeEntity.ENTITY_TYPE);
+            queryCriteria.getIndexSet().add(docRef);
+            queryCriteria.getFetchSet().add(Node.ENTITY_TYPE);
+            queryCriteria.getFetchSet().add(VolumeEntity.ENTITY_TYPE);
 
-        if (dataProvider == null) {
-            final EntityServiceFindAction<FindIndexShardCriteria, IndexShard> findAction = new EntityServiceFindAction<>(
-                    queryCriteria);
-            dataProvider = new ActionDataProvider<IndexShard>(dispatcher, findAction) {
-                @Override
-                protected void changeData(final ResultList<IndexShard> data) {
-                    super.changeData(data);
-                    onChangeData(data);
-                }
-            };
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            if (dataProvider == null) {
+                final EntityServiceFindAction<FindIndexShardCriteria, IndexShard> findAction = new EntityServiceFindAction<>(
+                        queryCriteria);
+                dataProvider = new ActionDataProvider<IndexShard>(dispatcher, findAction) {
+                    @Override
+                    protected void changeData(final ResultList<IndexShard> data) {
+                        super.changeData(data);
+                        onChangeData(data);
+                    }
+                };
+                dataProvider.addDataDisplay(getView().getDataDisplay());
+            }
+
+            securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
+                this.allowDelete = result;
+                enableButtons();
+            });
         }
-
-        securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {
-            this.allowDelete = result;
-            enableButtons();
-        });
     }
 
     @Override
