@@ -66,15 +66,18 @@ public class DbUtil {
                     break;
                 }
                 final Throwable cause = e.getCause();
-                LOGGER.warn("Unable to establish database connection due to error: [{}], will try again in {}ms, enable debug to see stack trace",
-                        cause != null ? cause.getMessage() : e.getMessage(), sleepMs);
+                final String errorMsg = cause != null ? cause.getMessage() : e.getMessage();
+                final int vendorCode = e.getErrorCode();
+                LOGGER.warn("Unable to establish database connection due to error: [{}] and vendorCode [{}], will try again " +
+                                "in {}ms, enable debug to see stack trace",
+                        errorMsg, vendorCode, sleepMs);
                 if (LOGGER.isDebugEnabled()) {
                     if (lastThrowable == null || !e.getMessage().equals(lastThrowable.getMessage())) {
                         // Only log the stack when it changes, else it fills up the log pretty quickly
                         LOGGER.debug("Unable to establish database connection due to error", e);
                     }
+                    lastThrowable = e;
                 }
-                lastThrowable = e;
             }
             ThreadUtil.sleep(sleepMs);
 
