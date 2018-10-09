@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.data.meta.impl.db'
+ext.moduleName = 'stroom.explorer.impl.db'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')

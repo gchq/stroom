@@ -124,7 +124,7 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
     private void read(final PresenterWidget<?> presenter,
                       final DocRef docRef,
                       final E entity) {
-        if (entity != null && presenter instanceof HasDocumentRead<?>) {
+        if (presenter instanceof HasDocumentRead<?>) {
             final HasDocumentRead<E> hasDocumentRead = (HasDocumentRead<E>) presenter;
             hasDocumentRead.read(docRef, entity);
 
