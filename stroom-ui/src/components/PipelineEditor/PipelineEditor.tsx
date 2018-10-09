@@ -20,19 +20,16 @@ import {
   lifecycle,
   branch,
   renderComponent,
-  withHandlers
+  withHandlers,
+  withProps
 } from "recompose";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { connect } from "react-redux";
 import PanelGroup from "react-panelgroup";
 
-import { DocRefIconHeader } from "../IconHeader";
 import Loader from "../Loader";
 import AddElementModal from "./AddElementModal";
-import DocRefBreadcrumb from "../DocRefBreadcrumb";
-import SavePipeline from "./SavePipeline";
-import CreateChildPipeline from "./CreateChildPipeline";
-import OpenPipelineSettings from "./OpenPipelineSettings";
+import { Props as ButtonProps } from "../Button";
 import PipelineSettings from "./PipelineSettings";
 import ElementPalette from "./ElementPalette";
 import DeletePipelineElement from "./DeletePipelineElement";
@@ -43,6 +40,7 @@ import Pipeline from "./Pipeline";
 import { GlobalStoreState } from "../../startup/reducers";
 import { DocRefConsumer } from "../../types";
 import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
+import DocRefEditor from "../DocRefEditor";
 
 const {
   startInheritPipeline,
@@ -66,13 +64,16 @@ interface ConnectDispatch {
   pipelineSettingsOpened: typeof pipelineSettingsOpened;
   pipelineElementSelectionCleared: typeof pipelineElementSelectionCleared;
 }
-
+interface WithProps {
+  actionBarItems: Array<ButtonProps>;
+}
 export interface EnhancedProps
   extends Props,
     RouteComponentProps<any>,
     WithHandlers,
     ConnectState,
-    ConnectDispatch {}
+    ConnectDispatch,
+    WithProps {}
 
 const enhance = compose<EnhancedProps, Props>(
   withRouter,
@@ -101,43 +102,50 @@ const enhance = compose<EnhancedProps, Props>(
   branch(
     ({ pipelineState }) => !(pipelineState && pipelineState.pipeline),
     renderComponent(() => <Loader message="Loading pipeline..." />)
+  ),
+  withProps<WithProps, Props & ConnectState & ConnectDispatch>(
+    ({
+      pipelineId,
+      pipelineState: { isDirty, isSaving },
+      savePipeline,
+      startInheritPipeline,
+      pipelineSettingsOpened
+    }) => ({
+      actionBarItems: [
+        {
+          icon: "cogs",
+          title: "Open Settings",
+          onClick: () => pipelineSettingsOpened(pipelineId)
+        },
+        {
+          icon: "save",
+          disabled: !(isDirty || isSaving),
+          title: isSaving ? "Saving..." : isDirty ? "Save" : "Saved",
+          onClick: () => savePipeline(pipelineId)
+        },
+        {
+          icon: "recycle",
+          title: "Create Child Pipeline",
+          onClick: () => startInheritPipeline(pipelineId)
+        }
+      ]
+    })
   )
 );
 
 const PipelineEditor = ({
   pipelineId,
-  pipelineState: { selectedElementId, pipeline, isDirty },
-  openDocRef,
-  savePipeline,
-  startInheritPipeline,
-  pipelineSettingsOpened,
-  pipelineElementSelectionCleared
+  pipelineState: { selectedElementId },
+  pipelineElementSelectionCleared,
+  actionBarItems
 }: EnhancedProps) => (
-  <div className="pipeline-editor__container">
-    <div className="pipeline-editor__header">
-      <div className="pipeline-editor__header__title">
-        <DocRefIconHeader
-          docRefType={pipeline!.docRef.type}
-          text={pipeline!.docRef.name || "UNKNOWN_NAME"}
-        />
-        <DocRefBreadcrumb docRefUuid={pipelineId} openDocRef={openDocRef} />
-      </div>
-      <div className="pipeline-editor__header__actions">
-        <SavePipeline
-          pipelineId={pipelineId}
-          isDirty={isDirty}
-          savePipeline={savePipeline}
-        />
-        <CreateChildPipeline
-          pipelineId={pipelineId}
-          startInheritPipeline={startInheritPipeline}
-        />
-        <OpenPipelineSettings
-          pipelineId={pipelineId}
-          pipelineSettingsOpened={pipelineSettingsOpened}
-        />
-      </div>
-    </div>
+  <DocRefEditor
+    docRef={{
+      type: "Pipeline",
+      uuid: pipelineId
+    }}
+    actionBarItems={actionBarItems}
+  >
     <div className="Pipeline-editor">
       <AddElementModal pipelineId={pipelineId} />
       <DeletePipelineElement pipelineId={pipelineId} />
@@ -170,7 +178,7 @@ const PipelineEditor = ({
         )}
       </PanelGroup>
     </div>
-  </div>
+  </DocRefEditor>
 );
 
 export default enhance(PipelineEditor);

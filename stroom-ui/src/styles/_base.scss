@@ -83,6 +83,16 @@ body {
   height: 1.5rem;
 }
 
+/* apply a natural box layout model to all elements, but allowing components to change */
+html {
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
 input[type="text"],
 select {
   width: 100%;
@@ -91,5 +101,4 @@ select {
   display: inline-block;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box;
 }
