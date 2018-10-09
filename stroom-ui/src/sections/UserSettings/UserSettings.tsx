@@ -70,10 +70,9 @@ const enhance = compose<EnhancedProps, Props>(
 );
 
 const UserSettings = ({ theme, onThemeChanged }: EnhancedProps) => (
-  <React.Fragment>
-    <IconHeader text="Me" icon="user" />
+  <div className="UserSettings">
+    <IconHeader text="User Settings" icon="user" />
     <div className="UserSettings__container">
-      <h3>User Settings</h3>
       <div>
         <label>Theme:</label>
         <select onChange={onThemeChanged} value={theme}>
@@ -85,7 +84,7 @@ const UserSettings = ({ theme, onThemeChanged }: EnhancedProps) => (
         </select>
       </div>
     </div>
-  </React.Fragment>
+  </div>
 );
 
 export default enhance(UserSettings);
