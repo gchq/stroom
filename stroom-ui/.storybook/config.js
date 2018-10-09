@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
-import * as storybook from '@storybook/react';
-import { setOptions } from '@storybook/addon-options';
-import StoryRouter from 'storybook-react-router';
+import * as React from "react";
+import * as storybook from "@storybook/react";
+import { setOptions } from "@storybook/addon-options";
+import StoryRouter from "storybook-react-router";
 
-import { FontAwesomeDecorator } from 'lib/storybook/FontAwesomeDecorator';
-import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { PollyDecoratorWithTestData } from 'lib/storybook/PollyDecoratorWithTestData';
-import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
-import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-import { ThemedDecorator } from 'lib/storybook/ThemedDecorator';
-
-const req = require.context('../src', true, /\.stories\.js$/);
+const req = require.context("../src", true, /\.stories\.tsx$/);
 
 function loadStories() {
   req.keys().forEach(filename => req(filename));
@@ -37,12 +30,12 @@ setOptions({
    * name to display in the top left corner
    * @type {String}
    */
-  name: 'Stroom storybook',
+  name: "Stroom storybook",
   /**
    * URL for name in top left corner to link to
    * @type {String}
    */
-  url: '#',
+  url: "#",
   /**
    * show story component as full screen
    * @type {Boolean}
@@ -105,15 +98,7 @@ setOptions({
    * enable/disable shortcuts
    * @type {Boolean}
    */
-  enableShortcuts: false, // true by default
+  enableShortcuts: false // true by default
 });
-
-storybook.addDecorator(ThemedDecorator);
-storybook.addDecorator(KeyIsDownDecorator());
-storybook.addDecorator(PollyDecoratorWithTestData);
-storybook.addDecorator(DragDropDecorator);
-storybook.addDecorator(ReduxDecorator);
-storybook.addDecorator(FontAwesomeDecorator);
-storybook.addDecorator(StoryRouter());
 
 storybook.configure(loadStories, module);

@@ -13,32 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
-import { compose, lifecycle } from 'recompose';
-import { connect } from 'react-redux';
+import * as React from "react";
+import { compose, lifecycle } from "recompose";
+import { connect } from "react-redux";
 
-import { storiesOf, addDecorator } from '@storybook/react';
-import 'styles/main.css';
+import { storiesOf, addDecorator } from "@storybook/react";
+import "../../styles/main.css";
 
-import ElementDetails from './ElementDetails';
-import { actionCreators as pipelineActionCreators } from '../redux';
-import { testPipelines, elements, elementProperties } from '../test';
-import { fetchPipeline } from '../pipelineResourceClient';
+import ElementDetails from "./ElementDetails";
+import { actionCreators as pipelineActionCreators } from "../redux";
+import { testPipelines, elements, elementProperties } from "../test";
+import { fetchPipeline } from "../pipelineResourceClient";
 
 const {
   pipelineReceived,
   elementsReceived,
   elementPropertiesReceived,
-  pipelineElementSelected,
+  pipelineElementSelected
 } = pipelineActionCreators;
 
 const enhance = compose(
-  connect(undefined, {
-    elementsReceived,
-    elementPropertiesReceived,
-    pipelineReceived,
-    pipelineElementSelected,
-  }),
+  connect(
+    undefined,
+    {
+      elementsReceived,
+      elementPropertiesReceived,
+      pipelineReceived,
+      pipelineElementSelected
+    }
+  ),
   lifecycle({
     componentDidMount() {
       const {
@@ -53,20 +56,20 @@ const enhance = compose(
         testElementProperties,
         testPipeline,
         testElementId,
-        testElementConfig,
+        testElementConfig
       } = this.props;
 
       elementsReceived(testElements);
       elementPropertiesReceived(testElementProperties);
       pipelineReceived(pipelineId, testPipeline);
       pipelineElementSelected(pipelineId, testElementId, testElementConfig);
-    },
-  }),
+    }
+  })
 );
 
 const TestElementDetails = enhance(ElementDetails);
 
-const stories = storiesOf('Element Details', module);
+const stories = storiesOf("Element Details", module);
 
 Object.entries(testPipelines).map(pipeline => {
   pipeline[1].merged.elements.add.map(element => {
@@ -78,7 +81,7 @@ Object.entries(testPipelines).map(pipeline => {
         testElementId={element.id}
         testElementConfig={{ splitDepth: 10, splitCount: 10 }}
         pipelineId={pipeline[1].docRef.uuid}
-      />)
-    )
-  })
-})
+      />
+    ));
+  });
+});

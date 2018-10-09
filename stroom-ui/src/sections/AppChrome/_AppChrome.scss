@@ -18,19 +18,26 @@
   position: relative;
 }
 
+.app-chrome__sidebar--expanded {
+  width:20rem;
+}
+
+.app-chrome__sidebar--collapsed {
+  width: 2.5rem;
+}
+
 .app-chrome__sidebar-menu {
-  width: 15rem;
   overflow-y: auto;
-  padding-top: 40px;
+  position:absolute;
+  height: calc(100% - 2.2rem);
+  width: 100%;
 }
 
-.app-chrome__sidebar__toggle {
-  color: #ff6f00 !important;
-  position: absolute;
-}
-
-.app-chrome__sidebar__toggle_collapsed {
-  position: relative;
+.app-chrome__sidebar-menu__container {
+  outline: none !important;
+  position:relative;
+  display: flex;
+  flex-direction:column;
 }
 
 .app-chrome__sidebar__buttons .button {
@@ -38,17 +45,19 @@
 }
 
 .app-chrome__sidebar_header {
-  position: absolute;
+  position: relative;
+  height: 2.2rem;
 }
 
-.AppChrome__MenuItemIcon {
-  display: inline-block;
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
+.sidebar__menu-item {
+  display: inline-flex;
+  outline:none !important;
+  width:100%;
 }
+
 
 .sidebar__menu-item.nav {
-  padding: 0.4rem;
+  padding: 0.35rem 0 0.35rem 0.1rem ;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -58,8 +67,6 @@
 }
 
 .sidebar__menu-item.doc {
-  color: #cacbcb;
-  padding: 0.1rem;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -76,16 +83,40 @@
   font-weight: italic;
 }
 
+.sidebar__menu-item.doc {
+  font-size: 0.85rem;
+}
+
+.sidebar__menu-item.doc.collapsed {
+  padding: 0 0 0 0.1rem !important ;
+}
+
+.sidebar__menu-item.child.collapsed {
+  padding-left: 0 !important ;
+}
+
+.sidebar__menu-item.nav.collapsed {
+}
+
 .sidebar__menu-item.doc.can-drop {
   color: green;
 }
 .sidebar__menu-item.doc.cannot-drop {
   color: red;
 }
+.sidebar__toggle {
+  width: 1.5rem !important;
+}
+
+.sidebar__children {
+  margin-bottom: 0.4rem;
+}
+
 .app-chrome__content {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow-y: auto;
 }
 
 .content-tabs {
@@ -128,7 +159,16 @@
   align-items: center;
   position: absolute;
   left: 40px;
-  // position: relative;
-  // top: 0.3rem;
-  // width: 90px !important;
+}
+
+.menu-item__menu-icon {
+  padding: 0 0.3125rem 0 0.4125rem;
+}
+
+.sidebar__menu-item.has-children--open{
+  padding-bottom: 0;
+}
+
+.menu-item__text{
+  padding-left: 0.65rem;
 }

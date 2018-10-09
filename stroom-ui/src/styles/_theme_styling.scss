@@ -158,7 +158,7 @@ input {
 
 :focus .inFocus {
   @include themify($themes) {
-    border: solid thick themed("selected-color") !important;
+    background-color: themed("raised-high__selected-background-color") !important;
   }
 }
 
@@ -172,7 +172,7 @@ input {
 
 :focus .raised-high .inFocus {
   @include themify($themes) {
-    border: solid thick themed("raised-high__selected-background-color") !important;
+    background-color: themed("raised-high__selected-background-color") !important;
   }
 }
 
@@ -236,7 +236,7 @@ input {
 .button {
   @include themify($themes) {
     border: themed("icon-button__border") !important;
-    background-color: themed("icon-button__background-color") !important;
+    background-color: themed("icon-button__background-color");
     color: themed("icon-button__color") !important;
   }
 }
@@ -254,6 +254,15 @@ input {
     background-color: themed("icon-button__background-color--hover") !important;
   }
 }
+
+.button.raised-high:hover:enabled,
+.button.raised-high:focus:enabled {
+  @include themify($themes) {
+    color: themed("text__color--deemphasised") !important;
+    background-color: themed("raised-high__selected-background-color") !important;
+  }
+}
+
 
 .button:disabled,
 .button[disabled]{
@@ -276,11 +285,23 @@ input {
     color: themed("text__color--deemphasised");
   }
 }
-.app-chrome__sidebar__toggle {
+.sidebar__menu-item.is-active{
   @include themify($themes) {
-    color: themed("sidebar__header-color") !important;
+    background-color:themed('raised-high__selected-background-color');
   }
 }
+.sidebar__menu-item.nav:hover{
+  @include themify($themes) {
+    background-color:themed('raised-high__selected-background-color');
+  }
+} 
+
+.sidebar__menu-item.doc:hover{
+  @include themify($themes) {
+    background-color:themed('raised-high__selected-background-color');
+  }
+} 
+
 
 .tooltip-popup {
   @include themify($themes) {
@@ -372,3 +393,10 @@ body ::-webkit-scrollbar-thumb {
     }
   }
 }
+
+.app-chrome__sidebar_header:hover {
+  @include themify($themes) {
+    background-color:themed('raised-high__selected-background-color');
+  }
+}
+
