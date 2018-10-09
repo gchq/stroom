@@ -198,7 +198,8 @@ public class App extends Application<Config> {
 
     private void startApp(final Config configuration, final Environment environment) {
 
-        waitForDbConnection();
+        waitForStroomDbConnection();
+        waitForStatsDbConnection();
 
         // Start the spring context.
         LOGGER.info("Loading Spring context");
@@ -254,11 +255,20 @@ public class App extends Application<Config> {
         SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);
     }
 
-    private void waitForDbConnection() {
+    private void waitForStroomDbConnection() {
         final String driverClassname = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_CLASS_NAME);
         final String driverUrl = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_URL);
         final String driverUsername = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_USERNAME);
         final String driverPassword = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_PASSWORD);
+
+        DbUtil.waitForConnection(driverClassname, driverUrl, driverUsername, driverPassword);
+    }
+
+    private void waitForStatsDbConnection() {
+        final String driverClassname = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverClassName");
+        final String driverUrl = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUrl|trace");
+        final String driverUsername = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUsername");
+        final String driverPassword = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverPassword");
 
         DbUtil.waitForConnection(driverClassname, driverUrl, driverUsername, driverPassword);
     }
