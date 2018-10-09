@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#859** : Change application startup to keep retrying when establishing a DB connection except for certain connection errors like access denied.
+
 * Issue **#730** : The `System` folder now displays data and processors. This is a bug fix related to changing the default initial page for some document types.
 
 * Issue **#854** : The activity screen no longer shows a permission error when shown to non admin users.
