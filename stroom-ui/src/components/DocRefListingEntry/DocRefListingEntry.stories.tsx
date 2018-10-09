@@ -26,6 +26,7 @@ import DocRefListingEntry from "./DocRefListingEntry";
 import { DocRefType, DocRefConsumer } from "../../types";
 
 import "../../styles/main.css";
+import { DocRefBreadcrumb } from "../DocRefBreadcrumb";
 
 const testFolder = fromSetupSampleData.children![0];
 const testDocRef = fromSetupSampleData.children![0].children![0].children![0];
@@ -35,6 +36,7 @@ interface Props {
   docRefs?: Array<DocRefType>;
   dndIsOver?: boolean;
   dndCanDrop?: boolean;
+  provideBreadcrumbs?: boolean;
 }
 
 interface WithStateHandlers {
@@ -87,10 +89,15 @@ let TestDocRefListingEntry = enhance(
     docRefs,
     onKeyDownWithShortcuts,
     dndIsOver,
-    dndCanDrop
+    dndCanDrop,
+    provideBreadcrumbs
   }: EnhancedProps) => (
     <div style={{ width: "50%" }}>
-      <div tabIndex={0} onKeyDown={onKeyDownWithShortcuts}>
+      <div
+        tabIndex={0}
+        onKeyDown={onKeyDownWithShortcuts}
+        style={{ borderStyle: "dashed", borderWidth: "2px" }}
+      >
         {docRefs &&
           docRefs.map(docRef => (
             <DocRefListingEntry
@@ -101,7 +108,14 @@ let TestDocRefListingEntry = enhance(
               enterFolder={enterFolder}
               dndIsOver={dndIsOver}
               dndCanDrop={dndCanDrop}
-            />
+            >
+              {provideBreadcrumbs && (
+                <DocRefBreadcrumb
+                  docRefUuid={docRef.uuid}
+                  openDocRef={openDocRef}
+                />
+              )}
+            </DocRefListingEntry>
           ))}
       </div>
       <div>
@@ -144,4 +158,11 @@ storiesOf("Doc Ref Listing Entry", module)
   ))
   .add("folder", () => (
     <TestDocRefListingEntry listingId="four" docRefs={testFolder.children} />
+  ))
+  .add("folder (w/breadcrumbs)", () => (
+    <TestDocRefListingEntry
+      listingId="four"
+      docRefs={testFolder.children}
+      provideBreadcrumbs
+    />
   ));

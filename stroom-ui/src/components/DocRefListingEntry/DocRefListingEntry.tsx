@@ -22,6 +22,7 @@ export interface Props {
   dndCanDrop?: boolean;
   openDocRef: DocRefConsumer;
   enterFolder?: DocRefConsumer;
+  children?: React.ReactNode;
 }
 
 interface ConnectState {
@@ -132,23 +133,26 @@ let DocRefListingEntry = ({
   onSelect,
   onOpenDocRef,
   onEnterFolder,
-  canEnterFolder
+  canEnterFolder,
+  children
 }: EnhancedProps) => (
   <div className={className} onClick={onSelect}>
-    <DocRefImage docRefType={docRef.type} />
+    <DocRefImage
+      className="DocRefListingEntry__docRefImage"
+      docRefType={docRef.type}
+    />
     <div className="DocRefListingEntry__name" onClick={onOpenDocRef}>
       {docRef.name}
     </div>
-    <div className="DocRefListingEntry__space" />
     {canEnterFolder && (
-      <div onClick={onEnterFolder}>
-        <FontAwesomeIcon
-          className="DocRefListingEntry__icon"
-          size="lg"
-          icon="angle-right"
-        />
+      <div
+        className="DocRefListingEntry__enterFolderIcon"
+        onClick={onEnterFolder}
+      >
+        <FontAwesomeIcon size="lg" icon="angle-right" />
       </div>
     )}
+    <div className="DocRefListing__children">{children}</div>
   </div>
 );
 

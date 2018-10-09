@@ -19,22 +19,20 @@ const SelectBox = ({
   placeholder = "Select an option",
   ...rest
 }: Props) => (
-  <span className="styled-select">
-    <select
-      {...rest}
-      value={value}
-      onChange={({ target: { value } }) => onChange(value)}
-    >
-      <option value="" disabled>
-        {placeholder}
+  <select
+    {...rest}
+    value={value}
+    onChange={({ target: { value } }) => onChange(value)}
+  >
+    <option value="" disabled>
+      {placeholder}
+    </option>
+    {options.map(f => (
+      <option key={f.value} value={f.value}>
+        {f.text}
       </option>
-      {options.map(f => (
-        <option key={f.value} value={f.value}>
-          {f.text}
-        </option>
-      ))}
-    </select>
-  </span>
+    ))}
+  </select>
 );
 
 export default SelectBox;
