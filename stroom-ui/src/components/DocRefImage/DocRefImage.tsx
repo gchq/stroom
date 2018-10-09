@@ -8,7 +8,7 @@ export interface Props {
 
 const DocRefImage = ({ docRefType, size = "lg", className = "" }: Props) => (
   <img
-    className={`stroom-icon--${size} ${className}`}
+    className={`stroom-icon--${size} ${className || ""}`}
     alt={`doc ref icon ${docRefType}`}
     src={require(`../../images/docRefTypes/${docRefType}.svg`)}
   />

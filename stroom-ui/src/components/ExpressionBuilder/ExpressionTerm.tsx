@@ -194,7 +194,7 @@ const ExpressionTerm = ({
   conditionOptions,
   valueType
 }: EnhancedProps) => (
-  <div className={`expression-term ${className}`}>
+  <div className={`expression-term ${className || ""}`}>
     {connectDragSource(
       <span>
         <FontAwesomeIcon icon="bars" />

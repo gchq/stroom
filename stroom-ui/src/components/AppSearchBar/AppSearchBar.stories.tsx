@@ -136,7 +136,7 @@ class AppSearchAsNavigator extends React.Component<
     const { pickerId } = this.props;
 
     return (
-      <div>
+      <div style={{ height: "100%", width: "100%" }}>
         <AppSearchBar
           pickerId={pickerId}
           onChange={d => {

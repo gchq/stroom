@@ -2,7 +2,7 @@
   display: grid;
   align-items: center;
   grid-template-columns: auto 30rem;
-  grid-template-rows: 3rem 2rem 2rem auto;
+  grid-template-rows: auto 2rem 2rem auto;
   grid-template-areas:
     "searchBar searchBar"
     "header actionButtons"

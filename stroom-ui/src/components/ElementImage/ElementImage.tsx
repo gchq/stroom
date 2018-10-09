@@ -8,7 +8,7 @@ export interface Props {
 
 const ElementImage = ({ icon, size = "lg", className = "" }: Props) => (
   <img
-    className={`stroom-icon--${size} ${className}`}
+    className={`stroom-icon--${size} ${className || ""}`}
     alt={`element icon ${icon}`}
     src={require(`../../images/elements/${icon}`)}
   />

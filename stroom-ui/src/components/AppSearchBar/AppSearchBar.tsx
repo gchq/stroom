@@ -318,7 +318,7 @@ const AppSearchBar = ({
   onSearchBlur,
   onSearchTermChange
 }: EnhancedProps) => (
-  <div className={`dropdown ${className}`}>
+  <div className={`dropdown app-search-bar ${className || ""}`}>
     <input
       className="app-search-bar__input"
       //icon="search" // TODO

@@ -90,78 +90,63 @@ const DocRefInfoModal = ({
     onRequestClose={docRefInfoClosed}
     header={<IconHeader icon="info" text="Document Information" />}
     content={
-      <form>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Type</label>
-            <input
-              type="text"
-              value={docRefInfo.docRef.type}
-              onChange={doNothing}
-            />
-          </span>
-          <span>
-            <label>UUID</label>
-            <input
-              type="text"
-              value={docRefInfo.docRef.uuid}
-              onChange={doNothing}
-            />
-          </span>
-          <span>
-            <label>Name</label>
-            <input
-              type="text"
-              value={docRefInfo.docRef.name}
-              onChange={doNothing}
-            />
-          </span>
+      <form className="DocRefInfo">
+        <div className="DocRefInfo__type">
+          <label>Type</label>
+          <input
+            type="text"
+            value={docRefInfo.docRef.type}
+            onChange={doNothing}
+          />
         </div>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Created by</label>
-            <input
-              type="text"
-              value={docRefInfo.createUser}
-              onChange={doNothing}
-            />
-          </span>
-          <span>
-            <label>at</label>
-            <input
-              type="text"
-              value={formattedCreateTime}
-              onChange={doNothing}
-            />
-          </span>
+        <div className="DocRefInfo__uuid">
+          <label>UUID</label>
+          <input
+            type="text"
+            value={docRefInfo.docRef.uuid}
+            onChange={doNothing}
+          />
         </div>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Updated by</label>
-            <input
-              type="text"
-              value={docRefInfo.updateUser}
-              onChange={doNothing}
-            />
-          </span>
-          <span>
-            <label>at</label>
-            <input
-              type="text"
-              value={formattedUpdateTime}
-              onChange={doNothing}
-            />
-          </span>
+        <div className="DocRefInfo__name">
+          <label>Name</label>
+          <input
+            type="text"
+            value={docRefInfo.docRef.name}
+            onChange={doNothing}
+          />
         </div>
-        <div className="DocRefInfo__formRow">
-          <span>
-            <label>Other Info</label>
-            <input
-              type="text"
-              value={docRefInfo.otherInfo}
-              onChange={doNothing}
-            />
-          </span>
+
+        <div className="DocRefInfo__createdBy">
+          <label>Created by</label>
+          <input
+            type="text"
+            value={docRefInfo.createUser}
+            onChange={doNothing}
+          />
+        </div>
+        <div className="DocRefInfo__createdOn">
+          <label>at</label>
+          <input type="text" value={formattedCreateTime} onChange={doNothing} />
+        </div>
+        <div className="DocRefInfo__updatedBy">
+          <label>Updated by</label>
+          <input
+            type="text"
+            value={docRefInfo.updateUser}
+            onChange={doNothing}
+          />
+        </div>
+        <div className="DocRefInfo__updatedOn">
+          <label>at</label>
+          <input type="text" value={formattedUpdateTime} onChange={doNothing} />
+        </div>
+        <div className="DocRefInfo__otherInfo">
+          <label>Other Info</label>
+          <input
+            type="text"
+            value={docRefInfo.otherInfo}
+            onChange={doNothing}
+          />
         </div>
       </form>
     }

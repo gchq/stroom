@@ -3,7 +3,11 @@
 }
 
 .app-search-bar__input {
-  width: 100%;
+  height: 2em;
+  min-width: 12em;
+  margin-top: 1em;
+  margin: 0.7em;
+  border: 0;
 }
 
 .app-search-bar__dropdown-content {

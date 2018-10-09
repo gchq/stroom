@@ -24,7 +24,7 @@ export interface Props {
 }
 
 const DocRefIconHeader = ({ text, docRefType, className }: Props) => (
-  <div className={`icon-header ${className}`}>
+  <div className={`icon-header ${className || ""}`}>
     <DocRefImage
       docRefType={docRefType}
       className="icon-header__icon"

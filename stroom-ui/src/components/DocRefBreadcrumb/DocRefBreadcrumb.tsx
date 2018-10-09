@@ -59,7 +59,7 @@ const DocRefBreadcrumb = ({
   openDocRef,
   className = ""
 }: EnhancedProps) => (
-  <div className={`DocRefBreadcrumb ${className}`}>
+  <div className={`DocRefBreadcrumb ${className || ""}`}>
     {lineage.map(l => (
       <React.Fragment key={l.uuid}>
         <Divider />

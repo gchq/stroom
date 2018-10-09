@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
- @font-face {
-  font-family: 'Varela';
+@font-face {
+  font-family: "Varela";
   font-style: normal;
   font-weight: 400;
-  src: local('Varela'), 
-       url('./fonts/varela/Varela-Regular.ttf') format('truetype'),
+  src: local("Varela"),
+    url("./fonts/varela/Varela-Regular.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: 'Open Sans';
+  font-family: "Open Sans";
   font-style: normal;
   font-weight: 400;
-  src: local('Open Sans'), 
-       local('OpenSans'),
-       url('./fonts/opensans/OpenSans-Regular.ttf') format('truetype'),
+  src: local("Open Sans"), local("OpenSans"),
+    url("./fonts/opensans/OpenSans-Regular.ttf") format("truetype");
 }
 
 body {
-  font-family: 'Varela';
+  font-family: "Varela";
   margin: 0;
   padding: 0;
   height: 100%;
@@ -82,4 +81,15 @@ body {
 .stroom-icon--lg {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+input[type="text"],
+select {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
 }

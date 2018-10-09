@@ -98,7 +98,8 @@ export const reducer = prepareReducerById(defaultStatePerId)
     NAVIGATE_TO_FOLDER,
     (state: StoreStatePerId, { navFolder }) => ({
       ...state,
-      navFolder
+      navFolder,
+      searchMode: SearchMode.NAVIGATION
     })
   )
   .handleAction<SearchTermUpdatedAction>(

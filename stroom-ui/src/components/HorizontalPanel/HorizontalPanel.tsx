@@ -33,7 +33,7 @@ const HorizontalPanel = ({
   onClose,
   className
 }: EnhancedProps) => (
-  <div className={`horizontal-panel ${className}`}>
+  <div className={`horizontal-panel ${className || ""}`}>
     <div className="horizontal-panel__header flat">
       <div className="horizontal-panel__header__title">{title}</div>
       {headerMenuItems}

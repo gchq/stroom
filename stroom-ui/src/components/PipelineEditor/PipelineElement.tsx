@@ -320,7 +320,7 @@ const PipelineElement = ({
   connectDragSource(
     connectDropTarget(
       <div
-        className={`${className} raised-low borderless `}
+        className={`${className || ""} raised-low borderless `}
         onClick={onElementClick}
       >
         {elementDefinition && <ElementImage icon={elementDefinition.icon} />}
