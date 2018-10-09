@@ -39,17 +39,15 @@ public class DbUtil {
 
         LOGGER.info("Ensuring database connection to {} with username {}", jdbcUrl, username);
 
-        boolean hasConnected = false;
         long sleepMs = 100;
         Throwable lastThrowable = null;
 
-        while (!hasConnected) {
+        while (true) {
             try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
-                hasConnected = true;
+                LOGGER.info("Successfully established connection to {} with username {}", jdbcUrl, username);
                 break;
             } catch (SQLException e) {
-
-                Throwable cause = e.getCause();
+                final Throwable cause = e.getCause();
                 LOGGER.warn("Unable to establish database connection due to error: [{}], will try again in {}ms, enable debug to see stack trace",
                         cause != null ? cause.getMessage() : e.getMessage(), sleepMs);
                 if (LOGGER.isDebugEnabled()) {
@@ -62,6 +60,7 @@ public class DbUtil {
             }
             ThreadUtil.sleep(sleepMs);
 
+            // Gradually increase the sleep time up to a maximum
             sleepMs = (long) (sleepMs * 1.3);
             if (sleepMs >= MAX_SLEEP_TIME_MS) {
                 sleepMs = MAX_SLEEP_TIME_MS;
