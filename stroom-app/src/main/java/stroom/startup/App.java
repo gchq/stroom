@@ -46,6 +46,7 @@ import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
 import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
+import stroom.entity.server.util.ConnectionUtil;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.externaldoc.spring.ExternalDocRefConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
@@ -95,6 +96,8 @@ import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
+import stroom.util.config.StroomProperties;
+import stroom.util.db.DbUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
 
@@ -194,6 +197,16 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
+
+        // Make sure we can connect to our databases, retrying as required.
+        boolean didAllDbsConnect;
+        didAllDbsConnect = waitForStroomDbConnection();
+        didAllDbsConnect = waitForStatsDbConnection() && didAllDbsConnect;
+        if (!didAllDbsConnect) {
+            LOGGER.error("Can't connect to all databases, shutting down");
+            System.exit(1);
+        }
+
         // Start the spring context.
         LOGGER.info("Loading Spring context");
         final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
@@ -246,6 +259,24 @@ public class App extends Application<Config> {
 
         // Listen to the lifecycle of the Dropwizard app.
         SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);
+    }
+
+    private boolean waitForStroomDbConnection() {
+        final String driverClassname = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_CLASS_NAME);
+        final String driverUrl = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_URL);
+        final String driverUsername = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_USERNAME);
+        final String driverPassword = StroomProperties.getProperty(ConnectionUtil.JDBC_DRIVER_PASSWORD);
+
+        return DbUtil.waitForConnection(driverClassname, driverUrl, driverUsername, driverPassword);
+    }
+
+    private boolean waitForStatsDbConnection() {
+        final String driverClassname = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverClassName");
+        final String driverUrl = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUrl|trace");
+        final String driverUsername = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverUsername");
+        final String driverPassword = StroomProperties.getProperty("stroom.statistics.sql.jdbcDriverPassword");
+
+        return DbUtil.waitForConnection(driverClassname, driverUrl, driverUsername, driverPassword);
     }
 
     private ApplicationContext loadApplcationContext(final Configuration configuration, final Environment environment) {
