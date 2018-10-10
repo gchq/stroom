@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.5] - 2018-10-10
+
 * Changed selected default tab for pipelines to be `Data`.
 
 * Issue **#860** : Fixed issue where stepping failed when using any sort of input filter or reader before the parser.
@@ -966,7 +968,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.5...HEAD
+[v5.5.5]: https://github.com/gchq/stroom/compare/v5.5.4...v5.5.5
 [v5.5.4]: https://github.com/gchq/stroom/compare/v5.5.3...v5.5.4
 [v5.5.3]: https://github.com/gchq/stroom/compare/v5.5.2...v5.5.3
 [v5.5.2]: https://github.com/gchq/stroom/compare/v5.5.1...v5.5.2
