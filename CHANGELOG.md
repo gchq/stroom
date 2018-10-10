@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.6]
+
+* Fix typo in Dockerfile
+
 ## [v6.0-beta.5]
 
 * Issue **#859** : Change application startup to keep retrying when establishing a DB connection except for certain connection errors like access denied.
@@ -1085,7 +1089,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.5...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.6...6.0
+[v6.0-beta.6]: https://github.com/gchq/stroom/compare/v6.0-beta.5...v6.0-beta.6
 [v6.0-beta.5]: https://github.com/gchq/stroom/compare/v6.0-beta.4...v6.0-beta.5
 [v6.0-beta.4]: https://github.com/gchq/stroom/compare/v6.0-beta.3...v6.0-beta.4
 [v6.0-beta.3]: https://github.com/gchq/stroom/compare/v6.0-beta.2...v6.0-beta.3
