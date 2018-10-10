@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Changed selected default tab for pipelines to be `Data`.
+
 * Issue **#860** : Fixed issue where stepping failed when using any sort of input filter or reader before the parser.
 
 ## [v5.5.4] - 2018-10-08
