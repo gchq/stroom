@@ -17,6 +17,8 @@
 
 package stroom.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.NodeService;
 import stroom.node.server.VolumeService;
@@ -28,9 +30,9 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeType;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.security.SecurityHelper;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -50,6 +52,8 @@ import java.util.List;
  */
 @Component(StatusServletImpl.BEAN_NAME)
 public class StatusServletImpl extends HttpServlet implements StatusServlet {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatusServletImpl.class);
+
     public static final String BEAN_NAME = "statusServlet";
 
     private static final long serialVersionUID = 1L;
@@ -73,6 +77,20 @@ public class StatusServletImpl extends HttpServlet implements StatusServlet {
         this.clientPropertiesService = clientPropertiesService;
         this.volumeService = volumeService;
         this.securityContext = securityContext;
+    }
+
+    @Override
+    public void init() throws ServletException {
+        LOGGER.info("Initialising Status Servlet");
+        super.init();
+        LOGGER.info("Initialised Status Servlet");
+    }
+
+    @Override
+    public void destroy() {
+        LOGGER.info("Destroying Status Servlet");
+        super.destroy();
+        LOGGER.info("Destroyed Status Servlet");
     }
 
     /**
