@@ -45,7 +45,7 @@ ADD docker-entrypoint.sh /usr/local/bin/
 
 #Add in all the content packs so stroom imports them on startup
 ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v2.0/core-xml-schemas-v2.0.zip /stroom/contentPackImport/
-ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v3.1.1/event-logging-xml-schema-v3.2.3.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v3.2.3/event-logging-xml-schema-v3.2.3.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.1/internal-statistics-sql-v2.1.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.1/internal-statistics-stroom-stats-v2.1.zip /stroom/contentPackImport/
