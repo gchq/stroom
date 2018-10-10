@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#860** : Fixed issue where stepping failed when using any sort of input filter or reader before the parser.
+
 ## [v5.5.4] - 2018-10-08
 
 * Issue **#730** : The `System` folder now displays data and processors. This is a bug fix related to changing the default initial page for some document types.
