@@ -31,15 +31,6 @@ startStroom(){
     echo -e "Starting ${GREEN}Stroom${NC}"
     echo -e "${BLUE}---------------${NC}"
     echo -e ""
-    STROOM_HOME="$HOME/.stroom/"
-
-    # Create the ~/.stroom directory if it doesn't exist
-    mkdir -p $STROOM_HOME
-    echo -e " - ${GREEN}Stroom's${NC} working directory is ${YELLOW}~/.stroom${NC}"
-
-    # Always copy the config over - the config here is the master config
-    echo -e " - Updating the config (${YELLOW}~/.stroom/stroom.conf${NC})"
-    cp -rf stroom.conf $STROOM_HOME
 
     # Run Stroom
     echo -e " - Running ${GREEN}Stroom${NC}"
