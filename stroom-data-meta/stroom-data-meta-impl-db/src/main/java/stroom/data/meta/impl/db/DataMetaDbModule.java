@@ -13,6 +13,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
+import stroom.util.db.DbUtil;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -41,6 +42,14 @@ public class DataMetaDbModule extends AbstractModule {
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<DataMetaServiceConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+
+        // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
+        DbUtil.waitForConnection(
+                connectionConfig.getJdbcDriverClassName(),
+                connectionConfig.getJdbcDriverUrl(),
+                connectionConfig.getJdbcDriverUsername(),
+                connectionConfig.getJdbcDriverPassword());
+
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
 
         connectionConfig.validate();
