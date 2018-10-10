@@ -87,6 +87,7 @@ import stroom.statistics.sql.search.SqlStatisticsQueryResource;
 import stroom.streamstore.StreamAttributeMapResource;
 import stroom.streamtask.resource.StreamTaskResource;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.db.DbUtil;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -201,6 +202,7 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
+
         final AppModule appModule = new AppModule(configuration.getAppConfig());
         final Injector injector = Guice.createInjector(appModule);
 

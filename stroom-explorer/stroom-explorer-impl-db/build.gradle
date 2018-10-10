@@ -4,7 +4,7 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-explorer:stroom-explorer-impl-db-gen')
     //compile project(':stroom-security:stroom-security-api')
-    //compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    compile project(':stroom-util')
     compile project(':stroom-util-shared')
     //compile project(':stroom-entity-shared')
 

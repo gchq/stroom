@@ -33,6 +33,7 @@ import stroom.io.StreamCloser;
 import stroom.node.NodeServiceModule;
 import stroom.task.TaskModule;
 import stroom.task.api.TaskHandler;
+import stroom.util.db.DbUtil;
 import stroom.volume.VolumeModule;
 
 import javax.inject.Provider;
@@ -64,6 +65,14 @@ public class FileSystemDataStoreModule extends AbstractModule {
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<DataStoreServiceConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+
+        // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
+        DbUtil.waitForConnection(
+                connectionConfig.getJdbcDriverClassName(),
+                connectionConfig.getJdbcDriverUrl(),
+                connectionConfig.getJdbcDriverUsername(),
+                connectionConfig.getJdbcDriverPassword());
+
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
 
         connectionConfig.validate();
@@ -72,9 +81,12 @@ public class FileSystemDataStoreModule extends AbstractModule {
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
         config.setUsername(connectionConfig.getJdbcDriverUsername());
         config.setPassword(connectionConfig.getJdbcDriverPassword());
-        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
-        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
+        config.addDataSourceProperty("cachePrepStmts",
+                String.valueOf(connectionPoolConfig.isCachePrepStmts()));
+        config.addDataSourceProperty("prepStmtCacheSize",
+                String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
+        config.addDataSourceProperty("prepStmtCacheSqlLimit",
+                String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;

@@ -77,6 +77,23 @@ dependencies {
     compile project(':stroom-kafka:stroom-kafka-impl')
     compile project(':stroom-kafka:stroom-kafka-pipeline')
     compile project(':stroom-pipeline')
+//<<<<<<< HEAD
+//=======
+    //compile project(':stroom-proxy')
+    //compile project(':stroom-explorer-api')
+    //compile project(':stroom-explorer-server')
+    //compile project(':stroom-security-server')
+    //compile project(':stroom-util')
+    //permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
+    //compile project(':stroom-index-server')
+    //compile project(':stroom-statistics-api')
+    //permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    //compile project(':stroom-entity-shared')
+    //permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
+    //compile project(':stroom-index-shared')
+    //permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
+////    compile project(':stroom-util')
+//>>>>>>> 6.0
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy')
     compile project(':stroom-ruleset:stroom-ruleset-server')
