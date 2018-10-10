@@ -255,6 +255,7 @@
                     <module>stroom.app.App</module>
                     <optimizationLevel>9</optimizationLevel>
                     <runTarget>stroom.jsp</runTarget>
+                    <extraJvmArgs>-Xms1g -Xmx2g</extraJvmArgs>
                 </configuration>
             </plugin>
 
@@ -289,6 +290,7 @@
                             <module>stroom.app.AppSuperDevMode</module>
                             <optimizationLevel>0</optimizationLevel>
                             <runTarget>stroom.jsp</runTarget>
+                            <extraJvmArgs>-Xms1g -Xmx2g</extraJvmArgs>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -310,6 +312,7 @@
                             <module>stroom.app.AppSuperDevModeChrome</module>
                             <optimizationLevel>0</optimizationLevel>
                             <runTarget>stroom.jsp</runTarget>
+                            <extraJvmArgs>-Xms1g -Xmx2g</extraJvmArgs>
                         </configuration>
                     </plugin>
                 </plugins>
