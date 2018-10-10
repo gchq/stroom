@@ -28,6 +28,7 @@ PATH_TO_JAR=stroom-app-all.jar
 PID_PATH_NAME=log/stroom.pid
 LOG_FILE=log/stroom.log
 ERROR_LOG_FILE=log/stroom_error.log
+JAVA_OPTS="-Xms512m -Xmx2048m"
 
 startStroom(){
     echo -e "Starting ${GREEN}Stroom${NC}"
@@ -46,7 +47,7 @@ startStroom(){
     # Run Stroom
     echo -e " - Running ${GREEN}Stroom${NC}"
 #    java -jar stroom-app-all.jar server config.yml
-    nohup java -jar $PATH_TO_JAR server config.yml > $LOG_FILE 2> $ERROR_LOG_FILE &
+    nohup java $JAVA_OPTS -jar $PATH_TO_JAR server config.yml > $LOG_FILE 2> $ERROR_LOG_FILE &
     echo $! > $PID_PATH_NAME
     echo -e ""
     echo -e "Run '${YELLOW}./stroom.sh log${NC}' to see what's happening, or '${YELLOW}./stroom.sh errors${NC}' for errors."
