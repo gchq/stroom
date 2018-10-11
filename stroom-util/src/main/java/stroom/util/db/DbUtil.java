@@ -32,10 +32,10 @@ public class DbUtil {
             final String username,
             final String password) {
 
-        Preconditions.checkNotNull(driverClass);
-        Preconditions.checkNotNull(jdbcUrl);
-        Preconditions.checkNotNull(username);
-        Preconditions.checkNotNull(password);
+        Preconditions.checkNotNull(driverClass, "The driver class cannot be null.");
+        Preconditions.checkNotNull(jdbcUrl, "The JDBC URL cannot be null.");
+        Preconditions.checkNotNull(username, " The username cannot be null.");
+        Preconditions.checkNotNull(password, "The password cannot be null.");
 
         try {
             Class.forName(driverClass);
