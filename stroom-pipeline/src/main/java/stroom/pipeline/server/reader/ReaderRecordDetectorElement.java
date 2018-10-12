@@ -16,25 +16,24 @@
 
 package stroom.pipeline.server.reader;
 
-import java.io.Reader;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.task.RecordDetector;
 import stroom.pipeline.server.task.SteppingController;
+
+import java.io.Reader;
 
 @Component
 @Scope("prototype")
 public class ReaderRecordDetectorElement extends AbstractReaderElement implements RecordDetector {
-    private ReaderRecordDetector recordDetector;
     private SteppingController controller;
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        recordDetector = new ReaderRecordDetector(reader);
-        recordDetector.setController(controller);
-        return recordDetector;
+        if (controller == null) {
+            return reader;
+        }
+        return new ReaderRecordDetector(reader, controller);
     }
 
     @Override

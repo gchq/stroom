@@ -16,26 +16,19 @@
 
 package stroom.pipeline.server.reader;
 
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.server.task.SteppingController;
+import stroom.util.logging.StroomLogger;
+
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 
-import stroom.util.logging.StroomLogger;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.task.RecordDetector;
-import stroom.pipeline.server.task.SteppingController;
-import stroom.util.spring.StroomScope;
-
-@Component
-@Scope(StroomScope.PROTOTYPE)
-public class ReaderRecordDetector extends FilterReader implements RecordDetector {
+class ReaderRecordDetector extends FilterReader {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(ReaderRecordDetector.class);
     private static final int MAX_COUNT = 10000;
 
-    private SteppingController controller;
+    private final SteppingController controller;
 
     private long currentStepNo;
 
@@ -47,8 +40,9 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
     private int count;
     private boolean end;
 
-    public ReaderRecordDetector(final Reader reader) {
+    ReaderRecordDetector(final Reader reader, final SteppingController controller) {
         super(reader);
+        this.controller = controller;
     }
 
     @Override
@@ -119,10 +113,5 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
         offset += i;
 
         return i;
-    }
-
-    @Override
-    public void setController(final SteppingController controller) {
-        this.controller = controller;
     }
 }

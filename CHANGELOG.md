@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#855** : Further fixes for stepping data that contains a BOM.
+
 ## [v5.5.5] - 2018-10-10
 
 * Changed selected default tab for pipelines to be `Data`.

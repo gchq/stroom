@@ -16,26 +16,19 @@
 
 package stroom.pipeline.server.reader;
 
+import stroom.pipeline.server.errorhandler.ProcessException;
+import stroom.pipeline.server.task.SteppingController;
+import stroom.util.logging.StroomLogger;
+
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import stroom.util.logging.StroomLogger;
-import stroom.util.spring.StroomScope;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.task.RecordDetector;
-import stroom.pipeline.server.task.SteppingController;
-
-@Component
-@Scope(StroomScope.PROTOTYPE)
-public class InputStreamRecordDetector extends FilterInputStream implements RecordDetector {
+class InputStreamRecordDetector extends FilterInputStream {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(InputStreamRecordDetector.class);
     private static final int MAX_COUNT = 10000;
 
-    private SteppingController controller;
+    private final SteppingController controller;
 
     private long currentStepNo;
 
@@ -47,8 +40,9 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
     private int count;
     private boolean end;
 
-    public InputStreamRecordDetector(final InputStream inputStream) {
+    InputStreamRecordDetector(final InputStream inputStream, final SteppingController controller) {
         super(inputStream);
+        this.controller = controller;
     }
 
     @Override
@@ -115,10 +109,5 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
         offset += i;
 
         return i;
-    }
-
-    @Override
-    public void setController(final SteppingController controller) {
-        this.controller = controller;
     }
 }

@@ -16,25 +16,24 @@
 
 package stroom.pipeline.server.reader;
 
-import java.io.InputStream;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import stroom.pipeline.server.task.RecordDetector;
 import stroom.pipeline.server.task.SteppingController;
+
+import java.io.InputStream;
 
 @Component
 @Scope("prototype")
 public class InputStreamRecordDetectorElement extends AbstractInputElement implements RecordDetector {
-    private InputStreamRecordDetector recordDetector;
     private SteppingController controller;
 
     @Override
     protected InputStream insertFilter(final InputStream inputStream, final String encoding) {
-        recordDetector = new InputStreamRecordDetector(inputStream);
-        recordDetector.setController(controller);
-        return recordDetector;
+        if (controller == null) {
+            return inputStream;
+        }
+        return new InputStreamRecordDetector(inputStream, controller);
     }
 
     @Override

@@ -16,14 +16,13 @@
 
 package stroom.pipeline.server.filter;
 
-import stroom.util.spring.StroomScope;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
 import stroom.pipeline.server.task.RecordDetector;
 import stroom.pipeline.server.task.SteppingController;
+import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -35,9 +34,11 @@ public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetect
 
     @Override
     public void startStream() {
-        currentStepNo = 0;
-        locator = null;
-        controller.resetSourceLocation();
+        if (controller != null) {
+            currentStepNo = 0;
+            locator = null;
+            controller.resetSourceLocation();
+        }
         super.startStream();
     }
 
@@ -58,7 +59,7 @@ public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetect
         super.endDocument();
 
         // Tell the controller that this is the end of a record.
-        if (controller.endRecord(locator, currentStepNo)) {
+        if (controller != null && controller.endRecord(locator, currentStepNo)) {
             throw new ExitSteppingException();
         }
     }
