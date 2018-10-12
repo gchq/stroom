@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.6] - 2018-10-12
+
 * Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
 
 * Issue **#867** : Find replace filter now creates an error if an invalid regex is used.
@@ -974,7 +976,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.6...HEAD
+[v5.5.6]: https://github.com/gchq/stroom/compare/v5.5.5...v5.5.6
 [v5.5.5]: https://github.com/gchq/stroom/compare/v5.5.4...v5.5.5
 [v5.5.4]: https://github.com/gchq/stroom/compare/v5.5.3...v5.5.4
 [v5.5.3]: https://github.com/gchq/stroom/compare/v5.5.2...v5.5.3
