@@ -33,10 +33,10 @@ public class DbUtil {
             final String username,
             final String password) {
 
-        Preconditions.checkNotNull(driverClass);
-        Preconditions.checkNotNull(jdbcUrl);
-        Preconditions.checkNotNull(username);
-        Preconditions.checkNotNull(password);
+        Preconditions.checkNotNull(driverClass, "The JDBC driver class has not been supplied");
+        Preconditions.checkNotNull(jdbcUrl, "The JDBC URL has not been supplied");
+        Preconditions.checkNotNull(username, "The JDBC username class has not been supplied");
+        Preconditions.checkNotNull(password, "The JDBC password class has not been supplied");
 
         try {
             Class.forName(driverClass);
