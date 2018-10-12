@@ -53,6 +53,7 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
     private boolean regex;
     private boolean dotAll;
     private int bufferSize = 1000;
+    private boolean showReplacementCount = true;
 
     @Inject
     public FindReplaceFilterElement(final ErrorReceiverProxy errorReceiver) {
@@ -61,33 +62,49 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        textReplacementFilterReader = new FindReplaceFilter.Builder()
-                .reader(reader)
-                .find(find)
-                .replacement(replacement)
-                .maxReplacements(maxReplacements)
-                .regex(regex)
-                .dotAll(dotAll)
-                .bufferSize(bufferSize)
-                .errorReceiver(errorReceiver)
-                .elementId(getElementId())
-                .build();
-        return textReplacementFilterReader;
+        Reader result = reader;
+
+        try {
+            textReplacementFilterReader = new FindReplaceFilter.Builder()
+                    .reader(reader)
+                    .find(find)
+                    .replacement(replacement)
+                    .maxReplacements(maxReplacements)
+                    .regex(regex)
+                    .dotAll(dotAll)
+                    .bufferSize(bufferSize)
+                    .errorReceiver(errorReceiver)
+                    .elementId(getElementId())
+                    .build();
+            result = textReplacementFilterReader;
+
+        } catch (final RuntimeException e) {
+            errorReceiver.log(
+                    Severity.ERROR,
+                    null,
+                    getElementId(),
+                    e.getMessage(),
+                    e);
+        }
+
+        return result;
     }
 
     @Override
     public void endStream() {
-        if (textReplacementFilterReader.getTotalReplacementCount() > 0) {
-            errorReceiver.log(
-                    Severity.INFO,
-                    null,
-                    getElementId(),
-                    "Performed " + textReplacementFilterReader.getTotalReplacementCount() + " replacements",
-                    null);
-        }
+        if (textReplacementFilterReader != null) {
+            if (showReplacementCount && textReplacementFilterReader.getTotalReplacementCount() > 0) {
+                errorReceiver.log(
+                        Severity.INFO,
+                        null,
+                        getElementId(),
+                        "Performed " + textReplacementFilterReader.getTotalReplacementCount() + " replacements",
+                        null);
+            }
 
-        // Reset some of the variables so we can find/replace again in the next stream.
-        textReplacementFilterReader.clear();
+            // Reset some of the variables so we can find/replace again in the next stream.
+            textReplacementFilterReader.clear();
+        }
     }
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
@@ -126,5 +143,11 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
             defaultValue = "1000")
     public void setBufferSize(final int bufferSize) {
         this.bufferSize = bufferSize;
+    }
+
+    @PipelineProperty(description = "Show total replacement count",
+            defaultValue = "true")
+    public void setShowReplacementCount(final boolean showReplacementCount) {
+        this.showReplacementCount = showReplacementCount;
     }
 }

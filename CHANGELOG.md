@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
+
+* Issue **#867** : Find replace filter now creates an error if an invalid regex is used.
+
 * Issue **#855** : Further fixes for stepping data that contains a BOM.
 
 ## [v5.5.5] - 2018-10-10
