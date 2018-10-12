@@ -19,8 +19,10 @@
 # This script is all you need to build a local image of stroom-proxy
 # Releases to Dockerhub will be done by travis
 
+set -e
+
 # Exclude tests because we want this to be fast. 
 # I guess you'd better test the build before releasing.
-./gradlew downloadUrlDependencies clean build shadowJar -x test -x integrationTest
+./gradlew downloadUrlDependencies clean build shadowJar -x test -x integrationTest -x gwtCompile
 
-docker build --tag gchq/stroom:dev-SNAPSHOT ./stroom-app/docker
+docker build --tag gchq/stroom-proxy:dev-SNAPSHOT ./stroom-app/proxy-docker

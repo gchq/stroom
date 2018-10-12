@@ -11,3 +11,4 @@
 /bin/
 /war/WEB-INF/lib
 /docker/build/
+/proxy-docker/build/

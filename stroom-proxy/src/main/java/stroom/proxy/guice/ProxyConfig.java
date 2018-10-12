@@ -9,7 +9,7 @@ import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
 public class ProxyConfig {
-    private String proxyConfigDir;
+    private String proxyContentDir;
     private ProxyRequestConfig proxyRequestConfig;
     private ForwardStreamConfig forwardStreamConfig;
     private ProxyRepositoryConfigImpl proxyRepositoryConfig;
@@ -78,7 +78,7 @@ public class ProxyConfig {
     }
 
     @JsonProperty
-    public String getProxyConfigDir() {
-        return proxyConfigDir;
+    public String getProxyContentDir() {
+        return proxyContentDir;
     }
 }

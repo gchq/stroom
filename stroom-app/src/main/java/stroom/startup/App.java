@@ -16,6 +16,8 @@
 
 package stroom.startup;
 
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -50,6 +52,7 @@ import stroom.entity.server.util.ConnectionUtil;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.externaldoc.spring.ExternalDocRefConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
+import stroom.healthchecks.LogLevelInspector;
 import stroom.importexport.server.ImportExportActionHandler;
 import stroom.index.server.StroomIndexQueryResource;
 import stroom.index.spring.IndexConfiguration;
@@ -57,6 +60,7 @@ import stroom.lifecycle.LifecycleService;
 import stroom.logging.spring.EventLoggingConfiguration;
 import stroom.pipeline.spring.PipelineConfiguration;
 import stroom.proxy.guice.ProxyModule;
+import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
@@ -162,20 +166,34 @@ public class App extends Application<Config> {
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
+        HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         // Add health checks
-        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
-        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
 
         // Add servlets
-        servletContextHandler.addServlet(new ServletHolder(new ConfigServlet(configPath)), ResourcePaths.ROOT_PATH + "/config");
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, ResourcePaths.ROOT_PATH + "/ui");
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
-        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
+        ConfigServlet configServlet = new ConfigServlet(configPath);
+        String configPathSpec = ResourcePaths.ROOT_PATH + "/config";
+        servletContextHandler.addServlet(new ServletHolder(configServlet), configPathSpec);
+        healthCheckRegistry.register(configServlet.getClass().getName(), new HealthCheck() {
+            @Override
+            protected Result check() throws Exception {
+                return Result.builder()
+                        .healthy()
+                        .withDetail("path", configPathSpec)
+                        .build();
+            }
+        });
+
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, ResourcePaths.ROOT_PATH + "/ui", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug", healthCheckRegistry);
 
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
@@ -191,8 +209,10 @@ public class App extends Application<Config> {
             importExportActionHandlers.put(RuleSet.DOCUMENT_TYPE, injector.getInstance(RuleSetService.class));
             importExportActionHandlers.put(DictionaryDoc.ENTITY_TYPE, injector.getInstance(DictionaryStore.class));
 
-            final ContentSyncService contentSyncService = new ContentSyncService(configuration.getProxyConfig().getContentSyncConfig(), importExportActionHandlers);
+            final ContentSyncService contentSyncService = new ContentSyncService(
+                    configuration.getProxyConfig().getContentSyncConfig(), importExportActionHandlers);
             environment.lifecycle().manage(contentSyncService);
+            GuiceUtil.addHealthCheck(healthCheckRegistry, contentSyncService);
         }
     }
 
