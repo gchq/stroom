@@ -122,67 +122,69 @@ public class ImportExportHelper {
 
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
-            final Config config = new Config();
-            config.read(new StringReader(dataMap.get("xml")));
+            final String xml = dataMap.get("xml");
+            if (xml != null) {
+                final Config config = new Config();
+                config.read(new StringReader(xml));
 
-            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
+                final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
-            // Output warnings where the config lists invalid properties.
-            for (final String property : config.getProperties()) {
-                boolean found = false;
-                for (final Property prop : propertyList) {
-                    if (prop.getName().equals(property)) {
+                // Output warnings where the config lists invalid properties.
+                for (final String property : config.getProperties()) {
+                    boolean found = false;
+                    for (final Property prop : propertyList) {
+                        if (prop.getName().equals(property)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (DocumentEntity.AUDIT_FIELDS.contains(property)) {
                         found = true;
-                        break;
+                    }
+
+                    if (!found) {
+                        importState.addMessage(Severity.WARNING, String.format("%s contains invalid property %s", entity.getType(), property));
                     }
                 }
-                if (DocumentEntity.AUDIT_FIELDS.contains(property)) {
-                    found = true;
-                }
 
-                if (!found) {
-                    importState.addMessage(Severity.WARNING, String.format("%s contains invalid property %s", entity.getType(), property));
-                }
-            }
+                // Only try and set valid properties.
+                // Start with properties that are not being set from an external
+                // file as the internal properties may affect the file extension of
+                // the external files.
+                for (final Property property : propertyList) {
+                    final String propertyName = property.getName();
 
-            // Only try and set valid properties.
-            // Start with properties that are not being set from an external
-            // file as the internal properties may affect the file extension of
-            // the external files.
-            for (final Property property : propertyList) {
-                final String propertyName = property.getName();
-
-                // Import non externalised properties.
-                if (!property.isExternalFile()) {
-                    // Set the property if it is specified.
-                    if (config.hasProperty(propertyName)) {
-                        updateProperty(beanWrapper, propertyName, config.get(propertyName), importState, importMode);
+                    // Import non externalised properties.
+                    if (!property.isExternalFile()) {
+                        // Set the property if it is specified.
+                        if (config.hasProperty(propertyName)) {
+                            updateProperty(beanWrapper, propertyName, config.get(propertyName), importState, importMode);
+                        }
                     }
                 }
-            }
 
-            // Now set properties that are held in external files.
-            for (final Property property : propertyList) {
-                final String propertyName = property.getName();
+                // Now set properties that are held in external files.
+                for (final Property property : propertyList) {
+                    final String propertyName = property.getName();
 
-                // Import the property from an external file if we are expected
-                // to.
-                if (property.isExternalFile()) {
-                    final String fileExtension = property.getExtensionProvider().getExtension(entity, propertyName);
-                    final String dataKey = propertyName + "." + fileExtension;
-                    final String data = dataMap.get(dataKey);
-                    if (data != null) {
-                        final List<Object> newDataList = new ArrayList<>();
-                        newDataList.add(data);
-                        updateProperty(beanWrapper, propertyName, newDataList, importState, importMode);
+                    // Import the property from an external file if we are expected
+                    // to.
+                    if (property.isExternalFile()) {
+                        final String fileExtension = property.getExtensionProvider().getExtension(entity, propertyName);
+                        final String dataKey = propertyName + "." + fileExtension;
+                        final String data = dataMap.get(dataKey);
+                        if (data != null) {
+                            final List<Object> newDataList = new ArrayList<>();
+                            newDataList.add(data);
+                            updateProperty(beanWrapper, propertyName, newDataList, importState, importMode);
 
-                    } else {
-                        importState.addMessage(Severity.WARNING, String
-                                .format("%s external property data not found %s", entity.getType(), property));
+                        } else {
+                            importState.addMessage(Severity.WARNING, String
+                                    .format("%s external property data not found %s", entity.getType(), property));
 
+                        }
                     }
                 }
-            }
 //
 //            // Unmarshall the object from the external form.
 //            try {
@@ -197,44 +199,45 @@ public class ImportExportHelper {
 //                }
 //            }
 
-            // Did we update anything?
-            if (importMode == ImportMode.CREATE_CONFIRMATION
-                    && State.UPDATE.equals(importState.getState())) {
-                boolean equal = importState.getUpdatedFieldList().size() == 0;
+                // Did we update anything?
+                if (importMode == ImportMode.CREATE_CONFIRMATION
+                        && State.UPDATE.equals(importState.getState())) {
+                    boolean equal = importState.getUpdatedFieldList().size() == 0;
 
-                final String newName = config.getString("name");
+                    final String newName = config.getString("name");
 
-                if (newName != null && !newName.equals(entity.getName())) {
-                    importState.addMessage(Severity.WARNING,
-                            "The entity name will be changed on import from '" + entity.getName() + "' to '" + newName + "'");
-                    equal = false;
-                }
+                    if (newName != null && !newName.equals(entity.getName())) {
+                        importState.addMessage(Severity.WARNING,
+                                "The entity name will be changed on import from '" + entity.getName() + "' to '" + newName + "'");
+                        equal = false;
+                    }
 
-                if (equal) {
-                    importState.setState(State.EQUAL);
-                } else {
-                    final Long originalUpdateTime = entity.getUpdateTime();
-                    final String newDateString = config.getString("updateTime");
-                    if (newDateString != null) {
-                        Long newTime = null;
-                        try {
-                            newTime = DateUtil.parseNormalDateTimeString(newDateString);
-                        } catch (final Exception e) {
-                            // Ignore.
-                        }
-                        try {
-                            newTime = Long.valueOf(newDateString);
-                        } catch (final Exception e) {
-                            // Ignore.
-                        }
+                    if (equal) {
+                        importState.setState(State.EQUAL);
+                    } else {
+                        final Long originalUpdateTime = entity.getUpdateTime();
+                        final String newDateString = config.getString("updateTime");
+                        if (newDateString != null) {
+                            Long newTime = null;
+                            try {
+                                newTime = DateUtil.parseNormalDateTimeString(newDateString);
+                            } catch (final Exception e) {
+                                // Ignore.
+                            }
+                            try {
+                                newTime = Long.valueOf(newDateString);
+                            } catch (final Exception e) {
+                                // Ignore.
+                            }
 
-                        if (originalUpdateTime != null && newTime != null && originalUpdateTime > newTime) {
-                            importState.addMessage(Severity.WARNING,
-                                    "The item you are attempting to import is older than the current version.\nCurrent is "
-                                            + DateUtil.createNormalDateTimeString(originalUpdateTime)
-                                            + " (" + entity.getUpdateUser() + "), Import is "
-                                            + DateUtil.createNormalDateTimeString(newTime));
+                            if (originalUpdateTime != null && newTime != null && originalUpdateTime > newTime) {
+                                importState.addMessage(Severity.WARNING,
+                                        "The item you are attempting to import is older than the current version.\nCurrent is "
+                                                + DateUtil.createNormalDateTimeString(originalUpdateTime)
+                                                + " (" + entity.getUpdateUser() + "), Import is "
+                                                + DateUtil.createNormalDateTimeString(newTime));
 
+                            }
                         }
                     }
                 }
