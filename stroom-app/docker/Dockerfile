@@ -50,6 +50,7 @@ ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.1/internal-statistics-sql-v2.1.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.1/internal-statistics-stroom-stats-v2.1.zip /stroom/contentPackImport/
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip /stroom/contentPackImport/
+ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v1.0/stroom-logs-v1.0.zip /stroom/contentPackImport/
 
 #Add in the visualisations for import on startup
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/visualisations-production-v3.0.5.zip /stroom/contentPackImport/
