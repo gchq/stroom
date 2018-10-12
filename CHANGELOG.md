@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
+
+* Issue **#867** : Find replace filter now creates an error if an invalid regex is used.
+
+* Issue **#855** : Further fixes for stepping data that contains a BOM.
+
+* Changed selected default tab for pipelines to be `Data`.
+
+* Issue **#860** : Fixed issue where stepping failed when using any sort of input filter or reader before the parser.
+
 ## [v6.0-beta.6]
 
 * Fix typo in Dockerfile

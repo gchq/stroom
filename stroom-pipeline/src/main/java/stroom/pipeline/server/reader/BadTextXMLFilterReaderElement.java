@@ -32,8 +32,14 @@ import java.io.Reader;
 
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "BadTextXMLFilterReader", category = Category.READER, roles = {
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "BadTextXMLFilterReader",
+        category = Category.READER,
+        roles = {
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_READER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.STREAM)
 public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
     private final ErrorReceiver errorReceiver;
 
