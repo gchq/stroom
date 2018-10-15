@@ -19,6 +19,7 @@ package stroom.content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -50,7 +51,7 @@ public class ProxySecurityFilter implements Filter {
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final ContentSyncConfig config) {
+    public ProxySecurityFilter(@Nullable final ContentSyncConfig config) {
         this.config = config;
     }
 
@@ -103,7 +104,7 @@ public class ProxySecurityFilter implements Filter {
 
             if (isApiRequest) {
                 try {
-                    if (config.getApiKey() == null) {
+                    if (config == null || config.getApiKey() == null) {
                         throw new RuntimeException("No API key has been configured");
                     }
 
