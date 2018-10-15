@@ -22,14 +22,14 @@ import stroom.pipeline.stepping.SteppingController;
 import java.io.InputStream;
 
 public class InputStreamRecordDetectorElement extends AbstractInputElement implements RecordDetector {
-    private InputStreamRecordDetector recordDetector;
     private SteppingController controller;
 
     @Override
     protected InputStream insertFilter(final InputStream inputStream, final String encoding) {
-        recordDetector = new InputStreamRecordDetector(inputStream);
-        recordDetector.setController(controller);
-        return recordDetector;
+        if (controller == null) {
+            return inputStream;
+        }
+        return new InputStreamRecordDetector(inputStream, controller);
     }
 
     @Override

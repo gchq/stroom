@@ -27,8 +27,14 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.io.Reader;
 
-@ConfigurableElement(type = "InvalidCharFilterReader", category = Category.READER, roles = {
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "InvalidCharFilterReader",
+        category = Category.READER,
+        roles = {
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_READER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.STREAM)
 public class InvalidCharFilterReaderElement extends AbstractReaderElement {
     private final ErrorReceiver errorReceiver;
 

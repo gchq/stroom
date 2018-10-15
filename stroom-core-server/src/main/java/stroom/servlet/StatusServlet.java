@@ -17,6 +17,8 @@
 
 package stroom.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.node.NodeService;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindNodeCriteria;
@@ -46,6 +48,8 @@ import java.util.List;
  * </p>
  */
 public class StatusServlet extends HttpServlet {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatusServlet.class);
+
     private static final long serialVersionUID = 1L;
     private static final String INFO = "INFO";
     private static final String WARN = "WARN";
@@ -71,6 +75,20 @@ public class StatusServlet extends HttpServlet {
         this.clientProperties = clientProperties;
         this.volumeService = volumeService;
         this.security = security;
+    }
+
+    @Override
+    public void init() throws ServletException {
+        LOGGER.info("Initialising Status Servlet");
+        super.init();
+        LOGGER.info("Initialised Status Servlet");
+    }
+
+    @Override
+    public void destroy() {
+        LOGGER.info("Destroying Status Servlet");
+        super.destroy();
+        LOGGER.info("Destroyed Status Servlet");
     }
 
     /**

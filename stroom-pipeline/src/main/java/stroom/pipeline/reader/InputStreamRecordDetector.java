@@ -19,19 +19,18 @@ package stroom.pipeline.reader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.stepping.RecordDetector;
 import stroom.pipeline.stepping.SteppingController;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class InputStreamRecordDetector extends FilterInputStream implements RecordDetector {
+class InputStreamRecordDetector extends FilterInputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamRecordDetector.class);
 
     private static final int MAX_COUNT = 10000;
     private final byte[] buffer = new byte[1024];
-    private SteppingController controller;
+    private final SteppingController controller;
     private long currentStepNo;
     private int offset;
     private int length;
@@ -40,8 +39,9 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
     private int count;
     private boolean end;
 
-    InputStreamRecordDetector(final InputStream inputStream) {
+    InputStreamRecordDetector(final InputStream inputStream, final SteppingController controller) {
         super(inputStream);
+        this.controller = controller;
     }
 
     @Override
@@ -108,10 +108,5 @@ public class InputStreamRecordDetector extends FilterInputStream implements Reco
         offset += i;
 
         return i;
-    }
-
-    @Override
-    public void setController(final SteppingController controller) {
-        this.controller = controller;
     }
 }

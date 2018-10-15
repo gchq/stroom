@@ -18,7 +18,6 @@ package stroom.pipeline.reader;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.pipeline.reader.FindReplaceFilter;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -113,6 +112,22 @@ public class TestFindReplaceFilter {
                 .build();
         final String output = getOutput(textReplacementFilterReader, 100000);
         Assert.assertTrue(output.endsWith("aaacata"));
+    }
+
+    @Test
+    public void testInvalidRegex() {
+        try {
+            final Reader reader = new StringReader(getDogCat3());
+            new FindReplaceFilter.Builder()
+                    .reader(reader)
+                    .find("{{bad}}")
+                    .replacement("a")
+                    .regex(true)
+                    .build();
+            Assert.fail("Shouldn't get here");
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
     }
 
     private String getDogCat() {

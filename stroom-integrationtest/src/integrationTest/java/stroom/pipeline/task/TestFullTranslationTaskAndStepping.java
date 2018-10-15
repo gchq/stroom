@@ -40,6 +40,11 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     @Test
+    public void testBOMAndReplaceXMLEvents() throws IOException {
+        testStepping("BOM_AND_REPLACE_XML-EVENTS");
+    }
+
+    @Test
     public void testDataSplitterEvents() throws IOException {
         testStepping("DATA_SPLITTER-EVENTS");
     }
@@ -72,6 +77,11 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
     @Test
     public void testXMLEvents() throws IOException {
         testStepping("XML-EVENTS");
+    }
+
+    @Test
+    public void testXMLReaderEvents() throws IOException {
+        testStepping("XML_READER-EVENTS");
     }
 
     @Test
