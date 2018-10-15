@@ -220,9 +220,18 @@ swagger {
     }
 }
 
-task dist(type: Zip) {
+task copySupportingFiles(type: Copy) {
     from 'src/dist'
+    into 'build/release'
+}
+
+task copyJar(type: Copy) {
     from shadowJar.outputs.files
+    into 'build/release/bin'
+}
+
+task dist(type: Zip) {
+    from 'build/release'
 }
 
 tasks.build.dependsOn generateSwaggerDocumentation
