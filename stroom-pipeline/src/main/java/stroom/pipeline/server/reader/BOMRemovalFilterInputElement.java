@@ -28,8 +28,14 @@ import java.io.InputStream;
 
 @Component
 @Scope("prototype")
-@ConfigurableElement(type = "BOMRemovalFilterInput", category = Category.READER, roles = {
-        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.ROLE_READER}, icon = ElementIcons.STREAM)
+@ConfigurableElement(type = "BOMRemovalFilterInput",
+        category = Category.READER,
+        roles = {
+                PipelineElementType.ROLE_HAS_TARGETS,
+                PipelineElementType.ROLE_READER,
+                PipelineElementType.ROLE_MUTATOR,
+                PipelineElementType.VISABILITY_STEPPING},
+        icon = ElementIcons.STREAM)
 public class BOMRemovalFilterInputElement extends AbstractInputElement {
     private BOMRemovalInputStream bomRemovalInputStream;
 

@@ -114,6 +114,22 @@ public class TestFindReplaceFilter {
         Assert.assertTrue(output.endsWith("aaacata"));
     }
 
+    @Test
+    public void testInvalidRegex() {
+        try {
+            final Reader reader = new StringReader(getDogCat3());
+            new FindReplaceFilter.Builder()
+                    .reader(reader)
+                    .find("{{bad}}")
+                    .replacement("a")
+                    .regex(true)
+                    .build();
+            Assert.fail("Shouldn't get here");
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
+    }
+
     private String getDogCat() {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 1000; i++) {
