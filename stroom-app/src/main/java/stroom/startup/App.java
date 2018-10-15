@@ -151,6 +151,7 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
+        LOGGER.info("Starting in mode: {}", configuration.getMode());
         if ("proxy".equalsIgnoreCase(configuration.getMode())) {
             startProxy(configuration, environment);
         } else {
