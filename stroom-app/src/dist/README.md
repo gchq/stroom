@@ -20,3 +20,9 @@ You can send Stroom's logs to Stroom using `bin/send_to_stroom.sh`.  If you run 
 ```
 
 In the above `STROOM_ACCESS_LOG`, `STROOM_EVENT_LOG`, and `STROOM_APP_LOG` are all feeds. These feeds need to exist for this script to succeed. They are part of the [stroom-logs content pack](https://github.com/gchq/stroom-content/tree/master/source/stroom-logs) and you likely already have them installed.
+
+## Running Stroom using `systemd`
+There is an example `systemd` configuration in `conf/stroom.service`. If you wish to use this you must edit some properties:
+
+ 1. `User`: this is the user Stroom be run under. You may also wish to add a `Group=...` property.
+ 2. `ExecStart`: you must change the path to the jar and config file so that it points to the real locations that you have used.

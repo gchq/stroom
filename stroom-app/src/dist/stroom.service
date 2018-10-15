@@ -1,0 +1,17 @@
+[Unit]
+Description=Stroom
+After=network.target
+# Keep trying to restart the service forever. If unset it will stop trying, despite Restart being set to always.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+# Wait 10 seconds before restarting
+RestartSec=10
+User=centos
+ExecStart=java -Xms512m -Xmx2048m -jar /path/to/deployment/bin/stroom-app-all.jar server /path/to/deployment/conf/config.yml
+
+[Install]
+# This is explained badly here: https://unix.stackexchange.com/questions/404667/systemd-service-what-is-multi-user-target
+WantedBy=multi-user.target
