@@ -26,3 +26,5 @@ There is an example `systemd` configuration in `conf/stroom.service`. If you wis
 
  1. `User`: this is the user Stroom be run under. You may also wish to add a `Group=...` property.
  2. `ExecStart`: you must change the path to the jar and config file so that it points to the real locations that you have used.
+
+ You would have to copy this file to `/lib/systemd/system`. You may then control Stroom in the usual way, e.g. `systemctl start stroom`.
