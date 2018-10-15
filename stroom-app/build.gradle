@@ -17,6 +17,7 @@ plugins {
     //search for NOTICE.txt and DEPENDENCIES.txt
     //id "org.nosphere.honker" version "0.3.0"
     id 'org.flywaydb.flyway' version '5.0.7'
+    id "de.undercouch.download"
 }
 
 def uiDir = project.file('src/main/resources/ui')
@@ -220,23 +221,56 @@ swagger {
     }
 }
 
-task copySupportingFiles(type: Copy) {
-    from 'src/dist'
-    into 'build/release'
-}
 
 task copyJar(type: Copy) {
     from shadowJar.outputs.files
     into 'build/release/bin'
 }
 
-task dist(type: Zip) {
+task copySupportingFiles(type: Copy) {
+    from 'src/dist'
+    into 'build/release'
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+task downloadSend(type: Download) {
+    src 'http://raw.githubusercontent.com/gchq/stroom-clients/master/bash/send_to_stroom.sh'
+    dest 'build/release/bin'
+}
+
+task downloadSendArgs(type: Download) {
+    src 'https://raw.githubusercontent.com/gchq/stroom-clients/master/bash/send_to_stroom_args.sh'
+    dest 'build/release/bin'
+}
+
+task makeSendExecutable {
+    dependsOn copySupportingFiles
+    doLast{
+        exec {
+            commandLine 'chmod', '+x', 'build/release/bin/send_to_stroom.sh'
+        }
+        exec {
+            commandLine 'chmod', '+x', 'build/release/bin/send_to_stroom_args.sh'
+        }
+    }
+}
+
+task buildDistribution(type: Zip) {
+    dependsOn copyJar
+    dependsOn copySupportingFiles
+    dependsOn downloadSend
+    dependsOn downloadSendArgs
+    dependsOn makeSendExecutable
     from 'build/release'
 }
+
+
 
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForDockerBuild
 tasks.build.dependsOn shadowJar
+tasks.build.dependsOn buildDistribution
 
 //commented out in case we decide to use this plugin
 //honker {
