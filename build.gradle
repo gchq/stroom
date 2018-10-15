@@ -31,6 +31,10 @@ apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
 
+if(JavaVersion.current() != JavaVersion.VERSION_1_8){
+    throw new GradleException("This build must be run with java 8")
+}
+
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
