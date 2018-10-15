@@ -202,6 +202,8 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
+        // Get the external config.
+        StroomProperties.setExternalConfigPath(configuration.getExternalConfig(), configPath);
 
         final AppModule appModule = new AppModule(configuration.getAppConfig());
         final Injector injector = Guice.createInjector(appModule);

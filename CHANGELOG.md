@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#865** : Made `stroom.conf` location relative to YAML file when `externalConfig` YAML property is set.
+
 * Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
 
 * Issue **#867** : Find replace filter now creates an error if an invalid regex is used.
