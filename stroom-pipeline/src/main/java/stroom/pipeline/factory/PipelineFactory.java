@@ -635,8 +635,7 @@ public class PipelineFactory {
 
             } else if (elementType.hasRole(PipelineElementType.ROLE_READER)) {
                 if (controller.getRecordDetector() == null) {
-                    final ReaderRecordDetectorElement recordDetector = elementFactory
-                            .getElementInstance(ReaderRecordDetectorElement.class);
+                    final ReaderRecordDetectorElement recordDetector = elementFactory.getElementInstance(ReaderRecordDetectorElement.class);
                     controller.setRecordDetector(recordDetector);
                     ((HasTargets) fragment.getOut()).setTarget(recordDetector);
                     result = new Fragment(fragment.getIn(), recordDetector);

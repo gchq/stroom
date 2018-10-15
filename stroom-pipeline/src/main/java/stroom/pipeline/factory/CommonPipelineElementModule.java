@@ -28,6 +28,7 @@ public class CommonPipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.reader.InvalidCharFilterReaderElement.class);
         bindElement(stroom.pipeline.reader.InvalidXMLCharFilterReaderElement.class);
         bindElement(stroom.pipeline.reader.ReaderElement.class);
+        bindElement(stroom.pipeline.reader.ReaderRecordDetectorElement.class);
 
         // Parsers
         bindElement(stroom.pipeline.parser.CombinedParser.class);
