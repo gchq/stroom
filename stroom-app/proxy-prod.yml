@@ -3,22 +3,22 @@ server:
   adminContextPath: /proxyAdmin
   applicationConnectors:
     - type: http
-      port: ${STROOM_PROXY_APP_PORT:-9090}
+      port: ${STROOM_PROXY_APP_PORT:-8090}
       #    - type: https
       #      port: ${STROOM_PROXY_APP_PORT_HTTPS:-9443}
   adminConnectors:
     - type: http
-      port: ${STROOM_PROXY_ADMIN_PORT:-9091}
+      port: ${STROOM_PROXY_ADMIN_PORT:-8091}
 
   requestLog:
     appenders:
     - type: file
-      currentLogFilename: /stroom-proxy/state/logs/access.log
+      currentLogFilename: /stroom-proxy/logs/access.log
       threshold: ALL
       queueSize: 256
       discardingThreshold: 0
       archive: true
-      archivedLogFilenamePattern: /stroom-proxy/state/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedLogFilenamePattern: /stroom-proxy/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 100
       timeZone: UTC
       logFormat: "%-5p [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] %c: %m%n%rEx"
@@ -35,12 +35,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: /stroom-proxy/state/logs/receive.log
+        currentLogFilename: /stroom-proxy/logs/receive.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: /stroom-proxy/state/logs/receive-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: /stroom-proxy/logs/receive-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -49,12 +49,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: /stroom-proxy/state/logs/send.log
+        currentLogFilename: /stroom-proxy/logs/send.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: /stroom-proxy/state/logs/send-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: /stroom-proxy/logs/send-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -64,12 +64,12 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger{5} - %X{code} %msg %n"
     timeZone: UTC
   - type: file
-    currentLogFilename: /stroom-proxy/state/logs/app.log
+    currentLogFilename: /stroom-proxy/logs/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: /stroom-proxy/state/logs/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedLogFilenamePattern: /stroom-proxy/logs/app-%d{yyyy-MM-dd'T'HH:mm}.log
     archivedFileCount: 100
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
@@ -77,17 +77,17 @@ logging:
 mode: "proxy"
 
 proxyConfig:
-  proxyContentDir: "/stroom-proxy/state/content"
+  proxyContentDir: "/stroom-proxy/content"
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below.
 #  proxyRequestConfig:
 #    receiptPolicyUuid: "12345"
 
-  forwardStreamConfig:
-    forwardUrl: "http://localhost:9090/stroom/datafeed"
+#  forwardStreamConfig:
+#    forwardUrl: "http://localhost:8080/stroom/datafeed"
   proxyRepositoryConfig:
-    repoDir: "/stroom-proxy/state/repo"
+    repoDir: "/stroom-proxy/repo"
     repositoryFormat: "${pathId}/${id}"
     rollCron: "* * *"
   proxyRepositoryReaderConfig:
@@ -96,7 +96,7 @@ proxyConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"
   contentSyncConfig:
     upstreamUrl:
-      RuleSet: "http://localhost:9090/api/ruleset/v1"
-      Dictionary: "http://localhost:9090/api/dictionary/v1"
+      RuleSet: "http://stroom:8080/api/ruleset/v1"
+      Dictionary: "http://stroom:8080/api/dictionary/v1"
     syncFrequency: 30000
     apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDcyOTk3MDQsInN1YiI6InByb3h5IiwiaXNzIjoic3Ryb29tIiwic2lkIjpudWxsfQ.3FYcPEH2K14o-qpKtlCsKxxYZwRGnCZ7ARoMPJrIG88h7uINuEPneMBAcdYys1_eD8-CoHXm8EsxPUeL6z0I8ERmXpk6BjnUsaiqI1cxB_rnxeRSFANKA1jSG5ewprHcJhWgy1HK3B2K9lrmhib35dFMx3ehrUUWaZdUrJGKSt1PKWGsFz6D2-QfYMPCdjYWkmFRoXVhCGV0BRoeJOAqAP0PDliqF7IZ7ZjCAF-NUAehrU9MEi0KTGMvCGZCzznYWahaep01GaMihYrX-okVPdq6rjIzAB3Argm0xi0SojteFhe1TomZA_HvV8otQYBO-2gvxYJ3qE26rIk7fitgmw"
