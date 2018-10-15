@@ -218,6 +218,8 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
+        // Get the external config.
+        StroomProperties.setExternalConfigPath(configuration.getExternalConfig(), configPath);
 
         // Make sure we can connect to our databases, retrying as required.
         boolean didAllDbsConnect;

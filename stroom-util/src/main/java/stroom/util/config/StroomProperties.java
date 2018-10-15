@@ -20,13 +20,11 @@ import com.google.common.base.CaseFormat;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.Resource;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomResourceLoaderUtil;
 
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,10 +37,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
-    public static final String STROOM_TEMP = "stroom.temp";
-    public static final String USER_CONF_DIR = ".stroom";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
-    private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
+
+    public static final String STROOM_TEMP = "stroom.temp";
     private static final String STROOM_TMP_ENV = "STROOM_TMP";
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
     private static final String TRACE = "TRACE";
@@ -50,7 +47,17 @@ public class StroomProperties {
     private static final PropertyMap properties = new PropertyMap();
     private static final PropertyMap override = new PropertyMap();
 
+    private static String externalConfigPath;
+    private static String yamlConfigPath;
+
+    private static volatile Path configFilePath;
+
     private static volatile boolean doneInit;
+
+    public static void setExternalConfigPath(final String externalConfigPath, final String yamlConfigPath) {
+        StroomProperties.externalConfigPath = externalConfigPath;
+        StroomProperties.yamlConfigPath = yamlConfigPath;
+    }
 
     private static void init() {
         if (!doneInit) {
@@ -62,62 +69,76 @@ public class StroomProperties {
         if (!doneInit) {
             doneInit = true;
 
-            final DefaultResourceLoader resourceLoader = new DefaultResourceLoader(
-                    StroomProperties.class.getClassLoader());
-
-//            // Started up as a WAR file?
-//            final String warName = ServletContextUtil
-//                    .getWARName(UpgradeDispatcherSingleton.instance().getServletConfig());
-//            if (warName != null) {
-//                loadResource(resourceLoader, "classpath:/" + warName + ".properties", Source.WAR);
-//            }
-
             // Get properties for the current user if there are any.
-            loadResource(resourceLoader, "file:" + System.getProperty("user.home") + "/" + USER_CONF_PATH, Source.USER_CONF);
+            loadResource(resolveExternalConfigPath(), Source.USER_CONF);
             ensureStroomTempEstablished();
         }
     }
 
-    private static void loadResource(final DefaultResourceLoader resourceLoader, final String resourceName, final Source source) {
+    public static Path getConfigDir() {
+        return resolveExternalConfigPath().getParent();
+    }
+
+    private static Path resolveExternalConfigPath() {
+        if (configFilePath == null) {
+            configFilePath = getConfigFilePath();
+        }
+        return configFilePath;
+    }
+
+    private static Path getConfigFilePath() {
+        // Get the external config.
+        String externalConfigPath = StroomProperties.externalConfigPath;
+        if (externalConfigPath == null) {
+            externalConfigPath = "~/.stroom/stroom.conf";
+        }
+
+        if (externalConfigPath.startsWith("/")) {
+            // Absolute path.
+            return Paths.get(externalConfigPath).toAbsolutePath();
+        }
+
+        if (externalConfigPath.contains("~")) {
+            final String home = System.getProperty("user.home");
+            externalConfigPath = externalConfigPath.replaceAll("~", home);
+            return Paths.get(externalConfigPath).toAbsolutePath();
+        }
+
+        // Relative path.
+        if (StroomProperties.yamlConfigPath == null) {
+            final URL location = StroomProperties.class.getProtectionDomain().getCodeSource().getLocation();
+            try {
+                final Path jar = Paths.get(location.toURI());
+                return jar.getParent().resolve(externalConfigPath).toAbsolutePath();
+            } catch (final URISyntaxException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        final Path file = Paths.get(yamlConfigPath).toAbsolutePath();
+        final Path dir = file.getParent();
+        return dir.resolve(externalConfigPath);
+    }
+
+    private static void loadResource(final Path path, final Source source) {
         try {
-            final Resource resource = StroomResourceLoaderUtil.getResource(resourceLoader, resourceName);
+            if (path != null && Files.isRegularFile(path)) {
+                try (final InputStream is = Files.newInputStream(path)) {
+                    final Properties properties = new Properties();
+                    properties.load(is);
 
-            if (resource != null && resource.exists()) {
-                final InputStream is = resource.getInputStream();
-                final Properties properties = new Properties();
-                properties.load(is);
-                CloseableUtil.close(is);
-
-                for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
-                    final String key = (String) entry.getKey();
-                    final String value = (String) entry.getValue();
-                    if (value != null) {
-                        setProperty(key, value, source);
+                    for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
+                        final String key = (String) entry.getKey();
+                        final String value = (String) entry.getValue();
+                        if (value != null) {
+                            setProperty(key, value, source);
+                        }
                     }
+
+                    LOGGER.info("Using properties from '{}'", path);
                 }
-
-                String path = "";
-                try {
-                    final Path file = Paths.get(resource.getURI());
-                    final Path dir = file.getParent();
-                    path = FileUtil.getCanonicalPath(dir);
-                } catch (final Exception e) {
-                    // Ignore.
-                }
-
-                LOGGER.info("Using properties '{}' from '{}'", resourceName, path);
-
-//                // Is this this web app property file?
-//                if (Source.WAR.equals(source)) {
-//                    try {
-//                        final Path resourceFile = resource.getFile();
-//                        propertiesDir = resourceFile.getParentFile();
-//                    } catch (final Exception ex) {
-//                        LOGGER.warn("Unable to locate properties dir ... maybe running in maven?");
-//                    }
-//                }
             } else {
-                LOGGER.info("Properties not found at '{}'", resourceName);
+                LOGGER.info("Properties not found at '{}'", path);
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -464,7 +485,7 @@ public class StroomProperties {
         SPRING(1, "Spring context"),
         DB(2, "Database"),
         WAR(3, "WAR property file"),
-        USER_CONF(4, USER_CONF_PATH),
+        USER_CONF(4, "External config file"),
         ENV(5, "Environment variable"),
         SYSTEM(6, "System property"),
         TEST(7, "Test");

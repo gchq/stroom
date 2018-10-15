@@ -30,7 +30,6 @@ import stroom.pipeline.server.filter.XMLFilter;
 import stroom.pipeline.server.parser.AbstractParser;
 import stroom.pipeline.server.reader.AbstractInputElement;
 import stroom.pipeline.server.reader.AbstractReaderElement;
-import stroom.pipeline.server.reader.InputRecorder;
 import stroom.pipeline.server.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecordDetectorElement;
 import stroom.pipeline.server.reader.ReaderRecorder;
@@ -465,7 +464,7 @@ public class PipelineFactory {
 
             } else if (in instanceof AbstractInputElement) {
                 final AbstractInputElement filter = (AbstractInputElement) in;
-                final InputRecorder recorder = new InputRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder();
                 recorder.setElementId(elementId);
                 recorder.setTarget(filter);
                 result = new Fragment(recorder, fragment.getOut());
@@ -479,7 +478,7 @@ public class PipelineFactory {
 
             } else if (in instanceof AbstractParser) {
                 final AbstractParser parser = (AbstractParser) in;
-                final InputRecorder recorder = new InputRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder();
                 recorder.setElementId(elementId);
                 recorder.setTarget(parser);
                 result = new Fragment(recorder, fragment.getOut());
@@ -509,7 +508,7 @@ public class PipelineFactory {
 
             } else if (out instanceof AbstractInputElement) {
                 final AbstractInputElement filter = (AbstractInputElement) out;
-                final InputRecorder recorder = new InputRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder();
                 recorder.setElementId(elementId);
                 filter.setTarget(recorder);
                 result = new Fragment(fragment.getIn(), recorder);

@@ -19,19 +19,18 @@ package stroom.pipeline.server.reader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.pipeline.server.task.RecordDetector;
 import stroom.pipeline.server.task.SteppingController;
 
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 
-public class ReaderRecordDetector extends FilterReader implements RecordDetector {
+public class ReaderRecordDetector extends FilterReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecordDetector.class);
 
     private static final int MAX_COUNT = 10000;
     private final char[] buffer = new char[1024];
-    private SteppingController controller;
+    private final SteppingController controller;
     private long currentStepNo;
     private int offset;
     private int length;
@@ -40,8 +39,9 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
     private int count;
     private boolean end;
 
-    ReaderRecordDetector(final Reader reader) {
+    ReaderRecordDetector(final Reader reader, final SteppingController controller) {
         super(reader);
+        this.controller = controller;
     }
 
     @Override
@@ -112,10 +112,5 @@ public class ReaderRecordDetector extends FilterReader implements RecordDetector
         offset += i;
 
         return i;
-    }
-
-    @Override
-    public void setController(final SteppingController controller) {
-        this.controller = controller;
     }
 }

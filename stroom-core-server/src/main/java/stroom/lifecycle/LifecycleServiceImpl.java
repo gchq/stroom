@@ -100,14 +100,16 @@ public class LifecycleServiceImpl implements LifecycleService {
      * Called when the application context is initialised.
      */
     @Override
-    public void start() throws Exception {
+    public void start() {
+        LOGGER.info("Starting Stroom");
+
         if (enabled.get()) {
             // Do this async so that we don't delay starting the web app up
             new Thread(() -> {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                LOGGER.info("init() - Starting up in background");
+                LOGGER.info("Starting up in background");
                 startup();
-                LOGGER.info("init() - Started in {}", logExecutionTime);
+                LOGGER.info("Started in {}", logExecutionTime);
             }).start();
         }
     }
@@ -116,11 +118,12 @@ public class LifecycleServiceImpl implements LifecycleService {
      * Called when the application context is destroyed.
      */
     @Override
-    public void stop() throws Exception {
-        LOGGER.debug("contextDestroyed()");
+    public void stop() {
+        LOGGER.info("Stopping Stroom");
         if (enabled.get()) {
             shutdown();
         }
+        LOGGER.info("Stopped Stroom");
     }
 
     public void startup() {

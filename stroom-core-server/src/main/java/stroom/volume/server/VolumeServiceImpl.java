@@ -589,7 +589,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private Optional<Path> getDefaultVolumesPath() {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
-                this::getUserHomeDir,
+                this::getConfigDir,
                 Optional::empty)
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
@@ -598,9 +598,8 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                 .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
     }
 
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+    private Optional<Path> getConfigDir() {
+        return Optional.of(StroomProperties.getConfigDir());
     }
 
     private Optional<Path> getApplicationJarDir() {

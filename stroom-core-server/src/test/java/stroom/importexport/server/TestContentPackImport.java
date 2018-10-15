@@ -50,8 +50,7 @@ public class TestContentPackImport {
     static Path CONTENT_PACK_DIR;
 
     static {
-        String userHome = System.getProperty("user.home");
-        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        CONTENT_PACK_DIR = StroomProperties.getConfigDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
     //This is needed as you can't have to RunWith annotations
@@ -71,8 +70,7 @@ public class TestContentPackImport {
 
     @Before
     public void setup() throws IOException {
-        String userHome = System.getProperty("user.home");
-        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        Path contentPackDir = StroomProperties.getConfigDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
 
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPackDir)) {
