@@ -18,13 +18,10 @@ NC='\033[0m' # No Colour
 
 mkdir -p log
 
-# PATH_TO_JAR=bin/stroom-app-all.jar
-# PATH_TO_CONFIG=conf/config.yml
-# PID_PATH_NAME=bin/stroom.pid
-PATH_TO_APP_LOG=log/app/app.log
-PATH_TO_JAR=stroom-app-all.jar
-PATH_TO_CONFIG=config.yml
-PID_FILE=stroom.pid
+PATH_TO_APP_LOG=logs/app/app.log
+PATH_TO_JAR=bin/stroom-app-all.jar
+PID_FILE=bin/stroom.pid
+PATH_TO_CONFIG=config/config.yml
 
 JAVA_OPTS="-Xms512m -Xmx2048m"
 
@@ -48,7 +45,7 @@ ask_about_logs() {
   
   if [ "$key" = '' ]; then
       info "Press ${BLUE}ctrl+c${NC} to stop following the logs."
-      source ./logs.sh
+      source ../logs.sh
   else
       info "Run ${BLUE}./logs.sh${NC} to see the log.\n"
   fi

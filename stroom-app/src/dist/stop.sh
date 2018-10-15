@@ -2,8 +2,7 @@
 #
 # Stops Stroom
 
-# source bin/utils.sh
-source utils.sh
+source bin/utils.sh
 
 readonly NOT_RUNNING_MESSAGE="This deployment of Stroom is not running!"
 

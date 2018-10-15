@@ -2,8 +2,7 @@
 #
 # Starts Stroom
 
-# source bin/utils.sh
-source utils.sh
+source bin/utils.sh
 
 
 start() {
