@@ -19,10 +19,7 @@ FROM openjdk:8u171-jre-alpine
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
 
-#Create Docker volume for Stroom's volumes dir
-#VOLUME /stroom-proxy/config/
-#VOLUME /stroom-proxy/logs/
-#VOLUME /stroom-proxy/repo/
+#Create Docker volume to hold all the persistent state (logs, repos, content, config)
 VOLUME /stroom-proxy/state/
 
 # update alpine and install Bash/tini/su-exec as they are not in alpine by default
@@ -47,7 +44,6 @@ WORKDIR /stroom-proxy
 ADD ./build/stroom-app-all.jar /stroom-proxy/stroom-app-all.jar
 ADD ./build/proxy-prod.yml /stroom-proxy/state/config.yml
 ADD docker-entrypoint.sh /usr/local/bin/
-
 
 #Make sure all the files are owned by the proxy user
 RUN chown -R proxy /stroom-proxy
