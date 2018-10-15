@@ -76,13 +76,15 @@ public class LifecycleServiceImpl implements LifecycleService {
      */
     @Override
     public void start() {
+        LOGGER.info("Starting Stroom");
+
         if (enabled.get()) {
             // Do this async so that we don't delay starting the web app up
             new Thread(() -> {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                LOGGER.info("init() - Starting up in background");
+                LOGGER.info("Starting up in background");
                 doStart();
-                LOGGER.info("init() - Started in {}", logExecutionTime);
+                LOGGER.info("Started in {}", logExecutionTime);
             }).start();
         }
     }
@@ -92,10 +94,11 @@ public class LifecycleServiceImpl implements LifecycleService {
      */
     @Override
     public void stop() {
-        LOGGER.debug("contextDestroyed()");
+        LOGGER.info("Stopping Stroom");
         if (enabled.get()) {
             doStop();
         }
+        LOGGER.info("Stopped Stroom");
     }
 
     private void doStart() {

@@ -74,6 +74,9 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         tabContentProvider.add(STRUCTURE, structurePresenter);
         addTab(STRUCTURE);
+        if (selectedTab == null) {
+            selectedTab = STRUCTURE;
+        }
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             hasManageProcessorsPermission = true;
@@ -83,7 +86,9 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             tabContentProvider.add(TASKS, streamTaskPresenterProvider);
             addTab(TASKS);
 
-            selectedTab = PROCESSORS;
+            if (selectedTab == null) {
+                selectedTab = PROCESSORS;
+            }
         }
 
         tabContentProvider.add(SETTINGS, settingsPresenter);
