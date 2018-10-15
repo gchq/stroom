@@ -7,6 +7,7 @@ import stroom.proxy.guice.ProxyConfig;
 public class Config extends Configuration {
     private String mode;
     private ProxyConfig proxyConfig;
+    private String externalConfig = "~/.stroom/stroom.conf";
 
     @JsonProperty
     public String getMode() {
@@ -26,5 +27,15 @@ public class Config extends Configuration {
     @JsonProperty
     public void setProxyConfig(final ProxyConfig proxyConfig) {
         this.proxyConfig = proxyConfig;
+    }
+
+    @JsonProperty
+    public String getExternalConfig() {
+        return externalConfig;
+    }
+
+    @JsonProperty
+    public void setExternalConfig(final String externalConfig) {
+        this.externalConfig = externalConfig;
     }
 }

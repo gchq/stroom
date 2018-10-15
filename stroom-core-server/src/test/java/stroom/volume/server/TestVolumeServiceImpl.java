@@ -43,18 +43,13 @@ import stroom.util.test.StroomUnitTest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestVolumeServiceImpl extends StroomUnitTest {
-
-    private static final Path DEFAULT_VOLUMES_PATH = Paths.get(
-            System.getProperty("user.home"),
-            StroomProperties.USER_CONF_DIR
-    ).resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
+    private static final Path DEFAULT_VOLUMES_PATH = StroomProperties.getConfigDir().resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
 
     private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
     private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
