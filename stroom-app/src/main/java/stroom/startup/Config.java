@@ -13,7 +13,6 @@ public class Config extends Configuration {
     private StartupMode mode = StartupMode.APP;
     private AppConfig appConfig;
     private ProxyConfig proxyConfig;
-    private String externalConfig = "~/.stroom/stroom.conf";
 
     public StartupMode getMode() {
         return mode;
@@ -37,15 +36,5 @@ public class Config extends Configuration {
 
     public void setProxyConfig(final ProxyConfig proxyConfig) {
         this.proxyConfig = proxyConfig;
-    }
-
-    @JsonProperty
-    public String getExternalConfig() {
-        return externalConfig;
-    }
-
-    @JsonProperty
-    public void setExternalConfig(final String externalConfig) {
-        this.externalConfig = externalConfig;
     }
 }
