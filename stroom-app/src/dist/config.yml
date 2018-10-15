@@ -55,3 +55,5 @@ logging:
     archivedFileCount: 100
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+
+externalConfig: "stroom.conf"
