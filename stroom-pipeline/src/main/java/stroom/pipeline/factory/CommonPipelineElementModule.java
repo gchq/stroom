@@ -25,6 +25,7 @@ public class CommonPipelineElementModule extends PipelineElementModule {
         // Readers
         bindElement(stroom.pipeline.reader.BOMRemovalFilterInputElement.class);
         bindElement(stroom.pipeline.reader.BadTextXMLFilterReaderElement.class);
+        bindElement(stroom.pipeline.reader.FindReplaceFilterElement.class);
         bindElement(stroom.pipeline.reader.InvalidCharFilterReaderElement.class);
         bindElement(stroom.pipeline.reader.InvalidXMLCharFilterReaderElement.class);
         bindElement(stroom.pipeline.reader.ReaderElement.class);
