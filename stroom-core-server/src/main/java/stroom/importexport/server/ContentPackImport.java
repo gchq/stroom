@@ -145,16 +145,15 @@ public class ContentPackImport {
     }
 
     private List<Path> getContentPackBaseDirs() {
-        return Arrays.asList(getApplicationJarDir(), getUserHomeDir()).stream()
+        return Arrays.asList(getApplicationJarDir(), getConfigDir()).stream()
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
                 .collect(Collectors.toList());
     }
 
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+    private Optional<Path> getConfigDir() {
+        return Optional.of(StroomProperties.getConfigDir());
     }
 
 
