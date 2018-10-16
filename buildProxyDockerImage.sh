@@ -25,4 +25,8 @@ set -e
 # I guess you'd better test the build before releasing.
 ./gradlew downloadUrlDependencies clean build shadowJar -x test -x integrationTest -x gwtCompile
 
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
 docker build --tag gchq/stroom-proxy:dev-SNAPSHOT ./stroom-app/proxy-docker
