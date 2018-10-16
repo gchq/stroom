@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#871** : Fix for OptimisticLockException when processing streams.
+
 * Issue **#872** : The parser cache is now automatically cleared when a schema changes as this can affect the way a data splitter parser is created.
 
 * Issue **#865** : Made `stroom.conf` location relative to YAML file when `externalConfig` YAML property is set.

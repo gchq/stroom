@@ -79,6 +79,7 @@ import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -603,10 +604,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             LOGGER.error("Unable to delete stream target!", e.getMessage(), e);
         }
 
-        // Make sure the stream data is deleted.
-        // Attach object (may throw a lock exception)
-        final Stream db = entityManager.saveEntity(target.getStream());
-        return doLogicalDeleteStream(db, false);
+        try {
+            // Make sure the stream data is deleted.
+            // Attach object (may throw a lock exception)
+            final Stream db = entityManager.saveEntity(target.getStream());
+            return doLogicalDeleteStream(db, false);
+
+        } catch (final OptimisticLockException e) {
+            // Expected if another process has updated the stream.
+            LOGGER.debug("Got an OptimisticLockException when trying to delete stream target for stream id=" + target.getStream().getId());
+            LOGGER.trace(e.getMessage(), e);
+        }
+
+        return 0L;
     }
 
     @Override
