@@ -34,13 +34,34 @@ import stroom.streamstore.shared.StreamType;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class ExpressionToFindCriteria {
+    private static final Map<String, String> ATTRIBUTE_MAPPING = Collections.unmodifiableMap(Stream.of(
+            new SimpleEntry<>("Node", "Node"),
+            new SimpleEntry<>("Read Count", "RecRead"),
+            new SimpleEntry<>("Write Count", "RecWrite"),
+            new SimpleEntry<>("Info Count", "RecInfo"),
+            new SimpleEntry<>("Warning Count", "RecWarn"),
+            new SimpleEntry<>("Error Count", "RecError"),
+            new SimpleEntry<>("Fatal Error Count", "RecFatal"),
+            new SimpleEntry<>("Duration", "Duration"),
+            new SimpleEntry<>("File Size", "FileSize"),
+            new SimpleEntry<>("Raw Size", "StreamSize"))
+            .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
+
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final DictionaryStore dictionaryStore;
@@ -51,10 +72,10 @@ public class ExpressionToFindCriteria {
             .collect(Collectors.toMap(StreamStatus::getDisplayValue, Function.identity()));
 
     private static final Function<List<Op>, String> OP_STACK_DISPLAY = (s) ->
-        s.stream().map(Op::getDisplayValue).collect(Collectors.joining(" -> "));
+            s.stream().map(Op::getDisplayValue).collect(Collectors.joining(" -> "));
 
     private static final BiFunction<String, List<Op>, String> OP_STACK_ERROR = (err, ops) ->
-        String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
+            String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
 
     @Inject
     public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
@@ -562,7 +583,12 @@ public class ExpressionToFindCriteria {
     }
 
     private List<StreamAttributeCondition> getStreamAttributeConditions(final String field, final List<ExpressionTerm> terms) {
-        final BaseResultList<StreamAttributeKey> keys = streamAttributeKeyService.find(new FindStreamAttributeKeyCriteria(field));
+        String mappedField = ATTRIBUTE_MAPPING.get(field);
+        if (mappedField == null) {
+            mappedField = field;
+        }
+
+        final BaseResultList<StreamAttributeKey> keys = streamAttributeKeyService.find(new FindStreamAttributeKeyCriteria(mappedField));
 
         if (keys == null || keys.size() == 0) {
             final String errorMsg = "No stream attribute key found for " + field;
