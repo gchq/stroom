@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.8]
+
 * Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
 
 * Issue **#878** : Changed the appearance of stream filter fields to be more user friendly, e.g. `feedName` is now `Feed` etc.
@@ -1121,7 +1123,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.7...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.8...6.0
+[v6.0-beta.8]: https://github.com/gchq/stroom/compare/v6.0-beta.7...v6.0-beta.8
 [v6.0-beta.7]: https://github.com/gchq/stroom/compare/v6.0-beta.6...v6.0-beta.7
 [v6.0-beta.6]: https://github.com/gchq/stroom/compare/v6.0-beta.5...v6.0-beta.6
 [v6.0-beta.5]: https://github.com/gchq/stroom/compare/v6.0-beta.4...v6.0-beta.5
