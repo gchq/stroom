@@ -19,6 +19,8 @@ package stroom.entity.server.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 
 public final class TransformerFactoryFactory {
@@ -39,18 +41,11 @@ public final class TransformerFactoryFactory {
 
                 System.setProperty(SYSPROP_TRANSFORMER_FACTORY, SAXON_TRANSFORMER_FACTORY);
             } else {
-                final StringBuilder sb = new StringBuilder();
-                sb.append(SYSPROP_SET_TO);
-                sb.append(factoryName);
-                sb.append(END);
-                LOGGER.info(sb.toString());
+                LOGGER.info(SYSPROP_SET_TO + factoryName + END);
             }
 
-            final TransformerFactory factory = TransformerFactory.newInstance();
-            final StringBuilder sb = new StringBuilder();
-            sb.append(IMP_USED);
-            sb.append(factory.getClass().getName());
-            LOGGER.info(sb.toString());
+            final TransformerFactory factory = newInstance();
+            LOGGER.info(IMP_USED + factory.getClass().getName());
         } catch (Exception ex) {
             LOGGER.error("Unable to create new TransformerFactory!", ex);
         }
@@ -61,6 +56,16 @@ public final class TransformerFactoryFactory {
     }
 
     public static TransformerFactory newInstance() {
-        return TransformerFactory.newInstance();
+        final TransformerFactory factory = TransformerFactory.newInstance();
+        secureProcessing(factory);
+        return factory;
+    }
+
+    private static void secureProcessing(final TransformerFactory factory) {
+        try {
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (final TransformerConfigurationException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 }

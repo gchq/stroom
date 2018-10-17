@@ -35,7 +35,6 @@ import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
 
 @Component
 @Scope(value = StroomScope.TASK)
@@ -47,7 +46,6 @@ public class XMLParser extends AbstractParser {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     @Inject
@@ -67,7 +65,7 @@ public class XMLParser extends AbstractParser {
     }
 
     @Override
-    protected InputSource getInputSource(final InputSource inputSource) throws IOException {
+    protected InputSource getInputSource(final InputSource inputSource) {
         return inputSource;
     }
 }

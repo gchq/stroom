@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#813** : Turned on secure processing feature for XML parsers and XML transformers so that external entities are not resolved. This prevents DoS attacks and gaining unauthorised access to the local machine.
+
 * Issue **#871** : Fix for OptimisticLockException when processing streams.
 
 * Issue **#872** : The parser cache is now automatically cleared when a schema changes as this can affect the way a data splitter parser is created.

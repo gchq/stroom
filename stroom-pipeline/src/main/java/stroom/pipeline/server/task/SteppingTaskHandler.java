@@ -51,8 +51,6 @@ import stroom.security.UserTokenUtil;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTypeService;
-import stroom.streamstore.server.fs.serializable.NestedInputStream;
-import stroom.streamstore.server.fs.serializable.RANestedInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -61,12 +59,10 @@ import stroom.streamstore.shared.StreamType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.Highlight;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,13 +75,6 @@ import java.util.Set;
 @Secured(PipelineEntity.STEPPING_PERMISSION)
 public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
-
-    private static final SAXParserFactory PARSER_FACTORY;
-
-    static {
-        PARSER_FACTORY = SAXParserFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-    }
 
     @Resource
     private StreamStore streamStore;
