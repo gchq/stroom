@@ -1,5 +1,6 @@
 package stroom.proxy.handler;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datafeed.server.MetaMapFilter;
@@ -13,7 +14,6 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.thread.BufferFactory;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,14 +37,14 @@ public class ProxyRequestHandler implements RequestHandler {
     private final LogStream logStream;
 
     @Inject
-    public ProxyRequestHandler(@Nullable final ProxyRequestConfig proxyRequestConfig,
+    public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
                                final MasterStreamHandlerFactory streamHandlerFactory,
                                final MetaMapFilterFactory metaMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
         this.logStream = logStream;
 
-        if(proxyRequestConfig != null && proxyRequestConfig.getReceiptPolicyUuid() != null){
+        if (StringUtils.isNotBlank(proxyRequestConfig.getReceiptPolicyUuid())) {
             metaMapFilter = metaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
         }
         else{

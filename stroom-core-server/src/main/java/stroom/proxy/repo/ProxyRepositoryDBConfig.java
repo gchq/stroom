@@ -5,6 +5,16 @@ import stroom.util.config.StroomProperties;
 
 @Component
 public class ProxyRepositoryDBConfig implements ProxyRepositoryConfig {
+
+    /**
+     * @return True if the proxy should store received data in its repository
+     */
+    @Override
+    public boolean isStoringEnabled() {
+        // Always enabled for stroom
+        return true;
+    }
+
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */

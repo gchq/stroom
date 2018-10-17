@@ -3,13 +3,23 @@ package stroom.proxy.handler;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ForwardStreamConfig {
+    private boolean isForwardingEnabled = false;
     private String forwardUrl;
     private Integer forwardTimeoutMs = 30000;
     private Integer forwardDelayMs;
     private Integer forwardChunkSize;
 
+    @JsonProperty
+    boolean isForwardingEnabled() {
+        return isForwardingEnabled;
+    }
+
+    void setForwardingEnabled(final boolean forwardingEnabled) {
+        isForwardingEnabled = forwardingEnabled;
+    }
+
     /**
-     * Optional The URL's to forward onto. This is pass-through mode if repoDir is not set
+     * The URL's to forward onto. This is pass-through mode if repoDir is not set
      */
     @JsonProperty
     public String getForwardUrl() {

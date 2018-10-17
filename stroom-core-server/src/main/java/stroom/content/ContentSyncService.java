@@ -40,9 +40,11 @@ public class ContentSyncService implements Managed , HasHealthCheck {
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
-    public ContentSyncService(final ContentSyncConfig contentSyncConfig, final Map<String, ImportExportActionHandler> importExportActionHandlers) {
+    public ContentSyncService(final ContentSyncConfig contentSyncConfig,
+                              final Map<String, ImportExportActionHandler> importExportActionHandlers) {
         this.contentSyncConfig = contentSyncConfig;
         this.importExportActionHandlers = importExportActionHandlers;
+        contentSyncConfig.validateConfiguration();
     }
 
     @Override

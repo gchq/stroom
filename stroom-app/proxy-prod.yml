@@ -77,17 +77,18 @@ logging:
 mode: "proxy"
 
 proxyConfig:
-  proxyContentDir: "/stroom-proxy/content"
+  proxyContentDir: "${CONTENT_DIR:-/stroom-proxy/content}"
 
 # If you want to use a receipt policy then the RuleSet must exist
-# in Stroom and have the UUID as specified below.
-#  proxyRequestConfig:
-#    receiptPolicyUuid: "12345"
-
-#  forwardStreamConfig:
-#    forwardUrl: "http://localhost:8080/stroom/datafeed"
+# in Stroom and have the UUID as specified below in receiptPolicyUuid
+  proxyRequestConfig:
+    receiptPolicyUuid: "${RECEIPT_POLICY_UUID:-}"
+  forwardStreamConfig:
+    forwardingEnabled: ${FORWARDING_ENABLED:-true}
+    forwardUrl: "${FORWARD_URL:-http://localhost:8080/stroom/datafeed}"
   proxyRepositoryConfig:
-    repoDir: "/stroom-proxy/repo"
+    storingEnabled: ${STORING_ENABLED:-true}
+    repoDir: "${REPO_DIR:-/stroom-proxy/repo}"
     repositoryFormat: "${pathId}/${id}"
     rollCron: "* * *"
   proxyRepositoryReaderConfig:
@@ -95,8 +96,9 @@ proxyConfig:
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"
   contentSyncConfig:
+    contentSyncEnabled: ${CONTENT_SYNC_ENABLED:-true}
     upstreamUrl:
-      RuleSet: "http://stroom:8080/api/ruleset/v1"
-      Dictionary: "http://stroom:8080/api/dictionary/v1"
+      RuleSet: "${UPSTREAM_RULE_URL:-http://stroom:8080/api/ruleset/v1}"
+      Dictionary: "${UPSTREAM_DICTIONARY_URL:-http://stroom:8080/api/dictionary/v1}"
     syncFrequency: 30000
-    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDcyOTk3MDQsInN1YiI6InByb3h5IiwiaXNzIjoic3Ryb29tIiwic2lkIjpudWxsfQ.3FYcPEH2K14o-qpKtlCsKxxYZwRGnCZ7ARoMPJrIG88h7uINuEPneMBAcdYys1_eD8-CoHXm8EsxPUeL6z0I8ERmXpk6BjnUsaiqI1cxB_rnxeRSFANKA1jSG5ewprHcJhWgy1HK3B2K9lrmhib35dFMx3ehrUUWaZdUrJGKSt1PKWGsFz6D2-QfYMPCdjYWkmFRoXVhCGV0BRoeJOAqAP0PDliqF7IZ7ZjCAF-NUAehrU9MEi0KTGMvCGZCzznYWahaep01GaMihYrX-okVPdq6rjIzAB3Argm0xi0SojteFhe1TomZA_HvV8otQYBO-2gvxYJ3qE26rIk7fitgmw"
+    apiKey: "${SYNC_API_KEY:-eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDcyOTk3MDQsInN1YiI6InByb3h5IiwiaXNzIjoic3Ryb29tIiwic2lkIjpudWxsfQ.3FYcPEH2K14o-qpKtlCsKxxYZwRGnCZ7ARoMPJrIG88h7uINuEPneMBAcdYys1_eD8-CoHXm8EsxPUeL6z0I8ERmXpk6BjnUsaiqI1cxB_rnxeRSFANKA1jSG5ewprHcJhWgy1HK3B2K9lrmhib35dFMx3ehrUUWaZdUrJGKSt1PKWGsFz6D2-QfYMPCdjYWkmFRoXVhCGV0BRoeJOAqAP0PDliqF7IZ7ZjCAF-NUAehrU9MEi0KTGMvCGZCzznYWahaep01GaMihYrX-okVPdq6rjIzAB3Argm0xi0SojteFhe1TomZA_HvV8otQYBO-2gvxYJ3qE26rIk7fitgmw}"

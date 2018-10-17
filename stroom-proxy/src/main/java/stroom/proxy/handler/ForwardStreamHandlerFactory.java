@@ -6,7 +6,6 @@ import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -34,24 +33,29 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
     @Inject
     ForwardStreamHandlerFactory(final LogStream logStream,
-                                @Nullable final ForwardStreamConfig forwardStreamConfig,
-                                @Nullable final ProxyRepositoryConfig proxyRepositoryConfig) {
+                                final ForwardStreamConfig forwardStreamConfig,
+                                final ProxyRepositoryConfig proxyRepositoryConfig) {
         this.logStream = logStream;
         this.forwardStreamConfig = forwardStreamConfig;
         this.proxyRepositoryConfig = proxyRepositoryConfig;
 
-        if (forwardStreamConfig != null &&
-                forwardStreamConfig.getForwardUrl() != null &&
-                forwardStreamConfig.getForwardUrl().length() > 0) {
+        if (forwardStreamConfig.isForwardingEnabled()) {
+            if (StringUtils.isEmpty(forwardStreamConfig.getForwardUrl())) {
+                throw new RuntimeException("Forward is enabled but no forward URLs have been configured in 'forwardUrl'");
+            }
             this.urls = Arrays.asList(forwardStreamConfig.getForwardUrl().split(","));
         } else {
             this.urls = Collections.emptyList();
+        }
+
+        if (proxyRepositoryConfig.isStoringEnabled() && StringUtils.isEmpty(proxyRepositoryConfig.getRepoDir())) {
+            throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
         }
     }
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig == null || StringUtils.isBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (!proxyRepositoryConfig.isStoringEnabled()) {
             add(handlers);
         }
         return handlers;
@@ -59,10 +63,15 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
     @Override
     public List<StreamHandler> addSendHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig != null && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (isConfiguredToStore()) {
             add(handlers);
         }
         return handlers;
+    }
+
+    private boolean isConfiguredToStore() {
+        return proxyRepositoryConfig.isStoringEnabled()
+                && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir());
     }
 
     private void add(final List<StreamHandler> handlers) {
