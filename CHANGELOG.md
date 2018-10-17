@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
+
 * Issue **#878** : Changed the appearance of stream filter fields to be more user friendly, e.g. `feedName` is now `Feed` etc.
 
 * Issue **#809** : Changed default job frequency for `Stream Attributes Retention` and `Stream Task Retention` to `1d` (one day).
