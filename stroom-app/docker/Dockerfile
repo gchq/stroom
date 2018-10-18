@@ -69,10 +69,6 @@ ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
 #start the app
 CMD ["java", "-jar", "stroom-app-all.jar", "server", "config/config.yml"]
 
-# The following line can be used as a temproary hack in dev if the build can't
-# resolve alpine's apk repo server.
-#RUN echo "151.101.112.249 dl-cdn.alpinelinux.org" >> /etc/hosts && \
-
 # update alpine and install Bash/tini/su-exec as they are not in alpine by default
 # Create a user with no home and no shell
 # No bash as sh should be sufficient
