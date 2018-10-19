@@ -57,7 +57,7 @@ RUN echo "http_proxy: $http_proxy" && \
     mkdir -p /stroom-proxy/logs/events && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/repo && \
-    chown -R proxy /stroom-proxy
+    chown -R proxy:proxy /stroom-proxy
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors

@@ -94,7 +94,7 @@ RUN echo "http_proxy: $http_proxy" && \
     mkdir -p /stroom/output && \
     mkdir -p /stroom/proxy-repo && \
     mkdir -p /stroom/volumes && \
-    chown -R stroom /stroom
+    chown -R stroom:stroom /stroom
 
 # Copy in all the content packs downloaded in the intermediate build stage
 COPY --chown=stroom:stroom --from=content-packs /content-packs /stroom/contentPackImport
