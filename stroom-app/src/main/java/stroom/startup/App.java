@@ -100,6 +100,7 @@ import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
+import stroom.util.HasHealthCheck;
 import stroom.util.config.StroomProperties;
 import stroom.util.db.DbUtil;
 import stroom.util.spring.StroomSpringProfiles;
@@ -172,6 +173,17 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
+
+        healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
+            @Override
+            protected Result check() throws Exception {
+                Map<String, Object> detailMap = HasHealthCheck.beanToMap(configuration.getProxyConfig());
+                return Result.builder()
+                        .healthy()
+                        .withDetail("values", detailMap)
+                        .build();
+            }
+        });
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
