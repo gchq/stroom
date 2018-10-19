@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.xml.sax.ErrorHandler;
 import stroom.entity.server.DocumentPermissionCache;
+import stroom.entity.server.event.EntityEvent;
+import stroom.entity.server.event.EntityEventHandler;
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
@@ -35,14 +37,16 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
+import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
 
 @Insecure
 @Component
+@EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 class ParserFactoryPoolImpl
         extends AbstractEntityPool<TextConverter, StoredParserFactory>
-        implements ParserFactoryPool {
+        implements ParserFactoryPool, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
 
     private final DSChooser dsChooser;
@@ -95,5 +99,10 @@ class ParserFactoryPoolImpl
         }
 
         return new StoredParserFactory(parserFactory, errorReceiver);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        clear();
     }
 }

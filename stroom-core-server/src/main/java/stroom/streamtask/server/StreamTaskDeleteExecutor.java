@@ -67,7 +67,7 @@ public class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
         this.streamProcessorFilterService = streamProcessorFilterService;
     }
 
-    @StroomFrequencySchedule("1m")
+    @StroomFrequencySchedule("1d")
     @JobTrackedSchedule(jobName = "Stream Task Retention", description = "Physically delete stream tasks that have been logically deleted or complete based on age ("
             + STREAM_TASKS_DELETE_AGE_PROPERTY + ")")
     public void exec() {

@@ -70,7 +70,6 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     private final ParserFactoryPool parserFactoryPool;
@@ -128,7 +127,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     private XMLReader createXMLReader() throws SAXException {
-        SAXParser parser = null;
+        SAXParser parser;
         try {
             parser = PARSER_FACTORY.newSAXParser();
         } catch (final ParserConfigurationException e) {
@@ -137,7 +136,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         return parser.getXMLReader();
     }
 
-    private XMLReader createJSONReader() throws SAXException {
+    private XMLReader createJSONReader() {
         return new JSONParserFactory().getParser();
     }
 

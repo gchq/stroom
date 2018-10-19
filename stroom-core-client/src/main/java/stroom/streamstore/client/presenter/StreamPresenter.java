@@ -337,16 +337,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
 
-
-
-
-
-
-
-
-
-
-
     private static StreamStatus getSingleStatus(final FindStreamAttributeMapCriteria criteria) {
         if (criteria == null) {
             return null;
@@ -406,16 +396,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
 
 
     private void showData() {
@@ -563,7 +543,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private void setStreamRelationListSelectableEnabled(final IdSet streamIdSet,
-                                                       final StreamStatus streamStatus) {
+                                                        final StreamStatus streamStatus) {
         final boolean someSelected = isSomeSelected(streamRelationListPresenter, streamIdSet);
 
         if (streamRelationListDownload != null) {
@@ -668,7 +648,10 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     // only includes the selected streams.
                     final FindStreamCriteria criteria = createFindStreamCriteria();
                     // Copy the current filter status
-                    criteria.setExpression(ExpressionUtil.createStatusExpression(getSingleStatus(streamPresenter.getCriteria())));
+                    final StreamStatus streamStatus = getSingleStatus(streamPresenter.getCriteria());
+                    if (streamStatus != null) {
+                        criteria.setExpression(ExpressionUtil.createStatusExpression(streamStatus));
+                    }
                     criteria.obtainSelectedIdSet().addAll(idSet.getSet());
                     // Paging is NA
                     criteria.obtainPageRequest().setLength(null);

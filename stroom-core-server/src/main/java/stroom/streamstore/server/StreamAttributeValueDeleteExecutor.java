@@ -50,7 +50,7 @@ public class StreamAttributeValueDeleteExecutor extends AbstractBatchDeleteExecu
                 DEFAULT_STREAM_ATTRIBUTE_DELETE_BATCH_SIZE, TEMP_STRM_ATTRIBUTE_ID_TABLE);
     }
 
-    @StroomFrequencySchedule("1h")
+    @StroomFrequencySchedule("1d")
     @JobTrackedSchedule(jobName = "Stream Attributes Retention", description = "Delete attributes older than system property "
             + STREAM_ATTRIBUTE_DELETE_AGE_PROPERTY + ")")
     public void exec() {

@@ -46,14 +46,13 @@ public class Sanitiser {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
-    public Sanitiser(final Path in, final Path out) {
+    private Sanitiser(final Path in, final Path out) {
         process(in, out);
     }
 
-    public static void main(final String[] args) throws Exception {
+    public static void main(final String[] args) {
         if (args.length != 2) {
             System.out.println("Bad arguments - provide input and output files.");
         }
@@ -67,7 +66,7 @@ public class Sanitiser {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 
-            SAXParser parser = null;
+            SAXParser parser;
             try {
                 parser = PARSER_FACTORY.newSAXParser();
             } catch (final ParserConfigurationException e) {

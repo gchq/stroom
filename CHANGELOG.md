@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.8]
+
+* Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
+
+* Issue **#878** : Changed the appearance of stream filter fields to be more user friendly, e.g. `feedName` is now `Feed` etc.
+
+* Issue **#809** : Changed default job frequency for `Stream Attributes Retention` and `Stream Task Retention` to `1d` (one day).
+
+* Issue **#813** : Turned on secure processing feature for XML parsers and XML transformers so that external entities are not resolved. This prevents DoS attacks and gaining unauthorised access to the local machine.
+
+* Issue **#871** : Fix for OptimisticLockException when processing streams.
+
+* Issue **#872** : The parser cache is now automatically cleared when a schema changes as this can affect the way a data splitter parser is created.
+
 * Issue **#865** : Made `stroom.conf` location relative to YAML file when `externalConfig` YAML property is set.
 
 * Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
@@ -17,6 +31,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Changed selected default tab for pipelines to be `Data`.
 
 * Issue **#860** : Fixed issue where stepping failed when using any sort of input filter or reader before the parser.
+
+* Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
+
+* Improved Stroom instance management scripts
+
+## [v6.0-beta.7]
+
+* Add contentPack import
 
 ## [v6.0-beta.6]
 
@@ -1101,7 +1123,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.6...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.8...6.0
+[v6.0-beta.8]: https://github.com/gchq/stroom/compare/v6.0-beta.7...v6.0-beta.8
+[v6.0-beta.7]: https://github.com/gchq/stroom/compare/v6.0-beta.6...v6.0-beta.7
 [v6.0-beta.6]: https://github.com/gchq/stroom/compare/v6.0-beta.5...v6.0-beta.6
 [v6.0-beta.5]: https://github.com/gchq/stroom/compare/v6.0-beta.4...v6.0-beta.5
 [v6.0-beta.4]: https://github.com/gchq/stroom/compare/v6.0-beta.3...v6.0-beta.4

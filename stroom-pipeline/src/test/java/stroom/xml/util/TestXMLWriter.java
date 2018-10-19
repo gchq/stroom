@@ -45,12 +45,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 
 public class TestXMLWriter extends StroomUnitTest {
-    public static final SAXParserFactory PARSER_FACTORY;
+    private static final SAXParserFactory PARSER_FACTORY;
     private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLWriter.class);
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     @Test

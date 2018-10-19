@@ -17,9 +17,7 @@
 package stroom.streamstore.server.fs.serializable;
 
 import stroom.util.io.StreamUtil;
-import stroom.util.xml.SAXParserFactoryFactory;
 
-import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -36,15 +34,6 @@ import java.io.UncheckedIOException;
  * found the input stream is treated as XML.
  */
 public class RawInputSegmentWriter {
-    // private static final int BYTES_PER_SEGMENT = 10000;
-    // private static final int TYPE_BUFFER_SIZE = 2000;
-    private static final SAXParserFactory PARSER_FACTORY;
-
-    static {
-        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-    }
-
     /**
      * Writes an input stream to a segment output stream and inserts segment
      * boundaries at appropriate positions depending on the input type. The
@@ -68,7 +57,7 @@ public class RawInputSegmentWriter {
      */
     public long write(final InputStream inputStream, final RASegmentOutputStream segmentOutputStream,
                       final boolean close) {
-        long bytesWritten = 0;
+        long bytesWritten;
         try {
             try {
                 bytesWritten = StreamUtil.streamToStream(inputStream, segmentOutputStream, close);
