@@ -14,13 +14,14 @@
 # limitations under the License.
 #**********************************************************************
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~ content pack download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # Intermediate build stage to grab all the content packs so we can
 # later copy them all in one go to reduce the number of layers
 FROM scratch as content-packs
 WORKDIR /content-packs
 
-#Add in all the content packs so stroom imports them on startup
+# Add in all the content packs so stroom imports them on startup
 ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v2.0/core-xml-schemas-v2.0.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v3.2.3/event-logging-xml-schema-v3.2.3.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip .
@@ -29,7 +30,7 @@ ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v1.0/stroom-logs-v1.0.zip .
 
-#Add in the visualisations for import on startup
+# Add in the visualisations for import on startup
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/visualisations-production-v3.0.5.zip .
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -69,12 +70,17 @@ ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
 #start the app
 CMD ["java", "-jar", "stroom-app-all.jar", "server", "config/config.yml"]
 
+# https://github.com/gchq/stroom/issues/884
+# JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
+# see https://github.com/docker-library/openjdk/issues/73#issuecomment-207816707
+
 # update alpine and install Bash/tini/su-exec as they are not in alpine by default
 # Create a user with no home and no shell
 # No bash as sh should be sufficient
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        ttf-dejavu \
         su-exec \
         tini && \
     addgroup -g 1000 -S stroom && \
@@ -103,3 +109,5 @@ COPY --chown=stroom:stroom ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
 ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
+# Needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
+ENV LANG en_GB.UTF-8
