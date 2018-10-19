@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add admin healthchecks to stroom-proxy
+
+* Add stroom-proxy docker image
+
+* Refactor stroom docker images to reduce image size
+
+* Add enabled flag to storing, forwarding and synching in stroom-proxy configuration
+
+* Issue **#884** : Added extra fonts to stroom docker image to fix bug downloading xls search results.
+
 ## [v6.0-beta.8]
 
 * Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
