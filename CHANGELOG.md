@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#880** : Increased the maximum value a numeric pipeline property can be set to via the UI to 10000000.
+
 * Issue **#888** : The dependencies listing now copes with external dependencies failing to provide data due to authentication issues.
 
 * Issue **#890** : Dictionaries now show the words tab by default.
