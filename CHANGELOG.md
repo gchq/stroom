@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#890** : Dictionaries now show the words tab by default.
+
 ## [v6.0-beta.8]
 
 * Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.

@@ -73,12 +73,12 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
         downloadButton = addButtonLeft(SvgPresets.DOWNLOAD);
 
-        addTab(SETTINGS_TAB);
         addTab(WORDS_TAB);
-        selectTab(SETTINGS_TAB);
+        addTab(SETTINGS_TAB);
+        selectTab(WORDS_TAB);
     }
 
-    @java.lang.Override
+    @Override
     protected void onBind() {
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> dispatcher.exec(new DownloadDictionaryAction(doc.getUuid())).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))));
@@ -89,7 +89,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         if (SETTINGS_TAB.equals(tab)) {
             callback.onReady(settingsPresenter);
         } else if (WORDS_TAB.equals(tab)) {
-            callback.onReady(codePresenter);
+            callback.onReady(getOrCreateCodePresenter());
         } else {
             callback.onReady(null);
         }
@@ -120,12 +120,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     public void onPermissionsCheck(final boolean readOnly) {
         super.onPermissionsCheck(readOnly);
 
-        codePresenter = editorPresenterProvider.get();
+        codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);
-
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
         }
@@ -134,5 +130,14 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @Override
     public String getType() {
         return DictionaryDoc.ENTITY_TYPE;
+    }
+
+    private EditorPresenter getOrCreateCodePresenter() {
+        if (codePresenter == null) {
+            codePresenter = editorPresenterProvider.get();
+            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        }
+        return codePresenter;
     }
 }
