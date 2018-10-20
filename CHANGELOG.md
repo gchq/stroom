@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#888** : The dependencies listing now copes with external dependencies failing to provide data due to authentication issues.
+
 * Issue **#890** : Dictionaries now show the words tab by default.
 
 ## [v6.0-beta.8]
