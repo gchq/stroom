@@ -152,10 +152,11 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        LOGGER.info("Starting in mode: {}", configuration.getMode() != null ? configuration.getMode().toUpperCase() : null);
         if ("proxy".equalsIgnoreCase(configuration.getMode())) {
+            LOGGER.info("Starting Stroom Proxy");
             startProxy(configuration, environment);
         } else {
+            LOGGER.info("Starting Stroom Application");
 //            // Adding asset bundles this way is not normal but it is done so that proxy can serve it's own root page for now.
 //            new AssetsBundle("/ui", "/", "stroom", "ui").run(environment);
             startApp(configuration, environment);
