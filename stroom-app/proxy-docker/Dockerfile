@@ -35,7 +35,7 @@ VOLUME /stroom-proxy/logs/
 ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
 
 # start the app
-CMD ["java", "-jar", "stroom-app-all.jar", "server", "/stroom-proxy/config/config.yml"]
+CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server /stroom-proxy/config/config.yml"]
 
 # The following line can be used as a temproary hack in dev if the build can't
 # resolve alpine's apk repo server.

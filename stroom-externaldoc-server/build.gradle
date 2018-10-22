@@ -15,4 +15,5 @@ dependencies {
     compile libs.javax_inject
     compile libs.ws_rs_api
     compile libs.jackson_annotations
+    compile libs.slf4j_api
 }

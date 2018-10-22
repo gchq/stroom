@@ -68,7 +68,7 @@ VOLUME /stroom/volumes/
 ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
 
 #start the app
-CMD ["java", "-jar", "stroom-app-all.jar", "server", "config/config.yml"]
+CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server config/config.yml"]
 
 # https://github.com/gchq/stroom/issues/884
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
