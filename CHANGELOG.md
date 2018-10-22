@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#881** : The find and replace strings specified for the `FindReplaceFilter` are now treated as unescaped Java strings and now support new line characters etc.
+
 * Issue **#880** : Increased the maximum value a numeric pipeline property can be set to via the UI to 10000000.
 
 * Issue **#888** : The dependencies listing now copes with external dependencies failing to provide data due to authentication issues.

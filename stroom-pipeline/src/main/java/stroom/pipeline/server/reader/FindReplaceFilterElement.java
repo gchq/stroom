@@ -16,6 +16,7 @@
 
 package stroom.pipeline.server.reader;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
@@ -109,12 +110,12 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
     public void setFind(final String find) {
-        this.find = find;
+        this.find = StringEscapeUtils.unescapeJava(find);
     }
 
     @PipelineProperty(description = "The replacement text.")
     public void setReplacement(final String replacement) {
-        this.replacement = replacement;
+        this.replacement = StringEscapeUtils.unescapeJava(replacement);
     }
 
     @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.")
