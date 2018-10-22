@@ -79,7 +79,6 @@ import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -604,19 +603,10 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             LOGGER.error("Unable to delete stream target!", e.getMessage(), e);
         }
 
-        try {
-            // Make sure the stream data is deleted.
-            // Attach object (may throw a lock exception)
-            final Stream db = entityManager.saveEntity(target.getStream());
-            return doLogicalDeleteStream(db, false);
-
-        } catch (final OptimisticLockException e) {
-            // Expected if another process has updated the stream.
-            LOGGER.debug("Got an OptimisticLockException when trying to delete stream target for stream id=" + target.getStream().getId());
-            LOGGER.trace(e.getMessage(), e);
-        }
-
-        return 0L;
+        // Make sure the stream data is deleted.
+        // Attach object (may throw a lock exception)
+        final Stream db = entityManager.saveEntity(target.getStream());
+        return doLogicalDeleteStream(db, false);
     }
 
     @Override
@@ -837,9 +827,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             feeds.setMatchAll(Boolean.FALSE);
             final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
 
-        if (feeds.size() > 0) {
-            final Set<Long> restrictedFeedIds =
-            restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
+            if (feeds.size() > 0) {
+                final Set<Long> restrictedFeedIds =
+                        restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
 
                 // Retain only the feeds that the user has the required permission on.
                 feeds.getSet().retainAll(restrictedFeedIds);

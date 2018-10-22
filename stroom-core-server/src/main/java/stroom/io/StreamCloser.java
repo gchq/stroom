@@ -25,6 +25,7 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.util.spring.StroomScope;
 
 import javax.annotation.Resource;
+import javax.persistence.OptimisticLockException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -41,31 +42,7 @@ public class StreamCloser implements Closeable {
     @Resource
     private StreamStore streamStore;
 
-    // For stream target's we can delete them on closing if they are no-longer
-    // required
-    private boolean delete = false;
-
     public StreamCloser() {
-    }
-
-    public StreamCloser(final Closeable... closeables) {
-        add(closeables);
-    }
-
-    public StreamCloser(final Closeable closeable) {
-        add(closeable);
-    }
-
-    public StreamCloser add(final Closeable... closeables) {
-        for (final Closeable closeable : closeables) {
-            add(closeable);
-        }
-
-        return this;
-    }
-
-    public void setDelete(boolean delete) {
-        this.delete = delete;
     }
 
     public StreamCloser add(final Closeable closeable) {
@@ -117,10 +94,15 @@ public class StreamCloser implements Closeable {
 
                         // Only call the API on the root parent stream
                         if (streamTarget.getParent() == null) {
-                            if (delete) {
-                                streamStore.deleteStreamTarget(streamTarget);
-                            } else {
+                            // Close the stream target.
+                            try {
                                 streamStore.closeStreamTarget(streamTarget);
+                            } catch (final OptimisticLockException e) {
+                                // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+                                LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+                                LOGGER.trace(e.getMessage(), e);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
                             }
                         }
                     } else {

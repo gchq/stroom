@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#883** : Output streams are now immediately unlocked as soon as they are closed.
+
 * Removed unnecessary OR operator that was being inserted into expressions where only a single child term was being used. This happened when reprocessing single streams.
 
 * Issue **#882** : Splitting aggregated streams now works when using `FindReplaceFilter`. This functionality was previously broken because various reader elements were not passing the `endStream` event on.

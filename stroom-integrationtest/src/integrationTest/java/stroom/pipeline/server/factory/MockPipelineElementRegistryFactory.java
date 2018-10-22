@@ -45,7 +45,7 @@ import java.util.List;
 public class MockPipelineElementRegistryFactory implements ElementRegistryFactory, ElementFactory {
     private final ElementRegistry registry;
 
-    public MockPipelineElementRegistryFactory() {
+    MockPipelineElementRegistryFactory() {
         final List<Class<?>> elementClasses = new ArrayList<>();
         elementClasses.add(SourceElement.class);
         elementClasses.add(CombinedParser.class);

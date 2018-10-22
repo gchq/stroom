@@ -57,16 +57,13 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamstore.server.OldFindStreamCriteria;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.server.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.server.InclusiveRanges;
 import stroom.streamtask.server.InclusiveRanges.InclusiveRange;
@@ -84,6 +81,7 @@ import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -122,12 +120,12 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final NodeCache nodeCache;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final SupersededOutputHelper supersededOutputHelper;
 
     private StreamProcessor streamProcessor;
     private StreamProcessorFilter streamProcessorFilter;
     private StreamTask streamTask;
     private StreamSource streamSource;
-    private ProcessInfoOutputStreamProvider processInfoOutputStreamProvider;
 
     @Inject
     public PipelineStreamProcessor(final PipelineFactory pipelineFactory,
@@ -149,7 +147,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final NodeCache nodeCache,
                                    final PipelineDataCache pipelineDataCache,
-                                   final InternalStatisticsReceiver internalStatisticsReceiver) {
+                                   final InternalStatisticsReceiver internalStatisticsReceiver,
+                                   final SupersededOutputHelper supersededOutputHelper) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
         this.feedService = feedService;
@@ -170,31 +169,43 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.nodeCache = nodeCache;
         this.pipelineDataCache = pipelineDataCache;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
+        this.supersededOutputHelper = supersededOutputHelper;
     }
 
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
                      final StreamTask streamTask, final StreamSource streamSource) {
-        try {
-            this.streamProcessor = streamProcessor;
-            this.streamProcessorFilter = streamProcessorFilter;
-            this.streamTask = streamTask;
-            this.streamSource = streamSource;
 
-            // Setup the error handler and receiver.
-            errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
+        this.streamProcessor = streamProcessor;
+        this.streamProcessorFilter = streamProcessorFilter;
+        this.streamTask = streamTask;
+        this.streamSource = streamSource;
 
-            // Setup the error writer.
-            processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore, streamCloser, metaData,
-                    streamSource.getStream(), streamProcessor, streamTask);
-            final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
-            errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
-            errorWriterProxy.setErrorWriter(errorWriter);
+        // Setup the error handler and receiver.
+        errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
-            process();
+        // Setup the process info writer.
+        try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore,
+                metaData,
+                streamSource.getStream(),
+                streamProcessor,
+                streamTask,
+                recordCount,
+                errorReceiverProxy,
+                supersededOutputHelper)) {
 
-        } catch (final Exception e) {
-            outputError(e);
+            try {
+                final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
+                errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
+                errorWriterProxy.setErrorWriter(errorWriter);
+
+                process();
+
+            } catch (final Exception e) {
+                outputError(e);
+            }
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -208,8 +219,12 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         try {
             final Stream stream = streamSource.getStream();
 
+            // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
+            supersededOutputHelper.init(stream, streamProcessor, streamTask, startTime);
+
             // Update the meta data for all output streams to use.
-            updateMetaData(streamSource);
+            metaData.put("Source Stream", String.valueOf(stream.getId()));
+            metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
@@ -226,22 +241,17 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             pipelineHolder.setPipeline(pipelineEntity);
 
             // Create some processing info.
-            final StringBuilder infoSb = new StringBuilder();
-            infoSb.append(" pipeline=");
-            infoSb.append(pipelineEntity.getName());
-            infoSb.append(", feed=");
-            infoSb.append(feed.getName());
-            infoSb.append(", streamId=");
-            infoSb.append(stream.getId());
-            infoSb.append(", streamCreated=");
-            infoSb.append(DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-            final String info = infoSb.toString();
+            final String info = " pipeline=" +
+                    pipelineEntity.getName() +
+                    ", feed=" +
+                    feed.getName() +
+                    ", streamId=" +
+                    stream.getId() +
+                    ", streamCreated=" +
+                    DateUtil.createNormalDateTimeString(stream.getCreateMs());
 
             // Create processing start message.
-            final StringBuilder processingInfoSb = new StringBuilder();
-            processingInfoSb.append(PROCESSING);
-            processingInfoSb.append(info);
-            final String processingInfo = processingInfoSb.toString();
+            final String processingInfo = PROCESSING + info;
 
             // Log that we are starting to process.
             taskMonitor.info(processingInfo);
@@ -259,12 +269,10 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             processNestedStreams(pipeline, stream, streamSource, feed, stream.getStreamType());
 
             // Create processing finished message.
-            final StringBuilder finishedInfoSb = new StringBuilder();
-            finishedInfoSb.append(FINISHED);
-            finishedInfoSb.append(info);
-            finishedInfoSb.append(", finished in ");
-            finishedInfoSb.append(ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
-            final String finishedInfo = finishedInfoSb.toString();
+            final String finishedInfo = FINISHED +
+                    info +
+                    ", finished in " +
+                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
 
             // Log that we have finished processing.
             taskMonitor.info(finishedInfo);
@@ -274,14 +282,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             outputError(e);
 
         } finally {
-            // Check we are not superseded.
-            checkSuperseded(startTime);
-
             // Record some statistics about processing.
             recordStats(feed, pipelineEntity);
-
-            // Update the meta data for all output streams to use.
-            updateMetaData(streamSource);
 
             try {
                 // Close all open streams.
@@ -289,62 +291,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             } catch (final IOException e) {
                 outputError(e);
             }
-        }
-    }
-
-    /**
-     * Look for any other streams that have been produced by the same pipeline
-     * and stream as the one we are processing. If we find any only the latest
-     * stream task id is validate (which would normally be this stream task).
-     * Any earlier stream tasks their streams should be deleted. If we are an
-     * earlier stream task then mark our output as to be deleted (rather than
-     * unlock it).
-     */
-    private void checkSuperseded(final long processStartTime) {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainParentStreamIdSet().add(streamSource.getStream());
-        findStreamCriteria.obtainStatusSet().setMatchAll(true);
-        findStreamCriteria.obtainStreamProcessorIdSet().add(streamProcessor);
-
-        final List<Stream> streamList = streamStore.find(findStreamCriteria);
-
-        Long latestStreamTaskId = null;
-        long latestStreamCreationTime = processStartTime;
-
-        // Find the latest stream task .... this one is not superseded
-        for (final Stream stream : streamList) {
-            if (stream.getStreamTaskId() != null && !StreamStatus.DELETED.equals(stream.getStatus())) {
-                if (stream.getCreateMs() > latestStreamCreationTime) {
-                    latestStreamCreationTime = stream.getCreateMs();
-                    latestStreamTaskId = stream.getStreamTaskId();
-                } else if (stream.getCreateMs() == latestStreamCreationTime
-                        && (latestStreamTaskId == null || stream.getStreamTaskId() > latestStreamTaskId)) {
-                    latestStreamCreationTime = stream.getCreateMs();
-                    latestStreamTaskId = stream.getStreamTaskId();
-                }
-            }
-        }
-
-        // We are not the latest stream task
-        if (latestStreamTaskId != null && latestStreamTaskId != streamTask.getId()) {
-            // Delete all our output
-            streamCloser.setDelete(true);
-        }
-
-        // Loop around all the streams found above looking for ones to delete
-        final FindStreamCriteria findDeleteStreamCriteria = new FindStreamCriteria();
-        for (final Stream stream : streamList) {
-            // If the stream is not associated with the latest stream task
-            // and is not already deleted then select it for deletion.
-            if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getStreamTaskId()))
-                    && !StreamStatus.DELETED.equals(stream.getStatus())) {
-                findDeleteStreamCriteria.obtainSelectedIdSet().add(stream.getId());
-            }
-        }
-        // If we have found any to delete then delete them now.
-        if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
-            final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
-            LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
         }
     }
 
@@ -409,7 +355,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
                 for (long streamNo = 0; streamNo < streamCount && !taskMonitor.isTerminated(); streamNo++) {
-                    InputStream inputStream = null;
+                    InputStream inputStream;
 
                     // If the task requires specific events to be processed then
                     // add them.
@@ -492,9 +438,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 outputError(e);
 
             } finally {
-                // Update the meta data for all output streams to use
-                updateMetaData(streamSource);
-
                 try {
                     if (startedProcessing) {
                         pipeline.endProcessing();
@@ -508,21 +451,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     outputError(e);
                 }
             }
-        } catch (final Exception e) {
-            outputError(e);
-        }
-    }
-
-    private void updateMetaData(final StreamSource source) {
-        try {
-            // Write some meta data to the map for all output streams to use
-            // when they close.
-            metaData.put("Source Stream", String.valueOf(source.getStream().getId()));
-            metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
-
-            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
-            processStatistics.write(metaData.getMetaMap());
-
         } catch (final Exception e) {
             outputError(e);
         }
@@ -565,44 +493,53 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     }
 
     private static class ProcessInfoOutputStreamProvider extends AbstractElement
-            implements DestinationProvider, Destination {
+            implements DestinationProvider, Destination, AutoCloseable {
         private final StreamStore streamStore;
-        private final StreamCloser streamCloser;
         private final MetaData metaData;
         private final Stream stream;
         private final StreamProcessor streamProcessor;
         private final StreamTask streamTask;
+        private final RecordCount recordCount;
+        private final ErrorReceiverProxy errorReceiverProxy;
+        private final SupersededOutputHelper supersededOutputHelper;
 
         private OutputStream processInfoOutputStream;
         private StreamTarget processInfoStreamTarget;
 
-        public ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
-                                               final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
-                                               final StreamTask streamTask) {
+        ProcessInfoOutputStreamProvider(final StreamStore streamStore,
+                                        final MetaData metaData,
+                                        final Stream stream,
+                                        final StreamProcessor streamProcessor,
+                                        final StreamTask streamTask,
+                                        final RecordCount recordCount,
+                                        final ErrorReceiverProxy errorReceiverProxy,
+                                        final SupersededOutputHelper supersededOutputHelper) {
             this.streamStore = streamStore;
-            this.streamCloser = streamCloser;
             this.metaData = metaData;
             this.stream = stream;
             this.streamProcessor = streamProcessor;
             this.streamTask = streamTask;
+            this.recordCount = recordCount;
+            this.errorReceiverProxy = errorReceiverProxy;
+            this.supersededOutputHelper = supersededOutputHelper;
         }
 
         @Override
-        public Destination borrowDestination() throws IOException {
+        public Destination borrowDestination() {
             return this;
         }
 
         @Override
-        public void returnDestination(final Destination destination) throws IOException {
+        public void returnDestination(final Destination destination) {
         }
 
         @Override
-        public OutputStream getByteArrayOutputStream() throws IOException {
+        public OutputStream getByteArrayOutputStream() {
             return getOutputStream(null, null);
         }
 
         @Override
-        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             if (processInfoOutputStream == null) {
                 // Create a processing info stream to write all processing
                 // information to.
@@ -610,28 +547,56 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         streamProcessor, streamTask);
 
                 processInfoStreamTarget = streamStore.openStreamTarget(errorStream);
-                streamCloser.add(processInfoStreamTarget);
-
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStream()) {
                     @Override
                     public void close() throws IOException {
-                        super.flush();
-                        super.close();
+                        try {
+                            super.flush();
+                            super.close();
 
-                        // Only do something if an output stream was used.
-                        if (processInfoStreamTarget != null) {
-                            // Write meta data.
-                            final MetaMap metaMap = metaData.getMetaMap();
-                            processInfoStreamTarget.getAttributeMap().putAll(metaMap);
-                            // We let the streamCloser close the stream target
-                            // with the stream store as it may want to delete it
+                        } finally {
+                            // Only do something if an output stream was used.
+                            if (processInfoStreamTarget != null) {
+                                // Write meta data.
+                                final MetaMap metaMap = metaData.getMetaMap();
+                                processInfoStreamTarget.getAttributeMap().putAll(metaMap);
+
+                                try {
+                                    // Write statistics meta data.
+                                    // Get current process statistics
+                                    final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+                                    processStatistics.write(processInfoStreamTarget.getAttributeMap());
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                }
+
+                                // Close the stream target.
+                                try {
+                                    if (supersededOutputHelper.isSuperseded()) {
+                                        streamStore.deleteStreamTarget(processInfoStreamTarget);
+                                    } else {
+                                        streamStore.closeStreamTarget(processInfoStreamTarget);
+                                    }
+                                } catch (final OptimisticLockException e) {
+                                    // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+                                    LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+                                    LOGGER.trace(e.getMessage(), e);
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                }
+                            }
                         }
                     }
                 };
-                streamCloser.add(processInfoOutputStream);
             }
 
             return processInfoOutputStream;
+        }
+
+        public void close() throws IOException {
+            if (processInfoOutputStream != null) {
+                processInfoOutputStream.close();
+            }
         }
 
         @Override

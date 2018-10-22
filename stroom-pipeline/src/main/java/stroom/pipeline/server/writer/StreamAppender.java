@@ -17,11 +17,12 @@
 
 package stroom.pipeline.server.writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.io.StreamCloser;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -29,6 +30,7 @@ import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.task.ProcessStatisticsFactory;
 import stroom.pipeline.server.task.ProcessStatisticsFactory.ProcessStatistics;
+import stroom.pipeline.server.task.SupersededOutputHelper;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -48,6 +50,7 @@ import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -57,6 +60,8 @@ import java.io.OutputStream;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class StreamAppender extends AbstractAppender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
+
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
@@ -65,7 +70,7 @@ public class StreamAppender extends AbstractAppender {
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
-    private final StreamCloser streamCloser;
+    private final SupersededOutputHelper supersededOutputHelper;
 
     private DocRef feedRef;
     private String streamType;
@@ -85,7 +90,7 @@ public class StreamAppender extends AbstractAppender {
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
                           final RecordCount recordCount,
-                          final StreamCloser streamCloser) {
+                          final SupersededOutputHelper supersededOutputHelper) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -95,7 +100,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
-        this.streamCloser = streamCloser;
+        this.supersededOutputHelper = supersededOutputHelper;
     }
 
     @Override
@@ -129,9 +134,6 @@ public class StreamAppender extends AbstractAppender {
 
         streamTarget = streamStore.openStreamTarget(stream);
         OutputStream targetOutputStream;
-
-        // Let the stream closer handle closing it
-        streamCloser.add(streamTarget);
 
         if (segmentOutput) {
             wrappedSegmentOutputStream = new WrappedSegmentOutputStream(new RASegmentOutputStream(streamTarget)) {
@@ -175,8 +177,20 @@ public class StreamAppender extends AbstractAppender {
             // Write statistics meta data.
             currentStatistics.write(streamTarget.getAttributeMap());
 
-            // We leave the streamCloser to close the stream target as it may
-            // want to delete it instead
+            // Close the stream target.
+            try {
+                if (supersededOutputHelper.isSuperseded()) {
+                    streamStore.deleteStreamTarget(streamTarget);
+                } else {
+                    streamStore.closeStreamTarget(streamTarget);
+                }
+            } catch (final OptimisticLockException e) {
+                // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+                LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+                LOGGER.trace(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
     }
 
