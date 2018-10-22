@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #**********************************************************************
-# Copyright 2016 Crown Copyright
+# Copyright 2018 Crown Copyright
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,30 @@
 # limitations under the License.
 #**********************************************************************
 
-# This script is all you need to build an image of stroom-auth-service and stroom-auth-ui.
+# This script is all you need to build a local image of stroom and stroom-proxy
+# Releases to Dockerhub will be done by travis
 
-# Exclude tests because we want this to be fast. I guess you'd better test the build before releasing.
+#Shell Colour constants for use in 'echo -e'
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+LGREY='\e[37m'
+DGREY='\e[90m'
+NC='\033[0m' # No Color
+
+# Exclude tests because we want this to be fast. 
+# I guess you'd better test the build before releasing.
 ./gradlew downloadUrlDependencies clean build shadowJar -x test -x integrationTest
 
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+echo -e "${GREEN}Building stroom docker image ${BLUE}gchq/stroom:dev-SNAPSHOT${NC}"
+
 docker build --tag gchq/stroom:dev-SNAPSHOT ./stroom-app/docker
+
+echo -e "${GREEN}Building stroom-proxy docker image ${BLUE}gchq/stroom-proxy:dev-SNAPSHOT${NC}"
+
+docker build --tag gchq/stroom-proxy:dev-SNAPSHOT ./stroom-app/proxy-docker

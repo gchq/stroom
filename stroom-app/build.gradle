@@ -150,14 +150,16 @@ runShadow {
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
-def dockerBuildDir = "${projectDir}/docker/build"
+def stroomDockerBuildDir = "${projectDir}/docker/build"
+def proxyDockerBuildDir = "${projectDir}/proxy-docker/build"
 
 clean{
-    delete dockerBuildDir
+    delete stroomDockerBuildDir
+    delete proxyDockerBuildDir
 }
 
-//Copy all the files needed by the docker build into stroom-app/docker/build
-task copyFilesForDockerBuild() {
+//Copy all the files needed by the stroom docker build into stroom-app/docker/build
+task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
     dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
     dependsOn tasks.getByPath(':stroom-elastic-client-impl_5_6_4:shadowJar')
@@ -167,25 +169,43 @@ task copyFilesForDockerBuild() {
         //Copy the stroom app fat jar
         copy {
             from "${project.buildDir}/libs/${fatJarName}"
-            into dockerBuildDir
+            into stroomDockerBuildDir
         }
 
         //Copy the kafka client fat jar
         copy {
             from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
-            into dockerBuildDir
+            into "${stroomDockerBuildDir}/plugins"
         }
 
         //Copy the elastic client fat jar
         copy {
             from project(':stroom-elastic-client-impl_5_6_4').file('build/libs/stroom-elastic-client-impl_5_6_4-all.jar')
-            into dockerBuildDir
+            into "${stroomDockerBuildDir}/plugins"
         }
 
         //Copy the dropwizard yml configuration
         copy {
             from "${projectDir}/prod.yml"
-            into dockerBuildDir
+            into stroomDockerBuildDir
+        }
+    }
+}
+
+//Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
+task copyFilesForProxyDockerBuild() {
+    dependsOn shadowJar
+    doFirst {
+        //Copy the stroom app fat jar
+        copy {
+            from "${project.buildDir}/libs/${fatJarName}"
+            into proxyDockerBuildDir
+        }
+
+        //Copy the dropwizard yml configuration
+        copy {
+            from "${projectDir}/proxy-prod.yml"
+            into proxyDockerBuildDir
         }
     }
 }
@@ -268,7 +288,8 @@ task buildDistribution(type: Zip) {
 
 
 tasks.build.dependsOn generateSwaggerDocumentation
-tasks.build.dependsOn copyFilesForDockerBuild
+tasks.build.dependsOn copyFilesForStroomDockerBuild
+tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
 

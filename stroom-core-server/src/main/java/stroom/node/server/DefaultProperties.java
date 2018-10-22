@@ -43,7 +43,7 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.proxyDir")
                 .value("${stroom.temp}/proxy")
-                .description("Folder to look for Stroom Proxy Content to aggregate")
+                .description("Folder to look for Stroom Proxy data to aggregate")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
@@ -1367,7 +1367,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.proxy.store.format")
-                .value("#{'$'}{pathId}/#{'$'}{id}")
+                .value("${pathId}/${id}")
                 .description("The format to use for the stroom proxy store")
                 .editable(true)
                 .build());

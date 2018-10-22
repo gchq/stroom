@@ -3,6 +3,11 @@ package stroom.proxy.repo;
 public interface ProxyRepositoryConfig {
 
     /**
+     * @return True if the proxy should store received data in its repository
+     */
+    boolean isStoringEnabled();
+
+    /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
     String getRepoDir();

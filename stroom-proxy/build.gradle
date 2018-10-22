@@ -11,13 +11,13 @@ dependencies {
     compile libs.slf4j_api
     compile libs.commons_lang
     compile libs.jackson_annotations
-    compile libs.findbugs_jsr
 
     compile libs.guice4
     compile libs.javax_inject
 
     compile libs.javax_servlet_api
     compile libs.dropwizard_lifecycle
+    compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile libs.junit

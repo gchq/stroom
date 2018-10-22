@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -16,15 +15,19 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
     private final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider;
 
     @Inject
-    public ProxyRepositoryStreamHandlerFactory(@Nullable final ProxyRepositoryConfig proxyRepositoryConfig,
+    public ProxyRepositoryStreamHandlerFactory(final ProxyRepositoryConfig proxyRepositoryConfig,
                                                final Provider<ProxyRepositoryStreamHandler> proxyRepositoryStreamHandlerProvider) {
         this.proxyRepositoryConfig = proxyRepositoryConfig;
         this.proxyRepositoryStreamHandlerProvider = proxyRepositoryStreamHandlerProvider;
+
+        if (proxyRepositoryConfig.isStoringEnabled() && StringUtils.isEmpty(proxyRepositoryConfig.getRepoDir())) {
+            throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
+        }
     }
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig != null && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir())) {
+        if (isConfiguredToStore()) {
             handlers.add(proxyRepositoryStreamHandlerProvider.get());
         }
         return handlers;
@@ -34,5 +37,10 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
     public List<StreamHandler> addSendHandlers(final List<StreamHandler> handlers) {
         // Do nothing.
         return handlers;
+    }
+
+    private boolean isConfiguredToStore() {
+        return proxyRepositoryConfig.isStoringEnabled()
+                && StringUtils.isNotBlank(proxyRepositoryConfig.getRepoDir());
     }
 }

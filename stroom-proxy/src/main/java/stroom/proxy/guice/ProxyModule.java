@@ -9,7 +9,6 @@ import stroom.datafeed.server.RequestHandler;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.docstore.server.Persistence;
-import stroom.docstore.server.Store;
 import stroom.docstore.server.fs.FSPersistence;
 import stroom.proxy.handler.ForwardStreamConfig;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
@@ -60,6 +59,6 @@ public class ProxyModule extends AbstractModule {
 
     @Provides @Singleton
     Persistence providePersistence() {
-        return new FSPersistence(Paths.get(proxyConfig.getProxyConfigDir()));
+        return new FSPersistence(Paths.get(proxyConfig.getProxyContentDir()));
     }
 }
