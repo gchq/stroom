@@ -106,6 +106,7 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
             // Reset some of the variables so we can find/replace again in the next stream.
             textReplacementFilterReader.clear();
         }
+        super.endStream();
     }
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.")
