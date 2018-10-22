@@ -63,6 +63,7 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
         if (invalidXMLCharFilterReader.hasModifiedContent()) {
             errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
         }
+        super.endStream();
     }
 
     @PipelineProperty(description = "XML version, e.g. 1.0 or 1.1", defaultValue = "1.1")

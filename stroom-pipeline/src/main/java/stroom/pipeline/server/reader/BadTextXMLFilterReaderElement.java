@@ -62,6 +62,7 @@ public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
         if (badTextXMLFilterReader.hasModifiedContent()) {
             errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
         }
+        super.endStream();
     }
 
     @PipelineProperty(description = "A comma separated list of XML elements between which non-escaped characters will be escaped.")
