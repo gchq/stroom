@@ -108,14 +108,19 @@ public class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataActio
                 list.sort(Comparator.comparing(o -> o.getPipeline().getName()));
 
                 for (final StreamProcessor streamProcessor : list) {
-                    final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);
-
                     final QueryData queryData = new QueryData();
                     final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
-                    final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-                    streamSet.forEach(streamId -> streamIdTerms.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
-                    operator.addOperator(streamIdTerms.build());
+                    final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);
+                    if (streamSet != null && streamSet.size() > 0) {
+                        if (streamSet.size() == 1) {
+                            operator.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamSet.getSingleId()));
+                        } else {
+                            final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+                            streamSet.forEach(streamId -> streamIdTerms.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                            operator.addOperator(streamIdTerms.build());
+                        }
+                    }
 
                     queryData.setDataSource(StreamDataSource.STREAM_STORE_DOC_REF);
                     queryData.setExpression(operator.build());
