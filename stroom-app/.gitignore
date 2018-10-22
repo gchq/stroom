@@ -10,6 +10,7 @@
 /build/
 /war/WEB-INF/lib
 /docker/build/
+/proxy-docker/build/
 
 # These are needed for the distribution build.
 ## We want to track the contents of the bin folder, but it's ignore elsewhere

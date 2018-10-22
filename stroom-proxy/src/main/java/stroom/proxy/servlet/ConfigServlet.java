@@ -1,5 +1,8 @@
 package stroom.proxy.servlet;
 
+import com.codahale.metrics.health.HealthCheck;
+import stroom.util.HasHealthCheck;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -10,7 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class ConfigServlet extends HttpServlet {
+public class ConfigServlet extends HttpServlet implements HasHealthCheck {
     private final String data;
 
     public ConfigServlet(final String path) {
@@ -30,5 +33,13 @@ public class ConfigServlet extends HttpServlet {
         final Writer writer = response.getWriter();
         writer.write(data);
         writer.close();
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        return HealthCheck.Result.builder()
+                .healthy()
+                .withDetail("path", super.getServletContext().getContextPath())
+                .build();
     }
 }
