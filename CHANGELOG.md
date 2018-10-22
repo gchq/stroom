@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#892** : Changed `Ok` to `OK`.
+
 * Issue **#883** : Output streams are now immediately unlocked as soon as they are closed.
 
 * Removed unnecessary OR operator that was being inserted into expressions where only a single child term was being used. This happened when reprocessing single streams.
