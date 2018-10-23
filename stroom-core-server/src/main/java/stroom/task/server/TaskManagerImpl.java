@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * NB: we also define this in Spring XML so we can set some of the properties.
@@ -174,15 +175,11 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
             final int currentCount = currentAsyncTaskCount.get();
             waiting = currentCount > 0;
             if (waiting) {
-                final StringBuilder builder = new StringBuilder();
-                for (final TaskThread<?> taskThread : currentTasks.values()) {
-                    builder.append(taskThread.getTask().getTaskName());
-                    builder.append(" ");
-                }
-
                 // Output some debug to list the tasks that are executing
                 // and queued.
-                LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, builder);
+                LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}", currentCount, currentTasks.values().stream()
+                        .map(t -> t.getTask().getTaskName())
+                        .collect(Collectors.joining(", ")));
 
                 // Wait 1 second.
                 ThreadUtil.sleep(1000);
