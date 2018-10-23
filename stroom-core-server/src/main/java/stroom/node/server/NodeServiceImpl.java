@@ -22,9 +22,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.NamedEntityServiceImpl;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
+import stroom.security.Insecure;
 import stroom.security.Secured;
 
 import javax.inject.Inject;
@@ -53,6 +55,12 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
         this.nodeServiceUtil = nodeServiceUtil;
         this.nodeName = nodeName;
         this.rackName = rackName;
+    }
+
+    @Override
+    @Insecure
+    public BaseResultList<Node> find(final FindNodeCriteria criteria) throws RuntimeException {
+        return super.find(criteria);
     }
 
     public Node getNode(final String name) {
