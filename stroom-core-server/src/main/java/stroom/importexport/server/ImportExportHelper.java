@@ -43,10 +43,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Component
 public class ImportExportHelper {
@@ -59,67 +57,12 @@ public class ImportExportHelper {
         this.genericEntityService = genericEntityService;
     }
 
-    /**
-     * Registers all the entities in the ClassTypeMap if they have not already
-     * been registered.
-     */
-    private void init() {
-//        if (!entitiesInitialised) {
-//            synchronized (this) {
-//                if (!entitiesInitialised) {
-//                    registerEntities();
-//                    entitiesInitialised = true;
-//                }
-//            }
-//        }
-    }
-
-//    /**
-//     * Use the spring registered instances of DocumentEntityServiceImpl to work
-//     * out which GroupedEntities to register into the ClassTypeMap The order we
-//     * register them in is important as some are dependent on others.
-//     */
-//    private void registerEntities() {
-//        // Stream type is a special case so explicitly register it first.
-//        classTypeMap.registerEntityReference(StreamType.class);
-//
-//        // get all the spring grouped entity service beans.
-//        final Collection<DocumentEntityService<?>> services = genericEntityService.findAll();
-//
-//        final ArrayList<Class<? extends DocumentEntity>> entityClasses = new ArrayList<>(services.size());
-//        for (final DocumentEntityService<?> service : services) {
-//            final Class<? extends DocumentEntity> clazz = service.getEntityClass();
-//            if (clazz == null) {
-//                throw new NullPointerException("No entity class provided");
-//            } else {
-//                entityClasses.add(clazz);
-//            }
-//        }
-//
-//        // Sort the list of entity classes to ensure consistent behaviour.
-//        Collections.sort(entityClasses, new EntityClassComparator());
-//        // Make sure folders are first
-//        entityClasses.remove(Folder.class);
-//        entityClasses.add(0, Folder.class);
-//        // Make sure pipelines are last.
-//        entityClasses.remove(PipelineEntity.class);
-//        entityClasses.add(PipelineEntity.class);
-//
-//        // Keep repeating the services loop to ensure all dependencies are
-//        // loaded.
-//        for (int i = 0; i < entityClasses.size(); i++) {
-//            // No dependencies and not already registered.
-//            entityClasses.stream().filter(entityClass -> classTypeMap.getEntityType(entityClass) == null)
-//                    .forEach(classTypeMap::registerEntity);
-//        }
-//    }
-
     @SuppressWarnings("unchecked")
-    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap,
-                                                         final ImportState importState, final ImportMode importMode) {
+    public <E extends DocumentEntity> void performImport(final E entity,
+                                                         final Map<String, String> dataMap,
+                                                         final ImportState importState,
+                                                         final ImportMode importMode) {
         try {
-            init();
-
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
             final String xml = dataMap.get("xml");
@@ -148,9 +91,7 @@ public class ImportExportHelper {
                 }
 
                 // Only try and set valid properties.
-                // Start with properties that are not being set from an external
-                // file as the internal properties may affect the file extension of
-                // the external files.
+                // Start with properties that are not being set from an external file as the internal properties may affect the file extension of the external files.
                 for (final Property property : propertyList) {
                     final String propertyName = property.getName();
 
@@ -167,8 +108,7 @@ public class ImportExportHelper {
                 for (final Property property : propertyList) {
                     final String propertyName = property.getName();
 
-                    // Import the property from an external file if we are expected
-                    // to.
+                    // Import the property from an external file if we are expected to.
                     if (property.isExternalFile()) {
                         final String fileExtension = property.getExtensionProvider().getExtension(entity, propertyName);
                         final String dataKey = propertyName + "." + fileExtension;
@@ -185,19 +125,6 @@ public class ImportExportHelper {
                         }
                     }
                 }
-//
-//            // Unmarshall the object from the external form.
-//            try {
-//                genericEntityMarshaller.unmarshal(entityType, entity);
-//            } catch (final EntityDependencyServiceException dependency) {
-//                if (importMode == ImportMode.CREATE_CONFIRMATION) {
-//                    if (importState.getEntityAction() != EntityAction.ADD) {
-//                        importState.setEntityAction(EntityAction.UPDATE);
-//                    }
-//                } else {
-//                    throw dependency;
-//                }
-//            }
 
                 // Did we update anything?
                 if (importMode == ImportMode.CREATE_CONFIRMATION
@@ -260,12 +187,6 @@ public class ImportExportHelper {
                 }
 
                 if (obj != null) {
-//                    if (obj instanceof String) {
-//                        final String string = (String) obj;
-//                        if (StringUtils.hasText(string)) {
-//                            setStringProperty(beanWrapper, propertyName, string, importState, importMode);
-//                        }
-//                    } else
                     if (obj instanceof DocRef) {
                         final DocRef docRef = (DocRef) obj;
                         setDocRefProperty(beanWrapper, propertyName, docRef, importState, importMode);
@@ -276,70 +197,34 @@ public class ImportExportHelper {
                         if (beanWrapper.getPropertyValue(propertyName) != null) {
                             importState.getUpdatedFieldList().add(propertyName);
                         }
-                    } else {
-                        beanWrapper.setPropertyValue(propertyName, null);
                     }
+
+                    beanWrapper.setPropertyValue(propertyName, null);
                 }
             } else if (beanWrapper.isPropertyBaseEntitySet(propertyName)) {
-                final Set<BaseEntity> newSet = new HashSet<>();
-
-                if (values != null && values.size() > 0) {
-//                    final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
-//                    final String entityType = classTypeMap.getEntityType(clazz);
-//
-//                    // Some entity types are not imported, e.g. Volumes so we
-//                    // will sometimes get null entity type here if they are
-//                    // unsupported.
-//                    if (entityType != null) {
-//                        for (final Object obj : values) {
-//                            if (obj instanceof String) {
-//                                final String string = (String) obj;
-//                                if (StringUtils.hasText(string)) {
-//                                    final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, string);
-//                                    newSet.add(entity);
-//                                }
-//                            } else if (obj instanceof DocRef) {
-//                                final DocRef docRef = (DocRef) obj;
-//                                final BaseEntity entity = resolveEntityByDocRef(beanWrapper, docRef);
-//                                newSet.add(entity);
-//                            }
-//                        }
-//                    }
-                }
-                @SuppressWarnings("unchecked") final Set<? extends DocumentEntity> oldSet = (Set<? extends DocumentEntity>) beanWrapper
-                        .getPropertyValue(propertyName);
-
-                if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                    if (!newSet.equals(oldSet)) {
-                        importState.getUpdatedFieldList().add(propertyName);
-                    }
-                } else {
-                    beanWrapper.clearPropertySet(propertyName);
-                    for (final BaseEntity o : newSet) {
-                        beanWrapper.addToPropertySet(propertyName, o);
-                    }
-                }
-
-            } else if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                if (values == null || values.size() == 0) {
-                    if (beanWrapper.getPropertyValue(propertyName) != null) {
-                        importState.getUpdatedFieldList().add(propertyName);
-                    }
-                } else {
-                    // null is like "" from a Stroom XML POV
-                    final Object oldValueO = beanWrapper.getPropertyValue(propertyName);
-                    String oldValue = "";
-                    if (oldValueO != null) {
-                        oldValue = String.valueOf(oldValueO);
-                    }
-                    final Object newValue = values.get(0);
-
-                    if (!newValue.equals(oldValue)) {
-                        importState.getUpdatedFieldList().add(propertyName);
-                    }
-                }
+                beanWrapper.clearPropertySet(propertyName);
 
             } else {
+                if (importMode == ImportMode.CREATE_CONFIRMATION) {
+                    if (values == null || values.size() == 0) {
+                        if (beanWrapper.getPropertyValue(propertyName) != null) {
+                            importState.getUpdatedFieldList().add(propertyName);
+                        }
+                    } else {
+                        // null is like "" from a Stroom XML POV
+                        final Object oldValueO = beanWrapper.getPropertyValue(propertyName);
+                        String oldValue = "";
+                        if (oldValueO != null) {
+                            oldValue = String.valueOf(oldValueO);
+                        }
+                        final Object newValue = values.get(0);
+
+                        if (!newValue.equals(oldValue)) {
+                            importState.getUpdatedFieldList().add(propertyName);
+                        }
+                    }
+                }
+
                 if (values == null || values.size() == 0) {
                     // Simple property
                     beanWrapper.setPropertyValue(propertyName, null);
@@ -353,51 +238,11 @@ public class ImportExportHelper {
         }
     }
 
-//    private void setStringProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-//                                   final String value, final ImportState importState,
-//                                   final ImportMode importMode) {
-//        final Class<? extends Entity> clazz = beanWrapper.getPropertyBaseEntityType(propertyName);
-//
-//         See if this property is a resource. If it is then create
-//         a new resource or update an existing one.
-//        if (Res.class.equals(clazz)) {
-//            Res res;
-//            final Object existing = beanWrapper.getPropertyValue(propertyName);
-//            if (existing == null) {
-//                res = new Res();
-//            } else {
-//                res = (Res) existing;
-//            }
-//
-//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-//                if (!EqualsUtil.isEquals(res.getData(), value)) {
-//                    importState.getUpdatedFieldList().add(propertyName);
-//                }
-//            } else {
-//                res.setData(value);
-//                beanWrapper.setPropertyValue(propertyName, res);
-//            }
-//
-//        }
-//        else {
-//            // This property is an entity so get the referenced
-//            // entity if we can.
-//            final BaseEntity entity = resolveEntityByPath(beanWrapper, clazz, value);
-//            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-//                if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
-//                    importState.getUpdatedFieldList().add(propertyName);
-//                }
-//            }
-//            beanWrapper.setPropertyValue(propertyName, entity);
-//        }
-//    }
-
     private void setDocRefProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
                                    final DocRef docRef, final ImportState importState,
                                    final ImportMode importMode) {
-        // This property is an entity so get the referenced
-        // entity if we can.
-        final BaseEntity entity = resolveEntityByDocRef(beanWrapper, docRef);
+        // This property is an entity so get the referenced entity if we can.
+        final BaseEntity entity = resolveEntityByDocRef(docRef);
         if (importMode == ImportMode.CREATE_CONFIRMATION) {
             if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
                 importState.getUpdatedFieldList().add(propertyName);
@@ -406,71 +251,16 @@ public class ImportExportHelper {
         beanWrapper.setPropertyValue(propertyName, entity);
     }
 
-//    private BaseEntity resolveEntityByPath(final BaseEntityBeanWrapper beanWrapper, final Class<? extends Entity> clazz,
-//                                           final String val) {
-//        NamedEntity entity;
-////        if (DocumentEntity.class.isAssignableFrom(clazz)) {
-////            entity = entityPathResolver.getEntity(classTypeMap.getEntityType(clazz), beanWrapper.getBaseEntity(), val,
-////                    null);
-////        } else {
-//        entity = genericEntityService.loadByName(classTypeMap.getEntityType(clazz), val);
-////        }
-//
-//        if (entity == null) {
-//            // If we couldn't find the referenced entity then throw an entity
-//            // dependency exception. We might get the dependency added later in
-//            // this import and be able to add this entity again later.
-//            throw new EntityDependencyServiceException(classTypeMap.getEntityType(clazz), val);
-//        }
-//
-//        return entity;
-//    }
-
-    private BaseEntity resolveEntityByDocRef(final BaseEntityBeanWrapper beanWrapper, final DocRef docRef) {
+    private BaseEntity resolveEntityByDocRef(final DocRef docRef) {
         NamedEntity entity = genericEntityService.loadByUuid(docRef.getType(), docRef.getUuid());
 
-//        // Try by path if we couldn't find with uuid
-//        if (entity == null) {
-//            entity = entityPathResolver.getEntity(docRef.getType(), beanWrapper.getBaseEntity(), docRef.getPath(),
-//                    null);
-//        }
-
         if (entity == null) {
-            // If we couldn't find the referenced entity then throw an entity
-            // dependency exception. We might get the dependency added later in
-            // this import and be able to add this entity again later.
+            // If we couldn't find the referenced entity then throw an entity dependency exception. We might get the dependency added later in this import and be able to add this entity again later.
             throw new EntityDependencyServiceException(docRef.getType(), docRef.getUuid());
         }
 
         return entity;
     }
-
-
-//    private String toPath(final Folder folder, final String name) {
-//        if (folder != null) {
-//            if (name != null) {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder) + "/" + name;
-//            } else {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder);
-//            }
-//        } else {
-//            return "/" + name;
-//        }
-//    }
-//
-//    private String getDataKey(final String entityName, final String entityType,
-//                             final String propertyName, final String fileExtension) {
-//        String path = ""
-//                + FileSystemUtil.encodeFileName(entityName)
-//                + "."
-//                + entityType
-//                + "."
-//                + propertyName
-//                + "."
-//                + fileExtension;
-//        return path;
-//    }
-
 
     public Map<String, String> performExport(final DocumentEntity entity,
                                              final boolean omitAuditFields, final List<Message> messageList) {
@@ -478,18 +268,14 @@ public class ImportExportHelper {
         final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), omitAuditFields);
 
         try {
-            init();
-
             final Config config = new Config();
-            final String name = entity.getName();
             final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
             for (final Property property : propertyList) {
                 final String propertyName = property.getName();
                 final Object value = beanWrapper.getPropertyValue(propertyName);
 
-                // If the property is supposed to produce an external file then
-                // do so.
+                // If the property is supposed to produce an external file then do so.
                 if (property.isExternalFile()) {
                     if (value != null) {
                         final String data = String.valueOf(value);
@@ -503,20 +289,13 @@ public class ImportExportHelper {
                     }
 
                 } else {
-                    // Otherwise put the property in the exported XML
-                    // representation of this entity.
+                    // Otherwise put the property in the exported XML representation of this entity.
                     if (value != null) {
                         if (value instanceof Collection) {
                             final List<Object> list = new ArrayList<>();
 
                             for (final Object valueItem : (Collection<?>) value) {
-//                                if (valueItem instanceof DocumentEntity) {
-//                                    final DocumentEntity documentEntity = (DocumentEntity) valueItem;
-//                                    list.add(entityPathResolver.getEntityPath(documentEntity.getType(), entity,
-//                                            documentEntity));
-//                                } else {
                                 list.add(String.valueOf(valueItem));
-//                                }
                             }
 
                             config.add(propertyName, list);

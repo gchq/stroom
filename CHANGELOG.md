@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#885** : Improved the way import works to ensure updates to entities are at least attempted when creating an import confirmation.
+
 * Issue **#892** : Changed `Ok` to `OK`.
 
 * Issue **#883** : Output streams are now immediately unlocked as soon as they are closed.
