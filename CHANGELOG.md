@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#889** : Index field editing in the UI now works correctly.
+
 * Issue **#891** : `StreamAppender` now keeps track of it's own record write count and no longer makes use of any other write counting pipeline element.
 
 * Issue **#885** : Improved the way import works to ensure updates to entities are at least attempted when creating an import confirmation.
