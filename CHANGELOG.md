@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#892** : The volume editor now waits for the node list to be loaded before opening.
+
 * Issue **#889** : Index field editing in the UI now works correctly.
 
 * Issue **#891** : `StreamAppender` now keeps track of it's own record write count and no longer makes use of any other write counting pipeline element.
