@@ -22,6 +22,7 @@ dependencies {
     compile libs.jersey_client
     compile libs.slf4j_api
     compile libs.guava
+    compile libs.hibernate_jpa_api
     compile libs.commons_lang
     compile libs.saxon_he
     compile libs.jackson_core
