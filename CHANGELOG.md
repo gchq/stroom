@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#894** : The system now generates and displays errors to the user when you attempt to copy a feed.
+
+* Issue **#896** : Extended folder `create` permissions are now correctly cached.
+
+* Issue **#893** : You can now manage volumes without the `Manage Nodes` permission.
+
+* Issue **#892** : The volume editor now waits for the node list to be loaded before opening.
+
+* Issue **#889** : Index field editing in the UI now works correctly.
+
+* Issue **#891** : `StreamAppender` now keeps track of it's own record write count and no longer makes use of any other write counting pipeline element.
+
+* Issue **#885** : Improved the way import works to ensure updates to entities are at least attempted when creating an import confirmation.
+
 * Issue **#892** : Changed `Ok` to `OK`.
 
 * Issue **#883** : Output streams are now immediately unlocked as soon as they are closed.

@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.pipeline.destination.Destination;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.factory.ConfigurableElement;
@@ -44,6 +45,7 @@ import stroom.streamstore.server.StreamTarget;
 import stroom.streamstore.server.StreamTypeService;
 import stroom.streamstore.server.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.shared.Severity;
@@ -78,6 +80,7 @@ public class StreamAppender extends AbstractAppender {
     private StreamTarget streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private ByteCountOutputStream byteCountOutputStream;
+    private long count;
 
     private ProcessStatistics lastProcessStatistics;
 
@@ -101,6 +104,12 @@ public class StreamAppender extends AbstractAppender {
         this.metaData = metaData;
         this.recordCount = recordCount;
         this.supersededOutputHelper = supersededOutputHelper;
+    }
+
+    @Override
+    public Destination borrowDestination() throws IOException {
+        count++;
+        return super.borrowDestination();
     }
 
     @Override
@@ -176,6 +185,9 @@ public class StreamAppender extends AbstractAppender {
 
             // Write statistics meta data.
             currentStatistics.write(streamTarget.getAttributeMap());
+
+            // Overwrite the actual output record count.
+            streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_WRITE, String.valueOf(count));
 
             // Close the stream target.
             try {

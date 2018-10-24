@@ -19,7 +19,7 @@ package stroom.explorer.server;
 
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.query.api.v2.DocRef;
@@ -29,8 +29,6 @@ import java.util.List;
 
 public interface ExplorerService {
     FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
-
-    DocumentTypes getDocumentTypes();
 
     DocRef create(String docType, String docName, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
 
@@ -45,4 +43,8 @@ public interface ExplorerService {
     DocRefInfo info(DocRef docRef);
 
     void rebuildTree();
+
+    List<DocumentType> getNonSystemTypes();
+
+    List<DocumentType> getVisibleTypes();
 }

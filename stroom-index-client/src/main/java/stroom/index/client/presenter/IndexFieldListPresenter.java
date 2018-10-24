@@ -25,7 +25,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.alert.client.presenter.ConfirmCallback;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -219,17 +218,19 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onAdd() {
-        final IndexField indexField = new IndexField();
         final Set<String> otherNames = indexFields.getFieldNames();
 
-        indexFieldEditPresenter.read(indexField, otherNames);
+        indexFieldEditPresenter.read(new IndexField(), otherNames);
         indexFieldEditPresenter.show("New Field", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
+                    final IndexField indexField = new IndexField();
                     if (indexFieldEditPresenter.write(indexField)) {
                         indexFields.add(indexField);
+                        getView().getSelectionModel().setSelected(indexField);
                         refresh();
+
                         indexFieldEditPresenter.hide();
                         DirtyEvent.fire(IndexFieldListPresenter.this, true);
                     }
@@ -246,20 +247,31 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onEdit() {
-        final IndexField indexField = getView().getSelectionModel().getSelected();
-        if (indexField != null) {
+        final IndexField existingField = getView().getSelectionModel().getSelected();
+        if (existingField != null) {
             final Set<String> otherNames = indexFields.getFieldNames();
-            otherNames.remove(indexField.getFieldName());
+            otherNames.remove(existingField.getFieldName());
 
-            indexFieldEditPresenter.read(indexField, otherNames);
+            indexFieldEditPresenter.read(existingField, otherNames);
             indexFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
+                        final IndexField indexField = new IndexField();
                         if (indexFieldEditPresenter.write(indexField)) {
-                            refresh();
-                            indexFieldEditPresenter.hide();
-                            DirtyEvent.fire(IndexFieldListPresenter.this, true);
+                            if (!indexField.equals(existingField)) {
+                                final List<IndexField> fieldList = indexFields.getIndexFields();
+                                final int index = fieldList.indexOf(existingField);
+                                fieldList.remove(index);
+                                fieldList.add(index, indexField);
+                                getView().getSelectionModel().setSelected(indexField);
+                                refresh();
+
+                                indexFieldEditPresenter.hide();
+                                DirtyEvent.fire(IndexFieldListPresenter.this, true);
+                            } else {
+                                indexFieldEditPresenter.hide();
+                            }
                         }
                     } else {
                         indexFieldEditPresenter.hide();
@@ -282,15 +294,12 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
                 message = "Are you sure you want to delete the selected fields?";
             }
 
-            ConfirmEvent.fire(this, message, new ConfirmCallback() {
-                @Override
-                public void onResult(final boolean result) {
-                    if (result) {
-                        indexFields.getIndexFields().removeAll(list);
-                        getView().getSelectionModel().clear();
-                        refresh();
-                        DirtyEvent.fire(IndexFieldListPresenter.this, true);
-                    }
+            ConfirmEvent.fire(this, message, result -> {
+                if (result) {
+                    indexFields.getIndexFields().removeAll(list);
+                    getView().getSelectionModel().clear();
+                    refresh();
+                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                 }
             });
         }
@@ -328,7 +337,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         }
     }
 
-    public void refresh() {
+    private void refresh() {
         if (indexFields == null) {
             indexFields = new IndexFields(new ArrayList<>());
         }

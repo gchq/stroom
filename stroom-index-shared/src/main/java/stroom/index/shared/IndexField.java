@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -217,16 +218,22 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj instanceof IndexField) {
-            return (((IndexField) obj).getFieldName().equals(getFieldName()));
-        }
-        return false;
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final IndexField that = (IndexField) o;
+        return stored == that.stored &&
+                indexed == that.indexed &&
+                termPositions == that.termPositions &&
+                caseSensitive == that.caseSensitive &&
+                fieldType == that.fieldType &&
+                Objects.equals(fieldName, that.fieldName) &&
+                analyzerType == that.analyzerType;
     }
 
     @Override
     public int hashCode() {
-        return getFieldName().hashCode();
+        return Objects.hash(fieldType, fieldName, stored, indexed, termPositions, analyzerType, caseSensitive);
     }
 
     @Override
