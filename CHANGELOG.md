@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#896** : Extended folder `create` permissions are now correctly cached.
+
 * Issue **#893** : You can now manage volumes without the `Manage Nodes` permission.
 
 * Issue **#892** : The volume editor now waits for the node list to be loaded before opening.

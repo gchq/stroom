@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -274,61 +273,6 @@ class ExplorerServiceImpl implements ExplorerService {
         } else {
             parent.setNodeState(HasNodeState.NodeState.CLOSED);
         }
-    }
-
-    @Override
-    public DocumentTypes getDocumentTypes() {
-        final List<DocumentType> nonSystemTypes = getNonSystemTypes();
-        final List<DocumentType> visibleTypes = getVisibleTypes();
-        return new DocumentTypes(nonSystemTypes, visibleTypes);
-    }
-
-    private List<DocumentType> getVisibleTypes() {
-        // Get the master tree model.
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
-
-        // Filter the model by user permissions.
-        final Set<String> requiredPermissions = new HashSet<>();
-        requiredPermissions.add(DocumentPermissionNames.READ);
-
-        final Set<String> visibleTypes = new HashSet<>();
-        addTypes(null, masterTreeModel, visibleTypes, requiredPermissions);
-
-        return getDocumentTypes(visibleTypes);
-    }
-
-    private boolean addTypes(final ExplorerNode parent,
-                             final TreeModel treeModel,
-                             final Set<String> types,
-                             final Set<String> requiredPermissions) {
-        boolean added = false;
-
-        final List<ExplorerNode> children = treeModel.getChildMap().get(parent);
-        if (children != null) {
-            for (final ExplorerNode child : children) {
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.
-                final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
-                if (hasChildren) {
-                    types.add(child.getType());
-                    added = true;
-                } else if (checkSecurity(child, requiredPermissions)) {
-                    types.add(child.getType());
-                    added = true;
-                }
-            }
-        }
-
-        return added;
-    }
-
-    private List<DocumentType> getNonSystemTypes() {
-        return explorerActionHandlers.getNonSystemTypes();
-    }
-
-    private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
-        return getNonSystemTypes().stream()
-                .filter(type -> visibleTypes.contains(type.getType()))
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -625,6 +569,56 @@ class ExplorerServiceImpl implements ExplorerService {
     @Override
     public void rebuildTree() {
         explorerTreeModel.rebuild();
+    }
+
+    @Override
+    public List<DocumentType> getNonSystemTypes() {
+        return explorerActionHandlers.getNonSystemTypes();
+    }
+
+    @Override
+    public List<DocumentType> getVisibleTypes() {
+        // Get the master tree model.
+        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+
+        // Filter the model by user permissions.
+        final Set<String> requiredPermissions = new HashSet<>();
+        requiredPermissions.add(DocumentPermissionNames.READ);
+
+        final Set<String> visibleTypes = new HashSet<>();
+        addTypes(null, masterTreeModel, visibleTypes, requiredPermissions);
+
+        return getDocumentTypes(visibleTypes);
+    }
+
+    private boolean addTypes(final ExplorerNode parent,
+                             final TreeModel treeModel,
+                             final Set<String> types,
+                             final Set<String> requiredPermissions) {
+        boolean added = false;
+
+        final List<ExplorerNode> children = treeModel.getChildMap().get(parent);
+        if (children != null) {
+            for (final ExplorerNode child : children) {
+                // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.
+                final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
+                if (hasChildren) {
+                    types.add(child.getType());
+                    added = true;
+                } else if (checkSecurity(child, requiredPermissions)) {
+                    types.add(child.getType());
+                    added = true;
+                }
+            }
+        }
+
+        return added;
+    }
+
+    private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
+        return getNonSystemTypes().stream()
+                .filter(type -> visibleTypes.contains(type.getType()))
+                .collect(Collectors.toList());
     }
 
     private String getUUID(final DocRef docRef) {
