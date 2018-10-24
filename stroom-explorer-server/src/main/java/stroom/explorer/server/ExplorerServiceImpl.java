@@ -26,7 +26,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
@@ -322,7 +321,6 @@ class ExplorerServiceImpl implements ExplorerService {
 
         // Create the UUID's of the copies up front
         final Map<String, String> copiesByOriginalUuid = childNodesByParent.keySet().stream()
-                .filter(d -> !d.getType().equals(Feed.ENTITY_TYPE)) // we don't copy feeds
                 .collect(Collectors.toMap(DocRef::getUuid, (d) -> UUID.randomUUID().toString()));
 
         docRefs.forEach(sourceDocRef ->

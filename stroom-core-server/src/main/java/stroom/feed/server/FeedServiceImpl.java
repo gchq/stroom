@@ -38,6 +38,7 @@ import javax.inject.Inject;
 import javax.persistence.Transient;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Transactional
@@ -56,6 +57,14 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
 
     @Override
     public DocRef copyDocument(String uuid, String parentFolderUUID) {
+        throw new EntityServiceException("You cannot copy Feeds");
+    }
+
+    @Override
+    public DocRef copyDocument(final String originalUuid,
+                               final String copyUuid,
+                               final Map<String, String> otherCopiesByOriginalUuid,
+                               final String parentFolderUUID) {
         throw new EntityServiceException("You cannot copy Feeds");
     }
 
