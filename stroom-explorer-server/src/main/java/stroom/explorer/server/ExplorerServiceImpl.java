@@ -589,7 +589,10 @@ class ExplorerServiceImpl implements ExplorerService {
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        for (final DocRef docRef : docRefs) {
+        final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
+        recurseGetNodes(docRefs.stream(), childNodesByParent::put);
+
+        childNodesByParent.keySet().forEach(docRef -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
             try {
                 handler.deleteDocument(docRef.getUuid());
@@ -607,7 +610,7 @@ class ExplorerServiceImpl implements ExplorerService {
 
             // Delete the explorer node.
             explorerNodeService.deleteNode(docRef);
-        }
+        });
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
