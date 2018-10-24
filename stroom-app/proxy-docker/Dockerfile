@@ -14,6 +14,23 @@
 # limitations under the License.
 #**********************************************************************
 
+# ~~~ send logs download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Intermediate build stage to grab all the send logs scripts
+# later copy them all in one go to reduce the number of layers
+# Have to use alpine rather than scratch so we can chmod
+FROM alpine:3.8 as send-logs-scripts
+WORKDIR /scripts
+
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom.sh .
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom_args.sh .
+RUN chmod u+x ./*.sh
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+# ~~~ Final build stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 FROM openjdk:8u171-jre-alpine
 
 # This is where stroom will run from and any local data will be
@@ -41,12 +58,16 @@ CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar str
 # resolve alpine's apk repo server.
 #RUN echo "151.101.112.249 dl-cdn.alpinelinux.org" >> /etc/hosts && \
 
-# update alpine and install tini/su-exec as they are not in alpine by default
+# bash/curl required for sending logs
+# su-exec required for running stroom as not-root user
+# tini required for process control in the entrypoint
 # Create a system user/group with no home and no shell and a uid:gid of 1000:1000
 # No bash as sh should be sufficient
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        bash \
+        curl \
         su-exec \
         tini && \
     addgroup -g 1000 -S proxy && \
@@ -54,14 +75,19 @@ RUN echo "http_proxy: $http_proxy" && \
     mkdir -p /stroom-proxy/config && \
     mkdir -p /stroom-proxy/content && \
     mkdir -p /stroom-proxy/logs/access && \
-    mkdir -p /stroom-proxy/logs/events && \
+    mkdir -p /stroom-proxy/logs/receive && \
+    mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/repo && \
     chown -R proxy:proxy /stroom-proxy
 
+# Copy in all the send logs scripts downloaded in the intermediate build stage
+COPY --chown=proxy:proxy --from=send-logs-scripts /scripts /stroom-proxy
+
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
 COPY --chown=proxy:proxy docker-entrypoint.sh /usr/local/bin/
+COPY --chown=proxy:proxy create_crontab.sh /stroom-proxy/
 COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
 COPY --chown=proxy:proxy ./build/stroom-app-all.jar /stroom-proxy/stroom-app-all.jar
 
