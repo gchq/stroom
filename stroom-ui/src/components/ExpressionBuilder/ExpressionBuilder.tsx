@@ -25,9 +25,7 @@ import { connect } from "react-redux";
 
 import Loader from "../Loader";
 import ExpressionOperator from "./ExpressionOperator";
-import { LineContainer } from "../LineTo";
 import DeleteExpressionItem from "./DeleteExpressionItem";
-import lineElementCreators from "./expressionLineCreators";
 import { GlobalStoreState } from "../../startup/reducers";
 import { DataSourceType, StyledComponentProps } from "../../types";
 import { StoreStateById } from "./redux";
@@ -91,11 +89,7 @@ const ExpressionBuilder = ({
   inEditMode,
   setEditableByUser
 }: EnhancedProps) => (
-  <LineContainer
-    className="Expression-editor__graph"
-    lineContextId={`expression-lines-${expressionId}`}
-    lineElementCreators={lineElementCreators}
-  >
+  <div>
     <DeleteExpressionItem expressionId={expressionId} />
     {showModeToggle ? (
       <React.Fragment>
@@ -123,7 +117,7 @@ const ExpressionBuilder = ({
         expression={expression}
       />
     )}
-  </LineContainer>
+  </div>
 );
 
 export default enhance(ExpressionBuilder);

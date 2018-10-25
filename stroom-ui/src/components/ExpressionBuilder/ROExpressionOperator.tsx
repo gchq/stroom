@@ -4,7 +4,6 @@ import ROExpressionTerm from "./ROExpressionTerm";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import { LineTo } from "../LineTo";
 import {
   ExpressionOperatorWithUuid,
   ExpressionItemWithUuid,
@@ -38,7 +37,7 @@ const ROExpressionOperator = ({
   return (
     <div className={className}>
       <div>
-        <span id={`expression-item${operator.uuid}`}>
+        <span>
           <FontAwesomeIcon icon="circle" />
         </span>
         <span>{operator.op}</span>
@@ -52,7 +51,7 @@ const ROExpressionOperator = ({
               switch (c.type) {
                 case "term":
                   itemElement = (
-                    <div key={c.uuid} id={`expression-item${c.uuid}`}>
+                    <div key={c.uuid}>
                       <ROExpressionTerm
                         expressionId={expressionId}
                         isEnabled={cIsEnabled}
@@ -75,17 +74,7 @@ const ROExpressionOperator = ({
               }
 
               // Wrap it with a line to
-              return (
-                <div key={c.uuid}>
-                  <LineTo
-                    lineId={c.uuid}
-                    lineType="downRightElbow"
-                    fromId={`expression-item${operator.uuid}`}
-                    toId={`expression-item${c.uuid}`}
-                  />
-                  {itemElement}
-                </div>
-              );
+              return <div key={c.uuid}>{itemElement}</div>;
             })
             .filter(c => !!c) // null filter
         }

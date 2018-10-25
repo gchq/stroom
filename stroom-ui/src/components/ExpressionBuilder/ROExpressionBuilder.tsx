@@ -16,8 +16,6 @@
 import * as React from "react";
 
 import ROExpressionOperator from "./ROExpressionOperator";
-import { LineContainer } from "../LineTo";
-import lineElementCreators from "./expressionLineCreators";
 import { ExpressionOperatorWithUuid } from "../../types";
 
 export interface Props {
@@ -26,16 +24,11 @@ export interface Props {
 }
 
 const ROExpressionBuilder = ({ expressionId, expression }: Props) => (
-  <LineContainer
-    lineContextId={`expression-lines-${expressionId}`}
-    lineElementCreators={lineElementCreators}
-  >
-    <ROExpressionOperator
-      expressionId={expressionId}
-      isEnabled
-      operator={expression}
-    />
-  </LineContainer>
+  <ROExpressionOperator
+    expressionId={expressionId}
+    isEnabled
+    operator={expression}
+  />
 );
 
 export default ROExpressionBuilder;

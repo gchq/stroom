@@ -35,7 +35,6 @@ import {
 } from "./dragDropTypes";
 import ExpressionTerm from "./ExpressionTerm";
 import { actionCreators } from "./redux";
-import { LineTo } from "../LineTo";
 import Button from "../Button";
 import {
   DataSourceType,
@@ -248,14 +247,12 @@ const ExpressionOperator = ({
   connectDropTarget,
   isOver,
   connectDragSource,
-  isDragging,
 
   dndBarColour,
   className,
 
   onAddOperator,
   onAddTerm,
-  onOperatorUpdated,
   onOpChange,
   onRequestDeleteOperator,
   onEnabledToggled,
@@ -266,7 +263,7 @@ const ExpressionOperator = ({
     {connectDropTarget(
       <div>
         {connectDragSource(
-          <span id={`expression-item${operator.uuid}`}>
+          <span>
             <FontAwesomeIcon color={dndBarColour} icon="bars" />
           </span>
         )}
@@ -329,7 +326,7 @@ const ExpressionOperator = ({
             switch (c.type) {
               case "term":
                 itemElement = (
-                  <div key={c.uuid} id={`expression-item${c.uuid}`}>
+                  <div key={c.uuid}>
                     <ExpressionTerm
                       dataSource={dataSource}
                       expressionId={expressionId}
@@ -354,17 +351,7 @@ const ExpressionOperator = ({
             }
 
             // Wrap it with a line to
-            return (
-              <div key={c.uuid}>
-                <LineTo
-                  lineId={c.uuid}
-                  lineType="downRightElbow"
-                  fromId={`expression-item${operator.uuid}`}
-                  toId={`expression-item${c.uuid}`}
-                />
-                {itemElement}
-              </div>
-            );
+            return <div key={c.uuid}>{itemElement}</div>;
           })
           .filter(c => !!c) // null filter
       }

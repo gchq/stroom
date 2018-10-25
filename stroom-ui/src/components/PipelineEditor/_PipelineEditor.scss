@@ -18,7 +18,7 @@ $palette-width: 12rem;
 }
 
 .pipeline-editor__header__title {
-  flex-grow:1;
+  flex-grow: 1;
 }
 
 .pipeline-editor__header__title .DocRefBreadcrumb {
@@ -90,7 +90,6 @@ $palette-width: 12rem;
   background-color: #fafafa;
   flex: 1;
   display: flex;
-  position: relative;
   overflow: scroll;
   overflow-y: auto;
   overflow-x: auto;

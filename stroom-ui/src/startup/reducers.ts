@@ -66,10 +66,6 @@ import {
   StoreState as DictionaryEditorStoreState
 } from "../components/DictionaryEditor";
 import {
-  reducer as lineContainer,
-  StoreState as LineContainerStoreState
-} from "../components/LineTo";
-import {
   reducer as docRefInfo,
   StoreState as DocRefInfoStoreState
 } from "../components/DocRefInfoModal/redux";
@@ -118,7 +114,6 @@ export interface GlobalStoreState {
   selectableItemListings: SelectableItemListingStoreState;
   form: FormStateMap;
   docRefTypes: DocRefTypesStoreState;
-  lineContainer: LineContainerStoreState;
   folderExplorer: FolderExplorerStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
   xsltEditor: XsltEditorStoreState;
@@ -147,7 +142,6 @@ export default combineReducers({
   docRefTypes,
   folderExplorer,
   xsltEditor,
-  lineContainer,
   appSearch,
   dictionaryEditor,
   expressionBuilder,

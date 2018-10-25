@@ -25,12 +25,10 @@ import {
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
-import { LineContainer, LineTo } from "../LineTo";
 import { mapObject } from "../../lib/treeUtils";
 import PipelineElement from "./PipelineElement";
 import { fetchPipeline } from "./pipelineResourceClient";
 import { fetchElements, fetchElementProperties } from "./elementResourceClient";
-import lineElementCreators from "./pipelineLineElementCreators";
 import {
   getPipelineLayoutInformation,
   PipelineLayoutInfo
@@ -106,71 +104,50 @@ const enhance = compose<EnhancedProps, Props>(
       !(pipelineState && pipelineState.pipeline && elements),
     renderComponent(() => <Loader message="Loading pipeline..." />)
   ),
-  withProps(({ pipelineState: { asTree } }) => ({
-    elementStyles: mapObject(
-      getPipelineLayoutInformation(asTree),
-      (l: PipelineLayoutInfo) => {
-        const index: number = l.verticalPos - 1;
-        const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
-        const fromLeft =
-          HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+  withProps(({ pipelineState: { asTree } }) => {
+    let layoutInfo = getPipelineLayoutInformation(asTree);
+    let elementStyles = mapObject(layoutInfo, (l: PipelineLayoutInfo) => {
+      const index: number = l.verticalPos - 1;
+      const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
+      const fromLeft =
+        HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
 
-        return {
-          ...COMMON_ELEMENT_STYLE,
-          top: `${fromTop}px`,
-          left: `${fromLeft}px`
-        };
-      }
-    )
-  }))
+      return {
+        ...COMMON_ELEMENT_STYLE,
+        top: `${fromTop}px`,
+        left: `${fromLeft}px`
+      };
+    });
+    console.log("Fc", { layoutInfo, elementStyles });
+    return {
+      elementStyles
+    };
+  })
 );
 
 const Pipeline = ({
   pipelineId,
   elementStyles,
   pipelineState: { pipeline }
-}: EnhancedProps) => {
-  return (
-    <LineContainer
-      className="Pipeline-editor__graph flat"
-      lineContextId={`pipeline-lines-${pipelineId}`}
-      lineElementCreators={lineElementCreators}
-    >
-      <div className="Pipeline-editor__elements">
-        {Object.keys(elementStyles)
-          .map(
-            es =>
-              pipeline &&
-              pipeline.merged.elements.add &&
-              pipeline.merged.elements.add.find(
-                (e: PipelineElementType) => e.id === es
-              )
+}: EnhancedProps) => (
+  <div className="Pipeline-editor__elements">
+    {Object.keys(elementStyles)
+      .map(
+        es =>
+          pipeline &&
+          pipeline.merged.elements.add &&
+          pipeline.merged.elements.add.find(
+            (e: PipelineElementType) => e.id === es
           )
-          .filter(e => e !== undefined)
-          .map(e => (
-            <div key={e!.id} id={e!.id} style={elementStyles[e!.id]}>
-              <PipelineElement pipelineId={pipelineId} elementId={e!.id} />
-            </div>
-          ))}
-      </div>
-      <div className="Pipeline-editor__lines">
-        {pipeline &&
-          pipeline.merged.links.add &&
-          pipeline.merged.links.add
-            .filter(l => elementStyles[l.from] && elementStyles[l.to])
-            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-            .map(l => (
-              <LineTo
-                lineId={l.lineId}
-                key={l.lineId}
-                fromId={l.from}
-                toId={l.to}
-                lineType="curve"
-              />
-            ))}
-      </div>
-    </LineContainer>
-  );
-};
+      )
+      .filter(e => e !== undefined)
+      .map(e => e!)
+      .map(e => (
+        <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+          <PipelineElement pipelineId={pipelineId} elementId={e.id} />
+        </div>
+      ))}
+  </div>
+);
 
 export default enhance(Pipeline);
