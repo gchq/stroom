@@ -6,6 +6,20 @@ set -e
 #if [ "$1" = 'proxy' -a "$(id -u)" = '0' ]; then
 if [ "$(id -u)" = '0' ]; then
     chown -R proxy:proxy .
+
+    # This is a bit of a cludge to get round "Text file in use" errors
+    # See: https://github.com/moby/moby/issues/9547
+    # sync ensures all disk writes are persisted
+    sync
+
+    # Build the crontab file to send logs to stroom
+    echo "Creating the crontab file"
+    ./create_crontab.sh
+
+    # Start the cron daemon
+    echo "Starting cron in the background"
+    crond
+
     #su-exec is the alpine equivalent of gosu
     #runs all args as user proxy, rather than as root
     exec su-exec proxy "$@"

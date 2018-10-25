@@ -28,18 +28,34 @@ ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.1/internal-statistics-sql-v2.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.1/internal-statistics-stroom-stats-v2.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip .
-ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v1.0/stroom-logs-v1.0.zip .
+ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v1.1/stroom-logs-v1.1.zip .
 
 # Add in the visualisations for import on startup
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/visualisations-production-v3.0.5.zip .
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+
+# ~~~ send logs download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Intermediate build stage to grab all the send logs scripts
+# later copy them all in one go to reduce the number of layers
+# Have to use alpine rather than scratch so we can chmod
+FROM alpine:3.8 as send-logs-scripts
+WORKDIR /scripts
+
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom.sh .
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom_args.sh .
+RUN chmod u+x ./*.sh
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Final build stage
 
 # We need the full JDK for the jmap binary as used by the Heap Histogram internal stats
-FROM openjdk:8u171-jdk-alpine
+FROM openjdk:8u171-jdk-alpine3.8
 
 #This is where stroom will run from and any local data will be
 WORKDIR /stroom
@@ -74,15 +90,19 @@ CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar str
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
 # see https://github.com/docker-library/openjdk/issues/73#issuecomment-207816707
 
-# update alpine and install Bash/tini/su-exec as they are not in alpine by default
+# bash/curl required for sending logs
+# su-exec required for running stroom as not-root user
+# tini required for process control in the entrypoint
 # Create a user with no home and no shell
 # No bash as sh should be sufficient
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
-        ttf-dejavu \
+        bash \
+        curl \
         su-exec \
-        tini && \
+        tini \
+        ttf-dejavu && \
     addgroup -g 1000 -S stroom && \
     adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
     mkdir -p /stroom && \
@@ -99,9 +119,13 @@ RUN echo "http_proxy: $http_proxy" && \
 # Copy in all the content packs downloaded in the intermediate build stage
 COPY --chown=stroom:stroom --from=content-packs /content-packs /stroom/contentPackImport
 
+# Copy in all the send logs scripts downloaded in the intermediate build stage
+COPY --chown=stroom:stroom --from=send-logs-scripts /scripts /stroom
+
 # Copy all the fat jars for the application and connectors
 # Most likely to have changed last
 COPY --chown=stroom:stroom docker-entrypoint.sh /usr/local/bin/
+COPY --chown=stroom:stroom create_crontab.sh /stroom/
 COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
 COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
 COPY --chown=stroom:stroom ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
