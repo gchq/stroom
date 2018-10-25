@@ -91,6 +91,12 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        tabContentProvider.onReadOnly(readOnly);
+    }
+
+    @Override
     public String getType() {
         return StroomStatsStoreEntity.ENTITY_TYPE;
     }

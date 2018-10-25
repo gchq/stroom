@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, HasPermissionCheck {
+public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, ReadOnlyChangeHandler {
     private final Map<TabData, Provider<?>> tabProviders = new HashMap<>();
     private final Map<TabData, PresenterWidget<?>> presenterCache = new HashMap<>();
 
@@ -40,7 +40,7 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
     private PresenterWidget<?> currentPresenter;
     private DocRef docRef;
     private E entity;
-    private boolean readOnly;
+    private boolean readOnly = true;
 
     public <T extends PresenterWidget<?>> void add(final TabData tab, final Provider<T> provider) {
         tabProviders.put(tab, provider);
@@ -75,7 +75,7 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
         // Read entity if not read since entity set.
         if (usedPresenters == null || !usedPresenters.contains(currentPresenter)) {
             read(currentPresenter, docRef, entity);
-            onPermissionsCheck(currentPresenter, readOnly);
+            setReadOnly(currentPresenter, readOnly);
         }
 
         return currentPresenter;
@@ -111,11 +111,11 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         if (usedPresenters != null) {
             for (final PresenterWidget<?> presenter : usedPresenters) {
-                onPermissionsCheck(presenter, readOnly);
+                setReadOnly(presenter, readOnly);
             }
         }
     }
@@ -143,10 +143,10 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, H
         }
     }
 
-    private void onPermissionsCheck(final PresenterWidget<?> presenter, final boolean readOnly) {
-        if (presenter instanceof HasPermissionCheck) {
-            final HasPermissionCheck hasPermissionsCheck = (HasPermissionCheck) presenter;
-            hasPermissionsCheck.onPermissionsCheck(readOnly);
+    private void setReadOnly(final PresenterWidget<?> presenter, final boolean readOnly) {
+        if (presenter instanceof ReadOnlyChangeHandler) {
+            final ReadOnlyChangeHandler changeHandler = (ReadOnlyChangeHandler) presenter;
+            changeHandler.onReadOnly(readOnly);
         }
     }
 

@@ -30,6 +30,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.view.WrapperView;
 import stroom.query.api.v2.DocRef;
@@ -42,13 +43,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<DictionaryDoc>, HasWrite<DictionaryDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<DictionaryDoc>, HasWrite<DictionaryDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<EntityChooser> dictionarySelection;
     private final ButtonView addButton;
     private final ButtonView removeButton;
+
     private List<DocRef> imports;
     private DocRef currentDoc;
+    private boolean readOnly = true;
 
     @Inject
     public DictionaryListPresenter(final EventBus eventBus, final WrapperView view,
@@ -60,21 +63,18 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         view.setView(docRefListPresenter.getView());
 
         addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
-        addButton.setTitle("Add Import");
         removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
-        removeButton.setTitle("Remove Import");
+
+        enableButtons();
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(addButton.addClickHandler(event -> onAdd(event)));
-        registerHandler(removeButton.addClickHandler(event -> onRemove(event)));
-        registerHandler(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
-            removeButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
-        }));
+        registerHandler(addButton.addClickHandler(this::onAdd));
+        registerHandler(removeButton.addClickHandler(this::onRemove));
+        registerHandler(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
     private void onAdd(final ClickEvent event) {
@@ -134,6 +134,26 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
             dictionary.setImports(null);
         } else {
             dictionary.setImports(imports);
+        }
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+    }
+
+    private void enableButtons() {
+        final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
+        addButton.setEnabled(!readOnly);
+        removeButton.setEnabled(!readOnly && selectionModel.getSelectedItems().size() > 0);
+
+        if (readOnly) {
+            addButton.setTitle("Add import disabled as this dictionary is read only");
+            removeButton.setTitle("Remove import disabled as this dictionary is read only");
+        } else {
+            addButton.setTitle("Add Import");
+            removeButton.setTitle("Remove Import");
         }
     }
 

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.presenter.IndexSettingsUiHandlers;
 import stroom.index.shared.Index.PartitionBy;
@@ -34,8 +35,9 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.valuespinner.client.SpinnerEvent;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers> implements IndexSettingsView {
+public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers> implements IndexSettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
+
     @UiField
     TextArea description;
     @UiField
@@ -160,6 +162,16 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @Override
     public void setVolumeList(final View view) {
         this.volumes.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        description.setEnabled(!readOnly);
+        maxDocsPerShard.setEnabled(!readOnly);
+        partitionBy.setEnabled(!readOnly);
+        partitionSize.setEnabled(!readOnly);
+        shardsPerPartition.setEnabled(!readOnly);
+        retentionAge.setEnabled(!readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, IndexSettingsViewImpl> {

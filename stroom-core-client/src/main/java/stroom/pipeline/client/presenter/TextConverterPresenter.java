@@ -39,16 +39,17 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
+    private boolean readOnly = true;
 
     @Inject
-    public TextConverterPresenter(final EventBus eventBus, final LinkTabPanelView view,
+    public TextConverterPresenter(final EventBus eventBus,
+                                  final LinkTabPanelView view,
                                   final TextConverterSettingsPresenter settingsPresenter,
                                   final Provider<EditorPresenter> editorPresenterProvider,
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
-
 
         settingsPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -78,9 +79,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Override
     public void onRead(final DocRef docRef, final TextConverter textConverter) {
         super.onRead(docRef, textConverter);
-
         settingsPresenter.read(docRef, textConverter);
-
         if (codePresenter != null) {
             codePresenter.setText(textConverter.getData());
         }
@@ -89,20 +88,18 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Override
     protected void onWrite(final TextConverter textConverter) {
         settingsPresenter.write(textConverter);
-
         if (codePresenter != null) {
             textConverter.setData(codePresenter.getText());
         }
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
-
-        codePresenter = getOrCreateCodePresenter();
-        codePresenter.setReadOnly(readOnly);
-        if (getEntity() != null) {
-            codePresenter.setText(getEntity().getData());
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        this.readOnly = readOnly;
+        settingsPresenter.onReadOnly(readOnly);
+        if (codePresenter != null) {
+            codePresenter.setReadOnly(readOnly);
         }
     }
 
@@ -116,6 +113,10 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
             codePresenter = editorPresenterProvider.get();
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+            codePresenter.setReadOnly(readOnly);
+            if (getEntity() != null) {
+                codePresenter.setText(getEntity().getData());
+            }
         }
         return codePresenter;
     }

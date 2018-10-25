@@ -28,14 +28,15 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.shared.XSLT;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 
 public class DictionarySettingsPresenter extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {
     private final DictionaryListPresenter dictionaryListPresenter;
 
     @Inject
-    public DictionarySettingsPresenter(final EventBus eventBus, final DictionarySettingsView view, final DictionaryListPresenter dictionaryListPresenter, final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public DictionarySettingsPresenter(final EventBus eventBus,
+                                       final DictionarySettingsView view,
+                                       final DictionaryListPresenter dictionaryListPresenter) {
+        super(eventBus, view);
         this.dictionaryListPresenter = dictionaryListPresenter;
         getView().setImportList(dictionaryListPresenter.getView());
 
@@ -71,6 +72,12 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
     protected void onWrite(final DictionaryDoc doc) {
         doc.setDescription(getView().getDescription().getText().trim());
         dictionaryListPresenter.write(doc);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        dictionaryListPresenter.onReadOnly(readOnly);
     }
 
     public interface DictionarySettingsView extends View {

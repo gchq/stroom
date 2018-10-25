@@ -33,6 +33,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
-        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers {
+        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -54,6 +55,8 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private final ButtonView upButton;
     private final ButtonView downButton;
     private IndexFields indexFields;
+
+    private boolean readOnly = true;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -63,17 +66,13 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        newButton.setTitle("New Field");
         editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Field");
         removeButton = getView().addButton(SvgPresets.DELETE);
-        removeButton.setTitle("Remove Field");
         upButton = getView().addButton(SvgPresets.UP);
-        upButton.setTitle("Move Up");
         downButton = getView().addButton(SvgPresets.DOWN);
-        downButton.setTitle("Move Down");
 
         addColumns();
+        enableButtons();
     }
 
     @Override
@@ -81,40 +80,53 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         super.onBind();
 
         registerHandler(newButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onAdd();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onAdd();
+                }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onEdit();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onEdit();
+                }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onRemove();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onRemove();
+                }
             }
         }));
         registerHandler(upButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                moveSelectedFieldUp();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    moveSelectedFieldUp();
+                }
             }
         }));
         registerHandler(downButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                moveSelectedFieldDown();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    moveSelectedFieldDown();
+                }
             }
         }));
         registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                onEdit();
+            if (!readOnly) {
+                enableButtons();
+                if (event.getSelectionType().isDoubleSelect()) {
+                    onEdit();
+                }
             }
         }));
     }
 
     private void enableButtons() {
-        if (indexFields != null && indexFields.getIndexFields() != null) {
+        newButton.setEnabled(!readOnly);
+        if (!readOnly && indexFields != null && indexFields.getIndexFields() != null) {
             final List<IndexField> fieldList = indexFields.getIndexFields();
             final IndexField selectedElement = getView().getSelectionModel().getSelected();
             final boolean enabled = selectedElement != null;
@@ -133,6 +145,20 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
             removeButton.setEnabled(false);
             upButton.setEnabled(false);
             downButton.setEnabled(false);
+        }
+
+        if (readOnly) {
+            newButton.setTitle("New field disabled as index is read only");
+            editButton.setTitle("Edit field disabled as index is read only");
+            removeButton.setTitle("Remove field disabled as index is read only");
+            upButton.setTitle("Move up disabled as index is read only");
+            downButton.setTitle("Move down disabled as index is read only");
+        } else {
+            newButton.setTitle("New Field");
+            editButton.setTitle("Edit Field");
+            removeButton.setTitle("Remove Field");
+            upButton.setTitle("Move Up");
+            downButton.setTitle("Move Down");
         }
     }
 
@@ -357,6 +383,12 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     @Override
     public void write(final Index entity) {
         entity.setIndexFieldsObject(indexFields);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     @Override

@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XMLSchema;
@@ -35,9 +34,8 @@ import stroom.xmlschema.shared.XMLSchema;
 public class XMLSchemaSettingsPresenter
         extends DocumentSettingsPresenter<XMLSchemaSettingsView, XMLSchema> {
     @Inject
-    public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view,
-                                      final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view) {
+        super(eventBus, view);
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {

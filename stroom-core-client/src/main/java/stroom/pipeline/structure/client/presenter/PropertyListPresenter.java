@@ -35,6 +35,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pipeline.shared.FetchDocRefsAction;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -63,7 +64,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PropertyListPresenter extends MyPresenterWidget<DataGridView<PipelineProperty>>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, ReadOnlyChangeHandler {
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
@@ -79,6 +80,8 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
 
+    private boolean readOnly = true;
+
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
@@ -88,9 +91,9 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
         this.dispatcher = dispatcher;
 
         editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Property");
 
         addColumns();
+        enableButtons();
     }
 
     @Override
@@ -327,7 +330,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void onEdit(final PipelineProperty property) {
-        if (property != null) {
+        if (!readOnly && property != null) {
             // Get the current value for this property.
             PipelineProperty localProperty = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
                     property);
@@ -460,7 +463,19 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void enableButtons() {
         final PipelineProperty selected = getView().getSelectionModel().getSelected();
-        editButton.setEnabled(selected != null);
+        editButton.setEnabled(!readOnly && selected != null);
+
+        if (readOnly) {
+            editButton.setTitle("Edit disabled as this pipeline is read only");
+        } else {
+            editButton.setTitle("Edit Property");
+        }
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     private void setDirty(final boolean dirty) {

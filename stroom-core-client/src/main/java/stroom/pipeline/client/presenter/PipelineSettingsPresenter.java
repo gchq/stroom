@@ -25,15 +25,13 @@ import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 
 public class PipelineSettingsPresenter
         extends DocumentSettingsPresenter<PipelineSettingsView, PipelineEntity>
         implements PipelineSettingsUiHandlers {
     @Inject
-    public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view,
-                                     final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view) {
+        super(eventBus, view);
         view.setUiHandlers(this);
     }
 

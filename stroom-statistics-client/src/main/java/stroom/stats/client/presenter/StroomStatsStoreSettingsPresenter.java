@@ -33,6 +33,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.shared.EventStoreTimeIntervalEnum;
@@ -42,7 +43,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 
 public class StroomStatsStoreSettingsPresenter
         extends MyPresenterWidget<StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView>
-        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers,
+        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers, ReadOnlyChangeHandler,
         StroomStatsStoreSettingsUiHandlers {
 
     @Inject
@@ -91,12 +92,17 @@ public class StroomStatsStoreSettingsPresenter
     }
 
     @Override
+    public void onReadOnly(final boolean readOnly) {
+        getView().onReadOnly(readOnly);
+    }
+
+    @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     public interface StroomStatsStoreSettingsView
-            extends View, HasUiHandlers<StroomStatsStoreSettingsUiHandlers> {
+            extends View, HasUiHandlers<StroomStatsStoreSettingsUiHandlers>, ReadOnlyChangeHandler {
         TextArea getDescription();
 
         StatisticType getStatisticType();
