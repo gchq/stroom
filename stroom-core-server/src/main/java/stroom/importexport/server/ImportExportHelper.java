@@ -176,47 +176,48 @@ public class ImportExportHelper {
         try {
             final Object existingValue = beanWrapper.getPropertyValue(propertyName);
 
-            if (beanWrapper.isPropertyBaseEntity(propertyName)) {
-                Object obj = null;
-                if (values != null && values.size() > 0) {
-                    obj = values.iterator().next();
-                }
+            // Don't rename existing items as they might have been renamed by the user.
+            if (existingValue == null || !propertyName.equals("name")) {
 
-                if (obj != null) {
-                    if (obj instanceof DocRef) {
-                        final DocRef docRef = (DocRef) obj;
-                        setDocRefProperty(beanWrapper, propertyName, docRef, importState);
+                if (beanWrapper.isPropertyBaseEntity(propertyName)) {
+                    Object obj = null;
+                    if (values != null && values.size() > 0) {
+                        obj = values.iterator().next();
                     }
-                } else {
-                    // The new property value is null so set it to null.
-                    if (existingValue != null) {
-                        importState.getUpdatedFieldList().add(propertyName);
-                    }
-                    beanWrapper.setPropertyValue(propertyName, null);
-                }
-            } else if (beanWrapper.isPropertyBaseEntitySet(propertyName)) {
-                beanWrapper.clearPropertySet(propertyName);
 
-            } else {
-                Object newValue = null;
-                if (values != null && values.size() > 0) {
-                    newValue = values.get(0);
-                }
-
-                if (!Objects.equals(existingValue, newValue)) {
-                    // Don't rename existing items as they might have been renamed by the user.
-                    if (existingValue == null || !propertyName.equals("name")) {
-                        importState.getUpdatedFieldList().add(propertyName);
-
-                        if (values == null || values.size() == 0) {
-                            // Simple property
-                            beanWrapper.setPropertyValue(propertyName, null);
-                        } else {
-                            // Simple property
-                            beanWrapper.setPropertyValue(propertyName, values.get(0));
+                    if (obj != null) {
+                        if (obj instanceof DocRef) {
+                            final DocRef docRef = (DocRef) obj;
+                            setDocRefProperty(beanWrapper, propertyName, docRef, importState);
                         }
+                    } else {
+                        // The new property value is null so set it to null.
+                        if (existingValue != null) {
+                            importState.getUpdatedFieldList().add(propertyName);
+                        }
+                        beanWrapper.setPropertyValue(propertyName, null);
+                    }
+                } else if (beanWrapper.isPropertyBaseEntitySet(propertyName)) {
+                    beanWrapper.clearPropertySet(propertyName);
+
+                } else {
+                    Object value = null;
+                    if (values != null && values.size() > 0) {
+                        value = values.get(0);
+                    }
+                    // null is like "" from a Stroom XML POV
+                    if ("".equals(value)) {
+                        value = null;
+                    }
+
+                    beanWrapper.setPropertyValue(propertyName, value);
+                    final Object newValue = beanWrapper.getPropertyValue(propertyName);
+
+                    if (!Objects.equals(existingValue, newValue)) {
+                        importState.getUpdatedFieldList().add(propertyName);
                     }
                 }
+
             }
         } catch (final Exception ex) {
             throw EntityServiceExceptionUtil.create(ex);
