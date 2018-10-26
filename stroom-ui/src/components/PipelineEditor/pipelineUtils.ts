@@ -118,18 +118,32 @@ export function getPipelineAsTree(
   return rootId ? elements[rootId] : undefined;
 }
 
-export enum Orientation {
-  horizontal,
-  vertical
-}
-
 export interface PipelineLayoutInfo {
-  horizontalPos: number;
-  verticalPos: number;
+  column: number;
+  row: number;
 }
 
 export interface PipelineLayoutInfoById {
   [uuid: string]: PipelineLayoutInfo;
+}
+
+export enum CellType {
+  EMPTY,
+  ELBOW,
+  ELEMENT
+}
+
+export interface PipelineLayoutCell {
+  cellType: CellType;
+  uuid?: string;
+}
+
+export interface PipelineLayoutRow {
+  columns: Array<PipelineLayoutCell>;
+}
+
+export interface PipelineLayoutGrid {
+  rows: Array<PipelineLayoutRow>;
 }
 
 /**
@@ -143,41 +157,63 @@ export interface PipelineLayoutInfoById {
  * the following properties {horizontalPos, verticalPos}. These position indicators are just
  * 1-up integer values that can then bo converted to specific layout information (pixel position, position in grid etc)
  */
-export function getPipelineLayoutInformation(
-  asTree: PipelineAsTreeType,
-  orientation: Orientation = Orientation.horizontal
-): PipelineLayoutInfoById {
+export function getPipelineLayoutGrid(
+  asTree: PipelineAsTreeType
+): PipelineLayoutGrid {
   const layoutInformation: PipelineLayoutInfoById = {};
 
-  let sidewayPosition = 1;
-  let lastLineageLengthSeen = -1;
+  let highestColumn = 0;
+  let lastRow = 0;
+  let lastColumn = -1;
   iterateNodes(asTree, (lineage, node) => {
-    const forwardPosition = lineage.length;
+    const column = lineage.length;
 
-    if (forwardPosition <= lastLineageLengthSeen) {
-      sidewayPosition += 1;
+    if (column <= lastColumn) {
+      // This means you have taken a sideways step to the next child (at some any level)
+      lastRow += 1;
     }
-    lastLineageLengthSeen = forwardPosition;
+    highestColumn = Math.max(highestColumn, column);
+    lastColumn = column;
 
-    switch (orientation) {
-      case Orientation.horizontal:
-        layoutInformation[node.uuid] = {
-          horizontalPos: forwardPosition,
-          verticalPos: sidewayPosition
-        };
-        break;
-      case Orientation.vertical:
-        layoutInformation[node.uuid] = {
-          horizontalPos: sidewayPosition,
-          verticalPos: forwardPosition
-        };
-        break;
-      default:
-        throw new Error(`Invalid Orientation value: ${Orientation}`);
-    }
+    layoutInformation[node.uuid] = {
+      row: lastRow,
+      column
+    };
   });
 
-  return layoutInformation;
+  const layoutGrid: PipelineLayoutGrid = {
+    rows: []
+  };
+  for (let row = 0; row <= lastRow; row++) {
+    let rowData: PipelineLayoutRow = {
+      columns: []
+    };
+    for (let column = 0; column <= lastColumn; column++) {
+      rowData.columns.push({
+        cellType: CellType.EMPTY
+      });
+    }
+    layoutGrid.rows.push(rowData);
+  }
+
+  Object.entries(layoutInformation)
+    .map(k => ({
+      uuid: k[0],
+      layoutInfo: k[1]
+    }))
+    .forEach(({ uuid, layoutInfo: { row, column } }) => {
+      if (column > 0) {
+        if (
+          layoutGrid.rows[row].columns[column - 1].cellType == CellType.EMPTY
+        ) {
+          layoutGrid.rows[row].columns[column - 1].cellType = CellType.ELBOW;
+        }
+      }
+      layoutGrid.rows[row].columns[column].cellType = CellType.ELEMENT;
+      layoutGrid.rows[row].columns[column].uuid = uuid;
+    });
+
+  return layoutGrid;
 }
 
 /**

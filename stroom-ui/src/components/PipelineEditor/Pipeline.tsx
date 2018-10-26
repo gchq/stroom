@@ -25,26 +25,21 @@ import {
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
-import { mapObject } from "../../lib/treeUtils";
+// import { mapObject } from "../../lib/treeUtils";
 import PipelineElement from "./PipelineElement";
 import { fetchPipeline } from "./pipelineResourceClient";
 import { fetchElements, fetchElementProperties } from "./elementResourceClient";
 import {
-  getPipelineLayoutInformation,
-  PipelineLayoutInfo
+  getPipelineLayoutGrid,
+  PipelineLayoutGrid,
+  CellType
+  // PipelinelayoutGrid
 } from "./pipelineUtils";
-import { PipelineElementType } from "../../types";
+// import { PipelineElementType } from "../../types";
 import { StoreState as ElementStoreState } from "./redux/elementReducer";
 import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
 import { GlobalStoreState } from "../../startup/reducers";
-
-const HORIZONTAL_SPACING = 150;
-const VERTICAL_SPACING = 70;
-const HORIZONTAL_START_PX = 10;
-const VERTICAL_START_PX = 10;
-const COMMON_ELEMENT_STYLE = {
-  position: "absolute"
-};
+import { PipelineElementType } from "src/types";
 
 export interface Props {
   pipelineId: string;
@@ -62,9 +57,7 @@ interface ConnectDispatch {
 }
 
 interface WithProps {
-  elementStyles: {
-    [uuid: string]: React.HTMLAttributes<HTMLDivElement>;
-  };
+  layoutGrid: PipelineLayoutGrid;
 }
 
 export interface EnhancedProps
@@ -105,48 +98,53 @@ const enhance = compose<EnhancedProps, Props>(
     renderComponent(() => <Loader message="Loading pipeline..." />)
   ),
   withProps(({ pipelineState: { asTree } }) => {
-    let layoutInfo = getPipelineLayoutInformation(asTree);
-    let elementStyles = mapObject(layoutInfo, (l: PipelineLayoutInfo) => {
-      const index: number = l.verticalPos - 1;
-      const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
-      const fromLeft =
-        HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+    let layoutGrid = getPipelineLayoutGrid(asTree);
 
-      return {
-        ...COMMON_ELEMENT_STYLE,
-        top: `${fromTop}px`,
-        left: `${fromLeft}px`
-      };
-    });
-    console.log("Fc", { layoutInfo, elementStyles });
-    return {
-      elementStyles
-    };
+    console.log("Fc", { layoutGrid });
+    return { layoutGrid };
   })
 );
 
 const Pipeline = ({
   pipelineId,
-  elementStyles,
+  layoutGrid,
   pipelineState: { pipeline }
 }: EnhancedProps) => (
   <div className="Pipeline-editor__elements">
-    {Object.keys(elementStyles)
-      .map(
-        es =>
-          pipeline &&
-          pipeline.merged.elements.add &&
-          pipeline.merged.elements.add.find(
-            (e: PipelineElementType) => e.id === es
-          )
-      )
-      .filter(e => e !== undefined)
-      .map(e => e!)
-      .map(e => (
-        <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-          <PipelineElement pipelineId={pipelineId} elementId={e.id} />
-        </div>
-      ))}
+    {layoutGrid.rows.map((row, r) => (
+      <div key={r} className="Pipeline-editor__elements-row">
+        {row.columns.map((column, c) => {
+          let cellClassNames = ["Pipeline-editor__elements_cell"];
+          switch (column.cellType) {
+            case CellType.ELBOW:
+              cellClassNames.push("elbow");
+              break;
+            case CellType.ELEMENT:
+              cellClassNames.push("element");
+              break;
+            case CellType.EMPTY:
+              cellClassNames.push("empty");
+              break;
+          }
+          return (
+            <div key={c} className={cellClassNames.join(" ")}>
+              {column.cellType == CellType.ELEMENT &&
+                pipeline &&
+                pipeline.merged.elements.add &&
+                pipeline.merged.elements.add
+                  .filter((e: PipelineElementType) => e.id === column.uuid)
+                  .map(e => (
+                    <PipelineElement
+                      key={e.id}
+                      pipelineId={pipelineId}
+                      elementId={e.id}
+                    />
+                  ))}
+            </div>
+          );
+        })}
+      </div>
+    ))}
   </div>
 );
 

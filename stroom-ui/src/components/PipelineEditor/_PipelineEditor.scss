@@ -42,15 +42,32 @@ $palette-width: 12rem;
   width: 100%;
 }
 
-/* The animation code */
+.Pipeline-editor__elements {
+  display: flex;
+  flex-direction: column;
+}
 
-@keyframes open-pallete {
-  from {
-    left: -$palette-width;
-  }
-  to {
-    left: 0;
-  }
+.Pipeline-editor__elements-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.Pipeline-editor__elements_cell {
+  border: solid thick black;
+}
+
+.Pipeline-editor__elements_cell.empty {
+  background-color: red;
+  width: 80px;
+  height: 80px;
+}
+.Pipeline-editor__elements_cell.elbow {
+  background-color: green;
+  width: 80px;
+  height: 80px;
+}
+.Pipeline-editor__elements_cell.element {
+  background-color: blue;
 }
 
 .Pipeline-editor__element-palette {
