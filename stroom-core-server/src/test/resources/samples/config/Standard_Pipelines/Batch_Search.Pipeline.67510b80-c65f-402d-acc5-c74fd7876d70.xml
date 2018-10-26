@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <description/>
    <name>Batch Search</name>
-   <parentPipelineXML/>
    <uuid>67510b80-c65f-402d-acc5-c74fd7876d70</uuid>
 </pipeline>
