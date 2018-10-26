@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class ImportExportHelper {
@@ -99,7 +100,7 @@ public class ImportExportHelper {
                     if (!property.isExternalFile()) {
                         // Set the property if it is specified.
                         if (config.hasProperty(propertyName)) {
-                            updateProperty(beanWrapper, propertyName, config.get(propertyName), importState, importMode);
+                            updateProperty(beanWrapper, propertyName, config.get(propertyName), importState);
                         }
                     }
                 }
@@ -116,7 +117,7 @@ public class ImportExportHelper {
                         if (data != null) {
                             final List<Object> newDataList = new ArrayList<>();
                             newDataList.add(data);
-                            updateProperty(beanWrapper, propertyName, newDataList, importState, importMode);
+                            updateProperty(beanWrapper, propertyName, newDataList, importState);
 
                         } else {
                             importState.addMessage(Severity.WARNING, String
@@ -130,14 +131,6 @@ public class ImportExportHelper {
                 if (importMode == ImportMode.CREATE_CONFIRMATION
                         && State.UPDATE.equals(importState.getState())) {
                     boolean equal = importState.getUpdatedFieldList().size() == 0;
-
-                    final String newName = config.getString("name");
-
-                    if (newName != null && !newName.equals(entity.getName())) {
-                        importState.addMessage(Severity.WARNING,
-                                "The entity name will be changed on import from '" + entity.getName() + "' to '" + newName + "'");
-                        equal = false;
-                    }
 
                     if (equal) {
                         importState.setState(State.EQUAL);
@@ -176,10 +169,13 @@ public class ImportExportHelper {
         }
     }
 
-    private void updateProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-                                final List<Object> values, final ImportState importState,
-                                final ImportMode importMode) {
+    private void updateProperty(final BaseEntityBeanWrapper beanWrapper,
+                                final String propertyName,
+                                final List<Object> values,
+                                final ImportState importState) {
         try {
+            final Object existingValue = beanWrapper.getPropertyValue(propertyName);
+
             if (beanWrapper.isPropertyBaseEntity(propertyName)) {
                 Object obj = null;
                 if (values != null && values.size() > 0) {
@@ -189,48 +185,37 @@ public class ImportExportHelper {
                 if (obj != null) {
                     if (obj instanceof DocRef) {
                         final DocRef docRef = (DocRef) obj;
-                        setDocRefProperty(beanWrapper, propertyName, docRef, importState, importMode);
+                        setDocRefProperty(beanWrapper, propertyName, docRef, importState);
                     }
                 } else {
                     // The new property value is null so set it to null.
-                    if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                        if (beanWrapper.getPropertyValue(propertyName) != null) {
-                            importState.getUpdatedFieldList().add(propertyName);
-                        }
+                    if (existingValue != null) {
+                        importState.getUpdatedFieldList().add(propertyName);
                     }
-
                     beanWrapper.setPropertyValue(propertyName, null);
                 }
             } else if (beanWrapper.isPropertyBaseEntitySet(propertyName)) {
                 beanWrapper.clearPropertySet(propertyName);
 
             } else {
-                if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                    if (values == null || values.size() == 0) {
-                        if (beanWrapper.getPropertyValue(propertyName) != null) {
-                            importState.getUpdatedFieldList().add(propertyName);
-                        }
-                    } else {
-                        // null is like "" from a Stroom XML POV
-                        final Object oldValueO = beanWrapper.getPropertyValue(propertyName);
-                        String oldValue = "";
-                        if (oldValueO != null) {
-                            oldValue = String.valueOf(oldValueO);
-                        }
-                        final Object newValue = values.get(0);
-
-                        if (!newValue.equals(oldValue)) {
-                            importState.getUpdatedFieldList().add(propertyName);
-                        }
-                    }
+                Object newValue = null;
+                if (values != null && values.size() > 0) {
+                    newValue = values.get(0);
                 }
 
-                if (values == null || values.size() == 0) {
-                    // Simple property
-                    beanWrapper.setPropertyValue(propertyName, null);
-                } else {
-                    // Simple property
-                    beanWrapper.setPropertyValue(propertyName, values.get(0));
+                if (!Objects.equals(existingValue, newValue)) {
+                    // Don't rename existing items as they might have been renamed by the user.
+                    if (existingValue == null || !propertyName.equals("name")) {
+                        importState.getUpdatedFieldList().add(propertyName);
+
+                        if (values == null || values.size() == 0) {
+                            // Simple property
+                            beanWrapper.setPropertyValue(propertyName, null);
+                        } else {
+                            // Simple property
+                            beanWrapper.setPropertyValue(propertyName, values.get(0));
+                        }
+                    }
                 }
             }
         } catch (final Exception ex) {
@@ -239,14 +224,11 @@ public class ImportExportHelper {
     }
 
     private void setDocRefProperty(final BaseEntityBeanWrapper beanWrapper, final String propertyName,
-                                   final DocRef docRef, final ImportState importState,
-                                   final ImportMode importMode) {
+                                   final DocRef docRef, final ImportState importState) {
         // This property is an entity so get the referenced entity if we can.
         final BaseEntity entity = resolveEntityByDocRef(docRef);
-        if (importMode == ImportMode.CREATE_CONFIRMATION) {
-            if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
-                importState.getUpdatedFieldList().add(propertyName);
-            }
+        if (!entity.equals(beanWrapper.getPropertyValue(propertyName))) {
+            importState.getUpdatedFieldList().add(propertyName);
         }
         beanWrapper.setPropertyValue(propertyName, entity);
     }
