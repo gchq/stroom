@@ -1,10 +1,27 @@
 server:
-  type: simple
   applicationContextPath: /
-  adminContextPath: /admin
-  connector:
-    type: http
+  adminContextPath: /proxyAdmin
+  applicationConnectors:
+  - type: http
     port: 9190
+  - type: https
+    port: 9543
+    keyStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/server.p12
+    keyStorePassword: password
+    keyStoreType: PKCS12
+    trustStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/ca.p12
+    trustStorePassword: password
+    trustStoreType: PKCS12
+    supportedProtocols: [SSLv3, TLSv1, TLSv1.1, TLSv1.2]
+    #supportedProtocols: [TLSv1, TLSv1.1, TLSv1.2]
+    needClientAuth: true
+    wantClientAuth: true
+#    supportedCipherSuites: [TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA]
+#    validateCerts: true
+#    certAlias: server
+  adminConnectors:
+  - type: http
+    port: 9191
 
   requestLog:
     appenders:
@@ -78,7 +95,7 @@ proxyConfig:
   proxyRequestConfig:
     receiptPolicyUuid:
   forwardStreamConfig:
-    forwardingEnabled: true
+    forwardingEnabled: false
     forwardUrl: "http://localhost:8899/datafeed"
   proxyRepositoryConfig:
     storingEnabled: true

@@ -43,6 +43,7 @@ EXPOSE 8091
 # Create Docker volume to hold all the persistent state (logs, repos, content, config)
 # Volumes need to be defined after the mounts have been created and populated
 VOLUME /stroom-proxy/config/
+VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/repo/
 VOLUME /stroom-proxy/logs/
@@ -72,6 +73,7 @@ RUN echo "http_proxy: $http_proxy" && \
         tini && \
     addgroup -g 1000 -S proxy && \
     adduser -u 1000 -S -s /bin/false -D -G proxy proxy && \
+    mkdir -p /stroom-proxy/certs && \
     mkdir -p /stroom-proxy/config && \
     mkdir -p /stroom-proxy/content && \
     mkdir -p /stroom-proxy/logs/access && \

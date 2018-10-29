@@ -4,8 +4,19 @@ server:
   applicationConnectors:
     - type: http
       port: ${STROOM_PROXY_APP_PORT:-8090}
-      #    - type: https
-      #      port: ${STROOM_PROXY_APP_PORT_HTTPS:-9443}
+    - type: https
+      port: ${STROOM_PROXY_APP_PORT_HTTPS:-8543}
+      keyStorePath: /stroom-proxy/certs/server.jks
+      keyStorePassword: password
+      keyStoreType: JKS
+      trustStorePath: /stroom-proxy/certs/ca.jks
+      trustStorePassword: password
+      trustStoreType: JKS
+      supportedProtocols: [SSLv3, TLSv1, TLSv1.1, TLSv1.2]
+      needClientAuth: true
+      wantClientAuth: true
+      validateCerts: true
+  #    certAlias: server
   adminConnectors:
     - type: http
       port: ${STROOM_PROXY_ADMIN_PORT:-8091}
