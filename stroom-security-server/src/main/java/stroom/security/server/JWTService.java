@@ -1,6 +1,8 @@
 package stroom.security.server;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
+import org.apache.commons.lang.StringUtils;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
+import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
@@ -24,7 +27,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @Component
-public class JWTService {
+public class JWTService implements HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
 
     private static final String BEARER = "Bearer ";
@@ -45,10 +48,19 @@ public class JWTService {
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = enableTokenRevocationCheck;
 
-        fetchNewPublicKeys();
+        updatePublicJsonWebKey();
 
         if (authenticationServiceUrl == null) {
             throw new SecurityException("No authentication service URL is defined");
+        }
+    }
+
+    private void updatePublicJsonWebKey() {
+        try {
+            String jwkAsJson = fetchNewPublicKey();
+            jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
+        } catch (JoseException | ApiException e) {
+            LOGGER.error("Unable to fetch the remote authentication service's public key!", e);
         }
     }
 
@@ -59,15 +71,11 @@ public class JWTService {
      * <p>
      * We need to do this if the remote public key changes and verification fails.
      */
-    private void fetchNewPublicKeys() {
+    private String fetchNewPublicKey() throws ApiException {
         // We need to fetch the public key from the remote authentication service.
         final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
-        try {
-            String jwkAsJson = apiKeyApi.getPublicKey();
-            jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
-        } catch (JoseException | ApiException e) {
-            LOGGER.error("Unable to fetch the remote authentication service's public key!", e);
-        }
+        String jwkAsJson = apiKeyApi.getPublicKey();
+        return jwkAsJson;
     }
 
     public boolean containsValidJws(ServletRequest request) {
@@ -141,7 +149,7 @@ public class JWTService {
             return Optional.of(toClaims(token));
         } catch (InvalidJwtException e) {
             LOGGER.warn("Unable to verify token! I'm going to refresh the verification key and try again.");
-            fetchNewPublicKeys();
+            updatePublicJsonWebKey();
             try {
                 return Optional.of(toClaims(token));
             } catch (InvalidJwtException e1) {
@@ -171,7 +179,7 @@ public class JWTService {
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
         if (jwk == null) {
-            fetchNewPublicKeys();
+            updatePublicJsonWebKey();
         }
 
         JwtConsumerBuilder builder = new JwtConsumerBuilder()
@@ -184,5 +192,31 @@ public class JWTService {
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(authJwtIssuer);
         return builder.build();
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        // determine the health based on being able to retrieve a public key from the auth service
+        try {
+            String publicJsonWebKey = fetchNewPublicKey();
+
+            if (StringUtils.isNotBlank(publicJsonWebKey)) {
+                return HealthCheck.Result.healthy();
+            } else {
+                return HealthCheck.Result.builder()
+                        .unhealthy()
+                        .withMessage("Returned public key is blank")
+                        .build();
+            }
+
+        } catch (ApiException | RuntimeException e) {
+            return HealthCheck.Result.builder()
+                    .unhealthy()
+                    .withMessage("Error fetching our identity provider's public key! " +
+                            "This means we cannot verify clients' authentication tokens ourselves. " +
+                            "This might mean the authentication service is down or unavailable. " +
+                            "The error was: [" + e.getMessage() + "]")
+                    .build();
+        }
     }
 }

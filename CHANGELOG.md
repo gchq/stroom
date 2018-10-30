@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add a health check for getting a public key from the authentication service.
+
 * Issue **#894** : The system now generates and displays errors to the user when you attempt to copy a feed.
 
 * Issue **#896** : Extended folder `create` permissions are now correctly cached.
