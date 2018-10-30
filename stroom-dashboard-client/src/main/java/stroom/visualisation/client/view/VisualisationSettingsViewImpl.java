@@ -25,12 +25,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.util.shared.HasReadOnly;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class VisualisationSettingsViewImpl extends ViewImpl implements VisualisationSettingsView, HasReadOnly {
+public class VisualisationSettingsViewImpl extends ViewImpl implements VisualisationSettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
+
     @UiField
     TextArea description;
     @UiField
@@ -71,12 +72,7 @@ public class VisualisationSettingsViewImpl extends ViewImpl implements Visualisa
     }
 
     @Override
-    public boolean isReadOnly() {
-        return description.isEnabled();
-    }
-
-    @Override
-    public void setReadOnly(final boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
         functionName.setEnabled(!readOnly);
     }

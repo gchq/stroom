@@ -1,6 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <description/>
    <name>TEST_JSON_PARSER-EVENTS</name>
    <uuid>40fd858d-9e0b-4547-bad9-032500ea390b</uuid>
 </pipeline>

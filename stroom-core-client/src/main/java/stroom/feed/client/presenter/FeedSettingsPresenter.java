@@ -37,7 +37,6 @@ import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.EqualsUtil;
@@ -46,10 +45,11 @@ import stroom.widget.tickbox.client.view.TickBox;
 
 public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, Feed> {
     @Inject
-    public FeedSettingsPresenter(final EventBus eventBus, final FeedSettingsView view,
-                                 final ClientSecurityContext securityContext, final StreamTypeUiManager streamTypeUiManager,
+    public FeedSettingsPresenter(final EventBus eventBus,
+                                 final FeedSettingsView view,
+                                 final StreamTypeUiManager streamTypeUiManager,
                                  final ClientDispatchAsync dispatcher) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view);
 
         dispatcher.exec(new FetchSupportedEncodingsAction()).onSuccess(result -> {
             view.getDataEncoding().clear();
@@ -162,7 +162,5 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         ItemListBox<SupportedRetentionAge> getRetentionAge();
 
         ItemListBox<FeedStatus> getFeedStatus();
-
-        void setReadOnly(boolean readOnly);
     }
 }

@@ -1,7 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
    <deprecated>false</deprecated>
-   <description/>
    <name>records v2.0</name>
    <namespaceURI>records:2</namespaceURI>
    <schemaGroup>RECORDS</schemaGroup>

@@ -39,6 +39,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.WeekFields;
 import java.util.Locale;
 
 @Component
@@ -46,7 +47,20 @@ import java.util.Locale;
 class FormatDate extends StroomExtensionFunctionCall {
     private static final String GMT_BST_GUESS = "GMT/BST";
     private static final ZoneId EUROPE_LONDON_TIME_ZONE = ZoneId.of("Europe/London");
+    private static final Locale LOCALE = Locale.ENGLISH;
+    private static final WeekFields WEEK_FIELDS = WeekFields.of(LOCALE);
     private final StreamHolder streamHolder;
+
+    private static final String DAY_OF_WEEK = "DayOfWeek";
+    private static final String WEEK_OF_MONTH = "WeekOfMonth";
+    private static final String WEEK_OF_YEAR = "WeekOfYear";
+    private static final String WEEK_OF_WEEK_BASED_YEAR = "WeekOfWeekBasedYear";
+    private static final String WEEK_BASED_YEAR = "WeekBasedYear";
+
+    private static final String YEAR_OF_ERA = "YearOfEra";
+    private static final String YEAR = "Year";
+    private static final String MONTH_OF_YEAR = "MonthOfYear";
+    private static final String DAY_OF_MONTH = "DayOfMonth";
 
     private Instant baseTime;
 
@@ -192,13 +206,58 @@ class FormatDate extends StroomExtensionFunctionCall {
     long parseDate(final XPathContext context, final String timeZone, final String pattern, final String date) {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
-        final DateTimeFormatter parseFormatter = new DateTimeFormatterBuilder()
+        final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
+                .parseLenient()
                 .parseCaseInsensitive()
-                .appendPattern(pattern)
-                .parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA))
-                .parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR))
-                .parseDefaulting(ChronoField.DAY_OF_MONTH, referenceDateTime.get(ChronoField.DAY_OF_MONTH))
-                .toFormatter(Locale.ENGLISH);
+                .appendPattern(pattern);
+
+        DateTimeFormatter parseFormatter = builder.toFormatter(LOCALE);
+        FieldSet fieldSet = new FieldSet(parseFormatter);
+
+        // See if we need to deal with week based date parsing.
+        if (fieldSet.contains(WEEK_BASED_YEAR)
+                || fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
+                || fieldSet.contains(WEEK_OF_YEAR)
+                || fieldSet.contains(WEEK_OF_MONTH)
+                || fieldSet.contains(DAY_OF_WEEK)) {
+
+            // Week based date parsing.
+            return parseWeekBasedDate(fieldSet, referenceDateTime, builder, date, zoneId);
+        }
+
+        // Regular date parsing.
+        return parseRegularDate(fieldSet, referenceDateTime, builder, date, zoneId);
+    }
+
+    /**
+     * Parsing dates that use week fields has to be done differently as week based parsing does not seem to cope with conflicting default values for fields.
+     */
+    private long parseWeekBasedDate(final FieldSet fieldSet,
+                                    final ZonedDateTime referenceDateTime,
+                                    final DateTimeFormatterBuilder builder,
+                                    final String date,
+                                    final ZoneId zoneId) {
+        if (!fieldSet.contains(WEEK_BASED_YEAR)
+                && !fieldSet.contains(YEAR_OF_ERA)
+                && !fieldSet.contains(YEAR)) {
+            builder.parseDefaulting(WEEK_FIELDS.weekBasedYear(), referenceDateTime.get(WEEK_FIELDS.weekBasedYear()));
+        }
+        if (!fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)) {
+            if (!fieldSet.contains(WEEK_OF_YEAR)
+                    && !fieldSet.contains(WEEK_OF_MONTH)) {
+                builder.parseDefaulting(WEEK_FIELDS.weekOfWeekBasedYear(), referenceDateTime.get(WEEK_FIELDS.weekOfWeekBasedYear()));
+            } else if (fieldSet.contains(WEEK_OF_MONTH)) {
+                builder.parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR));
+                builder.parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA));
+            } else {
+                builder.parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA));
+            }
+        }
+        if (!fieldSet.contains(DAY_OF_WEEK)) {
+            builder.parseDefaulting(WEEK_FIELDS.dayOfWeek(), referenceDateTime.get(WEEK_FIELDS.dayOfWeek()));
+        }
+
+        final DateTimeFormatter parseFormatter = builder.toFormatter(LOCALE);
 
         // Parse the date as best we can.
         ZonedDateTime dateTime;
@@ -213,8 +272,48 @@ class FormatDate extends StroomExtensionFunctionCall {
 
         // Subtract a year if the date appears to be after our reference time.
         if (dateTime.isAfter(referenceDateTime)) {
-            if (!pattern.contains("y")) {
-                if (!pattern.contains("M")) {
+            if (!fieldSet.contains(YEAR_OF_ERA)
+                    && !fieldSet.contains(YEAR)
+                    && !fieldSet.contains(WEEK_BASED_YEAR)) {
+                if (!fieldSet.contains(MONTH_OF_YEAR)
+                        && !fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
+                        && !fieldSet.contains(WEEK_OF_YEAR)) {
+                    dateTime = dateTime.minusWeeks(1);
+                } else {
+                    dateTime = dateTime.minusWeeks(52);
+                }
+            }
+        }
+        return dateTime.toInstant().toEpochMilli();
+    }
+
+    private long parseRegularDate(final FieldSet fieldSet,
+                                  final ZonedDateTime referenceDateTime,
+                                  final DateTimeFormatterBuilder builder,
+                                  final String date,
+                                  final ZoneId zoneId) {
+        builder.parseDefaulting(ChronoField.YEAR_OF_ERA, referenceDateTime.get(ChronoField.YEAR_OF_ERA));
+        builder.parseDefaulting(ChronoField.MONTH_OF_YEAR, referenceDateTime.get(ChronoField.MONTH_OF_YEAR));
+        builder.parseDefaulting(ChronoField.DAY_OF_MONTH, referenceDateTime.get(ChronoField.DAY_OF_MONTH));
+
+        final DateTimeFormatter parseFormatter = builder.toFormatter(LOCALE);
+
+        // Parse the date as best we can.
+        ZonedDateTime dateTime;
+        final TemporalAccessor temporalAccessor = parseFormatter.parseBest(date, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+        if (temporalAccessor instanceof ZonedDateTime) {
+            dateTime = ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
+        } else if (temporalAccessor instanceof LocalDateTime) {
+            dateTime = ((LocalDateTime) temporalAccessor).atZone(zoneId);
+        } else {
+            dateTime = ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
+        }
+
+        // Subtract a year if the date appears to be after our reference time.
+        if (dateTime.isAfter(referenceDateTime)) {
+            if (!fieldSet.contains(YEAR_OF_ERA)
+                    && !fieldSet.contains(YEAR)) {
+                if (!fieldSet.contains(MONTH_OF_YEAR)) {
                     dateTime = dateTime.minusMonths(1);
                 } else {
                     dateTime = dateTime.minusYears(1);
@@ -262,5 +361,27 @@ class FormatDate extends StroomExtensionFunctionCall {
             }
         }
         return baseTime;
+    }
+
+    private static class FieldSet {
+        private final String resolvedPattern;
+
+        FieldSet(final DateTimeFormatter parseFormatter) {
+            this.resolvedPattern = parseFormatter.toString();
+        }
+
+//        private boolean containsWeekField(final TemporalField temporalField) {
+//            final String name = temporalField.getDisplayName(LOCALE);
+//            return resolvedPattern.contains("(" + name + ",");
+//        }
+//
+//        private boolean contains(final ChronoField temporalField) {
+//            final String name = temporalField.name();
+//            return resolvedPattern.contains("(" + name + ",");
+//        }
+
+        private boolean contains(final String fieldName) {
+            return resolvedPattern.contains("(" + fieldName + ",");
+        }
     }
 }

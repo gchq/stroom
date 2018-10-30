@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <description/>
    <name>Indexing</name>
-   <parentPipelineXML/>
    <uuid>fcef1b20-083e-436c-ab95-47a6ce453435</uuid>
 </pipeline>

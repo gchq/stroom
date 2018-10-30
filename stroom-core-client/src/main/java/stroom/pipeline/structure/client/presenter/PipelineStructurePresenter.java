@@ -36,6 +36,7 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
@@ -52,7 +53,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.view.PipelineImageUtil;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -80,7 +80,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
-        implements HasDocumentRead<PipelineEntity>, HasWrite<PipelineEntity>, HasDirtyHandlers, PipelineStructureUiHandlers {
+        implements HasDocumentRead<PipelineEntity>, HasWrite<PipelineEntity>, HasDirtyHandlers, ReadOnlyChangeHandler, PipelineStructureUiHandlers {
     private final EntityDropDownPresenter pipelinePresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -96,17 +96,22 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private DocRef parentPipeline;
     private Map<Category, List<PipelineElementType>> elementTypes;
     private boolean advancedMode;
+    private boolean readOnly = true;
 
     private List<Item> addMenuItems;
     private List<Item> restoreMenuItems;
 
     @Inject
-    public PipelineStructurePresenter(final EventBus eventBus, final PipelineStructureView view,
-                                      final PipelineTreePresenter pipelineTreePresenter, final EntityDropDownPresenter pipelinePresenter,
-                                      final ClientDispatchAsync dispatcher, final MenuListPresenter menuListPresenter,
-                                      final NewElementPresenter newElementPresenter, final PropertyListPresenter propertyListPresenter,
+    public PipelineStructurePresenter(final EventBus eventBus,
+                                      final PipelineStructureView view,
+                                      final PipelineTreePresenter pipelineTreePresenter,
+                                      final EntityDropDownPresenter pipelinePresenter,
+                                      final ClientDispatchAsync dispatcher,
+                                      final MenuListPresenter menuListPresenter,
+                                      final NewElementPresenter newElementPresenter,
+                                      final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
-                                      final Provider<EditorPresenter> xmlEditorProvider, final ClientSecurityContext securityContext) {
+                                      final Provider<EditorPresenter> xmlEditorProvider) {
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
@@ -207,46 +212,48 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
     @Override
     public void read(final DocRef docRef, final PipelineEntity pipelineEntity) {
-        final PipelineElement previousSelection = this.selectedElement;
+        if (pipelineEntity != null) {
+            final PipelineElement previousSelection = this.selectedElement;
 
-        this.pipelineEntity = pipelineEntity;
-        this.selectedElement = null;
+            this.pipelineEntity = pipelineEntity;
+            this.selectedElement = null;
 
-        if (pipelineModel == null) {
-            pipelineModel = new PipelineModel();
-            pipelineTreePresenter.setModel(pipelineModel);
-        }
-
-        if (pipelineEntity.getParentPipeline() != null) {
-            this.parentPipeline = pipelineEntity.getParentPipeline();
-        }
-        pipelinePresenter.setSelectedEntityReference(pipelineEntity.getParentPipeline());
-
-        final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRefUtil.create(pipelineEntity));
-        dispatcher.exec(action).onSuccess(result -> {
-            final PipelineData pipelineData = result.get(result.size() - 1);
-            final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
-
-            // If there is a stack of pipeline data then we need
-            // to make sure changes are reflected appropriately.
-            for (int i = 0; i < result.size() - 1; i++) {
-                baseStack.add(result.get(i));
+            if (pipelineModel == null) {
+                pipelineModel = new PipelineModel();
+                pipelineTreePresenter.setModel(pipelineModel);
             }
 
-            try {
-                pipelineModel.setPipelineData(pipelineData);
-                pipelineModel.setBaseStack(baseStack);
-                pipelineModel.build();
-
-                pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
-
-                // We have just loaded the pipeline so set dirty to
-                // false.
-                setDirty(false);
-            } catch (final PipelineModelException e) {
-                AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+            if (pipelineEntity.getParentPipeline() != null) {
+                this.parentPipeline = pipelineEntity.getParentPipeline();
             }
-        });
+            pipelinePresenter.setSelectedEntityReference(pipelineEntity.getParentPipeline());
+
+            final FetchPipelineDataAction action = new FetchPipelineDataAction(DocRefUtil.create(pipelineEntity));
+            dispatcher.exec(action).onSuccess(result -> {
+                final PipelineData pipelineData = result.get(result.size() - 1);
+                final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
+
+                // If there is a stack of pipeline data then we need
+                // to make sure changes are reflected appropriately.
+                for (int i = 0; i < result.size() - 1; i++) {
+                    baseStack.add(result.get(i));
+                }
+
+                try {
+                    pipelineModel.setPipelineData(pipelineData);
+                    pipelineModel.setBaseStack(baseStack);
+                    pipelineModel.build();
+
+                    pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
+
+                    // We have just loaded the pipeline so set dirty to
+                    // false.
+                    setDirty(false);
+                } catch (final PipelineModelException e) {
+                    AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                }
+            });
+        }
     }
 
     @Override
@@ -265,6 +272,15 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        pipelinePresenter.setEnabled(!readOnly);
+        propertyListPresenter.onReadOnly(readOnly);
+        pipelineReferenceListPresenter.onReadOnly(readOnly);
+        enableButtons();
     }
 
     @Override
@@ -515,9 +531,9 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(addMenuItems != null && addMenuItems.size() > 0);
-        getView().setRestoreEnabled(restoreMenuItems != null && restoreMenuItems.size() > 0);
-        getView().setRemoveEnabled(advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
+        getView().setAddEnabled(!readOnly && addMenuItems != null && addMenuItems.size() > 0);
+        getView().setRestoreEnabled(!readOnly && restoreMenuItems != null && restoreMenuItems.size() > 0);
+        getView().setRemoveEnabled(!readOnly && advancedMode && selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement));
     }
 
     @Override

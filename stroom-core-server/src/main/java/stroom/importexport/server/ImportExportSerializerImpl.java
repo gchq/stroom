@@ -186,7 +186,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 if (!existingNode.isPresent()) {
                     importState.setState(State.NEW);
-                    importState.setDestPath(createPath(path, docRef.getName()));
+                    importState.setDestPath(importState.getSourcePath());
 
                     // Create a parent folder for the new node.
                     // Get the root node.
@@ -195,15 +195,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     parentNode = getOrCreateParentFolder(parent, path, importState.ok(importMode));
 
                 } else {
+                    final List<ExplorerNode> parents = explorerNodeService.getPath(docRef);
+                    final String parentPath = parents.stream().map(ExplorerNode::getName).collect(Collectors.joining("/"));
+
                     importState.setState(State.UPDATE);
-                    importState.setDestPath(createPath(path, docRef.getName()));
+                    importState.setDestPath(createPath(parentPath, existingNode.get().getName()));
 
                     // This is a pre existing item so make sure we are allowed to update it.
                     if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
                         throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
                     }
 
-                    final List<ExplorerNode> parents = explorerNodeService.getPath(docRef);
                     if (parents.size() > 0) {
                         parentNode = parents.get(parents.size() - 1);
                     }
@@ -226,8 +228,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         final DocRef imported = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
-                        if (!existingNode.isPresent() && !ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
-                            explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
+                        if (!ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                            if (!existingNode.isPresent()) {
+                                explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
+                            }
+
                             importExportEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
                     }
@@ -238,9 +243,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
-                if (importState != null) {
-                    importState.addMessage(Severity.ERROR, e.getMessage());
-                }
+                importState.addMessage(Severity.ERROR, e.getMessage());
             }
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);

@@ -35,7 +35,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasPermissionCheck;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.index.shared.DeleteIndexShardAction;
@@ -64,7 +64,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
-        implements Refreshable, HasDocumentRead<Index>, HasPermissionCheck {
+        implements Refreshable, HasDocumentRead<Index>, ReadOnlyChangeHandler {
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
@@ -72,8 +72,9 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private ResultList<IndexShard> resultList = null;
     private final FindIndexShardCriteria selectionCriteria = new FindIndexShardCriteria();
     private final FindIndexShardCriteria queryCriteria = new FindIndexShardCriteria();
-    private final ButtonView buttonFlush;
-    private final ButtonView buttonDelete;
+
+    private ButtonView buttonFlush;
+    private ButtonView buttonDelete;
     private Index index;
     private boolean readOnly;
     private boolean allowDelete;
@@ -88,9 +89,10 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
 
-        buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
-        buttonDelete = getView().addButton(SvgPresets.DELETE);
-        buttonDelete.setTitle("Delete Selected Shards");
+        if (securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION)) {
+            buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
+            buttonDelete = getView().addButton(SvgPresets.DELETE);
+        }
 
         addColumns();
     }
@@ -98,22 +100,42 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(buttonFlush.addClickHandler(event -> {
-            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                flush();
-            }
-        }));
-        registerHandler(buttonDelete.addClickHandler(event -> {
-            if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
-                delete();
-            }
-        }));
+        if (buttonFlush != null) {
+            registerHandler(buttonFlush.addClickHandler(event -> {
+                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                    flush();
+                }
+            }));
+        }
+        if (buttonDelete != null) {
+            registerHandler(buttonDelete.addClickHandler(event -> {
+                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                    delete();
+                }
+            }));
+        }
     }
 
     private void enableButtons() {
-        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll())) && securityContext.hasAppPermission(IndexShard.MANAGE_INDEX_SHARDS_PERMISSION);
-        buttonFlush.setEnabled(enabled);
-        buttonDelete.setEnabled(allowDelete && enabled);
+        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardSet().getMatchAll()));
+        if (buttonFlush != null) {
+            if (readOnly) {
+                buttonFlush.setTitle("Flush is not available as index is read only");
+            } else {
+                buttonFlush.setTitle("Flush Selected Shards");
+            }
+            buttonFlush.setEnabled(enabled);
+        }
+        if (buttonDelete != null) {
+            if (readOnly) {
+                buttonDelete.setTitle("Delete is not available as index is read only");
+            } else if (!allowDelete) {
+                buttonDelete.setTitle("You do not have delete permissions on this index");
+            } else {
+                buttonDelete.setTitle("Delete Selected Shards");
+            }
+            buttonDelete.setEnabled(allowDelete && enabled);
+        }
     }
 
     private void addColumns() {
@@ -388,7 +410,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
     }

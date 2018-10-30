@@ -26,20 +26,20 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.DocRef;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.Script;
-import stroom.security.client.ClientSecurityContext;
 
 public class ScriptSettingsPresenter
         extends DocumentSettingsPresenter<ScriptSettingsView, Script> {
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
     @Inject
-    public ScriptSettingsPresenter(final EventBus eventBus, final ScriptSettingsView view,
-                                   final ScriptDependencyListPresenter scriptDependencyListPresenter,
-                                   final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public ScriptSettingsPresenter(final EventBus eventBus,
+                                   final ScriptSettingsView view,
+                                   final ScriptDependencyListPresenter scriptDependencyListPresenter) {
+        super(eventBus, view);
         this.scriptDependencyListPresenter = scriptDependencyListPresenter;
 
         // Add listeners for dirty events.
@@ -79,7 +79,13 @@ public class ScriptSettingsPresenter
         scriptDependencyListPresenter.write(script);
     }
 
-    public interface ScriptSettingsView extends View {
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        scriptDependencyListPresenter.onReadOnly(readOnly);
+    }
+
+    public interface ScriptSettingsView extends View, ReadOnlyChangeHandler {
         TextArea getDescription();
 
         void setDependencyList(View view);

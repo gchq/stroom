@@ -319,6 +319,7 @@ class ExplorerServiceImpl implements ExplorerService {
         final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
         recurseGetNodes(docRefs.stream(), childNodesByParent::put);
 
+        // TODO : @66 Change the way this works so that copy allows the underlying service to create it's own UUIDs and then subsequently remap references in all copied items (see gh-899)
         // Create the UUID's of the copies up front
         final Map<String, String> copiesByOriginalUuid = childNodesByParent.keySet().stream()
                 .collect(Collectors.toMap(DocRef::getUuid, (d) -> UUID.randomUUID().toString()));

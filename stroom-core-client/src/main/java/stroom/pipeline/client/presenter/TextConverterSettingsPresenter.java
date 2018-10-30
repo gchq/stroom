@@ -30,14 +30,12 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConve
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.TextConverter.TextConverterType;
 import stroom.query.api.v2.DocRef;
-import stroom.security.client.ClientSecurityContext;
 
 public class TextConverterSettingsPresenter
         extends DocumentSettingsPresenter<TextConverterSettingsView, TextConverter> {
     @Inject
-    public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view,
-                                          final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view) {
+        super(eventBus, view);
 
         view.getConverterType().addItem(TextConverterType.NONE);
         view.getConverterType().addItem(TextConverterType.DATA_SPLITTER);

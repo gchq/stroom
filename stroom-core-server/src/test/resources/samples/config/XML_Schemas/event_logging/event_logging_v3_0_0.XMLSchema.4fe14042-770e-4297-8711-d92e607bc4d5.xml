@@ -1,7 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <xmlSchema>
    <deprecated>false</deprecated>
-   <description/>
    <name>event-logging v3.0.0</name>
    <namespaceURI>event-logging:3</namespaceURI>
    <schemaGroup>EVENTS</schemaGroup>

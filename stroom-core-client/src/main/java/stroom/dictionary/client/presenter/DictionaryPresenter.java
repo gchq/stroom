@@ -117,8 +117,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
 
         codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);

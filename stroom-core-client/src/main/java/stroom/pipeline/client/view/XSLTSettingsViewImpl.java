@@ -22,11 +22,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
-import stroom.util.shared.HasReadOnly;
 
-public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, HasReadOnly {
+public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
+
     @UiField
     TextArea description;
 
@@ -46,12 +47,7 @@ public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, 
     }
 
     @Override
-    public boolean isReadOnly() {
-        return description.isEnabled();
-    }
-
-    @Override
-    public void setReadOnly(final boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
     }
 

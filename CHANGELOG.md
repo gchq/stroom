@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add a health check for getting a public key from the authentication service.
 
+* Issue **#897** : Import no longer attempts to rename or move existing items but will still update content.
+
+* Issue **#902** : Improved the XSLT `format-date` function to better cope with week based dates and to default values to the stream time where year etc are omitted.
+
+* Issue **#905** : Popup resize and move operations are now constrained to ensure that a popup cannot be dragged off screen or resized to be bigger than the current browser window size.
+
+* Issue **#898** : Improved the way many read only aspects of the UI behave.
+
 * Issue **#894** : The system now generates and displays errors to the user when you attempt to copy a feed.
 
 * Issue **#896** : Extended folder `create` permissions are now correctly cached.

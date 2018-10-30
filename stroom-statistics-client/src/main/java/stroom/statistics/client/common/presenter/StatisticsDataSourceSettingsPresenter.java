@@ -33,6 +33,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.DocRef;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.StatisticType;
@@ -43,7 +44,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 public class StatisticsDataSourceSettingsPresenter
         extends MyPresenterWidget<StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView>
         implements HasDocumentRead<StatisticStoreEntity>, HasWrite<StatisticStoreEntity>, HasDirtyHandlers,
-        StatisticsDataSourceSettingsUiHandlers {
+        StatisticsDataSourceSettingsUiHandlers, ReadOnlyChangeHandler {
 
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view,
@@ -90,12 +91,17 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
+    public void onReadOnly(final boolean readOnly) {
+        getView().onReadOnly(readOnly);
+    }
+
+    @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     public interface StatisticsDataSourceSettingsView
-            extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers> {
+            extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers>, ReadOnlyChangeHandler {
         TextArea getDescription();
 
         StatisticType getStatisticType();

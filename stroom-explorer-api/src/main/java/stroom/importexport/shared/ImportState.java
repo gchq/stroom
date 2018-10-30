@@ -37,9 +37,11 @@ public class ImportState implements SharedObject {
     private List<Message> messageList = new ArrayList<>();
     private List<String> updatedFieldList = new ArrayList<>();
     private State state;
+
     public ImportState() {
         // Default constructor for GWT serialisation.
     }
+
     public ImportState(final DocRef docRef, final String sourcePath) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
