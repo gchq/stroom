@@ -34,6 +34,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.javax_servlet_api
     compile libs.javax_validation
+    compile libs.dropwizard_metrics_healthchecks
     compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context
