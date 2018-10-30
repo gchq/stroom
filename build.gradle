@@ -227,6 +227,7 @@ ext.contentPacks = [
     'internal-statistics-sql': 'v2.1',
     'internal-dashboards': 'v1.1',
     'stroom-101': 'v1.0',
+    'stroom-logs': 'v1.1',
     'event-logging-xml-schema': 'v3.2.3'
 ]
 
