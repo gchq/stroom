@@ -5,18 +5,19 @@ server:
     - type: http
       port: ${STROOM_PROXY_APP_PORT:-8090}
     - type: https
-      port: ${STROOM_PROXY_APP_PORT_HTTPS:-8543}
-      keyStorePath: /stroom-proxy/certs/server.jks
-      keyStorePassword: password
-      keyStoreType: JKS
-      trustStorePath: /stroom-proxy/certs/ca.jks
-      trustStorePassword: password
-      trustStoreType: JKS
-      supportedProtocols: [SSLv3, TLSv1, TLSv1.1, TLSv1.2]
-      needClientAuth: true
-      wantClientAuth: true
-      validateCerts: true
-  #    certAlias: server
+      port: ${STROOM_PROXY_HTTPS_APP_PORT:-8543}
+      keyStorePath: ${STROOM_PROXY_HTTPS_KEYSTORE_PATH:-/stroom-proxy/certs/server.jks}
+      keyStorePassword: ${STROOM_PROXY_HTTPS_KEYSTORE_PASSWORD:-password}
+      keyStoreType: ${STROOM_PROXY_HTTPS_KEYSTORE_TYPE:-JKS}
+      trustStorePath: ${STROOM_PROXY_HTTPS_TRUSTSTORE_PATH:-/stroom-proxy/certs/ca.jks}
+      trustStorePassword: ${STROOM_PROXY_HTTPS_TRUSTSTORE_PASSWORD:-password}
+      trustStoreType: ${STROOM_PROXY_HTTPS_TRUSTSTORE_TYPE:-JKS}
+      supportedProtocols: [${STROOM_PROXY_HTTPS_SUPPORTED_PROTOCOLS:-TLSv1.2}]
+      needClientAuth: ${STROOM_PROXY_HTTPS_NEED_CLIENT_AUTH:-true}
+      wantClientAuth: ${STROOM_PROXY_HTTPS_WANT_CLIENT_AUTH:-true}
+      # validateCerts/Peers must be false in DW 1.x, else app will not start
+      validateCerts: false
+      validatePeers: false
   adminConnectors:
     - type: http
       port: ${STROOM_PROXY_ADMIN_PORT:-8091}

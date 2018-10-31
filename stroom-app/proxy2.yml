@@ -6,17 +6,16 @@ server:
     port: 9190
   - type: https
     port: 9543
-    keyStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/server.p12
+    keyStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/server.jks
     keyStorePassword: password
-    keyStoreType: PKCS12
-    trustStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/ca.p12
+    keyStoreType: JKS
+    trustStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/ca.jks
     trustStorePassword: password
-    trustStoreType: PKCS12
-    supportedProtocols: [SSLv3, TLSv1, TLSv1.1, TLSv1.2]
-    #supportedProtocols: [TLSv1, TLSv1.1, TLSv1.2]
+    trustStoreType: JKS
+    supportedProtocols: [TLSv1.2]
+    #supportedProtocols: [SSLv3, TLSv1, TLSv1.1, TLSv1.2]
     needClientAuth: true
     wantClientAuth: true
-#    supportedCipherSuites: [TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA]
 #    validateCerts: true
 #    certAlias: server
   adminConnectors:

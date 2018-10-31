@@ -64,6 +64,7 @@ CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar str
 # tini required for process control in the entrypoint
 # Create a system user/group with no home and no shell and a uid:gid of 1000:1000
 # No bash as sh should be sufficient
+# If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
