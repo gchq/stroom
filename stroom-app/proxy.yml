@@ -1,10 +1,20 @@
 server:
-  type: simple
   applicationContextPath: /
-  adminContextPath: /admin
-  connector:
-    type: http
+  adminContextPath: /proxyAdmin
+  applicationConnectors:
+  - type: http
     port: 8090
+  - type: https
+    port: 9443
+    keyStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/all/server.pkcs12
+    keyStorePassword: password
+    keyStoreType: JKS
+    trustStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/all/ca.pkcs12
+    trustStorePassword: password
+    trustStoreType: JKS
+  adminConnectors:
+  - type: http
+    port: 8091
 
   requestLog:
     appenders:

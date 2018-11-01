@@ -5,7 +5,11 @@ set -e
 # This avoids permission denied if the data volume is mounted by root
 #if [ "$1" = 'proxy' -a "$(id -u)" = '0' ]; then
 if [ "$(id -u)" = '0' ]; then
-    chown -R proxy:proxy .
+    # Done individually to avoid chown-ing ./certs which is a readonly volume
+    chown -R proxy:proxy ./config
+    chown -R proxy:proxy ./content
+    chown -R proxy:proxy ./logs
+    chown -R proxy:proxy ./repo
 
     # This is a bit of a cludge to get round "Text file in use" errors
     # See: https://github.com/moby/moby/issues/9547
