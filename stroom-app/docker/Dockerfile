@@ -44,8 +44,10 @@ ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/v
 FROM alpine:3.8 as send-logs-scripts
 WORKDIR /scripts
 
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom.sh .
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom_args.sh .
+ARG SEND_TO_STROOM_VERSION=send-to-stroom-v1.1
+
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom.sh .
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom_args.sh .
 RUN chmod u+x ./*.sh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
