@@ -52,7 +52,7 @@ VOLUME /stroom-proxy/logs/
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
-ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
 # start the app
 CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server /stroom-proxy/config/config.yml"]
@@ -90,7 +90,7 @@ COPY --chown=proxy:proxy --from=send-logs-scripts /scripts /stroom-proxy
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
-COPY --chown=proxy:proxy docker-entrypoint.sh /usr/local/bin/
+COPY --chown=proxy:proxy docker-entrypoint.sh /stroom-proxy/
 COPY --chown=proxy:proxy create_crontab.sh /stroom-proxy/
 COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
 COPY --chown=proxy:proxy ./build/stroom-app-all.jar /stroom-proxy/stroom-app-all.jar

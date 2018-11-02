@@ -83,7 +83,7 @@ VOLUME /stroom/volumes/
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
-ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
 #start the app
 CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server config/config.yml"]
@@ -126,7 +126,7 @@ COPY --chown=stroom:stroom --from=send-logs-scripts /scripts /stroom
 
 # Copy all the fat jars for the application and connectors
 # Most likely to have changed last
-COPY --chown=stroom:stroom docker-entrypoint.sh /usr/local/bin/
+COPY --chown=stroom:stroom docker-entrypoint.sh /stroom/
 COPY --chown=stroom:stroom create_crontab.sh /stroom/
 COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
 COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
