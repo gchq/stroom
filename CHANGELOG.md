@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8
+
 ## [v6.0-beta.9]
 
 * Add a health check for getting a public key from the authentication service.
