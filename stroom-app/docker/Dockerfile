@@ -14,11 +14,41 @@
 # limitations under the License.
 #**********************************************************************
 
+# ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Intermediate build stage that is common to stroom and proxy to speed up
+# the build
+
+FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
+
+# bash/curl required for sending logs
+# su-exec required for running stroom as not-root user
+# tini required for process control in the entrypoint
+RUN echo "http_proxy: $http_proxy" && \
+    echo "https_proxy: $https_proxy" && \
+    apk add --no-cache \
+        bash \
+        curl \
+        su-exec \
+        tini
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+# ~~~ fat jar stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Intermediate build stage to copy the stroom fat jar to allow stroom 
+# and proxy builds to re-use the same cached layer with the fat jar in it
+FROM scratch as fat-jar-stage
+COPY ./build/stroom-app-all.jar /stroom-app-all.jar
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
 # ~~~ content pack download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage to grab all the content packs so we can
 # later copy them all in one go to reduce the number of layers
-FROM scratch as content-packs
+FROM scratch as content-packs-stage
 WORKDIR /content-packs
 
 # Add in all the content packs so stroom imports them on startup
@@ -41,7 +71,7 @@ ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/v
 # Intermediate build stage to grab all the send logs scripts
 # later copy them all in one go to reduce the number of layers
 # Have to use alpine rather than scratch so we can chmod
-FROM alpine:3.8 as send-logs-scripts
+FROM alpine:3.8 as send-logs-scripts-stage
 WORKDIR /scripts
 
 ARG SEND_TO_STROOM_VERSION=send-to-stroom-v1.2.1
@@ -57,7 +87,7 @@ RUN chmod u+x ./*.sh
 # Final build stage
 
 # We need the full JDK for the jmap binary as used by the Heap Histogram internal stats
-FROM openjdk:8u171-jdk-alpine3.8
+FROM stroom-base-stage
 
 #This is where stroom will run from and any local data will be
 WORKDIR /stroom
@@ -92,18 +122,9 @@ CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar str
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
 # see https://github.com/docker-library/openjdk/issues/73#issuecomment-207816707
 
-# bash/curl required for sending logs
-# su-exec required for running stroom as not-root user
-# tini required for process control in the entrypoint
 # Create a user with no home and no shell
-# No bash as sh should be sufficient
-RUN echo "http_proxy: $http_proxy" && \
-    echo "https_proxy: $https_proxy" && \
+RUN \
     apk add --no-cache \
-        bash \
-        curl \
-        su-exec \
-        tini \
         ttf-dejavu && \
     addgroup -g 1000 -S stroom && \
     adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
@@ -119,10 +140,10 @@ RUN echo "http_proxy: $http_proxy" && \
     chown -R stroom:stroom /stroom
 
 # Copy in all the content packs downloaded in the intermediate build stage
-COPY --chown=stroom:stroom --from=content-packs /content-packs /stroom/contentPackImport
+COPY --chown=stroom:stroom --from=content-packs-stage /content-packs /stroom/contentPackImport
 
 # Copy in all the send logs scripts downloaded in the intermediate build stage
-COPY --chown=stroom:stroom --from=send-logs-scripts /scripts /stroom
+COPY --chown=stroom:stroom --from=send-logs-scripts-stage /scripts /stroom
 
 # Copy all the fat jars for the application and connectors
 # Most likely to have changed last
@@ -130,7 +151,8 @@ COPY --chown=stroom:stroom docker-entrypoint.sh /stroom/
 COPY --chown=stroom:stroom create_crontab.sh /stroom/
 COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
 COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
-COPY --chown=stroom:stroom ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
+
+COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
