@@ -24,6 +24,7 @@ def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
+def sendToStroomScriptVersion = 'send-to-stroom-v1.2.1'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -255,12 +256,12 @@ task copySupportingFiles(type: Copy) {
 import de.undercouch.gradle.tasks.download.Download
 
 task downloadSend(type: Download) {
-    src 'http://raw.githubusercontent.com/gchq/stroom-clients/master/bash/send_to_stroom.sh'
+    src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
     dest 'build/release/bin'
 }
 
 task downloadSendArgs(type: Download) {
-    src 'https://raw.githubusercontent.com/gchq/stroom-clients/master/bash/send_to_stroom_args.sh'
+    src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
     dest 'build/release/bin'
 }
 
