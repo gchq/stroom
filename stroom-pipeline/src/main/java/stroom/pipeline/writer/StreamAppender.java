@@ -27,7 +27,6 @@ import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
-import stroom.io.StreamCloser;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -48,7 +47,6 @@ import stroom.streamtask.shared.Processor;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -204,10 +202,10 @@ public class StreamAppender extends AbstractAppender {
                 } else {
                     streamStore.closeStreamTarget(streamTarget);
                 }
-            } catch (final OptimisticLockException e) {
-                // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
-                LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
-                LOGGER.trace(e.getMessage(), e);
+//            } catch (final OptimisticLockException e) {
+//                // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+//                LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+//                LOGGER.trace(e.getMessage(), e);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }

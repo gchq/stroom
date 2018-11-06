@@ -79,7 +79,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -602,10 +601,10 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                     } else {
                                         streamStore.closeStreamTarget(processInfoStreamTarget);
                                     }
-                                } catch (final OptimisticLockException e) {
-                                    // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
-                                    LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
-                                    LOGGER.trace(e.getMessage(), e);
+//                                } catch (final OptimisticLockException e) {
+//                                    // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+//                                    LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+//                                    LOGGER.trace(e.getMessage(), e);
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }

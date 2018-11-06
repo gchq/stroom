@@ -20,11 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.pipeline.scope.PipelineScoped;
 import stroom.io.StreamCloser;
+import stroom.pipeline.scope.PipelineScoped;
 
 import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -96,10 +95,10 @@ public class SteamStoreStreamCloserImpl implements StreamCloser {
                         // Close the stream target.
                         try {
                             streamStore.closeStreamTarget(streamTarget);
-                        } catch (final OptimisticLockException e) {
-                            // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
-                            LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
-                            LOGGER.trace(e.getMessage(), e);
+//                        } catch (final OptimisticLockException e) {
+//                            // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+//                            LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+//                            LOGGER.trace(e.getMessage(), e);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
