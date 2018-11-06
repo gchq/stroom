@@ -198,7 +198,7 @@ class FormatDate extends StroomExtensionFunctionCall {
 
     // TODO : @66 Reinstate date format caching.
 
-    long parseDate(final XPathContext context, final String timeZone, final String pattern, final String value) {
+    long parseDate(final XPathContext context, final String value, final String pattern, final String timeZone) {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
                 .parseLenient()
