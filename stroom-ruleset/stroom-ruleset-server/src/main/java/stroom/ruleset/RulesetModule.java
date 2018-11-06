@@ -23,6 +23,7 @@ import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
+import stroom.util.HasHealthCheck;
 
 public class RulesetModule extends AbstractModule {
     @Override
@@ -38,6 +39,10 @@ public class RulesetModule extends AbstractModule {
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(RuleSet.DOCUMENT_TYPE).to(stroom.ruleset.RuleSetServiceImpl.class);
+
+        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
+        hasHealthCheckBinder.addBinding().to(RuleSetResource.class);
+        hasHealthCheckBinder.addBinding().to(RuleSetResource2.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);

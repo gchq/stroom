@@ -39,9 +39,11 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
+    private boolean readOnly = true;
 
     @Inject
-    public XsltPresenter(final EventBus eventBus, final LinkTabPanelView view,
+    public XsltPresenter(final EventBus eventBus,
+                         final LinkTabPanelView view,
                          final XsltSettingsPresenter settingsPresenter,
                          final Provider<EditorPresenter> editorPresenterProvider,
                          final ClientSecurityContext securityContext) {
@@ -75,7 +77,6 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     public void onRead(final DocRef docRef, final XsltDoc xslt) {
         super.onRead(docRef, xslt);
         settingsPresenter.read(docRef, xslt);
-
         if (codePresenter != null) {
             codePresenter.setText(xslt.getData());
         }
@@ -84,20 +85,18 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     @Override
     protected void onWrite(final XsltDoc xslt) {
         settingsPresenter.write(xslt);
-
         if (codePresenter != null) {
             xslt.setData(codePresenter.getText());
         }
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
-
-        codePresenter = getOrCreateCodePresenter();
-        codePresenter.setReadOnly(readOnly);
-        if (getEntity() != null) {
-            codePresenter.setText(getEntity().getData());
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        this.readOnly = readOnly;
+        settingsPresenter.onReadOnly(readOnly);
+        if (codePresenter != null) {
+            codePresenter.setReadOnly(readOnly);
         }
     }
 
@@ -111,6 +110,10 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
             codePresenter = editorPresenterProvider.get();
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+            codePresenter.setReadOnly(readOnly);
+            if (getEntity() != null) {
+                codePresenter.setText(getEntity().getData());
+            }
         }
         return codePresenter;
     }

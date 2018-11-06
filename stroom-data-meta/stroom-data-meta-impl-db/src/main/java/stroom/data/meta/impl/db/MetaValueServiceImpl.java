@@ -236,7 +236,7 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     // TODO : @66 MAKE SURE THIS GETS CALLED
-    @StroomFrequencySchedule("1h")
+    @StroomFrequencySchedule("1d")
     @JobTrackedSchedule(jobName = "Data Attributes Retention", description = "Delete attributes older than system property stroom.meta.deleteAge)")
     public void deleteOldValues() {
         // TODO : @66 ACQUIRE A CLUSTER LOCK BEFORE PERFORMING A BATCH DELETE TO REDUCE DB CONTENTION AND TO LET A SINGLE NODE DO THE JOB.

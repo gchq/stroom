@@ -35,9 +35,8 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 public class XMLSchemaSettingsPresenter
         extends DocumentSettingsPresenter<XMLSchemaSettingsView, XmlSchemaDoc> {
     @Inject
-    public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view,
-                                      final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view) {
+        super(eventBus, view);
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {

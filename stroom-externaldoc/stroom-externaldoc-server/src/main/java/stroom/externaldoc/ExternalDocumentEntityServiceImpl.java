@@ -18,6 +18,8 @@ package stroom.externaldoc;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.EncodingUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -45,6 +47,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntityService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExternalDocumentEntityServiceImpl.class);
+
     private final String type;
     private final SecurityContext securityContext;
     private final DocRefResourceHttpClient docRefHttpClient;
@@ -214,20 +218,26 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
 
     @Override
     public Set<DocRef> listDocuments() {
-        final Response response = docRefHttpClient.getAll(serviceUser());
+        try {
+            final Response response = docRefHttpClient.getAll(serviceUser());
 
-        if (response.getStatus() != HttpStatus.OK_200) {
-            response.close();
-            throw new EntityServiceException("Invalid HTTP status returned from listDocuments: " + response.getStatus());
+            if (response.getStatus() != HttpStatus.OK_200) {
+                response.close();
+                throw new EntityServiceException("Invalid HTTP status returned from listDocuments: " + response.getStatus());
+            }
+
+
+            final List<DocRefEntity> results = response.readEntity(new GenericType<List<DocRefEntity>>() {
+            });
+
+            return results.stream()
+                    .map(this::getDocRef)
+                    .collect(Collectors.toSet());
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
-
-        final List<DocRefEntity> results = response.readEntity(new GenericType<List<DocRefEntity>>() {
-        });
-
-        return results.stream()
-                .map(this::getDocRef)
-                .collect(Collectors.toSet());
+        return Collections.emptySet();
     }
 
     @Override

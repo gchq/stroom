@@ -45,6 +45,7 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
     private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
     private final ClientDispatchAsync clientDispatchAsync;
     private VolumeEntity volume;
+    private boolean opening;
 
     @Inject
     public VolumeEditPresenter(final EventBus eventBus, final VolumeEditView view,
@@ -54,38 +55,39 @@ public class VolumeEditPresenter extends MyPresenterWidget<VolumeEditPresenter.V
     }
 
     public void addVolume(final VolumeEntity volume, final PopupUiHandlers popupUiHandlers) {
-        this.volume = volume;
-        read();
-
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Add Volume",
-                new DelegatePopupUiHandlers(popupUiHandlers));
+        read(volume, "Add Volume", popupUiHandlers);
     }
 
     public void editVolume(final VolumeEntity volume, final PopupUiHandlers popupUiHandlers) {
-        this.volume = volume;
-        read();
-
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Volume",
-                new DelegatePopupUiHandlers(popupUiHandlers));
+        read(volume, "Edit Volume", popupUiHandlers);
     }
 
-    private void read() {
-        clientDispatchAsync.exec(new EntityServiceFindAction<FindNodeCriteria, Node>(new FindNodeCriteria())).onSuccess(result -> {
-            getView().getNode().addItems(result.getValues());
-            getView().getNode().setSelectedItem(volume.getNode());
-        });
-        getView().getPath().setText(volume.getPath());
-        getView().getVolumeType().addItems(VolumeType.values());
-        getView().getVolumeType().setSelectedItem(volume.getVolumeType());
-        getView().getStreamStatus().addItems(VolumeUseStatus.values());
-        getView().getStreamStatus().setSelectedItem(volume.getStreamStatus());
-        getView().getIndexStatus().addItems(VolumeUseStatus.values());
-        getView().getIndexStatus().setSelectedItem(volume.getIndexStatus());
+    private void read(final VolumeEntity volume, final String title, final PopupUiHandlers popupUiHandlers) {
+        if (!opening) {
+            opening = true;
 
-        if (volume.getBytesLimit() != null) {
-            getView().getBytesLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit()));
-        } else {
-            getView().getBytesLimit().setText("");
+            this.volume = volume;
+            clientDispatchAsync.exec(new EntityServiceFindAction<FindNodeCriteria, Node>(new FindNodeCriteria())).onSuccess(result -> {
+                getView().getNode().addItems(result.getValues());
+                getView().getNode().setSelectedItem(volume.getNode());
+                getView().getPath().setText(volume.getPath());
+                getView().getVolumeType().addItems(VolumeType.values());
+                getView().getVolumeType().setSelectedItem(volume.getVolumeType());
+                getView().getStreamStatus().addItems(VolumeUseStatus.values());
+                getView().getStreamStatus().setSelectedItem(volume.getStreamStatus());
+                getView().getIndexStatus().addItems(VolumeUseStatus.values());
+                getView().getIndexStatus().setSelectedItem(volume.getIndexStatus());
+
+                if (volume.getBytesLimit() != null) {
+                    getView().getBytesLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit()));
+                } else {
+                    getView().getBytesLimit().setText("");
+                }
+
+                opening = false;
+                ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
+                        new DelegatePopupUiHandlers(popupUiHandlers));
+            });
         }
     }
 

@@ -22,6 +22,7 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
 import stroom.task.api.TaskHandler;
+import stroom.util.HasHealthCheck;
 
 public class SecurityModule extends AbstractModule {
     @Override
@@ -57,6 +58,9 @@ public class SecurityModule extends AbstractModule {
         entityEventHandlerBinder.addBinding().to(DocumentPermissionsCache.class);
         entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
+
+        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
+        hasHealthCheckBinder.addBinding().to(JWTService.class);
     }
 
 //    @Provides

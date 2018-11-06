@@ -82,8 +82,7 @@ class FetchExplorerPermissionsHandler
 
                 // Add special permissions for folders to control creation of sub items.
                 if (DocumentTypes.isFolder(docRef.getType())) {
-                    final DocumentTypes documentTypes = explorerService.getDocumentTypes();
-                    for (final DocumentType documentType : documentTypes.getNonSystemTypes()) {
+                    for (final DocumentType documentType : explorerService.getNonSystemTypes()) {
                         final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());
                         if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
                                 permissionName)) {

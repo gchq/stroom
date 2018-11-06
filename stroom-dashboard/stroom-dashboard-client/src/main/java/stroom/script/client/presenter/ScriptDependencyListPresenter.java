@@ -23,15 +23,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.node.client.view.WrapperView;
-import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
@@ -41,12 +42,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<ScriptDoc>, HasWrite<ScriptDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<ScriptDoc>, HasWrite<ScriptDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
     private final ButtonView addButton;
     private final ButtonView removeButton;
     private List<DocRef> scripts;
+
+    private boolean readOnly = true;
 
     @Inject
     public ScriptDependencyListPresenter(final EventBus eventBus, final WrapperView view,
@@ -62,9 +65,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         view.setView(scriptListPresenter.getView());
 
         addButton = scriptListPresenter.getView().addButton(SvgPresets.ADD);
-        addButton.setTitle("Add Dependency");
         removeButton = scriptListPresenter.getView().addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove Dependency");
+
+        enableButtons();
     }
 
     @Override
@@ -73,10 +76,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
         registerHandler(addButton.addClickHandler(this::onAdd));
         registerHandler(removeButton.addClickHandler(this::onRemove));
-        registerHandler(scriptListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final DocRef selected = scriptListPresenter.getSelectionModel().getSelected();
-            removeButton.setEnabled(selected != null);
-        }));
+        registerHandler(scriptListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
         registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> {
             final ExplorerNode selectedItem = event.getSelectedItem();
             if (selectedItem != null) {
@@ -140,6 +140,26 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
             scriptListPresenter.setData(list);
         } else {
             scriptListPresenter.setData(new ArrayList<>());
+        }
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+    }
+
+    private void enableButtons() {
+        final DocRef selected = scriptListPresenter.getSelectionModel().getSelected();
+        addButton.setEnabled(!readOnly);
+        removeButton.setEnabled(!readOnly && selected != null);
+
+        if (readOnly) {
+            addButton.setTitle("Add dependency disabled as script is read only");
+            removeButton.setTitle("Remove dependency disabled as script is read only");
+        } else {
+            addButton.setTitle("Add Dependency");
+            removeButton.setTitle("Remove Dependency");
         }
     }
 

@@ -31,9 +31,8 @@ public class PipelineSettingsPresenter
         extends DocumentSettingsPresenter<PipelineSettingsView, PipelineDoc>
         implements PipelineSettingsUiHandlers {
     @Inject
-    public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view,
-                                     final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public PipelineSettingsPresenter(final EventBus eventBus, final PipelineSettingsView view) {
+        super(eventBus, view);
         view.setUiHandlers(this);
     }
 

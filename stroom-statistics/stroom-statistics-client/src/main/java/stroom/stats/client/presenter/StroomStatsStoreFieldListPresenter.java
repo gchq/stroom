@@ -32,6 +32,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.docref.DocRef;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreDoc;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
-        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -52,6 +53,8 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     private StroomStatsStoreEntityData stroomStatsStoreEntityData;
 
     private StroomStatsStoreCustomMaskListPresenter customMaskListPresenter;
+
+    private boolean readOnly = true;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -61,13 +64,12 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
         this.stroomStatsStoreFieldEditPresenter = stroomStatsStoreFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        newButton.setTitle("New Field");
         editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Field");
         removeButton = getView().addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove Field");
 
         addColumns();
+
+        enableButtons();
     }
 
     @Override
@@ -101,14 +103,25 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     }
 
     private void enableButtons() {
+        newButton.setEnabled(!readOnly);
         if (stroomStatsStoreEntityData != null && stroomStatsStoreEntityData.getStatisticFields() != null) {
             StatisticField selected = getView().getSelectionModel().getSelected();
-            final boolean enabled = selected != null;
+            final boolean enabled = !readOnly && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
         } else {
             editButton.setEnabled(false);
             removeButton.setEnabled(false);
+        }
+
+        if (readOnly) {
+            newButton.setTitle("New field disabled as fields are read only");
+            editButton.setTitle("Edit field disabled as fields are read only");
+            removeButton.setTitle("Remove field disabled as fields are read only");
+        } else {
+            newButton.setTitle("New Field");
+            editButton.setTitle("Edit Field");
+            removeButton.setTitle("Remove Field");
         }
     }
 
@@ -127,53 +140,18 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     }
 
     private void onAdd() {
-        final StatisticField statisticField = new StatisticField();
-        final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
-        final List<StatisticField> otherFields = stroomStatsStoreEntityData.getStatisticFields();
-
-        stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
-        stroomStatsStoreFieldEditPresenter.show("New Field", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
-                        stroomStatsStoreEntityData.addStatisticField(statisticField);
-                        reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
-                        refresh();
-                        stroomStatsStoreFieldEditPresenter.hide();
-                        DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
-                    }
-                } else {
-                    stroomStatsStoreFieldEditPresenter.hide();
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore.
-            }
-        });
-    }
-
-    private void onEdit() {
-        final StatisticField statisticField = getView().getSelectionModel().getSelected();
-        if (statisticField != null) {
+        if (!readOnly) {
+            final StatisticField statisticField = new StatisticField();
             final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
-
-            // make a copy of the list of stat fields and remove the one we are
-            // editing so we can check the new value
-            // is not already in the list
-            final List<StatisticField> otherFields = new ArrayList<>(
-                    stroomStatsStoreEntityData.getStatisticFields());
-            otherFields.remove(statisticField);
+            final List<StatisticField> otherFields = stroomStatsStoreEntityData.getStatisticFields();
 
             stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
-            stroomStatsStoreFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
+            stroomStatsStoreFieldEditPresenter.show("New Field", new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
                         if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
-                            stroomStatsStoreEntityData.reOrderStatisticFields();
+                            stroomStatsStoreEntityData.addStatisticField(statisticField);
                             reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
                             refresh();
                             stroomStatsStoreFieldEditPresenter.hide();
@@ -192,16 +170,57 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
         }
     }
 
-    private void onRemove() {
-        final List<StatisticField> list = getView().getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
-            final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
+    private void onEdit() {
+        if (!readOnly) {
+            final StatisticField statisticField = getView().getSelectionModel().getSelected();
+            if (statisticField != null) {
+                final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
 
-            stroomStatsStoreEntityData.getStatisticFields().removeAll(list);
-            getView().getSelectionModel().clear();
-            reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
-            refresh();
-            DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                // make a copy of the list of stat fields and remove the one we are
+                // editing so we can check the new value
+                // is not already in the list
+                final List<StatisticField> otherFields = new ArrayList<>(
+                        stroomStatsStoreEntityData.getStatisticFields());
+                otherFields.remove(statisticField);
+
+                stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
+                stroomStatsStoreFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
+                                stroomStatsStoreEntityData.reOrderStatisticFields();
+                                reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
+                                refresh();
+                                stroomStatsStoreFieldEditPresenter.hide();
+                                DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                            }
+                        } else {
+                            stroomStatsStoreFieldEditPresenter.hide();
+                        }
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Ignore.
+                    }
+                });
+            }
+        }
+    }
+
+    private void onRemove() {
+        if (!readOnly) {
+            final List<StatisticField> list = getView().getSelectionModel().getSelectedItems();
+            if (list != null && list.size() > 0) {
+                final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
+
+                stroomStatsStoreEntityData.getStatisticFields().removeAll(list);
+                getView().getSelectionModel().clear();
+                reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
+                refresh();
+                DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+            }
         }
     }
 
@@ -236,6 +255,12 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     @Override
     public void write(final StroomStatsStoreDoc entity) {
         entity.setConfig(stroomStatsStoreEntityData);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     @Override

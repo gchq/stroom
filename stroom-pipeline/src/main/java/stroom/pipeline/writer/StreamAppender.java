@@ -17,8 +17,11 @@
 
 package stroom.pipeline.writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;
@@ -31,6 +34,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
+import stroom.pipeline.server.task.SupersededOutputHelper;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -44,6 +48,7 @@ import stroom.streamtask.shared.Processor;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.persistence.OptimisticLockException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -51,13 +56,15 @@ import java.io.OutputStream;
         PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_DESTINATION,
         PipelineElementType.VISABILITY_STEPPING}, icon = ElementIcons.STREAM)
 public class StreamAppender extends AbstractAppender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAppender.class);
+
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final RecordCount recordCount;
-    private final StreamCloser streamCloser;
+    private final SupersededOutputHelper supersededOutputHelper;
 
     private String feed;
     private String streamType;
@@ -65,6 +72,7 @@ public class StreamAppender extends AbstractAppender {
     private StreamTarget streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
     private boolean doneHeader;
+    private long count;
 
     private ProcessStatistics lastProcessStatistics;
 
@@ -75,7 +83,7 @@ public class StreamAppender extends AbstractAppender {
                           final StreamProcessorHolder streamProcessorHolder,
                           final MetaData metaData,
                           final RecordCount recordCount,
-                          final StreamCloser streamCloser) {
+                          final SupersededOutputHelper supersededOutputHelper) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -83,7 +91,7 @@ public class StreamAppender extends AbstractAppender {
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.recordCount = recordCount;
-        this.streamCloser = streamCloser;
+        this.supersededOutputHelper = supersededOutputHelper;
     }
 
     @Override
@@ -123,9 +131,6 @@ public class StreamAppender extends AbstractAppender {
 
         streamTarget = streamStore.openStreamTarget(streamProperties);
 
-        // Let the stream closer handle closing it
-        streamCloser.add(streamTarget);
-
         wrappedSegmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
             @Override
             public void close() throws IOException {
@@ -145,6 +150,12 @@ public class StreamAppender extends AbstractAppender {
             insertSegmentMarker();
         }
         return outputStream;
+    }
+
+    @Override
+    public Destination borrowDestination() throws IOException {
+        count++;
+        return super.borrowDestination();
     }
 
     @Override
@@ -183,8 +194,23 @@ public class StreamAppender extends AbstractAppender {
             // Write statistics meta data.
             currentStatistics.write(streamTarget.getAttributes());
 
-            // We leave the streamCloser to close the stream target as it may
-            // want to delete it instead
+            // Overwrite the actual output record count.
+            streamTarget.getAttributes().put(MetaDataSource.REC_WRITE, String.valueOf(count));
+
+            // Close the stream target.
+            try {
+                if (supersededOutputHelper.isSuperseded()) {
+                    streamStore.deleteStreamTarget(streamTarget);
+                } else {
+                    streamStore.closeStreamTarget(streamTarget);
+                }
+            } catch (final OptimisticLockException e) {
+                // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+                LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+                LOGGER.trace(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
     }
 

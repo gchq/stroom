@@ -30,12 +30,13 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.docref.DocRef;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.ruleset.shared.RuleSet;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -47,7 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourceField>>
-        implements HasDocumentRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers {
+        implements HasDocumentRead<RuleSet>, HasWrite<RuleSet>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -55,6 +56,8 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     private final ButtonView upButton;
     private final ButtonView downButton;
     private List<DataSourceField> fields;
+
+    private boolean readOnly = true;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -75,6 +78,8 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
         downButton.setTitle("Move Down");
 
         addColumns();
+
+        enableButtons();
     }
 
     @Override
@@ -82,40 +87,54 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
         super.onBind();
 
         registerHandler(newButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onAdd();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onAdd();
+                }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onEdit();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onEdit();
+                }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onRemove();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onRemove();
+                }
             }
         }));
         registerHandler(upButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                moveSelectedFieldUp();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    moveSelectedFieldUp();
+                }
             }
         }));
         registerHandler(downButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                moveSelectedFieldDown();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    moveSelectedFieldDown();
+                }
             }
         }));
         registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                onEdit();
+            if (!readOnly) {
+                enableButtons();
+                if (event.getSelectionType().isDoubleSelect()) {
+                    onEdit();
+                }
             }
         }));
     }
 
     private void enableButtons() {
-        if (fields != null) {
+        newButton.setEnabled(!readOnly);
+
+        if (!readOnly && fields != null) {
             final DataSourceField selectedElement = getView().getSelectionModel().getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
@@ -290,6 +309,12 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     @Override
     public void write(final RuleSet policy) {
         policy.setFields(fields);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     @Override

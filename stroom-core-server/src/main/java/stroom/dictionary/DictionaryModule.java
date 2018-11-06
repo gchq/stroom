@@ -17,10 +17,16 @@
 package stroom.dictionary;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.util.HasHealthCheck;
 
 public class DictionaryModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
+
+        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
+        hasHealthCheckBinder.addBinding().to(DictionaryResource.class);
+        hasHealthCheckBinder.addBinding().to(DictionaryResource2.class);
     }
 }

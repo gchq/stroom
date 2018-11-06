@@ -35,6 +35,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.docref.DocRef;
 import stroom.statistics.client.common.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
 import stroom.statistics.shared.StatisticStoreDoc;
@@ -54,7 +55,7 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
@@ -64,6 +65,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     private StatisticStoreDoc statisticsDataSource;
     private MaskHolderList maskList = new MaskHolderList();
 
+    private boolean readOnly = true;
+
     @SuppressWarnings("unchecked")
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus,
@@ -71,15 +74,14 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        newButton.setTitle("New roll-up permutation");
         autoGenerateButton = getView().addButton(SvgPresets.GENERATE);
         removeButton = getView().addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove roll-up permutation");
 
         maskList = new MaskHolderList();
 
         this.dispatcher = dispatcher;
         refreshModel();
+        enableButtons();
     }
 
     @Override
@@ -108,16 +110,25 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     private void enableButtons() {
-        autoGenerateButton.setEnabled(true);
+        newButton.setEnabled(!readOnly);
+        autoGenerateButton.setEnabled(!readOnly);
 
         if (maskList != null && maskList.size() > 0) {
             selectedElement = getView().getSelectionModel().getSelected();
-            final boolean enabled = selectedElement != null;
-
-            removeButton.setEnabled(enabled);
+            removeButton.setEnabled(!readOnly && selectedElement != null);
 
         } else {
             removeButton.setEnabled(false);
+        }
+
+        if (readOnly) {
+            newButton.setTitle("New roll-up permutation disabled as read only");
+            autoGenerateButton.setTitle("Auto-generate roll-up permutations disabled as read only");
+            removeButton.setTitle("Remove roll-up permutation disabled as read only");
+        } else {
+            newButton.setTitle("New roll-up permutation");
+            autoGenerateButton.setTitle("Auto-generate roll-up permutations");
+            removeButton.setTitle("Remove roll-up permutation");
         }
     }
 
@@ -236,6 +247,12 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     public void write(final StatisticStoreDoc entity) {
         entity.getConfig()
                 .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     @Override

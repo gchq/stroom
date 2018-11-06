@@ -36,6 +36,7 @@ public class PipelineCacheModule extends AbstractModule {
         clearableBinder.addBinding().to(XsltPoolImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
+        entityEventHandlerBinder.addBinding().to(ParserFactoryPoolImpl.class);
         entityEventHandlerBinder.addBinding().to(SchemaPoolImpl.class);
     }
 }

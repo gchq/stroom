@@ -21,18 +21,36 @@ if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
     echo "Cron build so don't set up gradle plugins or docker containers"
 
 else
-    echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
     # Increase the size of the heap
     export JAVA_OPTS=-Xmx1024m
+    echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 
-    echo "Clone our stroom-resources repo"
+    # The version of compose that is ready installed with travis does not support v2.4 yml syntax
+    # so we have to update to something more recent.
+    echo -e "${GREEN}Removing docker-compose${NC}"
+    sudo rm /usr/local/bin/docker-compose
+
+    echo -e "${GREEN}Installing docker-compose ${BLUE}${DOCKER_COMPOSER_VERSION}${NC}"
+    curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+    chmod +x docker-compose
+    sudo mv docker-compose /usr/local/bin
+
+    echo -e "${GREEN}Clone our stroom-resources repo${NC}"
     git clone https://github.com/gchq/stroom-resources.git
     pushd stroom-resources/bin
     git checkout $STROOM_RESOURCES_BRANCH
 
-    echo "Start all the services we need to run the integration tests in stroom"
-    ./bounceIt.sh 'up -d --build' -e -y -x kafka stroom-all-dbs zookeeper
+    echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
+    ./bounceIt.sh 'up -d --build' -d -e -y -x kafka stroom-all-dbs zookeeper
     popd
+    popd
+
+    echo -e "${GREEN}Configure our plugins directory so stroom can find the kafka jar${NC}"
+    mkdir -p ~/.stroom/plugins
+    #Run the script to convert stroom.conf.template into stroom.conf
+    ./stroom.conf.sh
 fi
+
+echo -e "${GREEN}Finished running ${BLUE}before_script${NC}"
 
 exit 0

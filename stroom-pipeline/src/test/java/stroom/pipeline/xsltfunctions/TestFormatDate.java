@@ -37,6 +37,31 @@ import static org.mockito.Mockito.when;
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFormatDate extends StroomUnitTest {
     @Test
+    public void testDayOfWeekAndWeekAndWeakYear() {
+        final FormatDate formatDate = createFormatDate("2010-03-01T12:45:22.643Z");
+        Assert.assertEquals("2018-01-01T00:00:00.000Z", test(formatDate, "ccc/w/YYYY", "Mon/1/2018"));
+        Assert.assertEquals("2018-01-01T00:00:00.000Z", test(formatDate, "E/w/YYYY", "Mon/1/2018"));
+    }
+
+    @Test
+    public void testDayOfWeekAndWeek() {
+        final FormatDate formatDate = createFormatDate("2010-03-04T12:45:22.643Z");
+        Assert.assertEquals("2010-01-08T00:00:00.000Z", test(formatDate, "ccc/w", "Fri/2"));
+        Assert.assertEquals("2010-01-08T00:00:00.000Z", test(formatDate, "E/w", "Fri/2"));
+        Assert.assertEquals("2009-10-02T00:00:00.000Z", test(formatDate, "ccc/w", "Fri/40"));
+        Assert.assertEquals("2009-10-02T00:00:00.000Z", test(formatDate, "E/w", "Fri/40"));
+    }
+
+    @Test
+    public void testDayOfWeek() {
+        final FormatDate formatDate = createFormatDate("2010-03-04T12:45:22.643Z");
+        Assert.assertEquals("2010-03-01T00:00:00.000Z", test(formatDate, "ccc", "Mon"));
+        Assert.assertEquals("2010-03-01T00:00:00.000Z", test(formatDate, "E", "Mon"));
+        Assert.assertEquals("2010-02-26T00:00:00.000Z", test(formatDate, "ccc", "Fri"));
+        Assert.assertEquals("2010-02-26T00:00:00.000Z", test(formatDate, "E", "Fri"));
+    }
+
+    @Test
     public void testParseManualTimeZones() {
         long date;
 
@@ -121,13 +146,7 @@ public class TestFormatDate extends StroomUnitTest {
 
     @Test
     public void testDateWithNoYear() {
-        final Data stream = mock(Data.class);
-        when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
-
-        final StreamHolder streamHolder = new StreamHolder(null);
-        streamHolder.setStream(stream);
-
-        final FormatDate formatDate = new FormatDate(streamHolder);
+        final FormatDate formatDate = createFormatDate("2010-03-01T12:45:22.643Z");
 
         Assert.assertEquals("2010-01-01T00:00:00.000Z", test(formatDate, "dd/MM", "01/01"));
         Assert.assertEquals("2009-04-01T00:00:00.000Z", test(formatDate, "dd/MM", "01/04"));
@@ -182,80 +201,24 @@ public class TestFormatDate extends StroomUnitTest {
         parseUtcDate("dd-MM-yy HH:mm:ss VV", "18-04-18 01:01:01 Europe/London");
     }
 
-
     private ZonedDateTime parseUtcDate(final String pattern, final String dateStr) {
-        final Data stream = mock(Data.class);
-        when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
-
-        final StreamHolder streamHolder = new StreamHolder(null);
-        streamHolder.setStream(stream);
-
-        final FormatDate formatDate = new FormatDate(streamHolder);
+        final FormatDate formatDate = createFormatDate("2010-03-01T12:45:22.643Z");
 
         long timeMs = formatDate.parseDate(null, dateStr, pattern, "UTC");
         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMs), ZoneOffset.UTC);
     }
 
-    //TODO didn't have time to get this working so we can test via the front door
-//    private ZonedDateTime parseUtcDate(final String pattern, final String dateStr) {
-//        final Stream stream = new Stream();
-//        stream.setCreateMs(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
-//
-//        final StreamHolder streamHolder = new StreamHolder();
-//        streamHolder.setData(stream);
-//
-//        final FormatDate formatDate = new FormatDate(streamHolder);
-//        formatDate.configure(
-//                new ErrorReceiver() {
-//                    @Override
-//                    public void log(final Severity severity, final Location location, final String elementId, final String message, final Throwable e) {
-//
-//                    }
-//                },
-//                new LocationFactory() {
-//                    @Override
-//                    public Location create(final int colNo, final int lineNo) {
-//                        return null;
-//                    }
-//
-//                    @Override
-//                    public Location create() {
-//                        return null;
-//                    }
-//                },
-//                null);
-//
-//        XPathContext xPathContext = new XPathContextMajor(new ObjectValue<>("MyNode"), new Executable(new Configuration()));
-//
-////        long timeMs = formatDate.parseDate(null, "UTC", pattern , dateStr);
-//        try {
-//            String timeMsStr = formatDate.call("FormatDate", xPathContext, "UTC", pattern , dateStr);
-//            long timeMs = Long.parseLong(timeMsStr);
-//            ZonedDateTime time = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMs), ZoneOffset.UTC);
-//            return time;
-//        } catch (XPathException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//
-//    }
-
-//    private Instant call(final Sequence... arguments) {
-//        final String functionName = "FormatDate";
-//        final Stream stream = new Stream();
-//        stream.setCreateMs(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
-//
-//        final StreamHolder streamHolder = new StreamHolder();
-//        streamHolder.setData(stream);
-//
-//        final FormatDate formatDate = new FormatDate(streamHolder);
-//
-//        Sequence result = formatDate.call(functionName, null, arguments);
-//
-//
-//    }
-
     private String test(final FormatDate formatDate, final String pattern, final String date) {
         return DateUtil.createNormalDateTimeString(formatDate.parseDate(null, date, pattern, "UTC"));
+    }
+
+    private FormatDate createFormatDate(final String referenceDate) {
+        final Data stream = mock(Data.class);
+        when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString(referenceDate));
+
+        final StreamHolder streamHolder = new StreamHolder(null);
+        streamHolder.setStream(stream);
+
+        return new FormatDate(streamHolder);
     }
 }

@@ -49,7 +49,6 @@ public class UniqueXMLEvents {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     public static void main(final String[] args) {
@@ -65,7 +64,7 @@ public class UniqueXMLEvents {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 
-            SAXParser parser = null;
+            SAXParser parser;
             try {
                 parser = PARSER_FACTORY.newSAXParser();
             } catch (final ParserConfigurationException e) {
@@ -139,7 +138,7 @@ public class UniqueXMLEvents {
         }
 
         @Override
-        public void characters(final char[] ch, final int start, final int length) throws SAXException {
+        public void characters(final char[] ch, final int start, final int length) {
             content.append(ch, start, length);
         }
 

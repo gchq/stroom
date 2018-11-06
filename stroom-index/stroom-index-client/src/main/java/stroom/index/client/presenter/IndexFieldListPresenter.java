@@ -28,14 +28,15 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -47,7 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
-        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -55,6 +56,8 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     private final ButtonView upButton;
     private final ButtonView downButton;
     private List<IndexField> indexFields;
+
+    private boolean readOnly = true;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -64,17 +67,13 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        newButton.setTitle("New Field");
         editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Field");
         removeButton = getView().addButton(SvgPresets.DELETE);
-        removeButton.setTitle("Remove Field");
         upButton = getView().addButton(SvgPresets.UP);
-        upButton.setTitle("Move Up");
         downButton = getView().addButton(SvgPresets.DOWN);
-        downButton.setTitle("Move Down");
 
         addColumns();
+        enableButtons();
     }
 
     @Override
@@ -82,40 +81,53 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         super.onBind();
 
         registerHandler(newButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onAdd();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onAdd();
+                }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onEdit();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onEdit();
+                }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onRemove();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    onRemove();
+                }
             }
         }));
         registerHandler(upButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                moveSelectedFieldUp();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    moveSelectedFieldUp();
+                }
             }
         }));
         registerHandler(downButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                moveSelectedFieldDown();
+            if (!readOnly) {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    moveSelectedFieldDown();
+                }
             }
         }));
         registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                onEdit();
+            if (!readOnly) {
+                enableButtons();
+                if (event.getSelectionType().isDoubleSelect()) {
+                    onEdit();
+                }
             }
         }));
     }
 
     private void enableButtons() {
-        if (indexFields != null) {
+        newButton.setEnabled(!readOnly);
+        if (!readOnly && indexFields != null) {
             final List<IndexField> fieldList = indexFields;
             final IndexField selectedElement = getView().getSelectionModel().getSelected();
             final boolean enabled = selectedElement != null;
@@ -134,6 +146,20 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
             removeButton.setEnabled(false);
             upButton.setEnabled(false);
             downButton.setEnabled(false);
+        }
+
+        if (readOnly) {
+            newButton.setTitle("New field disabled as index is read only");
+            editButton.setTitle("Edit field disabled as index is read only");
+            removeButton.setTitle("Remove field disabled as index is read only");
+            upButton.setTitle("Move up disabled as index is read only");
+            downButton.setTitle("Move down disabled as index is read only");
+        } else {
+            newButton.setTitle("New Field");
+            editButton.setTitle("Edit Field");
+            removeButton.setTitle("Remove Field");
+            upButton.setTitle("Move Up");
+            downButton.setTitle("Move Down");
         }
     }
 
@@ -219,17 +245,19 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onAdd() {
-        final IndexField indexField = new IndexField();
         final Set<String> otherNames = getFieldNames();
 
-        indexFieldEditPresenter.read(indexField, otherNames);
+        indexFieldEditPresenter.read(new IndexField(), otherNames);
         indexFieldEditPresenter.show("New Field", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
+                    final IndexField indexField = new IndexField();
                     if (indexFieldEditPresenter.write(indexField)) {
                         indexFields.add(indexField);
+                        getView().getSelectionModel().setSelected(indexField);
                         refresh();
+
                         indexFieldEditPresenter.hide();
                         DirtyEvent.fire(IndexFieldListPresenter.this, true);
                     }
@@ -246,20 +274,31 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onEdit() {
-        final IndexField indexField = getView().getSelectionModel().getSelected();
-        if (indexField != null) {
+        final IndexField existingField = getView().getSelectionModel().getSelected();
+        if (existingField != null) {
             final Set<String> otherNames = getFieldNames();
-            otherNames.remove(indexField.getFieldName());
+            otherNames.remove(existingField.getFieldName());
 
-            indexFieldEditPresenter.read(indexField, otherNames);
+            indexFieldEditPresenter.read(existingField, otherNames);
             indexFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
+                        final IndexField indexField = new IndexField();
                         if (indexFieldEditPresenter.write(indexField)) {
-                            refresh();
-                            indexFieldEditPresenter.hide();
-                            DirtyEvent.fire(IndexFieldListPresenter.this, true);
+                            if (!indexField.equals(existingField)) {
+                                final List<IndexField> fieldList = indexFields;
+                                final int index = fieldList.indexOf(existingField);
+                                fieldList.remove(index);
+                                fieldList.add(index, indexField);
+                                getView().getSelectionModel().setSelected(indexField);
+                                refresh();
+
+                                indexFieldEditPresenter.hide();
+                                DirtyEvent.fire(IndexFieldListPresenter.this, true);
+                            } else {
+                                indexFieldEditPresenter.hide();
+                            }
                         }
                     } else {
                         indexFieldEditPresenter.hide();
@@ -352,6 +391,12 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
+    }
+
+    @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
@@ -364,12 +409,4 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         }
         return Collections.emptySet();
     }
-
-//    public Set<String> getFieldNames() {
-//        final Set<String> set = new HashSet<>();
-//        for (final IndexField field : indexFields) {
-//            set.add(field.getFieldName());
-//        }
-//        return set;
-//    }
 }

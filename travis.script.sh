@@ -3,10 +3,12 @@
 #exit script on any error
 set -e
 
-DOCKER_REPO="gchq/stroom"
+STROOM_DOCKER_REPO="gchq/stroom"
+STROOM_PROXY_DOCKER_REPO="gchq/stroom-proxy"
 GITHUB_REPO="gchq/stroom"
 GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
-DOCKER_CONTEXT_ROOT="stroom-app/docker/."
+STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
+STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-app/proxy-docker/."
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -184,7 +186,7 @@ else
 
     #Do the gradle build
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
-    ./gradlew -PdumpFailedTestXml=true -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist ${extraBuildArgs}
+    ./gradlew -PdumpFailedTestXml=true -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build buildDistribution ${extraBuildArgs}
 
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
@@ -193,8 +195,11 @@ else
         #which is incorrect, hopefully this course of events is unlikely to happen
         allDockerTags="${VERSION_FIXED_TAG} ${SNAPSHOT_FLOATING_TAG} ${MAJOR_VER_FLOATING_TAG} ${MINOR_VER_FLOATING_TAG}"
 
-        #build and release the stroom-stats image to dockerhub
-        releaseToDockerHub "${DOCKER_REPO}" "${DOCKER_CONTEXT_ROOT}" ${allDockerTags}
+        #build and release stroom image to dockerhub
+        releaseToDockerHub "${STROOM_DOCKER_REPO}" "${STROOM_DOCKER_CONTEXT_ROOT}" ${allDockerTags}
+
+        #build and release stroom-proxy image to dockerhub
+        releaseToDockerHub "${STROOM_PROXY_DOCKER_REPO}" "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" ${allDockerTags}
     fi
 
     #Deploy the generated swagger specs and swagger UI (obtained from github) to gh-pages

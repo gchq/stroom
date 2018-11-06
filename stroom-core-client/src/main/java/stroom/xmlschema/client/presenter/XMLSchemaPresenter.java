@@ -46,8 +46,10 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     private boolean updateDiagram;
 
     @Inject
-    public XMLSchemaPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                              final XMLSchemaSettingsPresenter settingsPresenter, final XSDBrowserPresenter xsdBrowserPresenter,
+    public XMLSchemaPresenter(final EventBus eventBus,
+                              final LinkTabPanelView view,
+                              final XMLSchemaSettingsPresenter settingsPresenter,
+                              final XSDBrowserPresenter xsdBrowserPresenter,
                               final EditorPresenter codePresenter,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
@@ -129,8 +131,10 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        codePresenter.setReadOnly(readOnly);
+        settingsPresenter.onReadOnly(readOnly);
 
         if (!readOnly) {
             // Enable controls based on user permission

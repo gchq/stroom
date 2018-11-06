@@ -17,6 +17,7 @@ plugins {
     //search for NOTICE.txt and DEPENDENCIES.txt
     //id "org.nosphere.honker" version "0.3.0"
     id 'org.flywaydb.flyway' version '5.0.7'
+    id "de.undercouch.download"
 }
 
 ext.moduleName = 'stroom.app'
@@ -162,14 +163,16 @@ runShadow {
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
-def dockerBuildDir = "${projectDir}/docker/build"
+def stroomDockerBuildDir = "${projectDir}/docker/build"
+def proxyDockerBuildDir = "${projectDir}/proxy-docker/build"
 
 clean {
-    delete dockerBuildDir
+    delete stroomDockerBuildDir
+    delete proxyDockerBuildDir
 }
 
-//Copy all the files needed by the docker build into stroom-app/docker/build
-task copyFilesForDockerBuild() {
+//Copy all the files needed by the stroom docker build into stroom-app/docker/build
+task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
 //    dependsOn tasks.getByPath(':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:shadowJar')
 //    dependsOn tasks.getByPath(':stroom-elastic:stroom-elastic-client-impl_5_6_4:shadowJar')
@@ -179,7 +182,7 @@ task copyFilesForDockerBuild() {
         // Copy the stroom app fat jar
         copy {
             from "${project.buildDir}/libs/${fatJarName}"
-            into dockerBuildDir
+            into stroomDockerBuildDir
         }
 
 //        // Copy the kafka client fat jar
@@ -197,7 +200,25 @@ task copyFilesForDockerBuild() {
         // Copy the dropwizard yml configuration
         copy {
             from "${projectDir}/prod.yml"
-            into dockerBuildDir
+            into stroomDockerBuildDir
+        }
+    }
+}
+
+//Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
+task copyFilesForProxyDockerBuild() {
+    dependsOn shadowJar
+    doFirst {
+        //Copy the stroom app fat jar
+        copy {
+            from "${project.buildDir}/libs/${fatJarName}"
+            into proxyDockerBuildDir
+        }
+
+        //Copy the dropwizard yml configuration
+        copy {
+            from "${projectDir}/proxy-prod.yml"
+            into proxyDockerBuildDir
         }
     }
 }
@@ -232,14 +253,57 @@ swagger {
     }
 }
 
-task dist(type: Zip) {
-    from 'src/dist'
+
+task copyJar(type: Copy) {
     from shadowJar.outputs.files
+    into 'build/release/bin'
 }
 
+task copySupportingFiles(type: Copy) {
+    from 'src/dist'
+    into 'build/release'
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+task downloadSend(type: Download) {
+    src 'http://raw.githubusercontent.com/gchq/stroom-clients/master/bash/send_to_stroom.sh'
+    dest 'build/release/bin'
+}
+
+task downloadSendArgs(type: Download) {
+    src 'https://raw.githubusercontent.com/gchq/stroom-clients/master/bash/send_to_stroom_args.sh'
+    dest 'build/release/bin'
+}
+
+task makeSendExecutable {
+    dependsOn copySupportingFiles
+    doLast{
+        exec {
+            commandLine 'chmod', '+x', 'build/release/bin/send_to_stroom.sh'
+        }
+        exec {
+            commandLine 'chmod', '+x', 'build/release/bin/send_to_stroom_args.sh'
+        }
+    }
+}
+
+task buildDistribution(type: Zip) {
+    dependsOn copyJar
+    dependsOn copySupportingFiles
+    dependsOn downloadSend
+    dependsOn downloadSendArgs
+    dependsOn makeSendExecutable
+    from 'build/release'
+}
+
+
+
 tasks.build.dependsOn generateSwaggerDocumentation
-tasks.build.dependsOn copyFilesForDockerBuild
+tasks.build.dependsOn copyFilesForStroomDockerBuild
+tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar
+tasks.build.dependsOn buildDistribution
 
 //commented out in case we decide to use this plugin
 //honker {

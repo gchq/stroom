@@ -6,6 +6,70 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add a health check for getting a public key from the authentication service.
+
+* Issue **#897** : Import no longer attempts to rename or move existing items but will still update content.
+
+* Issue **#902** : Improved the XSLT `format-date` function to better cope with week based dates and to default values to the stream time where year etc are omitted.
+
+* Issue **#905** : Popup resize and move operations are now constrained to ensure that a popup cannot be dragged off screen or resized to be bigger than the current browser window size.
+
+* Issue **#898** : Improved the way many read only aspects of the UI behave.
+
+* Issue **#894** : The system now generates and displays errors to the user when you attempt to copy a feed.
+
+* Issue **#896** : Extended folder `create` permissions are now correctly cached.
+
+* Issue **#893** : You can now manage volumes without the `Manage Nodes` permission.
+
+* Issue **#892** : The volume editor now waits for the node list to be loaded before opening.
+
+* Issue **#889** : Index field editing in the UI now works correctly.
+
+* Issue **#891** : `StreamAppender` now keeps track of it's own record write count and no longer makes use of any other write counting pipeline element.
+
+* Issue **#885** : Improved the way import works to ensure updates to entities are at least attempted when creating an import confirmation.
+
+* Issue **#892** : Changed `Ok` to `OK`.
+
+* Issue **#883** : Output streams are now immediately unlocked as soon as they are closed.
+
+* Removed unnecessary OR operator that was being inserted into expressions where only a single child term was being used. This happened when reprocessing single streams.
+
+* Issue **#882** : Splitting aggregated streams now works when using `FindReplaceFilter`. This functionality was previously broken because various reader elements were not passing the `endStream` event on.
+
+* Issue **#881** : The find and replace strings specified for the `FindReplaceFilter` are now treated as unescaped Java strings and now support new line characters etc.
+
+* Issue **#880** : Increased the maximum value a numeric pipeline property can be set to via the UI to 10000000.
+
+* Issue **#888** : The dependencies listing now copes with external dependencies failing to provide data due to authentication issues.
+
+* Issue **#890** : Dictionaries now show the words tab by default.
+
+* Add admin healthchecks to stroom-proxy
+
+* Add stroom-proxy docker image
+
+* Refactor stroom docker images to reduce image size
+
+* Add enabled flag to storing, forwarding and synching in stroom-proxy configuration
+
+* Issue **#884** : Added extra fonts to stroom docker image to fix bug downloading xls search results.
+
+* Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
+
+* Issue **#878** : Changed the appearance of stream filter fields to be more user friendly, e.g. `feedName` is now `Feed` etc.
+
+* Issue **#809** : Changed default job frequency for `Stream Attributes Retention` and `Stream Task Retention` to `1d` (one day).
+
+* Issue **#813** : Turned on secure processing feature for XML parsers and XML transformers so that external entities are not resolved. This prevents DoS attacks and gaining unauthorised access to the local machine.
+
+* Issue **#871** : Fix for OptimisticLockException when processing streams.
+
+* Issue **#872** : The parser cache is now automatically cleared when a schema changes as this can affect the way a data splitter parser is created.
+
+* Issue **#865** : Made `stroom.conf` location relative to YAML file when `externalConfig` YAML property is set.
+
 * Issue **#867** : Added an option `showReplacementCount` to the find replace filter to choose whether to report total replacements on process completion.
 
 * Issue **#867** : Find replace filter now creates an error if an invalid regex is used.

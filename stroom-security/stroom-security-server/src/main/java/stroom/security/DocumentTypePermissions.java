@@ -47,15 +47,14 @@ class DocumentTypePermissions {
         if (folderPermissions == null) {
             final List<String> permissionList = new ArrayList<>();
             try {
-                final List<DocumentType> documentTypes = explorerService.getDocumentTypes().getNonSystemTypes();
+                final List<DocumentType> documentTypes = explorerService.getNonSystemTypes();
                 permissionList.addAll(documentTypes.stream()
                         .map(documentType -> DocumentPermissionNames.getDocumentCreatePermission(documentType.getType()))
+                        .sorted()
                         .collect(Collectors.toList()));
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
-
-            Collections.sort(permissionList);
 
             permissionList.addAll(Arrays.asList(STANDARD_PERMISSIONS));
             folderPermissions = permissionList.toArray(new String[0]);

@@ -64,7 +64,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             }
         });
 
-        TabData selectedTab = SETTINGS;
+        TabData selectedTab = null;
 
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             tabContentProvider.add(DATA, streamPresenterProvider);
@@ -74,9 +74,6 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         tabContentProvider.add(STRUCTURE, structurePresenter);
         addTab(STRUCTURE);
-        if (selectedTab == null) {
-            selectedTab = STRUCTURE;
-        }
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             hasManageProcessorsPermission = true;
@@ -93,6 +90,10 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         tabContentProvider.add(SETTINGS, settingsPresenter);
         addTab(SETTINGS);
+
+        if (selectedTab == null) {
+            selectedTab = STRUCTURE;
+        }
 
         selectTab(selectedTab);
     }
@@ -119,9 +120,9 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
-        tabContentProvider.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        tabContentProvider.onReadOnly(readOnly);
         allowProcessorUpdates = hasManageProcessorsPermission && !readOnly;
         updatePermissions();
     }

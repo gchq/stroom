@@ -20,6 +20,7 @@ package stroom.node;
 
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.StroomEntityManager;
+import stroom.entity.shared.BaseResultList;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
@@ -37,6 +38,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria> implements NodeService {
+    private final Security security;
     private final NodeServiceTransactionHelper nodeServiceUtil;
 
     @Inject
@@ -45,6 +47,7 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
                     final UiConfig uiConfig,
                     final NodeServiceTransactionHelper nodeServiceUtil) {
         super(entityManager, security, uiConfig);
+        this.security = security;
         this.nodeServiceUtil = nodeServiceUtil;
     }
 
@@ -54,6 +57,11 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
 
     Rack getRack(final String name) {
         return nodeServiceUtil.getRack(name);
+    }
+
+    @Override
+    public BaseResultList<Node> find(final FindNodeCriteria criteria) {
+        return security.insecureResult(() -> super.find(criteria));
     }
 
     @Override

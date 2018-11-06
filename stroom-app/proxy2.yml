@@ -1,10 +1,25 @@
 server:
-  type: simple
   applicationContextPath: /
-  adminContextPath: /admin
-  connector:
-    type: http
+  adminContextPath: /proxyAdmin
+  applicationConnectors:
+  - type: http
     port: 9190
+    #  - type: https
+    #    port: 9543
+    #    keyStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/server.jks
+    #    keyStorePassword: password
+    #    keyStoreType: JKS
+    #    trustStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/server/ca.jks
+    #    trustStorePassword: password
+    #    trustStoreType: JKS
+    #    supportedProtocols: [TLSv1.2]
+    #    needClientAuth: true
+    #    wantClientAuth: true
+    ##    validateCerts: true
+    ##    certAlias: server
+  adminConnectors:
+  - type: http
+    port: 9191
 
   requestLog:
     appenders:
@@ -17,7 +32,6 @@ server:
       archivedLogFilenamePattern: ${HOME}/.stroom-proxy/logs/access-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 100
       timeZone: UTC
-      logFormat: "%-5p [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] %c: %m%n%rEx"
 
 logging:
   level: ${STROOM_LOGGING_LEVEL:- ERROR}
@@ -72,16 +86,17 @@ logging:
 
 mode: "PROXY"
 proxyConfig:
-  proxyConfigDir: "/tmp/stroom-proxy/config"
+  proxyContentDir: "/tmp/stroom-proxy/config"
 
 # If you want to use a receipt policy then the RuleSet must exist
-# in Stroom and have the UUID as specified below.
-#  proxyRequestConfig:
-#    receiptPolicyUuid: "12345"
-
-#  forwardStreamConfig:
-#    forwardUrl: "http://localhost:8899/datafeed"
+# in Stroom and have the UUID as specified below in receiptPolicyUuid
+  proxyRequestConfig:
+    receiptPolicyUuid:
+  forwardStreamConfig:
+    forwardingEnabled: true
+    forwardUrl: "http://localhost:8899/datafeed"
   proxyRepositoryConfig:
+    storingEnabled: true
     repoDir: "/tmp/stroom-proxy/repo"
     repositoryFormat: "${pathId}/${id}"
     rollCron: "* * *"
@@ -90,6 +105,7 @@ proxyConfig:
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"
   contentSyncConfig:
+    contentSyncEnabled: true
     upstreamUrl:
       RuleSet: "http://localhost:9090/api/ruleset/v1"
       Dictionary: "http://localhost:9090/api/dictionary/v1"

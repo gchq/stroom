@@ -16,8 +16,6 @@
 
 package stroom.entity.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -46,7 +44,6 @@ import java.io.Writer;
 
 public final class XMLUtil {
     public static final SAXParserFactory PARSER_FACTORY;
-    private static final Logger LOGGER = LoggerFactory.getLogger(XMLUtil.class);
     private static final String XML = "xml";
     private static final String UTF_8 = "UTF-8";
     private static final String NO = "no";
@@ -55,7 +52,6 @@ public final class XMLUtil {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     private XMLUtil() {
@@ -66,7 +62,7 @@ public final class XMLUtil {
      * Convert a java type into a xml name E.g. XMLType = "xmlType", String =
      * "string", StringBIG = "StringBIG"
      */
-    public static final String toXMLName(final String name) {
+    public static String toXMLName(final String name) {
         final StringBuilder builder = new StringBuilder();
         boolean firstWord = true;
         for (int i = 0; i < name.length(); i++) {
@@ -144,8 +140,7 @@ public final class XMLUtil {
         return th;
     }
 
-    public static void setCommonOutputProperties(final Transformer transformer, final boolean indentOutput)
-            throws TransformerConfigurationException {
+    public static void setCommonOutputProperties(final Transformer transformer, final boolean indentOutput) {
         transformer.setOutputProperty(OutputKeys.METHOD, XML);
         transformer.setOutputProperty(OutputKeys.ENCODING, UTF_8);
         transformer.setOutputProperty(OutputKeys.VERSION, VERSION);

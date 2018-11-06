@@ -5,9 +5,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 public class ContentSyncConfig {
+
+    private boolean isContentSyncEnabled = false;
     private Map<String, String> upstreamUrl;
     private long syncFrequency;
     private String apiKey;
+
+    @JsonProperty
+    boolean isContentSyncEnabled() {
+        return isContentSyncEnabled;
+    }
+
+    void setContentSyncEnabled(final boolean contentSyncEnabled) {
+        isContentSyncEnabled = contentSyncEnabled;
+    }
 
     @JsonProperty
     public Map<String, String> getUpstreamUrl() {
@@ -37,5 +48,14 @@ public class ContentSyncConfig {
     @JsonProperty
     public void setApiKey(final String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    public void validateConfiguration() {
+        if (isContentSyncEnabled) {
+            if (upstreamUrl.isEmpty()) {
+                throw new RuntimeException(
+                        "Content sync is enabled but no upstreamUrls have been provided in 'upstreamUrl'");
+            }
+        }
     }
 }

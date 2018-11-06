@@ -49,7 +49,6 @@ public class Sanitiser {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     public Sanitiser(final Path in, final Path out) throws IOException, TransformerConfigurationException, SAXException {
@@ -70,7 +69,7 @@ public class Sanitiser {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 
-            SAXParser parser = null;
+            SAXParser parser;
             try {
                 parser = PARSER_FACTORY.newSAXParser();
             } catch (final ParserConfigurationException e) {

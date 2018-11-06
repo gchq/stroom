@@ -42,18 +42,17 @@ public class XMLFragmentParser extends AbstractParser {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     private final String xml;
 
-    public XMLFragmentParser(final String xml) {
+    XMLFragmentParser(final String xml) {
         this.xml = xml;
     }
 
     @Override
     public void parse(final InputSource input) throws IOException, SAXException {
-        SAXParser parser = null;
+        SAXParser parser;
         try {
             parser = PARSER_FACTORY.newSAXParser();
         } catch (final ParserConfigurationException e) {
@@ -70,7 +69,7 @@ public class XMLFragmentParser extends AbstractParser {
             // Limit.TOTAL_ENTITY_SIZE_LIMIT. Turning off FEATURE_SECURE_PROCESSING prevents this limit check.
 
             // TODO It may be preferable to change the way fragment wrapper works so that it doesn't use
-            // entity resolution to acheive its goal, as the scanning for entities must add a fair
+            // entity resolution to achieve its goal, as the scanning for entities must add a fair
             // amount of overhead. A simpler and more crude approach may be better.
             xmlReader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
         } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
@@ -86,13 +85,12 @@ public class XMLFragmentParser extends AbstractParser {
         private static final String FRAGMENT = "fragment";
         private final InputSource fragment;
 
-        public FragmentEntity(final InputSource fragment) {
+        FragmentEntity(final InputSource fragment) {
             this.fragment = fragment;
         }
 
         @Override
-        public InputSource resolveEntity(final String publicId, final String systemId)
-                throws SAXException, IOException {
+        public InputSource resolveEntity(final String publicId, final String systemId) {
             if ((publicId != null && publicId.endsWith(FRAGMENT))
                     || (systemId != null && systemId.endsWith(FRAGMENT))) {
                 return fragment;
