@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.10]
+
+* Add fixed version of send_to_stroom.sh to release distribution
+
 * Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8
 
 ## [v6.0-beta.9]
@@ -1177,7 +1181,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.9...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.10...6.0
+[v6.0-beta.10]: https://github.com/gchq/stroom/compare/v6.0-beta.9...v6.0-beta.10
 [v6.0-beta.9]: https://github.com/gchq/stroom/compare/v6.0-beta.8...v6.0-beta.9
 [v6.0-beta.8]: https://github.com/gchq/stroom/compare/v6.0-beta.7...v6.0-beta.8
 [v6.0-beta.7]: https://github.com/gchq/stroom/compare/v6.0-beta.6...v6.0-beta.7
