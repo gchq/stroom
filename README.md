@@ -5,7 +5,7 @@
   * [**6.0.x**](https://github.com/gchq/stroom/commits/6.0) - [![Build Status](https://travis-ci.org/gchq/stroom.svg?branch=6.0)](https://travis-ci.org/gchq/stroom/branches)
 #### **Stroom Authentication**
   * [**Master**](https://github.com/gchq/stroom-auth/commits/master) - [![Build Status](https://travis-ci.org/gchq/stroom-auth.svg?branch=master)](https://travis-ci.org/gchq/stroom-auth)
-  * [**1.0.x**](https://github.com/gchq/stroom-auth/commits/1.0) - [![Build Status](https://travis-ci.org/gchq/stroom-auth.svg?branch=1.0)](https://travis-ci.org/gchq/stroom/branches)
+  * [**1.0.x**](https://github.com/gchq/stroom-auth/commits/1.0) - [![Build Status](https://travis-ci.org/gchq/stroom-auth.svg?branch=1.0)](https://travis-ci.org/gchq/stroom-auth/branches)
 #### **Stroom Resources**
   * [**Master**](https://github.com/gchq/stroom-resources/commits/master) - [![Build Status](https://travis-ci.org/gchq/stroom-resources.svg?branch=master)](https://travis-ci.org/gchq/stroom-resources)
 
