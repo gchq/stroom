@@ -79,6 +79,7 @@ import stroom.security.server.SessionResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
+import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 import stroom.servlet.CacheControlFilter;
 import stroom.servlet.DashboardServlet;
@@ -251,8 +252,11 @@ public class App extends Application<Config> {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
+        if (StroomProperties.getBooleanProperty(
+                ServiceDiscoveryManager.PROP_KEY_SERVICE_DISCOVERY_ENABLED, false)) {
+            SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
+            SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
+        }
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);

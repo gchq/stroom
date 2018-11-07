@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
+
 ## [v6.0-beta.10]
 
 * Add fixed version of send_to_stroom.sh to release distribution
