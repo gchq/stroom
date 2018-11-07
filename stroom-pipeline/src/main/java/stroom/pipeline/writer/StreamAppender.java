@@ -33,7 +33,6 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.server.task.SupersededOutputHelper;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -43,6 +42,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
+import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.streamtask.shared.Processor;
 import stroom.util.shared.Severity;
 

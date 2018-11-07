@@ -45,7 +45,6 @@ import stroom.dispatch.shared.DispatchService;
 import stroom.explorer.ExplorerResource;
 import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
-import stroom.healthchecks.LogLevelInspector;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;

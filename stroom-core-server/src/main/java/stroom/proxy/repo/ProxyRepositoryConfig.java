@@ -7,11 +7,6 @@ public interface ProxyRepositoryConfig {
     boolean isStoringEnabled();
 
     /**
-     * @return True if the proxy should store received data in its repository
-     */
-    boolean isStoringEnabled();
-
-    /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
     String getDir();

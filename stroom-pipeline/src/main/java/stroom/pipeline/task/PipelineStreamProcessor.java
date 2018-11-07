@@ -49,7 +49,6 @@ import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.server.task.SupersededOutputHelper;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;

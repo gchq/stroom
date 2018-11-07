@@ -1,4 +1,4 @@
-package stroom.pipeline.server.task;
+package stroom.pipeline.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
