@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix invalid requerstLog logFormat in proxy configuration
+
 ## [v6.0-beta.11]
 
 * Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
