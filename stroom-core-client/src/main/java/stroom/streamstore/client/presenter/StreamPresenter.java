@@ -634,7 +634,10 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     // only includes the selected streams.
                     final FindDataCriteria criteria = createFindStreamCriteria();
                     // Copy the current filter status
-                    criteria.setExpression(ExpressionUtil.createStatusExpression(getSingleStatus(streamPresenter.getCriteria())));
+                    final DataStatus status = getSingleStatus(streamPresenter.getCriteria());
+                    if (status != null) {
+                        criteria.setExpression(ExpressionUtil.createStatusExpression(status));
+                    }
                     criteria.obtainSelectedIdSet().addAll(idSet.getSet());
                     // Paging is NA
                     criteria.obtainPageRequest().setLength(null);

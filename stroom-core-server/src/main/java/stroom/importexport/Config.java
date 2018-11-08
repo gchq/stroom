@@ -20,8 +20,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.ext.Attributes2Impl;
-import stroom.entity.util.XMLUtil;
 import stroom.docref.DocRef;
+import stroom.entity.util.TransformerFactoryFactory;
+import stroom.entity.util.XMLUtil;
 import stroom.util.date.DateUtil;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -29,7 +30,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -70,7 +70,7 @@ public class Config {
 
     public void write(final Writer writer, final String entityType) throws IOException {
         try {
-            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactory.newInstance();
+            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
             final TransformerHandler th = stf.newTransformerHandler();
             final Transformer transformer = th.getTransformer();
 

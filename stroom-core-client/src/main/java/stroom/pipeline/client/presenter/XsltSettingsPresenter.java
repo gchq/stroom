@@ -28,13 +28,11 @@ import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.docref.DocRef;
-import stroom.security.client.ClientSecurityContext;
 
 public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSettingsView, XsltDoc> {
     @Inject
-    public XsltSettingsPresenter(final EventBus eventBus, final XsltSettingsView view,
-                                 final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public XsltSettingsPresenter(final EventBus eventBus, final XsltSettingsView view) {
+        super(eventBus, view);
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {

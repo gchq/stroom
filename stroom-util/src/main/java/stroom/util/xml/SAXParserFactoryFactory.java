@@ -18,7 +18,11 @@ package stroom.util.xml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
 /**
@@ -45,18 +49,11 @@ public final class SAXParserFactoryFactory {
 
                 System.setProperty(SYSPROP_SAX_PARSER_FACTORY, DEFAULT_SAX_PARSER_FACTORY);
             } else {
-                final StringBuilder sb = new StringBuilder();
-                sb.append(SYSPROP_SET_TO);
-                sb.append(factoryName);
-                sb.append(END);
-                LOGGER.info(sb.toString());
+                LOGGER.info(SYSPROP_SET_TO + factoryName + END);
             }
 
-            final SAXParserFactory factory = SAXParserFactory.newInstance();
-            final StringBuilder sb = new StringBuilder();
-            sb.append(IMP_USED);
-            sb.append(factory.getClass().getName());
-            LOGGER.info(sb.toString());
+            final SAXParserFactory factory = newInstance();
+            LOGGER.info(IMP_USED + factory.getClass().getName());
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to configure SAXParserFactory!", e);
         }
@@ -68,6 +65,17 @@ public final class SAXParserFactoryFactory {
 
     public static SAXParserFactory newInstance() {
         final SAXParserFactory factory = SAXParserFactory.newInstance();
+        secureProcessing(factory);
+        factory.setNamespaceAware(true);
+        factory.setValidating(false);
         return factory;
+    }
+
+    private static void secureProcessing(final SAXParserFactory factory) {
+        try {
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (final ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 }

@@ -20,7 +20,7 @@
 		</g:cell>
 		<g:cell>
 			<g:FlowPanel styleName="{style.layout}">
-				<g:Button ui:field="ok" text="Ok" />
+				<g:Button ui:field="ok" text="OK" />
 				<g:Button ui:field="cancel" styleName="gwt-Button {style.cancel}"
 					text="Cancel" />
 			</g:FlowPanel>

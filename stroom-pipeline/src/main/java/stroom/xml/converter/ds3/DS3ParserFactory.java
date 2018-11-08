@@ -44,8 +44,6 @@ public class DS3ParserFactory implements ParserFactory {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-        PARSER_FACTORY.setValidating(false);
     }
 
     private final SchemaFilter schemaFilter;

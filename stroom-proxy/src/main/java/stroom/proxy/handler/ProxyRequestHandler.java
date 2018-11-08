@@ -1,10 +1,12 @@
 package stroom.proxy.handler;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.datafeed.AttributeMapFilter;
 import stroom.datafeed.AttributeMapFilterFactory;
+import stroom.datafeed.BufferFactory;
 import stroom.datafeed.RequestHandler;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
@@ -12,7 +14,6 @@ import stroom.docref.DocRef;
 import stroom.feed.AttributeMapUtil;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
-import stroom.datafeed.BufferFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -48,7 +49,7 @@ public class ProxyRequestHandler implements RequestHandler {
         this.logStream = logStream;
         this.bufferFactory = bufferFactory;
 
-        if (proxyRequestConfig != null && proxyRequestConfig.getReceiptPolicyUuid() != null) {
+        if (!Strings.isNullOrEmpty(proxyRequestConfig.getReceiptPolicyUuid())) {
             attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
         } else {
             attributeMapFilter = attributeMapFilterFactory.create();

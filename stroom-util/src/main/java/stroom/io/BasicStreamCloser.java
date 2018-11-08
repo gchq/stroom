@@ -31,33 +31,25 @@ public class BasicStreamCloser implements StreamCloser {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicStreamCloser.class);
     private final List<Closeable> list = new ArrayList<>();
 
-    // For stream target's we can delete them on closing if they are no-longer
-    // required
-    private boolean delete = false;
-
     @Inject
-    BasicStreamCloser() {
+    public BasicStreamCloser() {
     }
 
-    public BasicStreamCloser(final Closeable... closeables) {
-        add(closeables);
-    }
-
-    public BasicStreamCloser(final Closeable closeable) {
-        add(closeable);
-    }
-
-    public BasicStreamCloser add(final Closeable... closeables) {
-        for (final Closeable closeable : closeables) {
-            add(closeable);
-        }
-
-        return this;
-    }
-
-    public void setDelete(boolean delete) {
-        this.delete = delete;
-    }
+//    public BasicStreamCloser(final Closeable... closeables) {
+//        add(closeables);
+//    }
+//
+//    public BasicStreamCloser(final Closeable closeable) {
+//        add(closeable);
+//    }
+//
+//    public BasicStreamCloser add(final Closeable... closeables) {
+//        for (final Closeable closeable : closeables) {
+//            add(closeable);
+//        }
+//
+//        return this;
+//    }
 
     public BasicStreamCloser add(final Closeable closeable) {
         // Add items to the beginning of the list so that they are closed in the

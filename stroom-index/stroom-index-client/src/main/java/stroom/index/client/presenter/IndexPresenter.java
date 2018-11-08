@@ -41,7 +41,8 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     public IndexPresenter(final EventBus eventBus, final LinkTabPanelView view,
                           final Provider<IndexSettingsPresenter> indexSettingsPresenter,
                           final Provider<IndexFieldListPresenter> indexFieldListPresenter,
-                          final Provider<IndexShardPresenter> indexShardPresenter, final ClientSecurityContext securityContext) {
+                          final Provider<IndexShardPresenter> indexShardPresenter,
+                          final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
@@ -71,9 +72,9 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
-        tabContentProvider.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

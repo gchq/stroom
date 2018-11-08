@@ -16,6 +16,7 @@
 
 package stroom.pipeline.reader;
 
+import org.apache.commons.text.StringEscapeUtils;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -101,18 +102,19 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
             // Reset some of the variables so we can find/replace again in the next stream.
             textReplacementFilterReader.clear();
         }
+        super.endStream();
     }
 
     @PipelineProperty(description = "The text or regex pattern to find and replace.",
             displayPriority = 1)
     public void setFind(final String find) {
-        this.find = find;
+        this.find = StringEscapeUtils.unescapeJava(find);
     }
 
     @PipelineProperty(description = "The replacement text.",
             displayPriority = 2)
     public void setReplacement(final String replacement) {
-        this.replacement = replacement;
+        this.replacement = StringEscapeUtils.unescapeJava(replacement);
     }
 
     @PipelineProperty(description = "The maximum number of times to try and replace text. There is no limit by default.",

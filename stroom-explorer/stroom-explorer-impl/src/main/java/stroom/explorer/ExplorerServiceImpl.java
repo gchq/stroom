@@ -277,61 +277,6 @@ class ExplorerServiceImpl implements ExplorerService {
     }
 
     @Override
-    public DocumentTypes getDocumentTypes() {
-        final List<DocumentType> nonSystemTypes = getNonSystemTypes();
-        final List<DocumentType> visibleTypes = getVisibleTypes();
-        return new DocumentTypes(nonSystemTypes, visibleTypes);
-    }
-
-    private List<DocumentType> getVisibleTypes() {
-        // Get the master tree model.
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
-
-        // Filter the model by user permissions.
-        final Set<String> requiredPermissions = new HashSet<>();
-        requiredPermissions.add(DocumentPermissionNames.READ);
-
-        final Set<String> visibleTypes = new HashSet<>();
-        addTypes(null, masterTreeModel, visibleTypes, requiredPermissions);
-
-        return getDocumentTypes(visibleTypes);
-    }
-
-    private boolean addTypes(final ExplorerNode parent,
-                             final TreeModel treeModel,
-                             final Set<String> types,
-                             final Set<String> requiredPermissions) {
-        boolean added = false;
-
-        final List<ExplorerNode> children = treeModel.getChildMap().get(parent);
-        if (children != null) {
-            for (final ExplorerNode child : children) {
-                // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.
-                final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
-                if (hasChildren) {
-                    types.add(child.getType());
-                    added = true;
-                } else if (checkSecurity(child, requiredPermissions)) {
-                    types.add(child.getType());
-                    added = true;
-                }
-            }
-        }
-
-        return added;
-    }
-
-    private List<DocumentType> getNonSystemTypes() {
-        return explorerActionHandlers.getNonSystemTypes();
-    }
-
-    private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
-        return getNonSystemTypes().stream()
-                .filter(type -> visibleTypes.contains(type.getType()))
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public DocRef create(final String type, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
         final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
                 .orElse(explorerNodeService.getRoot()
@@ -379,9 +324,9 @@ class ExplorerServiceImpl implements ExplorerService {
         final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
         recurseGetNodes(docRefs.stream(), childNodesByParent::put);
 
+        // TODO : @66 Change the way this works so that copy allows the underlying service to create it's own UUIDs and then subsequently remap references in all copied items (see gh-899)
         // Create the UUID's of the copies up front
         final Map<String, String> copiesByOriginalUuid = childNodesByParent.keySet().stream()
-                .filter(d -> !d.getType().equals(FeedDoc.DOCUMENT_TYPE)) // we don't copy feeds
                 .collect(Collectors.toMap(DocRef::getUuid, (d) -> UUID.randomUUID().toString()));
 
         docRefs.forEach(sourceDocRef ->
@@ -598,7 +543,10 @@ class ExplorerServiceImpl implements ExplorerService {
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        for (final DocRef docRef : docRefs) {
+        final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
+        recurseGetNodes(docRefs.stream(), childNodesByParent::put);
+
+        childNodesByParent.keySet().forEach(docRef -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
             try {
                 handler.deleteDocument(docRef.getUuid());
@@ -616,7 +564,7 @@ class ExplorerServiceImpl implements ExplorerService {
 
             // Delete the explorer node.
             explorerNodeService.deleteNode(docRef);
-        }
+        });
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
@@ -634,6 +582,56 @@ class ExplorerServiceImpl implements ExplorerService {
     @Override
     public void rebuildTree() {
         explorerTreeModel.rebuild();
+    }
+
+    @Override
+    public List<DocumentType> getNonSystemTypes() {
+        return explorerActionHandlers.getNonSystemTypes();
+    }
+
+    @Override
+    public List<DocumentType> getVisibleTypes() {
+        // Get the master tree model.
+        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+
+        // Filter the model by user permissions.
+        final Set<String> requiredPermissions = new HashSet<>();
+        requiredPermissions.add(DocumentPermissionNames.READ);
+
+        final Set<String> visibleTypes = new HashSet<>();
+        addTypes(null, masterTreeModel, visibleTypes, requiredPermissions);
+
+        return getDocumentTypes(visibleTypes);
+    }
+
+    private boolean addTypes(final ExplorerNode parent,
+                             final TreeModel treeModel,
+                             final Set<String> types,
+                             final Set<String> requiredPermissions) {
+        boolean added = false;
+
+        final List<ExplorerNode> children = treeModel.getChildMap().get(parent);
+        if (children != null) {
+            for (final ExplorerNode child : children) {
+                // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.
+                final boolean hasChildren = addTypes(child, treeModel, types, requiredPermissions);
+                if (hasChildren) {
+                    types.add(child.getType());
+                    added = true;
+                } else if (checkSecurity(child, requiredPermissions)) {
+                    types.add(child.getType());
+                    added = true;
+                }
+            }
+        }
+
+        return added;
+    }
+
+    private List<DocumentType> getDocumentTypes(final Collection<String> visibleTypes) {
+        return getNonSystemTypes().stream()
+                .filter(type -> visibleTypes.contains(type.getType()))
+                .collect(Collectors.toList());
     }
 
     private String getUUID(final DocRef docRef) {

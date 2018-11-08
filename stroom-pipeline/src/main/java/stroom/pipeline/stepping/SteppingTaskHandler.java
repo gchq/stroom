@@ -62,7 +62,6 @@ import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,13 +72,6 @@ import java.util.Set;
 @TaskHandlerBean(task = SteppingTask.class)
 class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
-
-    private static final SAXParserFactory PARSER_FACTORY;
-
-    static {
-        PARSER_FACTORY = SAXParserFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-    }
 
     private final StreamStore streamStore;
     private final DataMetaService streamMetaService;

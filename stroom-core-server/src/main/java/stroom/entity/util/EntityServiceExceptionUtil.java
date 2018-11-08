@@ -143,9 +143,10 @@ public class EntityServiceExceptionUtil {
         if (thEx instanceof org.hibernate.exception.ConstraintViolationException) {
             final org.hibernate.exception.ConstraintViolationException cvEx = (org.hibernate.exception.ConstraintViolationException) thEx;
             final EntityServiceException entityServiceException = new EntityServiceException(
-                    "Unable to save record due to constraint within system");
-            entityServiceException.setDetail("" + cvEx.getMessage() + "\n" + cvEx.getSQLException().getMessage() + "\n"
-                    + cvEx.getConstraintName() + "\n");
+                    "Unable to save due to constraint ");
+            entityServiceException.setDetail(appendDetail(cvEx.getMessage()) +
+                    appendDetail(cvEx.getSQLException().getMessage()) +
+                    appendDetail(cvEx.getConstraintName()));
             return entityServiceException;
         }
         if (thEx instanceof UnknownHostException) {
@@ -162,9 +163,6 @@ public class EntityServiceExceptionUtil {
         boolean networkRelated = thEx.getClass().getName().contains(".net");
         final String message = thEx.getMessage();
         if (message != null) {
-//            if (thEx instanceof FileNotFoundException && message.contains("http:")) {
-//                networkRelated = true;
-//            }
             if (thEx instanceof IOException && message.contains("http")) {
                 networkRelated = true;
             }
@@ -181,4 +179,10 @@ public class EntityServiceExceptionUtil {
 
     }
 
+    private static String appendDetail(String detail) {
+        if (detail == null) {
+            return "";
+        }
+        return detail + "\n";
+    }
 }

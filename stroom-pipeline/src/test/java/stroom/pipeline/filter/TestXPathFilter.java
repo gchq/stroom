@@ -49,7 +49,6 @@ public class TestXPathFilter extends StroomUnitTest {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     @Test
@@ -110,8 +109,7 @@ public class TestXPathFilter extends StroomUnitTest {
                     return true;
 
                 case CONTAINS:
-                    for (int i = 0; i < nodes.size(); i++) {
-                        final NodeInfo node = nodes.get(i);
+                    for (final NodeInfo node : nodes) {
                         if (contains(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
                             return true;
                         }
@@ -119,8 +117,7 @@ public class TestXPathFilter extends StroomUnitTest {
                     break;
 
                 case EQUALS:
-                    for (int i = 0; i < nodes.size(); i++) {
-                        final NodeInfo node = nodes.get(i);
+                    for (final NodeInfo node : nodes) {
                         if (equals(node.getStringValue(), xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
                             return true;
                         }
@@ -144,9 +141,7 @@ public class TestXPathFilter extends StroomUnitTest {
                 txt = text.toLowerCase();
             }
 
-            if (val.contains(txt)) {
-                return true;
-            }
+            return val.contains(txt);
         }
 
         return false;
@@ -162,9 +157,7 @@ public class TestXPathFilter extends StroomUnitTest {
                 txt = text.toLowerCase();
             }
 
-            if (val.equals(txt)) {
-                return true;
-            }
+            return val.equals(txt);
         }
 
         return false;

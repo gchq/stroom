@@ -35,9 +35,11 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.shared.FetchDocRefsAction;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -45,7 +47,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -65,7 +66,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, ReadOnlyChangeHandler {
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
@@ -85,6 +86,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private PipelineElement currentElement;
     private PipelinePropertyType propertyType;
 
+    private boolean readOnly = true;
+
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
@@ -94,18 +97,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         this.dispatcher = dispatcher;
 
         addButton = getView().addButton(SvgPresets.NEW_ITEM);
-        addButton.setTitle("New Reference");
-        addButton.setEnabled(false);
-
         editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Reference");
-        editButton.setEnabled(false);
-
         removeButton = getView().addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove Refefence");
-        removeButton.setEnabled(false);
 
         addColumns();
+
+        enableButtons();
     }
 
     @Override
@@ -444,19 +441,35 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     protected void enableButtons() {
-        addButton.setEnabled(propertyType != null);
+        addButton.setEnabled(!readOnly && propertyType != null);
 
         final PipelineReference selected = getView().getSelectionModel().getSelected();
         final State state = referenceStateMap.get(selected);
 
-        editButton.setEnabled(State.ADDED.equals(state));
-        removeButton.setEnabled(selected != null);
+        editButton.setEnabled(!readOnly && State.ADDED.equals(state));
+        removeButton.setEnabled(!readOnly && selected != null);
+
+        if (readOnly) {
+            addButton.setTitle("New reference disabled as pipeline is read only");
+            editButton.setTitle("Edit reference disabled as pipeline is read only");
+            removeButton.setTitle("Remove reference disabled as pipeline is read only");
+        } else {
+            addButton.setTitle("New Reference");
+            editButton.setTitle("Edit Reference");
+            removeButton.setTitle("Remove Reference");
+        }
     }
 
     protected void setDirty(final boolean dirty) {
         if (dirty) {
             DirtyEvent.fire(this, dirty);
         }
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     @Override

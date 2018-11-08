@@ -1,5 +1,6 @@
 package stroom.startup;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.base.Preconditions;
 import com.google.inject.Injector;
@@ -24,20 +25,16 @@ public class GuiceUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceUtil.class);
     private static final String HEALTH_CHECK_SUFFIX = "HealthCheck";
 
-    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry,
-                                      final Injector injector,
-                                      final Class<? extends HasHealthCheck> clazz) {
-        final HasHealthCheck hasHealthCheck = injector.getInstance(clazz);
-        String name = clazz.getName() + HEALTH_CHECK_SUFFIX;
-        LOGGER.debug("Registering heath check {}", name);
-        healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
-    }
+//    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry,
+//                                      final Injector injector,
+//                                      final Class<? extends HasHealthCheck> clazz) {
+//        final HasHealthCheck hasHealthCheck = injector.getInstance(clazz);
+//        addHealthCheck(healthCheckRegistry, hasHealthCheck);
+//    }
 
-    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry,
-                                      final HasHealthCheck hasHealthCheck) {
-
+    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry, HasHealthCheck hasHealthCheck) {
         String name = hasHealthCheck.getClass().getName() + HEALTH_CHECK_SUFFIX;
-        LOGGER.debug("Registering heath check {}", name);
+        LOGGER.info("Registering health check {}", name);
         healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
     }
 
@@ -74,13 +71,54 @@ public class GuiceUtil {
     public static ServletHolder addServlet(final ServletContextHandler servletContextHandler,
                                            final Injector injector,
                                            final Class<?> clazz,
-                                           final String url) {
+                                           final String url,
+                                           final HealthCheckRegistry healthCheckRegistry) {
         final Object object = injector.getInstance(clazz);
         if (!(object instanceof Servlet)) {
             throw new IllegalArgumentException("Expected servlet for object " + clazz.getName());
         }
+
+        if (object instanceof HasHealthCheck) {
+            healthCheckRegistry.register(clazz.getName(), new HealthCheck() {
+                        @Override
+                        protected Result check() {
+                            HealthCheck.Result result = ((HasHealthCheck) object).getHealth();
+
+                            HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+                            if (result.getDetails() != null) {
+                                result.getDetails().forEach(resultBuilder::withDetail);
+                                resultBuilder.withDetail("path", url);
+                            }
+                            if (result.getMessage() != null) {
+                                resultBuilder.withMessage(result.getMessage());
+                            }
+                            if (result.getError() != null) {
+                                resultBuilder.unhealthy(result.getError());
+                            } else {
+                                if (result.isHealthy()) {
+                                    resultBuilder.healthy();
+                                } else {
+                                    resultBuilder.unhealthy();
+                                }
+                            }
+                            return resultBuilder.build();
+                        }
+                    });
+        } else {
+            healthCheckRegistry.register(clazz.getName(), new HealthCheck() {
+                @Override
+                protected Result check() {
+                    return Result.builder()
+                            .healthy()
+                            .withDetail("path", url)
+                            .build();
+                }
+            });
+        }
+
         final ServletHolder servletHolder = new ServletHolder(clazz.getSimpleName(), (Servlet) object);
         servletContextHandler.addServlet(servletHolder, url);
+        LOGGER.info("Adding servlet {} on path {}", clazz.getSimpleName(), url);
         return servletHolder;
     }
 

@@ -18,18 +18,18 @@
 package stroom.streamtask;
 
 import com.google.common.base.Strings;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.AbstractTaskHandler;
@@ -104,14 +104,19 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     list.sort(Comparator.comparing(Processor::getPipelineUuid));
 
                     for (final Processor streamProcessor : list) {
-                        final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
-
                         final QueryData queryData = new QueryData();
                         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
-                        final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-                        streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
-                        operator.addOperator(streamIdTerms.build());
+                        final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
+                        if (streamIdSet != null && streamIdSet.size() > 0) {
+                            if (streamIdSet.size() == 1) {
+                                operator.addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamIdSet.getSingleItem()));
+                            } else {
+                                final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+                                streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                                operator.addOperator(streamIdTerms.build());
+                            }
+                        }
 
                         queryData.setDataSource(MetaDataSource.STREAM_STORE_DOC_REF);
                         queryData.setExpression(operator.build());

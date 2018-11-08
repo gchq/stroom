@@ -1,20 +1,26 @@
 package stroom.guice;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
 import stroom.cluster.impl.ClusterModule;
-import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
+import stroom.startup.Config;
 
 public class AppModule extends AbstractModule {
-    private final AppConfig appConfig;
+    private final Config configuration;
+    private final Environment environment;
 
-    public AppModule(final AppConfig appConfig) {
-        this.appConfig = appConfig;
+    public AppModule(final Config configuration, final Environment environment) {
+        this.configuration = configuration;
+        this.environment = environment;
     }
 
     @Override
     protected void configure() {
-        install(new AppConfigModule(appConfig));
+        bind(Config.class).toInstance(configuration);
+        bind(Environment.class).toInstance(environment);
+
+        install(new AppConfigModule(configuration.getAppConfig()));
 
         install(new CoreModule());
 

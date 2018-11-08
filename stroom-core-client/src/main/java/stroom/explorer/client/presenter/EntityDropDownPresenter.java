@@ -27,6 +27,7 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 
 public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
+    private boolean enabled = true;
 
     @Inject
     public EntityDropDownPresenter(final EventBus eventBus, final DropDrownView view,
@@ -68,7 +69,9 @@ public class EntityDropDownPresenter extends DropDownPresenter implements HasDat
 
     @Override
     public void showPopup() {
-        explorerDropDownTreePresenter.show();
+        if (enabled) {
+            explorerDropDownTreePresenter.show();
+        }
     }
 
     @Override
@@ -82,5 +85,9 @@ public class EntityDropDownPresenter extends DropDownPresenter implements HasDat
         } else {
             getView().setText(selection.getDisplayValue());
         }
+    }
+
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
     }
 }

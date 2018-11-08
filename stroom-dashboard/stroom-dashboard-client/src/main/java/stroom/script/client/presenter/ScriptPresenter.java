@@ -22,11 +22,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
+import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
@@ -42,8 +42,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
-    private boolean loadedResource;
-    private Boolean readOnly;
+    private boolean readOnly = true;
 
     private int loadCount;
 
@@ -60,9 +59,9 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
             }
         });
 
-        addTab(SETTINGS_TAB);
         addTab(SCRIPT_TAB);
-        selectTab(SETTINGS_TAB);
+        addTab(SETTINGS_TAB);
+        selectTab(SCRIPT_TAB);
     }
 
     @Override
@@ -70,23 +69,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         if (SETTINGS_TAB.equals(tab)) {
             callback.onReady(settingsPresenter);
         } else if (SCRIPT_TAB.equals(tab)) {
-            if (codePresenter == null) {
-                if (readOnly != null) {
-                    codePresenter = editorPresenterProvider.get();
-                    codePresenter.setReadOnly(readOnly);
-                    codePresenter.setMode(AceEditorMode.JAVASCRIPT);
-                    codePresenter.getContextMenu().setShowFormatOption(!readOnly);
-//                    codePresenter.getStylesOption().setOn(false);
-//                    codePresenter.getStylesOption().setAvailable(false);
-
-                    registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-                    registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
-
-                    loadResource(codePresenter);
-                }
-            } else {
-                callback.onReady(codePresenter);
-            }
+            callback.onReady(getOrCreateCodePresenter());
         } else {
             callback.onReady(null);
         }
@@ -98,9 +81,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         loadCount++;
         settingsPresenter.read(docRef, script);
 
-        // Reload the resource if we have loaded it before.
-        if (codePresenter != null) {
-            loadResource(codePresenter);
+        if (codePresenter != null && script.getData() != null) {
+            codePresenter.setText(script.getData());
         }
 
         if (loadCount > 1) {
@@ -117,27 +99,39 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     @Override
     protected void onWrite(final ScriptDoc script) {
         settingsPresenter.write(script);
-        if (loadedResource) {
+        if (codePresenter != null) {
             script.setData(codePresenter.getText());
         }
-        loadedResource = false;
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
         this.readOnly = readOnly;
-    }
-
-    private void loadResource(final EditorPresenter codePresenter) {
-        if (!loadedResource) {
-            codePresenter.setText(getEntity().getData());
-            loadedResource = true;
+        settingsPresenter.onReadOnly(readOnly);
+        if (codePresenter != null) {
+            codePresenter.setReadOnly(readOnly);
+            codePresenter.getContextMenu().setShowFormatOption(!readOnly);
         }
     }
 
     @Override
     public String getType() {
         return ScriptDoc.DOCUMENT_TYPE;
+    }
+
+    private EditorPresenter getOrCreateCodePresenter() {
+        if (codePresenter == null) {
+            codePresenter = editorPresenterProvider.get();
+            codePresenter.setMode(AceEditorMode.JAVASCRIPT);
+            registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+            registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+            codePresenter.setReadOnly(readOnly);
+            codePresenter.getContextMenu().setShowFormatOption(!readOnly);
+            if (getEntity() != null && getEntity().getData() != null) {
+                codePresenter.setText(getEntity().getData());
+            }
+        }
+        return codePresenter;
     }
 }

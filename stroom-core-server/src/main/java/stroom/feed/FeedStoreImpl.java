@@ -20,6 +20,7 @@ package stroom.feed;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -77,7 +78,8 @@ public class FeedStoreImpl implements FeedStore {
     public DocRef copyDocument(final String originalUuid,
                                final String copyUuid,
                                final Map<String, String> otherCopiesByOriginalUuid) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
+//        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
+        throw new EntityServiceException("You cannot copy Feeds");
     }
 
     @Override

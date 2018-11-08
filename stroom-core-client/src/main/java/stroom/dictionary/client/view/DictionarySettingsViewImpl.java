@@ -24,11 +24,12 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
-import stroom.util.shared.HasReadOnly;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySettingsView, HasReadOnly {
+public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
+
     @UiField
     TextArea description;
     @UiField
@@ -50,12 +51,7 @@ public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySe
     }
 
     @Override
-    public boolean isReadOnly() {
-        return description.isEnabled();
-    }
-
-    @Override
-    public void setReadOnly(final boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
     }
 

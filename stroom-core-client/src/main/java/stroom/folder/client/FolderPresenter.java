@@ -101,9 +101,9 @@ public class FolderPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
-        tabContentProvider.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        tabContentProvider.onReadOnly(readOnly);
     }
 
     @Override

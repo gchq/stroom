@@ -42,6 +42,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
@@ -87,6 +88,9 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private LoggingErrorReceiver loggingErrorReceiver;
 
     void test(final String name, final String type) {
+        // Delete everything in the temp dir.
+        FileUtil.deleteContents(FileUtil.getTempDir());
+
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
         final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);
