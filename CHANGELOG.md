@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* * Issue **#913** : Improve FindReplaceFilter to cope with more complex conditions.
+
 * Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
 
 ## [v6.0-beta.10]
