@@ -100,15 +100,22 @@ releaseToDockerHub() {
         fi
     done
 
-    echo -e "Building and releasing a docker image to ${GREEN}${dockerRepo}${NC} with tags: ${GREEN}${allTagArgs}${NC}"
+    echo -e "Building a docker image with tags: ${GREEN}${allTagArgs}${NC}"
     echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
     echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
 
-    #The username and password are configured in the travis gui
-    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" >/dev/null 2>&1
+    docker build ${allTagArgs} ${contextRoot}
 
-    docker build ${allTagArgs} ${contextRoot} >/dev/null 2>&1
+    echo -e "Logging in to Docker"
+
+    #The username and password are configured in the travis gui
+    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+
+    echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with tags: ${GREEN}${allTagArgs}${NC}"
     docker push ${dockerRepo} >/dev/null 2>&1
+
+    echo -e "Logging out of Docker"
+    docker logout >/dev/null 2>&1
 }
 
 #establish what version of stroom we are building
