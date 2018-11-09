@@ -150,7 +150,6 @@ COPY --chown=stroom:stroom --from=send-logs-scripts-stage /scripts /stroom
 COPY --chown=stroom:stroom docker-entrypoint.sh /stroom/
 COPY --chown=stroom:stroom create_crontab.sh /stroom/
 COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
-COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
 
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 
