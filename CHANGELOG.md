@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* * Issue **#913** : Improve FindReplaceFilter to cope with more complex conditions.
+* Issue **#910** : Changes to index settings in the UI now register as changes and enable save.
+
+* Issue **#913** : Improve FindReplaceFilter to cope with more complex conditions.
 
 * Change log level for SqlExceptionHelper to OFF, to stop expected exceptions from polluting the logs
 

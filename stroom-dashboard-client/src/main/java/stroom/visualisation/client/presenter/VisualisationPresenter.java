@@ -23,7 +23,6 @@ import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRefUtil;
 import stroom.query.api.v2.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.visualisation.shared.Visualisation;
