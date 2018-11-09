@@ -24,11 +24,13 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.SaveIndexVolumesAction;
@@ -36,7 +38,6 @@ import stroom.node.client.presenter.VolumeListPresenter;
 import stroom.node.client.presenter.VolumeStatusListPresenter;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -53,7 +54,7 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, ReadOnlyChangeHandler, HasDirtyHandlers {
     private final VolumeListPresenter volumeListPresenter;
     private final VolumeStatusListPresenter volumeStatusListPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -62,6 +63,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
     private DocRef docRef;
     private List<VolumeEntity> volumes;
+    private boolean readOnly = true;
 
     @Inject
     public IndexVolumeListPresenter(final EventBus eventBus,
@@ -76,13 +78,10 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
         view.setView(volumeListPresenter.getView());
 
-//        volumeStatusListPresenter.setSelectionModel(new MySingleSelectionModel<>());
-//        volumeListPresenter.setSelectionModel(new MultiSelectionModel<>());
-
         addButton = volumeListPresenter.getView().addButton(SvgPresets.ADD);
-        addButton.setTitle("Add Volume");
         removeButton = volumeListPresenter.getView().addButton(SvgPresets.DELETE);
-        removeButton.setTitle("Remove Volume");
+
+        enableButtons();
     }
 
     @Override
@@ -91,36 +90,49 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
         registerHandler(addButton.addClickHandler(this::onAdd));
         registerHandler(removeButton.addClickHandler(this::onRemove));
-        registerHandler(volumeListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final MultiSelectionModel<VolumeEntity> selectionModel = volumeListPresenter.getSelectionModel();
-            removeButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
-        }));
+        registerHandler(volumeListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
         registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
+            if (!readOnly && event.getSelectionType().isDoubleSelect()) {
                 addVolume(true);
             }
         }));
     }
 
+    private void enableButtons() {
+        final MultiSelectionModel<VolumeEntity> selectionModel = volumeListPresenter.getSelectionModel();
+        addButton.setEnabled(!readOnly);
+        removeButton.setEnabled(!readOnly && selectionModel.getSelectedItems().size() > 0);
+
+        if (readOnly) {
+            addButton.setTitle("Add volume is disabled as index is read only");
+            removeButton.setTitle("Remove volume is disabled as index is read only");
+        } else {
+            addButton.setTitle("Add Volume");
+            removeButton.setTitle("Remove Volume");
+        }
+    }
+
     private void onAdd(final ClickEvent event) {
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                addVolume(ok);
-            }
+        if (!readOnly) {
+            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                @Override
+                public void onHideRequest(final boolean autoClose, final boolean ok) {
+                    addVolume(ok);
+                }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        };
+                @Override
+                public void onHide(final boolean autoClose, final boolean ok) {
+                    // Do nothing.
+                }
+            };
 
-        final PopupSize popupSize = new PopupSize(600, 400, true);
-        volumeStatusListPresenter.refresh();
-        final MultiSelectionModel<VolumeEntity> selectionModel = volumeStatusListPresenter.getSelectionModel();
-        selectionModel.clear();
-        ShowPopupEvent.fire(this, volumeStatusListPresenter, PopupType.OK_CANCEL_DIALOG, null, popupSize,
-                "Add Volume To Index", popupUiHandlers, true);
+            final PopupSize popupSize = new PopupSize(600, 400, true);
+            volumeStatusListPresenter.refresh();
+            final MultiSelectionModel<VolumeEntity> selectionModel = volumeStatusListPresenter.getSelectionModel();
+            selectionModel.clear();
+            ShowPopupEvent.fire(this, volumeStatusListPresenter, PopupType.OK_CANCEL_DIALOG, null, popupSize,
+                    "Add Volume To Index", popupUiHandlers, true);
+        }
     }
 
     private void addVolume(final boolean ok) {
@@ -143,24 +155,26 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     private void onRemove(final ClickEvent event) {
-        final MultiSelectionModel<VolumeEntity> selectionModel = volumeListPresenter.getSelectionModel();
-        final List<VolumeEntity> selected = selectionModel.getSelectedItems();
-        if (selected != null && selected.size() > 0) {
-            String message = "Are you sure you want to remove this volume as a possible destination for this index?";
-            if (selected.size() > 1) {
-                message = "Are you sure you want to remove these volumes as possible destinations for this index?";
-            }
+        if (!readOnly) {
+            final MultiSelectionModel<VolumeEntity> selectionModel = volumeListPresenter.getSelectionModel();
+            final List<VolumeEntity> selected = selectionModel.getSelectedItems();
+            if (selected != null && selected.size() > 0) {
+                String message = "Are you sure you want to remove this volume as a possible destination for this index?";
+                if (selected.size() > 1) {
+                    message = "Are you sure you want to remove these volumes as possible destinations for this index?";
+                }
 
-            ConfirmEvent.fire(this,
-                    message,
-                    result -> {
-                        if (result) {
-                            volumes.removeAll(selected);
-                            selectionModel.clear();
-                            DirtyEvent.fire(IndexVolumeListPresenter.this, true);
-                            refresh();
-                        }
-                    });
+                ConfirmEvent.fire(this,
+                        message,
+                        result -> {
+                            if (result) {
+                                volumes.removeAll(selected);
+                                selectionModel.clear();
+                                DirtyEvent.fire(IndexVolumeListPresenter.this, true);
+                                refresh();
+                            }
+                        });
+            }
         }
     }
 
@@ -194,5 +208,11 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 }

@@ -93,11 +93,11 @@ public class StroomZipRepository {
      */
     StroomZipRepository(final String dir, final String repositoryFormat, final boolean lock, final int lockDeleteAgeMs) {
         if (repositoryFormat == null || repositoryFormat.trim().length() == 0) {
-            LOGGER.info("Using default repository format: " + DEFAULT_REPOSITORY_FORMAT);
+            LOGGER.info("Using default repository format: {} in directory {}", DEFAULT_REPOSITORY_FORMAT, dir);
             this.repositoryFormat = DEFAULT_REPOSITORY_FORMAT;
 
         } else {
-            LOGGER.info("Using repository format: " + repositoryFormat);
+            LOGGER.info("Using repository format: {} in directory {}", repositoryFormat, dir);
 
             // Validate the proxy repository format.
             final int index = repositoryFormat.indexOf(ID_VAR);

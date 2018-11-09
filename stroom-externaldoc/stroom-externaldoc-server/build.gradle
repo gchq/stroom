@@ -15,6 +15,7 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jetty_http
+    compile libs.slf4j_api
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit

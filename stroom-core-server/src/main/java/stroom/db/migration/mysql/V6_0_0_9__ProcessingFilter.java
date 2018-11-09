@@ -216,13 +216,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> includeFeedIds = criteria.obtainFeeds().obtainInclude().getSet();
         if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED);
+            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
             feedDictionariesToInclude.stream()
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                                    .field(StreamDataSource.FEED)
+                                    .field(StreamDataSource.FEED_NAME)
                                     .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                                     .dictionary(dict)
                                     .build()
@@ -230,7 +230,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     );
             rootAnd.addOperator(or.build());
         } else if (includeFeedIds.size() > 0) {
-            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED);
+            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
         } else if (feedDictionariesToInclude.size() > 0) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
             feedDictionariesToInclude.stream()
@@ -238,7 +238,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                            .field(StreamDataSource.FEED)
+                            .field(StreamDataSource.FEED_NAME)
                             .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                             .dictionary(dict)
                             .build()
@@ -251,17 +251,17 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> excludeFeedIds = criteria.obtainFeeds().obtainExclude().getSet();
         if (excludeFeedIds.size() > 0) {
             final ExpressionOperator.Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
-            applyIncludesTerm(not, excludeFeedIds, feedNamesById, StreamDataSource.FEED);
+            applyIncludesTerm(not, excludeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
             rootAnd.addOperator(not.build());
         }
 
         // Stream Types
         final Set<Long> streamTypeIds = criteria.obtainStreamTypeIdSet().getSet();
-        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, StreamDataSource.STREAM_TYPE);
+        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, StreamDataSource.STREAM_TYPE_NAME);
 
         // Pipeline
         final Set<Long> pipelineIds = criteria.obtainPipelineIdSet().getSet();
-        applyIncludesTerm(rootAnd, pipelineIds, pipeNamesById, StreamDataSource.PIPELINE);
+        applyIncludesTerm(rootAnd, pipelineIds, pipeNamesById, StreamDataSource.PIPELINE_UUID);
 
         // Parent Stream ID
         final Set<Long> parentStreamIds = criteria.obtainParentStreamIdSet().getSet();

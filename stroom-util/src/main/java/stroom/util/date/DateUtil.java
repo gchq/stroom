@@ -17,13 +17,9 @@
 package stroom.util.date;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 
 public final class DateUtil {
     public static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
@@ -33,17 +29,6 @@ public final class DateUtil {
 
     private DateUtil() {
         // Private constructor.
-    }
-
-    public static ZonedDateTime parseBest(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
-        final TemporalAccessor temporalAccessor = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
-        if (temporalAccessor instanceof ZonedDateTime) {
-            return ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
-        }
-        if (temporalAccessor instanceof LocalDateTime) {
-            return ((LocalDateTime) temporalAccessor).atZone(zoneId);
-        }
-        return ((LocalDate) temporalAccessor).atStartOfDay(zoneId);
     }
 
     /**

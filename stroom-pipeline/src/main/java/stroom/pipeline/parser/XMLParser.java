@@ -42,7 +42,6 @@ public class XMLParser extends AbstractParser {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     @Inject

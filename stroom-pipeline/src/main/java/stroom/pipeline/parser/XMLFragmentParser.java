@@ -42,20 +42,12 @@ import stroom.pool.PoolItem;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
-import javax.xml.parsers.SAXParserFactory;
 
 @ConfigurableElement(type = "XMLFragmentParser", category = Category.PARSER, roles = {PipelineElementType.ROLE_PARSER,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XML)
 public class XMLFragmentParser extends AbstractParser implements SupportsCodeInjection {
-    private static final SAXParserFactory PARSER_FACTORY;
-
-    static {
-        PARSER_FACTORY = SAXParserFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-    }
-
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterStore textConverterStore;
 

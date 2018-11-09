@@ -20,9 +20,11 @@ package stroom.refdata.store;
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
 import stroom.refdata.RefDataValueByteBufferConsumer;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
+import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.store.offheapstore.StringByteBufferConsumer;
 import stroom.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -35,7 +37,9 @@ import stroom.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.refdata.store.onheapstore.RefDataValueConsumer;
 import stroom.refdata.store.onheapstore.StringValueConsumer;
+import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.PooledByteBufferOutputStream;
+import stroom.util.HasHealthCheck;
 
 public class RefDataStoreModule extends AbstractModule {
     @Override
@@ -78,5 +82,9 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(OnHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
+
+        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
+        hasHealthCheckBinder.addBinding().to(RefDataOffHeapStore.class);
+        hasHealthCheckBinder.addBinding().to(ByteBufferPool.class);
     }
 }

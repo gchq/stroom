@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.pipeline.scope.PipelineScoped;
 import stroom.io.StreamCloser;
+import stroom.pipeline.scope.PipelineScoped;
 
 import javax.inject.Inject;
 import java.io.Closeable;
@@ -38,39 +38,9 @@ public class SteamStoreStreamCloserImpl implements StreamCloser {
 
     private final StreamStore streamStore;
 
-    // For stream target's we can delete them on closing if they are no-longer
-    // required
-    private boolean delete = false;
-
     @Inject
     public SteamStoreStreamCloserImpl(final StreamStore streamStore) {
         this.streamStore = streamStore;
-    }
-
-//    public SteamStoreStreamCloserImpl() {
-//        this.streamStore = null;
-//    }
-//
-//    public SteamStoreStreamCloserImpl(final Closeable... closeables) {
-//        this.streamStore = null;
-//        add(closeables);
-//    }
-//
-//    public SteamStoreStreamCloserImpl(final Closeable closeable) {
-//        this.streamStore = null;
-//        add(closeable);
-//    }
-
-    public SteamStoreStreamCloserImpl add(final Closeable... closeables) {
-        for (final Closeable closeable : closeables) {
-            add(closeable);
-        }
-
-        return this;
-    }
-
-    public void setDelete(boolean delete) {
-        this.delete = delete;
     }
 
     public SteamStoreStreamCloserImpl add(final Closeable closeable) {
@@ -122,11 +92,16 @@ public class SteamStoreStreamCloserImpl implements StreamCloser {
 
                         // Only call the API on the root parent stream
 //                        if (streamTarget.getParent() == null) {
-                            if (delete) {
-                                streamStore.deleteStreamTarget(streamTarget);
-                            } else {
-                                streamStore.closeStreamTarget(streamTarget);
-                            }
+                        // Close the stream target.
+                        try {
+                            streamStore.closeStreamTarget(streamTarget);
+//                        } catch (final OptimisticLockException e) {
+//                            // This exception will be thrown is the stream target has already been deleted by another thread if it was superseded.
+//                            LOGGER.debug("Optimistic lock exception thrown when closing stream target (see trace for details)");
+//                            LOGGER.trace(e.getMessage(), e);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
 //                        }
                     } else {
                         // Close the stream.

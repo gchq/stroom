@@ -23,12 +23,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
-import stroom.util.shared.HasReadOnly;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class ScriptSettingsViewImpl extends ViewImpl implements ScriptSettingsView, HasReadOnly {
+public class ScriptSettingsViewImpl extends ViewImpl implements ScriptSettingsView, ReadOnlyChangeHandler {
     private final Widget widget;
+
     @UiField
     TextArea description;
     @UiField
@@ -50,12 +51,7 @@ public class ScriptSettingsViewImpl extends ViewImpl implements ScriptSettingsVi
     }
 
     @Override
-    public boolean isReadOnly() {
-        return description.isEnabled();
-    }
-
-    @Override
-    public void setReadOnly(final boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         description.setEnabled(!readOnly);
     }
 

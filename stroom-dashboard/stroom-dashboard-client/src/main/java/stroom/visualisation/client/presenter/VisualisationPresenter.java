@@ -75,6 +75,12 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        settingsPresenter.onReadOnly(readOnly);
+    }
+
+    @Override
     protected void onWrite(final VisualisationDoc visualisation) {
         settingsPresenter.write(visualisation);
     }

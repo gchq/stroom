@@ -43,9 +43,11 @@ public class VisualisationSettingsPresenter
     private final EditorPresenter editorPresenter;
 
     @Inject
-    public VisualisationSettingsPresenter(final EventBus eventBus, final VisualisationSettingsView view,
-                                          final EntityDropDownPresenter scriptPresenter, final EditorPresenter editorPresenter, final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public VisualisationSettingsPresenter(final EventBus eventBus,
+                                          final VisualisationSettingsView view,
+                                          final EntityDropDownPresenter scriptPresenter,
+                                          final EditorPresenter editorPresenter) {
+        super(eventBus, view);
         this.scriptPresenter = scriptPresenter;
         this.editorPresenter = editorPresenter;
 
@@ -94,18 +96,19 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
-        editorPresenter.setReadOnly(readOnly);
-        editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
-    }
-
-    @Override
     protected void onWrite(final VisualisationDoc visualisation) {
         visualisation.setDescription(getView().getDescription().getText().trim());
         visualisation.setFunctionName(getView().getFunctionName().getText().trim());
         visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());
         visualisation.setSettings(editorPresenter.getText().trim());
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        scriptPresenter.setEnabled(!readOnly);
+        editorPresenter.setReadOnly(readOnly);
+        editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
     }
 
     public interface VisualisationSettingsView extends View {

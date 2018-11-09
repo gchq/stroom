@@ -31,7 +31,7 @@
 		</g:center>
 		<g:south size="26">
 			<g:FlowPanel styleName="{style.buttons}">
-				<g:Button ui:field="ok" text="Ok" />
+				<g:Button ui:field="ok" text="OK" />
 				<g:Button ui:field="cancel" styleName="gwt-Button {style.cancel}"
 					text="Cancel" />
 			</g:FlowPanel>

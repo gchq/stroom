@@ -17,13 +17,13 @@
 
 package stroom.explorer;
 
-import stroom.explorer.shared.PermissionInheritance;
+import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.docref.DocRef;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.query.api.v2.DocRefInfo;
 
 import java.util.List;
@@ -31,11 +31,6 @@ import java.util.List;
 class MockExplorerService implements ExplorerService {
     @Override
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
-        return null;
-    }
-
-    @Override
-    public DocumentTypes getDocumentTypes() {
         return null;
     }
 
@@ -72,5 +67,15 @@ class MockExplorerService implements ExplorerService {
     @Override
     public void rebuildTree() {
 
+    }
+
+    @Override
+    public List<DocumentType> getNonSystemTypes() {
+        return null;
+    }
+
+    @Override
+    public List<DocumentType> getVisibleTypes() {
+        return null;
     }
 }

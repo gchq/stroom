@@ -28,13 +28,12 @@ import stroom.entity.shared.Document;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.HasReadOnly;
 import stroom.util.shared.HasType;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
-        implements HasDocumentRead<D>, HasWrite<D>, HasPermissionCheck, HasDirtyHandlers, HasType {
+        implements HasDocumentRead<D>, HasWrite<D>, ReadOnlyChangeHandler, HasDirtyHandlers, HasType {
     private final ClientSecurityContext securityContext;
     private D entity;
     private boolean dirty;
@@ -73,12 +72,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         // Check document permissions if we haven't already.
         if (!checkedPermissions) {
             checkedPermissions = true;
-            if (entity instanceof Document) {
-                final Document document = (Document) entity;
-                securityContext.hasDocumentPermission(document.getType(), document.getUuid(), DocumentPermissionNames.UPDATE).onSuccess(this::setAllowUpdate);
-            } else {
-                onPermissionsCheck(false);
-            }
+            securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE).onSuccess(this::setAllowUpdate);
         }
 
         this.entity = entity;
@@ -96,16 +90,16 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     }
 
     @Override
-    public void onPermissionsCheck(boolean readOnly) {
+    public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        if (getView() instanceof HasReadOnly) {
-            final HasReadOnly hasReadOnly = (HasReadOnly) getView();
-            hasReadOnly.setReadOnly(readOnly);
+        if (getView() instanceof ReadOnlyChangeHandler) {
+            final ReadOnlyChangeHandler changeHandler = (ReadOnlyChangeHandler) getView();
+            changeHandler.onReadOnly(readOnly);
         }
     }
 
     private void setAllowUpdate(Boolean allowUpdate) {
-        onPermissionsCheck(!allowUpdate);
+        onReadOnly(!allowUpdate);
     }
 
     public boolean isReadOnly() {

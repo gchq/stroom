@@ -3,9 +3,20 @@ package stroom.proxy.repo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ProxyRepositoryConfigImpl implements ProxyRepositoryConfig {
+    private boolean isStoringEnabled = false;
     private String repoDir;
     private String repositoryFormat = "${pathId}/${id}";
     private String rollCron;
+
+    @Override
+    @JsonProperty
+    public boolean isStoringEnabled() {
+        return isStoringEnabled;
+    }
+
+    public void setStoringEnabled(final boolean storingEnabled) {
+        isStoringEnabled = storingEnabled;
+    }
 
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.

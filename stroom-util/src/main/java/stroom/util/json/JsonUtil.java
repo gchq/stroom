@@ -64,7 +64,7 @@ public final class JsonUtil {
         }
     }
 
-    private static ObjectMapper getMapper() {
+    public static ObjectMapper getMapper() {
         final SimpleModule module = new SimpleModule();
         module.addSerializer(Double.class, new MyDoubleSerialiser());
 

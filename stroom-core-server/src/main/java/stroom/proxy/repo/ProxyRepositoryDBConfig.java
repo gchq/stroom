@@ -8,6 +8,15 @@ public class ProxyRepositoryDBConfig implements ProxyRepositoryConfig {
     private String rollCron = "";
 
     /**
+     * @return True if the proxy should store received data in its repository
+     */
+    @Override
+    public boolean isStoringEnabled() {
+        // Always enabled for stroom
+        return true;
+    }
+
+    /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
     @JsonPropertyDescription("The stroom proxy dir to write data to from a pipeline")

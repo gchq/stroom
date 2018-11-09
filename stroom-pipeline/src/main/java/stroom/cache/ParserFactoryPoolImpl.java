@@ -19,6 +19,8 @@ package stroom.cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
+import stroom.entity.event.EntityEvent;
+import stroom.entity.event.EntityEventHandler;
 import stroom.security.DocumentPermissionCache;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
@@ -34,14 +36,16 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;
 import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@EntityEventHandler(type = XmlSchemaDoc.DOCUMENT_TYPE)
 class ParserFactoryPoolImpl
         extends AbstractDocPool<TextConverterDoc, StoredParserFactory>
-        implements ParserFactoryPool {
+        implements ParserFactoryPool, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
 
     private final DSChooser dsChooser;
@@ -98,5 +102,10 @@ class ParserFactoryPoolImpl
         }
 
         return new StoredParserFactory(parserFactory, errorReceiver);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        clear();
     }
 }

@@ -22,24 +22,24 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.document.client.event.DirtyEvent;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
-import stroom.docref.DocRef;
 
-public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPresenter.IndexSettingsView>
-        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, IndexSettingsUiHandlers {
+public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc>
+        implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler, IndexSettingsUiHandlers {
 
     private final IndexVolumeListPresenter indexVolumeListPresenter;
 
@@ -68,49 +68,47 @@ public class IndexSettingsPresenter extends MyPresenterWidget<IndexSettingsPrese
         registerHandler(indexVolumeListPresenter.addDirtyHandler(dirtyHandler));
     }
 
-    private void setDirty(final boolean dirty) {
-        DirtyEvent.fire(IndexSettingsPresenter.this, dirty);
-    }
-
     @Override
     public void onChange() {
         setDirty(true);
     }
 
     @Override
-    public void read(final DocRef docRef, final IndexDoc index) {
-        if (index != null) {
-            getView().getDescription().setText(index.getDescription());
-            getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
-            getView().setShardsPerPartition(index.getShardsPerPartition());
-            getView().setPartitionBy(index.getPartitionBy());
-            getView().setPartitionSize(index.getPartitionSize());
-            getView().getRetentionAge().setSelectedItem(SupportedRetentionAge.get(index.getRetentionDayAge()));
-
-            indexVolumeListPresenter.read(docRef, index);
-        }
+    public String getType() {
+        return IndexDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    public void write(final IndexDoc index) {
-        if (index != null) {
-            index.setDescription(getView().getDescription().getText().trim());
-            index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
-            index.setShardsPerPartition(getView().getShardsPerPartition());
-            index.setPartitionBy(getView().getPartitionBy());
-            index.setPartitionSize(getView().getPartitionSize());
-            index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
+    protected void onRead(final DocRef docRef, final IndexDoc index) {
+        getView().getDescription().setText(index.getDescription());
+        getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
+        getView().setShardsPerPartition(index.getShardsPerPartition());
+        getView().setPartitionBy(index.getPartitionBy());
+        getView().setPartitionSize(index.getPartitionSize());
+        getView().getRetentionAge().setSelectedItem(SupportedRetentionAge.get(index.getRetentionDayAge()));
 
-            indexVolumeListPresenter.write(index);
-        }
+        indexVolumeListPresenter.read(docRef, index);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    protected void onWrite(final IndexDoc index) {
+        index.setDescription(getView().getDescription().getText().trim());
+        index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
+        index.setShardsPerPartition(getView().getShardsPerPartition());
+        index.setPartitionBy(getView().getPartitionBy());
+        index.setPartitionSize(getView().getPartitionSize());
+        index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
+
+        indexVolumeListPresenter.write(index);
     }
 
-    public interface IndexSettingsView extends View, HasUiHandlers<IndexSettingsUiHandlers> {
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        getView().onReadOnly(readOnly);
+        indexVolumeListPresenter.onReadOnly(readOnly);
+    }
+
+    public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
         TextArea getDescription();
 
         int getMaxDocsPerShard();

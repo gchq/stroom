@@ -34,8 +34,10 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
     private final DictionaryListPresenter dictionaryListPresenter;
 
     @Inject
-    public DictionarySettingsPresenter(final EventBus eventBus, final DictionarySettingsView view, final DictionaryListPresenter dictionaryListPresenter, final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+    public DictionarySettingsPresenter(final EventBus eventBus,
+                                       final DictionarySettingsView view,
+                                       final DictionaryListPresenter dictionaryListPresenter) {
+        super(eventBus, view);
         this.dictionaryListPresenter = dictionaryListPresenter;
         getView().setImportList(dictionaryListPresenter.getView());
 
@@ -71,6 +73,12 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
     protected void onWrite(final DictionaryDoc doc) {
         doc.setDescription(getView().getDescription().getText().trim());
         dictionaryListPresenter.write(doc);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
+        dictionaryListPresenter.onReadOnly(readOnly);
     }
 
     public interface DictionarySettingsView extends View {

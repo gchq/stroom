@@ -144,6 +144,15 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         rollUpType.setSelectedItem(statisticRollUpType);
     }
 
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        description.setEnabled(!readOnly);
+        statisticType.setEnabled(!readOnly);
+        precision.setEnabled(!readOnly);
+        rollUpType.setEnabled(!readOnly);
+        enabled.setEnabled(!readOnly);
+    }
+
     public interface Binder extends UiBinder<Widget, StatisticsDataSourceSettingsViewImpl> {
     }
 }

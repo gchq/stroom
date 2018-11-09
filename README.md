@@ -1,8 +1,17 @@
 # ![Stroom](logo.png)
 
-[![Build Status](https://travis-ci.org/gchq/stroom.svg?branch=master)](https://travis-ci.org/gchq/stroom)
+#### **Stroom**
+  * [**Master**](https://github.com/gchq/stroom/commits/master) - [![Build Status](https://travis-ci.org/gchq/stroom.svg?branch=master)](https://travis-ci.org/gchq/stroom)
+  * [**6.0.x**](https://github.com/gchq/stroom/commits/6.0) - [![Build Status](https://travis-ci.org/gchq/stroom.svg?branch=6.0)](https://travis-ci.org/gchq/stroom/branches)
+#### **Stroom Authentication**
+  * [**Master**](https://github.com/gchq/stroom-auth/commits/master) - [![Build Status](https://travis-ci.org/gchq/stroom-auth.svg?branch=master)](https://travis-ci.org/gchq/stroom-auth)
+  * [**1.0.x**](https://github.com/gchq/stroom-auth/commits/1.0) - [![Build Status](https://travis-ci.org/gchq/stroom-auth.svg?branch=1.0)](https://travis-ci.org/gchq/stroom-auth/branches)
+#### **Stroom Resources**
+  * [**Master**](https://github.com/gchq/stroom-resources/commits/master) - [![Build Status](https://travis-ci.org/gchq/stroom-resources.svg?branch=master)](https://travis-ci.org/gchq/stroom-resources)
 
-Welcome to the repository for the main Stroom application. The application spans several repositories but we've bundled all the documentation into the [`stroom-docs` repository](https://github.com/gchq/stroom-docs). That's where to look if you want any of these:
+Welcome to the repository for the main Stroom application. 
+The application spans several repositories but we've bundled all the documentation into the [`stroom-docs`](https://gchq.github.io/stroom-docs/) repository. 
+That's where to look if you want any of these:
 
 - [The main README.md](https://github.com/gchq/stroom-docs/blob/master/README.md)
 - [The quick-start guide](https://github.com/gchq/stroom-docs/blob/master/quick-start-guide/quick-start.md)

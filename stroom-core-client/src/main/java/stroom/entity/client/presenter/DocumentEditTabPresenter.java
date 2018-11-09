@@ -183,9 +183,13 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    public void onPermissionsCheck(final boolean readOnly) {
-        super.onPermissionsCheck(readOnly);
+    public void onReadOnly(final boolean readOnly) {
+        super.onReadOnly(readOnly);
         saveButton.setEnabled(isDirty() && !readOnly);
+
+        if (readOnly) {
+            saveButton.setTitle("Save is not available as this document is read only");
+        }
     }
 
     @Override

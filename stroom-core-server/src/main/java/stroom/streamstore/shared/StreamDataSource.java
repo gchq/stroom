@@ -29,11 +29,11 @@ public class StreamDataSource {
 //    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
 //    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
-    public static final String FEED = "Feed";
-    public static final String PIPELINE = "Pipeline";
-    public static final String STREAM_TYPE = "Stream Type";
-    public static final String STREAM_ID = "Stream Id";
-    public static final String PARENT_STREAM_ID = "Parent Stream Id";
+    public static final String FEED_NAME = "Feed";
+    public static final String PIPELINE_UUID = "Pipeline UUID";
+    public static final String STREAM_TYPE_NAME = "Type";
+    public static final String STREAM_ID = "Id";
+    public static final String PARENT_STREAM_ID = "Parent Id";
     public static final String STATUS = "Status";
     public static final String CREATE_TIME = "Create Time";
     public static final String EFFECTIVE_TIME = "Effective Time";
@@ -42,15 +42,15 @@ public class StreamDataSource {
 
     // Extended fields.
 //    public static final String NODE = "Node";
-    public static final String REC_READ = "RecRead";
-    public static final String REC_WRITE = "RecWrite";
-    public static final String REC_INFO = "RecInfo";
-    public static final String REC_WARN = "RecWarn";
-    public static final String REC_ERROR = "RecError";
-    public static final String REC_FATAL = "RecFatal";
+    public static final String REC_READ = "Read Count";
+    public static final String REC_WRITE = "Write Count";
+    public static final String REC_INFO = "Info Count";
+    public static final String REC_WARN = "Warning Count";
+    public static final String REC_ERROR = "Error Count";
+    public static final String REC_FATAL = "Fatal Error Count";
     public static final String DURATION = "Duration";
-    public static final String FILE_SIZE = "FileSize";
-    public static final String STREAM_SIZE = "StreamSize";
+    public static final String FILE_SIZE = "File Size";
+    public static final String STREAM_SIZE = "Raw Size";
 
     // Legacy or hidden fields.
     public static final String FEED_ID = "Feed Id";
@@ -64,9 +64,9 @@ public class StreamDataSource {
 //        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
-        FIELDS.add(createStringField(FEED));
-        FIELDS.add(createStringField(PIPELINE));
-        FIELDS.add(createStringField(STREAM_TYPE));
+        FIELDS.add(createStringField(FEED_NAME));
+        FIELDS.add(createStringField(PIPELINE_UUID));
+        FIELDS.add(createStringField(STREAM_TYPE_NAME));
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));
         FIELDS.add(createStringField(STATUS));

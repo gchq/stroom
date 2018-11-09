@@ -6,7 +6,7 @@ sudo: required #to ensure we get a VM rather than a container for more memory an
 
 env:
   global:
-    - DOCKER_COMPOSE_VERSION=1.13.0
+    - DOCKER_COMPOSE_VERSION=1.22.0
     # $TAGPERM environment variable
     # generate a token at https://github.com/settings/tokens and encrypt it
     # with `travis encrypt TAGPERM=<yoursecrettoken>`

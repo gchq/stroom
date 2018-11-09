@@ -57,5 +57,6 @@ public class InvalidCharFilterReaderElement extends AbstractReaderElement {
             errorReceiver.log(Severity.WARNING, null, getElementId(),
                     "Some illegal characters were removed from the input stream", null);
         }
+        super.endStream();
     }
 }

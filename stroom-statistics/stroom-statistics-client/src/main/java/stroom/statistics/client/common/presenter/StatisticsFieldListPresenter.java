@@ -33,6 +33,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
-        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
     private final StatisticsFieldEditPresenter statisticsFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -53,6 +54,8 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     private StatisticsDataSourceData statisticsDataSourceData;
 
     private StatisticsCustomMaskListPresenter customMaskListPresenter;
+
+    private boolean readOnly = true;
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -62,13 +65,11 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        newButton.setTitle("New Field");
         editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Field");
         removeButton = getView().addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove Field");
 
         addColumns();
+        enableButtons();
     }
 
     @Override
@@ -102,14 +103,25 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     }
 
     private void enableButtons() {
+        newButton.setEnabled(!readOnly);
         if (statisticsDataSourceData != null && statisticsDataSourceData.getStatisticFields() != null) {
             StatisticField selected = getView().getSelectionModel().getSelected();
-            final boolean enabled = selected != null;
+            final boolean enabled = !readOnly && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
         } else {
             editButton.setEnabled(false);
             removeButton.setEnabled(false);
+        }
+
+        if (readOnly) {
+            newButton.setTitle("New field disabled as fields are read only");
+            editButton.setTitle("Edit field disabled as fields are read only");
+            removeButton.setTitle("Remove field disabled as fields are read only");
+        } else {
+            newButton.setTitle("New Field");
+            editButton.setTitle("Edit Field");
+            removeButton.setTitle("Remove Field");
         }
     }
 
@@ -128,53 +140,18 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     }
 
     private void onAdd() {
-        final StatisticField statisticField = new StatisticField();
-        final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
-        final List<StatisticField> otherFields = statisticsDataSourceData.getStatisticFields();
-
-        statisticsFieldEditPresenter.read(statisticField, otherFields);
-        statisticsFieldEditPresenter.show("New Field", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    if (statisticsFieldEditPresenter.write(statisticField)) {
-                        statisticsDataSourceData.addStatisticField(statisticField);
-                        reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
-                        refresh();
-                        statisticsFieldEditPresenter.hide();
-                        DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
-                    }
-                } else {
-                    statisticsFieldEditPresenter.hide();
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore.
-            }
-        });
-    }
-
-    private void onEdit() {
-        final StatisticField statisticField = getView().getSelectionModel().getSelected();
-        if (statisticField != null) {
+        if (!readOnly) {
+            final StatisticField statisticField = new StatisticField();
             final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
-
-            // make a copy of the list of stat fields and remove the one we are
-            // editing so we can check the new value
-            // is not already in the list
-            final List<StatisticField> otherFields = new ArrayList<>(
-                    statisticsDataSourceData.getStatisticFields());
-            otherFields.remove(statisticField);
+            final List<StatisticField> otherFields = statisticsDataSourceData.getStatisticFields();
 
             statisticsFieldEditPresenter.read(statisticField, otherFields);
-            statisticsFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
+            statisticsFieldEditPresenter.show("New Field", new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
                         if (statisticsFieldEditPresenter.write(statisticField)) {
-                            statisticsDataSourceData.reOrderStatisticFields();
+                            statisticsDataSourceData.addStatisticField(statisticField);
                             reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
                             refresh();
                             statisticsFieldEditPresenter.hide();
@@ -193,16 +170,57 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
         }
     }
 
-    private void onRemove() {
-        final List<StatisticField> list = getView().getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
-            final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
+    private void onEdit() {
+        if (!readOnly) {
+            final StatisticField statisticField = getView().getSelectionModel().getSelected();
+            if (statisticField != null) {
+                final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
 
-            statisticsDataSourceData.getStatisticFields().removeAll(list);
-            getView().getSelectionModel().clear();
-            reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
-            refresh();
-            DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                // make a copy of the list of stat fields and remove the one we are
+                // editing so we can check the new value
+                // is not already in the list
+                final List<StatisticField> otherFields = new ArrayList<>(
+                        statisticsDataSourceData.getStatisticFields());
+                otherFields.remove(statisticField);
+
+                statisticsFieldEditPresenter.read(statisticField, otherFields);
+                statisticsFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            if (statisticsFieldEditPresenter.write(statisticField)) {
+                                statisticsDataSourceData.reOrderStatisticFields();
+                                reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                                refresh();
+                                statisticsFieldEditPresenter.hide();
+                                DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                            }
+                        } else {
+                            statisticsFieldEditPresenter.hide();
+                        }
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Ignore.
+                    }
+                });
+            }
+        }
+    }
+
+    private void onRemove() {
+        if (!readOnly) {
+            final List<StatisticField> list = getView().getSelectionModel().getSelectedItems();
+            if (list != null && list.size() > 0) {
+                final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
+
+                statisticsDataSourceData.getStatisticFields().removeAll(list);
+                getView().getSelectionModel().clear();
+                reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                refresh();
+                DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+            }
         }
     }
 
@@ -237,6 +255,12 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     @Override
     public void write(final StatisticStoreDoc entity) {
         entity.setConfig(statisticsDataSourceData);
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     @Override
