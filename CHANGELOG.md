@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change log level for SqlExceptionHelper to OFF, to stop expected exceptions from polluting the logs
+
 * Fix invalid requerstLog logFormat in proxy configuration
 
 ## [v6.0-beta.11]
