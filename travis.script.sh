@@ -14,7 +14,7 @@ SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
 MINOR_VER_FLOATING_TAG=""
 #This is a whitelist of branches to produce docker builds for
-BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
+BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
 CRON_TAG_SUFFIX="DAILY"
 LATEST_SUFFIX="-LATEST"
