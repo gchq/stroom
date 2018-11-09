@@ -19,7 +19,8 @@ import {
   withState,
   branch,
   renderComponent,
-  withProps
+  withProps,
+  lifecycle
 } from "recompose";
 import { connect } from "react-redux";
 
@@ -72,6 +73,14 @@ const enhance = compose<EnhancedProps, Props>(
     }
   ),
   withSetEditableByUser,
+  lifecycle({
+    componentDidMount() {
+      const { setEditableByUser, editMode } = this.props as Props &
+        WithStateHandlers;
+
+      setEditableByUser(editMode || false);
+    }
+  }),
   branch(
     ({ expressionState }) => !expressionState,
     renderComponent(() => <Loader message="Loading expression state..." />)

@@ -54,7 +54,7 @@ export const actionCreators = {
   ): SelectableListingMounted & Action<"SELECTABLE_LISTING_MOUNTED"> => ({
     type: SELECTABLE_LISTING_MOUNTED,
     id,
-    items,
+    items: items !== null ? items : [],
     selectionBehaviour: selectionBehaviour || SelectionBehaviour.NONE,
     getKey
   }),
@@ -105,11 +105,12 @@ export const defaultStatePerId: StoreStatePerId = {
 export const reducer = prepareReducerById(defaultStatePerId)
   .handleAction<Action & SelectableListingMounted>(
     SELECTABLE_LISTING_MOUNTED,
-    (state: StoreStatePerId, { items, selectionBehaviour, getKey }) => {
+    (state: StoreStatePerId, { items = [], selectionBehaviour, getKey }) => {
       // Attempt to rescue previous focus index
       let focusIndex = -1;
       let focussedItem;
       if (state) {
+        console.log("Items", items);
         if (state.focusIndex < items.length) {
           focusIndex = state.focusIndex;
           focussedItem = items[focusIndex];

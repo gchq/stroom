@@ -20,7 +20,7 @@ import { connect } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { DragSource, DragSourceSpec } from "react-dnd";
 
-import SelectBox from "../SelectBox";
+import Select from "react-select";
 import Button from "../Button";
 import {
   DragDropTypes,
@@ -147,7 +147,7 @@ const enhance = compose<EnhancedProps, Props>(
     }) => value => expressionItemUpdated(expressionId, uuid, { value })
   }),
   withProps(({ isEnabled, term, dataSource }) => {
-    const classNames = ["expression-item"];
+    const classNames = ["expression-item", "expression-term"];
 
     if (!isEnabled) {
       classNames.push("expression-item--disabled");
@@ -155,7 +155,7 @@ const enhance = compose<EnhancedProps, Props>(
 
     const fieldOptions = dataSource.fields.map((f: DataSourceFieldType) => ({
       value: f.name,
-      text: f.name
+      label: f.name
     }));
 
     const thisField = dataSource.fields.find(
@@ -166,7 +166,7 @@ const enhance = compose<EnhancedProps, Props>(
     if (thisField) {
       conditionOptions = thisField.conditions.map((c: ConditionType) => ({
         value: c,
-        text: ConditionDisplayValues[c]
+        label: ConditionDisplayValues[c]
       }));
     }
 
@@ -194,27 +194,30 @@ const ExpressionTerm = ({
   conditionOptions,
   valueType
 }: EnhancedProps) => (
-  <div className={`expression-term ${className || ""}`}>
+  <div className={className}>
     {connectDragSource(
       <span>
         <FontAwesomeIcon icon="bars" />
       </span>
     )}
-    <SelectBox
+    <Select
+      className="expression-term__select"
       placeholder="Field"
-      value={term.field}
-      onChange={onFieldChange}
+      value={fieldOptions.find(o => o.value === term.field)}
+      onChange={(o: SelectOptionType) => onFieldChange(o.value)}
       options={fieldOptions}
     />
-    <SelectBox
+    <Select
+      className="expression-term__select"
       placeholder="Condition"
-      value={term.condition}
-      onChange={onConditionChange}
+      value={conditionOptions.find(o => o.value === term.condition)}
+      onChange={(o: SelectOptionType) =>
+        onConditionChange(o.value as ConditionType)
+      }
       options={conditionOptions}
     />
-
     <ValueWidget valueType={valueType} term={term} onChange={onValueChange} />
-    <div className="expression-term__spacer" />
+
     <div className="expression-term__actions">
       <Button
         icon="check"

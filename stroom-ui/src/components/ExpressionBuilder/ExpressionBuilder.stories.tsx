@@ -64,6 +64,7 @@ storiesOf("Expression Builder", module)
     <TestExpressionBuilder
       testExpression={testExpression}
       showModeToggle
+      editMode
       expressionId="populatedExEdit"
       dataSource={testDataSource}
     />

@@ -32,8 +32,8 @@ export interface DocRefWithLineage extends TWithLineage<DocRefType> {}
 export type DocRefConsumer = (d: DocRefType) => void;
 
 export interface SelectOptionType {
-  text: string;
   value: string;
+  label: string;
 }
 
 export interface OptionType {

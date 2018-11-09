@@ -163,7 +163,7 @@ const enhance = compose<EnhancedProps, Props>(
             documentTreeToUse,
             navFolderToUse.uuid
           )!;
-          docRefs = navFolderWithLineage.node.children!;
+          docRefs = navFolderWithLineage.node.children || [];
           thisFolder = navFolderWithLineage.node;
 
           if (

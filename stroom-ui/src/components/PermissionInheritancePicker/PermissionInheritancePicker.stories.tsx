@@ -14,55 +14,43 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose } from "recompose";
-import { connect } from "react-redux";
-import { Field, reduxForm, FormState } from "redux-form";
+import { Formik, FormikProps } from "formik";
 import { storiesOf } from "@storybook/react";
 
 import PermissionInheritancePicker from "./PermissionInheritancePicker";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
-import { GlobalStoreState } from "../../startup/reducers";
 import { addThemedStories } from "../../lib/themedStoryGenerator";
 import "../../styles/main.css";
 
-interface Props {}
-interface ConnectState {
-  thisForm: FormState;
+interface PermissionInheritanceForm {
+  permissionInheritance?: string;
 }
-interface ConnectDispatch {}
-interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ form }) => ({ thisForm: form.permissionInheritanceTest }),
-    {}
-  ),
-  reduxForm({
-    form: "permissionInheritanceTest"
-  })
-);
-
-const TestForm = enhance(({ thisForm }: EnhancedProps) => (
-  <form>
-    <div>
-      <label>Chosen Permission Inheritance</label>
-      <Field
-        name="permissionInheritance"
-        component={({ input: { onChange, value } }) => (
-          <PermissionInheritancePicker onChange={onChange} value={value} />
-        )}
-      />
-    </div>
-    {thisForm &&
-      thisForm.values && (
+const TestForm = () => (
+  <Formik
+    initialValues={{ permissionInheritance: undefined, color: undefined }}
+    onSubmit={() => console.log("Do nothing on submit")}
+  >
+    {({
+      submitForm,
+      values,
+      setFieldValue
+    }: FormikProps<PermissionInheritanceForm>) => (
+      <form>
         <div>
-          <div>
-            Permission Inheritance: {thisForm.values.permissionInheritance}
-          </div>
+          <label>Chosen Permission Inheritance</label>
+          <PermissionInheritancePicker
+            onChange={e => setFieldValue("permissionInheritance", e)}
+            value={values.permissionInheritance}
+          />
         </div>
-      )}
-  </form>
-));
+        <div>
+          <div>Permission Inheritance: {values.permissionInheritance}</div>
+        </div>
+      </form>
+    )}
+  </Formik>
+);
 
 const stories = storiesOf("Permission Inheritance Picker", module).addDecorator(
   StroomDecorator

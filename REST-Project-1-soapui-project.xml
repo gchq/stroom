@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="a6880821-a916-420f-8baa-5a79ee7911c5" activeEnvironment="Default" name="REST Project 1" resourceRoot="" soapui-version="5.4.0" xmlns:con="http://eviware.com/soapui/config">
+  <con:settings/>
+  <con:interface xsi:type="con:RestService" id="a6483042-18f4-4c4d-b028-292e623eb19a" wadlVersion="http://wadl.dev.java.net/2009/02" name="http://localhost:8080" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings/>
+    <con:definitionCache type="TEXT" rootPart=""/>
+    <con:endpoints>
+      <con:endpoint>http://localhost:8080</con:endpoint>
+    </con:endpoints>
+    <con:resource name="api" path="/api" id="afec52f9-627e-47c5-866d-d739f47ac88d">
+      <con:settings/>
+      <con:parameters>
+        <con:parameter>
+          <con:name>Authorization</con:name>
+          <con:value>Bearer eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg</con:value>
+          <con:style>HEADER</con:style>
+          <con:default>Bearer eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg</con:default>
+        </con:parameter>
+      </con:parameters>
+      <con:resource name="Explorer" path="explorer/v1" id="af252903-8d62-4212-b323-2e965a0a811b">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="Tree" path="all" id="24c21352-7a09-4fa3-ba68-0e5b38ae5452">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="GET Tree" id="b2d6bc6c-8a8d-44b8-a52e-1224d6dc9b18" method="GET">
+            <con:settings/>
+            <con:parameters/>
+            <con:representation type="RESPONSE">
+              <con:mediaType>application/json</con:mediaType>
+              <con:status>200</con:status>
+              <con:params/>
+              <con:element xmlns:all="http://localhost/api/explorer/v1/all">all:Response</con:element>
+            </con:representation>
+          </con:method>
+        </con:resource>
+        <con:resource name="Doc Info" path="info/{type}/{uuid}" id="0536701e-94b5-48ff-baf4-b32815861d71">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>type</con:name>
+              <con:value>type</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>type</con:default>
+            </con:parameter>
+            <con:parameter>
+              <con:name>uuid</con:name>
+              <con:value>uuid</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>uuid</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="GET Doc Info" id="691c56f0-ebce-422d-8b82-40cc3e00eeb1" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="Doc Ref Types" path="docRefTypes" id="8356e8b9-de13-48c7-a0a0-938861cc3def">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="GET Doc Ref Types" id="aeaf73e8-cd6e-48c3-8fa1-6a02076b40d4" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="Create" path="create" id="17b54c72-1694-4a17-b005-632871b3546c">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Create Doc Ref" id="fe8e0e50-1e6c-4806-b3d1-7a64e4236795" method="POST">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="Copy" path="copy" id="fa18ea2e-f41f-43b0-bafa-f27208e6939c">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Copy Doc Ref" id="ecc22b08-de55-4052-b987-fe2dcb698699" method="POST">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="Move" path="move" id="4d369384-b4a5-4ce1-99e2-311cd7eeaeed">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Move Doc Ref" id="880d660f-65e0-4011-be54-0e2ef0c8b945" method="PUT">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="Rename" path="rename" id="b12adbfd-bcb8-47f0-b477-f5391322ec73">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Rename Doc Ref" id="bfc673ec-4f61-40a4-96af-e5bd4091de98" method="PUT">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="Delete" path="delete" id="6c61a305-d4f4-4c0d-9c4a-e60062245734">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Delete Doc Ref" id="c6940673-83ce-40c1-9da7-07e3f288dd3e" method="DELETE">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+      </con:resource>
+      <con:resource name="Dictionary" path="dictionary/v1" id="72dd93e2-f58d-4a2e-ac0a-2bebfef5b287">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="{uuid}" path="{uuid}" id="245736aa-f22f-424e-a6cf-efb37b70d65d">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>uuid</con:name>
+              <con:value>uuid</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>uuid</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="GET Dictionary" id="b945d112-7d6d-42f4-ac5e-f4ce3bce5e80" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+          <con:method name="Save Dictionary" id="7bf94dbb-8272-4776-838b-3fd0c6380bea" method="POST">
+            <con:settings/>
+            <con:parameters/>
+            <con:request name="Request 1" id="16096005-2965-47d8-a343-8d58a66e309f" mediaType="application/json" postQueryString="false">
+              <con:settings/>
+              <con:endpoint>http://localhost:8080</con:endpoint>
+              <con:request/>
+              <con:credentials>
+                <con:authType>No Authorization</con:authType>
+              </con:credentials>
+              <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+              <con:jmsPropertyConfig/>
+              <con:parameters/>
+            </con:request>
+          </con:method>
+        </con:resource>
+        <con:resource name="List" path="list" id="6fd2db2b-cb5a-4b8c-a3f5-61f7baf12d70">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="GET List" id="15239151-b578-4f78-be37-1e2d7a3e4f08" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="import" path="import" id="da90f59f-3fb1-42f7-8627-477f69873f01">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Import Dictionary" id="1d678a31-b9bb-40e2-964e-df0a8ff300eb" method="POST">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="export" path="export" id="25fb3089-bfe8-4d2f-a0bf-31587198e875">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="Export Dictionary" id="971f54ed-5af0-4d99-8591-59c76f074639" method="POST">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+      </con:resource>
+      <con:resource name="Elements" path="elements/v1" id="50ab321e-9075-4451-9f6a-9f1d6c468429">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="elements" path="elements" id="8404ab2f-3f60-43f8-9cae-8b724746faf2">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="GET Elements" id="800bdbf4-0d82-49ef-970e-0b2b5d68d4e4" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="elementProperties" path="elementProperties" id="2c23334e-630f-4b3f-87eb-65c5e3dfd32c">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="GET Element Properties" id="213659a7-8be4-45d8-ab80-cecb84f52a57" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+      </con:resource>
+      <con:resource name="Pipelines" path="pipelines/v1" id="fcba63a4-ed3b-4158-a60a-1ab99908fb34">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="{uuid}" path="{uuid}" id="656eda11-940f-4c6f-9ba0-240038ecd28c">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>uuid</con:name>
+              <con:value>uuid</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>uuid</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="GET Pipeline" id="1d32cfaf-ee0a-470f-a8cc-4abec743fc24" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+          <con:method name="Save Pipeline" id="27d63126-3032-4774-849e-6d3ce8c6b1bf" method="POST">
+            <con:settings/>
+            <con:parameters/>
+            <con:request name="Request 1" id="2259750d-9c81-4c8a-83cb-e0616a8d118a" mediaType="application/json" postQueryString="false">
+              <con:settings/>
+              <con:endpoint>http://localhost:8080</con:endpoint>
+              <con:request/>
+              <con:credentials>
+                <con:authType>No Authorization</con:authType>
+              </con:credentials>
+              <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+              <con:jmsPropertyConfig/>
+              <con:parameters/>
+            </con:request>
+          </con:method>
+        </con:resource>
+        <con:resource name="inherit" path="{parentPipelineId}/inherit" id="1215355b-d794-48a9-88f9-ec12aa339f3d">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>parentPipelineId</con:name>
+              <con:value>parentPipelineId</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>parentPipelineId</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="Inherit Pipeline" id="3eb1fcff-d48d-4f40-9dc7-aff8a3a99662" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:method name="Search" id="d1f78abf-3f02-4f31-aada-b2d4daa934a2" method="GET">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>offset</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:integer</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>pageSize</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:integer</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>filter</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:default/>
+            </con:parameter>
+          </con:parameters>
+        </con:method>
+      </con:resource>
+      <con:resource name="XSLT" path="xslt/v1" id="72dd93e2-f58d-4a2e-ac0a-2bebfef5b287">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="{uuid}" path="{uuid}" id="245736aa-f22f-424e-a6cf-efb37b70d65d">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>uuid</con:name>
+              <con:value>uuid</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>uuid</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="GET XSLT" id="b945d112-7d6d-42f4-ac5e-f4ce3bce5e80" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+          <con:method name="Save XSLT" id="7bf94dbb-8272-4776-838b-3fd0c6380bea" method="POST">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+      </con:resource>
+      <con:resource name="Streams" path="data/v1/" id="2a73ae78-2439-43ff-bd71-7853b7bd058a">
+        <con:settings/>
+        <con:parameters/>
+        <con:method name="GET Streams" id="5bc81363-3d8d-4043-8da9-a2b4445f7932" method="GET">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter required="true">
+              <con:name>streamId</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>streamsOffset</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>streamsLength</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>pageOffset</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>pageSize</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>
+              <con:default/>
+            </con:parameter>
+          </con:parameters>
+        </con:method>
+      </con:resource>
+      <con:resource name="Stream Attribute Map" path="streamattributemap/v1" id="4b777a30-3faa-4fbc-a738-05f01de1d6ad">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="dataSource" path="dataSource" id="99bfd84a-7adf-4baf-88e7-80feddb8cb46">
+          <con:settings/>
+          <con:parameters/>
+          <con:method name="GET Data Source" id="8042f8fc-658e-4cd1-9340-cecf2342d7df" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:resource name="{id}" path="{id}" id="d6996883-ffc0-43a1-800d-b1259ec22b33">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>id</con:name>
+              <con:value>id</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>id</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="Get Stream" id="00bb5765-cd82-4885-87f6-775750057602" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:method name="page" id="91a463a9-2214-4cea-87c4-72eddcca3301" method="GET">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>pageOffset</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:long</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>pageSize</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:integer</con:type>
+              <con:default/>
+            </con:parameter>
+          </con:parameters>
+        </con:method>
+        <con:method name="search" id="970030e7-0724-49d3-a8e3-19ca8aa07c04" method="POST">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>pageOffset</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:default/>
+              <con:path xsi:nil="true"/>
+              <con:description xsi:nil="true"/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>pageSize</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:default/>
+              <con:path xsi:nil="true"/>
+              <con:description xsi:nil="true"/>
+            </con:parameter>
+          </con:parameters>
+        </con:method>
+      </con:resource>
+      <con:resource name="Stream Tasks" path="streamtasks/v1/" id="3d0506c8-cc44-4d6e-b139-0b7078251f08">
+        <con:settings/>
+        <con:parameters/>
+        <con:resource name="{filterId}" path="{filterId}" id="4baca4b3-b457-42c9-90a7-cd124085173f">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter>
+              <con:name>filterId</con:name>
+              <con:value>filterId</con:value>
+              <con:style>TEMPLATE</con:style>
+              <con:default>filterId</con:default>
+            </con:parameter>
+          </con:parameters>
+          <con:method name="enable" id="9617dc1f-e42c-4693-a4c1-7506a5f8b4a6" method="GET">
+            <con:settings/>
+            <con:parameters/>
+          </con:method>
+        </con:resource>
+        <con:method name="fetch" id="c9155a0f-54a5-4dd9-a51c-d998550961da" method="GET">
+          <con:settings/>
+          <con:parameters>
+            <con:parameter required="true">
+              <con:name>offset</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:integer</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>pageSize</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:type xmlns:xs="http://www.w3.org/2001/XMLSchema">xs:integer</con:type>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>sortBy</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>sortDirection</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:default/>
+            </con:parameter>
+            <con:parameter>
+              <con:name>filter</con:name>
+              <con:value/>
+              <con:style>QUERY</con:style>
+              <con:default/>
+            </con:parameter>
+          </con:parameters>
+        </con:method>
+      </con:resource>
+    </con:resource>
+  </con:interface>
+  <con:testSuite id="2fab78aa-744d-42b3-8e55-9e0df1f4a181" name="Explorer">
+    <con:settings/>
+    <con:runType>SEQUENTIAL</con:runType>
+    <con:testCase id="fa8cbd7a-9a6f-4f1e-b3ec-11e0a9848a54" failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Create Doc Ref" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="restrequest" name="Get Tree" id="391f058d-6a3e-491a-af41-07fe078c7640">
+        <con:settings/>
+        <con:config service="http://localhost:8080" methodName="GET Tree" resourcePath="/api/explorer/v1/all" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="Get Tree" id="77d07a3f-9f55-428c-9f8d-f5fe1d8fb8ea" mediaType="application/json">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:encoding>UTF-8</con:encoding>
+            <con:endpoint>http://localhost:8080</con:endpoint>
+            <con:request/>
+            <con:originalUri>http://localhost/api/explorer/v1/all</con:originalUri>
+            <con:credentials>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:jmsPropertyConfig/>
+            <con:parameters>
+              <con:entry key="Authorization" value="Bearer eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg"/>
+            </con:parameters>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:properties/>
+  </con:testSuite>
+  <con:properties/>
+  <con:wssContainer/>
+  <con:oAuth2ProfileContainer/>
+  <con:oAuth1ProfileContainer/>
+  <con:sensitiveInformation/>
+</con:soapui-project>

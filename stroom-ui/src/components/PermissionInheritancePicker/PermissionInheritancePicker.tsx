@@ -1,18 +1,26 @@
 import * as React from "react";
 
-import SelectBox, { ControlledInputProps } from "../SelectBox";
-import { PermissionInheritance } from "../../types";
+import Select from "react-select";
+import { PermissionInheritance, SelectOptionType } from "../../types";
 
-const piOptions = Object.values(PermissionInheritance).map(pi => ({
-  value: pi,
-  text: pi
+export interface Props {
+  value?: string;
+  onChange: (v: string) => any;
+}
+
+const options: Array<SelectOptionType> = Object.values(
+  PermissionInheritance
+).map(o => ({
+  value: o,
+  label: o
 }));
 
-const PermissionInheritancePicker = (props: ControlledInputProps) => (
-  <SelectBox
-    {...props}
+const PermissionInheritancePicker = ({ value, onChange }: Props) => (
+  <Select
+    value={options.find(o => o.value === value)}
+    onChange={(o: SelectOptionType) => onChange(o.value)}
     placeholder="Permission Inheritance"
-    options={piOptions}
+    options={options}
   />
 );
 
