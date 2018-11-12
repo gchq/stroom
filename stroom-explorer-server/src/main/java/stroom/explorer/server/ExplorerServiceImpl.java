@@ -532,33 +532,62 @@ class ExplorerServiceImpl implements ExplorerService {
         final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
-        recurseGetNodes(docRefs.stream(), childNodesByParent::put);
-
-        childNodesByParent.keySet().forEach(docRef -> {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-            try {
-                handler.deleteDocument(docRef.getUuid());
-                explorerEventLog.delete(docRef, null);
-                resultDocRefs.add(docRef);
-
-            } catch (final Exception e) {
-                explorerEventLog.delete(docRef, e);
-                resultMessage.append("Unable to delete '");
-                resultMessage.append(docRef.getName());
-                resultMessage.append("' ");
-                resultMessage.append(e.getMessage());
-                resultMessage.append("\n");
+        final HashSet<DocRef> deleted = new HashSet<>();
+        docRefs.forEach(docRef -> {
+            // Check this document hasn't already been deleted.
+            if (!deleted.contains(docRef)) {
+                recursiveDelete(docRefs, deleted, resultDocRefs, resultMessage);
             }
-
-            // Delete the explorer node.
-            explorerNodeService.deleteNode(docRef);
         });
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
+    }
+
+    private void recursiveDelete(final List<DocRef> docRefs, final HashSet<DocRef> deleted, final List<DocRef> resultDocRefs, final StringBuilder resultMessage) {
+        docRefs.forEach(docRef -> {
+            // Check this document hasn't already been deleted.
+            if (!deleted.contains(docRef)) {
+                // Get any children that might need to be deleted.
+                List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
+                if (children != null && children.size() > 0) {
+                    // Recursive delete.
+                    final List<DocRef> childDocRefs = children.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
+                    recursiveDelete(childDocRefs, deleted, resultDocRefs, resultMessage);
+                }
+
+                // Check to see if we still have children.
+                children = explorerNodeService.getChildren(docRef);
+                if (children != null && children.size() > 0) {
+                    final String message = "Unable to delete '" + docRef.getName() + "' because the folder is not empty";
+                    resultMessage.append(message);
+                    resultMessage.append("\n");
+                    explorerEventLog.delete(docRef, new RuntimeException(message));
+
+                } else {
+                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+                    try {
+                        handler.deleteDocument(docRef.getUuid());
+                        explorerEventLog.delete(docRef, null);
+                        deleted.add(docRef);
+                        resultDocRefs.add(docRef);
+
+                        // Delete the explorer node.
+                        explorerNodeService.deleteNode(docRef);
+
+                    } catch (final Exception e) {
+                        explorerEventLog.delete(docRef, e);
+                        resultMessage.append("Unable to delete '");
+                        resultMessage.append(docRef.getName());
+                        resultMessage.append("' ");
+                        resultMessage.append(e.getMessage());
+                        resultMessage.append("\n");
+                    }
+                }
+            }
+        });
     }
 
     @Override
