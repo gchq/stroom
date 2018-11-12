@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add colours to console logs in docker.
+
 * Issue **#869** : Delete will now properly delete all descendant nodes and documents when deleting folders but will not delete items from the tree if they cannot be deleted, e.g. feeds that have associated data.
 
 * Issue **#916** : You can no longer export empty folders or import nothing.
