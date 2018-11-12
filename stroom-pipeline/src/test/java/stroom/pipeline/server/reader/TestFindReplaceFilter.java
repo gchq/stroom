@@ -98,6 +98,61 @@ public class TestFindReplaceFilter {
     }
 
     @Test
+    public void testBigStartMatch() {
+        final Builder builder = new Builder()
+                .find("^a")
+                .replacement("b")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5000; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String output = getOutput(input, builder);
+        final String expected = input.replaceAll("^a", "b");
+        Assert.assertEquals(expected, output);
+    }
+
+    @Test
+    public void testBigEndMatch() {
+        final Builder builder = new Builder()
+                .find("a$")
+                .replacement("b")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5000; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String output = getOutput(input, builder);
+        final String expected = input.replaceAll("a$", "b");
+        Assert.assertEquals(expected, output);
+    }
+
+    @Test
+    public void testBigStartAndEndMatch() {
+        final Builder builder = new Builder()
+                .find("^a|a$")
+                .replacement("b")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 2500; i++) {
+            sb.append("a");
+        }
+        sb.append("b");
+        for (int i = 0; i < 2499; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String output = getOutput(input, builder);
+        final String expected = input.replaceAll("^a|a$", "b");
+        Assert.assertEquals(expected, output);
+    }
+
+    @Test
     public void testInvalidRegex() {
         try {
             new Builder()
