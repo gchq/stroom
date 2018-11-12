@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#869** : Delete will now properly delete all descendant nodes and documents when deleting folders but will not delete items from the tree if they cannot be deleted, e.g. feeds that have associated data.
+
+* Issue **#916** : You can no longer export empty folders or import nothing.
+
 * Issue **#911** : Changes to feeds and pipelines no longer clear data browsing filters.
 
 * Issue **#907** : Default volumes are now created as soon as they are needed.

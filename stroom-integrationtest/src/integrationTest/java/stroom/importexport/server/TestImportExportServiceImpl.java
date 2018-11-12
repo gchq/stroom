@@ -89,14 +89,17 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         final DocRef eventFeedRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
         Feed eventFeed = feedService.readDocument(eventFeedRef);
         eventFeed.setDescription("Description");
-        // eventFeed.getReferenceFeed().add(referenceFeed);
         eventFeed = feedService.save(eventFeed);
 
         final DocRef eventFeedChildRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
         final Feed eventFeedChild = feedService.readDocument(eventFeedChildRef);
         eventFeedChild.setDescription("Description");
-        // eventFeedChild.getReferenceFeed().add(referenceFeed);
         feedService.save(eventFeedChild);
+
+        final DocRef eventFeedChild2Ref = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child2, null);
+        final Feed eventFeedChild2 = feedService.readDocument(eventFeedChild2Ref);
+        eventFeedChild2.setDescription("Description2");
+        feedService.save(eventFeedChild2);
 
 //        final int startFolderSize = commonTestControl.countEntity(Folder.class);
         final int startTranslationSize = commonTestControl.countEntity(PipelineEntity.class);

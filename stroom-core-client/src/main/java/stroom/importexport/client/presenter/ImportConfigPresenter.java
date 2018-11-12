@@ -64,8 +64,12 @@ public class ImportConfigPresenter
             protected void onSuccess(final ResourceKey resourceKey) {
                 dispatcher.exec(new ImportConfigConfirmationAction(resourceKey))
                         .onSuccess(result -> {
-                            hide();
-                            ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, resourceKey, result);
+                            if (result.isEmpty()) {
+                                warning("The import package contains nothing that can be imported into this version of Stroom.");
+                            } else {
+                                hide();
+                                ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, resourceKey, result);
+                            }
                         })
                         .onFailure(caught -> error(caught.getMessage()));
             }
@@ -109,8 +113,12 @@ public class ImportConfigPresenter
         enableButtons();
     }
 
+    private void warning(final String message) {
+        AlertEvent.fireWarn(this, message, this::enableButtons);
+    }
+
     private void error(final String message) {
-        AlertEvent.fireError(this, message, () -> enableButtons());
+        AlertEvent.fireError(this, message, this::enableButtons);
     }
 
     private void disableButtons() {
