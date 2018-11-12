@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#907** : Default volumes are now created as soon as they are needed.
+
 * Issue **#910** : Changes to index settings in the UI now register as changes and enable save.
 
 * Issue **#913** : Improve FindReplaceFilter to cope with more complex conditions.

@@ -30,6 +30,7 @@ import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
@@ -49,7 +50,6 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
-import stroom.util.spring.StroomBeanStore;
 import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomStartup;
 
@@ -125,19 +125,21 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final StroomEntityManager stroomEntityManager;
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
-    private final StroomBeanStore stroomBeanStore;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
 
+    private volatile boolean createdDefaultVolumes;
+    private boolean creatingDefaultVolumes;
+
     @Inject
-    VolumeServiceImpl(final StroomEntityManager stroomEntityManager, final NodeCache nodeCache,
-                      final StroomPropertyService stroomPropertyService, final StroomBeanStore stroomBeanStore,
+    VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
+                      final NodeCache nodeCache,
+                      final StroomPropertyService stroomPropertyService,
                       final InternalStatisticsReceiver internalStatisticsReceiver) {
         super(stroomEntityManager);
         this.stroomEntityManager = stroomEntityManager;
         this.nodeCache = nodeCache;
         this.stroomPropertyService = stroomPropertyService;
-        this.stroomBeanStore = stroomBeanStore;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
     }
 
@@ -508,30 +510,53 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return new VolumeQueryAppender(entityManager);
     }
 
+    @Override
+    public BaseResultList<Volume> find(final FindVolumeCriteria criteria) throws RuntimeException {
+        ensureDefaultVolumes();
+        return super.find(criteria);
+    }
+
     @StroomStartup(priority = -1100)
     public void startup() {
+        ensureDefaultVolumes();
+    }
 
-        boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
+    private void ensureDefaultVolumes() {
+        if (!createdDefaultVolumes) {
+            createDefaultVolumes();
+        }
+    }
 
-        if (isEnabled) {
-            List<Volume> existingVolumes = getCurrentState();
-            if (existingVolumes.size() == 0) {
-                Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
+    private synchronized void createDefaultVolumes() {
+        if (!createdDefaultVolumes && !creatingDefaultVolumes) {
+            creatingDefaultVolumes = true;
 
-                if (optDefaultVolumePath.isPresent()) {
-                    Node node = nodeCache.getDefaultNode();
-                    Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
-                    createIndexVolume(indexVolPath, node);
-                    Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
-                    createStreamVolume(streamVolPath, node);
+            boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
+
+            if (isEnabled) {
+                final List<Volume> existingVolumes = getCurrentState();
+                if (existingVolumes.size() == 0) {
+                    final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
+
+                    if (optDefaultVolumePath.isPresent()) {
+                        LOGGER.info("Creating default volumes");
+                        final Node node = nodeCache.getDefaultNode();
+                        final Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
+                        createIndexVolume(indexVolPath, node);
+                        final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
+                        createStreamVolume(streamVolPath, node);
+                    } else {
+                        LOGGER.warn("No suitable directory to create default volumes in");
+                    }
                 } else {
-                    LOGGER.warn("No suitable directory to create default volumes in");
+                    LOGGER.info("Existing volumes exist, won't create default volumes");
                 }
             } else {
-                LOGGER.info("Existing volumes exist, won't create default volumes");
+                LOGGER.info("Creation of default volumes is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
             }
-        } else {
-            LOGGER.info("Creation of default volumes is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+
+            createdDefaultVolumes = true;
+            creatingDefaultVolumes = false;
         }
     }
 
