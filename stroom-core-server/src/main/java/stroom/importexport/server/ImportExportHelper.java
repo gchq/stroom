@@ -64,6 +64,7 @@ public class ImportExportHelper {
                                                          final ImportState importState,
                                                          final ImportMode importMode) {
         try {
+            final Long originalUpdateTime = entity.getUpdateTime();
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
             final String xml = dataMap.get("xml");
@@ -98,9 +99,12 @@ public class ImportExportHelper {
 
                     // Import non externalised properties.
                     if (!property.isExternalFile()) {
-                        // Set the property if it is specified.
-                        if (config.hasProperty(propertyName)) {
-                            updateProperty(beanWrapper, propertyName, config.get(propertyName), importState);
+                        // Ignore audit fields.
+                        if (!DocumentEntity.AUDIT_FIELDS.contains(propertyName)) {
+                            // Set the property if it is specified.
+                            if (config.hasProperty(propertyName)) {
+                                updateProperty(beanWrapper, propertyName, config.get(propertyName), importState);
+                            }
                         }
                     }
                 }
@@ -135,7 +139,6 @@ public class ImportExportHelper {
                     if (equal) {
                         importState.setState(State.EQUAL);
                     } else {
-                        final Long originalUpdateTime = entity.getUpdateTime();
                         final String newDateString = config.getString("updateTime");
                         if (newDateString != null) {
                             Long newTime = null;
@@ -213,7 +216,7 @@ public class ImportExportHelper {
                     beanWrapper.setPropertyValue(propertyName, value);
                     final Object newValue = beanWrapper.getPropertyValue(propertyName);
 
-                    if (!Objects.equals(existingValue, newValue)) {
+                    if (!Objects.equals(existingValue, newValue) && !("".equals(existingValue) && newValue == null)) {
                         importState.getUpdatedFieldList().add(propertyName);
                     }
                 }

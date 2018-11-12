@@ -107,7 +107,7 @@ public class ExportConfigPresenter
 
             clientDispatchAsync.exec(new ExportConfigAction(docRefs))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this));
+                    .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable));
         }
     }
 

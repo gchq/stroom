@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#916** : You can no longer export empty folders or import nothing.
+
 * Issue **#911** : Changes to feeds and pipelines no longer clear data browsing filters.
 
 * Issue **#907** : Default volumes are now created as soon as they are needed.
