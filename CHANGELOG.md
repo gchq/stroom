@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#904** : The UI now shows dictionary names in expressions without the need to enter edit mode.
+
+* Updated ACE editor to v1.4.1.
+
 * Add colours to console logs in docker.
 
 * Issue **#869** : Delete will now properly delete all descendant nodes and documents when deleting folders but will not delete items from the tree if they cannot be deleted, e.g. feeds that have associated data.

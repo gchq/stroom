@@ -23,7 +23,6 @@ background: #B5D5FF\
 }\
 .ace-xcode.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px #FFFFFF;\
-border-radius: 2px\
 }\
 .ace-xcode .ace_marker-layer .ace_step {\
 background: rgb(198, 219, 174)\
@@ -87,3 +86,11 @@ background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgb
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/xcode"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

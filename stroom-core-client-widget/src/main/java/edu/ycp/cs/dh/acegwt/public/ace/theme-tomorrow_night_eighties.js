@@ -23,7 +23,6 @@ background: #515151\
 }\
 .ace-tomorrow-night-eighties.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px #2D2D2D;\
-border-radius: 2px\
 }\
 .ace-tomorrow-night-eighties .ace_marker-layer .ace_step {\
 background: rgb(102, 82, 0)\
@@ -107,3 +106,11 @@ background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgb
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/tomorrow_night_eighties"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

@@ -8,7 +8,7 @@ var reservedKeywords = exports.reservedKeywords = (
         '!|{|}|case|do|done|elif|else|'+
         'esac|fi|for|if|in|then|until|while|'+
         '&|;|export|local|read|typeset|unset|'+
-        'elif|select|set'
+        'elif|select|set|function|declare|readonly'
     );
 
 var languageConstructs = exports.languageConstructs = (
@@ -30,7 +30,6 @@ var ShHighlightRules = function() {
     }, "identifier");
 
     var integer = "(?:(?:[1-9]\\d*)|(?:0))";
-
     var fraction = "(?:\\.\\d+)";
     var intPart = "(?:\\d+)";
     var pointFloat = "(?:(?:" + intPart + "?" + fraction + ")|(?:" + intPart + "\\.))";
@@ -39,7 +38,7 @@ var ShHighlightRules = function() {
     var fileDescriptor = "(?:&" + intPart + ")";
 
     var variableName = "[a-zA-Z_][a-zA-Z0-9_]*";
-    var variable = "(?:(?:\\$" + variableName + ")|(?:" + variableName + "=))";
+    var variable = "(?:" + variableName + "(?==))";
 
     var builtinVariable = "(?:\\$(?:SHLVL|\\$|\\!|\\?))";
 
@@ -53,17 +52,32 @@ var ShHighlightRules = function() {
             token : ["text", "comment"],
             regex : /(^|\s)(#.*)$/
         }, {
-            token : "string",
+            token : "string.start",
             regex : '"',
             push : [{
                 token : "constant.language.escape",
-                regex : /\\(?:[$abeEfnrtv\\'"]|x[a-fA-F\d]{1,2}|u[a-fA-F\d]{4}([a-fA-F\d]{4})?|c.|\d{1,3})/
+                regex : /\\(?:[$`"\\]|$)/
             }, {
-                token : "constant",
-                regex : /\$\w+/
+                include : "variables"
+            }, {
+                token : "keyword.operator",
+                regex : /`/ // TODO highlight `
+            }, {
+                token : "string.end",
+                regex : '"',
+                next: "pop"
+            }, {
+                defaultToken: "string"
+            }]
+        }, {
+            token : "string",
+            regex : "\\$'",
+            push : [{
+                token : "constant.language.escape",
+                regex : /\\(?:[abeEfnrtv\\'"]|x[a-fA-F\d]{1,2}|u[a-fA-F\d]{4}([a-fA-F\d]{4})?|c.|\d{1,3})/
             }, {
                 token : "string",
-                regex : '"',
+                regex : "'",
                 next: "pop"
             }, {
                 defaultToken: "string"
@@ -73,7 +87,7 @@ var ShHighlightRules = function() {
             token : "keyword.operator"
         }, {
             stateName: "heredoc",
-            regex : "(<<)(\\s*)(['\"`]?)([\\w\\-]+)(['\"`]?)",
+            regex : "(<<-?)(\\s*)(['\"`]?)([\\w\\-]+)(['\"`]?)",
             onMatch : function(value, currentState, stack) {
                 var next = value[2] == '-' ? "indentedHeredoc" : "heredoc";
                 var tokens = value.split(this.splitRegex);
@@ -128,11 +142,16 @@ var ShHighlightRules = function() {
                 return currentState;
             }
         }, {
+            token : ["keyword", "text", "text", "text", "variable"],
+            regex : /(declare|local|readonly)(\s+)(?:(-[fixar]+)(\s+))?([a-zA-Z_][a-zA-Z0-9_]*\b)/
+        }, {
             token : "variable.language",
             regex : builtinVariable
         }, {
             token : "variable",
             regex : variable
+        }, {
+            include : "variables"
         }, {
             token : "support.function",
             regex : func
@@ -153,14 +172,40 @@ var ShHighlightRules = function() {
             regex : "[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }, {
             token : "keyword.operator",
-            regex : "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|~|<|>|<=|=>|=|!="
+            regex : "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|~|<|>|<=|=>|=|!=|[%&|`]"
+        }, {
+            token : "punctuation.operator",
+            regex : ";"
         }, {
             token : "paren.lparen",
             regex : "[\\[\\(\\{]"
         }, {
             token : "paren.rparen",
-            regex : "[\\]\\)\\}]"
-        } ]
+            regex : "[\\]]"
+        }, {
+            token : "paren.rparen",
+            regex : "[\\)\\}]",
+            next : "pop"
+        }],
+        variables: [{
+            token : "variable",
+            regex : /(\$)(\w+)/
+        }, {
+            token : ["variable", "paren.lparen"],
+            regex : /(\$)(\()/,
+            push : "start"
+        }, {
+            token : ["variable", "paren.lparen", "keyword.operator", "variable", "keyword.operator"],
+            regex : /(\$)(\{)([#!]?)(\w+|[*@#?\-$!0_])(:[?+\-=]?|##?|%%?|,,?\/|\^\^?)?/,
+            push : "start"
+        }, {
+            token : "variable",
+            regex : /\$[*@#?\-$!0_]/
+        }, {
+            token : ["variable", "paren.lparen"],
+            regex : /(\$)(\{)/,
+            push : "start"
+        }]
     };
     
     this.normalizeRules();
@@ -180,7 +225,6 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var ShHighlightFile = require("./sh_highlight_rules");
 
 var MakefileHighlightRules = function() {
-
     var keywordMapper = this.createKeywordMapper({
         "keyword": ShHighlightFile.reservedKeywords,
         "support.function.builtin": ShHighlightFile.languageConstructs,
@@ -235,7 +279,7 @@ var MakefileHighlightRules = function() {
             next  : "start"
         }
     ]
-}
+};
 
 };
 
@@ -342,6 +386,7 @@ var FoldMode = require("./folding/coffee").FoldMode;
 var Mode = function() {
     this.HighlightRules = MakefileHighlightRules;
     this.foldingRules = new FoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
@@ -355,3 +400,11 @@ oop.inherits(Mode, TextMode);
 
 exports.Mode = Mode;
 });
+                (function() {
+                    window.require(["ace/mode/makefile"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            
