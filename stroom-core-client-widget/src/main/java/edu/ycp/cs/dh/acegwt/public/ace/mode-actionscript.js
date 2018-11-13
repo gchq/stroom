@@ -5,7 +5,6 @@ var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var ActionScriptHighlightRules = function() {
-
     this.$rules = { start: 
        [ { token: 'support.class.actionscript.2',
            regex: '\\b(?:R(?:ecordset|DBMSResolver|adioButton(?:Group)?)|X(?:ML(?:Socket|Node|Connector)?|UpdateResolverDataHolder)|M(?:M(?:Save|Execute)|icrophoneMicrophone|o(?:use|vieClip(?:Loader)?)|e(?:nu(?:Bar)?|dia(?:Controller|Display|Playback))|ath)|B(?:yName|inding|utton)|S(?:haredObject|ystem|crollPane|t(?:yleSheet|age|ream)|ound|e(?:ndEvent|rviceObject)|OAPCall|lide)|N(?:umericStepper|et(?:stream|S(?:tream|ervices)|Connection|Debug(?:Config)?))|C(?:heckBox|o(?:ntextMenu(?:Item)?|okie|lor|m(?:ponentMixins|boBox))|ustomActions|lient|amera)|T(?:ypedValue|ext(?:Snapshot|Input|F(?:ield|ormat)|Area)|ree|AB)|Object|D(?:ownload|elta(?:Item|Packet)?|at(?:e(?:Chooser|Field)?|a(?:G(?:lue|rid)|Set|Type)))|U(?:RL|TC|IScrollBar)|P(?:opUpManager|endingCall|r(?:intJob|o(?:duct|gressBar)))|E(?:ndPoint|rror)|Video|Key|F(?:RadioButton|GridColumn|MessageBox|BarChart|S(?:croll(?:Bar|Pane)|tyleFormat|plitView)|orm|C(?:heckbox|omboBox|alendar)|unction|T(?:icker|ooltip(?:Lite)?|ree(?:Node)?)|IconButton|D(?:ataGrid|raggablePane)|P(?:ieChart|ushButton|ro(?:gressBar|mptBox))|L(?:i(?:stBox|neChart)|oadingBox)|AdvancedMessageBox)|W(?:indow|SDLURL|ebService(?:Connector)?)|L(?:ist|o(?:calConnection|ad(?:er|Vars)|g)|a(?:unch|bel))|A(?:sBroadcaster|cc(?:ordion|essibility)|S(?:Set(?:Native|PropFlags)|N(?:ew|ative)|C(?:onstructor|lamp(?:2)?)|InstanceOf)|pplication|lert|rray))\\b' },
@@ -86,7 +85,7 @@ var ActionScriptHighlightRules = function() {
               'storage.modifier.extends.actionscript.2',
               'meta.class.actionscript.2',
               'entity.other.inherited-class.actionscript.2' ],
-           regex: '\\b(class)(\\s+)([a-zA-Z_](?:\\w|\\.)*)(?:(\\s+)(extends)(\\s+)([a-zA-Z_](?:\\w|\\.)*))?' } ] }
+           regex: '\\b(class)(\\s+)([a-zA-Z_](?:\\w|\\.)*)(?:(\\s+)(extends)(\\s+)([a-zA-Z_](?:\\w|\\.)*))?' } ] };
     
     this.normalizeRules();
 };
@@ -94,7 +93,7 @@ var ActionScriptHighlightRules = function() {
 ActionScriptHighlightRules.metaData = { fileTypes: [ 'as' ],
       keyEquivalent: '^~A',
       name: 'ActionScript',
-      scopeName: 'source.actionscript.2' }
+      scopeName: 'source.actionscript.2' };
 
 
 oop.inherits(ActionScriptHighlightRules, TextHighlightRules);
@@ -122,12 +121,35 @@ var FoldMode = exports.FoldMode = function(commentRegex) {
 oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
-
-    this.foldingStartMarker = /(\{|\[)[^\}\]]*$|^\s*(\/\*)/;
-    this.foldingStopMarker = /^[^\[\{]*(\}|\])|^[\s\*]*(\*\/)/;
+    
+    this.foldingStartMarker = /([\{\[\(])[^\}\]\)]*$|^\s*(\/\*)/;
+    this.foldingStopMarker = /^[^\[\{\(]*([\}\]\)])|^[\s\*]*(\*\/)/;
+    this.singleLineBlockCommentRe= /^\s*(\/\*).*\*\/\s*$/;
+    this.tripleStarBlockCommentRe = /^\s*(\/\*\*\*).*\*\/\s*$/;
+    this.startRegionRe = /^\s*(\/\*|\/\/)#?region\b/;
+    this._getFoldWidgetBase = this.getFoldWidget;
+    this.getFoldWidget = function(session, foldStyle, row) {
+        var line = session.getLine(row);
+    
+        if (this.singleLineBlockCommentRe.test(line)) {
+            if (!this.startRegionRe.test(line) && !this.tripleStarBlockCommentRe.test(line))
+                return "";
+        }
+    
+        var fw = this._getFoldWidgetBase(session, foldStyle, row);
+    
+        if (!fw && this.startRegionRe.test(line))
+            return "start"; // lineCommentRegionStart
+    
+        return fw;
+    };
 
     this.getFoldWidgetRange = function(session, foldStyle, row, forceMultiline) {
         var line = session.getLine(row);
+        
+        if (this.startRegionRe.test(line))
+            return this.getCommentRegionBlock(session, line, row);
+        
         var match = line.match(this.foldingStartMarker);
         if (match) {
             var i = match.index;
@@ -192,6 +214,28 @@ oop.inherits(FoldMode, BaseFoldMode);
         
         return new Range(startRow, startColumn, endRow, session.getLine(endRow).length);
     };
+    this.getCommentRegionBlock = function(session, line, row) {
+        var startColumn = line.search(/\s*$/);
+        var maxRow = session.getLength();
+        var startRow = row;
+        
+        var re = /^\s*(?:\/\*|\/\/|--)#?(end)?region\b/;
+        var depth = 1;
+        while (++row < maxRow) {
+            line = session.getLine(row);
+            var m = re.exec(line);
+            if (!m) continue;
+            if (m[1]) depth--;
+            else depth++;
+
+            if (!depth) break;
+        }
+
+        var endRow = row;
+        if (endRow > startRow) {
+            return new Range(startRow, startColumn, endRow, line.length);
+        }
+    };
 
 }).call(FoldMode.prototype);
 
@@ -208,6 +252,7 @@ var FoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function() {
     this.HighlightRules = ActionScriptHighlightRules;
     this.foldingRules = new FoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
@@ -219,3 +264,11 @@ oop.inherits(Mode, TextMode);
 
 exports.Mode = Mode;
 });
+                (function() {
+                    window.require(["ace/mode/actionscript"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

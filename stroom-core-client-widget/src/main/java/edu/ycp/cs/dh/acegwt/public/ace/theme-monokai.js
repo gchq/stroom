@@ -22,7 +22,6 @@ background: #49483E\
 }\
 .ace-monokai.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px #272822;\
-border-radius: 2px\
 }\
 .ace-monokai .ace_marker-layer .ace_step {\
 background: rgb(102, 82, 0)\
@@ -104,3 +103,11 @@ background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgb
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/monokai"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

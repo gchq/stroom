@@ -1,1 +1,15 @@
-define("ace/snippets/ini",["require","exports","module"],function(e,t,n){t.snippetText="",t.scope="ini"})
+define("ace/snippets/ini",["require","exports","module"], function(require, exports, module) {
+"use strict";
+
+exports.snippetText = "";
+exports.scope = "ini";
+
+});
+                (function() {
+                    window.require(["ace/snippets/ini"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

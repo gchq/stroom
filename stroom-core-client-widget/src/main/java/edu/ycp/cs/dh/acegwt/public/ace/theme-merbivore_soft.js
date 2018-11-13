@@ -22,7 +22,6 @@ background: #494949\
 }\
 .ace-merbivore-soft.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px #1C1C1C;\
-border-radius: 2px\
 }\
 .ace-merbivore-soft .ace_marker-layer .ace_step {\
 background: rgb(102, 82, 0)\
@@ -95,3 +94,11 @@ background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgb
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/merbivore_soft"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

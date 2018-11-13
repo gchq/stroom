@@ -33,8 +33,8 @@ var keywords = "abort|else|new|return|abs|elsif|not|reverse|abstract|end|null|ac
             token : "string",           // " string
             regex : '".*?"'
         }, {
-            token : "string",           // ' string
-            regex : "'.*?'"
+            token : "string",           // character
+            regex : "'.'"
         }, {
             token : "constant.numeric", // float
             regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
@@ -72,6 +72,7 @@ var Range = require("../range").Range;
 
 var Mode = function() {
     this.HighlightRules = AdaHighlightRules;
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
@@ -79,9 +80,59 @@ oop.inherits(Mode, TextMode);
 
     this.lineCommentStart = "--";
 
+    this.getNextLineIndent = function(state, line, tab) {
+        var indent = this.$getIndent(line);
+
+        var tokenizedLine = this.getTokenizer().getLineTokens(line, state);
+        var tokens = tokenizedLine.tokens;
+
+        if (tokens.length && tokens[tokens.length-1].type == "comment") {
+            return indent;
+        }
+        if (state == "start") {
+            var match = line.match(/^.*(begin|loop|then|is|do)\s*$/);
+            if (match) {
+                indent += tab;
+            }
+        }
+
+        return indent;
+    };
+
+    this.checkOutdent = function(state, line, input) {
+        var complete_line = line + input;
+        if (complete_line.match(/^\s*(begin|end)$/)) {
+            return true;
+        }
+
+        return false;
+    };
+
+    this.autoOutdent = function(state, session, row) {
+
+        var line = session.getLine(row);
+        var prevLine = session.getLine(row - 1);
+        var prevIndent = this.$getIndent(prevLine).length;
+        var indent = this.$getIndent(line).length;
+        if (indent <= prevIndent) {
+            return;
+        }
+
+        session.outdentRows(new Range(row, 0, row + 2, 0));
+    };
+
+
     this.$id = "ace/mode/ada";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
 
 });
+                (function() {
+                    window.require(["ace/mode/ada"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

@@ -1,24 +1,27 @@
 "no use strict";
-;(function(window) {
-if (typeof window.window != "undefined" && window.document) {
+!(function(window) {
+if (typeof window.window != "undefined" && window.document)
     return;
+if (window.require && window.define)
+    return;
+
+if (!window.console) {
+    window.console = function() {
+        var msgs = Array.prototype.slice.call(arguments, 0);
+        postMessage({type: "log", data: msgs});
+    };
+    window.console.error =
+    window.console.warn = 
+    window.console.log =
+    window.console.trace = window.console;
 }
-
-window.console = function() {
-    var msgs = Array.prototype.slice.call(arguments, 0);
-    postMessage({type: "log", data: msgs});
-};
-window.console.error =
-window.console.warn = 
-window.console.log =
-window.console.trace = window.console;
-
 window.window = window;
 window.ace = window;
 
 window.onerror = function(message, file, line, col, err) {
     postMessage({type: "error", data: {
         message: message,
+        data: err.data,
         file: file,
         line: line, 
         col: col,
@@ -37,7 +40,7 @@ window.normalizeModule = function(parentId, moduleName) {
         var base = parentId.split("/").slice(0, -1).join("/");
         moduleName = (base ? base + "/" : "") + moduleName;
         
-        while(moduleName.indexOf(".") !== -1 && previous != moduleName) {
+        while (moduleName.indexOf(".") !== -1 && previous != moduleName) {
             var previous = moduleName;
             moduleName = moduleName.replace(/^\.\//, "").replace(/\/\.\//, "/").replace(/[^\/]+\/\.\.\//, "");
         }
@@ -46,7 +49,7 @@ window.normalizeModule = function(parentId, moduleName) {
     return moduleName;
 };
 
-window.require = function(parentId, id) {
+window.require = function require(parentId, id) {
     if (!id) {
         id = parentId;
         parentId = null;
@@ -64,17 +67,36 @@ window.require = function(parentId, id) {
         }
         return module.exports;
     }
-    
-    var chunks = id.split("/");
+   
     if (!window.require.tlns)
         return console.log("unable to load " + id);
-    chunks[0] = window.require.tlns[chunks[0]] || chunks[0];
-    var path = chunks.join("/") + ".js";
+    
+    var path = resolveModuleId(id, window.require.tlns);
+    if (path.slice(-3) != ".js") path += ".js";
     
     window.require.id = id;
+    window.require.modules[id] = {}; // prevent infinite loop on broken modules
     importScripts(path);
     return window.require(parentId, id);
 };
+function resolveModuleId(id, paths) {
+    var testPath = id, tail = "";
+    while (testPath) {
+        var alias = paths[testPath];
+        if (typeof alias == "string") {
+            return alias + tail;
+        } else if (alias) {
+            return  alias.location.replace(/\/*$/, "/") + (tail || alias.main || alias.name);
+        } else if (alias === false) {
+            return "";
+        }
+        var i = testPath.lastIndexOf("/");
+        if (i === -1) break;
+        tail = testPath.substr(i) + tail;
+        testPath = testPath.slice(0, i);
+    }
+    return id;
+}
 window.require.modules = {};
 window.require.tlns = {};
 
@@ -100,9 +122,9 @@ window.define = function(id, deps, factory) {
     }
 
     if (!deps.length)
-        // If there is no dependencies, we inject 'require', 'exports' and
-        // 'module' as dependencies, to provide CommonJS compatibility.
-        deps = ['require', 'exports', 'module'];
+        // If there is no dependencies, we inject "require", "exports" and
+        // "module" as dependencies, to provide CommonJS compatibility.
+        deps = ["require", "exports", "module"];
 
     var req = function(childId) {
         return window.require(id, childId);
@@ -112,17 +134,17 @@ window.define = function(id, deps, factory) {
         exports: {},
         factory: function() {
             var module = this;
-            var returnExports = factory.apply(this, deps.map(function(dep) {
-              switch(dep) {
-                  // Because 'require', 'exports' and 'module' aren't actual
-                  // dependencies, we must handle them seperately.
-                  case 'require': return req;
-                  case 'exports': return module.exports;
-                  case 'module':  return module;
-                  // But for all other dependencies, we can just go ahead and
-                  // require them.
-                  default:        return req(dep);
-              }
+            var returnExports = factory.apply(this, deps.slice(0, factory.length).map(function(dep) {
+                switch (dep) {
+                    // Because "require", "exports" and "module" aren't actual
+                    // dependencies, we must handle them seperately.
+                    case "require": return req;
+                    case "exports": return module.exports;
+                    case "module":  return module;
+                    // But for all other dependencies, we can just go ahead and
+                    // require them.
+                    default:        return req(dep);
+                }
             }));
             if (returnExports)
                 module.exports = returnExports;
@@ -131,9 +153,10 @@ window.define = function(id, deps, factory) {
     };
 };
 window.define.amd = {};
-
+require.tlns = {};
 window.initBaseUrls  = function initBaseUrls(topLevelNamespaces) {
-    require.tlns = topLevelNamespaces;
+    for (var i in topLevelNamespaces)
+        require.tlns[i] = topLevelNamespaces[i];
 };
 
 window.initSender = function initSender() {
@@ -173,26 +196,28 @@ var sender = window.sender = null;
 
 window.onmessage = function(e) {
     var msg = e.data;
-    if (msg.command) {
+    if (msg.event && sender) {
+        sender._signal(msg.event, msg.data);
+    }
+    else if (msg.command) {
         if (main[msg.command])
             main[msg.command].apply(main, msg.args);
+        else if (window[msg.command])
+            window[msg.command].apply(window, msg.args);
         else
             throw new Error("Unknown command:" + msg.command);
     }
-    else if (msg.init) {        
-        initBaseUrls(msg.tlns);
+    else if (msg.init) {
+        window.initBaseUrls(msg.tlns);
         require("ace/lib/es5-shim");
-        sender = window.sender = initSender();
+        sender = window.sender = window.initSender();
         var clazz = require(msg.module)[msg.classname];
         main = window.main = new clazz(sender);
-    } 
-    else if (msg.event && sender) {
-        sender._signal(msg.event, msg.data);
     }
 };
 })(this);
 
-define("ace/lib/oop",["require","exports","module"], function(require, exports, module) {
+define("ace/lib/oop",[], function(require, exports, module) {
 "use strict";
 
 exports.inherits = function(ctor, superCtor) {
@@ -220,133 +245,7 @@ exports.implement = function(proto, mixin) {
 
 });
 
-define("ace/lib/event_emitter",["require","exports","module"], function(require, exports, module) {
-"use strict";
-
-var EventEmitter = {};
-var stopPropagation = function() { this.propagationStopped = true; };
-var preventDefault = function() { this.defaultPrevented = true; };
-
-EventEmitter._emit =
-EventEmitter._dispatchEvent = function(eventName, e) {
-    this._eventRegistry || (this._eventRegistry = {});
-    this._defaultHandlers || (this._defaultHandlers = {});
-
-    var listeners = this._eventRegistry[eventName] || [];
-    var defaultHandler = this._defaultHandlers[eventName];
-    if (!listeners.length && !defaultHandler)
-        return;
-
-    if (typeof e != "object" || !e)
-        e = {};
-
-    if (!e.type)
-        e.type = eventName;
-    if (!e.stopPropagation)
-        e.stopPropagation = stopPropagation;
-    if (!e.preventDefault)
-        e.preventDefault = preventDefault;
-
-    listeners = listeners.slice();
-    for (var i=0; i<listeners.length; i++) {
-        listeners[i](e, this);
-        if (e.propagationStopped)
-            break;
-    }
-    
-    if (defaultHandler && !e.defaultPrevented)
-        return defaultHandler(e, this);
-};
-
-
-EventEmitter._signal = function(eventName, e) {
-    var listeners = (this._eventRegistry || {})[eventName];
-    if (!listeners)
-        return;
-    listeners = listeners.slice();
-    for (var i=0; i<listeners.length; i++)
-        listeners[i](e, this);
-};
-
-EventEmitter.once = function(eventName, callback) {
-    var _self = this;
-    callback && this.addEventListener(eventName, function newCallback() {
-        _self.removeEventListener(eventName, newCallback);
-        callback.apply(null, arguments);
-    });
-};
-
-
-EventEmitter.setDefaultHandler = function(eventName, callback) {
-    var handlers = this._defaultHandlers
-    if (!handlers)
-        handlers = this._defaultHandlers = {_disabled_: {}};
-    
-    if (handlers[eventName]) {
-        var old = handlers[eventName];
-        var disabled = handlers._disabled_[eventName];
-        if (!disabled)
-            handlers._disabled_[eventName] = disabled = [];
-        disabled.push(old);
-        var i = disabled.indexOf(callback);
-        if (i != -1) 
-            disabled.splice(i, 1);
-    }
-    handlers[eventName] = callback;
-};
-EventEmitter.removeDefaultHandler = function(eventName, callback) {
-    var handlers = this._defaultHandlers
-    if (!handlers)
-        return;
-    var disabled = handlers._disabled_[eventName];
-    
-    if (handlers[eventName] == callback) {
-        var old = handlers[eventName];
-        if (disabled)
-            this.setDefaultHandler(eventName, disabled.pop());
-    } else if (disabled) {
-        var i = disabled.indexOf(callback);
-        if (i != -1)
-            disabled.splice(i, 1);
-    }
-};
-
-EventEmitter.on =
-EventEmitter.addEventListener = function(eventName, callback, capturing) {
-    this._eventRegistry = this._eventRegistry || {};
-
-    var listeners = this._eventRegistry[eventName];
-    if (!listeners)
-        listeners = this._eventRegistry[eventName] = [];
-
-    if (listeners.indexOf(callback) == -1)
-        listeners[capturing ? "unshift" : "push"](callback);
-    return callback;
-};
-
-EventEmitter.off =
-EventEmitter.removeListener =
-EventEmitter.removeEventListener = function(eventName, callback) {
-    this._eventRegistry = this._eventRegistry || {};
-
-    var listeners = this._eventRegistry[eventName];
-    if (!listeners)
-        return;
-
-    var index = listeners.indexOf(callback);
-    if (index !== -1)
-        listeners.splice(index, 1);
-};
-
-EventEmitter.removeAllListeners = function(eventName) {
-    if (this._eventRegistry) this._eventRegistry[eventName] = [];
-};
-
-exports.EventEmitter = EventEmitter;
-
-});
-
-define("ace/range",["require","exports","module"], function(require, exports, module) {
+define("ace/range",[], function(require, exports, module) {
 "use strict";
 var comparePoints = function(p1, p2) {
     return p1.row - p2.row || p1.column - p2.column;
@@ -474,7 +373,7 @@ var Range = function(startRow, startColumn, endRow, endColumn) {
         if (!this.isMultiLine()) {
             if (row === this.start.row) {
                 return column < this.start.column ? -1 : (column > this.end.column ? 1 : 0);
-            };
+            }
         }
 
         if (row < this.start.row)
@@ -551,9 +450,9 @@ var Range = function(startRow, startColumn, endRow, endColumn) {
     };
     this.collapseRows = function() {
         if (this.end.column == 0)
-            return new Range(this.start.row, 0, Math.max(this.start.row, this.end.row-1), 0)
+            return new Range(this.start.row, 0, Math.max(this.start.row, this.end.row-1), 0);
         else
-            return new Range(this.start.row, 0, this.end.row, 0)
+            return new Range(this.start.row, 0, this.end.row, 0);
     };
     this.toScreenRange = function(session) {
         var screenPosStart = session.documentToScreenPosition(this.start);
@@ -585,7 +484,196 @@ Range.comparePoints = function(p1, p2) {
 exports.Range = Range;
 });
 
-define("ace/anchor",["require","exports","module","ace/lib/oop","ace/lib/event_emitter"], function(require, exports, module) {
+define("ace/apply_delta",[], function(require, exports, module) {
+"use strict";
+
+function throwDeltaError(delta, errorText){
+    console.log("Invalid Delta:", delta);
+    throw "Invalid Delta: " + errorText;
+}
+
+function positionInDocument(docLines, position) {
+    return position.row    >= 0 && position.row    <  docLines.length &&
+           position.column >= 0 && position.column <= docLines[position.row].length;
+}
+
+function validateDelta(docLines, delta) {
+    if (delta.action != "insert" && delta.action != "remove")
+        throwDeltaError(delta, "delta.action must be 'insert' or 'remove'");
+    if (!(delta.lines instanceof Array))
+        throwDeltaError(delta, "delta.lines must be an Array");
+    if (!delta.start || !delta.end)
+       throwDeltaError(delta, "delta.start/end must be an present");
+    var start = delta.start;
+    if (!positionInDocument(docLines, delta.start))
+        throwDeltaError(delta, "delta.start must be contained in document");
+    var end = delta.end;
+    if (delta.action == "remove" && !positionInDocument(docLines, end))
+        throwDeltaError(delta, "delta.end must contained in document for 'remove' actions");
+    var numRangeRows = end.row - start.row;
+    var numRangeLastLineChars = (end.column - (numRangeRows == 0 ? start.column : 0));
+    if (numRangeRows != delta.lines.length - 1 || delta.lines[numRangeRows].length != numRangeLastLineChars)
+        throwDeltaError(delta, "delta.range must match delta lines");
+}
+
+exports.applyDelta = function(docLines, delta, doNotValidate) {
+    var row = delta.start.row;
+    var startColumn = delta.start.column;
+    var line = docLines[row] || "";
+    switch (delta.action) {
+        case "insert":
+            var lines = delta.lines;
+            if (lines.length === 1) {
+                docLines[row] = line.substring(0, startColumn) + delta.lines[0] + line.substring(startColumn);
+            } else {
+                var args = [row, 1].concat(delta.lines);
+                docLines.splice.apply(docLines, args);
+                docLines[row] = line.substring(0, startColumn) + docLines[row];
+                docLines[row + delta.lines.length - 1] += line.substring(startColumn);
+            }
+            break;
+        case "remove":
+            var endColumn = delta.end.column;
+            var endRow = delta.end.row;
+            if (row === endRow) {
+                docLines[row] = line.substring(0, startColumn) + line.substring(endColumn);
+            } else {
+                docLines.splice(
+                    row, endRow - row + 1,
+                    line.substring(0, startColumn) + docLines[endRow].substring(endColumn)
+                );
+            }
+            break;
+    }
+};
+});
+
+define("ace/lib/event_emitter",[], function(require, exports, module) {
+"use strict";
+
+var EventEmitter = {};
+var stopPropagation = function() { this.propagationStopped = true; };
+var preventDefault = function() { this.defaultPrevented = true; };
+
+EventEmitter._emit =
+EventEmitter._dispatchEvent = function(eventName, e) {
+    this._eventRegistry || (this._eventRegistry = {});
+    this._defaultHandlers || (this._defaultHandlers = {});
+
+    var listeners = this._eventRegistry[eventName] || [];
+    var defaultHandler = this._defaultHandlers[eventName];
+    if (!listeners.length && !defaultHandler)
+        return;
+
+    if (typeof e != "object" || !e)
+        e = {};
+
+    if (!e.type)
+        e.type = eventName;
+    if (!e.stopPropagation)
+        e.stopPropagation = stopPropagation;
+    if (!e.preventDefault)
+        e.preventDefault = preventDefault;
+
+    listeners = listeners.slice();
+    for (var i=0; i<listeners.length; i++) {
+        listeners[i](e, this);
+        if (e.propagationStopped)
+            break;
+    }
+    
+    if (defaultHandler && !e.defaultPrevented)
+        return defaultHandler(e, this);
+};
+
+
+EventEmitter._signal = function(eventName, e) {
+    var listeners = (this._eventRegistry || {})[eventName];
+    if (!listeners)
+        return;
+    listeners = listeners.slice();
+    for (var i=0; i<listeners.length; i++)
+        listeners[i](e, this);
+};
+
+EventEmitter.once = function(eventName, callback) {
+    var _self = this;
+    callback && this.addEventListener(eventName, function newCallback() {
+        _self.removeEventListener(eventName, newCallback);
+        callback.apply(null, arguments);
+    });
+};
+
+
+EventEmitter.setDefaultHandler = function(eventName, callback) {
+    var handlers = this._defaultHandlers;
+    if (!handlers)
+        handlers = this._defaultHandlers = {_disabled_: {}};
+    
+    if (handlers[eventName]) {
+        var old = handlers[eventName];
+        var disabled = handlers._disabled_[eventName];
+        if (!disabled)
+            handlers._disabled_[eventName] = disabled = [];
+        disabled.push(old);
+        var i = disabled.indexOf(callback);
+        if (i != -1) 
+            disabled.splice(i, 1);
+    }
+    handlers[eventName] = callback;
+};
+EventEmitter.removeDefaultHandler = function(eventName, callback) {
+    var handlers = this._defaultHandlers;
+    if (!handlers)
+        return;
+    var disabled = handlers._disabled_[eventName];
+    
+    if (handlers[eventName] == callback) {
+        if (disabled)
+            this.setDefaultHandler(eventName, disabled.pop());
+    } else if (disabled) {
+        var i = disabled.indexOf(callback);
+        if (i != -1)
+            disabled.splice(i, 1);
+    }
+};
+
+EventEmitter.on =
+EventEmitter.addEventListener = function(eventName, callback, capturing) {
+    this._eventRegistry = this._eventRegistry || {};
+
+    var listeners = this._eventRegistry[eventName];
+    if (!listeners)
+        listeners = this._eventRegistry[eventName] = [];
+
+    if (listeners.indexOf(callback) == -1)
+        listeners[capturing ? "unshift" : "push"](callback);
+    return callback;
+};
+
+EventEmitter.off =
+EventEmitter.removeListener =
+EventEmitter.removeEventListener = function(eventName, callback) {
+    this._eventRegistry = this._eventRegistry || {};
+
+    var listeners = this._eventRegistry[eventName];
+    if (!listeners)
+        return;
+
+    var index = listeners.indexOf(callback);
+    if (index !== -1)
+        listeners.splice(index, 1);
+};
+
+EventEmitter.removeAllListeners = function(eventName) {
+    if (this._eventRegistry) this._eventRegistry[eventName] = [];
+};
+
+exports.EventEmitter = EventEmitter;
+
+});
+
+define("ace/anchor",[], function(require, exports, module) {
 "use strict";
 
 var oop = require("./lib/oop");
@@ -611,70 +699,45 @@ var Anchor = exports.Anchor = function(doc, row, column) {
         return this.document;
     };
     this.$insertRight = false;
-    this.onChange = function(e) {
-        var delta = e.data;
-        var range = delta.range;
-
-        if (range.start.row == range.end.row && range.start.row != this.row)
+    this.onChange = function(delta) {
+        if (delta.start.row == delta.end.row && delta.start.row != this.row)
             return;
 
-        if (range.start.row > this.row)
+        if (delta.start.row > this.row)
             return;
-
-        if (range.start.row == this.row && range.start.column > this.column)
-            return;
-
-        var row = this.row;
-        var column = this.column;
-        var start = range.start;
-        var end = range.end;
-
-        if (delta.action === "insertText") {
-            if (start.row === row && start.column <= column) {
-                if (start.column === column && this.$insertRight) {
-                } else if (start.row === end.row) {
-                    column += end.column - start.column;
-                } else {
-                    column -= start.column;
-                    row += end.row - start.row;
-                }
-            } else if (start.row !== end.row && start.row < row) {
-                row += end.row - start.row;
-            }
-        } else if (delta.action === "insertLines") {
-            if (start.row === row && column === 0 && this.$insertRight) {
-            }
-            else if (start.row <= row) {
-                row += end.row - start.row;
-            }
-        } else if (delta.action === "removeText") {
-            if (start.row === row && start.column < column) {
-                if (end.column >= column)
-                    column = start.column;
-                else
-                    column = Math.max(0, column - (end.column - start.column));
-
-            } else if (start.row !== end.row && start.row < row) {
-                if (end.row === row)
-                    column = Math.max(0, column - end.column) + start.column;
-                row -= (end.row - start.row);
-            } else if (end.row === row) {
-                row -= end.row - start.row;
-                column = Math.max(0, column - end.column) + start.column;
-            }
-        } else if (delta.action == "removeLines") {
-            if (start.row <= row) {
-                if (end.row <= row)
-                    row -= end.row - start.row;
-                else {
-                    row = start.row;
-                    column = 0;
-                }
-            }
-        }
-
-        this.setPosition(row, column, true);
+            
+        var point = $getTransformedPoint(delta, {row: this.row, column: this.column}, this.$insertRight);
+        this.setPosition(point.row, point.column, true);
     };
+    
+    function $pointsInOrder(point1, point2, equalPointsInOrder) {
+        var bColIsAfter = equalPointsInOrder ? point1.column <= point2.column : point1.column < point2.column;
+        return (point1.row < point2.row) || (point1.row == point2.row && bColIsAfter);
+    }
+            
+    function $getTransformedPoint(delta, point, moveIfEqual) {
+        var deltaIsInsert = delta.action == "insert";
+        var deltaRowShift = (deltaIsInsert ? 1 : -1) * (delta.end.row    - delta.start.row);
+        var deltaColShift = (deltaIsInsert ? 1 : -1) * (delta.end.column - delta.start.column);
+        var deltaStart = delta.start;
+        var deltaEnd = deltaIsInsert ? deltaStart : delta.end; // Collapse insert range.
+        if ($pointsInOrder(point, deltaStart, moveIfEqual)) {
+            return {
+                row: point.row,
+                column: point.column
+            };
+        }
+        if ($pointsInOrder(deltaEnd, point, !moveIfEqual)) {
+            return {
+                row: point.row + deltaRowShift,
+                column: point.column + (point.row == deltaEnd.row ? deltaColShift : 0)
+            };
+        }
+        return {
+            row: deltaStart.row,
+            column: deltaStart.column
+        };
+    }
     this.setPosition = function(row, column, noClip) {
         var pos;
         if (noClip) {
@@ -734,22 +797,23 @@ var Anchor = exports.Anchor = function(doc, row, column) {
 
 });
 
-define("ace/document",["require","exports","module","ace/lib/oop","ace/lib/event_emitter","ace/range","ace/anchor"], function(require, exports, module) {
+define("ace/document",[], function(require, exports, module) {
 "use strict";
 
 var oop = require("./lib/oop");
+var applyDelta = require("./apply_delta").applyDelta;
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
 var Range = require("./range").Range;
 var Anchor = require("./anchor").Anchor;
 
-var Document = function(text) {
-    this.$lines = [];
-    if (text.length === 0) {
+var Document = function(textOrLines) {
+    this.$lines = [""];
+    if (textOrLines.length === 0) {
         this.$lines = [""];
-    } else if (Array.isArray(text)) {
-        this._insertLines(0, text);
+    } else if (Array.isArray(textOrLines)) {
+        this.insertMergedLines({row: 0, column: 0}, textOrLines);
     } else {
-        this.insert({row: 0, column:0}, text);
+        this.insert({row: 0, column:0}, textOrLines);
     }
 };
 
@@ -757,9 +821,9 @@ var Document = function(text) {
 
     oop.implement(this, EventEmitter);
     this.setValue = function(text) {
-        var len = this.getLength();
-        this.remove(new Range(0, 0, len, this.getLine(len-1).length));
-        this.insert({row: 0, column:0}, text);
+        var len = this.getLength() - 1;
+        this.remove(new Range(0, 0, len, this.getLine(len).length));
+        this.insert({row: 0, column: 0}, text);
     };
     this.getValue = function() {
         return this.getAllLines().join(this.getNewLineCharacter());
@@ -767,14 +831,15 @@ var Document = function(text) {
     this.createAnchor = function(row, column) {
         return new Anchor(this, row, column);
     };
-    if ("aaa".split(/a/).length === 0)
+    if ("aaa".split(/a/).length === 0) {
         this.$split = function(text) {
             return text.replace(/\r\n|\r/g, "\n").split("\n");
         };
-    else
+    } else {
         this.$split = function(text) {
             return text.split(/\r\n|\r|\n/);
         };
+    }
 
 
     this.$detectNewLine = function(text) {
@@ -821,251 +886,245 @@ var Document = function(text) {
         return this.$lines.length;
     };
     this.getTextRange = function(range) {
-        if (range.start.row == range.end.row) {
-            return this.getLine(range.start.row)
-                .substring(range.start.column, range.end.column);
-        }
-        var lines = this.getLines(range.start.row, range.end.row);
-        lines[0] = (lines[0] || "").substring(range.start.column);
-        var l = lines.length - 1;
-        if (range.end.row - range.start.row == l)
-            lines[l] = lines[l].substring(0, range.end.column);
-        return lines.join(this.getNewLineCharacter());
+        return this.getLinesForRange(range).join(this.getNewLineCharacter());
     };
-
+    this.getLinesForRange = function(range) {
+        var lines;
+        if (range.start.row === range.end.row) {
+            lines = [this.getLine(range.start.row).substring(range.start.column, range.end.column)];
+        } else {
+            lines = this.getLines(range.start.row, range.end.row);
+            lines[0] = (lines[0] || "").substring(range.start.column);
+            var l = lines.length - 1;
+            if (range.end.row - range.start.row == l)
+                lines[l] = lines[l].substring(0, range.end.column);
+        }
+        return lines;
+    };
+    this.insertLines = function(row, lines) {
+        console.warn("Use of document.insertLines is deprecated. Use the insertFullLines method instead.");
+        return this.insertFullLines(row, lines);
+    };
+    this.removeLines = function(firstRow, lastRow) {
+        console.warn("Use of document.removeLines is deprecated. Use the removeFullLines method instead.");
+        return this.removeFullLines(firstRow, lastRow);
+    };
+    this.insertNewLine = function(position) {
+        console.warn("Use of document.insertNewLine is deprecated. Use insertMergedLines(position, ['', '']) instead.");
+        return this.insertMergedLines(position, ["", ""]);
+    };
+    this.insert = function(position, text) {
+        if (this.getLength() <= 1)
+            this.$detectNewLine(text);
+        
+        return this.insertMergedLines(position, this.$split(text));
+    };
+    this.insertInLine = function(position, text) {
+        var start = this.clippedPos(position.row, position.column);
+        var end = this.pos(position.row, position.column + text.length);
+        
+        this.applyDelta({
+            start: start,
+            end: end,
+            action: "insert",
+            lines: [text]
+        }, true);
+        
+        return this.clonePos(end);
+    };
+    
+    this.clippedPos = function(row, column) {
+        var length = this.getLength();
+        if (row === undefined) {
+            row = length;
+        } else if (row < 0) {
+            row = 0;
+        } else if (row >= length) {
+            row = length - 1;
+            column = undefined;
+        }
+        var line = this.getLine(row);
+        if (column == undefined)
+            column = line.length;
+        column = Math.min(Math.max(column, 0), line.length);
+        return {row: row, column: column};
+    };
+    
+    this.clonePos = function(pos) {
+        return {row: pos.row, column: pos.column};
+    };
+    
+    this.pos = function(row, column) {
+        return {row: row, column: column};
+    };
+    
     this.$clipPosition = function(position) {
         var length = this.getLength();
         if (position.row >= length) {
             position.row = Math.max(0, length - 1);
-            position.column = this.getLine(length-1).length;
-        } else if (position.row < 0)
-            position.row = 0;
-        return position;
-    };
-    this.insert = function(position, text) {
-        if (!text || text.length === 0)
-            return position;
-
-        position = this.$clipPosition(position);
-        if (this.getLength() <= 1)
-            this.$detectNewLine(text);
-
-        var lines = this.$split(text);
-        var firstLine = lines.splice(0, 1)[0];
-        var lastLine = lines.length == 0 ? null : lines.splice(lines.length - 1, 1)[0];
-
-        position = this.insertInLine(position, firstLine);
-        if (lastLine !== null) {
-            position = this.insertNewLine(position); // terminate first line
-            position = this._insertLines(position.row, lines);
-            position = this.insertInLine(position, lastLine || "");
+            position.column = this.getLine(length - 1).length;
+        } else {
+            position.row = Math.max(0, position.row);
+            position.column = Math.min(Math.max(position.column, 0), this.getLine(position.row).length);
         }
         return position;
     };
-    this.insertLines = function(row, lines) {
-        if (row >= this.getLength())
-            return this.insert({row: row, column: 0}, "\n" + lines.join("\n"));
-        return this._insertLines(Math.max(row, 0), lines);
-    };
-    this._insertLines = function(row, lines) {
-        if (lines.length == 0)
-            return {row: row, column: 0};
-        while (lines.length > 0xF000) {
-            var end = this._insertLines(row, lines.slice(0, 0xF000));
-            lines = lines.slice(0xF000);
-            row = end.row;
+    this.insertFullLines = function(row, lines) {
+        row = Math.min(Math.max(row, 0), this.getLength());
+        var column = 0;
+        if (row < this.getLength()) {
+            lines = lines.concat([""]);
+            column = 0;
+        } else {
+            lines = [""].concat(lines);
+            row--;
+            column = this.$lines[row].length;
         }
-
-        var args = [row, 0];
-        args.push.apply(args, lines);
-        this.$lines.splice.apply(this.$lines, args);
-
-        var range = new Range(row, 0, row + lines.length, 0);
-        var delta = {
-            action: "insertLines",
-            range: range,
+        this.insertMergedLines({row: row, column: column}, lines);
+    };
+    this.insertMergedLines = function(position, lines) {
+        var start = this.clippedPos(position.row, position.column);
+        var end = {
+            row: start.row + lines.length - 1,
+            column: (lines.length == 1 ? start.column : 0) + lines[lines.length - 1].length
+        };
+        
+        this.applyDelta({
+            start: start,
+            end: end,
+            action: "insert",
             lines: lines
-        };
-        this._signal("change", { data: delta });
-        return range.end;
-    };
-    this.insertNewLine = function(position) {
-        position = this.$clipPosition(position);
-        var line = this.$lines[position.row] || "";
-
-        this.$lines[position.row] = line.substring(0, position.column);
-        this.$lines.splice(position.row + 1, 0, line.substring(position.column, line.length));
-
-        var end = {
-            row : position.row + 1,
-            column : 0
-        };
-
-        var delta = {
-            action: "insertText",
-            range: Range.fromPoints(position, end),
-            text: this.getNewLineCharacter()
-        };
-        this._signal("change", { data: delta });
-
-        return end;
-    };
-    this.insertInLine = function(position, text) {
-        if (text.length == 0)
-            return position;
-
-        var line = this.$lines[position.row] || "";
-
-        this.$lines[position.row] = line.substring(0, position.column) + text
-                + line.substring(position.column);
-
-        var end = {
-            row : position.row,
-            column : position.column + text.length
-        };
-
-        var delta = {
-            action: "insertText",
-            range: Range.fromPoints(position, end),
-            text: text
-        };
-        this._signal("change", { data: delta });
-
-        return end;
+        });
+        
+        return this.clonePos(end);
     };
     this.remove = function(range) {
-        if (!(range instanceof Range))
-            range = Range.fromPoints(range.start, range.end);
-        range.start = this.$clipPosition(range.start);
-        range.end = this.$clipPosition(range.end);
-
-        if (range.isEmpty())
-            return range.start;
-
-        var firstRow = range.start.row;
-        var lastRow = range.end.row;
-
-        if (range.isMultiLine()) {
-            var firstFullRow = range.start.column == 0 ? firstRow : firstRow + 1;
-            var lastFullRow = lastRow - 1;
-
-            if (range.end.column > 0)
-                this.removeInLine(lastRow, 0, range.end.column);
-
-            if (lastFullRow >= firstFullRow)
-                this._removeLines(firstFullRow, lastFullRow);
-
-            if (firstFullRow != firstRow) {
-                this.removeInLine(firstRow, range.start.column, this.getLine(firstRow).length);
-                this.removeNewLine(range.start.row);
-            }
-        }
-        else {
-            this.removeInLine(firstRow, range.start.column, range.end.column);
-        }
-        return range.start;
+        var start = this.clippedPos(range.start.row, range.start.column);
+        var end = this.clippedPos(range.end.row, range.end.column);
+        this.applyDelta({
+            start: start,
+            end: end,
+            action: "remove",
+            lines: this.getLinesForRange({start: start, end: end})
+        });
+        return this.clonePos(start);
     };
     this.removeInLine = function(row, startColumn, endColumn) {
-        if (startColumn == endColumn)
-            return;
-
-        var range = new Range(row, startColumn, row, endColumn);
-        var line = this.getLine(row);
-        var removed = line.substring(startColumn, endColumn);
-        var newLine = line.substring(0, startColumn) + line.substring(endColumn, line.length);
-        this.$lines.splice(row, 1, newLine);
-
-        var delta = {
-            action: "removeText",
-            range: range,
-            text: removed
-        };
-        this._signal("change", { data: delta });
-        return range.start;
+        var start = this.clippedPos(row, startColumn);
+        var end = this.clippedPos(row, endColumn);
+        
+        this.applyDelta({
+            start: start,
+            end: end,
+            action: "remove",
+            lines: this.getLinesForRange({start: start, end: end})
+        }, true);
+        
+        return this.clonePos(start);
     };
-    this.removeLines = function(firstRow, lastRow) {
-        if (firstRow < 0 || lastRow >= this.getLength())
-            return this.remove(new Range(firstRow, 0, lastRow + 1, 0));
-        return this._removeLines(firstRow, lastRow);
-    };
-
-    this._removeLines = function(firstRow, lastRow) {
-        var range = new Range(firstRow, 0, lastRow + 1, 0);
-        var removed = this.$lines.splice(firstRow, lastRow - firstRow + 1);
-
-        var delta = {
-            action: "removeLines",
-            range: range,
-            nl: this.getNewLineCharacter(),
-            lines: removed
-        };
-        this._signal("change", { data: delta });
-        return removed;
+    this.removeFullLines = function(firstRow, lastRow) {
+        firstRow = Math.min(Math.max(0, firstRow), this.getLength() - 1);
+        lastRow  = Math.min(Math.max(0, lastRow ), this.getLength() - 1);
+        var deleteFirstNewLine = lastRow == this.getLength() - 1 && firstRow > 0;
+        var deleteLastNewLine  = lastRow  < this.getLength() - 1;
+        var startRow = ( deleteFirstNewLine ? firstRow - 1                  : firstRow                    );
+        var startCol = ( deleteFirstNewLine ? this.getLine(startRow).length : 0                           );
+        var endRow   = ( deleteLastNewLine  ? lastRow + 1                   : lastRow                     );
+        var endCol   = ( deleteLastNewLine  ? 0                             : this.getLine(endRow).length ); 
+        var range = new Range(startRow, startCol, endRow, endCol);
+        var deletedLines = this.$lines.slice(firstRow, lastRow + 1);
+        
+        this.applyDelta({
+            start: range.start,
+            end: range.end,
+            action: "remove",
+            lines: this.getLinesForRange(range)
+        });
+        return deletedLines;
     };
     this.removeNewLine = function(row) {
-        var firstLine = this.getLine(row);
-        var secondLine = this.getLine(row+1);
-
-        var range = new Range(row, firstLine.length, row+1, 0);
-        var line = firstLine + secondLine;
-
-        this.$lines.splice(row, 2, line);
-
-        var delta = {
-            action: "removeText",
-            range: range,
-            text: this.getNewLineCharacter()
-        };
-        this._signal("change", { data: delta });
+        if (row < this.getLength() - 1 && row >= 0) {
+            this.applyDelta({
+                start: this.pos(row, this.getLine(row).length),
+                end: this.pos(row + 1, 0),
+                action: "remove",
+                lines: ["", ""]
+            });
+        }
     };
     this.replace = function(range, text) {
         if (!(range instanceof Range))
             range = Range.fromPoints(range.start, range.end);
-        if (text.length == 0 && range.isEmpty())
+        if (text.length === 0 && range.isEmpty())
             return range.start;
         if (text == this.getTextRange(range))
             return range.end;
 
         this.remove(range);
+        var end;
         if (text) {
-            var end = this.insert(range.start, text);
+            end = this.insert(range.start, text);
         }
         else {
             end = range.start;
         }
-
+        
         return end;
     };
     this.applyDeltas = function(deltas) {
         for (var i=0; i<deltas.length; i++) {
-            var delta = deltas[i];
-            var range = Range.fromPoints(delta.range.start, delta.range.end);
-
-            if (delta.action == "insertLines")
-                this.insertLines(range.start.row, delta.lines);
-            else if (delta.action == "insertText")
-                this.insert(range.start, delta.text);
-            else if (delta.action == "removeLines")
-                this._removeLines(range.start.row, range.end.row - 1);
-            else if (delta.action == "removeText")
-                this.remove(range);
+            this.applyDelta(deltas[i]);
         }
     };
     this.revertDeltas = function(deltas) {
         for (var i=deltas.length-1; i>=0; i--) {
-            var delta = deltas[i];
-
-            var range = Range.fromPoints(delta.range.start, delta.range.end);
-
-            if (delta.action == "insertLines")
-                this._removeLines(range.start.row, range.end.row - 1);
-            else if (delta.action == "insertText")
-                this.remove(range);
-            else if (delta.action == "removeLines")
-                this._insertLines(range.start.row, delta.lines);
-            else if (delta.action == "removeText")
-                this.insert(range.start, delta.text);
+            this.revertDelta(deltas[i]);
         }
+    };
+    this.applyDelta = function(delta, doNotValidate) {
+        var isInsert = delta.action == "insert";
+        if (isInsert ? delta.lines.length <= 1 && !delta.lines[0]
+            : !Range.comparePoints(delta.start, delta.end)) {
+            return;
+        }
+        
+        if (isInsert && delta.lines.length > 20000) {
+            this.$splitAndapplyLargeDelta(delta, 20000);
+        }
+        else {
+            applyDelta(this.$lines, delta, doNotValidate);
+            this._signal("change", delta);
+        }
+    };
+    
+    this.$splitAndapplyLargeDelta = function(delta, MAX) {
+        var lines = delta.lines;
+        var l = lines.length - MAX + 1;
+        var row = delta.start.row; 
+        var column = delta.start.column;
+        for (var from = 0, to = 0; from < l; from = to) {
+            to += MAX - 1;
+            var chunk = lines.slice(from, to);
+            chunk.push("");
+            this.applyDelta({
+                start: this.pos(row + from, column),
+                end: this.pos(row + to, column = 0),
+                action: delta.action,
+                lines: chunk
+            }, true);
+        }
+        delta.lines = lines.slice(from);
+        delta.start.row = row + from;
+        delta.start.column = column;
+        this.applyDelta(delta, true);
+    };
+    this.revertDelta = function(delta) {
+        this.applyDelta({
+            start: this.clonePos(delta.start),
+            end: this.clonePos(delta.end),
+            action: (delta.action == "insert" ? "remove" : "insert"),
+            lines: delta.lines.slice()
+        });
     };
     this.indexToPosition = function(index, startRow) {
         var lines = this.$lines || this.getAllLines();
@@ -1075,7 +1134,7 @@ var Document = function(text) {
             if (index < 0)
                 return {row: i, column: index + lines[i].length + newlineLength};
         }
-        return {row: l-1, column: lines[l-1].length};
+        return {row: l-1, column: index + lines[l-1].length + newlineLength};
     };
     this.positionToIndex = function(pos, startRow) {
         var lines = this.$lines || this.getAllLines();
@@ -1093,7 +1152,7 @@ var Document = function(text) {
 exports.Document = Document;
 });
 
-define("ace/lib/lang",["require","exports","module"], function(require, exports, module) {
+define("ace/lib/lang",[], function(require, exports, module) {
 "use strict";
 
 exports.last = function(a) {
@@ -1139,28 +1198,30 @@ exports.copyArray = function(array){
     var copy = [];
     for (var i=0, l=array.length; i<l; i++) {
         if (array[i] && typeof array[i] == "object")
-            copy[i] = this.copyObject( array[i] );
+            copy[i] = this.copyObject(array[i]);
         else 
             copy[i] = array[i];
     }
     return copy;
 };
 
-exports.deepCopy = function (obj) {
+exports.deepCopy = function deepCopy(obj) {
     if (typeof obj !== "object" || !obj)
         return obj;
-    var cons = obj.constructor;
-    if (cons === RegExp)
+    var copy;
+    if (Array.isArray(obj)) {
+        copy = [];
+        for (var key = 0; key < obj.length; key++) {
+            copy[key] = deepCopy(obj[key]);
+        }
+        return copy;
+    }
+    if (Object.prototype.toString.call(obj) !== "[object Object]")
         return obj;
     
-    var copy = cons();
-    for (var key in obj) {
-        if (typeof obj[key] === "object") {
-            copy[key] = exports.deepCopy(obj[key]);
-        } else {
-            copy[key] = obj[key];
-        }
-    }
+    copy = {};
+    for (var key in obj)
+        copy[key] = deepCopy(obj[key]);
     return copy;
 };
 
@@ -1193,7 +1254,7 @@ exports.escapeRegExp = function(str) {
 };
 
 exports.escapeHTML = function(str) {
-    return str.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&#60;");
+    return ("" + str).replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&#60;");
 };
 
 exports.getMatchOffsets = function(string, regExp) {
@@ -1209,7 +1270,6 @@ exports.getMatchOffsets = function(string, regExp) {
     return matches;
 };
 exports.deferredCall = function(fcn) {
-
     var timer = null;
     var callback = function() {
         timer = null;
@@ -1280,9 +1340,10 @@ exports.delayedCall = function(fcn, defaultTimeout) {
 };
 });
 
-define("ace/worker/mirror",["require","exports","module","ace/document","ace/lib/lang"], function(require, exports, module) {
+define("ace/worker/mirror",[], function(require, exports, module) {
 "use strict";
 
+var Range = require("../range").Range;
 var Document = require("../document").Document;
 var lang = require("../lib/lang");
     
@@ -1294,7 +1355,19 @@ var Mirror = exports.Mirror = function(sender) {
     
     var _self = this;
     sender.on("change", function(e) {
-        doc.applyDeltas(e.data);
+        var data = e.data;
+        if (data[0].start) {
+            doc.applyDeltas(data);
+        } else {
+            for (var i = 0; i < data.length; i += 2) {
+                if (Array.isArray(data[i+1])) {
+                    var d = {action: "insert", start: data[i], lines: data[i+1]};
+                } else {
+                    var d = {action: "remove", start: data[i], end: data[i+1]};
+                }
+                doc.applyDelta(d, true);
+            }
+        }
         if (_self.$timeout)
             return deferredUpdate.schedule(_self.$timeout);
         _self.onUpdate();
@@ -1329,7 +1402,7 @@ var Mirror = exports.Mirror = function(sender) {
 
 });
 
-define("ace/mode/lua/luaparse",["require","exports","module"], function(require, exports, module) {
+define("ace/mode/lua/luaparse",[], function(require, exports, module) {
 
 (function (root, name, factory) {
    factory(exports)
@@ -1346,7 +1419,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     , locations: false
     , ranges: false
   };
-
   var EOF = 1, StringLiteral = 2, Keyword = 4, Identifier = 8
     , NumericLiteral = 16, Punctuator = 32, BooleanLiteral = 64
     , NilLiteral = 128, VarargLiteral = 256;
@@ -1356,7 +1428,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     , Punctuator: Punctuator, BooleanLiteral: BooleanLiteral
     , NilLiteral: NilLiteral, VarargLiteral: VarargLiteral
   };
-
   var errors = exports.errors = {
       unexpected: 'Unexpected %1 \'%2\' near \'%3\''
     , expected: '\'%1\' expected near \'%2\''
@@ -1364,7 +1435,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     , unfinishedString: 'unfinished string near \'%1\''
     , malformedNumber: 'malformed number near \'%1\''
   };
-
+  //
   var ast = exports.ast = {
       labelStatement: function(label) {
       return {
@@ -1620,7 +1691,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       };
     }
   };
-
   function finishNode(node) {
     if (trackLocations) {
       var location = locations.pop();
@@ -1630,7 +1700,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return node;
   }
-
   var slice = Array.prototype.slice
     , toString = Object.prototype.toString
     , indexOf = function indexOf(array, element) {
@@ -1639,14 +1708,14 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       }
       return -1;
     };
-
   function indexOfObject(array, property, element) {
     for (var i = 0, length = array.length; i < length; i++) {
       if (array[i][property] === element) return i;
     }
     return -1;
   }
-
+  //
+  //
   function sprintf(format) {
     var args = slice.call(arguments, 1);
     format = format.replace(/%(\d)/g, function (match, index) {
@@ -1654,7 +1723,8 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     });
     return format;
   }
-
+  //
+  //
   function extend() {
     var args = slice.call(arguments)
       , dest = {}
@@ -1668,7 +1738,10 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return dest;
   }
-
+  //
+  //
+  //
+  //
   function raise(token) {
     var message = sprintf.apply(null, slice.call(arguments, 1))
       , error, col;
@@ -1688,11 +1761,15 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     throw error;
   }
-
+  //
+  //
   function raiseUnexpectedToken(type, token) {
     raise(token, errors.expectedToken, type, token.value);
   }
-
+  //
+  //
+  //
+  //
   function unexpected(found, near) {
     if ('undefined' === typeof near) near = lookahead.value;
     if ('undefined' !== typeof found.type) {
@@ -1711,7 +1788,10 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return raise(found, errors.unexpected, 'symbol', found, near);
   }
-
+  //
+  //
+  //
+  //
   var index
     , token
     , previousToken
@@ -1772,7 +1852,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
       case 126: // ~
         if (61 === next) return scanPunctuator('~=');
-        return raise({}, errors.expected, '=', '~');
+        return scanPunctuator('~');
 
       case 58: // :
         if (58 === next) return scanPunctuator('::');
@@ -1782,13 +1862,12 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
         if (91 === next || 61 === next) return scanLongStringLiteral();
         return scanPunctuator('[');
       case 42: case 47: case 94: case 37: case 44: case 123: case 125:
-      case 93: case 40: case 41: case 59: case 35: case 45: case 43:
+      case 93: case 40: case 41: case 59: case 35: case 45: case 43: case 38: case 124:
         return scanPunctuator(input.charAt(index));
     }
 
     return unexpected(input.charAt(index));
   }
-
   function skipWhiteSpace() {
     while (index < length) {
       var charCode = input.charCodeAt(index);
@@ -1802,7 +1881,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       }
     }
   }
-
   function scanIdentifierOrKeyword() {
     var value, type;
     while (isIdentifierPart(input.charCodeAt(++index)));
@@ -1827,7 +1905,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       , range: [tokenStart, index]
     };
   }
-
   function scanPunctuator(value) {
     index += value.length;
     return {
@@ -1838,7 +1915,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       , range: [tokenStart, index]
     };
   }
-
   function scanVarargLiteral() {
     index += 3;
     return {
@@ -1849,7 +1925,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       , range: [tokenStart, index]
     };
   }
-
   function scanStringLiteral() {
     var delimiter = input.charCodeAt(index++)
       , stringStart = index
@@ -1878,7 +1953,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       , range: [tokenStart, index]
     };
   }
-
   function scanLongStringLiteral() {
     var string = readLongString();
     if (false === string) raise(token, errors.expected, '[', token.value);
@@ -1891,7 +1965,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       , range: [tokenStart, index]
     };
   }
-
+  //
   function scanNumericLiteral() {
     var character = input.charAt(index)
       , next = input.charAt(index + 1);
@@ -1907,7 +1981,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       , range: [tokenStart, index]
     };
   }
-
+  //
   function readHexLiteral() {
     var fraction = 0 // defaults to 0 as it gets summed
       , binaryExponent = 1 // defaults to 1 as it gets multiplied
@@ -1944,7 +2018,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     return (digit + fraction) * binaryExponent;
   }
-
   function readDecLiteral() {
     while (isDecDigit(input.charCodeAt(index))) index++;
     if ('.' === input.charAt(index)) {
@@ -1962,7 +2035,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     return parseFloat(input.slice(tokenStart, index));
   }
-
   function readEscapeSequence() {
     var sequenceStart = index;
     switch (input.charAt(index)) {
@@ -1988,7 +2060,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
         return input.charAt(index++);
     }
   }
-
+  //
   function scanComment() {
     tokenStart = index;
     index += 2; // --
@@ -2027,7 +2099,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       comments.push(node);
     }
   }
-
   function readLongString() {
     var level = 0
       , content = ''
@@ -2065,13 +2136,12 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     return content;
   }
-
+  //
   function next() {
     previousToken = token;
     token = lookahead;
     lookahead = lex();
   }
-
   function consume(value) {
     if (value === token.value) {
       next();
@@ -2079,12 +2149,10 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return false;
   }
-
   function expect(value) {
     if (value === token.value) next();
     else raise(token, errors.expected, value, token.value);
   }
-
   function isWhiteSpace(charCode) {
     return 9 === charCode || 32 === charCode || 0xB === charCode || 0xC === charCode;
   }
@@ -2100,7 +2168,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
   function isHexDigit(charCode) {
     return (charCode >= 48 && charCode <= 57) || (charCode >= 97 && charCode <= 102) || (charCode >= 65 && charCode <= 70);
   }
-
   function isIdentifierStart(charCode) {
     return (charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122) || 95 === charCode;
   }
@@ -2108,7 +2175,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
   function isIdentifierPart(charCode) {
     return (charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122) || 95 === charCode || (charCode >= 48 && charCode <= 57);
   }
-
+  //
   function isKeyword(id) {
     switch (id.length) {
       case 2:
@@ -2128,7 +2195,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
   }
 
   function isUnary(token) {
-    if (Punctuator === token.type) return '#-'.indexOf(token.value) >= 0;
+    if (Punctuator === token.type) return '#-~'.indexOf(token.value) >= 0;
     if (Keyword === token.type) return 'not' === token.value;
     return false;
   }
@@ -2141,7 +2208,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return false;
   }
-
   function isBlockFollow(token) {
     if (EOF === token.type) return true;
     if (Keyword !== token.type) return false;
@@ -2180,7 +2246,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
   function scopeHasName(name) {
     return (-1 !== indexOf(scopes[scopeDepth], name));
   }
-
+  //
   var locations = []
     , trackLocations;
 
@@ -2218,7 +2284,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
   function pushLocation(marker) {
     if (trackLocations) locations.push(marker);
   }
-
+  //
   function parseChunk() {
     next();
     markLocation();
@@ -2227,7 +2293,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     if (trackLocations && !body.length) previousToken = token;
     return finishNode(ast.chunk(body));
   }
-
+  //
   function parseBlock(terminator) {
     var block = []
       , statement;
@@ -2245,7 +2311,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     if (options.scope) exitScope();
     return block;
   }
-
+  //
   function parseStatement() {
     markLocation();
     if (Keyword === token.type) {
@@ -2273,7 +2339,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     return parseAssignmentOrCallStatement();
   }
-
   function parseLabelStatement() {
     var name = token.value
       , label = parseIdentifier();
@@ -2286,11 +2351,9 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     expect('::');
     return finishNode(ast.labelStatement(label));
   }
-
   function parseBreakStatement() {
     return finishNode(ast.breakStatement());
   }
-
   function parseGotoStatement() {
     var name = token.value
       , label = parseIdentifier();
@@ -2298,13 +2361,11 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     if (options.scope) label.isLabel = scopeHasName('::' + name + '::');
     return finishNode(ast.gotoStatement(label));
   }
-
   function parseDoStatement() {
     var body = parseBlock();
     expect('end');
     return finishNode(ast.doStatement(body));
   }
-
   function parseWhileStatement() {
     var condition = parseExpectedExpression();
     expect('do');
@@ -2312,14 +2373,12 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     expect('end');
     return finishNode(ast.whileStatement(condition, body));
   }
-
   function parseRepeatStatement() {
     var body = parseBlock();
     expect('until');
     var condition = parseExpectedExpression();
     return finishNode(ast.repeatStatement(condition, body));
   }
-
   function parseReturnStatement() {
     var expressions = [];
 
@@ -2334,7 +2393,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return finishNode(ast.returnStatement(expressions));
   }
-
   function parseIfStatement() {
     var clauses = []
       , condition
@@ -2371,7 +2429,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     expect('end');
     return finishNode(ast.ifStatement(clauses));
   }
-
+  //
   function parseForStatement() {
     var variable = parseIdentifier()
       , body;
@@ -2409,7 +2467,8 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       return finishNode(ast.forGenericStatement(variables, iterators, body));
     }
   }
-
+  //
+  //
   function parseLocalStatement() {
     var name;
 
@@ -2445,7 +2504,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       raiseUnexpectedToken('<name>', token);
     }
   }
-
+  //
   function parseAssignmentOrCallStatement() {
     var previous = token
       , expression, marker;
@@ -2479,7 +2538,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return unexpected(previous);
   }
-
   function parseIdentifier() {
     markLocation();
     var identifier = token.value;
@@ -2487,7 +2545,8 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     next();
     return finishNode(ast.identifier(identifier));
   }
-
+  //
+  //
   function parseFunctionDeclaration(name, isLocal) {
     var parameters = [];
     expect('(');
@@ -2518,7 +2577,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     isLocal = isLocal || false;
     return finishNode(ast.functionStatement(name, parameters, isLocal, body));
   }
-
+  //
   function parseFunctionName() {
     var base, name, marker;
 
@@ -2543,7 +2602,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     return base;
   }
-
+  //
   function parseTableConstructor() {
     var fields = []
       , key, value;
@@ -2580,18 +2639,23 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     expect('}');
     return finishNode(ast.tableConstructorExpression(fields));
   }
+  //
+  //
+  //
+  //
+  //
 
   function parseExpression() {
     var expression = parseSubExpression(0);
     return expression;
   }
-
   function parseExpectedExpression() {
     var expression = parseExpression();
     if (null == expression) raiseUnexpectedToken('<expression>', token);
     else return expression;
   }
-
+  //
+  //
   function binaryPrecedence(operator) {
     var charCode = operator.charCodeAt(0)
       , length = operator.length;
@@ -2602,6 +2666,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
         case 42: case 47: case 37: return 7; // * / %
         case 43: case 45: return 6; // + -
         case 60: case 62: return 3; // < >
+        case 38: case 124: return 7; // & |
       }
     } else if (2 === length) {
       switch (charCode) {
@@ -2612,7 +2677,8 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     } else if (97 === charCode && 'and' === operator) return 2;
     return 0;
   }
-
+  //
+  //
   function parseSubExpression(minPrecedence) {
     var operator = token.value
       , expression, marker;
@@ -2651,7 +2717,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
     }
     return expression;
   }
-
+  //
   function parsePrefixExpression() {
     var base, name, marker
       , isLocal;
@@ -2712,7 +2778,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     return base;
   }
-
   function parseCallExpression(base) {
     if (Punctuator === token.type) {
       switch (token.value) {
@@ -2741,7 +2806,6 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
     raiseUnexpectedToken('function arguments', token);
   }
-
   function parsePrimaryExpression() {
     var literals = StringLiteral | NumericLiteral | BooleanLiteral | NilLiteral | VarargLiteral
       , value = token.value
@@ -2764,7 +2828,9 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
       return parseTableConstructor();
     }
   }
-
+  //
+  //
+  //
   exports.parse = parse;
 
   function parse(_input, _options) {
@@ -2819,7 +2885,7 @@ define("ace/mode/lua/luaparse",["require","exports","module"], function(require,
 
 });
 
-define("ace/mode/lua_worker",["require","exports","module","ace/lib/oop","ace/worker/mirror","ace/mode/lua/luaparse"], function(require, exports, module) {
+define("ace/mode/lua_worker",[], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
@@ -2837,28 +2903,30 @@ oop.inherits(Worker, Mirror);
 
     this.onUpdate = function() {
         var value = this.doc.getValue();
+        var errors = [];
         try {
             luaparse.parse(value);
         } catch(e) {
             if (e instanceof SyntaxError) {
-                this.sender.emit("error", {
-					row: e.line - 1,
-					column: e.column,
-					text: e.message,
-					type: "error"
-				});
+                errors.push({
+                    row: e.line - 1,
+                    column: e.column,
+                    text: e.message,
+                    type: "error"
+                });
             }
-            return;
         }
-        this.sender.emit("ok");
+        this.sender.emit("annotate", errors);
     };
 
 }).call(Worker.prototype);
 
 });
 
-define("ace/lib/es5-shim",["require","exports","module"], function(require, exports, module) {
+define("ace/lib/es5-shim",[], function(require, exports, module) {
 
+//
+//
 function Empty() {}
 
 if (!Function.prototype.bind) {
@@ -2871,7 +2939,6 @@ if (!Function.prototype.bind) {
         var bound = function () {
 
             if (this instanceof bound) {
-
                 var result = target.apply(
                     this,
                     args.concat(slice.call(arguments))
@@ -2895,6 +2962,7 @@ if (!Function.prototype.bind) {
             bound.prototype = new Empty();
             Empty.prototype = null;
         }
+        //
         return bound;
     };
 }
@@ -2915,6 +2983,9 @@ if ((supportsAccessors = owns(prototypeOfObject, "__defineGetter__"))) {
     lookupGetter = call.bind(prototypeOfObject.__lookupGetter__);
     lookupSetter = call.bind(prototypeOfObject.__lookupSetter__);
 }
+
+//
+//
 if ([1,2].splice(0).length != 2) {
     if(function() { // test IE < 9 to splice bug - see issue #138
         function makeArray(l) {
@@ -3237,6 +3308,9 @@ if (!Array.prototype.lastIndexOf || ([0, 1].lastIndexOf(0, -3) != -1)) {
         return -1;
     };
 }
+
+//
+//
 if (!Object.getPrototypeOf) {
     Object.getPrototypeOf = function getPrototypeOf(object) {
         return object.__proto__ || (
@@ -3320,7 +3394,6 @@ if (!Object.create) {
         return object;
     };
 }
-
 function doesDefinePropertyWork(object) {
     try {
         Object.defineProperty(object, "sentinel", {});
@@ -3486,11 +3559,18 @@ if (!Object.keys) {
     };
 
 }
+
+//
+//
 if (!Date.now) {
     Date.now = function now() {
         return new Date().getTime();
     };
 }
+
+
+//
+//
 var ws = "\x09\x0A\x0B\x0C\x0D\x20\xA0\u1680\u180E\u2000\u2001\u2002\u2003" +
     "\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028" +
     "\u2029\uFEFF";
@@ -3503,6 +3583,8 @@ if (!String.prototype.trim || ws.trim()) {
     };
 }
 
+//
+//
 function toInteger(n) {
     n = +n;
     if (n !== n) { // isNaN

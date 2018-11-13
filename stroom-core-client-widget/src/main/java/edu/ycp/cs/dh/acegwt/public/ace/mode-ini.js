@@ -141,14 +141,23 @@ var FoldMode = require("./folding/ini").FoldMode;
 var Mode = function() {
     this.HighlightRules = IniHighlightRules;
     this.foldingRules = new FoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
     this.lineCommentStart = ";";
-    this.blockComment = {start: "/*", end: "*/"};
+    this.blockComment = null;
     this.$id = "ace/mode/ini";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
 });
+                (function() {
+                    window.require(["ace/mode/ini"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            
