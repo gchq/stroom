@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.KeyboardInterceptor.KeyTest;
@@ -321,13 +322,17 @@ public class DocumentPluginEventManager extends Plugin {
             }
 
             if (docRefs.size() > 0) {
-                delete(docRefs).onSuccess(result -> {
-                    if (result.getMessage().length() > 0) {
-                        AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to delete some items", result.getMessage(), null);
-                    }
+                ConfirmEvent.fire(DocumentPluginEventManager.this, "Are you sure you want to delete these items?", ok -> {
+                    if (ok) {
+                        delete(docRefs).onSuccess(result -> {
+                            if (result.getMessage().length() > 0) {
+                                AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to delete some items", result.getMessage(), null);
+                            }
 
-                    // Refresh the explorer tree so the documents are marked as deleted.
-                    RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                            // Refresh the explorer tree so the documents are marked as deleted.
+                            RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                        });
+                    }
                 });
             }
         }
@@ -510,8 +515,8 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Folders are not valid items for requesting info
         final boolean containsFolder = documentPermissionMap.keySet().stream()
-                    .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
-                    .orElse(false);
+                .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
+                .orElse(false);
 
         // Actions allowed based on permissions of selection
         final boolean allowRead = readableItems.size() > 0;

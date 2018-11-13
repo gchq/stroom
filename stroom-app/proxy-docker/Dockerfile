@@ -14,16 +14,50 @@
 # limitations under the License.
 #**********************************************************************
 
+# ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Intermediate build stage that is common to stroom and proxy to speed up
+# the build
+
+# We don't need the full JDK but as stroom does we may as well use it as 
+# it means proxy and stroom can share the same base layer. This makes things
+# quicker when you have both proxy and stroom on the same host, but if you
+# only have proxy then you take a 20Mb hit for the jdk bits you don't need.
+FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
+
+# bash/curl required for sending logs
+# su-exec required for running stroom as not-root user
+# tini required for process control in the entrypoint
+RUN echo "http_proxy: $http_proxy" && \
+    echo "https_proxy: $https_proxy" && \
+    apk add --no-cache \
+        bash \
+        curl \
+        su-exec \
+        tini
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# ~~~ fat jar stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Intermediate build stage to copy the stroom fat jar to allow stroom 
+# and proxy builds to re-use the same cached layer with the fat jar in it
+FROM scratch as fat-jar-stage
+COPY ./build/stroom-app-all.jar /stroom-app-all.jar
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 # ~~~ send logs download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage to grab all the send logs scripts
 # later copy them all in one go to reduce the number of layers
 # Have to use alpine rather than scratch so we can chmod
-FROM alpine:3.8 as send-logs-scripts
+FROM alpine:3.8 as send-logs-scripts-stage
 WORKDIR /scripts
 
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom.sh .
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/send-to-stroom-v1.0/bash/send_to_stroom_args.sh .
+ARG SEND_TO_STROOM_VERSION=send-to-stroom-v1.2.1
+
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom.sh .
+ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom_args.sh .
 RUN chmod u+x ./*.sh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -31,7 +65,7 @@ RUN chmod u+x ./*.sh
 
 # ~~~ Final build stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-FROM openjdk:8u171-jre-alpine
+FROM stroom-base-stage
 
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom-proxy
@@ -43,13 +77,14 @@ EXPOSE 8091
 # Create Docker volume to hold all the persistent state (logs, repos, content, config)
 # Volumes need to be defined after the mounts have been created and populated
 VOLUME /stroom-proxy/config/
+VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/repo/
 VOLUME /stroom-proxy/logs/
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
-ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
 # start the app
 CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server /stroom-proxy/config/config.yml"]
@@ -58,20 +93,13 @@ CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar str
 # resolve alpine's apk repo server.
 #RUN echo "151.101.112.249 dl-cdn.alpinelinux.org" >> /etc/hosts && \
 
-# bash/curl required for sending logs
-# su-exec required for running stroom as not-root user
-# tini required for process control in the entrypoint
 # Create a system user/group with no home and no shell and a uid:gid of 1000:1000
-# No bash as sh should be sufficient
-RUN echo "http_proxy: $http_proxy" && \
-    echo "https_proxy: $https_proxy" && \
-    apk add --no-cache \
-        bash \
-        curl \
-        su-exec \
-        tini && \
+# If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
+RUN \
     addgroup -g 1000 -S proxy && \
     adduser -u 1000 -S -s /bin/false -D -G proxy proxy && \
+    mkdir -p /stroom-proxy && \
+    mkdir -p /stroom-proxy/certs && \
     mkdir -p /stroom-proxy/config && \
     mkdir -p /stroom-proxy/content && \
     mkdir -p /stroom-proxy/logs/access && \
@@ -82,14 +110,15 @@ RUN echo "http_proxy: $http_proxy" && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy in all the send logs scripts downloaded in the intermediate build stage
-COPY --chown=proxy:proxy --from=send-logs-scripts /scripts /stroom-proxy
+COPY --chown=proxy:proxy --from=send-logs-scripts-stage /scripts /stroom-proxy
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
-COPY --chown=proxy:proxy docker-entrypoint.sh /usr/local/bin/
+COPY --chown=proxy:proxy docker-entrypoint.sh /stroom-proxy/
 COPY --chown=proxy:proxy create_crontab.sh /stroom-proxy/
 COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
-COPY --chown=proxy:proxy ./build/stroom-app-all.jar /stroom-proxy/stroom-app-all.jar
+
+COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"

@@ -73,11 +73,13 @@ import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
+import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
+import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
 import stroom.servlet.CacheControlFilter;
 import stroom.servlet.DashboardServlet;
@@ -100,7 +102,7 @@ import stroom.spring.ServerComponentScanConfiguration;
 import stroom.spring.ServerConfiguration;
 import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
-import stroom.util.HasHealthCheck;
+import stroom.util.HealthCheckUtils;
 import stroom.util.config.StroomProperties;
 import stroom.util.db.DbUtil;
 import stroom.util.spring.StroomSpringProfiles;
@@ -178,7 +180,7 @@ public class App extends Application<Config> {
         healthCheckRegistry.register(configuration.getProxyConfig().getClass().getName(), new HealthCheck() {
             @Override
             protected Result check() throws Exception {
-                Map<String, Object> detailMap = HasHealthCheck.beanToMap(configuration.getProxyConfig());
+                Map<String, Object> detailMap = HealthCheckUtils.beanToMap(configuration.getProxyConfig());
                 return Result.builder()
                         .healthy()
                         .withDetail("values", detailMap)
@@ -250,12 +252,16 @@ public class App extends Application<Config> {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
-        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
+        if (StroomProperties.getBooleanProperty(
+                ServiceDiscoveryManager.PROP_KEY_SERVICE_DISCOVERY_ENABLED, false)) {
+            SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
+            SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
+        }
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, RuleSetResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, JWTService.class);
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");

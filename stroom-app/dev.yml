@@ -28,7 +28,7 @@ logging:
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
     org.hibernate: ERROR
-    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: FATAL
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: "OFF"
     "event-logger":
       level: INFO
       additive: false

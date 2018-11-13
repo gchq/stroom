@@ -5,9 +5,8 @@ var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var ForthHighlightRules = function() {
-
     this.$rules = { start: [ { include: '#forth' } ],
-      '#comment': 
+      '#comment':
        [ { token: 'comment.line.double-dash.forth',
            regex: '(?:^|\\s)--\\s.*$',
            comment: 'line comments for iForth' },
@@ -19,7 +18,7 @@ var ForthHighlightRules = function() {
            comment: 'gForth line comment' },
          { token: 'comment.block.forth',
            regex: '(?:^|\\s)\\(\\*(?=\\s|$)',
-           push: 
+           push:
             [ { token: 'comment.block.forth',
                 regex: '(?:^|\\s)\\*\\)(?=\\s|$)',
                 next: 'pop' },
@@ -28,7 +27,7 @@ var ForthHighlightRules = function() {
          { token: 'comment.block.documentation.forth',
            regex: '\\bDOC\\b',
            caseInsensitive: true,
-           push: 
+           push:
             [ { token: 'comment.block.documentation.forth',
                 regex: '\\bENDDOC\\b',
                 caseInsensitive: true,
@@ -38,7 +37,7 @@ var ForthHighlightRules = function() {
          { token: 'comment.line.parentheses.forth',
            regex: '(?:^|\\s)\\.?\\( [^)]*\\)',
            comment: 'ANSI line comment' } ],
-      '#constant': 
+      '#constant':
        [ { token: 'constant.language.forth',
            regex: '(?:^|\\s)(?:TRUE|FALSE|BL|PI|CELL|C/L|R/O|W/O|R/W)(?=\\s|$)',
            caseInsensitive: true},
@@ -46,7 +45,7 @@ var ForthHighlightRules = function() {
            regex: '(?:^|\\s)[$#%]?[-+]?[0-9]+(?:\\.[0-9]*e-?[0-9]+|\\.?[0-9a-fA-F]*)(?=\\s|$)'},
          { token: 'constant.character.forth',
            regex: '(?:^|\\s)(?:[&^]\\S|(?:"|\')\\S(?:"|\'))(?=\\s|$)'}],
-      '#forth': 
+      '#forth':
        [ { include: '#constant' },
          { include: '#comment' },
          { include: '#string' },
@@ -54,22 +53,22 @@ var ForthHighlightRules = function() {
          { include: '#variable' },
          { include: '#storage' },
          { include: '#word-def' } ],
-      '#storage': 
+      '#storage':
        [ { token: 'storage.type.forth',
            regex: '(?:^|\\s)(?:2CONSTANT|2VARIABLE|ALIAS|CONSTANT|CREATE-INTERPRET/COMPILE[:]?|CREATE|DEFER|FCONSTANT|FIELD|FVARIABLE|USER|VALUE|VARIABLE|VOCABULARY)(?=\\s|$)',
            caseInsensitive: true}],
-      '#string': 
+      '#string':
        [ { token: 'string.quoted.double.forth',
            regex: '(ABORT" |BREAK" |\\." |C" |0"|S\\\\?" )([^"]+")',
            caseInsensitive: true},
          { token: 'string.unquoted.forth',
            regex: '(?:INCLUDE|NEEDS|REQUIRE|USE)[ ]\\S+(?=\\s|$)',
            caseInsensitive: true}],
-      '#variable': 
+      '#variable':
        [ { token: 'variable.language.forth',
            regex: '\\b(?:I|J)\\b',
            caseInsensitive: true } ],
-      '#word': 
+      '#word':
        [ { token: 'keyword.control.immediate.forth',
            regex: '(?:^|\\s)\\[(?:\\?DO|\\+LOOP|AGAIN|BEGIN|DEFINED|DO|ELSE|ENDIF|FOR|IF|IFDEF|IFUNDEF|LOOP|NEXT|REPEAT|THEN|UNTIL|WHILE)\\](?=\\s|$)',
            caseInsensitive: true},
@@ -88,15 +87,15 @@ var ForthHighlightRules = function() {
          { token: 'keyword.other.warning.forth',
            regex: '(?:^|\\s)(?:~~|BREAK:|BREAK"|DBG)(?=\\s|$)',
            caseInsensitive: true}],
-      '#word-def': 
-       [ { token: 
+      '#word-def':
+       [ { token:
             [ 'keyword.other.compile-only.forth',
               'keyword.other.compile-only.forth',
               'meta.block.forth',
               'entity.name.function.forth' ],
            regex: '(:NONAME)|(^:|\\s:)(\\s)(\\S+)(?=\\s|$)',
            caseInsensitive: true,
-           push: 
+           push:
             [ { token: 'keyword.other.compile-only.forth',
                 regex: ';(?:CODE)?',
                 caseInsensitive: true,
@@ -107,17 +106,17 @@ var ForthHighlightRules = function() {
               { include: '#word' },
               { include: '#variable' },
               { include: '#storage' },
-              { defaultToken: 'meta.block.forth' } ] } ] }
+              { defaultToken: 'meta.block.forth' } ] } ] };
     
     this.normalizeRules();
 };
 
-ForthHighlightRules.metaData = { fileTypes: [ 'frt', 'fs', 'ldr' ],
+ForthHighlightRules.metaData = { fileTypes: [ 'frt', 'fs', 'ldr', 'fth', '4th' ],
       foldingStartMarker: '/\\*\\*|\\{\\s*$',
       foldingStopMarker: '\\*\\*/|^\\s*\\}',
       keyEquivalent: '^~F',
       name: 'Forth',
-      scopeName: 'source.forth' }
+      scopeName: 'source.forth' };
 
 
 oop.inherits(ForthHighlightRules, TextHighlightRules);
@@ -145,12 +144,35 @@ var FoldMode = exports.FoldMode = function(commentRegex) {
 oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
-
-    this.foldingStartMarker = /(\{|\[)[^\}\]]*$|^\s*(\/\*)/;
-    this.foldingStopMarker = /^[^\[\{]*(\}|\])|^[\s\*]*(\*\/)/;
+    
+    this.foldingStartMarker = /([\{\[\(])[^\}\]\)]*$|^\s*(\/\*)/;
+    this.foldingStopMarker = /^[^\[\{\(]*([\}\]\)])|^[\s\*]*(\*\/)/;
+    this.singleLineBlockCommentRe= /^\s*(\/\*).*\*\/\s*$/;
+    this.tripleStarBlockCommentRe = /^\s*(\/\*\*\*).*\*\/\s*$/;
+    this.startRegionRe = /^\s*(\/\*|\/\/)#?region\b/;
+    this._getFoldWidgetBase = this.getFoldWidget;
+    this.getFoldWidget = function(session, foldStyle, row) {
+        var line = session.getLine(row);
+    
+        if (this.singleLineBlockCommentRe.test(line)) {
+            if (!this.startRegionRe.test(line) && !this.tripleStarBlockCommentRe.test(line))
+                return "";
+        }
+    
+        var fw = this._getFoldWidgetBase(session, foldStyle, row);
+    
+        if (!fw && this.startRegionRe.test(line))
+            return "start"; // lineCommentRegionStart
+    
+        return fw;
+    };
 
     this.getFoldWidgetRange = function(session, foldStyle, row, forceMultiline) {
         var line = session.getLine(row);
+        
+        if (this.startRegionRe.test(line))
+            return this.getCommentRegionBlock(session, line, row);
+        
         var match = line.match(this.foldingStartMarker);
         if (match) {
             var i = match.index;
@@ -215,6 +237,28 @@ oop.inherits(FoldMode, BaseFoldMode);
         
         return new Range(startRow, startColumn, endRow, session.getLine(endRow).length);
     };
+    this.getCommentRegionBlock = function(session, line, row) {
+        var startColumn = line.search(/\s*$/);
+        var maxRow = session.getLength();
+        var startRow = row;
+        
+        var re = /^\s*(?:\/\*|\/\/|--)#?(end)?region\b/;
+        var depth = 1;
+        while (++row < maxRow) {
+            line = session.getLine(row);
+            var m = re.exec(line);
+            if (!m) continue;
+            if (m[1]) depth--;
+            else depth++;
+
+            if (!depth) break;
+        }
+
+        var endRow = row;
+        if (endRow > startRow) {
+            return new Range(startRow, startColumn, endRow, line.length);
+        }
+    };
 
 }).call(FoldMode.prototype);
 
@@ -231,14 +275,23 @@ var FoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function() {
     this.HighlightRules = ForthHighlightRules;
     this.foldingRules = new FoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
     this.lineCommentStart = "--";
-    this.blockComment = {start: "/*", end: "*/"};
+    this.blockComment = null;
     this.$id = "ace/mode/forth";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
 });
+                (function() {
+                    window.require(["ace/mode/forth"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

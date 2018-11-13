@@ -22,7 +22,6 @@ background: #424242\
 }\
 .ace-terminal-theme.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px black;\
-border-radius: 2px\
 }\
 .ace-terminal-theme .ace_marker-layer .ace_step {\
 background: rgb(0, 0, 0)\
@@ -113,3 +112,11 @@ background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgb
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/terminal"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

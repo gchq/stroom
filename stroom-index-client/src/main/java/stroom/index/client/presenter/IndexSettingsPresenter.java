@@ -26,10 +26,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.shared.Index;
@@ -38,8 +35,7 @@ import stroom.item.client.ItemListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.query.api.v2.DocRef;
 
-public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, Index>
-        implements HasDocumentRead<Index>, HasWrite<Index>, HasDirtyHandlers, ReadOnlyChangeHandler, IndexSettingsUiHandlers {
+public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, Index> implements IndexSettingsUiHandlers {
 
     private final IndexVolumeListPresenter indexVolumeListPresenter;
 
@@ -104,7 +100,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        getView().onReadOnly(readOnly);
+        super.onReadOnly(readOnly);
         indexVolumeListPresenter.onReadOnly(readOnly);
     }
 

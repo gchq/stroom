@@ -6,6 +6,40 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Updated ACE editor to v1.4.1.
+
+* Add colours to console logs in docker.
+
+* Issue **#869** : Delete will now properly delete all descendant nodes and documents when deleting folders but will not delete items from the tree if they cannot be deleted, e.g. feeds that have associated data.
+
+* Issue **#916** : You can no longer export empty folders or import nothing.
+
+* Issue **#911** : Changes to feeds and pipelines no longer clear data browsing filters.
+
+* Issue **#907** : Default volumes are now created as soon as they are needed.
+
+* Issue **#910** : Changes to index settings in the UI now register as changes and enable save.
+
+* Issue **#913** : Improve FindReplaceFilter to cope with more complex conditions.
+
+* Change log level for SqlExceptionHelper to OFF, to stop expected exceptions from polluting the logs
+
+* Fix invalid requestLog logFormat in proxy configuration
+
+## [v6.0-beta.11]
+
+* Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
+
+## [v6.0-beta.10]
+
+* Add fixed version of send_to_stroom.sh to release distribution
+
+* Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8
+
+## [v6.0-beta.9]
+
+* Add a health check for getting a public key from the authentication service.
+
 * Issue **#897** : Import no longer attempts to rename or move existing items but will still update content.
 
 * Issue **#902** : Improved the XSLT `format-date` function to better cope with week based dates and to default values to the stream time where year etc are omitted.
@@ -1171,7 +1205,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.8...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.11...6.0
+[v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11
+[v6.0-beta.10]: https://github.com/gchq/stroom/compare/v6.0-beta.9...v6.0-beta.10
+[v6.0-beta.9]: https://github.com/gchq/stroom/compare/v6.0-beta.8...v6.0-beta.9
 [v6.0-beta.8]: https://github.com/gchq/stroom/compare/v6.0-beta.7...v6.0-beta.8
 [v6.0-beta.7]: https://github.com/gchq/stroom/compare/v6.0-beta.6...v6.0-beta.7
 [v6.0-beta.6]: https://github.com/gchq/stroom/compare/v6.0-beta.5...v6.0-beta.6

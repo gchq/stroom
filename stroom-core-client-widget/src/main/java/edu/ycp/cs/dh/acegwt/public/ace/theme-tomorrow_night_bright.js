@@ -22,7 +22,6 @@ background: #424242\
 }\
 .ace-tomorrow-night-bright.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px #000000;\
-border-radius: 2px\
 }\
 .ace-tomorrow-night-bright .ace_marker-layer .ace_step {\
 background: rgb(102, 82, 0)\
@@ -120,3 +119,11 @@ background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgb
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/tomorrow_night_bright"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

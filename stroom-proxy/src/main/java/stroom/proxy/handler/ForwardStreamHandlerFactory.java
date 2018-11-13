@@ -4,16 +4,10 @@ import com.codahale.metrics.health.HealthCheck;
 import org.apache.commons.lang.StringUtils;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.util.HasHealthCheck;
-import stroom.util.logging.LambdaLogger;
+import stroom.util.HealthCheckUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -95,7 +89,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
         // parallelStream so we can hit multiple URLs concurrently
         urls.parallelStream()
                 .forEach(url -> {
-                    final String msg = validatePost(url);
+                    final String msg = HealthCheckUtils.validateHttpConnection("POST", url);
 
                     if (!"200".equals(msg)) {
                         allHealthy.set(false);
@@ -112,46 +106,5 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
         return resultBuilder.build();
     }
 
-    private String validatePost(final String urlStr) {
-        URL url = null;
-        try {
-            url = new URL(urlStr);
-        } catch (MalformedURLException e) {
-            return LambdaLogger.buildMessage("Malformed URL: [{}]", e.getMessage());
-        }
-
-        URLConnection connection = null;
-        try {
-            connection = url.openConnection();
-        } catch (IOException e) {
-            return LambdaLogger.buildMessage("Invalid URL: [{}]", e.getMessage());
-        }
-
-        if (connection instanceof HttpURLConnection) {
-            HttpURLConnection http = (HttpURLConnection) connection;
-            try {
-                http.setRequestMethod("POST"); // PUT is another valid option
-            } catch (ProtocolException e) {
-                return LambdaLogger.buildMessage("Invalid protocol during test: [{}]", e.getMessage());
-            }
-            http.setDoOutput(true);
-
-            try {
-                http.connect();
-            } catch (IOException e) {
-                return LambdaLogger.buildMessage("Unable to connect: [{}]", e.getMessage());
-            }
-
-            try {
-                int responseCode = http.getResponseCode();
-                return String.valueOf(responseCode);
-            } catch (IOException e) {
-                return LambdaLogger.buildMessage("Unable to get response code: [{}]", e.getMessage());
-            }
-        } else {
-            return LambdaLogger.buildMessage("Unknown connection type: [{}]",
-                    connection.getClass().getName());
-        }
-    }
 
 }

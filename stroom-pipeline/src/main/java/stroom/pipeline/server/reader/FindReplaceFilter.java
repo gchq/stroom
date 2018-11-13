@@ -35,11 +35,12 @@ public class FindReplaceFilter extends FilterReader {
     private final ErrorReceiver errorReceiver;
     private final String elementId;
 
-    private boolean firstPass = true;
+    private int inputOffset;
     private int replacementCount;
     private int totalReplacementCount;
-    private final BufferedReader inBuffer;
+    private final InBuffer inBuffer;
     private final OutBuffer outBuffer = new OutBuffer();
+    private final StringBuffer replacementBuffer = new StringBuffer();
 
     private FindReplaceFilter(final Reader reader,
                               final String find,
@@ -56,7 +57,7 @@ public class FindReplaceFilter extends FilterReader {
         this.elementId = elementId;
 
         final int doubleBufferSize = 2 * this.bufferSize;
-        inBuffer = new BufferedReader(reader, MIN_SIZE, doubleBufferSize);
+        inBuffer = new InBuffer(reader, MIN_SIZE, doubleBufferSize);
 
         if (find == null) {
             this.pattern = null;
@@ -87,34 +88,48 @@ public class FindReplaceFilter extends FilterReader {
         inBuffer.fillBuffer();
 
         boolean doneReplacement = false;
-        final Matcher matcher = pattern.matcher(inBuffer);
-        if (matcher.find()) {
-            final boolean matchedBufferStart = matcher.start() == 0 && !firstPass;
-            final boolean matchedBufferEnd = matcher.end() == inBuffer.length() && !inBuffer.isEof();
+        final CharSequence charSequence = new PaddingWrapper(inBuffer, inputOffset != 0);
+        final Matcher matcher = pattern.matcher(charSequence);
 
-            if (matchedBufferStart && matchedBufferEnd) {
-                // If we matched all text in the buffer but aren't actually at the start of the stream or at the end then this is not likely to be correct.
-                error("The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
-            }
-            if (matchedBufferStart) {
-                // If we matched from the start of the buffer but aren't actually at the start of the text then this is not likely to be correct.
-                error("The pattern matched text at the start of the buffer when we are not at the start of the stream. Consider changing your match expression or making the buffer bigger.");
-            } else if (matchedBufferEnd) {
-                // If we matched to the end of the buffer and we are not at the end of the stream then this is not likely to be correct.
-                error("The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+        if (matcher.find(inputOffset)) {
+            final int start = matcher.start();
+            final int end = matcher.end();
 
-            } else {
-                matcher.appendReplacement(outBuffer.getStringBuffer(), replacement);
-                inBuffer.move(matcher.end());
-                doneReplacement = true;
-                replacementCount++;
-                totalReplacementCount++;
+            // Guard against matching up to the end of the visible buffer unless we have reached the end of the file.
+            if (start <= bufferSize || inBuffer.isEof()) {
+                final boolean matchedBufferStart = start == 0;
+                final boolean matchedBufferEnd = end == charSequence.length() && !inBuffer.isEof();
+
+                if (matchedBufferStart && matchedBufferEnd) {
+                    // If we matched all text in the buffer but aren't actually at the start of the stream or at the end then this is not likely to be correct.
+                    error("The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
+                }
+                if (matchedBufferEnd) {
+                    if (!inBuffer.isEof()) {
+                        // If we matched to the end of the buffer and we are not at the end of the stream then this is not likely to be correct.
+                        error("The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+                    }
+                } else {
+                    // Append the replacement. Note that we do this with a separate buffer as we don't actually want to keep the start of the string that occurs before the `lastPosition` that is added by appendReplacement. We are using `lastPosition` in our matches so that matches after the first do not match a start anchor.
+                    matcher.appendReplacement(replacementBuffer, replacement);
+                    outBuffer.append(replacementBuffer, inputOffset, replacementBuffer.length());
+                    replacementBuffer.setLength(0);
+
+                    // Move to the end of the match minus one char.
+                    if (end > 0) {
+                        inBuffer.move(end - inputOffset);
+                    }
+
+                    doneReplacement = true;
+                    replacementCount++;
+                    totalReplacementCount++;
+                }
             }
         }
 
         if (!doneReplacement) {
             // If we didn't manage to replace anything then copy the buffered text to the output.
-            if (inBuffer.isEof() || inBuffer.length() < bufferSize) {
+            if (inBuffer.isEof()) {
                 // Copy all remaining text to the output buffer.
                 copyBuffer(inBuffer.length());
             } else {
@@ -123,7 +138,8 @@ public class FindReplaceFilter extends FilterReader {
             }
         }
 
-        firstPass = false;
+        // Subsequent matches will work on padded input so that `^` anchored patterns will no longer match.
+        inputOffset = 1;
     }
 
     private void copyBuffer(int length) {
@@ -208,36 +224,198 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     void clear() {
-        // Be ready to start matching from teh start again.
-        firstPass = true;
+        // Be ready to start matching from the start again.
+        inputOffset = 0;
         // Reset the replacement count.
         replacementCount = 0;
         // Clear out buffer.
         outBuffer.clear();
     }
 
-    private class OutBuffer {
-        private StringBuffer stringBuffer = new StringBuffer();
+    static class PaddingWrapper implements CharSequence {
+        private static final char PADDING = (char) 0;
+
+        private final CharSequence charSequence;
+        private final boolean pad;
+
+        PaddingWrapper(final CharSequence charSequence, final boolean pad) {
+            this.charSequence = charSequence;
+            this.pad = pad;
+        }
+
+        @Override
+        public int length() {
+            if (pad) {
+                return charSequence.length() + 1;
+            }
+
+            return charSequence.length();
+        }
+
+        @Override
+        public char charAt(final int index) {
+            if (pad) {
+                if (index <= 0) {
+                    return PADDING;
+                }
+                return charSequence.charAt(index - 1);
+            }
+
+            return charSequence.charAt(index);
+        }
+
+        @Override
+        public CharSequence subSequence(final int start, final int end) {
+            if (pad) {
+                if (start < 1) {
+                    throw new IllegalArgumentException("Unexpected start for subsequence");
+                }
+                return new SubSequence(charSequence, start - 1, end);
+            }
+            return new SubSequence(charSequence, start, end);
+        }
+
+        @Override
+        public String toString() {
+            if (pad) {
+                return PADDING + charSequence.toString();
+            }
+
+            return charSequence.toString();
+        }
+    }
+
+    static class SubSequence implements CharSequence {
+        private final CharSequence charSequence;
+        private final int start;
+        private final int end;
+
+        SubSequence(final CharSequence charSequence, final int start, final int end) {
+            this.charSequence = charSequence;
+            this.start = start;
+            this.end = end;
+        }
+
+        @Override
+        public int length() {
+            return end - start;
+        }
+
+        @Override
+        public char charAt(final int index) {
+            return charSequence.charAt(start + index);
+        }
+
+        @Override
+        public CharSequence subSequence(final int start, final int end) {
+            return new SubSequence(charSequence, this.start + start, this.start + end);
+        }
+
+        @Override
+        public String toString() {
+            return charSequence.subSequence(start, end).toString();
+        }
+    }
+
+    private static class InBuffer extends CharBuffer {
+        private final int initialSize;
+        private final int capacity;
+        private final int halfCapacity;
+
+        private Reader reader;
+        private boolean eof;
+
+        InBuffer(final Reader reader, final int initialSize, final int capacity) {
+            super(initialSize);
+            this.reader = reader;
+
+            if (initialSize < 8) {
+                throw new IllegalStateException("The initial size must be greater than or equal to 8");
+            }
+            if (capacity < initialSize) {
+                throw new IllegalStateException("Capacity must be greater than or equal to " + initialSize);
+            }
+
+            this.capacity = capacity;
+            this.initialSize = initialSize;
+            this.halfCapacity = capacity / 2;
+        }
+
+        void fillBuffer() throws IOException {
+            // Only fill the buffer if we haven't reached the end of the file.
+            if (!eof) {
+                int i = 0;
+
+                // Only fill the buffer if the length of remaining characters is
+                // less than half the capacity.
+                if (length <= halfCapacity) {
+                    // If we processed more than half of the capacity then we need
+                    // to shift the buffer up so that the offset becomes 0. This
+                    // will give us
+                    // room to fill more of the buffer.
+                    if (offset >= halfCapacity) {
+                        System.arraycopy(buffer, offset, buffer, 0, length);
+                        offset = 0;
+                    }
+
+                    // Now fill any remaining capacity.
+                    int maxLength = capacity - offset;
+                    while (maxLength > length && (i = reader.read()) != -1) {
+                        final char c = (char) i;
+
+                        // If we have filled the buffer then double the size of
+                        // it up to the maximum capacity.
+                        if (buffer.length == offset + length) {
+                            int newLen = buffer.length * 2;
+                            if (newLen == 0) {
+                                newLen = initialSize;
+                            } else if (newLen > capacity) {
+                                newLen = capacity;
+                            }
+                            final char[] tmp = new char[newLen];
+                            System.arraycopy(buffer, offset, tmp, 0, length);
+                            offset = 0;
+                            buffer = tmp;
+
+                            // Now the offset has been reset to 0 we should set
+                            // the max length to be the maximum capacity.
+                            maxLength = capacity;
+                        }
+
+                        buffer[offset + length] = c;
+                        length++;
+                    }
+                }
+
+                // Determine if we reached the end of the file.
+                eof = i == -1;
+            }
+        }
+
+        public boolean isEof() {
+            return eof;
+        }
+    }
+
+
+    private static class OutBuffer {
+        private StringBuilder sb = new StringBuilder();
         private int offset;
 
         void append(final CharSequence s, final int start, final int end) {
-            stringBuffer.append(s, start, end);
+            sb.append(s, start, end);
         }
 
         void getChars(int srcBegin, int srcEnd, char[] dst, int dstBegin) {
-            stringBuffer.getChars(srcBegin + offset, srcEnd + offset, dst, dstBegin);
+            sb.getChars(srcBegin + offset, srcEnd + offset, dst, dstBegin);
         }
 
         int charAt(final int index) {
-            return stringBuffer.charAt(offset + index);
+            return sb.charAt(offset + index);
         }
 
         int length() {
-            return stringBuffer.length() - offset;
-        }
-
-        StringBuffer getStringBuffer() {
-            return stringBuffer;
+            return sb.length() - offset;
         }
 
         void move(final int len) {
@@ -246,20 +424,20 @@ public class FindReplaceFilter extends FilterReader {
             } else {
                 offset += len;
                 if (offset > 1000) {
-                    stringBuffer.delete(0, offset);
+                    sb.delete(0, offset);
                     offset = 0;
                 }
             }
         }
 
         void clear() {
-            stringBuffer.setLength(0);
+            sb.setLength(0);
             offset = 0;
         }
 
         @Override
         public String toString() {
-            return stringBuffer.substring(offset);
+            return sb.substring(offset);
         }
     }
 

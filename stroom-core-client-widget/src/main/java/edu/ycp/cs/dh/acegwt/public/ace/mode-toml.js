@@ -24,6 +24,10 @@ var TomlHighlightRules = function() {
         },
         {
             token: ["variable.keygroup.toml"],
+            regex: "(?:^\\s*)(\\[\\[([^\\]]+)\\]\\])"
+        },
+        {
+            token: ["variable.keygroup.toml"],
             regex: "(?:^\\s*)(\\[([^\\]]+)\\])"
         },
         {
@@ -58,7 +62,7 @@ var TomlHighlightRules = function() {
             defaultToken: "string"
         }
     ]
-    }
+    };
 
 };
 
@@ -129,6 +133,7 @@ var FoldMode = require("./folding/ini").FoldMode;
 var Mode = function() {
     this.HighlightRules = TomlHighlightRules;
     this.foldingRules = new FoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
@@ -139,3 +144,11 @@ oop.inherits(Mode, TextMode);
 
 exports.Mode = Mode;
 });
+                (function() {
+                    window.require(["ace/mode/toml"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            
