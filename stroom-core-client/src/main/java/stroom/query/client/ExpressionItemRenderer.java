@@ -64,8 +64,6 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         final double x = bounds.getX();
         final double y = bounds.getY() + ((bounds.getHeight() - height) / 2);
 
-        final String text = getText(item);
-
         final ExpressionItemBox box = new ExpressionItemBox(treeLayout, item, selectionModel != null);
         final Style style = box.getElement().getStyle();
         style.setLeft(x, Unit.PX);
@@ -100,7 +98,7 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         }
 
         if (widget == null) {
-            widget = new Label(text, false);
+            widget = new Label(item.toString(), false);
         }
 
         box.setInnerWidget(widget);
@@ -127,29 +125,6 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         }
 
         return new Dimension(400, 20);
-    }
-
-    public String getText(final Item item) {
-        if (item instanceof Operator) {
-            final Operator operator = (Operator) item;
-            return operator.getOp().getDisplayValue();
-        } else if (item instanceof Term) {
-            final Term term = (Term) item;
-            final StringBuilder sb = new StringBuilder();
-            if (term.getField() != null) {
-                sb.append(term.getField());
-                sb.append(" ");
-            }
-            if (term.getCondition() != null) {
-                sb.append(term.getCondition().getDisplayValue());
-                sb.append(" ");
-            }
-            if (term.getValue() != null) {
-                sb.append(term.getValue());
-            }
-            return sb.toString();
-        }
-        return null;
     }
 
     public void clear() {

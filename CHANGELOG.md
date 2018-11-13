@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#904** : The UI now shows dictionary names in expressions without the need to enter edit mode.
+
 * Updated ACE editor to v1.4.1.
 
 * Add colours to console logs in docker.
