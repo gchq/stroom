@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add API to allow creation of an internal Stroom user.
+
 * Fix logger configuration for SqlExceptionHelper
 
 * Add template-pipelines and standard-pipelines content packs to docker image
