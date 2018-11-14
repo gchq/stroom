@@ -37,6 +37,7 @@ const TestNewDocRefDialog = connect<
   { prepareDocRefCreation }
 )(({ prepareDocRefCreation, testDestination }: EnhancedProps) => (
   <div>
+    <h1>Create Doc Ref Test</h1>
     <button onClick={() => prepareDocRefCreation(LISTING_ID, testDestination)}>
       Show
     </button>

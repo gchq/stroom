@@ -110,7 +110,6 @@ export const reducer = prepareReducerById(defaultStatePerId)
       let focusIndex = -1;
       let focussedItem;
       if (state) {
-        console.log("Items", items);
         if (state.focusIndex < items.length) {
           focusIndex = state.focusIndex;
           focussedItem = items[focusIndex];

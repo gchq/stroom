@@ -17,7 +17,7 @@ import * as React from "react";
 
 import { connect } from "react-redux";
 import { compose, withHandlers } from "recompose";
-import { Field, reduxForm, FormState } from "redux-form";
+import { Formik, Field } from "formik";
 
 import DialogActionButtons from "./DialogActionButtons";
 import IconHeader from "../IconHeader";
@@ -37,9 +37,7 @@ export interface Props {
   listingId: string;
 }
 
-interface ConnectState extends RenameStoreState {
-  renameDocRefForm: FormState;
-}
+interface ConnectState extends RenameStoreState {}
 
 interface ConnectDispatch {
   completeDocRefRename: typeof completeDocRefRename;
@@ -57,28 +55,22 @@ export interface EnhancedProps
     ConnectDispatch,
     WithHandlers {}
 
+interface FormValues {
+  docRefName: string;
+}
+
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { renameDocRef }, form }, { listingId }) => {
+    ({ folderExplorer: { renameDocRef } }, { listingId }) => {
       let renameState: RenameStoreState =
         renameDocRef[listingId] || defaultStatePerId;
 
       return {
-        ...renameState,
-        renameDocRefForm: form.renameDocRefDialog,
-        initialValues: {
-          docRefName: renameState.docRef ? renameState.docRef.name : ""
-        }
+        ...renameState
       };
     },
     { completeDocRefRename, renameDocument }
   ),
-  reduxForm({
-    form: "renameDocRefDialog",
-    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
-    enableReinitialize: true,
-    touchOnChange: true
-  }),
   withHandlers({
     onConfirm: ({
       renameDocument,
@@ -94,26 +86,35 @@ const enhance = compose<EnhancedProps, Props>(
 
 let RenameDocRefDialog = ({
   isRenaming,
-  onConfirm,
-  onCancel
+  docRef,
+  onCancel,
+  renameDocument
 }: EnhancedProps) => (
-  <ThemedModal
-    isOpen={isRenaming}
-    header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
-    content={
-      <form>
-        <label>Type</label>
-        <Field
-          name="docRefName"
-          component="input"
-          type="text"
-          placeholder="Name"
-          validate={[required, minLength2]}
-        />
-      </form>
-    }
-    actions={<DialogActionButtons onCancel={onCancel} onConfirm={onConfirm} />}
-  />
+  <Formik<FormValues>
+    initialValues={{ docRefName: "" }}
+    onSubmit={values => renameDocument(docRef!, values.docRefName)}
+  >
+    {({ submitForm }) => (
+      <ThemedModal
+        isOpen={isRenaming}
+        header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
+        content={
+          <form>
+            <label>Type</label>
+            <Field
+              name="docRefName"
+              type="text"
+              placeholder="Name"
+              validate={[required, minLength2]}
+            />
+          </form>
+        }
+        actions={
+          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+        }
+      />
+    )}
+  </Formik>
 );
 
 export default enhance(RenameDocRefDialog);

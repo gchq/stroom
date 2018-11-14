@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { connect } from "react-redux";
 import { compose, withState } from "recompose";
-import { Field, reduxForm, FormState } from "redux-form";
+import { Formik, Field, FieldProps } from "formik";
 
 import { storiesOf } from "@storybook/react";
 
@@ -25,68 +24,47 @@ import { addThemedStories } from "../../lib/themedStoryGenerator";
 import AppSearchBar from "./AppSearchBar";
 
 import "../../styles/main.css";
-import { GlobalStoreState } from "../../startup/reducers";
 import { DocRefType, DocRefConsumer } from "../../types";
+import FormikDebug from "../../lib/FormikDebug";
 
 interface Props {
   pickerId: string;
   typeFilters?: Array<string>;
 }
 
-interface ConnectState {
-  thisForm: FormState;
-}
-interface ConnectDispatch {}
-
-interface AsFormEnhancedProps extends Props, ConnectState, ConnectDispatch {}
-
-const enhanceForm = compose<AsFormEnhancedProps, Props>(
-  connect<ConnectState, {}, Props, GlobalStoreState>(
-    ({ form }) => ({
-      thisForm: form.appSearchBarTest
-    }),
-    {}
-  ),
-  reduxForm({
-    form: "appSearchBarTest",
-    enableReinitialize: true,
-    touchOnChange: true
-  })
-);
-
-let AppSearchAsForm = enhanceForm(
-  ({ pickerId, typeFilters, thisForm }: AsFormEnhancedProps) => (
-    <form>
-      <div>
-        <label htmlFor="someName">Some Name</label>
-        <Field name="someName" component="input" type="text" />
-      </div>
-      <div>
-        <label>Chosen Doc Ref</label>
-        <Field
-          name="chosenDocRef"
-          component={({ input: { onChange, value } }) => (
-            <AppSearchBar
-              pickerId={pickerId}
-              typeFilters={typeFilters}
-              onChange={onChange}
-              value={value}
-            />
-          )}
-        />
-      </div>
-      {thisForm &&
-        thisForm.values && (
+let AppSearchAsForm = ({ pickerId, typeFilters }: Props) => (
+  <Formik
+    initialValues={{
+      someName: "",
+      chosenDocRef: undefined
+    }}
+    onSubmit={() => {}}
+  >
+    {({ setFieldValue }: Formik) => (
+      <React.Fragment>
+        <form>
           <div>
-            <h3>Form Values Observed</h3>
-            Name: {thisForm.values.someName}
-            <br />
-            Chosen Doc Ref:{" "}
-            {thisForm.values.chosenDocRef && thisForm.values.chosenDocRef.name}
+            <label htmlFor="someName">Some Name</label>
+            <Field name="someName" type="text" />
           </div>
-        )}
-    </form>
-  )
+          <div>
+            <label>Chosen Doc Ref</label>
+            <Field name="chosenDocRef">
+              {({ field: { value } }: FieldProps) => (
+                <AppSearchBar
+                  pickerId={pickerId}
+                  typeFilters={typeFilters}
+                  onChange={e => setFieldValue("chosenDocRef", e)}
+                  value={value}
+                />
+              )}
+            </Field>
+          </div>
+        </form>
+        <FormikDebug />
+      </React.Fragment>
+    )}
+  </Formik>
 );
 
 interface WithPickedDocRef {

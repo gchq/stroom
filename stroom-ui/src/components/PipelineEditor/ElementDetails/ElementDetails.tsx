@@ -17,7 +17,6 @@
 import * as React from "react";
 import { compose, branch, renderComponent, withProps } from "recompose";
 import { connect } from "react-redux";
-import { reduxForm } from "redux-form";
 
 import ElementImage from "../../ElementImage";
 import HorizontalPanel from "../../HorizontalPanel";
@@ -79,7 +78,6 @@ const enhance = compose<EnhancedProps, Props>(
     },
     {}
   ),
-  reduxForm({}),
   branch(
     ({ selectedElementId }) => !selectedElementId,
     renderComponent(() => (

@@ -14,76 +14,55 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose } from "recompose";
-import { connect } from "react-redux";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { storiesOf } from "@storybook/react";
-import { Field, reduxForm, FormState } from "redux-form";
+import { Formik, Field, FieldProps } from "formik";
 
 import DocTypeFilters from "./DocTypeFilters";
 import DocRefTypePicker from "./DocRefTypePicker";
 
-import { GlobalStoreState } from "../../startup/reducers";
-
 import "../../styles/main.css";
+import FormikDebug from "../../lib/FormikDebug";
 
-interface Props {}
-interface ConnectState {
-  thisForm: FormState;
-  initialValues: object;
-}
-interface ConnectDispatch {}
-interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
-
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ form }) => ({
-      thisForm: form.docTypeFilterTest,
-      initialValues: {
-        docTypes: []
-      }
-    }),
-    {}
-  ),
-  reduxForm({
-    form: "docTypeFilterTest"
-  })
-);
-
-const TestForm = enhance(({ thisForm }: EnhancedProps) => (
-  <form>
-    <div>
-      <label>Chosen Doc Type</label>
-      <Field
-        name="docType"
-        component={({ input: { onChange, value } }) => (
-          <DocRefTypePicker
-            pickerId="test1"
-            onChange={onChange}
-            value={value}
-          />
-        )}
-      />
-    </div>
-    <div>
-      <label>Chosen Doc Types</label>
-      <Field
-        name="docTypes"
-        component={({ input: { onChange, value } }) => (
-          <DocTypeFilters onChange={onChange} value={value} />
-        )}
-      />
-    </div>
-    {thisForm &&
-      thisForm.values && (
+const TestForm = () => (
+  <Formik
+    initialValues={{
+      docType: undefined,
+      docTypes: []
+    }}
+    onSubmit={() => {}}
+  >
+    {({ setFieldValue }: Formik) => (
+      <form>
         <div>
-          <div>Doc Type: {thisForm.values.docType}</div>
-          <div>Doc Types: {thisForm.values.docTypes.join(",")}</div>
+          <label>Chosen Doc Type</label>
+          <Field name="docType">
+            {({ field: { value } }: FieldProps) => (
+              <DocRefTypePicker
+                pickerId="test1"
+                onChange={d => setFieldValue("docType", d)}
+                value={value}
+              />
+            )}
+          </Field>
         </div>
-      )}
-  </form>
-));
+        <div>
+          <label>Chosen Doc Types</label>
+          <Field name="docTypes">
+            {({ field: { value } }: FieldProps) => (
+              <DocTypeFilters
+                onChange={d => setFieldValue("docTypes", d)}
+                value={value}
+              />
+            )}
+          </Field>
+        </div>
+        <FormikDebug />
+      </form>
+    )}
+  </Formik>
+);
 
 storiesOf("Doc Type Filters", module)
   .addDecorator(StroomDecorator)

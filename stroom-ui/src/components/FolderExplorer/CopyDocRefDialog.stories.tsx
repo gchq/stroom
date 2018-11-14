@@ -36,6 +36,7 @@ const TestCopyDialog = connect<
   { prepareDocRefCopy }
 )(({ prepareDocRefCopy, testUuids, testDestination }: EnhancedProps) => (
   <div>
+    <h1>Copy Doc Ref Test</h1>
     <button
       onClick={() => prepareDocRefCopy(LISTING_ID, testUuids, testDestination)}
     >

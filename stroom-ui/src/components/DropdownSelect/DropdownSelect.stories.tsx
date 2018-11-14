@@ -14,42 +14,18 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { compose } from "recompose";
-import { connect } from "react-redux";
 
 import { storiesOf } from "@storybook/react";
-import { Field, reduxForm, FormState } from "redux-form";
 
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import DropdownSelect, {
   DropdownOptionProps,
   PickerProps
 } from "./DropdownSelect";
-
-import { GlobalStoreState } from "../../startup/reducers";
+import { Formik, Field, FieldProps } from "formik";
+import FormikDebug from "../../lib/FormikDebug";
 
 import "../../styles/main.css";
-
-interface Props {}
-
-interface ConnectState {
-  thisForm: FormState;
-}
-interface ConnectDispatch {}
-
-interface EnhancedProps extends Props, ConnectState {}
-
-const enhance = compose<EnhancedProps, Props>(
-  connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ form }) => ({
-      thisForm: form.dropdownSelectTest
-    }),
-    {}
-  ),
-  reduxForm({
-    form: "dropdownSelectTest"
-  })
-);
 
 const toSimpleOption = (c: string) => ({
   value: c.toLowerCase(),
@@ -101,59 +77,46 @@ const WeekdayPicker = (props: PickerProps) => (
   <DropdownSelect {...props} options={weekdayOptions} />
 );
 
-const TestForm = enhance(({ thisForm }: EnhancedProps) => (
-  <div>
-    <form>
-      <div>
-        <label>Colour</label>
-        <Field
-          name="colour"
-          component={({ input: { onChange, value } }) => (
-            <ColourPicker
-              pickerId="colourPicker"
-              onChange={onChange}
-              value={value}
-            />
-          )}
-        />
-      </div>
-      <div>
-        <label>Weekday</label>
-        <Field
-          name="weekday"
-          component={({ input: { onChange, value } }) => (
-            <WeekdayPicker
-              pickerId="wdPicker"
-              onChange={onChange}
-              value={value}
-            />
-          )}
-        />
-      </div>
-    </form>
-    {thisForm &&
-      thisForm.values && (
+const TestForm = () => (
+  <Formik
+    initialValues={{
+      color: ""
+    }}
+    onSubmit={(e: any) => console.log("Submitting", e)}
+  >
+    {({ setFieldValue }: Formik) => (
+      <React.Fragment>
         <form>
           <div>
-            <label>Colour:</label>
-            <input
-              readOnly
-              value={thisForm.values.colour}
-              onChange={() => {}}
-            />
+            <label>Colour</label>
+            <Field name="colour">
+              {({ field: { value } }: FieldProps) => (
+                <ColourPicker
+                  pickerId="colourPicker"
+                  onChange={e => setFieldValue("colour", e)}
+                  value={value}
+                />
+              )}
+            </Field>
           </div>
           <div>
-            <label>Weekday:</label>
-            <input
-              readOnly
-              value={thisForm.values.weekday}
-              onChange={() => {}}
-            />
+            <label>Weekday</label>
+            <Field name="weekday">
+              {({ field: { value } }: FieldProps) => (
+                <WeekdayPicker
+                  pickerId="wdPicker"
+                  onChange={e => setFieldValue("weekday", e)}
+                  value={value}
+                />
+              )}
+            </Field>
           </div>
         </form>
-      )}
-  </div>
-));
+        <FormikDebug />
+      </React.Fragment>
+    )}
+  </Formik>
+);
 
 storiesOf("Dropdown Select", module)
   .addDecorator(StroomDecorator)

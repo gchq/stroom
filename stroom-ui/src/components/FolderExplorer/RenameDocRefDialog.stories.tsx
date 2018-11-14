@@ -38,6 +38,7 @@ const TestRenameDialog = connect<
   { prepareDocRefRename }
 )(({ prepareDocRefRename, testDocRef }: EnhancedProps) => (
   <div>
+    <h1>Rename Document Test</h1>
     <button onClick={() => prepareDocRefRename(LISTING_ID, testDocRef)}>
       Show
     </button>

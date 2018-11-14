@@ -32,6 +32,7 @@ const TestMoveDialog = connect(
   { prepareDocRefMove }
 )(({ prepareDocRefMove, testUuids, testDestination }: EnhancedProps) => (
   <div>
+    <h1>Move Doc Ref Test</h1>
     <button
       onClick={() => prepareDocRefMove(LISTING_ID, testUuids, testDestination)}
     >

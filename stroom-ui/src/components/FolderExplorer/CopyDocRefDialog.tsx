@@ -17,7 +17,7 @@ import * as React from "react";
 
 import { compose, withHandlers } from "recompose";
 import { connect } from "react-redux";
-import { Field, reduxForm, FormState } from "redux-form";
+import { Formik, Field, FieldProps } from "formik";
 
 import { GlobalStoreState } from "../../startup/reducers";
 import IconHeader from "../IconHeader";
@@ -33,7 +33,11 @@ import DialogActionButtons from "./DialogActionButtons";
 import ThemedModal from "../ThemedModal";
 import AppSearchBar from "../AppSearchBar";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
-import { DocRefType, Tree, DocRefWithLineage } from "../../types";
+import {
+  DocRefWithLineage,
+  DocRefType,
+  PermissionInheritance
+} from "../../types";
 
 const { completeDocRefCopy } = actionCreators;
 
@@ -43,12 +47,7 @@ export interface Props {
   listingId: string;
 }
 
-interface ConnectState extends CopyStoreState {
-  copyDocRefDialogForm: FormState;
-  initialValues: {
-    destination?: Tree<DocRefType>;
-  };
-}
+interface ConnectState extends CopyStoreState {}
 
 interface ConnectDispatch {
   completeDocRefCopy: typeof completeDocRefCopy;
@@ -57,7 +56,6 @@ interface ConnectDispatch {
 
 interface WithHandlers {
   onCancel: React.MouseEventHandler;
-  onConfirm: React.MouseEventHandler;
 }
 
 export interface EnhancedProps
@@ -69,7 +67,7 @@ export interface EnhancedProps
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ folderExplorer: { documentTree, copyDocRef }, form }, { listingId }) => {
+    ({ folderExplorer: { documentTree, copyDocRef } }, { listingId }) => {
       const thisState: CopyStoreState =
         copyDocRef[listingId] || defaultStatePerId;
 
@@ -80,7 +78,6 @@ const enhance = compose<EnhancedProps, Props>(
         : undefined;
 
       return {
-        copyDocRefDialogForm: form.copyDocRefDialog,
         ...thisState,
         initialValues: {
           destination: initialDestination && initialDestination.node
@@ -89,63 +86,79 @@ const enhance = compose<EnhancedProps, Props>(
     },
     { completeDocRefCopy, copyDocuments }
   ),
-  reduxForm({
-    form: "copyDocRefDialog",
-    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
-    enableReinitialize: true,
-    touchOnChange: true
-  }),
   withHandlers<Props & ConnectState & ConnectDispatch, WithHandlers>({
     onCancel: ({ completeDocRefCopy, listingId }) => () =>
-      completeDocRefCopy(listingId),
-    onConfirm: ({
-      copyDocuments,
-      uuids,
-      copyDocRefDialogForm: { values }
-    }) => () =>
-      copyDocuments(
-        uuids,
-        values!.destination.uuid,
-        values!.permissionInheritance
-      )
+      completeDocRefCopy(listingId)
   })
 );
 
-let CopyDocRefDialog = ({ isCopying, onCancel, onConfirm }: EnhancedProps) => (
-  <ThemedModal
-    isOpen={isCopying}
-    header={
-      <IconHeader icon="copy" text="Select a Destination Folder for the Copy" />
+interface FormValues {
+  destination?: DocRefType;
+  permissionInheritance: PermissionInheritance;
+}
+
+let CopyDocRefDialog = ({
+  isCopying,
+  onCancel,
+  copyDocuments,
+  uuids
+}: EnhancedProps) => (
+  <Formik<FormValues>
+    initialValues={{
+      destination: undefined,
+      permissionInheritance: PermissionInheritance.NONE
+    }}
+    onSubmit={values =>
+      copyDocuments(
+        uuids,
+        values.destination!.uuid,
+        values.permissionInheritance
+      )
     }
-    content={
-      <form>
-        <div>
-          <label>Destination</label>
-          <Field
-            name="destination"
-            component={({ input: { onChange, value } }) => (
-              <AppSearchBar
-                pickerId={LISTING_ID}
-                onChange={onChange}
-                value={value}
-                typeFilters={[]}
-              />
-            )}
+  >
+    {({ setFieldValue, submitForm }: Formik) => (
+      <ThemedModal
+        isOpen={isCopying}
+        header={
+          <IconHeader
+            icon="copy"
+            text="Select a Destination Folder for the Copy"
           />
-        </div>
-        <div>
-          <label>Permission Inheritance</label>
-          <Field
-            name="permissionInheritance"
-            component={({ input: { onChange, value } }) => (
-              <PermissionInheritancePicker onChange={onChange} value={value} />
-            )}
-          />
-        </div>
-      </form>
-    }
-    actions={<DialogActionButtons onCancel={onCancel} onConfirm={onConfirm} />}
-  />
+        }
+        content={
+          <form>
+            <div>
+              <label>Destination</label>
+              <Field name="destination">
+                {({ field: { value } }: FieldProps) => (
+                  <AppSearchBar
+                    pickerId={LISTING_ID}
+                    onChange={d => setFieldValue("destination", d)}
+                    value={value}
+                    typeFilters={[]}
+                  />
+                )}
+              </Field>
+            </div>
+            <div>
+              <label>Permission Inheritance</label>
+              <Field name="permissionInheritance">
+                {({ field: { value } }: FieldProps) => (
+                  <PermissionInheritancePicker
+                    onChange={d => setFieldValue("permissionInheritance", d)}
+                    value={value}
+                  />
+                )}
+              </Field>
+            </div>
+          </form>
+        }
+        actions={
+          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+        }
+      />
+    )}
+  </Formik>
 );
 
 export default enhance(CopyDocRefDialog);

@@ -16,7 +16,6 @@
 
 import { combineReducers } from "redux";
 import { routerReducer, RouterState } from "react-router-redux";
-import { reducer as formReducer, FormStateMap } from "redux-form";
 import {
   reducer as keyIsDown,
   StoreState as KeyIsDownState
@@ -112,7 +111,6 @@ export interface GlobalStoreState {
   fetch: FetchStoreStore;
   userSettings: UserSettingsStoreState;
   selectableItemListings: SelectableItemListingStoreState;
-  form: FormStateMap;
   docRefTypes: DocRefTypesStoreState;
   folderExplorer: FolderExplorerStoreState;
   dictionaryEditor: DictionaryEditorStoreState;
@@ -130,7 +128,6 @@ export interface GlobalStoreState {
 
 export default combineReducers({
   routing: routerReducer,
-  form: formReducer,
   keyIsDown,
   errorPage,
   config,

@@ -17,7 +17,7 @@ import * as React from "react";
 
 import { compose, withHandlers } from "recompose";
 import { connect } from "react-redux";
-import { Field, reduxForm, FormState } from "redux-form";
+import { Formik, Field, FieldProps } from "formik";
 
 import IconHeader from "../IconHeader";
 import { findItem } from "../../lib/treeUtils";
@@ -35,7 +35,11 @@ import AppSearchBar from "../AppSearchBar";
 import ThemedModal from "../ThemedModal";
 import PermissionInheritancePicker from "../PermissionInheritancePicker";
 import { GlobalStoreState } from "../../startup/reducers";
-import { DocRefType, DocRefWithLineage } from "../../types";
+import {
+  DocRefType,
+  DocRefWithLineage,
+  PermissionInheritance
+} from "../../types";
 
 const { completeDocRefMove } = actionCreators;
 
@@ -45,12 +49,7 @@ export interface Props {
   listingId: string;
 }
 
-interface ConnectState extends MoveStoreState {
-  moveDocRefDialogForm: FormState;
-  initialValues: {
-    destination?: DocRefType;
-  };
-}
+interface ConnectState extends MoveStoreState {}
 
 interface ConnectDispatch {
   completeDocRefMove: typeof completeDocRefMove;
@@ -69,6 +68,11 @@ export interface EnhancedProps
     ConnectDispatch,
     WithHandlers {}
 
+interface FormValues {
+  destination?: DocRefType;
+  permissionInheritance: PermissionInheritance;
+}
+
 const enhance = compose<EnhancedProps, Props>(
   withDocumentTree,
   connect<
@@ -78,11 +82,7 @@ const enhance = compose<EnhancedProps, Props>(
     GlobalStoreState
   >(
     (
-      {
-        folderExplorer: { documentTree },
-        form,
-        folderExplorer: { moveDocRef }
-      },
+      { folderExplorer: { documentTree }, folderExplorer: { moveDocRef } },
       { listingId }
     ) => {
       const thisState = moveDocRef[listingId] || defaultStatePerId;
@@ -93,7 +93,6 @@ const enhance = compose<EnhancedProps, Props>(
         : undefined;
 
       return {
-        moveDocRefDialogForm: form.moveDocRefDialog,
         ...thisState,
         initialValues: {
           destination: initialDestination && initialDestination.node
@@ -102,62 +101,73 @@ const enhance = compose<EnhancedProps, Props>(
     },
     { completeDocRefMove, moveDocuments }
   ),
-  reduxForm({
-    form: "moveDocRefDialog",
-    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
-    enableReinitialize: true,
-    touchOnChange: true
-  }),
   withHandlers({
-    onConfirm: ({
-      moveDocuments,
-      uuids,
-      moveDocRefDialogForm: {
-        values: { destination, permissionInheritance }
-      }
-    }) => () => moveDocuments(uuids, destination.uuid, permissionInheritance),
     onCancel: ({ listingId, completeDocRefMove }) => () =>
       completeDocRefMove(listingId)
   })
 );
 
-let MoveDocRefDialog = ({ isMoving, onConfirm, onCancel }: EnhancedProps) => (
-  <ThemedModal
-    isOpen={isMoving}
-    header={
-      <IconHeader
-        icon="arrows-alt"
-        text="Select a Destination Folder for the Move?"
+let MoveDocRefDialog = ({
+  isMoving,
+  moveDocuments,
+  uuids,
+  onCancel
+}: EnhancedProps) => (
+  <Formik<FormValues>
+    initialValues={{
+      destination: undefined,
+      permissionInheritance: PermissionInheritance.NONE
+    }}
+    onSubmit={values =>
+      moveDocuments(
+        uuids,
+        values.destination!.uuid,
+        values.permissionInheritance
+      )
+    }
+  >
+    {({ setFieldValue, submitForm }: Formik) => (
+      <ThemedModal
+        isOpen={isMoving}
+        header={
+          <IconHeader
+            icon="arrows-alt"
+            text="Select a Destination Folder for the Move?"
+          />
+        }
+        content={
+          <form>
+            <div>
+              <label>Destination</label>
+              <Field name="destination">
+                {({ field: { value } }: FieldProps) => (
+                  <AppSearchBar
+                    pickerId={LISTING_ID}
+                    onChange={d => setFieldValue("destination", d)}
+                    value={value}
+                  />
+                )}
+              </Field>
+            </div>
+            <div>
+              <label>Permission Inheritance</label>
+              <Field name="permissionInheritance">
+                {({ field: { value } }: FieldProps) => (
+                  <PermissionInheritancePicker
+                    onChange={d => setFieldValue("permissionInheritance", d)}
+                    value={value}
+                  />
+                )}
+              </Field>
+            </div>
+          </form>
+        }
+        actions={
+          <DialogActionButtons onCancel={onCancel} onConfirm={submitForm} />
+        }
       />
-    }
-    content={
-      <form>
-        <div>
-          <label>Destination</label>
-          <Field
-            name="destination"
-            component={({ input: { onChange, value } }) => (
-              <AppSearchBar
-                pickerId={LISTING_ID}
-                onChange={onChange}
-                value={value}
-              />
-            )}
-          />
-        </div>
-        <div>
-          <label>Permission Inheritance</label>
-          <Field
-            name="permissionInheritance"
-            component={({ input: { onChange, value } }) => (
-              <PermissionInheritancePicker onChange={onChange} value={value} />
-            )}
-          />
-        </div>
-      </form>
-    }
-    actions={<DialogActionButtons onCancel={onCancel} onConfirm={onConfirm} />}
-  />
+    )}
+  </Formik>
 );
 
 export default enhance(MoveDocRefDialog);

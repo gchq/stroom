@@ -296,6 +296,7 @@ const enhance = compose<EnhancedProps, Props>(
     }) => () => {
       // We need to get the initial values for this element and make sure they go into the state,
       // ready for redux-form to populate the new form.
+      // TODO THIS MUST SURELY BE CHANGED NOW WE ARE USING FORMIK
       const thisElementTypeProperties = elementProperties[element.type];
       const thisElementProperties = pipeline.merged.properties.add.filter(
         (property: PipelinePropertyType) => property.element === element.id
