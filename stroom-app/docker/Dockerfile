@@ -59,7 +59,7 @@ ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.1/internal-statistics-stroom-stats-v2.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/standard-pipelines-v0.1/standard-pipelines-v0.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip .
-ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v1.1/stroom-logs-v1.1.zip .
+ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v2.0-alpha.2/stroom-logs-v2.0-alpha.2.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/template-pipelines-v0.1/template-pipelines-v0.1.zip .
 
 # Add in the visualisations for import on startup
