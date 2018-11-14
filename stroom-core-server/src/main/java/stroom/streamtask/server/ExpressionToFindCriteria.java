@@ -9,8 +9,10 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.StringCriteria;
+import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
+import stroom.feed.shared.FindFeedCriteria;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.FindPipelineEntityCriteria;
 import stroom.pipeline.shared.PipelineEntity;
@@ -317,6 +319,21 @@ public class ExpressionToFindCriteria {
     }
 
     private Set<Feed> findFeeds(final String field, final String value) {
+        // Deal with wildcard names
+        if (value.contains("*")) {
+            try {
+                final FindFeedCriteria findFeedCriteria = new FindFeedCriteria(value);
+                findFeedCriteria.getName().setMatchStyle(MatchStyle.Wild);
+                findFeedCriteria.obtainPageRequest().setLength(Integer.MAX_VALUE);
+                final List<Feed> feeds = feedService.find(findFeedCriteria);
+                if (feeds != null) {
+                    return new HashSet<>(feeds);
+                }
+            } catch (final Exception e) {
+                // Ignore.
+            }
+        }
+
         // Try by UUID
         try {
             final Feed feed = feedService.loadByUuid(value);

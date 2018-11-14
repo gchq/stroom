@@ -30,6 +30,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     private MatchStyle matchStyle = null;
     private boolean caseInsensitive;
     private Boolean matchNull = null;
+
     public StringCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
@@ -120,6 +121,10 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         }
         if (matchStyle != null) {
             switch (matchStyle) {
+                case Wild:
+                    return rtnString.replace('*', '%');
+                case WildStart:
+                    return "%" + rtnString.replace('*', '%');
                 case WildEnd:
                     return rtnString.replace('*', '%') + "%";
                 case WildStandAndEnd:
@@ -188,6 +193,6 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     public enum MatchStyle {
-        WildEnd, WildStandAndEnd
+        Wild, WildStart, WildEnd, WildStandAndEnd
     }
 }

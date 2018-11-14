@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#903** : Feed names can now contain wildcard characters when filtering in the data browser.
+
 ## [v6.0-beta.12]
 
 * Add API to allow creation of an internal Stroom user.
