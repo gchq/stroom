@@ -27,7 +27,7 @@ export interface DragObject {
 export interface DropCollectedProps {
   connectDropTarget: ConnectDropTarget;
   isOver: boolean;
-  dndIsHappening: boolean;
+  draggingItemType?: string | null | symbol;
 }
 export interface DragCollectedProps {
   connectDragSource: ConnectDragSource;

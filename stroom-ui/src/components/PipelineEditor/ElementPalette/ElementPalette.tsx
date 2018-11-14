@@ -58,7 +58,7 @@ const dropCollect: DropTargetCollector<DropCollectedProps> = (
 ) => ({
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
-  dndIsHappening: monitor.getItem() !== null
+  draggingItemType: monitor.getItemType()
 });
 
 const enhance = compose<EnhancedProps, Props>(
@@ -97,11 +97,11 @@ const ElementPalette = ({
   recycleBinItems,
   binColour,
   connectDropTarget,
-  dndIsHappening
+  draggingItemType
 }: EnhancedProps) =>
   connectDropTarget(
     <div className="element-palette">
-      {dndIsHappening ? (
+      {draggingItemType === DragDropTypes.ELEMENT ? (
         <div className="Pipeline-editor__bin">
           <FontAwesomeIcon icon="trash" size="lg" color={binColour} />
         </div>

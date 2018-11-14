@@ -189,7 +189,7 @@ const dropCollect: DropTargetCollector<DropCollectedProps> = (
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
   canDrop: monitor.canDrop(),
-  dndIsHappening: monitor.getItem() !== null
+  draggingItemType: monitor.getItemType()
 });
 
 const enhance = compose<EnhancedProps, Props>(
@@ -204,19 +204,17 @@ const enhance = compose<EnhancedProps, Props>(
       let element: PipelineElementType | undefined;
       let elementDefinition: ElementDefinition | undefined;
 
-      if (element !== undefined) {
-        if (pipelineState && pipelineState.pipeline) {
-          selectedElementId = pipelineState.selectedElementId;
-          element =
-            pipelineState.pipeline.merged.elements.add &&
-            pipelineState.pipeline.merged.elements.add.find(
-              (e: PipelineElementType) => e.id === elementId
-            );
-          if (element) {
-            elementDefinition = Object.values(elements.elements).find(
-              e => e.type === element!.type
-            )!;
-          }
+      if (pipelineState && pipelineState.pipeline) {
+        selectedElementId = pipelineState.selectedElementId;
+        element =
+          pipelineState.pipeline.merged.elements.add &&
+          pipelineState.pipeline.merged.elements.add.find(
+            (e: PipelineElementType) => e.id === elementId
+          );
+        if (element) {
+          elementDefinition = Object.values(elements.elements).find(
+            e => e.type === element!.type
+          )!;
         }
       }
 
@@ -250,7 +248,7 @@ const enhance = compose<EnhancedProps, Props>(
       isDragging,
       selectedElementId,
       elementId,
-      dndIsHappening
+      draggingItemType
     }) => {
       const classNames = ["Pipeline-element"];
       let isIconDisabled = false;
@@ -270,7 +268,7 @@ const enhance = compose<EnhancedProps, Props>(
         }
       } else if (canDrop) {
         classNames.push("Pipeline-element__not_over_can_drop");
-      } else if (dndIsHappening) {
+      } else if (!!draggingItemType) {
         isIconDisabled = true;
         classNames.push("Pipeline-element__cannot_drop");
       }

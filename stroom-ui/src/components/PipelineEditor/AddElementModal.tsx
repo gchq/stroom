@@ -72,10 +72,12 @@ const enhance = compose<EnhancedProps, Props>(
       return !elementNames.includes(value);
     }
   }),
-  withProps(({ invalid, submitting, pendingNewElement }) => ({
-    submitDisabled: invalid || submitting,
-    isOpen: !!pendingNewElement
-  }))
+  withProps(
+    ({ invalid, submitting, pipelineState: { pendingNewElement } }) => ({
+      submitDisabled: invalid || submitting,
+      isOpen: !!pendingNewElement
+    })
+  )
 );
 
 interface FormValues {
