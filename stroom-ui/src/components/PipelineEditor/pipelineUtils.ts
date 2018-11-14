@@ -75,9 +75,11 @@ export function getPipelineAsTree(
 
   // Create the tree using links
   if (pipeline.merged.links.add) {
-    pipeline.merged.links.add.filter(l => !!elements[l.from]).forEach(l => {
-      elements[l.from].children.push(elements[l.to]);
-    });
+    pipeline.merged.links.add
+      .filter(l => !!elements[l.from])
+      .forEach(l => {
+        elements[l.from].children.push(elements[l.to]);
+      });
   }
 
   // Figure out the root
@@ -163,20 +165,20 @@ export function getPipelineLayoutGrid(
   const layoutInformation: PipelineLayoutInfoById = {};
 
   let highestColumn = 0;
-  let lastRow = 0;
+  let highestRow = 0;
   let lastColumn = -1;
   iterateNodes(asTree, (lineage, node) => {
     const column = lineage.length;
 
     if (column <= lastColumn) {
       // This means you have taken a sideways step to the next child (at some any level)
-      lastRow += 1;
+      highestRow += 1;
     }
     highestColumn = Math.max(highestColumn, column);
     lastColumn = column;
 
     layoutInformation[node.uuid] = {
-      row: lastRow,
+      row: highestRow,
       column
     };
   });
@@ -184,11 +186,11 @@ export function getPipelineLayoutGrid(
   const layoutGrid: PipelineLayoutGrid = {
     rows: []
   };
-  for (let row = 0; row <= lastRow; row++) {
+  for (let row = 0; row <= highestRow; row++) {
     let rowData: PipelineLayoutRow = {
       columns: []
     };
-    for (let column = 0; column <= lastColumn; column++) {
+    for (let column = 0; column <= highestColumn; column++) {
       rowData.columns.push({
         cellType: CellType.EMPTY
       });
@@ -245,9 +247,8 @@ export function getAllElementNames(pipeline: PipelineModelType): Array<string> {
  * All the other items are left as they are.
  */
 function mapLastItemInArray(input: any, mapFunc: (input: any) => any) {
-  return input.map(
-    (item: any, i: number, arr: Array<any>) =>
-      i === arr.length - 1 ? mapFunc(item) : item
+  return input.map((item: any, i: number, arr: Array<any>) =>
+    i === arr.length - 1 ? mapFunc(item) : item
   );
 }
 
