@@ -36,6 +36,8 @@ export interface SelectOptionType {
   label: string;
 }
 
+export type SelectOptionsType = Array<SelectOptionType>;
+
 export interface OptionType {
   text: string;
   value: string;

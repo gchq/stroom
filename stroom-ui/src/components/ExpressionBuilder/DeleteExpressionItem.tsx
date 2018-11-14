@@ -51,10 +51,12 @@ const enhance = compose<ConfirmProps, Props>(
     onConfirm: ({ expressionId, expressionItemDeleteConfirmed }) => () =>
       expressionItemDeleteConfirmed(expressionId)
   }),
-  withProps(({ pendingDeletionOperatorId }) => ({
-    isOpen: !!pendingDeletionOperatorId,
-    question: `Delete ${pendingDeletionOperatorId} from expression?`
-  }))
+  withProps<WithProps, Props & ConnectState>(
+    ({ expressionState: { pendingDeletionOperatorId } }) => ({
+      isOpen: !!pendingDeletionOperatorId,
+      question: `Delete ${pendingDeletionOperatorId} from expression?`
+    })
+  )
 );
 
 export default enhance(ThemedConfirm);

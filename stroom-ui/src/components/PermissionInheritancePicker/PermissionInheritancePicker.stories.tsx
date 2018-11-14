@@ -31,11 +31,7 @@ const TestForm = () => (
     initialValues={{ permissionInheritance: undefined, color: undefined }}
     onSubmit={() => console.log("Do nothing on submit")}
   >
-    {({
-      submitForm,
-      values,
-      setFieldValue
-    }: FormikProps<PermissionInheritanceForm>) => (
+    {({ values, setFieldValue }: FormikProps<PermissionInheritanceForm>) => (
       <form>
         <div>
           <label>Chosen Permission Inheritance</label>

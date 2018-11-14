@@ -22,6 +22,7 @@ import { DragSource, DragSourceSpec } from "react-dnd";
 
 import Select from "react-select";
 import Button from "../Button";
+import ConditionPicker from "./ConditionPicker";
 import {
   DragDropTypes,
   DragObject,
@@ -39,7 +40,8 @@ import {
   DataSourceFieldType,
   SelectOptionType,
   ConditionDisplayValues,
-  ExpressionTermWithUuid
+  ExpressionTermWithUuid,
+  SelectOptionsType
 } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
 
@@ -68,8 +70,8 @@ interface WithHandlers {
 }
 
 interface WithProps {
-  conditionOptions: Array<SelectOptionType>;
-  fieldOptions: Array<SelectOptionType>;
+  conditionOptions: SelectOptionsType;
+  fieldOptions: SelectOptionsType;
   className: string;
 }
 
@@ -207,14 +209,11 @@ const ExpressionTerm = ({
       onChange={(o: SelectOptionType) => onFieldChange(o.value)}
       options={fieldOptions}
     />
-    <Select
+    <ConditionPicker
       className="expression-term__select"
-      placeholder="Condition"
-      value={conditionOptions.find(o => o.value === term.condition)}
-      onChange={(o: SelectOptionType) =>
-        onConditionChange(o.value as ConditionType)
-      }
-      options={conditionOptions}
+      value={term.condition}
+      onChange={onConditionChange}
+      conditionOptions={conditionOptions}
     />
     <ValueWidget valueType={valueType} term={term} onChange={onValueChange} />
 
