@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#922** : The explorer now changes the selection on a right click if the item clicked is not already selected (could be part of a multi select).
+
 * Issue **#903** : Feed names can now contain wildcard characters when filtering in the data browser.
 
 ## [v6.0-beta.12]

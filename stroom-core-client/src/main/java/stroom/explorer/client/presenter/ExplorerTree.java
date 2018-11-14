@@ -310,8 +310,15 @@ public class ExplorerTree extends AbstractExplorerTree {
                 final int button = nativeEvent.getButton();
 
                 if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
-                    cellTable.setKeyboardSelectedRow(event.getIndex());
+                    final ExplorerNode selectedItem = event.getValue();
+                    // If the item clicked is already selected then don't change the selection.
+                    if (!selectionModel.isSelected(selectedItem)) {
+                        // Change the selection.
+                        doSelect(selectedItem, new SelectionType(false, true, false, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                    }
+
                     ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
+
                 } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
                     final ExplorerNode selectedItem = event.getValue();
                     if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
