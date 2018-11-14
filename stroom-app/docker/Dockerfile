@@ -51,14 +51,16 @@ COPY ./build/stroom-app-all.jar /stroom-app-all.jar
 FROM scratch as content-packs-stage
 WORKDIR /content-packs
 
-# Add in all the content packs so stroom imports them on startup
+# Add in all the content packs so stroom imports them on startup (A-Z order please)
 ADD https://github.com/gchq/stroom-content/releases/download/core-xml-schemas-v2.0/core-xml-schemas-v2.0.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/event-logging-xml-schema-v3.2.3/event-logging-xml-schema-v3.2.3.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/internal-dashboards-v1.1/internal-dashboards-v1.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-sql-v2.1/internal-statistics-sql-v2.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/internal-statistics-stroom-stats-v2.1/internal-statistics-stroom-stats-v2.1.zip .
+ADD https://github.com/gchq/stroom-content/releases/download/standard-pipelines-v0.1/standard-pipelines-v0.1.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip .
 ADD https://github.com/gchq/stroom-content/releases/download/stroom-logs-v1.1/stroom-logs-v1.1.zip .
+ADD https://github.com/gchq/stroom-content/releases/download/template-pipelines-v0.1/template-pipelines-v0.1.zip .
 
 # Add in the visualisations for import on startup
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/visualisations-production-v3.0.5.zip .
