@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.12]
+
 * Add API to allow creation of an internal Stroom user.
 
 * Fix logger configuration for SqlExceptionHelper
@@ -1213,7 +1215,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.11...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.12...6.0
+[v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
 [v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11
 [v6.0-beta.10]: https://github.com/gchq/stroom/compare/v6.0-beta.9...v6.0-beta.10
 [v6.0-beta.9]: https://github.com/gchq/stroom/compare/v6.0-beta.8...v6.0-beta.9
