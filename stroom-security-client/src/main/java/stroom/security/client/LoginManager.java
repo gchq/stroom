@@ -64,7 +64,7 @@ public class LoginManager implements HasHandlers {
             } else {
                 logout();
             }
-        }).onFailure(caught -> AlertEvent.fireErrorFromException(LoginManager.this, caught, null));
+        }).onFailure(caught -> AlertEvent.fireInfo(LoginManager.this, caught.getMessage(), () -> logout()));
     }
 
     private void logout() {
