@@ -104,7 +104,12 @@ releaseToDockerHub() {
     echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
     echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
 
-    docker build ${allTagArgs} ${contextRoot}
+    # If we have a TRAVIS_TAG (git tag) then use that, else use the floating tag
+    docker build \
+        ${allTagArgs} \
+        --build-arg GIT_COMMIT=${TRAVIS_COMMIT} \
+        --build-arg GIT_TAG=${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}} \
+        ${contextRoot}
 
     echo -e "Logging in to Docker"
 

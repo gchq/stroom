@@ -51,4 +51,5 @@ echo -e "${GREEN}Building stroom-proxy docker image ${BLUE}gchq/stroom-proxy:${D
 docker build \
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT=${CURRENT_GIT_COMMIT} \
+    --build-arg GIT_TAG=${DOCKER_IMAGE_TAG} \
     ./stroom-app/proxy-docker
