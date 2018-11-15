@@ -67,6 +67,9 @@ RUN chmod u+x ./*.sh
 
 FROM stroom-base-stage
 
+# IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
+ENV IN_DOCKER="true"
+
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom-proxy
 
@@ -120,5 +123,9 @@ COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
 
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
 
-# IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
-ENV IN_DOCKER="true"
+# Label the image so we can see what commit/tag it came from
+ARG GIT_COMMIT=unspecified
+ARG GIT_TAG=unspecified
+LABEL \
+    git_commit="$GIT_COMMIT" \
+    git_tag="$GIT_TAG"

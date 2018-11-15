@@ -91,6 +91,12 @@ RUN chmod u+x ./*.sh
 # We need the full JDK for the jmap binary as used by the Heap Histogram internal stats
 FROM stroom-base-stage
 
+# IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
+ENV IN_DOCKER="true"
+ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
+# Needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
+ENV LANG en_GB.UTF-8
+
 #This is where stroom will run from and any local data will be
 WORKDIR /stroom
 
@@ -156,8 +162,9 @@ COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
 
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 
-# IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
-ENV IN_DOCKER="true"
-ENV STROOM_CONTENT_PACK_IMPORT_ENABLE="true"
-# Needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
-ENV LANG en_GB.UTF-8
+# Label the image so we can see what commit/tag it came from
+ARG GIT_COMMIT=unspecified
+ARG GIT_TAG=unspecified
+LABEL \
+    git_commit="$GIT_COMMIT" \
+    git_tag="$GIT_TAG"
