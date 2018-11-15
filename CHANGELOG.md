@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add git_tag and git_commit labels to docker images
+
 * Uplift stroom-logs content pack in docker image to` v2.0-alpha.2`
 
 * Stop truncation of `logger` in logback console logs
