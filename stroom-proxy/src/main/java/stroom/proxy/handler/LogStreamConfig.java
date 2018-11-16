@@ -3,7 +3,7 @@ package stroom.proxy.handler;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class LogStreamConfig {
-    private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress";
+    private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress,remotedn";
 
     /**
      * Optional log line with header attributes output as defined by this property
