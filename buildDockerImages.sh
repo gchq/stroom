@@ -30,16 +30,27 @@ NC='\033[0m' # No Color
 
 # Exclude tests because we want this to be fast. 
 # I guess you'd better test the build before releasing.
-./gradlew downloadUrlDependencies clean build shadowJar -x test -x integrationTest
+./gradlew clean build -x test -x integrationTest
 
 if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo -e "${GREEN}Building stroom docker image ${BLUE}gchq/stroom:dev-SNAPSHOT${NC}"
+DOCKER_IMAGE_TAG="local-SNAPSHOT"
+CURRENT_GIT_COMMIT="$(git rev-parse HEAD)"
 
-docker build --tag gchq/stroom:dev-SNAPSHOT ./stroom-app/docker
+echo -e "${GREEN}Building stroom docker image ${BLUE}gchq/stroom:${DOCKER_IMAGE_TAG}${NC} for commit ${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
-echo -e "${GREEN}Building stroom-proxy docker image ${BLUE}gchq/stroom-proxy:dev-SNAPSHOT${NC}"
+docker build \
+    --tag gchq/stroom:${DOCKER_IMAGE_TAG} \
+    --build-arg GIT_COMMIT=${CURRENT_GIT_COMMIT} \
+    --build-arg GIT_TAG=${DOCKER_IMAGE_TAG} \
+    ./stroom-app/docker
 
-docker build --tag gchq/stroom-proxy:dev-SNAPSHOT ./stroom-app/proxy-docker
+echo -e "${GREEN}Building stroom-proxy docker image ${BLUE}gchq/stroom-proxy:${DOCKER_IMAGE_TAG}${NC} for commit ${BLUE}${CURRENT_GIT_COMMIT}${NC}"
+
+docker build \
+    --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
+    --build-arg GIT_COMMIT=${CURRENT_GIT_COMMIT} \
+    --build-arg GIT_TAG=${DOCKER_IMAGE_TAG} \
+    ./stroom-app/proxy-docker
