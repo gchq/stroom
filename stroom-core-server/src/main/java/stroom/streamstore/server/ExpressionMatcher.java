@@ -87,6 +87,7 @@ public class ExpressionMatcher {
         final Condition condition = term.getCondition();
         String termValue = term.getValue();
         final DocRef dictionary = term.getDictionary();
+        final DocRef docRef = term.getDocRef();
 
         // Clean strings to remove unwanted whitespace that the user may have
         // added accidentally.
@@ -115,6 +116,12 @@ public class ExpressionMatcher {
         } else {
             if (termValue == null || termValue.length() == 0) {
                 throw new MatchException("Value not set");
+            }
+        }
+
+        if (Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef == null || docRef.getUuid() == null) {
+                throw new MatchException("Entity not set for field: " + termField);
             }
         }
 
@@ -222,6 +229,9 @@ public class ExpressionMatcher {
                     return isDateIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
                     return isInDictionary(fieldName, dictionary, field, attribute);
+                case IS_DOC_REF:
+                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + field.getType().getDisplayValue() + " field type");
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getType().getDisplayValue() + " field type");
@@ -234,6 +244,8 @@ public class ExpressionMatcher {
                     return isStringMatch(termValue, attribute.toString());
                 case IN:
                     return isIn(fieldName, termValue, attribute);
+                case IS_DOC_REF:
+                    return isDocRef(fieldName, docRef, field, attribute);
                 case IN_DICTIONARY:
                     return isInDictionary(fieldName, dictionary, field, attribute);
                 default:
@@ -285,6 +297,16 @@ public class ExpressionMatcher {
     private boolean isStringMatch(final String termValue, final String attribute) {
         final Pattern pattern = patternMap.computeIfAbsent(termValue, t -> Pattern.compile(t.replaceAll("\\*", ".*")));
         return pattern.matcher(attribute).matches();
+    }
+
+    private boolean isDocRef(final String fieldName, final DocRef docRef,
+                             final DataSourceField field, final Object attribute) {
+        if (attribute instanceof DocRef) {
+            final String uuid = ((DocRef) attribute).getUuid();
+            return (null != uuid && uuid.equals(docRef.getUuid()));
+        }
+
+        return false;
     }
 
     private boolean isInDictionary(final String fieldName, final DocRef docRef,

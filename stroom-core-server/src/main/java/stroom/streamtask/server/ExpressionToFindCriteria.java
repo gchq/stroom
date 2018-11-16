@@ -484,6 +484,12 @@ public class ExpressionToFindCriteria {
                     final Set<String> words = getDictionaryWords(term.getDictionary());
                     values.addAll(words);
                     break;
+                case IS_DOC_REF:
+                    final DocRef docRef = term.getDocRef();
+                    if (null != docRef) {
+                        values.add(docRef.getUuid());
+                    }
+                    break;
                 default:
                     final String errorMsg = "Unexpected condition '" + term.getCondition() + "' used for " + term.getField();
                     throw new EntityServiceException(errorMsg);

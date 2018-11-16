@@ -191,6 +191,8 @@ public class StreamTaskCreatorTransactionHelper {
                     if (!StreamDataSource.STATUS.equals(expressionTerm.getField())) {
                         if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition())) {
                             builder.addDictionaryTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDictionary());
+                        } else if (Condition.IS_DOC_REF.equals(expressionTerm.getCondition())) {
+                            builder.addDocRefTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDocRef());
                         } else {
                             builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getValue());
                         }

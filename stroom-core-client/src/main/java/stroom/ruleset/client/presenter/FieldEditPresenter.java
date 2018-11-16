@@ -61,7 +61,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
 
 
 
-        return new DataSourceField(getView().getType(), name, true, null);
+        return new DataSourceField(getView().getType(), null, name, true, null);
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {

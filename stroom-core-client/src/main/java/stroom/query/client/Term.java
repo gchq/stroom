@@ -24,6 +24,7 @@ public final class Term extends Item {
     private Condition condition;
     private String value;
     private DocRef dictionary;
+    private DocRef docRef;
 
     public String getField() {
         return field;
@@ -57,6 +58,14 @@ public final class Term extends Item {
         this.dictionary = dictionary;
     }
 
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    public void setDocRef(DocRef docRef) {
+        this.docRef = docRef;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -71,6 +80,10 @@ public final class Term extends Item {
         if (Condition.IN_DICTIONARY.equals(condition)) {
             if (dictionary != null && dictionary.getName() != null) {
                 sb.append(dictionary.getName());
+            }
+        } else if (Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef != null && docRef.getName() != null) {
+                sb.append(docRef.getName());
             }
         } else {
             if (value != null) {

@@ -60,7 +60,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         // Create a map of index fields keyed by name.
         final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap(IndexDataSourceFieldUtil.getDataSourceFields(index));
         final DataSourceField actual = dataSourceFieldsMap.get("Action");
-        final DataSourceField expected = new DataSourceField(DataSourceFieldType.FIELD, "Action", true, actual.getConditions());
+        final DataSourceField expected = new DataSourceField(DataSourceFieldType.FIELD, null, "Action", true, actual.getConditions());
 
         Assert.assertEquals("Expected to index action", expected, actual);
     }

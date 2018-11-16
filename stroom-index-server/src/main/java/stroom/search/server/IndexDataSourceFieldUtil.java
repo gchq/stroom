@@ -36,7 +36,8 @@ public final class IndexDataSourceFieldUtil {
         final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.getIndexFields().size());
         for (int i = 0; i < indexFields.getIndexFields().size(); i++) {
             final IndexField indexField = indexFields.getIndexFields().get(i);
-            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
+            // TODO should index fields include doc refs?
+            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), null, indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
         }
 
         return dataSourceFields;

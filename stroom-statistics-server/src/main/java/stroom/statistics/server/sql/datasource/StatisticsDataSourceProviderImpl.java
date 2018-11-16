@@ -76,7 +76,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
 
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
-        addField(StatisticStoreEntity.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, true,
+        addField(StatisticStoreEntity.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, null, true,
                 Arrays.asList(ExpressionTerm.Condition.BETWEEN), fields);
 
         // one field per tag
@@ -86,18 +86,18 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
                 // support for more conditions like CONTAINS
-                addField(statisticField.getFieldName(), DataSourceFieldType.FIELD, true,
+                addField(statisticField.getFieldName(), DataSourceFieldType.FIELD, null, true,
                         supportedConditions, fields);
             }
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_COUNT, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+        addField(StatisticStoreEntity.FIELD_NAME_COUNT, DataSourceFieldType.NUMERIC_FIELD, null, false, null, fields);
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
-            addField(StatisticStoreEntity.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+            addField(StatisticStoreEntity.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, null, false, null, fields);
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+        addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, null, false, null, fields);
 
         // Filter fields.
         if (entity.getStatisticDataSourceDataObject() != null) {
@@ -111,9 +111,13 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
      * @return A reference to the create index field so additional modifications
      * can be made
      */
-    private void addField(final String name, final DataSourceFieldType type, final boolean isQueryable,
-                          final List<Condition> supportedConditions, final List<DataSourceField> fields) {
-        final DataSourceField field = new DataSourceField(type, name, isQueryable, supportedConditions);
+    private void addField(final String name,
+                          final DataSourceFieldType type,
+                          final String docRefType,
+                          final boolean isQueryable,
+                          final List<Condition> supportedConditions,
+                          final List<DataSourceField> fields) {
+        final DataSourceField field = new DataSourceField(type, docRefType, name, isQueryable, supportedConditions);
         fields.add(field);
     }
 }
