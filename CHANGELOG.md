@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#924** : The `FindReplaceFilter` now records the location of errors.
+
 * Issue **#939** : Added `remotedn` to default list of keys to include in `receive.log`.
 
 * Add git_tag and git_commit labels to docker images

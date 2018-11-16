@@ -18,7 +18,9 @@ package stroom.pipeline.server.reader;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.pipeline.server.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.server.DefaultLocationFactory;
+import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.reader.FindReplaceFilter.Builder;
 import stroom.pipeline.server.reader.FindReplaceFilter.SubSequence;
 
@@ -36,8 +38,7 @@ public class TestFindReplaceFilter {
         final Builder builder = new Builder()
                 .find("nasty")
                 .replacement("friendly");
-        final String output = getOutput("This is a nasty string", builder);
-        Assert.assertEquals("This is a friendly string", output);
+        test(builder, "This is a nasty string", "This is a friendly string", null);
     }
 
     @Test
@@ -45,8 +46,7 @@ public class TestFindReplaceFilter {
         final Builder builder = new Builder()
                 .find("nasty")
                 .replacement("friendly");
-        final String output = getOutput("This is a nasty string", builder, 2);
-        Assert.assertEquals("This is a friendly string", output);
+        test(builder, 2, "This is a nasty string", "This is a friendly string", null);
     }
 
     @Test
@@ -55,26 +55,27 @@ public class TestFindReplaceFilter {
                 .find("cat")
                 .replacement("dog")
                 .maxReplacements(1);
-        final String output = getOutput("dog cat dog cat dog", builder, 2);
-        Assert.assertEquals("dog dog dog cat dog", output);
+        test(builder, 2, "dog cat dog cat dog", "dog dog dog cat dog", null);
     }
 
     @Test
     public void testBiggerReplacement() {
+        final String input = getDogCat();
+        final String expected = input.replaceAll("cat", "dog");
         final Builder builder = new Builder()
                 .find("cat")
                 .replacement("dog");
-        final String output = getOutput(getDogCat(), builder);
-        Assert.assertFalse(output.contains("cat"));
+        test(builder, input, expected, null);
     }
 
     @Test
     public void testBiggerReplacement2() {
+        final String input = getDogCat2();
+        final String expected = input.replaceAll("cat", "a");
         final Builder builder = new Builder()
                 .find("cat")
                 .replacement("a");
-        final String output = getOutput(getDogCat2(), builder, 100000);
-        Assert.assertFalse(output.contains("cat"));
+        test(builder, 100000, input, expected, null);
     }
 
     @Test
@@ -83,60 +84,53 @@ public class TestFindReplaceFilter {
                 .find("^cat")
                 .replacement("dog")
                 .regex(true);
-        final String output = getOutput("cat dog cat dog", builder, 100000);
-        Assert.assertTrue(output.endsWith("dog dog cat dog"));
+        test(builder, 100000, "cat dog cat dog", "dog dog cat dog", null);
     }
 
     @Test
     public void testEndMatch() {
+        final String input = getDogCat3();
+        final String expected = input.replaceAll("cat$", "a");
+        Assert.assertTrue(expected.endsWith("aaacata"));
         final Builder builder = new Builder()
                 .find("cat$")
                 .replacement("a")
                 .regex(true);
-        final String output = getOutput(getDogCat3(), builder, 100000);
-        Assert.assertTrue(output.endsWith("aaacata"));
+        test(builder, 100000, input, expected, null);
     }
 
     @Test
     public void testBigStartMatch() {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5000; i++) {
+            sb.append("a");
+        }
+        final String input = sb.toString();
+        final String expected = input.replaceAll("^a", "b");
         final Builder builder = new Builder()
                 .find("^a")
                 .replacement("b")
                 .regex(true);
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 5000; i++) {
-            sb.append("a");
-        }
-
-        final String input = sb.toString();
-        final String output = getOutput(input, builder);
-        final String expected = input.replaceAll("^a", "b");
-        Assert.assertEquals(expected, output);
+        test(builder, input, expected, null);
     }
 
     @Test
     public void testBigEndMatch() {
-        final Builder builder = new Builder()
-                .find("a$")
-                .replacement("b")
-                .regex(true);
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 5000; i++) {
             sb.append("a");
         }
-
         final String input = sb.toString();
-        final String output = getOutput(input, builder);
         final String expected = input.replaceAll("a$", "b");
-        Assert.assertEquals(expected, output);
+        final Builder builder = new Builder()
+                .find("a$")
+                .replacement("b")
+                .regex(true);
+        test(builder, input, expected, null);
     }
 
     @Test
     public void testBigStartAndEndMatch() {
-        final Builder builder = new Builder()
-                .find("^a|a$")
-                .replacement("b")
-                .regex(true);
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 2500; i++) {
             sb.append("a");
@@ -145,11 +139,13 @@ public class TestFindReplaceFilter {
         for (int i = 0; i < 2499; i++) {
             sb.append("a");
         }
-
         final String input = sb.toString();
-        final String output = getOutput(input, builder);
         final String expected = input.replaceAll("^a|a$", "b");
-        Assert.assertEquals(expected, output);
+        final Builder builder = new Builder()
+                .find("^a|a$")
+                .replacement("b")
+                .regex(true);
+        test(builder, input, expected, null);
     }
 
     @Test
@@ -172,8 +168,7 @@ public class TestFindReplaceFilter {
                 .find("[\u0000-\u0009\u000C\u000E-\u001F]")
                 .replacement(" ")
                 .regex(true);
-        final String output = getOutput("This\u0000string\u0001contains\u0002non\u0003alpha\u0004chars", builder);
-        Assert.assertEquals("This string contains non alpha chars", output);
+        test(builder, "This\u0000string\u0001contains\u0002non\u0003alpha\u0004chars", "This string contains non alpha chars", null);
     }
 
     @Test
@@ -182,12 +177,12 @@ public class TestFindReplaceFilter {
         for (int i = 0; i < 100; i++) {
             sb.append("cat");
         }
-
+        final String input = sb.toString();
+        final String expected = input.replaceAll("cat", "dog");
         final Builder builder = new Builder()
                 .find("cat")
                 .replacement("dog");
-        final String output = getOutput(sb.toString(), builder);
-        Assert.assertEquals(sb.toString().replaceAll("cat", "dog"), output);
+        test(builder, input, expected, null);
     }
 
     @Test
@@ -196,17 +191,17 @@ public class TestFindReplaceFilter {
         for (int i = 0; i < 100; i++) {
             sb.append("cat");
         }
-
+        final String input = sb.toString();
+        final String expected = input.replaceAll("^cat", "dog");
         final Builder builder = new Builder()
                 .find("^cat")
                 .replacement("dog")
                 .regex(true);
-        final String output = getOutput(sb.toString(), builder);
-        Assert.assertEquals(sb.toString().replaceFirst("cat", "dog"), output);
+        test(builder, input, expected, null);
     }
 
     @Test
-    public void testNoMatchInBuffer() {
+    public void testNoMatchInBuffer1() {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 500000; i++) {
             if (i == 1999) {
@@ -214,12 +209,13 @@ public class TestFindReplaceFilter {
             }
             sb.append("a");
         }
-
+        final String input = sb.toString();
+        final String expected = input.replaceAll("\u0000", "");
         final Builder builder = new Builder()
                 .find("\u0000")
                 .replacement("")
                 .regex(true);
-        final String output = getOutput(sb.toString(), builder);
+        test(builder, input, expected, null);
 //        Assert.assertEquals("This string contains chars", output);
     }
 
@@ -240,7 +236,7 @@ public class TestFindReplaceFilter {
 //                        .find("\u0000")
 //                        .replacement("")
 //                        .regex(true);
-//                final String output = getOutput(sb.toString(), builder);
+//                test(sb.toString(), builder);
 ////        Assert.assertEquals("This string contains chars", output);
 //            } catch (final Exception e) {
 //                System.out.println(j);
@@ -255,12 +251,13 @@ public class TestFindReplaceFilter {
         for (int i = 0; i < 500000; i++) {
             sb.append("a\u0000");
         }
-
+        final String input = sb.toString();
+        final String expected = input.replaceAll("\u0000", "");
         final Builder builder = new Builder()
                 .find("\u0000")
                 .replacement("")
                 .regex(true);
-        final String output = getOutput(sb.toString(), builder);
+        test(builder, input, expected, null);
 //        Assert.assertEquals("This string contains chars", output);
     }
 
@@ -270,12 +267,13 @@ public class TestFindReplaceFilter {
         for (int i = 0; i < 500000; i++) {
             sb.append("\u0000a");
         }
-
+        final String input = sb.toString();
+        final String expected = input.replaceAll("\u0000", "");
         final Builder builder = new Builder()
                 .find("\u0000")
                 .replacement("")
                 .regex(true);
-        final String output = getOutput(sb.toString(), builder);
+        test(builder, input, expected, null);
 //        Assert.assertEquals("This string contains chars", output);
     }
 
@@ -299,7 +297,7 @@ public class TestFindReplaceFilter {
 //                    .find("[\u0000-\u0009\u000C\u000E-\u001F]")
 //                    .replacement("a")
 //                    .regex(true);
-//            final String output = getOutput(value, builder);
+//            test(value, builder);
 //            final String expected = value.replaceAll("[^a]", "a");
 //            Assert.assertEquals(expected, output);
 //        }
@@ -315,15 +313,13 @@ public class TestFindReplaceFilter {
         for (int i = 0; i < 1999; i++) {
             sb.append("a");
         }
-        final String value = sb.toString();
-
+        final String input = sb.toString();
+        final String expected = input.replaceAll("[^a]", "a");
         final Builder builder = new Builder()
                 .find("[\u0000-\u0009\u000C\u000E-\u001F]")
                 .replacement("a")
                 .regex(true);
-        final String output = getOutput(value, builder);
-        final String expected = value.replaceAll("[^a]", "a");
-        Assert.assertEquals(expected, output);
+        test(builder, input, expected, null);
     }
 
     @Test
@@ -332,8 +328,9 @@ public class TestFindReplaceFilter {
                 .find("^$")
                 .replacement("<EventRoot/>")
                 .regex(true);
-        final String output = getOutput("", builder);
-        Assert.assertEquals("<EventRoot/>", output);
+        final String input = "";
+        final String expected = "<EventRoot/>";
+        test(builder, input, expected, null);
     }
 
     @Test
@@ -342,8 +339,9 @@ public class TestFindReplaceFilter {
                 .find("^$")
                 .replacement("<EventRoot/>")
                 .regex(true);
-        final String output = getOutput("text", builder);
-        Assert.assertEquals("text", output);
+        final String input = "text";
+        final String expected = "text";
+        test(builder, input, expected, null);
     }
 
     @Test
@@ -388,7 +386,6 @@ public class TestFindReplaceFilter {
         }
         sb.append(input.substring(start));
         Assert.assertEquals("catcatratcatcatratcatcatrat", sb.toString());
-
     }
 
     @Test
@@ -409,6 +406,86 @@ public class TestFindReplaceFilter {
         Assert.assertEquals("ccc", new SubSequence("aaabbbccc", 6, 9).toString());
         Assert.assertEquals("ccc", new SubSequence("aaabbbccc", 3, 9).subSequence(3, 6).toString());
     }
+
+    @Test
+    public void testExhaustBuffer1() {
+        final Builder builder = new Builder()
+                .find(".*")
+                .replacement("b")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5000; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String expected = input;
+        test(builder, input, expected, "The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
+    }
+
+    @Test
+    public void testExhaustBuffer2() {
+        final Builder builder = new Builder()
+                .find("a*")
+                .replacement("c")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        sb.append("b");
+        for (int i = 0; i < 5000; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String expected = input.replaceFirst("a*", "c");
+        test(builder, input, expected, "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+    }
+
+    @Test
+    public void testExhaustBuffer3() {
+        final Builder builder = new Builder()
+                .find("a*")
+                .replacement("c")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        sb.append("b");
+        for (int i = 0; i < 100; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String expected = input.replaceAll("a*", "c");
+        test(builder, input, expected, null);
+    }
+
+    @Test
+    public void testExhaustBuffer4() {
+        final Builder builder = new Builder()
+                .find("a+")
+                .replacement("c")
+                .regex(true);
+        final StringBuilder sb = new StringBuilder();
+        sb.append("b");
+        for (int i = 0; i < 5000; i++) {
+            sb.append("a");
+        }
+
+        final String input = sb.toString();
+        final String expected = input;
+        test(builder, input, expected, "The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
+    }
+
+    @Test
+    public void testOdd() {
+        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll("a*", "c");
+        Assert.assertEquals("cbcc", out);
+    }
+
+    @Test
+    public void testOdd2() {
+        final String out = "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".replaceAll("a*$", "c");
+        Assert.assertEquals("bcc", out);
+    }
+
 
     private String getDogCat() {
         final StringBuilder sb = new StringBuilder();
@@ -440,15 +517,18 @@ public class TestFindReplaceFilter {
         return sb.toString();
     }
 
-    private String getOutput(final String input, final Builder builder) {
-        return getOutput(input, builder, BUFFER_SIZE);
+    private void test(final Builder builder, final String input, final String expectedOutput, final String expectedError) {
+        test(builder, BUFFER_SIZE, input, expectedOutput, expectedError);
     }
 
-    private String getOutput(final String input, final Builder builder, final int length) {
+    private void test(final Builder builder, final int length, final String input, final String expectedOutput, final String expectedError) {
         try {
+            final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
             final FindReplaceFilter reader = builder
                     .reader(new StringReader(input))
-                    .errorReceiver(new FatalErrorReceiver())
+                    .locationFactory(new DefaultLocationFactory())
+                    .errorReceiver(loggingErrorReceiver)
+                    .elementId("findReplaceFilter")
                     .build();
 
             final StringBuilder stringBuilder = new StringBuilder();
@@ -457,7 +537,15 @@ public class TestFindReplaceFilter {
             while ((len = reader.read(buffer, 0, length)) != -1) {
                 stringBuilder.append(buffer, 0, len);
             }
-            return stringBuilder.toString();
+
+            final String error = loggingErrorReceiver.toString();
+            if (expectedError != null) {
+                Assert.assertTrue(error.contains(expectedError));
+            } else if (error.length() > 0) {
+                throw new ProcessException(error);
+            }
+
+            Assert.assertEquals(expectedOutput, stringBuilder.toString());
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
