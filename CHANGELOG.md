@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#939** : Added `remotedn` to default list of keys to include in `receive.log`.
+
 * Issue **#921** : Renaming open documents now correctly changes their tab name. Documents that are being edited now prevent the rename operation until they are saved.
 
 * Issue **#922** : The explorer now changes the selection on a right click if the item clicked is not already selected (could be part of a multi select).
