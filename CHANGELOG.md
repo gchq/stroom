@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.13]
+
 * Remove log sending cron process from docker images (now handled by stroom-log-sender).
 
 * Issue **#924** : The `FindReplaceFilter` now records the location of errors.
@@ -1233,7 +1235,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.12...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.13...6.0
+[v6.0-beta.13]: https://github.com/gchq/stroom/compare/v6.0-beta.12...v6.0-beta.13
 [v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
 [v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11
 [v6.0-beta.10]: https://github.com/gchq/stroom/compare/v6.0-beta.9...v6.0-beta.10
