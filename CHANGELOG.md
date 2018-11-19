@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Remove log sending cron process from docker images (now handled by stroom-log-sender).
+
 * Issue **#924** : The `FindReplaceFilter` now records the location of errors.
 
 * Issue **#939** : Added `remotedn` to default list of keys to include in `receive.log`.
