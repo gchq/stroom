@@ -35,12 +35,12 @@ logging:
       additive: false
       appenders:
       - type: file
-        currentLogFilename: /stroom/logs/events/event.log
+        currentLogFilename: /stroom/logs/user/user.log
         threshold: ALL
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: /stroom/logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: /stroom/logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"

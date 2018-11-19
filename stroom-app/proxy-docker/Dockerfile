@@ -25,14 +25,11 @@
 # only have proxy then you take a 20Mb hit for the jdk bits you don't need.
 FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
 
-# bash/curl required for sending logs
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
-        bash \
-        curl \
         su-exec \
         tini
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,23 +41,6 @@ RUN echo "http_proxy: $http_proxy" && \
 FROM scratch as fat-jar-stage
 COPY ./build/stroom-app-all.jar /stroom-app-all.jar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-# ~~~ send logs download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Intermediate build stage to grab all the send logs scripts
-# later copy them all in one go to reduce the number of layers
-# Have to use alpine rather than scratch so we can chmod
-FROM alpine:3.8 as send-logs-scripts-stage
-WORKDIR /scripts
-
-ARG SEND_TO_STROOM_VERSION=send-to-stroom-v1.2.1
-
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom.sh .
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom_args.sh .
-RUN chmod u+x ./*.sh
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 
 # ~~~ Final build stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,13 +92,9 @@ RUN \
     mkdir -p /stroom-proxy/repo && \
     chown -R proxy:proxy /stroom-proxy
 
-# Copy in all the send logs scripts downloaded in the intermediate build stage
-COPY --chown=proxy:proxy --from=send-logs-scripts-stage /scripts /stroom-proxy
-
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
 COPY --chown=proxy:proxy docker-entrypoint.sh /stroom-proxy/
-COPY --chown=proxy:proxy create_crontab.sh /stroom-proxy/
 COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
 
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
