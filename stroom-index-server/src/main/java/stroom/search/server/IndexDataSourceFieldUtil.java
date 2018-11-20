@@ -22,6 +22,7 @@ import stroom.index.shared.Index;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
+import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,12 @@ public final class IndexDataSourceFieldUtil {
         final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.getIndexFields().size());
         for (int i = 0; i < indexFields.getIndexFields().size(); i++) {
             final IndexField indexField = indexFields.getIndexFields().get(i);
-            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
+            dataSourceFields.add(new DataSourceField.Builder()
+                    .type(getDataSourceFieldType(indexField.getFieldType()))
+                    .name(indexField.getFieldName())
+                    .queryable(indexField.isIndexed())
+                    .addConditions(indexField.getSupportedConditions().toArray(new ExpressionTerm.Condition[0]))
+                    .build());
         }
 
         return dataSourceFields;

@@ -107,13 +107,17 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
         return fields;
     }
 
-    /**
-     * @return A reference to the create index field so additional modifications
-     * can be made
-     */
-    private void addField(final String name, final DataSourceFieldType type, final boolean isQueryable,
-                          final List<Condition> supportedConditions, final List<DataSourceField> fields) {
-        final DataSourceField field = new DataSourceField(type, name, isQueryable, supportedConditions);
+    private void addField(final String name,
+                          final DataSourceFieldType type,
+                          final boolean isQueryable,
+                          final List<Condition> supportedConditions,
+                          final List<DataSourceField> fields) {
+        final DataSourceField field = new DataSourceField.Builder()
+                .type(type)
+                .name(name)
+                .queryable(isQueryable)
+                .addConditions(supportedConditions.toArray(new Condition[0]))
+                .build();
         fields.add(field);
     }
 }
