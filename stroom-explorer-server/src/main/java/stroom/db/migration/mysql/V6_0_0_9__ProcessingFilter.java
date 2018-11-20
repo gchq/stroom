@@ -239,10 +239,10 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                            .field(StreamDataSource.FEED_NAME)
-                            .condition(ExpressionTerm.Condition.IN_DICTIONARY)
-                            .dictionary(dict)
-                            .build()
+                                    .field(StreamDataSource.FEED_NAME)
+                                    .condition(ExpressionTerm.Condition.IN_DICTIONARY)
+                                    .dictionary(dict)
+                                    .build()
                             )
                     );
             rootAnd.addOperator(or.build());
@@ -391,7 +391,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
 
         void recurse(final Consumer<Long> consumer,
-                            final boolean deep) {
+                     final boolean deep) {
             consumer.accept(this.id);
             if (deep) {
                 this.children.forEach(c -> c.recurse(consumer, deep));
@@ -509,9 +509,9 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
     }
 
     private <T> void applyIncludesTerm(final ExpressionOperator.Builder parentTerm,
-                                      final Set<T> rawTerms,
-                                      final Function<T, Optional<String>> toString,
-                                      final String fieldName) {
+                                       final Set<T> rawTerms,
+                                       final Function<T, Optional<String>> toString,
+                                       final String fieldName) {
         if (rawTerms.size() > 1) {
             final String values = rawTerms.stream()
                     .map(l -> {
@@ -527,7 +527,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
             parentTerm.addTerm(fieldName, ExpressionTerm.Condition.IN, values);
         } else if (rawTerms.size() == 1) {
             toString.apply(rawTerms.iterator().next()).ifPresent(value ->
-                parentTerm.addTerm(fieldName, ExpressionTerm.Condition.EQUALS, value)
+                    parentTerm.addTerm(fieldName, ExpressionTerm.Condition.EQUALS, value)
             );
         }
     }

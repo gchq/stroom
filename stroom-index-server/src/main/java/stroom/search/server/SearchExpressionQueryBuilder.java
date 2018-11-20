@@ -234,6 +234,11 @@ public class SearchExpressionQueryBuilder {
                 return null;
             }
         }
+        if (Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef == null || docRef.getUuid() == null) {
+                throw new SearchException("Doc Ref not set for field: " + field);
+            }
+        }
 
         if (Condition.IS_DOC_REF.equals(condition)) {
             if (docRef == null || docRef.getUuid() == null) {
@@ -327,7 +332,7 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY:
                     return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
                 case IS_DOC_REF:
-                    return getDocRef(fieldName, docRef, indexField, matchVersion, terms);
+                    return getSubQuery(matchVersion, indexField, docRef.getUuid(), terms, false);
                 default:
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");
