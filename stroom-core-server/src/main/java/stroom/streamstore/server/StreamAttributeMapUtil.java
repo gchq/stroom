@@ -42,7 +42,7 @@ class StreamAttributeMapUtil {
             }
             final Feed feed = stream.getFeed();
             if (feed != null) {
-                attributeMap.put(StreamDataSource.FEED_NAME, DocRefUtil.create(feed));
+                attributeMap.put(StreamDataSource.FEED_NAME, feed.getName());
             }
             final StreamProcessor streamProcessor = stream.getStreamProcessor();
             if (streamProcessor != null) {
