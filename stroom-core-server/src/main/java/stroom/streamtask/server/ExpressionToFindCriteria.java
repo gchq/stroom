@@ -229,7 +229,10 @@ public class ExpressionToFindCriteria {
                 });
     }
 
-    private void addTerms(final List<ExpressionTerm> allTerms, final OldFindStreamCriteria criteria, final boolean negate, final Context context) {
+    private void addTerms(final List<ExpressionTerm> allTerms,
+                          final OldFindStreamCriteria criteria,
+                          final boolean negate,
+                          final Context context) {
         // Group terms by field.
         final Map<String, List<ExpressionTerm>> map = allTerms.stream()
                 .collect(Collectors.groupingBy(ExpressionTerm::getField, Collectors.toList()));
