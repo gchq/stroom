@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#920** : Fix error handling for sql stats queries
+
 ## [v6.0-beta.13]
 
 * Remove log sending cron process from docker images (now handled by stroom-log-sender).
