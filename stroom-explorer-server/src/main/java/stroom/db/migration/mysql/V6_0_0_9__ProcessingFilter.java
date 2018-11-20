@@ -7,6 +7,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.server.util.XMLMarshallerUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Range;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -102,7 +103,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Map<Long, String> streamTypeNamesById = getStringFieldById(connection, "STRM_TP", "NAME");
 
         // Get all the stream type ID's to names
-        final Map<Long, String> pipeUuidsById = getStringFieldById(connection, "PIPE", "UUID");
+        final Map<Long, DocRef> pipeDocRefsById = getDocRefsById(connection, PipelineEntity.ENTITY_TYPE, "PIPE");
 
         // Get all the feed to folder names
         final Map<Long, Long> folderByFeedId = getFkById(connection, "FD", "FK_FOLDER_ID");
@@ -122,7 +123,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                         criteriaEntry.getValue(),
                         l -> Optional.ofNullable(feedNamesById.get(l)),
                         l -> Optional.ofNullable(streamTypeNamesById.get(l)),
-                        l -> Optional.ofNullable(pipeUuidsById.get(l)),
+                        l -> Optional.ofNullable(pipeDocRefsById.get(l)),
                         folderByFeedId,
                         l -> Optional.ofNullable(folders.get(l)),
                         dictionariesByFolder);
@@ -175,7 +176,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                                                 final OldFindStreamCriteria criteria,
                                                 final Function<Long, Optional<String>> feedNamesById,
                                                 final Function<Long, Optional<String>> streamTypeNamesById,
-                                                final Function<Long, Optional<String>> pipeUuidsById,
+                                                final Function<Long, Optional<DocRef>> pipeDocRefsById,
                                                 final Map<Long, Long> folderByFeedId,
                                                 final Function<Long, Optional<IdTreeNode>> folders,
                                                 final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder) {
@@ -261,7 +262,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
 
         // Pipeline
         final Set<Long> pipelineIds = criteria.obtainPipelineIdSet().getSet();
-        applyIncludesTerm(rootAnd, pipelineIds, pipeUuidsById, StreamDataSource.PIPELINE_UUID);
+        applyIncludesDocRefTerm(rootAnd, pipelineIds, pipeDocRefsById, StreamDataSource.PIPELINE_UUID);
 
         // Parent Stream ID
         final Set<Long> parentStreamIds = criteria.obtainParentStreamIdSet().getSet();
@@ -398,6 +399,30 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
     }
 
+    private Map<Long, DocRef> getDocRefsById(final Connection connection,
+                                             final String docRefType,
+                                             final String tableName) throws Exception {
+        final String sql = String.format("SELECT ID, UUID, NAME FROM %s", tableName);
+        try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+            try (final ResultSet rs = stmt.executeQuery()) {
+                final Map<Long, DocRef> docRefsById = new HashMap<>();
+
+                while (rs.next()) {
+                    final long id = rs.getLong(1);
+                    final String uuid = rs.getString(2);
+                    final String name = rs.getString(3);
+                    docRefsById.put(id, new DocRef.Builder()
+                            .uuid(uuid)
+                            .type(docRefType)
+                            .name(name)
+                            .build());
+                }
+
+                return docRefsById;
+            }
+        }
+    }
+
     // This function takes a table name and picks all the values of ID, NAME and puts them in a map
     private Map<Long, String> getStringFieldById(final Connection connection,
                                                  final String tableName,
@@ -456,6 +481,31 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
 
         return objectsById;
+    }
+
+    private <T> void applyIncludesDocRefTerm(final ExpressionOperator.Builder parentTerm,
+                                             final Set<T> rawTerms,
+                                             final Function<T, Optional<DocRef>> toDocRef,
+                                             final String fieldName) {
+        if (rawTerms.size() > 1) {
+            final ExpressionOperator.Builder opOp = new ExpressionOperator.Builder().op(ExpressionOperator.Op.OR);
+            rawTerms.stream()
+                    .map(l -> {
+                        final Optional<DocRef> value = toDocRef.apply(l);
+                        if (!value.isPresent()) {
+                            LOGGER.warn("Could not find value for {} in field {}", l, fieldName);
+                        }
+                        return value;
+                    })
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .forEach(d -> opOp.addDocRefTerm(fieldName, ExpressionTerm.Condition.IS_DOC_REF, d));
+            parentTerm.addOperator(opOp.build());
+        } else if (rawTerms.size() == 1) {
+            toDocRef.apply(rawTerms.iterator().next()).ifPresent(value ->
+                    parentTerm.addDocRefTerm(fieldName, ExpressionTerm.Condition.IS_DOC_REF, value)
+            );
+        }
     }
 
     private <T> void applyIncludesTerm(final ExpressionOperator.Builder parentTerm,

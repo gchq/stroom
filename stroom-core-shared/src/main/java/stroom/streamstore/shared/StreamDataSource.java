@@ -32,7 +32,7 @@ public class StreamDataSource {
     private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED_NAME = "Feed";
-    public static final String PIPELINE_UUID = "Pipeline UUID";
+    public static final String PIPELINE_UUID = "Pipeline";
     public static final String STREAM_TYPE_NAME = "Type";
     public static final String STREAM_ID = "Id";
     public static final String PARENT_STREAM_ID = "Parent Id";
