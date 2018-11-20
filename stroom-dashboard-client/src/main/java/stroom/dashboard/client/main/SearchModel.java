@@ -221,6 +221,7 @@ public class SearchModel {
                             .condition(term.getCondition())
                             .value(replaced)
                             .dictionary(term.getDictionary())
+                            .docRef(term.getDocRef())
                             .build());
                 }
             }

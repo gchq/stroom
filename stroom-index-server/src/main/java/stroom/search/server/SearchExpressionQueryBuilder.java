@@ -203,6 +203,7 @@ public class SearchExpressionQueryBuilder {
         final Condition condition = term.getCondition();
         String value = term.getValue();
         final DocRef dictionary = term.getDictionary();
+        final DocRef docRef = term.getDocRef();
 
         // Clean strings to remove unwanted whitespace that the user may have
         // added accidentally.
@@ -231,6 +232,11 @@ public class SearchExpressionQueryBuilder {
         } else {
             if (value == null || value.length() == 0) {
                 return null;
+            }
+        }
+        if (Condition.IS_DOC_REF.equals(condition)) {
+            if (docRef == null || docRef.getUuid() == null) {
+                throw new SearchException("Doc Ref not set for field: " + field);
             }
         }
 
@@ -319,6 +325,8 @@ public class SearchExpressionQueryBuilder {
                     return getIn(fieldName, value, indexField, matchVersion, terms);
                 case IN_DICTIONARY:
                     return getDictionary(fieldName, dictionary, indexField, matchVersion, terms);
+                case IS_DOC_REF:
+                    return getSubQuery(matchVersion, indexField, docRef.getUuid(), terms, false);
                 default:
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");

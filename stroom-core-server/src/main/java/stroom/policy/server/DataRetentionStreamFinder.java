@@ -208,7 +208,13 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                         final String string = resultSet.getString(fieldName);
                         attributeMap.put(fieldName, string);
                         break;
-                    default:
+                    case DOC_REF:
+                        final String name = resultSet.getString(fieldName);
+                        attributeMap.put(fieldName, name);
+                        break;
+                    case DATE_FIELD:
+                    case ID:
+                    case NUMERIC_FIELD:
                         final long number = resultSet.getLong(fieldName);
                         attributeMap.put(fieldName, number);
                         break;

@@ -32,7 +32,7 @@ public class StreamDataSource {
     private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED_NAME = "Feed";
-    public static final String PIPELINE_UUID = "Pipeline UUID";
+    public static final String PIPELINE_UUID = "Pipeline";
     public static final String STREAM_TYPE_NAME = "Type";
     public static final String STREAM_ID = "Id";
     public static final String PARENT_STREAM_ID = "Parent Id";
@@ -61,8 +61,8 @@ public class StreamDataSource {
         STREAM_TYPE_FIELDS.put(STREAM_TYPE_NAME, StreamType.NAME);
         PIPELINE_FIELDS.put(PIPELINE_UUID, PipelineEntity.UUID);
 
-        FIELDS.add(createStringField(FEED_NAME));
-        FIELDS.add(createStringField(PIPELINE_UUID));
+        FIELDS.add(createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
+        FIELDS.add(createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
         FIELDS.add(createStringField(STREAM_TYPE_NAME));
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));
@@ -116,6 +116,18 @@ public class StreamDataSource {
                 .addConditions(Condition.EQUALS)
                 .addConditions(Condition.IN)
                 .type(DataSourceField.DataSourceFieldType.ID)
+                .build();
+    }
+
+    private static DataSourceField createDocRefField(final String name, final String docRefType) {
+        return new DataSourceField.Builder()
+                .name(name)
+                .addConditions(Condition.IS_DOC_REF)
+                .addConditions(Condition.EQUALS)
+                .addConditions(Condition.CONTAINS)
+                .addConditions(Condition.IN)
+                .addConditions(Condition.IN_DICTIONARY)
+                .docRefType(docRefType)
                 .build();
     }
 
