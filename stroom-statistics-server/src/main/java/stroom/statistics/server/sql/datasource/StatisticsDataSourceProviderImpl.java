@@ -33,6 +33,7 @@ import stroom.statistics.shared.common.StatisticField;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -77,7 +78,7 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
         addField(StatisticStoreEntity.FIELD_NAME_DATE_TIME, DataSourceFieldType.DATE_FIELD, true,
-                Arrays.asList(ExpressionTerm.Condition.BETWEEN), fields);
+                Collections.singletonList(Condition.BETWEEN), fields);
 
         // one field per tag
         if (entity.getStatisticDataSourceDataObject() != null) {
@@ -91,13 +92,25 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
             }
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_COUNT, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+        addField(StatisticStoreEntity.FIELD_NAME_COUNT,
+                DataSourceFieldType.NUMERIC_FIELD,
+                false,
+                Collections.emptyList(),
+                fields);
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
-            addField(StatisticStoreEntity.FIELD_NAME_VALUE, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+            addField(StatisticStoreEntity.FIELD_NAME_VALUE,
+                    DataSourceFieldType.NUMERIC_FIELD,
+                    false,
+                    Collections.emptyList(),
+                    fields);
         }
 
-        addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, DataSourceFieldType.NUMERIC_FIELD, false, null, fields);
+        addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
+                DataSourceFieldType.NUMERIC_FIELD,
+                false,
+                Collections.emptyList(),
+                fields);
 
         // Filter fields.
         if (entity.getStatisticDataSourceDataObject() != null) {
