@@ -21,14 +21,11 @@
 
 FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
 
-# bash/curl required for sending logs
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
-        bash \
-        curl \
         su-exec \
         tini
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,23 +61,6 @@ ADD https://github.com/gchq/stroom-content/releases/download/template-pipelines-
 
 # Add in the visualisations for import on startup
 ADD https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.0.5/visualisations-production-v3.0.5.zip .
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-# ~~~ send logs download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Intermediate build stage to grab all the send logs scripts
-# later copy them all in one go to reduce the number of layers
-# Have to use alpine rather than scratch so we can chmod
-FROM alpine:3.8 as send-logs-scripts-stage
-WORKDIR /scripts
-
-ARG SEND_TO_STROOM_VERSION=send-to-stroom-v1.2.1
-
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom.sh .
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom_args.sh .
-RUN chmod u+x ./*.sh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -141,7 +121,7 @@ RUN \
     mkdir -p /stroom/contentPackImport && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
-    mkdir -p /stroom/logs/events && \
+    mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
     mkdir -p /stroom/proxy-repo && \
     mkdir -p /stroom/volumes && \
@@ -150,13 +130,9 @@ RUN \
 # Copy in all the content packs downloaded in the intermediate build stage
 COPY --chown=stroom:stroom --from=content-packs-stage /content-packs /stroom/contentPackImport
 
-# Copy in all the send logs scripts downloaded in the intermediate build stage
-COPY --chown=stroom:stroom --from=send-logs-scripts-stage /scripts /stroom
-
 # Copy all the fat jars for the application and connectors
 # Most likely to have changed last
 COPY --chown=stroom:stroom docker-entrypoint.sh /stroom/
-COPY --chown=stroom:stroom create_crontab.sh /stroom/
 COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
 COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
 

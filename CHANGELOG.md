@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Updated stroom expression to v1.4.12 to improve handling or errors values and add new type checking functions `isBoolean()`, `isDouble()`, `isError()`, `isInteger()`, `isLong()`, `isNull()`, `isNumber()`, `isString()`, `isValue()`. Testing equality of null with `x=null()` is no longer valid and must be replaced with `isNull(x)`.
+
+* Issue **#920** : Fix error handling for sql stats queries
+
+## [v6.0-beta.13]
+
+* Remove log sending cron process from docker images (now handled by stroom-log-sender).
+
+* Issue **#924** : The `FindReplaceFilter` now records the location of errors.
+
+* Issue **#939** : Added `remotedn` to default list of keys to include in `receive.log`.
+
 * Add git_tag and git_commit labels to docker images
 
 * Uplift stroom-logs content pack in docker image to` v2.0-alpha.2`
@@ -1227,7 +1239,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.12...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.13...6.0
+[v6.0-beta.13]: https://github.com/gchq/stroom/compare/v6.0-beta.12...v6.0-beta.13
 [v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
 [v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11
 [v6.0-beta.10]: https://github.com/gchq/stroom/compare/v6.0-beta.9...v6.0-beta.10

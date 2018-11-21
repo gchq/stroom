@@ -46,8 +46,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     @Inject
     public StatisticsQueryServiceImpl(final StatisticsDataSourceProvider statisticsDataSourceProvider,
                                       final StatisticStoreCache statisticStoreCache,
-                                      @Named("sqlStatisticsSearchResponseCreatorManager")
-                                          final SearchResponseCreatorManager searchResponseCreatorManager) {
+                                      @Named("sqlStatisticsSearchResponseCreatorManager") final SearchResponseCreatorManager searchResponseCreatorManager) {
         this.statisticsDataSourceProvider = statisticsDataSourceProvider;
         this.statisticStoreCache = statisticStoreCache;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
@@ -206,12 +205,17 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
 
 //        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(store);
 
-        // This will create/get a searchResponseCreator for this query key
-        final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
-                new SearchResponseCreatorCache.Key(searchRequest));
+        SearchResponse searchResponse;
+        try {
+            // This will create/get a searchResponseCreator for this query key
+            final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(
+                    new SearchResponseCreatorCache.Key(searchRequest));
 
-        // This will build a response from the search whether it is still running or has finished
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+            // This will build a response from the search whether it is still running or has finished
+            searchResponse = searchResponseCreator.create(searchRequest);
+        } catch (Exception e) {
+            searchResponse = SearchResponseCreator.createErrorResponse(Collections.singletonList(e.getMessage()));
+        }
 
         return searchResponse;
     }

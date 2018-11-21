@@ -16,7 +16,9 @@
 
 package stroom.pipeline.server.reader;
 
+import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
+import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 import java.io.FilterReader;
@@ -32,6 +34,7 @@ public class FindReplaceFilter extends FilterReader {
     private final String replacement;
     private final int maxReplacements;
     private final int bufferSize;
+    private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
     private final String elementId;
 
@@ -42,6 +45,10 @@ public class FindReplaceFilter extends FilterReader {
     private final OutBuffer outBuffer = new OutBuffer();
     private final StringBuffer replacementBuffer = new StringBuffer();
 
+    private int lineNo;
+    private int colNo;
+    private boolean allowReplacement;
+
     private FindReplaceFilter(final Reader reader,
                               final String find,
                               final String replacement,
@@ -49,10 +56,12 @@ public class FindReplaceFilter extends FilterReader {
                               final boolean regex,
                               final boolean dotAll,
                               final int bufferSize,
+                              final LocationFactory locationFactory,
                               final ErrorReceiver errorReceiver,
                               final String elementId) {
         super(reader);
         this.bufferSize = Math.max(MIN_SIZE, bufferSize);
+        this.locationFactory = locationFactory;
         this.errorReceiver = errorReceiver;
         this.elementId = elementId;
 
@@ -79,6 +88,8 @@ public class FindReplaceFilter extends FilterReader {
                 this.replacement = Matcher.quoteReplacement(replacement);
             }
         }
+
+        clear();
     }
 
     /**
@@ -103,8 +114,7 @@ public class FindReplaceFilter extends FilterReader {
                 if (matchedBufferStart && matchedBufferEnd) {
                     // If we matched all text in the buffer but aren't actually at the start of the stream or at the end then this is not likely to be correct.
                     error("The pattern matched all text in the buffer. Consider changing your match expression or making the buffer bigger.");
-                }
-                if (matchedBufferEnd) {
+                } else if (matchedBufferEnd) {
                     if (!inBuffer.isEof()) {
                         // If we matched to the end of the buffer and we are not at the end of the stream then this is not likely to be correct.
                         error("The pattern matched text at the end of the buffer when we are not at the end of the stream. Consider changing your match expression or making the buffer bigger");
@@ -116,19 +126,28 @@ public class FindReplaceFilter extends FilterReader {
                     replacementBuffer.setLength(0);
 
                     // Move to the end of the match minus one char.
-                    if (end > 0) {
-                        inBuffer.move(end - inputOffset);
+                    final int advance = end - inputOffset;
+                    if (advance > 0) {
+                        move(Math.min(inBuffer.length(), advance));
+                    } else {
+                        // Copy a single char to at least advance rather than getting stuck at this position. This mimics the behaviour of`replaceAll()`.
+                        copyBuffer(Math.min(inBuffer.length(), 1));
                     }
 
                     doneReplacement = true;
                     replacementCount++;
                     totalReplacementCount++;
+
+                    // Stop any further replacements if we got to our max replacement count or didn't advance and are at the end of the input.
+                    if (replacementCount == maxReplacements || (advance == 0 && inBuffer.isEof() && inBuffer.length() == 0)) {
+                        allowReplacement = false;
+                    }
                 }
             }
         }
 
         if (!doneReplacement) {
-            // If we didn't manage to replace anything then copy the buffered text to the output.
+            // We didn't manage to replace anything then copy the buffered text to the output.
             if (inBuffer.isEof()) {
                 // Copy all remaining text to the output buffer.
                 copyBuffer(inBuffer.length());
@@ -146,14 +165,34 @@ public class FindReplaceFilter extends FilterReader {
         if (length > 0) {
             final CharSequence charSequence = inBuffer.subSequence(0, length);
             outBuffer.append(charSequence, 0, charSequence.length());
-            inBuffer.move(charSequence.length());
+            move(charSequence.length());
+        }
+    }
+
+    private void move(int length) {
+        if (length > 0) {
+            // Move our location to aid error reporting.
+            for (int i = 0; i < length; i++) {
+                if (inBuffer.charAt(i) == '\n') {
+                    lineNo++;
+                    colNo = 0;
+                } else {
+                    colNo++;
+                }
+            }
+
+            inBuffer.move(length);
         }
     }
 
     @Override
     public int read(final char[] cbuf, final int offset, final int length) throws IOException {
         if (outBuffer.length() == 0) {
-            if (replacementCount == maxReplacements) {
+            if (allowReplacement) {
+                // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
+                performReplacement();
+
+            } else {
                 // Put any remaining text from the input buffer into the output buffer.
                 if (inBuffer.length() > 0) {
                     copyBuffer(inBuffer.length());
@@ -162,9 +201,6 @@ public class FindReplaceFilter extends FilterReader {
                     // There is no more text to be replaced so pass through.
                     return super.read(cbuf, offset, length);
                 }
-            } else {
-                // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
-                performReplacement();
             }
         }
 
@@ -186,7 +222,11 @@ public class FindReplaceFilter extends FilterReader {
     @Override
     public int read() throws IOException {
         if (outBuffer.length() == 0) {
-            if (replacementCount == maxReplacements) {
+            if (allowReplacement) {
+                // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
+                performReplacement();
+
+            } else {
                 // Put any remaining text from the input buffer into the output buffer.
                 if (inBuffer.length() > 0) {
                     copyBuffer(inBuffer.length());
@@ -195,9 +235,6 @@ public class FindReplaceFilter extends FilterReader {
                     // There is no more text to be replaced so pass through.
                     return super.read();
                 }
-            } else {
-                // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
-                performReplacement();
             }
         }
 
@@ -218,8 +255,16 @@ public class FindReplaceFilter extends FilterReader {
     }
 
     private void error(final String error) {
+        // Allow no further replacements for this input.
+        allowReplacement = false;
+
+        // Log the error.
         if (errorReceiver != null) {
-            errorReceiver.log(Severity.ERROR, null, elementId, error, null);
+            Location location = null;
+            if (locationFactory != null) {
+                location = locationFactory.create(lineNo, colNo);
+            }
+            errorReceiver.log(Severity.ERROR, location, elementId, error, null);
         }
     }
 
@@ -230,6 +275,12 @@ public class FindReplaceFilter extends FilterReader {
         replacementCount = 0;
         // Clear out buffer.
         outBuffer.clear();
+        // Reset line number.
+        lineNo = 1;
+        // Reset column number.
+        colNo = 0;
+        // Allow replacements.
+        allowReplacement = replacementCount != maxReplacements;
     }
 
     static class PaddingWrapper implements CharSequence {
@@ -449,6 +500,7 @@ public class FindReplaceFilter extends FilterReader {
         private boolean regex;
         private boolean dotAll;
         private int bufferSize;
+        private LocationFactory locationFactory;
         private ErrorReceiver errorReceiver;
         private String elementId;
 
@@ -489,6 +541,11 @@ public class FindReplaceFilter extends FilterReader {
             return this;
         }
 
+        public Builder locationFactory(final LocationFactory locationFactory) {
+            this.locationFactory = locationFactory;
+            return this;
+        }
+
         public Builder errorReceiver(final ErrorReceiver errorReceiver) {
             this.errorReceiver = errorReceiver;
             return this;
@@ -500,7 +557,7 @@ public class FindReplaceFilter extends FilterReader {
         }
 
         public FindReplaceFilter build() {
-            return new FindReplaceFilter(reader, find, replacement, maxReplacements, regex, dotAll, bufferSize, errorReceiver, elementId);
+            return new FindReplaceFilter(reader, find, replacement, maxReplacements, regex, dotAll, bufferSize, locationFactory, errorReceiver, elementId);
         }
     }
 }
