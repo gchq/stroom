@@ -169,8 +169,8 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null) {
-                final ExplorerNode entityData = (ExplorerNode) event.getSelectedItem();
+            if (event.getSelectedItem() != null && event.getSelectedItem().getUuid().length() > 0) {
+                final ExplorerNode entityData = event.getSelectedItem();
                 if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineEntity.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
                             () -> {

@@ -229,7 +229,10 @@ public class ExpressionToFindCriteria {
                 });
     }
 
-    private void addTerms(final List<ExpressionTerm> allTerms, final OldFindStreamCriteria criteria, final boolean negate, final Context context) {
+    private void addTerms(final List<ExpressionTerm> allTerms,
+                          final OldFindStreamCriteria criteria,
+                          final boolean negate,
+                          final Context context) {
         // Group terms by field.
         final Map<String, List<ExpressionTerm>> map = allTerms.stream()
                 .collect(Collectors.groupingBy(ExpressionTerm::getField, Collectors.toList()));
@@ -483,6 +486,12 @@ public class ExpressionToFindCriteria {
                 case IN_DICTIONARY:
                     final Set<String> words = getDictionaryWords(term.getDictionary());
                     values.addAll(words);
+                    break;
+                case IS_DOC_REF:
+                    final DocRef docRef = term.getDocRef();
+                    if (null != docRef) {
+                        values.add(docRef.getUuid());
+                    }
                     break;
                 default:
                     final String errorMsg = "Unexpected condition '" + term.getCondition() + "' used for " + term.getField();

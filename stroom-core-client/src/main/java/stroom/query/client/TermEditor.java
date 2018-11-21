@@ -60,6 +60,8 @@ public class TermEditor extends Composite {
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
+    private final Widget docRefWidget;
+    private final EntityDropDownPresenter docRefPresenter;
     private final Widget dictionaryWidget;
     private final EntityDropDownPresenter dictionaryPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
@@ -73,14 +75,25 @@ public class TermEditor extends Composite {
 
     private AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
-    public TermEditor(final EntityDropDownPresenter dictionaryPresenter) {
+    public TermEditor(final EntityDropDownPresenter docRefPresenter,
+                      final EntityDropDownPresenter dictionaryPresenter) {
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
         }
 
-        this.dictionaryPresenter = dictionaryPresenter;
+        this.docRefPresenter = docRefPresenter;
+        if (docRefPresenter != null) {
+            docRefWidget = docRefPresenter.getWidget();
+        } else {
+            docRefWidget = new Label();
+        }
 
+        fixStyle(docRefWidget, 200);
+        docRefWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
+        docRefWidget.setVisible(false);
+
+        this.dictionaryPresenter = dictionaryPresenter;
         if (dictionaryPresenter != null) {
             dictionaryWidget = dictionaryPresenter.getWidget();
         } else {
@@ -121,6 +134,7 @@ public class TermEditor extends Composite {
         layout.add(andLabel);
         layout.add(valueTo);
         layout.add(dateTo);
+        layout.add(docRefWidget);
         layout.add(dictionaryWidget);
 
         layout.setVisible(false);
@@ -186,6 +200,7 @@ public class TermEditor extends Composite {
     private void write(final Term term) {
         if (fieldListBox.getSelectedItem() != null && conditionListBox.getSelectedItem() != null) {
             DocRef dictionaryRef = null;
+            DocRef docRef = null;
 
             term.setField(fieldListBox.getSelectedItem().getName());
             term.setCondition(conditionListBox.getSelectedItem());
@@ -197,6 +212,14 @@ public class TermEditor extends Composite {
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
                     sb.append(((MyDateBox) widget).getValue());
+                    sb.append(",");
+                } else if (widget.equals(docRefWidget)) {
+                    if (docRefPresenter != null) {
+                        docRef = docRefPresenter.getSelectedEntityReference();
+                        if (docRef != null) {
+                            sb.append(docRef.getName());
+                        }
+                    }
                     sb.append(",");
                 } else if (widget.equals(dictionaryWidget)) {
                     if (dictionaryPresenter != null) {
@@ -214,11 +237,8 @@ public class TermEditor extends Composite {
             }
 
             term.setValue(sb.toString());
-            if (dictionaryRef == null) {
-                term.setDictionary(null);
-            } else {
-                term.setDictionary(dictionaryRef);
-            }
+            term.setDocRef(docRef);
+            term.setDictionary(dictionaryRef);
         }
     }
 
@@ -236,7 +256,7 @@ public class TermEditor extends Composite {
         }
 
         conditionListBox.setSelectedItem(selected);
-        changeCondition(selected);
+        changeCondition(field, selected);
     }
 
     private List<Condition> getConditions(final DataSourceField field) {
@@ -251,9 +271,15 @@ public class TermEditor extends Composite {
 
         } else if (field.getConditions() != null && field.getConditions().size() > 0) {
             conditions = field.getConditions();
-
         } else {
-            if (field.getType().isNumeric()) {
+            if (DataSourceFieldType.DOC_REF.equals(field.getType())) {
+                conditions = Arrays.asList(Condition.EQUALS,
+                        Condition.CONTAINS,
+                        Condition.IN,
+                        Condition.IN_DICTIONARY,
+                        Condition.IS_DOC_REF);
+            }
+            else if (field.getType().isNumeric()) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
                         Condition.CONTAINS,
@@ -292,7 +318,8 @@ public class TermEditor extends Composite {
         return conditions;
     }
 
-    private void changeCondition(final Condition condition) {
+    private void changeCondition(final DataSourceField field,
+                                 final Condition condition) {
         DataSourceFieldType indexFieldType = null;
         if (fieldListBox.getSelectedItem() != null) {
             indexFieldType = fieldListBox.getSelectedItem().getType();
@@ -354,6 +381,9 @@ public class TermEditor extends Composite {
                 case IN_DICTIONARY:
                     enterDictionaryMode();
                     break;
+                case IS_DOC_REF:
+                    enterDocRefMode(field);
+                    break;
             }
         }
     }
@@ -383,6 +413,15 @@ public class TermEditor extends Composite {
 
         if (dictionaryPresenter != null) {
             dictionaryPresenter.setSelectedEntityReference(term.getDictionary());
+        }
+    }
+
+    private void enterDocRefMode(final DataSourceField field) {
+        setActiveWidgets(docRefWidget);
+
+        if (docRefPresenter != null) {
+            docRefPresenter.setIncludedTypes(field.getDocRefType());
+            docRefPresenter.setSelectedEntityReference(term.getDocRef());
         }
     }
 
@@ -502,6 +541,16 @@ public class TermEditor extends Composite {
                 }
             }));
         }
+        if (docRefPresenter != null) {
+            registerHandler(docRefPresenter.addDataSelectionHandler(event -> {
+                final DocRef selection = docRefPresenter.getSelectedEntityReference();
+                if (!EqualsUtil.isEquals(term.getDocRef(), selection)) {
+                    write(term);
+                    fireDirty();
+                }
+            }));
+
+        }
 
         registerHandler(fieldListBox.addSelectionHandler(event -> {
             if (!reading) {
@@ -513,7 +562,7 @@ public class TermEditor extends Composite {
         registerHandler(conditionListBox.addSelectionHandler(event -> {
             if (!reading) {
                 write(term);
-                changeCondition(event.getSelectedItem());
+                changeCondition(fieldListBox.getSelectedItem(), event.getSelectedItem());
                 fireDirty();
             }
         }));

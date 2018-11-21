@@ -2,6 +2,7 @@ package stroom.streamstore.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.Stream;
@@ -63,7 +64,11 @@ class StreamAttributeMapUtil {
                         case DATE_FIELD:
                             attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
-                        default:
+                        case DOC_REF:
+                            attributeMap.put(field.getName(), value);
+                            break;
+                        case ID:
+                        case NUMERIC_FIELD:
                             attributeMap.put(field.getName(), Long.valueOf(value));
                             break;
                     }

@@ -1,5 +1,6 @@
 package stroom.streamstore.shared;
 
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.ExpressionItem;
@@ -10,7 +11,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ExpressionUtil {
@@ -66,11 +66,11 @@ public final class ExpressionUtil {
 
         if (feeds != null) {
             if (feeds.length == 1) {
-                builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feeds[0].getName());
+                builder.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IS_DOC_REF, DocRefUtil.create(feeds[0]));
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
                 for (final Feed feed : feeds) {
-                    or.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
+                    or.addDocRefTerm(StreamDataSource.FEED_NAME, Condition.IS_DOC_REF, DocRefUtil.create(feed));
                 }
                 builder.addOperator(or.build());
             }
@@ -83,7 +83,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final PipelineEntity pipelineEntity) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PIPELINE_UUID, Condition.EQUALS, pipelineEntity.getUuid())
+                .addDocRefTerm(StreamDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, DocRefUtil.create(pipelineEntity))
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

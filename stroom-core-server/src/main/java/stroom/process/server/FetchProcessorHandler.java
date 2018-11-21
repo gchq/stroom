@@ -25,6 +25,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.FetchProcessorAction;
 import stroom.process.shared.StreamProcessorFilterRow;
@@ -70,6 +71,8 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
     private SecurityContext securityContext;
     @Resource
     private DictionaryStore dictionaryStore;
+    @Resource
+    private PipelineService pipelineService;
 
     @Override
     public ResultList<SharedObject> exec(final FetchProcessorAction action) {
@@ -158,6 +161,7 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
                 } else if (child instanceof ExpressionTerm) {
                     ExpressionTerm term = (ExpressionTerm) child;
                     DocRef dictionary = term.getDictionary();
+                    DocRef docRef = term.getDocRef();
 
                     if (dictionary != null) {
                         try {
@@ -173,6 +177,21 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
                                 .condition(term.getCondition())
                                 .value(term.getValue())
                                 .dictionary(dictionary)
+                                .build();
+                    } else if (docRef != null && PipelineEntity.ENTITY_TYPE.equals(docRef.getType())) {
+                        try {
+                            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(docRef.getUuid());
+                            docRef = stroom.entity.shared.DocRefUtil.create(pipelineEntity);
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e.getMessage(), e);
+                        }
+
+                        term = new ExpressionTerm.Builder()
+                                .enabled(term.getEnabled())
+                                .field(term.getField())
+                                .condition(term.getCondition())
+                                .value(term.getValue())
+                                .docRef(docRef)
                                 .build();
                     }
 

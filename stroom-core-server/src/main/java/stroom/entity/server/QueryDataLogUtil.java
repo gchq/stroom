@@ -71,6 +71,13 @@ public class QueryDataLogUtil {
                     case IN:
                         appendTerm(items, field, TermCondition.CONTAINS, value);
                         break;
+                    case IS_DOC_REF: {
+                        final DocRef docRef = expressionTerm.getDocRef();
+                        if (docRef != null) {
+                            appendTerm(items, field, TermCondition.EQUALS, docRef.toInfoString());
+                        }
+                        break;
+                    }
                     case IN_DICTIONARY:
                         if (dictionaryStore != null) {
                             DocRef docRef = expressionTerm.getDictionary();

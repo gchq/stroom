@@ -182,7 +182,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<DataSourc
     private void onAdd() {
         final Set<String> otherNames = fields.stream().map(DataSourceField::getName).collect(Collectors.toSet());
 
-        fieldEditPresenter.read(new DataSourceField(DataSourceFieldType.FIELD, "", null, null), otherNames);
+        fieldEditPresenter.read(new DataSourceField(DataSourceFieldType.FIELD, null, "", null, null), otherNames);
         fieldEditPresenter.show("New Field", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {

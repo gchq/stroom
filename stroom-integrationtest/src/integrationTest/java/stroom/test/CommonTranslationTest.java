@@ -89,7 +89,7 @@ public class CommonTranslationTest {
 
     public List<StreamProcessorTaskExecutor> processAll() throws Exception {
         // Force creation of stream tasks.
-        if (streamTaskCreator instanceof StreamTaskCreator) {
+        if (streamTaskCreator != null) {
             streamTaskCreator.createTasks(new TaskMonitorImpl());
         }
 
