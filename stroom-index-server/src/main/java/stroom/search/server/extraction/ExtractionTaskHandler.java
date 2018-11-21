@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.server.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.server.PipelineService;
@@ -134,6 +135,11 @@ public class ExtractionTaskHandler {
             currentUserHolder.setCurrentUser(securityContext.getUserId());
 
             final DocRef pipelineRef = task.getPipelineRef();
+
+            // Check the pipelineRef is not our 'NULL SELECTION'
+            if (DocRefUtil.NULL_SELECTION.compareTo(pipelineRef) == 0) {
+                throw new SearchException("Extraction is enabled, but no extraction pipeline is configured.");
+            }
 
             // Get the translation that will be used to display results.
             final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineRef.getUuid());
