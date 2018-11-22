@@ -4,4 +4,4 @@
 
 source bin/utils.sh
 
-tail -f ${PATH_TO_APP_LOG}
+tail -F ${PATH_TO_APP_LOG}
