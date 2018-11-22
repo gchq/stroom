@@ -36,7 +36,7 @@ server:
       # For logFormat syntax in the access log see https://logback.qos.ch/manual/layouts.html (scroll to bottom)
 
 logging:
-  level: ${STROOM_PROXY_LOGGING_LEVEL:- ERROR}
+  level: ${STROOM_PROXY_LOGGING_LEVEL:- WARN}
   loggers:
     stroom: INFO
     io.dropwizard: INFO
@@ -72,9 +72,12 @@ logging:
         logFormat: "%msg%n"
 
   appenders:
+    # stdout for docker
+    # Comment out for non-dockered environments
   - type: console
     logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
     timeZone: UTC
+    # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
     currentLogFilename: /stroom-proxy/logs/app/app.log
     threshold: ALL
@@ -82,9 +85,23 @@ logging:
     discardingThreshold: 0
     archive: true
     archivedLogFilenamePattern: /stroom-proxy/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
-    archivedFileCount: 100
+    # One week using minute files
+    archivedFileCount: 10080
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+    # Size rolled logs for admins (10x100M), not curl'd to stroom
+    # Un-comment for non-dockered environments
+    #  - type: file
+    #    currentLogFilename: /stroom-proxy/logs/app.log
+    #    threshold: ALL
+    #    queueSize: 256
+    #    discardingThreshold: 0
+    #    archive: true
+    #    archivedLogFilenamePattern: /stroom-proxy/logs/app-%i.log
+    #    archivedFileCount: 10
+    #    maxFileSize: "100MB"
+    #    timeZone: UTC
+    #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 mode: "proxy"
 
