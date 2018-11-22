@@ -243,43 +243,45 @@ swagger {
 }
 
 
+def releaseBuildDir= 'build/release'
+
 task copyJar(type: Copy) {
     from shadowJar.outputs.files
-    into 'build/release/bin'
+    into "${releaseBuildDir}/bin"
 }
 
 task copySupportingFiles(type: Copy) {
     from 'src/dist'
-    into 'build/release'
+    into releaseBuildDir 
 }
 
 import de.undercouch.gradle.tasks.download.Download
 
 task downloadSend(type: Download) {
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
-    dest 'build/release/bin'
+    dest "${releaseBuildDir}/bin"
 }
 
 task downloadSendArgs(type: Download) {
     src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
-    dest 'build/release/bin'
+    dest "${releaseBuildDir}/bin"
 }
 
 task makeSendExecutable {
     dependsOn copySupportingFiles
     doLast{
         exec {
-            commandLine 'chmod', '+x', 'build/release/bin/send_to_stroom.sh'
+            commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
         }
         exec {
-            commandLine 'chmod', '+x', 'build/release/bin/send_to_stroom_args.sh'
+            commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom_args.sh"
         }
     }
 }
 
 task copyContentPackToDistribution(type: Copy) {
     from contentPackImportDir
-    into 'build/release/contentPacks'
+    into "${releaseBuildDir}/contentPacks"
 }
 
 task buildDistribution(type: Zip) {
@@ -290,7 +292,7 @@ task buildDistribution(type: Zip) {
     dependsOn makeSendExecutable
     dependsOn parent.downloadStroomContent
     dependsOn copyContentPackToDistribution
-    from 'build/release'
+    from releaseBuildDir
 }
 
 
