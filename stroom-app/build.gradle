@@ -277,12 +277,19 @@ task makeSendExecutable {
     }
 }
 
+task copyContentPackToDistribution(type: Copy) {
+    from contentPackImportDir
+    into 'build/release/contentPacks'
+}
+
 task buildDistribution(type: Zip) {
     dependsOn copyJar
     dependsOn copySupportingFiles
     dependsOn downloadSend
     dependsOn downloadSendArgs
     dependsOn makeSendExecutable
+    dependsOn parent.downloadStroomContent
+    dependsOn copyContentPackToDistribution
     from 'build/release'
 }
 
