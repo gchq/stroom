@@ -6,10 +6,10 @@ buildscript {
         maven { url "https://dl.bintray.com/stroom/stroom" }
     }
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
         // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-        classpath 'stroom:gradle-dependency-analyze:v2.2.2'
+        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -34,14 +34,14 @@ plugins {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.10'
+    gradleVersion = '4.10.2'
 }
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
 apply plugin: 'ca.cutterslade.analyze'
 
-if(JavaVersion.current() != JavaVersion.VERSION_1_10){
+if(JavaVersion.current().isJava10Compatible()) {
     throw new GradleException("This build must be run with java 10")
 }
 
@@ -79,8 +79,8 @@ ext.versions = [
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v1.0-beta.8',
-        stroomExpression  : 'v1.4.11',
-        stroomQuery       : 'v4.0-beta.20', //same version for both stroom-query-api and stroom-query-common
+        stroomExpression  : 'v2.0.3',
+        stroomQuery       : 'v4.0-beta.21', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
