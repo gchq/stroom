@@ -12,18 +12,9 @@ GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
 BLUE2='\033[1;34m'
-
 NC='\033[0m' # No Colour
 
-
 mkdir -p log
-
-PATH_TO_APP_LOG=logs/app/app.log
-PATH_TO_JAR=bin/stroom-app-all.jar
-PID_FILE=bin/stroom.pid
-PATH_TO_CONFIG=config/config.yml
-
-JAVA_OPTS="-Xms512m -Xmx2048m"
 
 greeting() {
   echo -e "${GREEN}                    ╔╬═${NC}"

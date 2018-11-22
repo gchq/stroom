@@ -3,7 +3,7 @@
 # Starts Stroom
 
 source bin/utils.sh
-
+source config/scripts.env
 
 start() {
   # We pipe the output of nohup to /dev/null because everything we might need for debugging
