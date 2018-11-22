@@ -25,11 +25,13 @@
 # only have proxy then you take a 20Mb hit for the jdk bits you don't need.
 FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
 
+# curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        curl \
         su-exec \
         tini
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
