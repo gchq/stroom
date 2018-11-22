@@ -41,8 +41,8 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
 apply plugin: 'ca.cutterslade.analyze'
 
-if(JavaVersion.current().isJava10Compatible()) {
-    throw new GradleException("This build must be run with java 10")
+if (!JavaVersion.current().isJava10()) {
+    throw new GradleException("This build must be run with Java 10 (current = " + JavaVersion.current() + ")")
 }
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"

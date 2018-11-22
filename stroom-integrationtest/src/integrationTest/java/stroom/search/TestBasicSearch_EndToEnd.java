@@ -22,13 +22,13 @@ import org.junit.Test;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
+import stroom.docref.DocRef;
 import stroom.index.IndexShardService;
 import stroom.index.IndexShardUtil;
 import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -59,7 +59,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         // Create a map of index fields keyed by name.
         final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap(IndexDataSourceFieldUtil.getDataSourceFields(index));
         final DataSourceField actual = dataSourceFieldsMap.get("Action");
-        final DataSourceField expected = new DataSourceField(DataSourceFieldType.FIELD, "Action", true, actual.getConditions());
+        final DataSourceField expected = new DataSourceField(DataSourceFieldType.FIELD, null, "Action", true, actual.getConditions());
 
         Assert.assertEquals("Expected to index action", expected, actual);
     }

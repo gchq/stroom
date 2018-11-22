@@ -109,7 +109,7 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
      */
     private void addField(final String name, final DataSourceFieldType type, final boolean isQueryable,
                           final List<Condition> supportedConditions, final List<DataSourceField> fields) {
-        final DataSourceField field = new DataSourceField(type, name, isQueryable, supportedConditions);
+        final DataSourceField field = new DataSourceField(type, null, name, isQueryable, supportedConditions);
         fields.add(field);
     }
 }

@@ -35,7 +35,7 @@ public final class IndexDataSourceFieldUtil {
         final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.size());
         for (int i = 0; i < indexFields.size(); i++) {
             final IndexField indexField = indexFields.get(i);
-            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
+            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), null, indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
         }
 
         return dataSourceFields;
