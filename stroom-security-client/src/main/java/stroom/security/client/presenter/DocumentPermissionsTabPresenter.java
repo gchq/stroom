@@ -177,6 +177,10 @@ public class DocumentPermissionsTabPresenter
         refreshUserList();
     }
 
+    public DocumentPermissions getDocumentPermissions(){
+        return this.documentPermissions;
+    }
+
     private void refreshUserList() {
         userListPresenter.refresh();
     }
