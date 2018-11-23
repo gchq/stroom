@@ -10,25 +10,34 @@
         .cascade {
         margin-top: 5px;
         }
+
+        .copyPermissionsFromParentButton {
+        width: 259px;
+        }
     </ui:style>
 
     <g:DockLayoutPanel ui:field="layout" width="100%" height="100%">
-        <g:south size="25">
-
-            <g:Grid ui:field="cascadeGrid" styleName="stroom-control-grid {style.cascade}">
-                <g:row>
-                    <g:cell>Cascade:</g:cell>
-                    <g:customCell>
-                        <l:ItemListBox ui:field="cascade" />
-                    </g:customCell>
-                </g:row>
-            </g:Grid>
-
-        </g:south>
-
         <g:center>
             <v:ResizeSimplePanel ui:field="tabs" styleName="{style.max}"/>
         </g:center>
+
+        <g:south size="55">
+            <g:DockLayoutPanel ui:field="innerLayout" width="100%" height="100%">
+                <g:north size="25">
+                    <g:Grid ui:field="cascadeGrid" styleName="stroom-control-grid {style.cascade}">
+                        <g:row>
+                            <g:cell>Cascade:</g:cell>
+                            <g:customCell>
+                                <l:ItemListBox ui:field="cascade" />
+                            </g:customCell>
+                        </g:row>
+                    </g:Grid>
+                </g:north>
+                <g:south size="25" >
+                    <g:Button width="100" styleName="gwt-Button {style.copyPermissionsFromParentButton}" ui:field="copyPermissionsFromParentButton" text="Copy permissions from parent" />
+                </g:south>
+            </g:DockLayoutPanel>
+        </g:south>
     </g:DockLayoutPanel>
 
 </ui:UiBinder> 
