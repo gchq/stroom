@@ -1,6 +1,7 @@
 package stroom.data.meta.api;
 
 import stroom.docref.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -81,7 +82,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.PIPELINE_UUID, Condition.EQUALS, pipelineRef.getUuid())
+                .addDocRefTerm(MetaDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, pipelineRef)
                 .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

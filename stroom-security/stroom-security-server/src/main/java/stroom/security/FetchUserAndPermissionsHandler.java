@@ -56,7 +56,7 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
             if (preventLogin) {
                 security.asUser(UserTokenUtil.create(userRef.getName(), null), () -> {
                     if (!securityContext.isAdmin()) {
-                        throw new AuthenticationException("You are not allowed access at this time");
+                        throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
                     }
                 });
             }

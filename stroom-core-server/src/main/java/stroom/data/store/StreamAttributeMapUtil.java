@@ -59,7 +59,11 @@ class StreamAttributeMapUtil {
                         case DATE_FIELD:
                             map.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
-                        default:
+                        case DOC_REF:
+                            attributeMap.put(field.getName(), value);
+                            break;
+                        case ID:
+                        case NUMERIC_FIELD:
                             map.put(field.getName(), Long.valueOf(value));
                             break;
                     }

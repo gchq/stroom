@@ -69,9 +69,12 @@ public class LegacyXMLSerialiser {
 
                 // Import non externalised properties.
                 if (!property.isExternalFile()) {
-                    // Set the property if it is specified.
-                    if (config.hasProperty(propertyName)) {
-                        updateProperty(entity, property, config.get(propertyName));
+                    // Ignore audit fields.
+                    if (!DocumentEntity.AUDIT_FIELDS.contains(propertyName)) {
+                        // Set the property if it is specified.
+                        if (config.hasProperty(propertyName)) {
+                            updateProperty(entity, property, config.get(propertyName));
+                        }
                     }
                 }
             }

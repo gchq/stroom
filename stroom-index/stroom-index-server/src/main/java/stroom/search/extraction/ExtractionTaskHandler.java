@@ -23,6 +23,7 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
+import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -132,6 +133,11 @@ public class ExtractionTaskHandler {
             currentUserHolder.setCurrentUser(securityContext.getUserId());
 
             final DocRef pipelineRef = task.getPipelineRef();
+
+            // Check the pipelineRef is not our 'NULL SELECTION'
+            if (DocRefUtil.NULL_SELECTION.compareTo(pipelineRef) == 0) {
+                throw new SearchException("Extraction is enabled, but no extraction pipeline is configured.");
+            }
 
             // Get the translation that will be used to display results.
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);

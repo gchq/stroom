@@ -17,12 +17,24 @@
 
 package stroom.streamtask;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -43,19 +55,27 @@ import java.util.Set;
 
 @TaskHandlerBean(task = FetchProcessorAction.class)
 class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, ResultList<SharedObject>> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FetchProcessorHandler.class);
+
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final SecurityContext securityContext;
+    private final DictionaryStore dictionaryStore;
+    private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
     FetchProcessorHandler(final StreamProcessorFilterService streamProcessorFilterService,
                           final StreamProcessorService streamProcessorService,
                           final SecurityContext securityContext,
+                          final DictionaryStore dictionaryStore,
+                          final PipelineStore pipelineStore,
                           final Security security) {
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.securityContext = securityContext;
+        this.dictionaryStore = dictionaryStore;
+        this.pipelineStore = pipelineStore;
         this.security = security;
     }
 
@@ -114,6 +134,12 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
                     // Add filters.
                     for (final ProcessorFilter streamProcessorFilter : streamProcessorFilters) {
                         if (streamProcessor.equals(streamProcessorFilter.getStreamProcessor())) {
+                            // Decorate the expression with resolved dictionaries etc.
+                            final QueryData queryData = streamProcessorFilter.getQueryData();
+                            if (queryData != null && queryData.getExpression() != null) {
+                                queryData.setExpression(decorate(queryData.getExpression()));
+                            }
+
                             final ProcessorFilterRow streamProcessorFilterRow = new ProcessorFilterRow(
                                     streamProcessorFilter);
                             values.add(streamProcessorFilterRow);
@@ -124,5 +150,60 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
 
             return BaseResultList.createUnboundedList(values);
         });
+    }
+
+    private ExpressionOperator decorate(final ExpressionOperator operator) {
+        final ExpressionOperator.Builder builder = new Builder()
+                .op(operator.getOp())
+                .enabled(operator.getEnabled());
+
+        if (operator.getChildren() != null) {
+            for (final ExpressionItem child : operator.getChildren()) {
+                if (child instanceof ExpressionOperator) {
+                    builder.addOperator(decorate((ExpressionOperator) child));
+
+                } else if (child instanceof ExpressionTerm) {
+                    ExpressionTerm term = (ExpressionTerm) child;
+                    DocRef dictionary = term.getDictionary();
+                    DocRef docRef = term.getDocRef();
+
+                    if (dictionary != null) {
+                        try {
+                            final DictionaryDoc dictionaryDoc = dictionaryStore.read(term.getDictionary().getUuid());
+                            dictionary = DocRefUtil.create(dictionaryDoc);
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e.getMessage(), e);
+                        }
+
+                        term = new ExpressionTerm.Builder()
+                                .enabled(term.getEnabled())
+                                .field(term.getField())
+                                .condition(term.getCondition())
+                                .value(term.getValue())
+                                .dictionary(dictionary)
+                                .build();
+                    } else if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+                        try {
+                            final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
+                            docRef = DocRefUtil.create(pipelineDoc);
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e.getMessage(), e);
+                        }
+
+                        term = new ExpressionTerm.Builder()
+                                .enabled(term.getEnabled())
+                                .field(term.getField())
+                                .condition(term.getCondition())
+                                .value(term.getValue())
+                                .docRef(docRef)
+                                .build();
+                    }
+
+                    builder.addTerm(term);
+                }
+            }
+        }
+
+        return builder.build();
     }
 }

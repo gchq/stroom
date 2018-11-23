@@ -17,6 +17,7 @@
 package stroom.pipeline.reader;
 
 import org.apache.commons.text.StringEscapeUtils;
+import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -40,6 +41,7 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class FindReplaceFilterElement extends AbstractReaderElement {
+    private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
 
     private FindReplaceFilter textReplacementFilterReader;
@@ -53,7 +55,9 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
     private boolean showReplacementCount = true;
 
     @Inject
-    public FindReplaceFilterElement(final ErrorReceiverProxy errorReceiver) {
+    public FindReplaceFilterElement(final LocationFactory locationFactory,
+                                    final ErrorReceiverProxy errorReceiver) {
+        this.locationFactory = locationFactory;
         this.errorReceiver = errorReceiver;
     }
 
@@ -70,6 +74,7 @@ public class FindReplaceFilterElement extends AbstractReaderElement {
                     .regex(regex)
                     .dotAll(dotAll)
                     .bufferSize(bufferSize)
+                    .locationFactory(locationFactory)
                     .errorReceiver(errorReceiver)
                     .elementId(getElementId())
                     .build();

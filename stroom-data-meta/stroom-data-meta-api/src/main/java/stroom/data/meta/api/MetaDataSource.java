@@ -29,7 +29,7 @@ public class MetaDataSource {
 //    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED_NAME = "Feed";
-    public static final String PIPELINE_UUID = "Pipeline UUID";
+    public static final String PIPELINE_UUID = "Pipeline";
     public static final String STREAM_TYPE_NAME = "Type";
     public static final String STREAM_ID = "Id";
     public static final String PARENT_STREAM_ID = "Parent Id";
@@ -63,8 +63,8 @@ public class MetaDataSource {
 //        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
-        FIELDS.add(createStringField(FEED_NAME));
-        FIELDS.add(createStringField(PIPELINE_UUID));
+        FIELDS.add(createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
+        FIELDS.add(createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
         FIELDS.add(createStringField(STREAM_TYPE_NAME));
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));
@@ -122,6 +122,18 @@ public class MetaDataSource {
                 .build();
     }
 
+    private static DataSourceField createDocRefField(final String name, final String docRefType) {
+        return new DataSourceField.Builder()
+                .name(name)
+                .addConditions(Condition.IS_DOC_REF)
+                .addConditions(Condition.EQUALS)
+                .addConditions(Condition.CONTAINS)
+                .addConditions(Condition.IN)
+                .addConditions(Condition.IN_DICTIONARY)
+                .docRefType(docRefType)
+                .build();
+    }
+
     private static DataSourceField createNumField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
@@ -150,20 +162,4 @@ public class MetaDataSource {
     public static Map<String, DataSourceField> getExtendedFieldMap() {
         return EXTENDED_FIELD_MAP;
     }
-
-//    public static Map<String, String> getDataFields() {
-//        return DATA_FIELDS;
-//    }
-//
-//    public static Map<String, String> getFeedFields() {
-//        return FEED_FIELDS;
-//    }
-//
-//    public static Map<String, String> getTypeFields() {
-//        return STREAM_TYPE_FIELDS;
-//    }
-
-//    public static Map<String, String> getPipelineFields() {
-//        return PIPELINE_FIELDS;
-//    }
 }

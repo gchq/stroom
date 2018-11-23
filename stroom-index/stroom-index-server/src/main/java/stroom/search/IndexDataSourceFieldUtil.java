@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
+import stroom.query.api.v2.ExpressionTerm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,13 @@ public final class IndexDataSourceFieldUtil {
         final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.size());
         for (int i = 0; i < indexFields.size(); i++) {
             final IndexField indexField = indexFields.get(i);
-            dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
+            // TODO should index fields include doc refs?
+            dataSourceFields.add(new DataSourceField.Builder()
+                    .type(getDataSourceFieldType(indexField.getFieldType()))
+                    .name(indexField.getFieldName())
+                    .queryable(indexField.isIndexed())
+                    .addConditions(indexField.getSupportedConditions().toArray(new ExpressionTerm.Condition[0]))
+                    .build());
         }
 
         return dataSourceFields;

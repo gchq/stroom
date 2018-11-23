@@ -54,8 +54,6 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void testExport() {
-        // commonTestControl.deleteDir();
-
         final DocRef system = explorerNodeService.getRoot().map(ExplorerNode::getDocRef).orElse(null);
         Assert.assertEquals(1, explorerNodeService.getDescendants(system).size());
 
@@ -85,14 +83,17 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         final DocRef eventFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
         FeedDoc eventFeed = feedStore.readDocument(eventFeedRef);
         eventFeed.setDescription("Description");
-        // eventFeed.getReferenceFeed().add(referenceFeed);
-        eventFeed = feedStore.writeDocument(eventFeed);
+        feedStore.writeDocument(eventFeed);
 
         final DocRef eventFeedChildRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
         final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildRef);
         eventFeedChild.setDescription("Description");
-        // eventFeedChild.getReferenceFeed().add(referenceFeed);
         feedStore.writeDocument(eventFeedChild);
+
+        final DocRef eventFeedChild2Ref = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child2, null);
+        final FeedDoc eventFeedChild2 = feedStore.readDocument(eventFeedChild2Ref);
+        eventFeedChild2.setDescription("Description2");
+        feedStore.writeDocument(eventFeedChild2);
 
         final int startTranslationSize = pipelineStore.list().size();
         final int startFeedSize = feedStore.list().size();

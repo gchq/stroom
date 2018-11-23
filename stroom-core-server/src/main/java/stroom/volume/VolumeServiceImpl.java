@@ -27,6 +27,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
@@ -82,7 +83,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
     static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
 
-    private static final String INTERNAL_STAT_KEY_VOLUMES = "volumes";
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeServiceImpl.class);
 
     private static final Map<String, VolumeSelector> volumeSelectorMap;
@@ -109,7 +109,9 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private final VolumeConfig volumeConfig;
     private final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver;
     private final AtomicReference<List<VolumeEntity>> currentVolumeState = new AtomicReference<>();
-    private volatile boolean initialised;
+
+    private volatile boolean createdDefaultVolumes;
+    private boolean creatingDefaultVolumes;
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
@@ -131,44 +133,8 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
         volumeSelectorMap.put(volumeSelector.getName(), volumeSelector);
     }
 
-    private void initialise() {
-        if (!initialised) {
-            synchronized (this) {
-                if (!initialised) {
-                    security.insecure(() -> {
-                        boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
-
-                        if (isEnabled) {
-                            List<VolumeEntity> existingVolumes = getCurrentState();
-                            if (existingVolumes.size() == 0) {
-                                final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
-                                if (optDefaultVolumePath.isPresent()) {
-                                    Node node = nodeCache.getDefaultNode();
-                                    Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
-                                    createIndexVolume(indexVolPath, node);
-                                    Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
-                                    createStreamVolume(streamVolPath, node);
-                                } else {
-                                    LOGGER.warn("No suitable directory to create default volumes in");
-                                }
-                            } else {
-                                LOGGER.info("Existing volumes exist, won't create default volumes");
-                            }
-                        } else {
-                            LOGGER.info("Creation of default volumes is currently disabled");
-                        }
-
-                        initialised = true;
-                    });
-                }
-            }
-        }
-    }
-
     @Override
     public Set<VolumeEntity> getStreamVolumeSet(final Node node) {
-        initialise();
-
         return security.insecureResult(() -> {
             LocalVolumeUse localVolumeUse = null;
             if (volumeConfig.isPreferLocalVolumes()) {
@@ -182,8 +148,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 
     @Override
     public Set<VolumeEntity> getIndexVolumeSet(final Node node, final Set<VolumeEntity> allowedVolumes) {
-        initialise();
-
         return security.insecureResult(() -> getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1));
     }
 
@@ -532,32 +496,56 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
         return new VolumeQueryAppender(entityManager);
     }
 
+    @Override
+    public BaseResultList<VolumeEntity> find(final FindVolumeCriteria criteria) throws RuntimeException {
+        ensureDefaultVolumes();
+        return super.find(criteria);
+    }
+
 //    @StroomStartup(priority = -1100)
 //    public void startup() {
-//
-//        boolean isEnabled = propertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
-//
-//        if (isEnabled) {
-//            List<VolumeEntity> existingVolumes = getCurrentState();
-//            if (existingVolumes.size() == 0) {
-//                Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
-//
-//                if (optDefaultVolumePath.isPresent()) {
-//                    Node node = nodeCache.get();
-//                    Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
-//                    createIndexVolume(indexVolPath, node);
-//                    Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
-//                    createStreamVolume(streamVolPath, node);
-//                } else {
-//                    LOGGER.warn("No suitable directory to create default volumes in");
-//                }
-//            } else {
-//                LOGGER.info("Existing volumes exist, won't create default volumes");
-//            }
-//        } else {
-//            LOGGER.info("Creation of default volumes is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
-//        }
+//        ensureDefaultVolumes();
 //    }
+
+    private void ensureDefaultVolumes() {
+        if (!createdDefaultVolumes) {
+            createDefaultVolumes();
+        }
+    }
+
+    private synchronized void createDefaultVolumes() {
+        if (!createdDefaultVolumes && !creatingDefaultVolumes) {
+            creatingDefaultVolumes = true;
+
+            security.insecure(() -> {
+                final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
+
+                if (isEnabled) {
+                    final List<VolumeEntity> existingVolumes = getCurrentState();
+                    if (existingVolumes.size() == 0) {
+                        final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
+                        if (optDefaultVolumePath.isPresent()) {
+                            LOGGER.info("Creating default volumes");
+                            final Node node = nodeCache.getDefaultNode();
+                            final Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
+                            createIndexVolume(indexVolPath, node);
+                            final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
+                            createStreamVolume(streamVolPath, node);
+                        } else {
+                            LOGGER.warn("No suitable directory to create default volumes in");
+                        }
+                    } else {
+                        LOGGER.info("Existing volumes exist, won't create default volumes");
+                    }
+                } else {
+                    LOGGER.info("Creation of default volumes is currently disabled");
+                }
+
+                createdDefaultVolumes = true;
+                creatingDefaultVolumes = false;
+            });
+        }
+    }
 
     private void createIndexVolume(final Path path, final Node node) {
         final VolumeEntity vol = new VolumeEntity();

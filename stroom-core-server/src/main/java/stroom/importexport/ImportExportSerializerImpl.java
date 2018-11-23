@@ -20,6 +20,7 @@ package stroom.importexport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.DocRefs;
+import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionException;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerNodeService;
@@ -227,6 +228,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                             importExportDocumentEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
+                    } else {
+                        // We can't import this item so remove it from the map.
+                        confirmMap.remove(docRef);
                     }
                 } catch (final RuntimeException e) {
                     importExportDocumentEventLog.importDocument(docRef.getType(), docRef.getUuid(), docRef.getName(), e);
@@ -250,6 +254,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                       final List<Message> messageList) {
         // Create a set of all entities that we are going to try and export.
         DocRefs expandedDocRefs = expandDocRefSet(docRefs);
+
+        if (expandedDocRefs.getDoc().size() == 0) {
+            throw new EntityServiceException("No documents were found that could be exported");
+        }
 
         for (final DocRef docRef : expandedDocRefs) {
             try {
@@ -319,8 +327,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private void addDocRef(final DocRef docRef, final DocRefs docRefs) {
         try {
-            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
-                docRefs.add(docRef);
+            final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(docRef.getType());
+            if (importExportActionHandler != null) {
+                if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
+                    docRefs.add(docRef);
+                }
             }
         } catch (final RuntimeException e) {
             // We might get a permission exception which is expected for some users.

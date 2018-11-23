@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -47,6 +48,7 @@ public class ImportExportServiceImpl implements ImportExportService {
     public SharedList<ImportState> createImportConfirmationList(final Path data) {
         final SharedList<ImportState> confirmList = new SharedList<>();
         doImport(data, confirmList, ImportMode.CREATE_CONFIRMATION);
+        confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
         return confirmList;
     }
 
