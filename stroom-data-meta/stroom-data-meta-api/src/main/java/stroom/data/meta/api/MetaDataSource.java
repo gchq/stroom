@@ -63,8 +63,8 @@ public class MetaDataSource {
 //        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
-        FIELDS.add(createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
-        FIELDS.add(createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
+        FIELDS.add(createDocRefField(FEED_NAME, "Feed"));
+        FIELDS.add(createDocRefField(PIPELINE_UUID, "Pipeline"));
         FIELDS.add(createStringField(STREAM_TYPE_NAME));
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));

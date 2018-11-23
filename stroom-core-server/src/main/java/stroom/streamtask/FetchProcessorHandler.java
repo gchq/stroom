@@ -169,7 +169,7 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
 
                     if (dictionary != null) {
                         try {
-                            final DictionaryDoc dictionaryDoc = dictionaryStore.read(term.getDictionary().getUuid());
+                            final DictionaryDoc dictionaryDoc = dictionaryStore.readDocument(term.getDictionary());
                             dictionary = DocRefUtil.create(dictionaryDoc);
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
