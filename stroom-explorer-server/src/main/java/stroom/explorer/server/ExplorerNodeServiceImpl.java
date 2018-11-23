@@ -4,10 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -59,11 +61,11 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             switch (perms) {
                 case NONE:
                     // Make the new item owned by the current user.
-                    addDocumentPermissions(null, docRef, true);
+                    addDocumentPermissions(null, docRef, true, false);
                     break;
                 case DESTINATION:
                     // Copy permissions from the containing folder and make the new item owned by the current user.
-                    addDocumentPermissions(destinationFolderRef, docRef, true);
+                    addDocumentPermissions(destinationFolderRef, docRef, true, false);
                     break;
                 default:
                     LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for create operation");
@@ -90,20 +92,20 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             switch (perms) {
                 case NONE:
                     // Ignore original permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
-                    addDocumentPermissions(null, destDocRef, true);
+                    addDocumentPermissions(null, destDocRef, true, true);
                     break;
                 case SOURCE:
                     // Copy permissions from the original, ignore permissions of the destination folder, and make the new item owned by the current user.
-                    addDocumentPermissions(sourceDocRef, destDocRef, true);
+                    addDocumentPermissions(sourceDocRef, destDocRef, true, true);
                     break;
                 case DESTINATION:
                     // Ignore permissions of the original, add permissions of the destination folder, and make the new item owned by the current user.
-                    addDocumentPermissions(destinationFolderRef, destDocRef, true);
+                    addDocumentPermissions(destinationFolderRef, destDocRef, true, true);
                     break;
                 case COMBINED:
                     // Copy permissions from the original, add permissions of the destination folder, and make the new item owned by the current user.
-                    addDocumentPermissions(sourceDocRef, destDocRef, true);
-                    addDocumentPermissions(destinationFolderRef, destDocRef, true);
+                    addDocumentPermissions(sourceDocRef, destDocRef, true, true);
+                    addDocumentPermissions(destinationFolderRef, destDocRef, true, true);
                     break;
                 default:
                     LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for copy operation");
@@ -131,7 +133,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case NONE:
                     // Remove all current permissions, ignore permissions of the destination folder, just make the new item owned by the current user.
                     clearDocumentPermissions(docRef);
-                    addDocumentPermissions(null, docRef, true);
+                    addDocumentPermissions(null, docRef, true, true);
                     break;
                 case SOURCE:
                     // We are keeping the permissions that we already have so do nothing.
@@ -139,11 +141,11 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 case DESTINATION:
                     // Remove all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
                     clearDocumentPermissions(docRef);
-                    addDocumentPermissions(destinationFolderRef, docRef, true);
+                    addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 case COMBINED:
                     // Keep all current permissions, add permissions of the destination folder, and make the new item owned by the current user.
-                    addDocumentPermissions(destinationFolderRef, docRef, true);
+                    addDocumentPermissions(destinationFolderRef, docRef, true, true);
                     break;
                 default:
                     LOGGER.error("Unexpected permission inheritance '" + perms + "' supplied for move operation");
@@ -323,7 +325,10 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         }
     }
 
-    private void addDocumentPermissions(final DocRef source, final DocRef dest, final boolean owner) {
+    private void addDocumentPermissions(final DocRef source,
+                                        final DocRef dest,
+                                        final boolean owner,
+                                        final boolean cascade) {
         String sourceType = null;
         String sourceUuid = null;
         String destType = null;
@@ -337,6 +342,22 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         if (dest != null) {
             destType = dest.getType();
             destUuid = dest.getUuid();
+        }
+
+        if (cascade
+                && sourceType != null
+                && sourceUuid != null
+                && DocumentTypes.isFolder(sourceType)) {
+            final String cascadeSourceType = sourceType;
+            final String cascadeSourceUuid = sourceUuid;
+            final List<ExplorerNode> descendants = getDescendants(dest);
+            descendants.forEach(descendant ->
+                securityContext.addDocumentPermissions(cascadeSourceType,
+                        cascadeSourceUuid,
+                        descendant.getType(),
+                        descendant.getUuid(),
+                        owner)
+            );
         }
 
         securityContext.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
