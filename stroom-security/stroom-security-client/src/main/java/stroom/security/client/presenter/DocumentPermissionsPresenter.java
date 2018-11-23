@@ -17,6 +17,7 @@
 
 package stroom.security.client.presenter;
 
+import com.google.gwt.user.client.ui.Button;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -27,8 +28,10 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.item.client.ItemListBox;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
+import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.security.shared.UserPermission;
+import stroom.security.shared.UserRef;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -40,6 +43,9 @@ import stroom.widget.tab.client.presenter.TabData;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class DocumentPermissionsPresenter
         extends MyPresenterWidget<DocumentPermissionsPresenter.DocumentPermissionsView> {
@@ -72,6 +78,36 @@ public class DocumentPermissionsPresenter
         final TabData users = tabPresenter.addTab("Users", usersPresenter);
 
         tabPresenter.changeSelectedTab(groups);
+
+        getView().getCopyPermissionsFromParentButton().addClickHandler(event -> {
+            dispatcher.exec(new CopyPermissionsFromParentAction(explorerNode.getDocRef()))
+                    .onSuccess(documentPermissions -> {
+                        // We want to wipe existing permissions, which means updating the removeSet on the changeSet.
+                        Map<UserRef, Set<String>> permissionsToRemove = new HashMap<>();
+                        permissionsToRemove.putAll(usersPresenter.getDocumentPermissions().getUserPermissions());
+                        permissionsToRemove.putAll(groupsPresenter.getDocumentPermissions().getUserPermissions());
+                        for(UserRef userRef : permissionsToRemove.keySet()){
+                            for(String permission : permissionsToRemove.get(userRef)){
+                                changeSet.remove(new UserPermission(userRef, permission));
+                            }
+                        }
+                        // We need to update the changeSet with all the new permissions.
+                        for(UserRef userRef : documentPermissions.getUserPermissions().keySet()){
+                            for(String permission : documentPermissions.getPermissionsForUser(userRef)) {
+                                changeSet.add(new UserPermission(userRef, permission));
+                            }
+                        }
+                        // We need to set the document permissions so that what's been changed is visible.
+                        usersPresenter.setDocumentPermissions(documentPermissions, false, changeSet);
+                        groupsPresenter.setDocumentPermissions(documentPermissions, true, changeSet);
+                        // TODO: How do I refresh the view if it's already being displayed? If you click a group and
+                        // then click copy from parent it doesn't update the display until you click the group again.
+                    });
+        });
+        // If we're looking at the root node then we can't copy from the parent because there isn't one.
+        if(DocumentTypes.isSystem(explorerNode.getType())) {
+            getView().getCopyPermissionsFromParentButton().setEnabled(false);
+        }
 
         final FetchAllDocumentPermissionsAction fetchAllDocumentPermissionsAction = new FetchAllDocumentPermissionsAction(explorerNode.getDocRef());
         dispatcher.exec(fetchAllDocumentPermissionsAction).onSuccess(documentPermissions -> {
@@ -130,6 +166,8 @@ public class DocumentPermissionsPresenter
         ItemListBox<ChangeDocumentPermissionsAction.Cascade> getCascade();
 
         void setCascadeVisible(boolean visible);
+
+        Button getCopyPermissionsFromParentButton();
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {
