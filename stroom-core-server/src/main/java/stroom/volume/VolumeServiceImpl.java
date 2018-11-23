@@ -507,7 +507,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 //        ensureDefaultVolumes();
 //    }
 
-    private void ensureDefaultVolumes() {
+    void ensureDefaultVolumes() {
         if (!createdDefaultVolumes) {
             createDefaultVolumes();
         }

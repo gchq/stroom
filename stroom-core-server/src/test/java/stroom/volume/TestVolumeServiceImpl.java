@@ -220,6 +220,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
         @Override
         public BaseResultList<VolumeEntity> find(final FindVolumeCriteria criteria) {
+            ensureDefaultVolumes();
             return BaseResultList.createUnboundedList(volumeList);
         }
 
