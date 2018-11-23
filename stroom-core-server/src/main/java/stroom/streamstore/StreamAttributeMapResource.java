@@ -27,6 +27,7 @@ import stroom.data.meta.api.DataRow;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
+import stroom.db.migration.doc.feed.FeedDoc;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
@@ -148,7 +149,8 @@ public class StreamAttributeMapResource implements HasHealthCheck {
         DataSource dataSource = new DataSource(
                 ImmutableList.of(new DataSourceField(
                         FIELD,
-                        "feedName",
+                        FeedDoc.DOCUMENT_TYPE,
+                        "Feed",
                         true,
                         Arrays.asList(Condition.EQUALS, Condition.CONTAINS)
                 )));
