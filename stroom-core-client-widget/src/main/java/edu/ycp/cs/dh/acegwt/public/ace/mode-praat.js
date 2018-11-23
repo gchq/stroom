@@ -12,7 +12,7 @@ var PraatHighlightRules = function() {
         "while|endwhile|" +
         "repeat|until|" +
         "select|plus|minus|" +
-        "assert"
+        "assert|asserterror"
     );
 
     var predefinedVariables = (
@@ -26,17 +26,17 @@ var PraatHighlightRules = function() {
     var directives = (
         "clearinfo|endSendPraat"
     );
-      
+
     var functions = (
-        "writeInfo|writeInfoLine|appendInfo|appendInfoLine|" +
+        "writeInfo|writeInfoLine|appendInfo|appendInfoLine|info\\$|" +
         "writeFile|writeFileLine|appendFile|appendFileLine|" +
         "abs|round|floor|ceiling|min|max|imin|imax|" +
         "sqrt|sin|cos|tan|arcsin|arccos|arctan|arctan2|sinc|sincpi|" +
-        "exp|ln|log10|log2|" +
-        "sinh|cosh|tanh|arcsinh|arccosh|actanh|" +
+        "exp|ln|lnBeta|lnGamma|log10|log2|" +
+        "sinh|cosh|tanh|arcsinh|arccosh|arctanh|" +
         "sigmoid|invSigmoid|erf|erfc|" +
-        "randomUniform|randomInteger|randomGauss|randomPoisson|" +
-        "lnGamma|gaussP|gaussQ|invGaussQ|" +
+        "random(?:Uniform|Integer|Gauss|Poisson|Binomial)|" +
+        "gaussP|gaussQ|invGaussQ|incompleteGammaP|incompleteBeta|" +
         "chiSquareP|chiSquareQ|invChiSquareQ|studentP|studentQ|invStudentQ|" +
         "fisherP|fisherQ|invFisherQ|" +
         "binomialP|binomialQ|invBinomialP|invBinomialQ|" +
@@ -45,12 +45,16 @@ var PraatHighlightRules = function() {
         "hertzToSemitones|semitonesToHerz|" +
         "erb|hertzToErb|erbToHertz|" +
         "phonToDifferenceLimens|differenceLimensToPhon|" +
-        "beta|besselI|besselK|" +
+        "soundPressureToPhon|" +
+        "beta|beta2|besselI|besselK|" +
+        "numberOfColumns|numberOfRows|" +
         "selected|selected\\$|numberOfSelected|variableExists|"+
         "index|rindex|startsWith|endsWith|"+
         "index_regex|rindex_regex|replace_regex\\$|"+
         "length|extractWord\\$|extractLine\\$|extractNumber|" +
         "left\\$|right\\$|mid\\$|replace\\$|" +
+        "date\\$|fixed\\$|percent\\$|" +
+        "zero#|linear#|randomUniform#|randomInteger#|randomGauss#|" +
         "beginPause|endPause|" +
         "demoShow|demoWindowTitle|demoInput|demoWaitForInput|" +
         "demoClicked|demoClickedIn|demoX|demoY|" +
@@ -61,7 +65,8 @@ var PraatHighlightRules = function() {
         "chooseDirectory\\$|createDirectory|fileReadable|deleteFile|" +
         "selectObject|removeObject|plusObject|minusObject|" +
         "runScript|exitScript|" +
-        "beginSendPraat|endSendPraat"
+        "beginSendPraat|endSendPraat|" +
+        "objectsAreIdentical"
     );
 
     var objectTypes = (
@@ -88,18 +93,17 @@ var PraatHighlightRules = function() {
         "TableOfReal|TextGrid|TextInterval|TextPoint|TextTier|Tier|"         +
         "Transition|VocalTract|Weight|WordList"
     );
-
     this.$rules = {
         "start" : [
             {
                 token : "string.interpolated",
-                regex : /'((?:[a-z][a-zA-Z0-9_]*)(?:\$|#|:[0-9]+)?)'/
+                regex : /'((?:\.?[a-z][a-zA-Z0-9_.]*)(?:\$|#|:[0-9]+)?)'/
             }, {
                 token : ["text", "text", "keyword.operator", "text", "keyword"],
-                regex : /(^\s*)(?:([a-z][a-zA-Z0-9_]*\$?\s+)(=)(\s+))?(stopwatch)/
+                regex : /(^\s*)(?:(\.?[a-z][a-zA-Z0-9_.]*\$?\s+)(=)(\s+))?(stopwatch)/
             }, {
                 token : ["text", "keyword", "text", "string"],
-                regex : /(^\s*)(print(?:line)?|echo|exit|pause|sendpraat|include|execute)(\s+)(.*)/
+                regex : /(^\s*)(print(?:line|tab)?|echo|exit|pause|send(?:praat|socket)|include|execute|system(?:_nocheck)?)(\s+)(.*)/
             }, {
                 token : ["text", "keyword"],
                 regex : "(^\\s*)(" + directives + ")$"
@@ -108,7 +112,10 @@ var PraatHighlightRules = function() {
                 regex : /(\s+)((?:\+|-|\/|\*|<|>)=?|==?|!=|%|\^|\||and|or|not)(\s+)/
             }, {
                 token : ["text", "text", "keyword.operator", "text", "keyword", "text", "keyword"],
-                regex : /(^\s*)(?:([a-z][a-zA-Z0-9_]*\$?\s+)(=)(\s+))?(?:((?:no)?warn|nocheck|noprogress)(\s+))?((?:[A-Z][^.:"]+)(?:$|(?:\.{3}|:)))/
+                regex : /(^\s*)(?:(\.?[a-z][a-zA-Z0-9_.]*\$?\s+)(=)(\s+))?(?:((?:no)?warn|(?:unix_)?nocheck|noprogress)(\s+))?((?:[A-Z][^.:"]+)(?:$|(?:\.{3}|:)))/
+            }, {
+                token : ["text", "keyword", "text", "keyword"],
+                regex : /(^\s*)((?:no(?:warn|check))?)(\s*)(\b(?:editor(?::?)|endeditor)\b)/
             }, {
                 token : ["text", "keyword", "text", "keyword"],
                 regex : /(^\s*)(?:(demo)?(\s+))((?:[A-Z][^.:"]+)(?:$|(?:\.{3}|:)))/
@@ -150,7 +157,7 @@ var PraatHighlightRules = function() {
                 regex : /\b[+-]?\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b/
             }, {
                 token : ["keyword", "text", "entity.name.function"],
-                regex : /(procedure)(\s+)(\S+)/
+                regex : /(procedure)(\s+)([^:\s]+)/
             }, {
                 token : ["entity.name.function", "text"],
                 regex : /(@\S+)(:|\s*\()/
@@ -218,7 +225,7 @@ var PraatHighlightRules = function() {
                 regex : /"/,
                 next : "start"
             }
-        ],
+        ]
     };
 };
 
@@ -287,12 +294,35 @@ var FoldMode = exports.FoldMode = function(commentRegex) {
 oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
-
-    this.foldingStartMarker = /(\{|\[)[^\}\]]*$|^\s*(\/\*)/;
-    this.foldingStopMarker = /^[^\[\{]*(\}|\])|^[\s\*]*(\*\/)/;
+    
+    this.foldingStartMarker = /([\{\[\(])[^\}\]\)]*$|^\s*(\/\*)/;
+    this.foldingStopMarker = /^[^\[\{\(]*([\}\]\)])|^[\s\*]*(\*\/)/;
+    this.singleLineBlockCommentRe= /^\s*(\/\*).*\*\/\s*$/;
+    this.tripleStarBlockCommentRe = /^\s*(\/\*\*\*).*\*\/\s*$/;
+    this.startRegionRe = /^\s*(\/\*|\/\/)#?region\b/;
+    this._getFoldWidgetBase = this.getFoldWidget;
+    this.getFoldWidget = function(session, foldStyle, row) {
+        var line = session.getLine(row);
+    
+        if (this.singleLineBlockCommentRe.test(line)) {
+            if (!this.startRegionRe.test(line) && !this.tripleStarBlockCommentRe.test(line))
+                return "";
+        }
+    
+        var fw = this._getFoldWidgetBase(session, foldStyle, row);
+    
+        if (!fw && this.startRegionRe.test(line))
+            return "start"; // lineCommentRegionStart
+    
+        return fw;
+    };
 
     this.getFoldWidgetRange = function(session, foldStyle, row, forceMultiline) {
         var line = session.getLine(row);
+        
+        if (this.startRegionRe.test(line))
+            return this.getCommentRegionBlock(session, line, row);
+        
         var match = line.match(this.foldingStartMarker);
         if (match) {
             var i = match.index;
@@ -357,25 +387,47 @@ oop.inherits(FoldMode, BaseFoldMode);
         
         return new Range(startRow, startColumn, endRow, session.getLine(endRow).length);
     };
+    this.getCommentRegionBlock = function(session, line, row) {
+        var startColumn = line.search(/\s*$/);
+        var maxRow = session.getLength();
+        var startRow = row;
+        
+        var re = /^\s*(?:\/\*|\/\/|--)#?(end)?region\b/;
+        var depth = 1;
+        while (++row < maxRow) {
+            line = session.getLine(row);
+            var m = re.exec(line);
+            if (!m) continue;
+            if (m[1]) depth--;
+            else depth++;
+
+            if (!depth) break;
+        }
+
+        var endRow = row;
+        if (endRow > startRow) {
+            return new Range(startRow, startColumn, endRow, line.length);
+        }
+    };
 
 }).call(FoldMode.prototype);
 
 });
 
-define("ace/mode/praat",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/praat_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/mode/folding/cstyle"], function(require, exports, module) {
+define("ace/mode/praat",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/praat_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var PraatHighlightRules = require("./praat_highlight_rules").PraatHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var Range = require("../range").Range;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 
 var Mode = function() {
     this.HighlightRules = PraatHighlightRules;
-    
     this.$outdent = new MatchingBraceOutdent();
+    this.foldingRules = new CStyleFoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
@@ -394,7 +446,7 @@ oop.inherits(Mode, TextMode);
         }
 
         if (state == "start") {
-            var match = line.match(/^.*[\{\(\[\:]\s*$/);
+            var match = line.match(/^.*[\{\(\[:]\s*$/);
             if (match) {
                 indent += tab;
             }
@@ -416,3 +468,11 @@ oop.inherits(Mode, TextMode);
 
 exports.Mode = Mode;
 });
+                (function() {
+                    window.require(["ace/mode/praat"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

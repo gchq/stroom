@@ -6,6 +6,62 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add content packs to stroom distribution
+
+* Change distribution to use send_to_stroom.sh v1.5
+
+* Updated stroom expression to v1.4.12 to improve handling or errors values and add new type checking functions `isBoolean()`, `isDouble()`, `isError()`, `isInteger()`, `isLong()`, `isNull()`, `isNumber()`, `isString()`, `isValue()`. Testing equality of null with `x=null()` is no longer valid and must be replaced with `isNull(x)`.
+
+* Issue **#920** : Fix error handling for sql stats queries
+
+* Remove log sending cron process from docker images (now handled by stroom-log-sender).
+
+* Issue **#924** : The `FindReplaceFilter` now records the location of errors.
+
+* Issue **#939** : Added `remotedn` to default list of keys to include in `receive.log`.
+
+* Add git_tag and git_commit labels to docker images
+
+* Uplift stroom-logs content pack in docker image to` v2.0-alpha.2`
+
+* Stop truncation of `logger` in logback console logs
+
+* Issue **#921** : Renaming open documents now correctly changes their tab name. Documents that are being edited now prevent the rename operation until they are saved.
+
+* Issue **#922** : The explorer now changes the selection on a right click if the item clicked is not already selected (could be part of a multi select).
+
+* Issue **#903** : Feed names can now contain wildcard characters when filtering in the data browser.
+
+* Add API to allow creation of an internal Stroom user.
+
+* Fix logger configuration for SqlExceptionHelper
+
+* Add template-pipelines and standard-pipelines content packs to docker image
+
+* Issue **#904** : The UI now shows dictionary names in expressions without the need to enter edit mode.
+
+* Updated ACE editor to v1.4.1.
+
+* Add colours to console logs in docker.
+
+* Issue **#869** : Delete will now properly delete all descendant nodes and documents when deleting folders but will not delete items from the tree if they cannot be deleted, e.g. feeds that have associated data.
+
+* Issue **#916** : You can no longer export empty folders or import nothing.
+
+* Issue **#911** : Changes to feeds and pipelines no longer clear data browsing filters.
+
+* Issue **#907** : Default volumes are now created as soon as they are needed.
+
+* Issue **#910** : Changes to index settings in the UI now register as changes and enable save.
+
+* Issue **#913** : Improve FindReplaceFilter to cope with more complex conditions.
+
+* Change log level for SqlExceptionHelper to OFF, to stop expected exceptions from polluting the logs
+
+* Fix invalid requestLog logFormat in proxy configuration
+
+* Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
+
 * Add fixed version of send_to_stroom.sh to release distribution
 
 * Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8

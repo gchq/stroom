@@ -14,7 +14,7 @@ SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
 MINOR_VER_FLOATING_TAG=""
 #This is a whitelist of branches to produce docker builds for
-BRANCH_WHITELIST_REGEX='(^dev$|^master$|^v[0-9].*$)'
+BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+\.[0-9].*$'
 CRON_TAG_SUFFIX="DAILY"
 LATEST_SUFFIX="-LATEST"
@@ -100,15 +100,27 @@ releaseToDockerHub() {
         fi
     done
 
-    echo -e "Building and releasing a docker image to ${GREEN}${dockerRepo}${NC} with tags: ${GREEN}${allTagArgs}${NC}"
+    echo -e "Building a docker image with tags: ${GREEN}${allTagArgs}${NC}"
     echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
     echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
 
-    #The username and password are configured in the travis gui
-    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" >/dev/null 2>&1
+    # If we have a TRAVIS_TAG (git tag) then use that, else use the floating tag
+    docker build \
+        ${allTagArgs} \
+        --build-arg GIT_COMMIT=${TRAVIS_COMMIT} \
+        --build-arg GIT_TAG=${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}} \
+        ${contextRoot}
 
-    docker build ${allTagArgs} ${contextRoot} >/dev/null 2>&1
+    echo -e "Logging in to Docker"
+
+    #The username and password are configured in the travis gui
+    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+
+    echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with tags: ${GREEN}${allTagArgs}${NC}"
     docker push ${dockerRepo} >/dev/null 2>&1
+
+    echo -e "Logging out of Docker"
+    docker logout >/dev/null 2>&1
 }
 
 #establish what version of stroom we are building

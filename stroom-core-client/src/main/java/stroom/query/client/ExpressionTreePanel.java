@@ -62,13 +62,18 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
 
-    public ExpressionTreePanel(final Provider<EntityDropDownPresenter> dictionaryProvider) {
-        final EntityDropDownPresenter dictionaryPresenter = dictionaryProvider.get();
+    public ExpressionTreePanel(final Provider<EntityDropDownPresenter> docRefProvider) {
+        final EntityDropDownPresenter docRefPresenter = docRefProvider.get();
+        docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+        docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
+
+        final EntityDropDownPresenter dictionaryPresenter = docRefProvider.get();
         dictionaryPresenter.setIncludedTypes(DictionaryDoc.ENTITY_TYPE);
         dictionaryPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         dictionaryPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
+
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(dictionaryPresenter);
+        termEditor = new TermEditor(docRefPresenter, dictionaryPresenter);
 
         panel = new FlowPanel();
         setAbsoluteLeftTop(panel.getElement());

@@ -317,6 +317,9 @@ public class StreamEventLog {
             case IN_DICTIONARY: {
                 items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "dictionary: " + expressionTerm.getDictionary()));
             }
+            case IS_DOC_REF: {
+                items.add(EventLoggingUtil.createTerm(expressionTerm.getField(), TermCondition.EQUALS, "docRef: " + expressionTerm.getDocRef()));
+            }
         }
     }
 }

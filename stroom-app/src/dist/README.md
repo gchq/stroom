@@ -12,14 +12,14 @@ You can use the `start.sh`/`stop.sh`/`restart.sh` scripts to manage the applicat
 
 You can send Stroom's logs to Stroom using `bin/send_to_stroom.sh`.  If you run this script it'll tell you exactly what parameters it expects. But you will want to use the following:
 ```
-./bin/send_to_stroom.sh logs/access STROOM_ACCESS_LOG Stroom Ref http://localhost:8080/stroom/datafeed -max_sleep 0 --no_pretty --delete_after_sending --secure
+./bin/send_to_stroom.sh logs/access STROOM-ACCESS-EVENTS Stroom Ref http://localhost:8080/stroom/datafeed --file-regex '.*/[a-z]+-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}\.log' -max_sleep 10 --no_pretty --delete_after_sending --secure
 
-./bin/send_to_stroom.sh logs/events STROOM_EVENTS_LOG Stroom Ref http://localhost:8080/stroom/datafeed -max_sleep 0 --no_pretty --delete_after_sending --secure
+./bin/send_to_stroom.sh logs/events STROOM-USER-EVENTS Stroom Ref http://localhost:8080/stroom/datafeed --file-regex '.*/[a-z]+-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}\.log' -max_sleep 10 --no_pretty --delete_after_sending --secure
 
-./bin/send_to_stroom.sh logs/app STROOM_APP_LOG Stroom Ref http://localhost:8080/stroom/datafeed -max_sleep 0 --no_pretty --delete_after_sending --secure
+./bin/send_to_stroom.sh logs/app STROOM-APP-EVENTS Stroom Ref http://localhost:8080/stroom/datafeed --file-regex '.*/[a-z]+-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}\.log' -max_sleep 10 --no_pretty --delete_after_sending --secure
 ```
 
-In the above `STROOM_ACCESS_LOG`, `STROOM_EVENT_LOG`, and `STROOM_APP_LOG` are all feeds. These feeds need to exist for this script to succeed. They are part of the [stroom-logs content pack](https://github.com/gchq/stroom-content/tree/master/source/stroom-logs) and you likely already have them installed.
+In the above `STROOM-ACCESS-EVENTS`, `STROOM-USER-EVENTS`, and `STROOM-APP-EVENTS` are all feeds. These feeds need to exist for this script to succeed. They are part of the [stroom-logs content pack](https://github.com/gchq/stroom-content/tree/master/source/stroom-logs) and you likely already have them installed.
 
 ## Running Stroom using `systemd`
 There is an example `systemd` configuration in `conf/stroom.service`. If you wish to use this you must edit some properties:

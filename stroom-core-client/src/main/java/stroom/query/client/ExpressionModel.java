@@ -66,6 +66,7 @@ public class ExpressionModel {
                 term.setCondition(expressionTerm.getCondition());
                 term.setValue(expressionTerm.getValue());
                 term.setDictionary(expressionTerm.getDictionary());
+                term.setDocRef(expressionTerm.getDocRef());
                 term.setEnabled(expressionTerm.getEnabled());
 
                 return term;
@@ -110,6 +111,7 @@ public class ExpressionModel {
                             .condition(term.getCondition())
                             .value(term.getValue())
                             .dictionary(term.getDictionary())
+                            .docRef(term.getDocRef())
                             .build());
                 }
             }

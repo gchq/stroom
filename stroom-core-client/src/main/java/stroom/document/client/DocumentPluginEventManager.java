@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.KeyboardInterceptor.KeyTest;
@@ -92,6 +93,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DocumentPluginEventManager extends Plugin {
     private static final KeyTest CTRL_S = event -> event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
@@ -254,7 +256,10 @@ public class DocumentPluginEventManager extends Plugin {
             // Hide the rename document presenter.
             HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-            rename(event.getDocRef(), event.getDocName()).onSuccess(this::highlight);
+            rename(event.getDocRef(), event.getDocName()).onSuccess(docRef -> {
+                highlight(docRef);
+                RefreshDocumentEvent.fire(this, docRef);
+            });
         }));
 
         // 10. Handle entity delete events.
@@ -269,7 +274,7 @@ public class DocumentPluginEventManager extends Plugin {
             }
         }));
 
-//////////////////////////////
+        //////////////////////////////
         // END EXPLORER EVENTS
         ///////////////////////////////
 
@@ -313,21 +318,45 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
 
+    private void renameItems(final List<ExplorerNode> explorerNodeList) {
+        final List<ExplorerNode> dirtyList = new ArrayList<>();
+        final List<ExplorerNode> cleanList = new ArrayList<>();
+
+        explorerNodeList.forEach(node -> {
+            final DocRef docRef = node.getDocRef();
+            final DocumentPlugin<?> plugin = pluginMap.get(docRef.getType());
+            if (plugin != null && plugin.isDirty(docRef)) {
+                dirtyList.add(node);
+            } else {
+                cleanList.add(node);
+            }
+        });
+
+        if (dirtyList.size() > 0) {
+            final DocRef docRef = dirtyList.get(0).getDocRef();
+            AlertEvent.fireWarn(this, "You must save changes to " + docRef.getType() + " '"
+                    + docRef.getDisplayValue()
+                    + "' before it can be renamed.", null);
+        } else if (cleanList.size() > 0) {
+            ShowRenameDocumentDialogEvent.fire(DocumentPluginEventManager.this, cleanList);
+        }
+    }
+
     private void deleteItems(final List<ExplorerNode> explorerNodeList) {
         if (explorerNodeList != null) {
-            final List<DocRef> docRefs = new ArrayList<>();
-            for (final ExplorerNode explorerNode : explorerNodeList) {
-                docRefs.add(explorerNode.getDocRef());
-            }
-
+            final List<DocRef> docRefs = explorerNodeList.stream().map(ExplorerNode::getDocRef).collect(Collectors.toList());
             if (docRefs.size() > 0) {
-                delete(docRefs).onSuccess(result -> {
-                    if (result.getMessage().length() > 0) {
-                        AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to delete some items", result.getMessage(), null);
-                    }
+                ConfirmEvent.fire(DocumentPluginEventManager.this, "Are you sure you want to delete these items?", ok -> {
+                    if (ok) {
+                        delete(docRefs).onSuccess(result -> {
+                            if (result.getMessage().length() > 0) {
+                                AlertEvent.fireInfo(DocumentPluginEventManager.this, "Unable to delete some items", result.getMessage(), null);
+                            }
 
-                    // Refresh the explorer tree so the documents are marked as deleted.
-                    RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                            // Refresh the explorer tree so the documents are marked as deleted.
+                            RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                        });
+                    }
                 });
             }
         }
@@ -510,8 +539,8 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Folders are not valid items for requesting info
         final boolean containsFolder = documentPermissionMap.keySet().stream()
-                    .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
-                    .orElse(false);
+                .findFirst().map(n -> DocumentTypes.isFolder(n.getType()))
+                .orElse(false);
 
         // Actions allowed based on permissions of selection
         final boolean allowRead = readableItems.size() > 0;
@@ -617,7 +646,7 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private MenuItem createRenameMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
-        final Command command = () -> ShowRenameDocumentDialogEvent.fire(DocumentPluginEventManager.this, explorerNodeList);
+        final Command command = () -> renameItems(explorerNodeList);
 
         return new IconMenuItem(priority, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null,
                 enabled, command);

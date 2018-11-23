@@ -3,6 +3,7 @@
 # Tells the user if stroom is running or not.
 
 source bin/utils.sh
+source config/scripts.env
 
 readonly NOT_RUNNING_MESSAGE="Stroom is not running"
 readonly RUNNING_MESSAGE="Stroom is running under pid"

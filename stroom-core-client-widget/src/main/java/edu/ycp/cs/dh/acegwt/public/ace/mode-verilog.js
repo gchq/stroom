@@ -37,11 +37,23 @@ var keywords = "always|and|assign|automatic|begin|buf|bufif0|bufif1|case|casex|c
             token : "comment",
             regex : "//.*$"
         }, {
-            token : "string",           // " string
-            regex : '".*?"'
+            token : "comment.start",
+            regex : "/\\*",
+            next : [
+                { token : "comment.end", regex : "\\*/", next: "start" },
+                { defaultToken : "comment" }
+            ]
         }, {
-            token : "string",           // ' string
-            regex : "'.*?'"
+            token : "string.start",
+            regex : '"',
+            next : [
+                { token : "constant.language.escape", regex : /\\(?:[ntvfa\\"]|[0-7]{1,3}|\x[a-fA-F\d]{1,2}|)/, consumeLineEnd : true },
+                { token : "string.end", regex : '"|$', next: "start" },
+                { defaultToken : "string" }
+            ]
+        }, {
+            token : "string",
+            regex : "'^[']'"
         }, {
             token : "constant.numeric", // float
             regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
@@ -62,6 +74,7 @@ var keywords = "always|and|assign|automatic|begin|buf|bufif0|bufif1|case|casex|c
             regex : "\\s+"
         } ]
     };
+    this.normalizeRules();
 };
 
 oop.inherits(VerilogHighlightRules, TextHighlightRules);
@@ -79,6 +92,7 @@ var Range = require("../range").Range;
 
 var Mode = function() {
     this.HighlightRules = VerilogHighlightRules;
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 
@@ -86,6 +100,8 @@ oop.inherits(Mode, TextMode);
 
     this.lineCommentStart = "//";
     this.blockComment = {start: "/*", end: "*/"};
+    this.$quotes = { '"': '"' };
+
 
     this.$id = "ace/mode/verilog";
 }).call(Mode.prototype);
@@ -93,3 +109,11 @@ oop.inherits(Mode, TextMode);
 exports.Mode = Mode;
 
 });
+                (function() {
+                    window.require(["ace/mode/verilog"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

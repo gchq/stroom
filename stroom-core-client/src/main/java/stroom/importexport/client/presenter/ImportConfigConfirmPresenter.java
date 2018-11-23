@@ -112,13 +112,23 @@ public class ImportConfigConfirmPresenter extends
 
         if (ok) {
             boolean warnings = false;
+            int count = 0;
             for (final ImportState importState : confirmList) {
-                if (importState.isAction() && importState.getSeverity().greaterThan(Severity.INFO)) {
-                    warnings = true;
+                if (importState.isAction()) {
+                    count++;
+                    if (importState.getSeverity().greaterThan(Severity.INFO)) {
+                        warnings = true;
+                    }
                 }
             }
 
-            if (warnings) {
+            if (count == 0) {
+                AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, "No items are selected for import", () -> {
+                    // Re-enable popup buttons.
+                    EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
+                            ImportConfigConfirmPresenter.this);
+                });
+            } else if (warnings) {
                 ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "There are warnings in the items selected.  Are you sure you want to import?.",
                         result -> {

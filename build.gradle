@@ -237,7 +237,10 @@ ext.libs = [
         zzDUMMYzz                      : "makes sorting easier"
 ]
 
+def contentPackDownloadDir = "${project.buildDir}/contentPackDownload"
+ext.contentPackDownloadDir = contentPackDownloadDir
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
+ext.contentPackImportDir = contentPackImportDir
 def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
 def visualisationsContentPackVer = "v3.0.4"
 def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
@@ -249,8 +252,10 @@ ext.contentPacks = [
         'internal-dashboards'             : 'v1.1',
         'internal-statistics-sql'         : 'v2.1',
         'internal-statistics-stroom-stats': 'v2.1',
+        'standard-pipelines'              : 'v0.1',
         'stroom-101'                      : 'v1.0',
-        'stroom-logs'                     : 'v1.1'
+        'stroom-logs'                     : 'v2.0-alpha.2',
+        'template-pipelines'              : 'v0.2'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
@@ -624,8 +629,19 @@ task clearContentPackImportDir(type: Delete) {
     }
 }
 
+task clearContentPackDownloadDir(type: Delete) {
+    //ensure the import directory exists
+    new File(contentPackDownloadDir).mkdirs()
+
+    //cleans out any zip files in the contentPackImportDir
+    delete fileTree(new File(contentPackDownloadDir)) {
+        include '**/*.zip'
+    }
+}
+
 task downloadStroomContent() {
 
+    dependsOn clearContentPackDownloadDir
     dependsOn clearContentPackImportDir
 
     doLast {
@@ -636,14 +652,14 @@ task downloadStroomContent() {
             def packUrl = "${contentReleasesUrl}${packName}-${packVer}/${packName}-${packVer}.zip"
             download {
                 src packUrl
-                dest new File(contentPackImportDir)
+                dest new File(contentPackDownloadDir)
                 overwrite true
             }
         }
         //now get the visualisations pack from a different repo
         download {
             src visualisationsContentPackUrl
-            dest new File(contentPackImportDir)
+            dest new File(contentPackDownloadDir)
             overwrite true
         }
     }

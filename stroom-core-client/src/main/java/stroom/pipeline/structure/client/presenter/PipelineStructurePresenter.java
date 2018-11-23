@@ -38,6 +38,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.FetchPipelineDataAction;
@@ -169,8 +170,8 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null) {
-                final ExplorerNode entityData = (ExplorerNode) event.getSelectedItem();
+            if (event.getSelectedItem() != null && event.getSelectedItem().getDocRef().compareTo(DocRefUtil.NULL_SELECTION) != 0) {
+                final ExplorerNode entityData = event.getSelectedItem();
                 if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
                             () -> {

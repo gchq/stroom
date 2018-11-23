@@ -3,6 +3,7 @@
 # Stops Stroom
 
 source bin/utils.sh
+source config/scripts.env
 
 readonly NOT_RUNNING_MESSAGE="This deployment of Stroom is not running!"
 

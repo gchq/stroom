@@ -21,6 +21,8 @@ import stroom.util.shared.HasId;
 import stroom.util.shared.HasType;
 
 public final class DocRefUtil {
+    public static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
+
     private DocRefUtil() {
         // Utility class.
     }

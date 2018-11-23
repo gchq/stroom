@@ -21,6 +21,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeAction;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeModel {
-    static final ExplorerNode NULL_SELECTION = new ExplorerNode("", "", "None", null);
+    static final ExplorerNode NULL_SELECTION = ExplorerNode.create(DocRefUtil.NULL_SELECTION);
 
     private final OpenItems<ExplorerNode> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();

@@ -6,21 +6,27 @@ var TextLayer = require("../layer/text").Text;
 var baseStyles = ".ace_static_highlight {\
 font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'Droid Sans Mono', monospace;\
 font-size: 12px;\
+white-space: pre-wrap\
 }\
 .ace_static_highlight .ace_gutter {\
-width: 25px !important;\
-float: left;\
+width: 2em;\
 text-align: right;\
 padding: 0 3px 0 0;\
 margin-right: 3px;\
-position: static !important;\
 }\
-.ace_static_highlight .ace_line { clear: both; }\
+.ace_static_highlight.ace_show_gutter .ace_line {\
+padding-left: 2.6em;\
+}\
+.ace_static_highlight .ace_line { position: relative; }\
 .ace_static_highlight .ace_gutter-cell {\
 -moz-user-select: -moz-none;\
 -khtml-user-select: none;\
 -webkit-user-select: none;\
 user-select: none;\
+top: 0;\
+bottom: 0;\
+left: 0;\
+position: absolute;\
 }\
 .ace_static_highlight .ace_gutter-cell:before {\
 content: counter(ace_line, decimal);\
@@ -33,6 +39,60 @@ counter-reset: ace_line;\
 var config = require("../config");
 var dom = require("../lib/dom");
 
+function Element(type) {
+    this.type = type;
+    this.style = {};
+    this.textContent = "";
+}
+Element.prototype.cloneNode = function() {
+    return this;
+};
+Element.prototype.appendChild = function(child) {
+    this.textContent += child.toString();
+};
+Element.prototype.toString = function() {
+    var stringBuilder = [];
+    if (this.type != "fragment") {
+        stringBuilder.push("<", this.type);
+        if (this.className)
+            stringBuilder.push(" class='", this.className, "'");
+        var styleStr = [];
+        for (var key in this.style) {
+            styleStr.push(key, ":", this.style[key]);
+        }
+        if (styleStr.length)
+            stringBuilder.push(" style='", styleStr.join(""), "'");
+        stringBuilder.push(">");
+    }
+    
+    if (this.textContent)
+        stringBuilder.push(this.textContent);
+    
+    if (this.type != "fragment") {
+        stringBuilder.push("</", this.type, ">");
+    }
+    
+    return stringBuilder.join("");
+};
+
+
+var simpleDom = {
+    createTextNode: function(textContent, element) {
+        return textContent;
+    },
+    createElement: function(type) {
+        return new Element(type);
+    },
+    createFragment: function() {
+        return new Element("fragment");
+    }
+};
+
+var SimpleTextLayer = function() {
+    this.config = {};
+    this.dom = simpleDom;
+};
+SimpleTextLayer.prototype = TextLayer.prototype;
 
 var highlight = function(el, opts, callback) {
     var m = el.className.match(/lang-(\w+)/);
@@ -56,7 +116,7 @@ var highlight = function(el, opts, callback) {
             }
         }
     } else {
-        data = dom.getInnerText(el);
+        data = el.textContent;
         if (opts.trim)
             data = data.trim();
     }
@@ -111,45 +171,56 @@ highlight.renderSync = function(input, mode, theme, lineStart, disableGutter) {
     session.setUseWorker(false);
     session.setMode(mode);
 
-    var textLayer = new TextLayer(document.createElement("div"));
+    var textLayer = new SimpleTextLayer();
     textLayer.setSession(session);
-    textLayer.config = {
-        characterWidth: 10,
-        lineHeight: 20
-    };
+    Object.keys(textLayer.$tabStrings).forEach(function(k) {
+        if (typeof textLayer.$tabStrings[k] == "string") {
+            var el = simpleDom.createFragment();
+            el.textContent = textLayer.$tabStrings[k];
+            textLayer.$tabStrings[k] = el;
+        }
+    });
 
     session.setValue(input);
-
-    var stringBuilder = [];
     var length =  session.getLength();
+    
+    var outerEl = simpleDom.createElement("div");
+    outerEl.className = theme.cssClass;
+    
+    var innerEl = simpleDom.createElement("div");
+    innerEl.className = "ace_static_highlight" + (disableGutter ? "" : " ace_show_gutter");
+    innerEl.style["counter-reset"] = "ace_line " + (lineStart - 1);
 
-    for(var ix = 0; ix < length; ix++) {
-        stringBuilder.push("<div class='ace_line'>");
-        if (!disableGutter)
-            stringBuilder.push("<span class='ace_gutter ace_gutter-cell' unselectable='on'>" + /*(ix + lineStart) + */ "</span>");
-        textLayer.$renderLine(stringBuilder, ix, true, false);
-        stringBuilder.push("\n</div>");
+    for (var ix = 0; ix < length; ix++) {
+        var lineEl = simpleDom.createElement("div");
+        lineEl.className = "ace_line";
+        
+        if (!disableGutter) {
+            var gutterEl = simpleDom.createElement("span");
+            gutterEl.className ="ace_gutter ace_gutter-cell";
+            gutterEl.textContent = ""; /*(ix + lineStart) + */
+            lineEl.appendChild(gutterEl);
+        }
+        textLayer.$renderLine(lineEl, ix, false);
+        innerEl.appendChild(lineEl);
     }
-    var html = "<div class='" + theme.cssClass + "'>" +
-        "<div class='ace_static_highlight' style='counter-reset:ace_line " + (lineStart - 1) + "'>" +
-            stringBuilder.join("") +
-        "</div>" +
-    "</div>";
-
-    textLayer.destroy();
+    outerEl.appendChild(innerEl);
 
     return {
         css: baseStyles + theme.cssText,
-        html: html,
+        html: outerEl.toString(),
         session: session
     };
 };
 
 module.exports = highlight;
-module.exports.highlight =highlight;
+module.exports.highlight = highlight;
 });
-;
                 (function() {
-                    window.require(["ace/ext/static_highlight"], function() {});
+                    window.require(["ace/ext/static_highlight"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
                 })();
             

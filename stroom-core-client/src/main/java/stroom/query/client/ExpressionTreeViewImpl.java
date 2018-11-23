@@ -40,9 +40,9 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     private MySingleSelectionModel<Item> selectionModel;
 
     @Inject
-    public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> dictionaryProvider) {
-        treePanel = new ExpressionTreePanel(dictionaryProvider);
-        final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(dictionaryProvider);
+    public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> docRefProvider) {
+        treePanel = new ExpressionTreePanel(docRefProvider);
+        final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(docRefProvider);
 
         layoutPanel = new DraggableTreePanel<Item>(treePanel, subTreePanel) {
             @Override

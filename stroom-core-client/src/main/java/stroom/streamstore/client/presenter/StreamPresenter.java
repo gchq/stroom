@@ -99,6 +99,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private ButtonView streamRelationListUndelete;
     private ButtonView streamRelationListProcess;
 
+    private boolean hasSetCriteria;
+
     @Inject
     public StreamPresenter(final EventBus eventBus, final StreamView view, final LocationManager locationManager,
                            final StreamListPresenter streamListPresenter,
@@ -431,24 +433,32 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 //    }
 
     private void setFeedCriteria(final String feedName) {
-        this.feedName = feedName;
-        showStreamListButtons(true);
-        showStreamRelationListButtons(true);
+        // Only set this criteria once.
+        if (!hasSetCriteria) {
+            hasSetCriteria = true;
+            this.feedName = feedName;
+            showStreamListButtons(true);
+            showStreamRelationListButtons(true);
 
-        findStreamCriteria = createFindStreamCriteria();
-        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
+            findStreamCriteria = createFindStreamCriteria();
+            findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
 
-        initCriteria();
+            initCriteria();
+        }
     }
 
     private void setPipelineCriteria(final DocRef pipelineRef) {
-        showStreamListButtons(false);
-        showStreamRelationListButtons(false);
+        // Only set this criteria once.
+        if (!hasSetCriteria) {
+            hasSetCriteria = true;
+            showStreamListButtons(false);
+            showStreamRelationListButtons(false);
 
-        findStreamCriteria = createFindStreamCriteria();
-        findStreamCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineRef));
+            findStreamCriteria = createFindStreamCriteria();
+            findStreamCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineRef));
 
-        initCriteria();
+            initCriteria();
+        }
     }
 
     private void setNullCriteria() {

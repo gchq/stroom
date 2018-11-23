@@ -161,7 +161,7 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
      */
     @SuppressWarnings("unchecked")
     public void save(final DocumentTabData tabData) {
-        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
             if (presenter.isDirty()) {
                 final D document = presenter.getEntity();
@@ -178,6 +178,15 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
             save(tabData);
         }
+    }
+
+    public boolean isDirty(final DocRef docRef) {
+        final DocumentTabData tabData = documentToTabDataMap.get(docRef);
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
+            final DocumentEditPresenter<?, ?> presenter = (DocumentEditPresenter<?, ?>) tabData;
+            return presenter.isDirty();
+        }
+        return false;
     }
 
 //    // /**

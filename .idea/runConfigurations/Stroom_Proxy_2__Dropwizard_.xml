@@ -5,7 +5,6 @@
     <option name="MAIN_CLASS_NAME" value="stroom.startup.App" />
     <module name="stroom-app_main" />
     <option name="PROGRAM_PARAMETERS" value="server proxy2.yml" />
-    <option name="VM_PARAMETERS" value="-Djavax.net.debug=all" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />
     <method v="2">
       <option name="Make" enabled="true" />

@@ -28,4 +28,12 @@ public final class Operator extends Item {
     public void setOp(final Op op) {
         this.op = op;
     }
+
+    @Override
+    public String toString() {
+        if (op != null) {
+            return op.getDisplayValue();
+        }
+        return "";
+    }
 }

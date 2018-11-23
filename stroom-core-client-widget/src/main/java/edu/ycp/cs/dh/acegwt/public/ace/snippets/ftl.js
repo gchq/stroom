@@ -1,1 +1,15 @@
-define("ace/snippets/ftl",["require","exports","module"],function(e,t,n){t.snippetText="",t.scope="ftl"})
+define("ace/snippets/ftl",["require","exports","module"], function(require, exports, module) {
+"use strict";
+
+exports.snippetText = "";
+exports.scope = "ftl";
+
+});
+                (function() {
+                    window.require(["ace/snippets/ftl"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

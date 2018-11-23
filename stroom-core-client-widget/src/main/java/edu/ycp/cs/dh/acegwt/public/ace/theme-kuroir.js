@@ -23,7 +23,6 @@ background: rgba(245, 170, 0, 0.57);\
 }\
 .ace-kuroir.ace_multiselect .ace_selection.ace_start {\
 box-shadow: 0 0 3px 0px #E8E9E8;\
-border-radius: 2px;\
 }\
 .ace-kuroir .ace_marker-layer .ace_step {\
 background: rgb(198, 219, 174);\
@@ -41,6 +40,9 @@ background-color: rgba(203, 220, 47, 0.22);\
 .ace-kuroir .ace_marker-layer .ace_selected-word {\
 border: 1px solid rgba(245, 170, 0, 0.57);\
 }\
+.ace-kuroir .ace_invisible {\
+color: #BFBFBF\
+}\
 .ace-kuroir .ace_fold {\
 border-color: #363636;\
 }\
@@ -57,3 +59,11 @@ background-color:rgba(191, 97, 51, 0.051);}.ace-kuroir .ace_markup.ace_list{colo
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass);
 });
+                (function() {
+                    window.require(["ace/theme/kuroir"], function(m) {
+                        if (typeof module == "object" && typeof exports == "object" && module) {
+                            module.exports = m;
+                        }
+                    });
+                })();
+            

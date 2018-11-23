@@ -25,13 +25,12 @@
 # only have proxy then you take a 20Mb hit for the jdk bits you don't need.
 FROM openjdk:8u181-jdk-alpine3.8 as stroom-base-stage
 
-# bash/curl required for sending logs
+# curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
-        bash \
         curl \
         su-exec \
         tini
@@ -46,26 +45,12 @@ COPY ./build/stroom-app-all.jar /stroom-app-all.jar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-# ~~~ send logs download stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Intermediate build stage to grab all the send logs scripts
-# later copy them all in one go to reduce the number of layers
-# Have to use alpine rather than scratch so we can chmod
-FROM alpine:3.8 as send-logs-scripts-stage
-WORKDIR /scripts
-
-ARG SEND_TO_STROOM_VERSION=send-to-stroom-v1.2.1
-
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom.sh .
-ADD https://raw.githubusercontent.com/gchq/stroom-clients/${SEND_TO_STROOM_VERSION}/bash/send_to_stroom_args.sh .
-RUN chmod u+x ./*.sh
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
 # ~~~ Final build stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 FROM stroom-base-stage
+
+# IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
+ENV IN_DOCKER="true"
 
 # This is where stroom will run from and any local data will be
 WORKDIR /stroom-proxy
@@ -109,16 +94,16 @@ RUN \
     mkdir -p /stroom-proxy/repo && \
     chown -R proxy:proxy /stroom-proxy
 
-# Copy in all the send logs scripts downloaded in the intermediate build stage
-COPY --chown=proxy:proxy --from=send-logs-scripts-stage /scripts /stroom-proxy
-
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
 COPY --chown=proxy:proxy docker-entrypoint.sh /stroom-proxy/
-COPY --chown=proxy:proxy create_crontab.sh /stroom-proxy/
 COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
 
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
 
-# IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
-ENV IN_DOCKER="true"
+# Label the image so we can see what commit/tag it came from
+ARG GIT_COMMIT=unspecified
+ARG GIT_TAG=unspecified
+LABEL \
+    git_commit="$GIT_COMMIT" \
+    git_tag="$GIT_TAG"
