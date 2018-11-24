@@ -208,22 +208,23 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         fieldSet.forEach(fieldName -> {
             try {
                 final DataSourceField field = StreamDataSource.getFieldMap().get(fieldName);
-                switch (field.getType()) {
-                    case FIELD:
-                        final String string = resultSet.getString(fieldName);
-                        attributeMap.put(fieldName, string);
-                        break;
-                    case DOC_REF:
-                        final String name = resultSet.getString(fieldName);
-                        attributeMap.put(fieldName, name);
-                        break;
-                    case DATE_FIELD:
-                    case ID:
-                    case NUMERIC_FIELD:
-                        final long number = resultSet.getLong(fieldName);
-                        attributeMap.put(fieldName, number);
-                        break;
-
+                if (field != null) {
+                    switch (field.getType()) {
+                        case FIELD:
+                            final String string = resultSet.getString(fieldName);
+                            attributeMap.put(fieldName, string);
+                            break;
+                        case DOC_REF:
+                            final String name = resultSet.getString(fieldName);
+                            attributeMap.put(fieldName, name);
+                            break;
+                        case DATE_FIELD:
+                        case ID:
+                        case NUMERIC_FIELD:
+                            final long number = resultSet.getLong(fieldName);
+                            attributeMap.put(fieldName, number);
+                            break;
+                    }
                 }
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
