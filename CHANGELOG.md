@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#947** : Fixed issue where data retention policy contains incorrect field names.
+
 * Add content packs to stroom distribution
 
 * Change distribution to use send_to_stroom.sh v1.5

@@ -190,11 +190,16 @@ public class DataRetentionStreamFinder implements AutoCloseable {
     }
 
     private DataRetentionRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<DataRetentionRule> activeRules) {
-        for (final DataRetentionRule rule : activeRules) {
-            if (expressionMatcher.match(attributeMap, rule.getExpression())) {
-                return rule;
+        try {
+            for (final DataRetentionRule rule : activeRules) {
+                if (expressionMatcher.match(attributeMap, rule.getExpression())) {
+                    return rule;
+                }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
+
         return null;
     }
 
