@@ -282,6 +282,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     public void registerChangeListner(final Runnable changeListener) {
         changeListeners.add(Objects.requireNonNull(changeListener));
+        notifyListenersOfChange();
     }
 
     private void notifyListenersOfChange() {
