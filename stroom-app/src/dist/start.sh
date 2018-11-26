@@ -6,16 +6,6 @@
 source bin/utils.sh
 source config/scripts.env
 
-check_is_configured() {
-  local IP_ADDRESS_TAG="IP_ADDRESS"
-  local STROOM_CONF_PATH="config/stroom.conf"
-  if grep -q "${IP_ADDRESS_TAG}" "${STROOM_CONF_PATH}"; then
-    echo 
-    error "It looks like you haven't configured IP addresses in ${BLUE}config/stroom.conf${NC}. You need to replace all instances of ${BLUE}IP_ADDRESS${NC} before Stroom can start."
-    exit 1
-  fi
-}
-
 start() {
   # We pipe the output of nohup to /dev/null because everything we might need for debugging
   # should be caputured somewhere in 'logs'. If there's a problem starting and the logs aren't
@@ -33,10 +23,10 @@ start() {
   wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/admin"
 
   # Stroom is now up or we have given up waiting so check the health
-  #./health.sh
+  ./health.sh
 
   # Display the banner, URLs and login details
-  #./info.sh
+  ./info.sh
 }
 
 main(){
