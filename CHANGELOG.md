@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#923** : Dashboard queries will now terminate if there are no index shards to search.
+
 * Issue **#953** : Fixed NPE.
 
 * Issue **#947** : Fixed issue where data retention policy contains incorrect field names.
