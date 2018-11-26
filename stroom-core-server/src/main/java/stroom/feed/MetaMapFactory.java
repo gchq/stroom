@@ -16,7 +16,10 @@
 
 package stroom.feed;
 
+import stroom.util.date.DateUtil;
+
 import javax.servlet.http.HttpServletRequest;
+import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
@@ -30,14 +33,29 @@ public class MetaMapFactory {
 
     public static MetaMap create(final HttpServletRequest httpServletRequest) {
         MetaMap metaMap = new MetaMap();
+        addAllSecureTokens(httpServletRequest, metaMap);
         addAllHeaders(httpServletRequest, metaMap);
         addAllQueryString(httpServletRequest, metaMap);
 
         return metaMap;
     }
 
+    private static void addAllSecureTokens(final HttpServletRequest httpServletRequest,
+                                           final MetaMap metaMap) {
+        final X509Certificate[] certs = (X509Certificate[]) httpServletRequest.getAttribute("javax.servlet.request.X509Certificate");
+
+        if (certs!=null && certs.length > 0 && certs[0]!=null) {
+            final X509Certificate cert = certs[0];
+            final String remoteDN = cert.getIssuerDN().toString();
+            final String remoteCertExpiry = DateUtil.createNormalDateTimeString(cert.getNotAfter().getTime());
+            metaMap.put(StroomHeaderArguments.REMOTE_DN, remoteDN);
+            metaMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY, remoteCertExpiry);
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private static void addAllHeaders(HttpServletRequest httpServletRequest, MetaMap metaMap) {
+    private static void addAllHeaders(final HttpServletRequest httpServletRequest,
+                                      final MetaMap metaMap) {
         Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
