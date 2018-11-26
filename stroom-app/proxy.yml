@@ -6,10 +6,10 @@ server:
     port: 8090
   - type: https
     port: 9443
-    keyStorePath: ${HOME}/git/stroom-resources/dev-resources/certs/server/server.jks
+    keyStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/server.jks
     keyStorePassword: password
     keyStoreType: JKS
-    trustStorePath: ${HOME}/git/stroom-resources/dev-resources/certs/server/ca.jks
+    trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
     trustStorePassword: password
     trustStoreType: JKS
     needClientAuth: true
@@ -89,10 +89,10 @@ proxyConfig:
   proxyRequestConfig:
     receiptPolicyUuid:
   forwardStreamConfig:
-    forwardingEnabled: false
+    forwardingEnabled: true
     forwardUrl: "http://localhost:8080/stroom/datafeed"
   proxyRepositoryConfig:
-    storingEnabled: true
+    storingEnabled: false
     repoDir: "/tmp/stroom-proxy/repo"
     repositoryFormat: "${pathId}/${id}"
     rollCron: "* * *"
@@ -101,7 +101,7 @@ proxyConfig:
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
   contentSyncConfig:
-    contentSyncEnabled: false
+    contentSyncEnabled: true
     upstreamUrl:
       RuleSet: "http://localhost:8080/api/ruleset/v1"
       Dictionary: "http://localhost:8080/api/dictionary/v1"
