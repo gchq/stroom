@@ -46,7 +46,7 @@ public class MetaMapFactory {
 
         if (certs!=null && certs.length > 0 && certs[0]!=null) {
             final X509Certificate cert = certs[0];
-            final String remoteDN = cert.getIssuerDN().toString();
+            final String remoteDN = cert.getSubjectDN().toString();
             final String remoteCertExpiry = DateUtil.createNormalDateTimeString(cert.getNotAfter().getTime());
             metaMap.put(StroomHeaderArguments.REMOTE_DN, remoteDN);
             metaMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY, remoteCertExpiry);
