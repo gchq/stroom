@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#952** : Remote data sources now execute calls within the context of the user for the active query. As a result all running search `destroy()` calls will now be made as the same user that initiated the search.
+
 * Issue **#953** : Fixed NPE.
 
 * Issue **#947** : Fixed issue where data retention policy contains incorrect field names.

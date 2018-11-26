@@ -16,7 +16,6 @@
 
 package stroom.datasource;
 
-import com.google.common.base.Strings;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
@@ -27,10 +26,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.servlet.HttpSessionUtil;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -50,14 +46,11 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
-    private HttpServletRequestHolder httpServletRequestHolder;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
-                             final String url,
-                             final HttpServletRequestHolder httpServletRequestHolder) {
+                             final String url) {
         this.securityContext = securityContext;
         this.url = url;
-        this.httpServletRequestHolder = httpServletRequestHolder;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -86,22 +79,16 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
             WebTarget webTarget = client.target(url).path(path);
 
-            Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+            final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-            final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
-            if (httpServletRequest == null) {
-                throw new NullPointerException("Null HttpServletRequest");
-            }
-
-            // We'll look for the user's API key in the session, but if they're not logged in we'll try and get
-            // one from the security context.
-            String usersApiKey = HttpSessionUtil.getUserApiKey(httpServletRequest.getSession(true));
-            if(Strings.isNullOrEmpty(usersApiKey)){
-                usersApiKey = securityContext.getApiToken();
+            final String usersApiKey = securityContext.getApiToken();
+            if (usersApiKey == null) {
+                throw new RuntimeException("No API key can be retrieved to make this request! The user was " +
+                        securityContext.getUserId());
             }
 
             invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
-            Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
+            final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 return response.readEntity(responseClass);
