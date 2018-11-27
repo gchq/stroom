@@ -80,6 +80,7 @@ dependencies {
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
+    testCompile libs.assertj_core
     testCompile libs.junit
     testCompile libs.mockito_core
 
