@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#566** : Info and warning icons are now displayed in stepping screen when needed.
+
 * Issue **#953** : Fixed NPE.
 
 * Issue **#947** : Fixed issue where data retention policy contains incorrect field names.
