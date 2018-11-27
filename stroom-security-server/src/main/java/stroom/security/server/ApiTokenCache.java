@@ -21,7 +21,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.NumericDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -37,22 +36,28 @@ public class ApiTokenCache {
 
     private static final int MAX_CACHE_ENTRIES = 10000;
 
-    private final LoadingCache<String, Optional<JwtClaims>> cache;
-    private final JWTService jwtService;
+    private final LoadingCache<String, Optional<TokenAndExpiry>> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
     public ApiTokenCache(final CacheManager cacheManager,
                          final AuthenticationServiceClients authenticationServiceClients,
                          final JWTService jwtService) {
-        this.jwtService = jwtService;
 
-        final CacheLoader<String, Optional<JwtClaims>> cacheLoader = CacheLoader.from(userId -> {
+        final CacheLoader<String, Optional<TokenAndExpiry>> cacheLoader = CacheLoader.from(userId -> {
             final String token = authenticationServiceClients.getUsersApiToken(userId);
-            if (token == null) {
-                return Optional.empty();
+            if (token != null) {
+                final Optional<JwtClaims> claims = jwtService.verifyToken(token);
+                try {
+                    if (claims.isPresent()) {
+                        return Optional.of(new TokenAndExpiry(token, claims.get().getExpirationTime().getValueInMillis()));
+                    }
+                } catch (final MalformedClaimException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
             }
-            return jwtService.verifyToken(token);
+
+            return Optional.empty();
         });
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
@@ -62,26 +67,40 @@ public class ApiTokenCache {
     }
 
     String get(final String userId) {
-        Optional<JwtClaims> optional = cache.getUnchecked(userId);
+        Optional<TokenAndExpiry> optional = cache.getUnchecked(userId);
         if (optional.isPresent()) {
-            try {
-                final NumericDate oldTime = NumericDate.fromMilliseconds(System.currentTimeMillis() - 60000);
-                if (optional.get().getExpirationTime().isBefore(oldTime)) {
-                    remove(userId);
-                    optional = cache.getUnchecked(userId);
-                }
-            } catch (final MalformedClaimException e) {
-                LOGGER.debug(e.getMessage(), e);
+            final long oldTime = System.currentTimeMillis() - 60000;
+            if (optional.get().getExpiryMs() < oldTime) {
+                LOGGER.debug("Removing cached token for '{}' as it has expired", userId);
                 remove(userId);
+                optional = cache.getUnchecked(userId);
             }
         } else {
             remove(userId);
         }
 
-        return optional.map(JwtClaims::getRawJson).orElse(null);
+        return optional.map(TokenAndExpiry::getToken).orElse(null);
     }
 
     void remove(final String userId) {
         cache.invalidate(userId);
+    }
+
+    private static class TokenAndExpiry {
+        private final String token;
+        private final long expiryMs;
+
+        TokenAndExpiry(final String token, final long expiryMs) {
+            this.token = token;
+            this.expiryMs = expiryMs;
+        }
+
+        String getToken() {
+            return token;
+        }
+
+        long getExpiryMs() {
+            return expiryMs;
+        }
     }
 }
