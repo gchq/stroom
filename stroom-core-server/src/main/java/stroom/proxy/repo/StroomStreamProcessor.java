@@ -27,7 +27,6 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
-import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.CloseableUtil;
