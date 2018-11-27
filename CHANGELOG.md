@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#566** : Info and warning icons are now displayed in stepping screen when needed.
+
 * Issue **#923** : Dashboard queries will now terminate if there are no index shards to search.
 
 * Uplift visualisations to v3.0.5 in the gradle build
