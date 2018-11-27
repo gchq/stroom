@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift visualisations to v3.0.5 in the gradle build
+
 * Issue **#936** : Add conversion of header `X-SSL-Client-V-End` into `RemoteCertExpiry`, translating date format in the process.
 
 * Issue **#953** : Fixed NPE.
