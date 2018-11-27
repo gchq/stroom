@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#768** : Preventing deletion of /store in empty volumes
+
+* Issue **#939** : Including Subject DN in receive.log
+
+* Issue **#940** : Capturing User DN and cert expiry on DW terminated SSL
+
+* Issue **#744** : Improved reporting of error when running query with no search extraction pipeline
+
+* Issue **#134** : Copy permissions from parent button
+
+* Issue **#688** : Cascading permissions when moving/copying folder into a destination
+
+* Issue **#788** : Adding DocRef and IsDocRef to stroom query to allow doc ref related filtering. Migration of stream filters uses this.
+
 * Issue **#936** : Add conversion of header `X-SSL-Client-V-End` into `RemoteCertExpiry`, translating date format in the process.
 
 * Issue **#953** : Fixed NPE.
