@@ -20,9 +20,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import stroom.security.server.AuthenticationServiceClients;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.server.AuthenticationService;
+import stroom.security.server.AuthenticationServiceClients;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityConfig;
 import stroom.security.server.SecurityFilter;
@@ -57,10 +57,10 @@ public class SecurityConfiguration {
 
     @Bean(name = "securityFilter")
     public SecurityFilter securityFilter(
-            SecurityConfig securityConfig,
-            JWTService jwtService,
-            AuthenticationServiceClients authenticationServiceClients,
-            AuthenticationService authenticationService) {
+            final SecurityConfig securityConfig,
+            final JWTService jwtService,
+            final AuthenticationServiceClients authenticationServiceClients,
+            final AuthenticationService authenticationService) {
         return new SecurityFilter(
                 securityConfig,
                 jwtService,

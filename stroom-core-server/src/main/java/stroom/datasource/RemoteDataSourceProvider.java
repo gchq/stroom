@@ -83,8 +83,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             final String usersApiKey = securityContext.getApiToken();
             if (usersApiKey == null) {
-                throw new RuntimeException("No API key can be retrieved to make this request! The user was " +
-                        securityContext.getUserId());
+                LOGGER.debug("The API key is null for user '{}'", securityContext.getUserId());
             }
 
             invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
