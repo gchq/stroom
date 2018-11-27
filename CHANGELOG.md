@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#959** : Remove Material UI from Login and from password management pages
+
+* Issue **#933** : Add health check for password resets
+
+* Issue **#929** : Add more comprehensive password validation
+
+* Issue **#876** : Fix password reset issues
+
 * Issue **#768** : Preventing deletion of /store in empty volumes
 
 * Issue **#939** : Including Subject DN in receive.log
@@ -25,6 +33,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#953** : Fixed NPE.
 
 * Issue **#947** : Fixed issue where data retention policy contains incorrect field names.
+
+* Remove Material UI from the Users and API Keys pages
 
 * Add content packs to stroom distribution
 
