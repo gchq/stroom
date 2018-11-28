@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#948** : Catching Spring initialisation runtime errors and ensuring they are logged.
+
 * Add `set_log_levels.sh` script to the distribution
 
 * Uplift visualisations content pack to v3.0.6 in the gradle build
