@@ -28,6 +28,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
+import javax.persistence.PersistenceException;
 
 @Component
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -54,6 +55,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         createOrRefreshStroomServiceUser();
     }
 
+    private static final int GET_USER_ATTEMPTS = 2;
+
     @Override
     @Insecure
     public UserRef getUserRef(final AuthenticationToken token) {
@@ -61,15 +64,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return null;
         }
 
-        UserRef userRef = loadUserByUsername(token.getUserId());
+        // Race conditions can mean that multiple processes kick off the creation of a user
+        // The first one will succeed, but the others may clash. So we retrieve/create the user
+        // in a loop to allow the failures caused by the race to be absorbed without failure
+        int attempts = 0;
+        UserRef userRef = null;
 
-        if (userRef == null) {
-            // At this point the user has been authenticated using JWT.
-            // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
-            // some way of sensibly referencing the user and something to attach permissions to.
-            // We need to elevate the user because no one is currently logged in.
-            try (SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-                userRef = userService.createUser(token.getUserId());
+        while (userRef == null) {
+            userRef = loadUserByUsername(token.getUserId());
+
+            if (userRef == null) {
+                // At this point the user has been authenticated using JWT.
+                // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
+                // some way of sensibly referencing the user and something to attach permissions to.
+                // We need to elevate the user because no one is currently logged in.
+                try (SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                    userRef = userService.createUser(token.getUserId());
+                } catch (final PersistenceException e) {
+                    final String msg = String.format("Could not create user, this is attempt %d", attempts);
+                    if (attempts == 0) {
+                        LOGGER.warn(msg);
+                    } else {
+                        LOGGER.info(msg);
+                    }
+                }
+            }
+
+            if (attempts++ > GET_USER_ATTEMPTS) {
+                break;
             }
         }
 
