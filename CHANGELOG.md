@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#920** : Fix error handling for sql stats queries
 
-## [v6.0-beta.13]
+## [v6.0-beta.13] - 2018-11-19
 
 * Remove log sending cron process from docker images (now handled by stroom-log-sender).
 
@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#903** : Feed names can now contain wildcard characters when filtering in the data browser.
 
-## [v6.0-beta.12]
+## [v6.0-beta.12] - 2018-11-14
 
 * Add API to allow creation of an internal Stroom user.
 
@@ -102,17 +102,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix invalid requestLog logFormat in proxy configuration
 
-## [v6.0-beta.11]
+## [v6.0-beta.11] - 2018-11-07
 
 * Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
 
-## [v6.0-beta.10]
+## [v6.0-beta.10] - 2018-11-06
 
 * Add fixed version of send_to_stroom.sh to release distribution
 
 * Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8
 
-## [v6.0-beta.9]
+## [v6.0-beta.9] - 2018-11-02
 
 * Add a health check for getting a public key from the authentication service.
 
@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#884** : Added extra fonts to stroom docker image to fix bug downloading xls search results.
 
-## [v6.0-beta.8]
+## [v6.0-beta.8] - 2018-10-17
 
 * Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
 
@@ -194,15 +194,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Improved Stroom instance management scripts
 
-## [v6.0-beta.7]
+## [v6.0-beta.7] - 2018-10-12
 
 * Add contentPack import
 
-## [v6.0-beta.6]
+## [v6.0-beta.6] - 2018-10-10
 
 * Fix typo in Dockerfile
 
-## [v6.0-beta.5]
+## [v6.0-beta.5] - 2018-10-10
 
 * Issue **#859** : Change application startup to keep retrying when establishing a DB connection except for certain connection errors like access denied.
 
@@ -214,7 +214,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#855** : Fixed stepping data that contains a BOM.
 
-## [v6.0-beta.4]
+## [v6.0-beta.4] - 2018-10-04
 
 * Change base docker image to openjdk:8u171-jdk-alpine
 
@@ -272,6 +272,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix background colour to white on activity pane.
 
+## [v6.0-beta.3] - 2018-09-18
+
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 
 * Issue **#838** : Fix bug where calculation of written and read bytes was being accounted for twice due to the use of Java internal `FilterInputStream` and `FilterOutputStream` behaviour. This was leading to files being split at half od the expected size. Replaced Java internal classes with our own `WrappedInputStream` and `WrappedOutputStream` code.
@@ -316,11 +318,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#805** : Fix for dashboard date time formatting to use local time zone.
 
-## [v6.0-beta.2]
+## [v6.0-beta.2] - 2018-07-09
 
 * Issue **#803** : Fix for group key conversion to an appropriate value for visualisations.
 
-## [v6.0-beta.1]
+## [v6.0-beta.1] - 2018-07-04
 
 * Issue **#802** : Restore lucene-backward-codecs to the build
 
