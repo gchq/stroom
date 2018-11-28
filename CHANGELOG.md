@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#952** : Remote data sources now execute calls within the context of the user for the active query. As a result all running search `destroy()` calls will now be made as the same user that initiated the search.
+
+* Issue **#566** : Info and warning icons are now displayed in stepping screen when needed.
+
+* Issue **#923** : Dashboard queries will now terminate if there are no index shards to search.
+
+* Uplift visualisations to v3.0.5 in the gradle build
+
+* Issue **#959** : Remove Material UI from Login and from password management pages
+
+* Issue **#933** : Add health check for password resets
+
+* Issue **#929** : Add more comprehensive password validation
+
+* Issue **#876** : Fix password reset issues
+
 * Issue **#768** : Preventing deletion of /store in empty volumes
 
 * Issue **#939** : Including Subject DN in receive.log
@@ -25,6 +41,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#953** : Fixed NPE.
 
 * Issue **#947** : Fixed issue where data retention policy contains incorrect field names.
+
+* Remove Material UI from the Users and API Keys pages
 
 * Add content packs to stroom distribution
 

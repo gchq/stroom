@@ -22,12 +22,13 @@
  * 		font-awesome
  */
 
-//TODO - Could do with a big refactor of the individual visualisations to get a separation between the object 
+//TODO - Could do with a big refactor of the individual visualisations to get a separation between the object
 //that Stroom calls and the object instances created for each grid cell.  At the moment it is just a single object
 //i.e. visualisations.BarChart which contains everything.  We could instead have visualisations.BarChart and
 //visualisations.BarChartContent, with the former exposing setData() and the latter exposing setDataInsideGrid().
-//Further to this we could do with some form of prototype for a geeric gridded visualisation as we have a lot of 
+//Further to this we could do with some form of prototype for a geeric gridded visualisation as we have a lot of
 //repeated code.
+
 
 if (!visualisations) {
     var visualisations = {};
@@ -45,7 +46,7 @@ visualisations.GenericGrid = function(element) {
     var intraCellPadding = 5;
 
     var margin = {
-        top: interCellPadding,
+        top: 14,
         right: interCellPadding,
         bottom: interCellPadding,
         left: interCellPadding
@@ -418,9 +419,9 @@ visualisations.GenericGrid = function(element) {
         //set up the chart tile hover tip
         if (typeof(seriesLabelTip) == "undefined") {
             seriesLabelTip = d3.tip()
-                .direction(commonFunctions.d3TipDirectionFunc)
+                .direction(commonFunctions.d3TipEastWestDirectionFunc)
                 .attr('class', 'd3-tip')
-                .html(commonFunctions.makeD3TipBasicTextHtmlFunc(function(d) { 
+                .html(commonFunctions.makeD3TipBasicTextHtmlFunc(function(d) {
                     return d.key;
                 }));
         }
@@ -436,262 +437,265 @@ visualisations.GenericGrid = function(element) {
 
 
     var update = function(duration) {
-        //clear any visible legends
-        clearLegends(legendsContainer);
+        width = chartsAreaWidthFunc();
+        height = chartsAreaHeightFunc();
 
-        //clear the contents of any d3-tip nodes
-        d3.selectAll(".d3-tip")
-            .each(function(d, i) {
-                d3.select(this).html("");
-            });
+        // Do not render if there is no available width to do so
+        if (width > 0 && height > 0) {
+            // Clear any visible legends
+            clearLegends(legendsContainer);
 
-        if (visData) {
-            var legendKeyField;
-            if (!callingVis.hasOwnProperty("getLegendKeyField") || callingVis.getLegendKeyField() === null) {
-                //vis uses the grouping keys for its legend
-                var removalFunc = removeInvisibleSeries;
-                legendKeyField = null;
-            } else {
-                legendKeyField = callingVis.getLegendKeyField();
-                var removalFunc = removeInvisibleDataPoints(legendKeyField);
-            }
-            removeInvisibleData(visData, removalFunc);
-            
-            //now re-compute the aggregates as we may have 'removed' data
-            commonFunctions.dataAggregator()
-                .setRecursive(true)
-                .setUseVisibleValues(true)
-                .aggregate(visData);
-
-            //get the unique values for the designated key field over all grid cells
-            commonFunctions.computeUniqueValues(visData, function(type, index) {
-                return (index === legendKeyField || visData.types[index] === "TEXT" || visData.types[index] === "GENERAL");
-            });
-                
-            //find all the unique series keys 
-            commonFunctions.computeUniqueKeys(visData);
-
-            if (commonFunctions.isTrue(visSettings.synchSeries)) {
-                //create a single coulour scale for all grid cells as they are synched
-                commonFunctions.setColourDomain(colour, visData, legendKeyField, "SYNCHED_SERIES");
-                visContext.color = colour;
-            } else if (commonFunctions.isTrue(visSettings.synchNames)) {
-                //create a single coulour scale for all grid cells as they are synched
-                commonFunctions.setColourDomain(colour, visData, legendKeyField, "VALUE");
-                visContext.color = colour;
-            }
-
-            //clone the types and uniqueValues arrays down to each series sub-element
-            //and synch the aggregates of all specified fields
-            if (!isZoomedIn) {
-                visData.values.forEach(function(gridCellData, i, wholeArray) {
-                    gridCellData.types = visData.types;
-                    if (visSynchedFields){
-                        visSynchedFields.forEach(function(arrPosToSync) {
-                            gridCellData.min[arrPosToSync] = visData.min[arrPosToSync];
-                            gridCellData.max[arrPosToSync] = visData.max[arrPosToSync];
-                            gridCellData.sum[arrPosToSync] = visData.sum[arrPosToSync];
-                            if (visData.unique) {
-                                gridCellData.unique[arrPosToSync] = visData.unique[arrPosToSync] ;
-                            }
-                            if (visData.visibleUnique) {
-                                gridCellData.visibleUnique[arrPosToSync] = visData.visibleUnique[arrPosToSync] ;
-                            }
-                        });
-                    }
+            // Clear the contents of any d3-tip nodes
+            d3.selectAll(".d3-tip")
+                .each(function(d, i) {
+                    d3.select(this).html("");
                 });
-            } else {
-                //zoomed in so re-compute the aggregates for the single grid cell so the axes are scaled to its data
-                //Only need to re-compute aggregates one level deep as the rest should be uneffected
-                if (visData.visibleValues){
-                    var zoomedInCellData = visData.visibleValues()[0];
-                    if (zoomedInCellData){
-                        commonFunctions.dataAggregator()
-                            .setRecursive(false)
-                            .setUseVisibleValues(true)
-                            .aggregate(zoomedInCellData);
+
+            if (visData) {
+                var legendKeyField;
+                if (!callingVis.hasOwnProperty("getLegendKeyField") || callingVis.getLegendKeyField() === null) {
+                    //vis uses the grouping keys for its legend
+                    var removalFunc = removeInvisibleSeries;
+                    legendKeyField = null;
+                } else {
+                    legendKeyField = callingVis.getLegendKeyField();
+                    var removalFunc = removeInvisibleDataPoints(legendKeyField);
+                }
+                removeInvisibleData(visData, removalFunc);
+
+                //now re-compute the aggregates as we may have 'removed' data
+                commonFunctions.dataAggregator()
+                    .setRecursive(true)
+                    .setUseVisibleValues(true)
+                    .aggregate(visData);
+
+                //get the unique values for the designated key field over all grid cells
+                commonFunctions.computeUniqueValues(visData, function(type, index) {
+                    return (index === legendKeyField || visData.types[index] === "TEXT" || visData.types[index] === "GENERAL");
+                });
+
+                //find all the unique series keys
+                commonFunctions.computeUniqueKeys(visData);
+
+                if (commonFunctions.isTrue(visSettings.synchSeries)) {
+                    //create a single coulour scale for all grid cells as they are synched
+                    commonFunctions.setColourDomain(colour, visData, legendKeyField, "SYNCHED_SERIES");
+                    visContext.color = colour;
+                } else if (commonFunctions.isTrue(visSettings.synchNames)) {
+                    //create a single coulour scale for all grid cells as they are synched
+                    commonFunctions.setColourDomain(colour, visData, legendKeyField, "VALUE");
+                    visContext.color = colour;
+                }
+
+                //clone the types and uniqueValues arrays down to each series sub-element
+                //and synch the aggregates of all specified fields
+                if (!isZoomedIn) {
+                    visData.values.forEach(function(gridCellData, i, wholeArray) {
+                        gridCellData.types = visData.types;
+                        if (visSynchedFields){
+                            visSynchedFields.forEach(function(arrPosToSync) {
+                                gridCellData.min[arrPosToSync] = visData.min[arrPosToSync];
+                                gridCellData.max[arrPosToSync] = visData.max[arrPosToSync];
+                                gridCellData.sum[arrPosToSync] = visData.sum[arrPosToSync];
+                                if (visData.unique) {
+                                    gridCellData.unique[arrPosToSync] = visData.unique[arrPosToSync] ;
+                                }
+                                if (visData.visibleUnique) {
+                                    gridCellData.visibleUnique[arrPosToSync] = visData.visibleUnique[arrPosToSync] ;
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    //zoomed in so re-compute the aggregates for the single grid cell so the axes are scaled to its data
+                    //Only need to re-compute aggregates one level deep as the rest should be uneffected
+                    if (visData.visibleValues){
+                        var zoomedInCellData = visData.visibleValues()[0];
+                        if (zoomedInCellData){
+                            commonFunctions.dataAggregator()
+                                .setRecursive(false)
+                                .setUseVisibleValues(true)
+                                .aggregate(zoomedInCellData);
+                        }
                     }
                 }
-            }
 
-            var visibleValues = visData.visibleValues();
-            var duration = typeof(defaultDuration) != "undefined" ? defaultDuration : duration;
-            var requiresZoomInOutCapability = (isZoomedIn || visibleValues.length > 1);
-            var requiresLegend = commonFunctions.isTrue(visSettings.requiresLegend, true);
+                var visibleValues = visData.visibleValues();
+                var duration = typeof(defaultDuration) != "undefined" ? defaultDuration : duration;
+                var requiresZoomInOutCapability = (isZoomedIn || visibleValues.length > 1);
+                var requiresLegend = commonFunctions.isTrue(visSettings.requiresLegend, true);
 
-            width = chartsAreaWidthFunc();
-            height = chartsAreaHeightFunc();
+                //update all the canvas dimensions based on the current window area
+                setCanvasDimensions(canvas);
+                setPaddedCanvasDimensions(paddedCanvas);
+                setChartsAreaCanvasDimensions(chartsAreaCanvas);
 
-            //update all the canvas dimensions based on the current window area
-            setCanvasDimensions(canvas);
-            setPaddedCanvasDimensions(paddedCanvas);
-            setChartsAreaCanvasDimensions(chartsAreaCanvas);
+                seriesContainer.call(seriesLabelTip);
 
-            seriesContainer.call(seriesLabelTip);
-
-            commonFunctions.addDelegateEvent(seriesContainer, "mouseover", ".vis-cellVisualisation-seriesName.truncated", function(d) {
-                seriesLabelTip.attr('class', 'd3-tip animate');
-                seriesLabelTip.show(d);
-            });
-            commonFunctions.addDelegateEvent(seriesContainer, "mouseout", ".vis-cellVisualisation-seriesName.truncated", function(d) {
-                seriesLabelTip.attr('class', 'd3-tip');
-                seriesLabelTip.hide();
-            });
-
-            //D3 data binding for legends
-            var legends = legendsContainer.selectAll(".vis-legend")
-                .data(visibleValues, function(d) { 
-                    //console.log('key function key: ' + d.key);
-                    return d.key;
+                commonFunctions.addDelegateEvent(seriesContainer, "mouseover", ".vis-cellVisualisation-seriesName.truncated", function(d) {
+                    seriesLabelTip.attr('class', 'd3-tip animate');
+                    seriesLabelTip.show(d);
+                });
+                commonFunctions.addDelegateEvent(seriesContainer, "mouseout", ".vis-cellVisualisation-seriesName.truncated", function(d) {
+                    seriesLabelTip.attr('class', 'd3-tip');
+                    seriesLabelTip.hide();
                 });
 
-            legends.enter()
-                .append("div")
-                .attr("class","vis-legend")
-                .each(function(d,i) {
-                    legendMap[d.key] = d3.select(this);
-                });
+                //D3 data binding for legends
+                var legends = legendsContainer.selectAll(".vis-legend")
+                    .data(visibleValues, function(d) {
+                        //console.log('key function key: ' + d.key);
+                        return d.key;
+                    });
 
-            legends.exit()
-                .each(function(d,i) {
-                    delete legendMap[d.key];
-                })
-                .remove();
+                legends.enter()
+                    .append("div")
+                    .attr("class","vis-legend")
+                    .each(function(d,i) {
+                        legendMap[d.key] = d3.select(this);
+                    });
 
-            //Construct the grid layout 
-            chartsGridLayout = d3.layout.grid()
-                .bands()
-                .size([width,height])
-                .padding(gridLayoutPadding);
+                legends.exit()
+                    .each(function(d,i) {
+                        delete legendMap[d.key];
+                    })
+                    .remove();
 
-            //D3 data binding for the grid cells
-            var gridCells = seriesContainer.selectAll(".vis-cellVisualisation")
-                .data(chartsGridLayout(visibleValues), function(d) { 
-                    //console.log('key function key: ' + d.key);
-                    return d.key;
-                });
+                //Construct the grid layout
+                chartsGridLayout = d3.layout.grid()
+                    .bands()
+                    .size([width,height])
+                    .padding(gridLayoutPadding);
 
-            gridCells.enter()
-                .append("svg:svg")
-                .attr("class","vis-cellVisualisation")
-                .attr("opacity","0")
-                .call(function(parentNode) {
-                    parentNode.append("svg:rect")
-                        .attr("class","vis-cellVisualisation-border")
-                        .attr("x", interCellPadding)
-                        .attr("y", interCellPadding);
-                    parentNode.append("svg:text")
-                        .classed("vis-cellVisualisation-seriesName", true)
-                        .attr("x", interCellPadding + intraCellPadding);
-                    if (visibleValues.length > 1) {
+                //D3 data binding for the grid cells
+                var gridCells = seriesContainer.selectAll(".vis-cellVisualisation")
+                    .data(chartsGridLayout(visibleValues), function(d) {
+                        //console.log('key function key: ' + d.key);
+                        return d.key;
+                    });
+
+                gridCells.enter()
+                    .append("svg:svg")
+                    .attr("class","vis-cellVisualisation")
+                    .attr("opacity","0")
+                    .call(function(parentNode) {
+                        parentNode.append("svg:rect")
+                            .attr("class","vis-cellVisualisation-border")
+                            .attr("x", interCellPadding)
+                            .attr("y", interCellPadding);
                         parentNode.append("svg:text")
-                            .attr("class","vis-cellVisualisation-icon vis-cellVisualisation-zoomIcon");
-                    }
-                    if (requiresLegend){
-                        parentNode.append("svg:text")
-                        .attr("class","vis-cellVisualisation-icon vis-cellVisualisation-legendIcon")
-                        .text(commonConstants.fontAwesomeLegend);
-                    }
-                    parentNode.append("svg:svg")
-                        .attr("class","vis-cellVisualisation-usableArea")
-                        .attr("x", interCellPadding + intraCellPadding);
-                })
-                .each(addNewSeries)
-                .transition()
-                .duration(duration);
+                            .classed("vis-cellVisualisation-seriesName", true)
+                            .attr("x", interCellPadding + intraCellPadding);
+                        if (visibleValues.length > 1) {
+                            parentNode.append("svg:text")
+                                .attr("class","vis-cellVisualisation-icon vis-cellVisualisation-zoomIcon");
+                        }
+                        if (requiresLegend){
+                            parentNode.append("svg:text")
+                            .attr("class","vis-cellVisualisation-icon vis-cellVisualisation-legendIcon")
+                            .text(commonConstants.fontAwesomeLegend);
+                        }
+                        parentNode.append("svg:svg")
+                            .attr("class","vis-cellVisualisation-usableArea")
+                            .attr("x", interCellPadding + intraCellPadding);
+                    })
+                    .each(addNewSeries)
+                    .transition()
+                    .duration(duration);
 
-            gridCells.exit()
-                .transition()
-                .duration(duration)
-                .attr("opacity","0")
-                .each(removeExistingSeries)
-                .remove();
+                gridCells.exit()
+                    .transition()
+                    .duration(duration)
+                    .attr("opacity","0")
+                    .each(removeExistingSeries)
+                    .remove();
 
-            gridCells.transition()
-                .duration(duration)
-                .attr("opacity","1")
-                .call(setRectDimensions)
-                .each(function(d) {
-                    var gridCell = d3.select(this);
+                gridCells.transition()
+                    .duration(duration)
+                    .attr("opacity","1")
+                    .call(setRectDimensions)
+                    .each(function(d) {
+                        var gridCell = d3.select(this);
 
-                    //work out the length available for the series name
-                    var seriesNameSpace = Math.floor(0.95 * (getCellWidth() - (intraCellPadding * 2) - zoomIconWidth - iconPadding - legendIconWidth));
+                        //work out the length available for the series name
+                        var seriesNameSpace = Math.floor(0.95 * (getCellWidth() - (intraCellPadding * 2) - zoomIconWidth - iconPadding - legendIconWidth));
 
-                    gridCell.call(setRectDimensions);
+                        gridCell.call(setRectDimensions);
 
-                    gridCell.selectAll(".vis-cellVisualisation-border")
-                        .attr("width", getCellWidth() - (interCellPadding * 2))
-                        .attr("height",getCellHeight() - (interCellPadding * 2))
-                        .style("visibility", function() {
-                            return (visibleValues.length > 1) ? "visible" : "hidden";
-                        });
+                        gridCell.selectAll(".vis-cellVisualisation-border")
+                            .attr("width", getCellWidth() - (interCellPadding * 2))
+                            .attr("height",getCellHeight() - (interCellPadding * 2))
+                            .style("visibility", function() {
+                                return (visibleValues.length > 1) ? "visible" : "hidden";
+                            });
 
-                    gridCell.selectAll(".vis-cellVisualisation-seriesName")
-                        .attr("y", interCellPadding + intraCellPadding + chartHeaderTextHeight - 2)
-                        .classed(function() {
-                            var cellWidth = getCellWidth();
-                            if (cellWidth < 350) {
-                                return {"normal": false, "small": false, "smaller": true};
-                            } else if (cellWidth < 450){
-                                return{"normal": false, "small": true, "smaller": false};
-                            } else {
-                                return{"normal": true, "small": false, "smaller": false};
-                            }
-                        }())
-                        .style("cursor", function() {
-                            return requiresZoomInOutCapability ? "pointer" : "default";
-                        })
-                        .text(function(d) {
-                            //If there is no grid series then the key will be "Series" so don't display this
-                            if (visibleValues.length === 1 && d.key === "Series") {
-                                return "";
-                            } else {
-                                return formatGridKey(d.key);
-                            }
-                        })
-                        .on("mousedown", function() { 
-                            if (requiresZoomInOutCapability) {
-                                return makeSeriesZoomMouseHandler(d);
-                            } else {
-                                return null;
-                            }
-                        }())
-                        .each(commonFunctions.truncateSVGText(seriesNameSpace));
+                        gridCell.selectAll(".vis-cellVisualisation-seriesName")
+                            .attr("y", interCellPadding + intraCellPadding + chartHeaderTextHeight - 2)
+                            .classed(function() {
+                                var cellWidth = getCellWidth();
+                                if (cellWidth < 350) {
+                                    return {"normal": false, "small": false, "smaller": true};
+                                } else if (cellWidth < 450){
+                                    return{"normal": false, "small": true, "smaller": false};
+                                } else {
+                                    return{"normal": true, "small": false, "smaller": false};
+                                }
+                            }())
+                            .style("cursor", function() {
+                                return requiresZoomInOutCapability ? "pointer" : "default";
+                            })
+                            .text(function(d) {
+                                //If there is no grid series then the key will be "Series" so don't display this
+                                if (visibleValues.length === 1 && d.key === "Series") {
+                                    return "";
+                                } else {
+                                    return formatGridKey(d.key);
+                                }
+                            })
+                            .on("mousedown", function() {
+                                if (requiresZoomInOutCapability) {
+                                    return makeSeriesZoomMouseHandler(d);
+                                } else {
+                                    return null;
+                                }
+                            }())
+                            .each(commonFunctions.truncateSVGText(seriesNameSpace));
 
-                    gridCell.selectAll(".vis-cellVisualisation-zoomIcon")
-                        .attr("x", getCellWidth() - (interCellPadding + intraCellPadding + zoomIconWidth))
-                        .attr("y", interCellPadding + intraCellPadding + chartHeaderTextHeight - 4)
-                        .style("visibility", function() {
-                            return (isZoomedIn || visibleValues.length > 1) ? "visible" : "hidden";
-                        })
-                        .text(commonFunctions.zoomIconTextFunc(isZoomedIn))
-                        .on("mousedown", function() { 
-                            if (requiresZoomInOutCapability) {
-                                return makeSeriesZoomMouseHandler(d);
-                            } else {
-                                return null;
-                            }
-                        }());	
-
-                    gridCell.selectAll(".vis-cellVisualisation-usableArea")
-                        .attr("y", interCellPadding + (intraCellPadding * 2) + chartHeaderTextHeight)
-                        .attr("width", getCellWidth() - (interCellPadding * 2) - (intraCellPadding * 2) )
-                        .attr("height", getUsableChartHeight());
-
-                })
-                .each(updateExistingSeries)
-                .each(function(d) {
-                    //creation of the legend handler needs to be done
-                    //once the vis has been fed data so its colour scale is
-                    //set up
-                    var gridCell = d3.select(this);
-                    if (requiresLegend) {
-                        gridCell.selectAll(".vis-cellVisualisation-legendIcon")
-                            .attr("x", getCellWidth() - (interCellPadding + intraCellPadding + zoomIconWidth + iconPadding + legendIconWidth))
+                        gridCell.selectAll(".vis-cellVisualisation-zoomIcon")
+                            .attr("x", getCellWidth() - (interCellPadding + intraCellPadding + zoomIconWidth))
                             .attr("y", interCellPadding + intraCellPadding + chartHeaderTextHeight - 4)
-                            .on("mousedown",makeLegendMouseHandler(this, d));    
-                    }
-                });
+                            .style("visibility", function() {
+                                return (isZoomedIn || visibleValues.length > 1) ? "visible" : "hidden";
+                            })
+                            .text(commonFunctions.zoomIconTextFunc(isZoomedIn))
+                            .on("mousedown", function() {
+                                if (requiresZoomInOutCapability) {
+                                    return makeSeriesZoomMouseHandler(d);
+                                } else {
+                                    return null;
+                                }
+                            }());
+
+                        gridCell.selectAll(".vis-cellVisualisation-usableArea")
+                            .attr("y", interCellPadding + (intraCellPadding * 2) + chartHeaderTextHeight)
+                            .attr("width", getCellWidth() - (interCellPadding * 2) - (intraCellPadding * 2) )
+                            .attr("height", getUsableChartHeight());
+
+                    })
+                    .each(updateExistingSeries)
+                    .each(function(d) {
+                        //creation of the legend handler needs to be done
+                        //once the vis has been fed data so its colour scale is
+                        //set up
+                        var gridCell = d3.select(this);
+                        if (requiresLegend) {
+                            gridCell.selectAll(".vis-cellVisualisation-legendIcon")
+                                .attr("x", getCellWidth() - (interCellPadding + intraCellPadding + zoomIconWidth + iconPadding + legendIconWidth))
+                                .attr("y", interCellPadding + intraCellPadding + chartHeaderTextHeight - 4)
+                                .on("mousedown",makeLegendMouseHandler(this, d));
+                        }
+                    });
+            }
         }
     }
 

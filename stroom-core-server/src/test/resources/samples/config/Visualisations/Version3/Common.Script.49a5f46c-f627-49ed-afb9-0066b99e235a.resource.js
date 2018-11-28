@@ -677,7 +677,7 @@ if (!visualisations) {
         } else {
             var newWidth = element.clientWidth - margins.right - margins.left;
             var newHeight = element.clientHeight - margins.top - margins.bottom;
-            if (newWidth != width || newHeight != height) {
+            if ((newWidth > 0 && newHeight > 0) && (newWidth != width || newHeight != height)) {
                 //need to do the update with trasition time of zero otherwise we getr all sorts of
                 //interpolation errors in the setting of the svg translate attribute by D3
                 updateFunc(0);
