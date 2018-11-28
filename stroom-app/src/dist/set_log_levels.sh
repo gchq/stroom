@@ -14,6 +14,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
 NC='\033[0m' # No Colour 
 
+#readonly URL="http://127.0.0.1:8081/stroomAdmin/tasks/log-level"
 readonly URL="http://127.0.0.1:8081/admin/tasks/log-level"
 readonly CURL="curl"
 readonly HTTPIE="http"
@@ -34,12 +35,12 @@ send_request() {
 
 main() {
 
-    if ! [ -x "$(command -v http > /dev/null)" ]; then
+    if command -v jq 1>/dev/null; then 
+        binary="${HTTPIE}"
+    else
         echo -e "${YELLOW}WARN${NC} - ${BLUE}httpie${NC} is not installed (see ${BLUE}https://httpie.org${NC}), falling back to ${BLUE}curl${NC}." >&2
         echo
         binary="${CURL}"
-    else
-        binary="${HTTPIE}"
     fi
 
     # should have an arg count that is a multiple of two
