@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Uplift visualisations to v3.0.5 in the gradle build
+* Uplift visualisations content pack to v3.0.6 in the gradle build
 
 * Issue **#959** : Remove Material UI from Login and from password management pages
 
