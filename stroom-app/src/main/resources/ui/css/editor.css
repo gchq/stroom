@@ -29,3 +29,27 @@
   	-moz-user-select: text;
   	user-select: text;
 }
+
+.editor .ace_gutter-cell.stroom_info {
+    background-image: url(../images/info.svg);
+    background-size: 14px 14px;
+    background-position-x: 3px;
+}
+
+.editor .ace_gutter-cell.stroom_warning {
+    background-image: url(../images/alert.svg);
+    background-size: 14px 14px;
+    background-position-x: 3px;
+}
+
+.editor .ace_gutter-cell.stroom_error {
+    background-image: url(../images/error.svg);
+    background-size: 14px 14px;
+    background-position-x: 3px;
+}
+
+.editor .ace_gutter-cell.stroom_fatal_error {
+    background-image: url(../images/fatal.svg);
+    background-size: 14px 14px;
+    background-position-x: 3px;
+}

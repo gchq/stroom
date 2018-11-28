@@ -25,15 +25,13 @@ import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.DocRef;
 import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
-
+class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
     private static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
@@ -41,13 +39,10 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private final Map<String, String> urlMap;
 
     private final SecurityContext securityContext;
-    private HttpServletRequestHolder httpServletRequestHolder;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                     final StroomPropertyService stroomPropertyService,
-                                     final HttpServletRequestHolder httpServletRequestHolder) {
+                                     final StroomPropertyService stroomPropertyService) {
         this.securityContext = securityContext;
-        this.httpServletRequestHolder = httpServletRequestHolder;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
         final String annotationsPath = stroomPropertyService
@@ -97,7 +92,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
      */
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
-                .map(url -> new RemoteDataSourceProvider(securityContext, url, httpServletRequestHolder));
+                .map(url -> new RemoteDataSourceProvider(securityContext, url));
     }
 
     /**

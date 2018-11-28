@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Uplift visualisations content pack to v3.0.6 in the gradle build
 
+* Issue **#952** : Remote data sources now execute calls within the context of the user for the active query. As a result all running search `destroy()` calls will now be made as the same user that initiated the search.
+
+* Issue **#566** : Info and warning icons are now displayed in stepping screen when needed.
+
+* Issue **#923** : Dashboard queries will now terminate if there are no index shards to search.
+
 * Issue **#959** : Remove Material UI from Login and from password management pages
 
 * Issue **#933** : Add health check for password resets
