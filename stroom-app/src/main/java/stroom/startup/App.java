@@ -34,6 +34,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.cluster.server.ClusterCallServiceRPC;
@@ -247,7 +248,7 @@ public class App extends Application<Config> {
 
         // Start the spring context.
         LOGGER.info("Loading Spring context");
-        final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
+        final ApplicationContext applicationContext = loadApplicationContext(configuration, environment);
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
@@ -321,7 +322,7 @@ public class App extends Application<Config> {
         return DbUtil.waitForConnection(driverClassname, driverUrl, driverUsername, driverPassword);
     }
 
-    private ApplicationContext loadApplcationContext(final Configuration configuration, final Environment environment) {
+    private ApplicationContext loadApplicationContext(final Configuration configuration, final Environment environment) {
         final AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
         applicationContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY);
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
@@ -347,7 +348,12 @@ public class App extends Application<Config> {
                 ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
-        applicationContext.refresh();
+        try {
+            applicationContext.refresh();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
         return applicationContext;
     }
 
