@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.14] - 2018-11-28
+
 * Issue **#945** : Visualisations now show an unlimited number of data points unless constrained by their parent table or their own maximum value setting.
 
 * Issue **#948** : Catching Spring initialisation runtime errors and ensuring they are logged.
@@ -1289,7 +1291,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.13...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.14...6.0
+[v6.0-beta.14]: https://github.com/gchq/stroom/compare/v6.0-beta.13...v6.0-beta.14
 [v6.0-beta.13]: https://github.com/gchq/stroom/compare/v6.0-beta.12...v6.0-beta.13
 [v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
 [v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11
