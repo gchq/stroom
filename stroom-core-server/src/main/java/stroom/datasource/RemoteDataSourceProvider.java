@@ -69,8 +69,13 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
-        LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
-        return post(queryKey, DESTROY_ENDPOINT, Boolean.class);
+        try {
+            LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
+            return post(queryKey, DESTROY_ENDPOINT, Boolean.class);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to destroy active query for queryKey {} on url {}", queryKey, url, e);
+        }
+        return Boolean.FALSE;
     }
 
     private <T> T post(final Object request, String path, final Class<T> responseClass) {
@@ -100,7 +105,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             }
 
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
     }
