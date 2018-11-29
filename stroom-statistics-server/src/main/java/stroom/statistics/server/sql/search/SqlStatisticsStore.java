@@ -24,7 +24,7 @@ import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
@@ -62,7 +62,7 @@ public class SqlStatisticsStore implements Store {
     private final ResultHandler resultHandler;
     private final int resultHandlerBatchSize;
     private final List<Integer> defaultMaxResultsSizes;
-    private final StoreSize storeSize;
+    private final Sizes storeSize;
     private final AtomicBoolean isComplete;
     private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
@@ -75,7 +75,7 @@ public class SqlStatisticsStore implements Store {
                        final StatisticStoreEntity statisticStoreEntity,
                        final StatisticsSearchService statisticsSearchService,
                        final List<Integer> defaultMaxResultsSizes,
-                       final StoreSize storeSize,
+                       final Sizes storeSize,
                        final int resultHandlerBatchSize,
                        final Executor executor,
                        final TaskContext taskContext) {
@@ -152,7 +152,7 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public StoreSize getStoreSize() {
+    public Sizes getStoreSize() {
         return storeSize;
     }
 

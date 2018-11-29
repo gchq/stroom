@@ -37,7 +37,7 @@ import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.Sizes;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
@@ -128,7 +128,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 nowEpochMilli);
 
         // Create a handler for search results.
-        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final Sizes storeSize = Sizes.create(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final SearchResultHandler resultHandler = new SearchResultHandler(
                 coprocessorSettingsMap,

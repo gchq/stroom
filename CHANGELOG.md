@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#945** : More changes to fix some visualisations only showing 10 data points.
+
 ## [v6.0-beta.14] - 2018-11-28
 
 * Issue **#945** : Visualisations now show an unlimited number of data points unless constrained by their parent table or their own maximum value setting.

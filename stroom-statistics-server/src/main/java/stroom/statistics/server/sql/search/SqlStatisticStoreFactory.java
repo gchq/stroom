@@ -10,7 +10,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.Sizes;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.ExecutorProvider;
@@ -86,7 +86,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreEntity);
 
-        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final Sizes storeSize = Sizes.create(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
