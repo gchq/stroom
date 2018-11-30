@@ -193,7 +193,7 @@ ext.libs = [
     poi_ooxml: "org.apache.poi:poi-ooxml:3.17",
     reactivestreams: "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
     rxjava: "io.reactivex.rxjava2:rxjava:$versions.rxjava",
-    saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-18",
+    saxon_he: "net.sf.saxon:Saxon-HE:9.7.0-21",
     slf4j_api: "org.slf4j:slf4j-api:$versions.slf4j",
     spring_aop: "org.springframework:spring-aop:$versions.spring",
     spring_aspects: "org.springframework:spring-aspects:$versions.spring",

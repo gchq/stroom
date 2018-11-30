@@ -45,6 +45,7 @@ dependencies {
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
     compile libs.javassist
+    compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.spring_beans
     compile libs.spring_context
@@ -61,8 +62,7 @@ dependencies {
     compile libs.spring_jdbc
     compile libs.spring_orm
     compile libs.commons_fileupload
-
-    runtime libs.saxon_he
+    
     runtime libs.jackson_annotations
     runtime libs.hibernate_entitymanager
     runtime libs.aopalliance

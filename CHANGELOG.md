@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
+
 * Issue **#945** : More changes to fix some visualisations only showing 10 data points.
 
 ## [v6.0-beta.14] - 2018-11-28
