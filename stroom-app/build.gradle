@@ -24,7 +24,7 @@ def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
-def sendToStroomScriptVersion = 'send-to-stroom-v1.7'
+def sendToStroomScriptVersion = 'send-to-stroom-v1.8.1'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
