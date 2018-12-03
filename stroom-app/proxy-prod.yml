@@ -123,7 +123,7 @@ proxyConfig:
   proxyRepositoryReaderConfig:
     readCron: "* * *"
   logStreamConfig:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   contentSyncConfig:
     contentSyncEnabled: ${CONTENT_SYNC_ENABLED:-true}
     upstreamUrl:

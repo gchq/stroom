@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change the proxy yaml configuration for the stack to add `remotedn` and `remotecertexpiry` headers to the receive log
+
 * Change logback archived logs to be gzip compressed for stroom and proxy
 
 * Uplift stroom-logs content pack to v2.0-alpha.3
