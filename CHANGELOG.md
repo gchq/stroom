@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
+
 * Issue **#938** : Fixed an NPE in authentication session state.
 
 * Change the proxy yaml configuration for the stack to add `remotedn` and `remotecertexpiry` headers to the receive log
