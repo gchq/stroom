@@ -4,11 +4,11 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.query.common.v2.Sizes;
 import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.query.common.v2.StoreSize;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.task.ExecutorProvider;
@@ -79,7 +79,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreDoc);
 
-        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final Sizes storeSize = Sizes.create(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 

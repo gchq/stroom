@@ -15702,13 +15702,20 @@ var Gutter = function(parentEl) {
             if (rowInfo.text.indexOf(annoText) === -1)
                 rowInfo.text.push(annoText);
 
-            var type = annotation.type;
-            if (type == "error")
-                rowInfo.className = " ace_error";
-            else if (type == "warning" && rowInfo.className != " ace_error")
-                rowInfo.className = " ace_warning";
-            else if (type == "info" && (!rowInfo.className))
-                rowInfo.className = " ace_info";
+/* For Stroom to be able to display four different annotation icons in the left hand gutter the source for `ace.js` has been altered.
+Any future update to `ace.js` will need to incorporate this change. */
+
+// -- ORIGINAL CODE --
+//            var type = annotation.type;
+//            if (type == "error")
+//                rowInfo.className = " ace_error";
+//            else if (type == "warning" && rowInfo.className != " ace_error")
+//                rowInfo.className = " ace_warning";
+//            else if (type == "info" && (!rowInfo.className))
+//                rowInfo.className = " ace_info";
+
+// -- REPLACEMENT CODE --
+            rowInfo.className = " " + annotation.type;
         }
     };
 

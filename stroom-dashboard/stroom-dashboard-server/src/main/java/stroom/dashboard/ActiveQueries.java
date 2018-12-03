@@ -22,24 +22,32 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
+import stroom.security.Security;
+import stroom.security.SecurityContext;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ActiveQueries {
+class ActiveQueries {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActiveQueries.class);
 
     private final ConcurrentHashMap<DashboardQueryKey, ActiveQuery> activeQueries = new ConcurrentHashMap<>();
 
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
+    private final SecurityContext securityContext;
+    private final Security security;
 
-    public ActiveQueries(final DataSourceProviderRegistry dataSourceProviderRegistry) {
+    ActiveQueries(final DataSourceProviderRegistry dataSourceProviderRegistry,
+                  final SecurityContext securityContext,
+                  final Security security) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.securityContext = securityContext;
+        this.security = security;
     }
 
-    public void destroyUnusedQueries(final Set<DashboardQueryKey> keys) {
+    void destroyUnusedQueries(final Set<DashboardQueryKey> keys) {
         // Kill off any searches that are no longer required by the UI.
         Iterator<Entry<DashboardQueryKey, ActiveQuery>> iterator = activeQueries.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -47,15 +55,14 @@ public class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                // Terminate the associated search task.
-                Boolean success = dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
+                final Boolean success = security.asUserResult(activeQuery.getUserId(), () -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
                         .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
                         .orElseGet(() -> {
                             LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
                                     queryKey.getUuid(),
                                     activeQuery.getDocRef().getType());
                             return Boolean.TRUE;
-                        });
+                        }));
 
                 if (Boolean.TRUE.equals(success)) {
                     // Remove the collector from the available searches as it is no longer required by the UI.
@@ -65,12 +72,16 @@ public class ActiveQueries {
         }
     }
 
-    public ActiveQuery getExistingQuery(final DashboardQueryKey queryKey) {
+    ActiveQuery getExistingQuery(final DashboardQueryKey queryKey) {
         return activeQueries.get(queryKey);
     }
 
-    public ActiveQuery addNewQuery(final DashboardQueryKey queryKey, final DocRef docRef) {
-        final ActiveQuery activeQuery = new ActiveQuery(docRef);
+    ActiveQuery addNewQuery(final DashboardQueryKey queryKey, final DocRef docRef) {
+        final String userId = securityContext.getUserId();
+        if (userId == null) {
+            throw new RuntimeException("No user is currently logged in");
+        }
+        final ActiveQuery activeQuery = new ActiveQuery(docRef, userId);
         final ActiveQuery existing = activeQueries.put(queryKey, activeQuery);
         if (existing != null) {
             throw new RuntimeException(
@@ -79,7 +90,7 @@ public class ActiveQueries {
         return activeQuery;
     }
 
-    public void destroy() {
+    void destroy() {
         destroyUnusedQueries(null);
     }
 }

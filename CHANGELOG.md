@@ -6,9 +6,59 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
+
+* Issue **#945** : More changes to fix some visualisations only showing 10 data points.
+
+## [v6.0-beta.14] - 2018-11-28
+
+* Issue **#945** : Visualisations now show an unlimited number of data points unless constrained by their parent table or their own maximum value setting.
+
+* Issue **#948** : Catching Spring initialisation runtime errors and ensuring they are logged.
+
+* Add `set_log_levels.sh` script to the distribution
+
+* Uplift visualisations content pack to v3.0.6 in the gradle build
+
+* Issue **#952** : Remote data sources now execute calls within the context of the user for the active query. As a result all running search `destroy()` calls will now be made as the same user that initiated the search.
+
+* Issue **#566** : Info and warning icons are now displayed in stepping screen when needed.
+
+* Issue **#923** : Dashboard queries will now terminate if there are no index shards to search.
+
+* Issue **#959** : Remove Material UI from Login and from password management pages
+
+* Issue **#933** : Add health check for password resets
+
+* Issue **#929** : Add more comprehensive password validation
+
+* Issue **#876** : Fix password reset issues
+
+* Issue **#768** : Preventing deletion of /store in empty volumes
+
+* Issue **#939** : Including Subject DN in receive.log
+
+* Issue **#940** : Capturing User DN and cert expiry on DW terminated SSL
+
+* Issue **#744** : Improved reporting of error when running query with no search extraction pipeline
+
+* Issue **#134** : Copy permissions from parent button
+
+* Issue **#688** : Cascading permissions when moving/copying folder into a destination
+
+* Issue **#788** : Adding DocRef and IsDocRef to stroom query to allow doc ref related filtering. Migration of stream filters uses this.
+
+* Issue **#936** : Add conversion of header `X-SSL-Client-V-End` into `RemoteCertExpiry`, translating date format in the process.
+
+* Issue **#953** : Fixed NPE.
+
+* Issue **#947** : Fixed issue where data retention policy contains incorrect field names.
+
+* Remove Material UI from the Users and API Keys pages
+
 * Add content packs to stroom distribution
 
-* Change distribution to use send_to_stroom.sh v1.5
+* Change distribution to use send_to_stroom.sh v1.7
 
 * Updated stroom expression to v1.4.12 to improve handling or errors values and add new type checking functions `isBoolean()`, `isDouble()`, `isError()`, `isInteger()`, `isLong()`, `isNull()`, `isNumber()`, `isString()`, `isValue()`. Testing equality of null with `x=null()` is no longer valid and must be replaced with `isNull(x)`.
 
@@ -275,6 +325,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Splash presenter buttons are now always enabled.
 
 * Fix background colour to white on activity pane.
+
+## [v6.0-beta.3] - 2018-09-18
 
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 

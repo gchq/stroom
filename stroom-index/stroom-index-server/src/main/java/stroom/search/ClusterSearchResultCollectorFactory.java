@@ -19,9 +19,9 @@ package stroom.search;
 import stroom.node.shared.Node;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.StoreSize;
-import stroom.task.api.TaskContext;
+import stroom.query.common.v2.Sizes;
 import stroom.task.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollectorCache;
 
@@ -51,7 +51,7 @@ public class ClusterSearchResultCollectorFactory {
                                                final Set<String> highlights,
                                                final ResultHandler resultHandler,
                                                final List<Integer> defaultMaxResultsSizes,
-                                               final StoreSize storeSize,
+                                               final Sizes storeSize,
                                                final CompletionState completionState) {
         return new ClusterSearchResultCollector(taskManager,
                 taskContext,

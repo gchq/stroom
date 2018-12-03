@@ -22,8 +22,8 @@ import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreSize;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
@@ -46,18 +46,17 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 public class SqlStatisticsStore implements Store {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
 
     private static final String TASK_NAME = "Sql Statistic Search";
 
-    public static final Duration RESULT_SEND_INTERVAL = Duration.ofSeconds(1);
+    private static final Duration RESULT_SEND_INTERVAL = Duration.ofSeconds(1);
 
     private final ResultHandler resultHandler;
     private final int resultHandlerBatchSize;
     private final List<Integer> defaultMaxResultsSizes;
-    private final StoreSize storeSize;
+    private final Sizes storeSize;
     private final CompletionState completionState;
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final TaskContext taskContext;
@@ -68,7 +67,7 @@ public class SqlStatisticsStore implements Store {
                        final StatisticStoreDoc statisticStoreDoc,
                        final StatisticsSearchService statisticsSearchService,
                        final List<Integer> defaultMaxResultsSizes,
-                       final StoreSize storeSize,
+                       final Sizes storeSize,
                        final int resultHandlerBatchSize,
                        final Executor executor,
                        final TaskContext taskContext) {
@@ -152,7 +151,7 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public StoreSize getStoreSize() {
+    public Sizes getStoreSize() {
         return storeSize;
     }
 

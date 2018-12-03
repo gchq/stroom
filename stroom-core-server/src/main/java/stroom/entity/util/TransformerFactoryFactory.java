@@ -16,12 +16,17 @@
 
 package stroom.entity.util;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.jaxp.SaxonTransformerFactory;
+import net.sf.saxon.lib.SerializerFactory;
+import net.sf.saxon.serialize.Emitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
+import java.util.Properties;
 
 public final class TransformerFactoryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformerFactoryFactory.class);
@@ -58,6 +63,11 @@ public final class TransformerFactoryFactory {
     public static TransformerFactory newInstance() {
         final TransformerFactory factory = TransformerFactory.newInstance();
         secureProcessing(factory);
+
+        final SaxonTransformerFactory saxonTransformerFactory = (SaxonTransformerFactory) factory;
+        final Configuration configuration = saxonTransformerFactory.getConfiguration();
+        configuration.setSerializerFactory(new MySerializerFactory(configuration));
+
         return factory;
     }
 
@@ -66,6 +76,17 @@ public final class TransformerFactoryFactory {
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         } catch (final TransformerConfigurationException e) {
             LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    private static class MySerializerFactory extends SerializerFactory {
+        public MySerializerFactory(final Configuration config) {
+            super(config);
+        }
+
+        @Override
+        protected Emitter newXMLEmitter(final Properties properties) {
+            return new MyXmlEmitter();
         }
     }
 }

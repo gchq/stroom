@@ -18,20 +18,26 @@ package stroom.dashboard;
 
 import stroom.docref.DocRef;
 
-public class ActiveQuery {
+class ActiveQuery {
     private final DocRef docRef;
+    private final String userId;
     private final long creationTime;
 
-    public ActiveQuery(final DocRef docRef) {
+    ActiveQuery(final DocRef docRef, final String userId) {
         this.docRef = docRef;
+        this.userId = userId;
         this.creationTime = System.currentTimeMillis();
     }
 
-    public DocRef getDocRef() {
+    DocRef getDocRef() {
         return docRef;
     }
 
-    public long getCreationTime() {
+    String getUserId() {
+        return userId;
+    }
+
+    long getCreationTime() {
         return creationTime;
     }
 
@@ -39,6 +45,7 @@ public class ActiveQuery {
     public String toString() {
         return "ActiveQuery{" +
                 "docRef=" + docRef +
+                ", userId=" + userId +
                 ", creationTime=" + creationTime +
                 '}';
     }

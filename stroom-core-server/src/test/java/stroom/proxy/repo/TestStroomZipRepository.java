@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -128,6 +130,39 @@ public class TestStroomZipRepository {
             Assert.assertTrue(1L == min);
             Assert.assertTrue(1L == max);
         });
+    }
+
+    @Test
+    public void testTemplatedFilenameWithDate() throws IOException {
+        // template should be case insensitive as far as key names go as the metamap is case insensitive
+        final String repositoryFormat = "${year}-${month}-${day}/${feed}/${id}";
+        final String FEED_NAME = "myFeed";
+
+        final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
+        StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
+
+        AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", FEED_NAME);
+
+        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
+
+        StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
+                "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+        Assert.assertFalse(Files.isRegularFile(out1.getFile()));
+        out1.close();
+        Path zipFile = out1.getFile();
+        Path feedDir = zipFile.getParent();
+        Path dateDir = feedDir.getParent();
+        String dateDirStr = dateDir.getFileName().toString();
+
+        Assert.assertTrue(Files.isRegularFile(zipFile));
+
+        Assert.assertEquals(FEED_NAME, feedDir.getFileName().toString());
+
+        String pattern = "yyyy-MM-dd";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        String nowStr = simpleDateFormat.format(new Date());
+        Assert.assertEquals(nowStr, dateDirStr);
     }
 
     @Test

@@ -26,10 +26,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.servlet.HttpSessionUtil;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -49,14 +46,11 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
-    private HttpServletRequestHolder httpServletRequestHolder;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
-                             final String url,
-                             final HttpServletRequestHolder httpServletRequestHolder) {
+                             final String url) {
         this.securityContext = securityContext;
         this.url = url;
-        this.httpServletRequestHolder = httpServletRequestHolder;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -75,8 +69,13 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
-        LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
-        return post(queryKey, DESTROY_ENDPOINT, Boolean.class);
+        try {
+            LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
+            return post(queryKey, DESTROY_ENDPOINT, Boolean.class);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to destroy active query for queryKey {} on url {}", queryKey, url, e);
+        }
+        return Boolean.FALSE;
     }
 
     private <T> T post(final Object request, String path, final Class<T> responseClass) {
@@ -85,22 +84,15 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
             WebTarget webTarget = client.target(url).path(path);
 
-            Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+            final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-            final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
-            if (httpServletRequest == null) {
-                throw new NullPointerException("Null HttpServletRequest");
-            }
-
-            // We'll look for the user's API key in the session, but if they're not logged in we'll try and get
-            // one from the security context.
-            String usersApiKey = HttpSessionUtil.getUserApiKey(httpServletRequest.getSession(true));
-            if (usersApiKey == null || usersApiKey.isEmpty()) {
-                usersApiKey = securityContext.getApiToken();
+            final String usersApiKey = securityContext.getApiToken();
+            if (usersApiKey == null) {
+                LOGGER.debug("The API key is null for user '{}'", securityContext.getUserId());
             }
 
             invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
-            Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
+            final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 return response.readEntity(responseClass);
@@ -113,7 +105,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             }
 
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
     }

@@ -25,7 +25,7 @@ import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.Sizes;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskManager;
 import stroom.task.TaskTerminatedException;
@@ -71,7 +71,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final List<Integer> defaultMaxResultsSizes;
-    private final StoreSize storeSize;
+    private final Sizes storeSize;
     private final CompletionState completionState;
 
     ClusterSearchResultCollector(final TaskManager taskManager,
@@ -83,7 +83,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final ClusterResultCollectorCache clusterResultCollectorCache,
                                  final ResultHandler resultHandler,
                                  final List<Integer> defaultMaxResultsSizes,
-                                 final StoreSize storeSize,
+                                 final Sizes storeSize,
                                  final CompletionState completionState) {
         this.taskManager = taskManager;
         this.taskContext = taskContext;
@@ -300,7 +300,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public StoreSize getStoreSize() {
+    public Sizes getStoreSize() {
         return storeSize;
     }
 

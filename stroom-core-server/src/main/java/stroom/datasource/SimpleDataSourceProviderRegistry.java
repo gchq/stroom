@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,19 +27,16 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
+class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
 
     private final Map<String, Supplier<String>> urlMap;
 
     private final SecurityContext securityContext;
-    private HttpServletRequestHolder httpServletRequestHolder;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                     final DataSourceUrlConfig dataSourceUrlConfig,
-                                     final HttpServletRequestHolder httpServletRequestHolder) {
+                                     final DataSourceUrlConfig dataSourceUrlConfig) {
         this.securityContext = securityContext;
-        this.httpServletRequestHolder = httpServletRequestHolder;
 
 //        final String basePath = serviceDiscoveryConfig.getSimpleLookupBasePath();
 //        final String annotationsPath = propertyService
@@ -91,7 +87,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
                 .map(urlProvider ->
-                        new RemoteDataSourceProvider(securityContext, urlProvider.get(), httpServletRequestHolder));
+                        new RemoteDataSourceProvider(securityContext, urlProvider.get()));
     }
 
     /**

@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.entity.util.XMLUtil;
 import stroom.pipeline.LocationFactory;
@@ -64,7 +63,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private final LocationFactory locationFactory;
 
     private ContentHandler handler = NullXMLFilter.INSTANCE;
-    private Locator locator;
 
     private boolean doneElement;
     private int depth;
@@ -118,19 +116,6 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         //LOGGER.trace("startStream called");
         super.startStream();
         doneElement = false;
-    }
-
-    /**
-     * @param locator an object that can return the location of any SAX document
-     *                event
-     * @see org.xml.sax.Locator
-     * @see stroom.pipeline.filter.AbstractXMLFilter#setDocumentLocator(org.xml.sax.Locator)
-     */
-    @Override
-    public void setDocumentLocator(final Locator locator) {
-        // Just remember the locator in case we start to output a document.
-        this.locator = locator;
-        super.setDocumentLocator(locator);
     }
 
     @Override

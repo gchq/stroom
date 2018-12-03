@@ -8,11 +8,11 @@ public class CopyPermissionsFromParentAction extends Action<DocumentPermissions>
 
     private DocRef docRef;
 
-    public CopyPermissionsFromParentAction(){
+    public CopyPermissionsFromParentAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CopyPermissionsFromParentAction(final DocRef docRef){
+    public CopyPermissionsFromParentAction(final DocRef docRef) {
         this.docRef = docRef;
     }
 

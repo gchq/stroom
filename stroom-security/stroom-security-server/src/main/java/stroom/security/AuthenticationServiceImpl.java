@@ -24,12 +24,14 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.persistence.PersistenceException;
 
 @Singleton
 class AuthenticationServiceImpl implements AuthenticationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final String ADMINISTRATORS = "Administrators";
+    private static final int GET_USER_ATTEMPTS = 2;
 
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;
@@ -47,23 +49,42 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public UserRef getUserRef(final AuthenticationToken token) {
-        return security.insecureResult(() -> {
-            if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
-                return null;
-            }
+        if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
+            return null;
+        }
 
-            UserRef userRef = loadUserByUsername(token.getUserId());
+        // Race conditions can mean that multiple processes kick off the creation of a user
+        // The first one will succeed, but the others may clash. So we retrieve/create the user
+        // in a loop to allow the failures caused by the race to be absorbed without failure
+        int attempts = 0;
+        UserRef userRef = null;
+
+        while (userRef == null) {
+            userRef = loadUserByUsername(token.getUserId());
 
             if (userRef == null) {
                 // At this point the user has been authenticated using JWT.
                 // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
-                userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
+                try {
+                    userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
+                } catch (final PersistenceException e) {
+                    final String msg = String.format("Could not create user, this is attempt %d", attempts);
+                    if (attempts == 0) {
+                        LOGGER.warn(msg);
+                    } else {
+                        LOGGER.info(msg);
+                    }
+                }
             }
 
-            return userRef;
-        });
+            if (attempts++ > GET_USER_ATTEMPTS) {
+                break;
+            }
+        }
+
+        return userRef;
     }
 
     private UserRef loadUserByUsername(final String username) {

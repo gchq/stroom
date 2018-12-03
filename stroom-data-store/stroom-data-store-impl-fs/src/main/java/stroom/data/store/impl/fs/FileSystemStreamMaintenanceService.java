@@ -19,10 +19,10 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
@@ -114,11 +114,12 @@ class FileSystemStreamMaintenanceService
             final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
             final Map<String, DataVolume> streamsKeyedByBaseName = new HashMap<>();
             final Path directory;
+            final Path volumeRoot = FileSystemUtil.createFileTypeRoot(volume);
 
             if (repoPath != null && !repoPath.isEmpty()) {
-                directory = FileSystemUtil.createFileTypeRoot(volume).resolve(repoPath);
+                directory = volumeRoot.resolve(repoPath);
             } else {
-                directory = FileSystemUtil.createFileTypeRoot(volume);
+                directory = volumeRoot;
             }
 
             if (!Files.isDirectory(directory)) {
@@ -141,7 +142,13 @@ class FileSystemStreamMaintenanceService
             // The idea is that entries are written in the database before the file
             // system. We can safely delete entries on the file system that do not
             // have a entries on the database.
-            checkEmptyDirectory(result, doDelete, directory, oldFileTime, kids);
+            try {
+                if (!Files.isSameFile(volumeRoot, directory)) {
+                    checkEmptyDirectory(result, doDelete, directory, oldFileTime, kids);
+                }
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
 
             // Loop around all the kids build a list of file names or sub processing
             // directories.

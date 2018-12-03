@@ -22,10 +22,8 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
-import stroom.security.AuthenticationStateSessionUtil.AuthenticationState;
 import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
-import stroom.servlet.HttpSessionUtil;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StreamUtil;
 
@@ -177,10 +175,6 @@ public class SecurityFilter implements Filter {
             if (useSession) {
                 // Set the user ref in the session.
                 UserRefSessionUtil.set(request.getSession(true), userRef);
-
-                // Get the user's API key and store it in the session
-                String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
-                HttpSessionUtil.setUserApiKey(request.getSession(true), apiKey);
             }
 
             continueAsUser(request, response, chain, userRef);
@@ -214,7 +208,7 @@ public class SecurityFilter implements Filter {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
             // Check the state is one we requested.
-            final AuthenticationState state = AuthenticationStateSessionUtil.remove(request.getSession(false), stateId);
+            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request.getSession(false));
             if (state == null) {
                 LOGGER.warn("Unexpected state: " + stateId);
 
@@ -229,10 +223,6 @@ public class SecurityFilter implements Filter {
                     if (userRef != null) {
                         // Set the user ref in the session.
                         UserRefSessionUtil.set(request.getSession(true), userRef);
-
-                        // Get the user's API key and store it in the session
-                        String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
-                        HttpSessionUtil.setUserApiKey(request.getSession(true), apiKey);
 
                         loggedIn = true;
                     }

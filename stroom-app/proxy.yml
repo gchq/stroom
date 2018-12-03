@@ -6,12 +6,13 @@ server:
     port: 8090
   - type: https
     port: 9443
-    keyStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/all/server.pkcs12
+    keyStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/server.jks
     keyStorePassword: password
     keyStoreType: JKS
-    trustStorePath: /home/dev/git_work/stroom-resources/dev-resources/certs/all/ca.pkcs12
+    trustStorePath: ${HOME}/git_work/stroom-resources/dev-resources/certs/server/ca.jks
     trustStorePassword: password
     trustStoreType: JKS
+    needClientAuth: true
   adminConnectors:
   - type: http
     port: 8091
@@ -98,7 +99,7 @@ proxyConfig:
   proxyRepositoryReaderConfig:
     readCron: "* * *"
   logStreamConfig:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   contentSyncConfig:
     contentSyncEnabled: true
     upstreamUrl:

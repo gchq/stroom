@@ -17,6 +17,17 @@
 
 package stroom.policy;
 
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.ruleset.shared.DataRetentionRule;
+import stroom.streamstore.shared.StreamDataSource;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 // TODO : @66 Re-implement finding streams for data retention
 public class DataRetentionStreamFinder {//implements AutoCloseable {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionStreamFinder.class);
@@ -173,36 +184,42 @@ public class DataRetentionStreamFinder {//implements AutoCloseable {
 ////        return sql;
 //    }
 //
-//    private DataRetentionRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<DataRetentionRule> activeRules) {
+//private DataRetentionRule findMatchingRule(final ExpressionMatcher expressionMatcher, final Map<String, Object> attributeMap, final List<DataRetentionRule> activeRules) {
+//    try {
 //        for (final DataRetentionRule rule : activeRules) {
 //            if (expressionMatcher.match(attributeMap, rule.getExpression())) {
 //                return rule;
 //            }
 //        }
-//        return null;
+//    } catch (final RuntimeException e) {
+//        LOGGER.debug(e.getMessage(), e);
 //    }
+//
+//    return null;
+//}
 //
 //    private Map<String, Object> createAttributeMap(final ResultSet resultSet, final Set<String> fieldSet) {
 //        final Map<String, Object> attributeMap = new HashMap<>();
 //        fieldSet.forEach(fieldName -> {
 //            try {
 //                final DataSourceField field = StreamDataSource.getFieldMap().get(fieldName);
-//                switch (field.getType()) {
-//                    case FIELD:
-//                        final String string = resultSet.getString(fieldName);
-//                        attributeMap.put(fieldName, string);
-//                        break;
-//                    case DOC_REF:
-//                          final String name = resultSet.getString(fieldName);
-//                        attributeMap.put(fieldName, name);
-//                        break;
-//                    case DATE_FIELD:
-//                    case ID:
-//                    case NUMERIC_FIELD:
-//                        final long number = resultSet.getLong(fieldName);
-//                        attributeMap.put(fieldName, number);
-//                        break;
-//
+//                if (field != null) {
+//                    switch (field.getType()) {
+//                        case FIELD:
+//                            final String string = resultSet.getString(fieldName);
+//                            attributeMap.put(fieldName, string);
+//                            break;
+//                        case DOC_REF:
+//                            final String name = resultSet.getString(fieldName);
+//                            attributeMap.put(fieldName, name);
+//                            break;
+//                        case DATE_FIELD:
+//                        case ID:
+//                        case NUMERIC_FIELD:
+//                            final long number = resultSet.getLong(fieldName);
+//                            attributeMap.put(fieldName, number);
+//                            break;
+//                    }
 //                }
 //            } catch (final SQLException e) {
 //                LOGGER.error(e.getMessage(), e);

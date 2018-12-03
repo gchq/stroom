@@ -16,7 +16,10 @@
 
 package stroom.feed;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.util.date.DateUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -30,13 +33,46 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoField;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 public class AttributeMapUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapUtil.class);
+
+    private static final String CERT_EXPIRY_HEADER_TOKEN = "X-SSL-Client-V-End";
+
+    // This formatter is used to parse the date in nginx property '$ssl_client_v_end'
+    // I can't find any documentation on the exact format used so can only go on a few examples.
+    // 'Sep  9 16:16:45 2292 GMT'
+    // 'Sep 10 06:39:20 2292 GMT'
+    static DateTimeFormatter CERT_EXPIRY_DATE_FORMATTER = new DateTimeFormatterBuilder()
+            .appendText(ChronoField.MONTH_OF_YEAR, TextStyle.SHORT)
+            .appendLiteral(' ')
+            .padNext(2) // for some reason nginx right pads the day of month
+            .appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NEVER)
+            .appendLiteral(' ')
+            .appendValue(ChronoField.HOUR_OF_DAY, 2)
+            .appendLiteral(':')
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+            .appendLiteral(':')
+            .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+            .appendLiteral(' ')
+            .appendValue(ChronoField.YEAR, 4)
+            .appendLiteral(' ')
+            .appendZoneText(TextStyle.SHORT)
+            .toFormatter();
+
     private static final String HEADER_DELIMITER = ":";
-    private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
     public static AttributeMap cloneAllowable(final AttributeMap in) {
         final AttributeMap attributeMap = new AttributeMap();
@@ -47,6 +83,7 @@ public class AttributeMapUtil {
 
     public static AttributeMap create(final HttpServletRequest httpServletRequest) {
         AttributeMap attributeMap = new AttributeMap();
+        addAllSecureTokens(httpServletRequest, attributeMap);
         addAllHeaders(httpServletRequest, attributeMap);
         addAllQueryString(httpServletRequest, attributeMap);
 
@@ -109,12 +146,62 @@ public class AttributeMapUtil {
         }
     }
 
+    private static void addAllSecureTokens(final HttpServletRequest httpServletRequest,
+                                           final AttributeMap attributeMap) {
+        final X509Certificate[] certs = (X509Certificate[]) httpServletRequest
+                .getAttribute("javax.servlet.request.X509Certificate");
+
+        if (certs != null && certs.length > 0 && certs[0] != null) {
+            // If we get here it means SSL has been terminated by DropWizard so we need to add meta items
+            // from the certificate
+            final X509Certificate cert = certs[0];
+            if (cert.getSubjectDN() != null) {
+                final String remoteDN = cert.getSubjectDN().toString();
+                attributeMap.put(StroomHeaderArguments.REMOTE_DN, remoteDN);
+            } else {
+                LOGGER.debug("Cert {} doesn't have a subject DN", cert);
+            }
+
+            if (cert.getNotAfter() != null) {
+                final String remoteCertExpiry = DateUtil.createNormalDateTimeString(cert.getNotAfter().getTime());
+                attributeMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY, remoteCertExpiry);
+            } else {
+                LOGGER.debug("Cert {} doesn't have a Not After date", cert);
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private static void addAllHeaders(HttpServletRequest httpServletRequest, AttributeMap attributeMap) {
+    private static void addAllHeaders(final HttpServletRequest httpServletRequest,
+                                      final AttributeMap attributeMap) {
         Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
-            attributeMap.put(header, httpServletRequest.getHeader(header));
+            putHeader(header, httpServletRequest, attributeMap);
+        }
+    }
+
+    private static void putHeader(final String headerToken,
+                                  final HttpServletRequest httpServletRequest,
+                                  final AttributeMap attributeMap) {
+
+        final String headerValue = httpServletRequest.getHeader(headerToken);
+        attributeMap.put(headerToken, headerValue);
+
+        // If this is the cert expiry header added by nginx then translate it to a sensible date format
+        // and at it to the meta using a new header token
+        // RemoteDN is added by nginx
+        if (CERT_EXPIRY_HEADER_TOKEN.equals(headerToken)) {
+            try {
+                final LocalDateTime localDateTime = LocalDateTime.parse(headerValue, CERT_EXPIRY_DATE_FORMATTER);
+                final String newHeaderValue = DateUtil.createNormalDateTimeString(
+                        localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
+                LOGGER.debug("Converting certificate expiry date from [{}] to [{}]", headerValue, newHeaderValue);
+                attributeMap.put(StroomHeaderArguments.REMOTE_CERT_EXPIRY, newHeaderValue);
+            } catch (Exception e) {
+                LOGGER.error("Unable to create header {} from header {} with value [{}].",
+                        StroomHeaderArguments.REMOTE_CERT_EXPIRY, CERT_EXPIRY_HEADER_TOKEN, headerValue, e);
+            }
         }
     }
 
@@ -127,7 +214,7 @@ public class AttributeMapUtil {
                 int pos = pair.indexOf('=');
                 if (pos != -1) {
                     String key = pair.substring(0, pos);
-                    String val = pair.substring(pos + 1, pair.length());
+                    String val = pair.substring(pos + 1);
 
                     attributeMap.put(key, val);
                 }

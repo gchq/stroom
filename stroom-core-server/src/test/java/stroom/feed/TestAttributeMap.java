@@ -1,13 +1,14 @@
-package stroom.proxy.repo;
+package stroom.feed;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestAttributeMap {
     @Test
@@ -15,17 +16,17 @@ public class TestAttributeMap {
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("person", "person1");
 
-        Assert.assertEquals("person1", attributeMap.get("person"));
-        Assert.assertEquals("person1", attributeMap.get("PERSON"));
+        assertThat(attributeMap.get("person")).isEqualTo("person1");
+        assertThat(attributeMap.get("PERSON")).isEqualTo("person1");
 
-        Assert.assertEquals(new HashSet<>(Arrays.asList("person")), attributeMap.keySet());
+        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Arrays.asList("person")));
 
         attributeMap.put("PERSON", "person2");
 
-        Assert.assertEquals("person2", attributeMap.get("person"));
-        Assert.assertEquals("person2", attributeMap.get("PERSON"));
+        assertThat(attributeMap.get("person")).isEqualTo("person2");
+        assertThat(attributeMap.get("PERSON")).isEqualTo("person2");
 
-        Assert.assertEquals(new HashSet<>(Arrays.asList("PERSON")), attributeMap.keySet());
+        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Arrays.asList("PERSON")));
 
         AttributeMap attributeMap2 = new AttributeMap();
         attributeMap2.put("persOn", "person3");
@@ -33,8 +34,7 @@ public class TestAttributeMap {
 
         attributeMap.putAll(attributeMap2);
 
-        Assert.assertEquals(new HashSet<>(Arrays.asList("persOn", "persOn1")), attributeMap.keySet());
-
+        assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Arrays.asList("persOn", "persOn1")));
     }
 
     @Test
@@ -45,24 +45,24 @@ public class TestAttributeMap {
 
         attributeMap.removeAll(Arrays.asList("A", "b"));
 
-        Assert.assertEquals(0, attributeMap.size());
+        assertThat(attributeMap.size()).isEqualTo(0);
     }
 
     @Test
     public void testReadWrite() throws IOException {
         AttributeMap attributeMap = new AttributeMap();
-        AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET), attributeMap);
-        Assert.assertEquals("1", attributeMap.get("a"));
-        Assert.assertEquals("2", attributeMap.get("b"));
+        AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
+        assertThat(attributeMap.get("a")).isEqualTo("1");
+        assertThat(attributeMap.get("b")).isEqualTo("2");
         Assert.assertNull(attributeMap.get("z"));
 
-        Assert.assertEquals("a:1\nb:2\nz\n", new String(AttributeMapUtil.toByteArray(attributeMap), CharsetConstants.DEFAULT_CHARSET));
+        assertThat(new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET)).isEqualTo("a:1\nb:2\nz\n");
     }
 
     @Test
     public void testtoString() throws IOException {
         AttributeMap attributeMap = new AttributeMap();
-        AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET), attributeMap);
+        AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
 
         // AttributeMap's are used in log output and so check that they do output
         // the map values.
@@ -79,7 +79,7 @@ public class TestAttributeMap {
         attributeMap.put("F OOBAR", "2");
         attributeMap.put(" foobar ", " 3 ");
 
-        Assert.assertEquals("person2", attributeMap.get("PERSON "));
-        Assert.assertEquals("3", attributeMap.get("FOOBAR"));
+        assertThat(attributeMap.get("PERSON ")).isEqualTo("person2");
+        assertThat(attributeMap.get("FOOBAR")).isEqualTo("3");
     }
 }

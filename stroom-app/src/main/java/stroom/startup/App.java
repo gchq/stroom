@@ -85,6 +85,7 @@ import stroom.statistics.sql.search.SqlStatisticsQueryResource;
 import stroom.streamstore.StreamAttributeMapResource;
 import stroom.streamtask.resource.StreamTaskResource;
 import stroom.util.HealthCheckUtils;
+import stroom.util.db.DbUtil;
 import stroom.util.logging.LambdaLogger;
 
 import javax.servlet.DispatcherType;

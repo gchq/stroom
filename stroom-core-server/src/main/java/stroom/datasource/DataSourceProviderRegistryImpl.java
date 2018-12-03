@@ -7,7 +7,6 @@ import stroom.lifecycle.StroomBeanStore;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
-import stroom.servlet.HttpServletRequestHolder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,7 +24,6 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
                                    final ServiceDiscoveryConfig serviceDiscoveryConfig,
                                    final StroomBeanStore stroomBeanStore,
-                                   final HttpServletRequestHolder httpServletRequestHolder,
                                    final DataSourceUrlConfig dataSourceUrlConfig) {
         final boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
         if (isServiceDiscoveryEnabled) {
@@ -33,14 +31,12 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,
-                    serviceDiscoverer,
-                    httpServletRequestHolder);
+                    serviceDiscoverer);
         } else {
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
                     securityContext,
-                    dataSourceUrlConfig,
-                    httpServletRequestHolder);
+                    dataSourceUrlConfig);
         }
     }
 
