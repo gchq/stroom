@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change logback archived logs to be gzip compressed for stroom and proxy
+
 * Uplift stroom-logs content pack to v2.0-alpha.3
 
 * Uplift send_to_stroom script to v1.8.1
