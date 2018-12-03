@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change the proxy yaml configuration for the stack to add `remotedn` and `remotecertexpiry` headers to the receive log
+
+* Change logback archived logs to be gzip compressed for stroom and proxy
+
+* Uplift stroom-logs content pack to v2.0-alpha.3
+
+* Uplift send_to_stroom script to v1.8.1
+
 * Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
 
 * Issue **#945** : More changes to fix some visualisations only showing 10 data points.

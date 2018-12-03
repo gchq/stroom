@@ -16,7 +16,7 @@ server:
       queueSize: 256
       discardingThreshold: 0
       archive: true
-      archivedLogFilenamePattern: /stroom/logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedLogFilenamePattern: /stroom/logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
       archivedFileCount: 100
       timeZone: UTC
 
@@ -40,7 +40,7 @@ logging:
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: /stroom/logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: /stroom/logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -58,7 +58,7 @@ logging:
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: /stroom/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedLogFilenamePattern: /stroom/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
     timeZone: UTC

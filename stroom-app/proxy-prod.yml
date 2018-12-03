@@ -30,7 +30,7 @@ server:
       queueSize: 256
       discardingThreshold: 0
       archive: true
-      archivedLogFilenamePattern: /stroom-proxy/logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
+      archivedLogFilenamePattern: /stroom-proxy/logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
       archivedFileCount: 100
       timeZone: UTC
       # For logFormat syntax in the access log see https://logback.qos.ch/manual/layouts.html (scroll to bottom)
@@ -52,7 +52,7 @@ logging:
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: /stroom-proxy/logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: /stroom-proxy/logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -66,7 +66,7 @@ logging:
         queueSize: 256
         discardingThreshold: 0
         archive: true
-        archivedLogFilenamePattern: /stroom-proxy/logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log
+        archivedLogFilenamePattern: /stroom-proxy/logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         archivedFileCount: 100
         timeZone: UTC
         logFormat: "%msg%n"
@@ -84,7 +84,7 @@ logging:
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: /stroom-proxy/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
+    archivedLogFilenamePattern: /stroom-proxy/logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
     timeZone: UTC
@@ -123,7 +123,7 @@ proxyConfig:
   proxyRepositoryReaderConfig:
     readCron: "* * *"
   logStreamConfig:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress"
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   contentSyncConfig:
     contentSyncEnabled: ${CONTENT_SYNC_ENABLED:-true}
     upstreamUrl:
