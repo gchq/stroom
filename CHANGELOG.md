@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#938** : Fixed an NPE in authentication session state.
+
 * Change the proxy yaml configuration for the stack to add `remotedn` and `remotecertexpiry` headers to the receive log
 
 * Change logback archived logs to be gzip compressed for stroom and proxy

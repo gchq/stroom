@@ -200,7 +200,7 @@ public class SecurityFilter implements Filter {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
             // Check the state is one we requested.
-            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request.getSession(false));
+            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request);
             if (state == null) {
                 LOGGER.warn("Unexpected state: " + stateId);
 
@@ -245,7 +245,7 @@ public class SecurityFilter implements Filter {
         final String url = request.getRequestURL().toString();
 
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, url);
 
         // If we're using the request URL we want to trim off any trailing params
         final URI parsedRequestUrl = UriBuilder.fromUri(url).build();
@@ -276,7 +276,7 @@ public class SecurityFilter implements Filter {
         // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
         // log in as the 'admin' user but the browser is always presenting a certificate.
         String prompt = request.getParameter("prompt");
-        if(!Strings.isNullOrEmpty(prompt)){
+        if (!Strings.isNullOrEmpty(prompt)) {
             authenticationRequestParams += "&prompt=" + prompt;
         }
 
@@ -315,8 +315,7 @@ public class SecurityFilter implements Filter {
                 // If we can't exchange the accessCode for an idToken then this probably means the
                 // accessCode doesn't exist any more, or has already been used. so we can't proceed.
                 LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
-            }
-            else {
+            } else {
                 LOGGER.error("Unable to retrieve idToken!", e);
             }
         } catch (final MalformedClaimException e) {
