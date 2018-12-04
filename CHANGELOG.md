@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#969** : The code now suppresses errors for index shards being locked for writing as it is expected. We now lock shards using maps rather than the file system as it is more reliable between restarts.
+
 ## [v6.0-beta.16] - 2018-12-04
 
 * Issue **#970** : Add stream type of `Records` for translated stroom app events.
