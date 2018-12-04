@@ -18,6 +18,10 @@ public class StreamTypeNames {
      */
     public static final String REFERENCE = "Reference";
     /**
+     * Processed Data files conforming to the Records XMLSchema.
+     */
+    public static final String RECORDS = "Records";
+    /**
      * Meta stream data
      */
     public static final String META = "Meta Data";

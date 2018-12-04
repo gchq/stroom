@@ -94,7 +94,7 @@ public class ProxyRequestHandler implements RequestHandler {
                             streamHandler.handleHeader();
                         }
 
-                        stroomStreamProcessor.process(request.getInputStream(), "");
+                        stroomStreamProcessor.process(inputStream, "");
 
                         for (final StreamHandler streamHandler : handlers) {
                             streamHandler.handleFooter();

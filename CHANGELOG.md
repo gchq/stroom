@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.16] - 2018-12-04
+
+* Issue **#970** : Add stream type of `Records` for translated stroom app events.
+
+## [v6.0-beta.15] - 2018-12-03
+
+* Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
+
+* Issue **#938** : Fixed an NPE in authentication session state.
+
 * Change the proxy yaml configuration for the stack to add `remotedn` and `remotecertexpiry` headers to the receive log
 
 * Change logback archived logs to be gzip compressed for stroom and proxy

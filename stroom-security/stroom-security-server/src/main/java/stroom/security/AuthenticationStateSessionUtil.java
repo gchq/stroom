@@ -1,5 +1,6 @@
 package stroom.security;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -19,17 +20,28 @@ public final class AuthenticationStateSessionUtil {
      * URL to allow verification that the return request was expected.
      */
     @SuppressWarnings("unchecked")
-    public static AuthenticationState create(final HttpSession session, final String url) {
+    public static AuthenticationState create(final HttpServletRequest request, final String url) {
         final String stateId = createRandomString(8);
         final String nonce = createRandomString(20);
         final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
+
+        // Get the current session if there is one. Create a new session if needed.
+        final HttpSession session = request.getSession(true);
         session.setAttribute(SESSION_AUTHENTICATION_STATE_MAP, state);
+
         return state;
     }
 
     @SuppressWarnings("unchecked")
-    public static AuthenticationState pop(final HttpSession session) {
-        AuthenticationState state = (AuthenticationState) session.getAttribute(SESSION_AUTHENTICATION_STATE_MAP);
+    public static AuthenticationState pop(final HttpServletRequest request) {
+        AuthenticationState state = null;
+
+        // Get the current session if there is one without creating a new one.
+        final HttpSession session = request.getSession(false);
+        if (session != null) {
+            state = (AuthenticationState) session.getAttribute(SESSION_AUTHENTICATION_STATE_MAP);
+        }
+
         return state;
     }
 

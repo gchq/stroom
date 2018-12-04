@@ -1,4 +1,4 @@
-package stroom.pipeline.server;
+package stroom.pipeline;
 
 import net.sf.saxon.serialize.charcode.UTF16CharacterSet;
 import org.junit.Test;

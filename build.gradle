@@ -247,15 +247,15 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-        'core-xml-schemas': 'v2.0',
-        'event-logging-xml-schema': 'v3.2.3',
-        'internal-dashboards': 'v1.1',
-        'internal-statistics-sql': 'v2.1',
-        'internal-statistics-stroom-stats': 'v2.1',
-        'standard-pipelines': 'v0.1',
-        'stroom-101': 'v1.0',
-        'stroom-logs': 'v2.0-alpha.3',
-        'template-pipelines': 'v0.2'
+    'core-xml-schemas': 'v2.0',
+    'event-logging-xml-schema': 'v3.2.3',
+    'internal-dashboards': 'v1.1',
+    'internal-statistics-sql': 'v2.1',
+    'internal-statistics-stroom-stats': 'v2.1',
+    'standard-pipelines': 'v0.1',
+    'stroom-101': 'v1.0',
+    'stroom-logs': 'v2.0-alpha.4',
+    'template-pipelines': 'v0.2'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
