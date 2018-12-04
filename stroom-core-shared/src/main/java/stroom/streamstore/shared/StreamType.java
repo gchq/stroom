@@ -97,7 +97,7 @@ public class StreamType extends NamedEntity implements HasPrimitiveValue {
     public static final StreamType CONTEXT = new StreamType("CONTEXT", "ctx", "Context", 34, Purpose.CONTEXT);
     private static final long serialVersionUID = 2059206179226911212L;
     private static final StreamType[] INITIAL_ALL_TYPES = new StreamType[]{MANIFEST, RAW_EVENTS, RAW_REFERENCE,
-            EVENTS, REFERENCE, RECORDS, TEST_REFERENCE, SEGMENT_INDEX, BOUNDARY_INDEX, META, ERROR, CONTEXT};
+            EVENTS, REFERENCE, RECORDS, TEST_EVENTS, TEST_REFERENCE, SEGMENT_INDEX, BOUNDARY_INDEX, META, ERROR, CONTEXT};
     private String extension;
     private String path;
     private byte ppurpose;
