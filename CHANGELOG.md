@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.17] - 2018-12-04
+
 * Issue **#969** : The code now suppresses errors for index shards being locked for writing as it is expected. We now lock shards using maps rather than the file system as it is more reliable between restarts.
 
 * Issue **#941** : Internal Meta Stats are now being written
@@ -1317,7 +1319,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.16...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.17...6.0
+[v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17
 [v6.0-beta.16]: https://github.com/gchq/stroom/compare/v6.0-beta.15...v6.0-beta.16
 [v6.0-beta.15]: https://github.com/gchq/stroom/compare/v6.0-beta.14...v6.0-beta.15
 [v6.0-beta.14]: https://github.com/gchq/stroom/compare/v6.0-beta.13...v6.0-beta.14
