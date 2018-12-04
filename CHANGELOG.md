@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#941** : Internal Meta Stats are now being written
+
 ## [v6.0-beta.16] - 2018-12-04
 
 * Issue **#970** : Add stream type of `Records` for translated stroom app events.
