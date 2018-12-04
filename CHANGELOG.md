@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#970** : Add stream type of `Records` for translated stroom app events.
+
 ## [v6.0-beta.15] - 2018-12-03
 
 * Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
