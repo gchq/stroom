@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#970** : Add stream type of `Records` for translated stroom app events.
 
+## [v6.0-beta.15] - 2018-12-03
+
 * Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
 
 * Issue **#938** : Fixed an NPE in authentication session state.
@@ -1309,7 +1311,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.14...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.15...6.0
+[v6.0-beta.15]: https://github.com/gchq/stroom/compare/v6.0-beta.14...v6.0-beta.15
 [v6.0-beta.14]: https://github.com/gchq/stroom/compare/v6.0-beta.13...v6.0-beta.14
 [v6.0-beta.13]: https://github.com/gchq/stroom/compare/v6.0-beta.12...v6.0-beta.13
 [v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
