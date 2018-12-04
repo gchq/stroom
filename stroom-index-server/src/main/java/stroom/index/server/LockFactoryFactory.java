@@ -17,19 +17,19 @@
 package stroom.index.server;
 
 import org.apache.lucene.store.LockFactory;
-import org.apache.lucene.store.SimpleFSLockFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public final class LockFactoryUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LockFactoryUtil.class);
+public final class LockFactoryFactory {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LockFactoryFactory.class);
+    private static final LockFactory INSTANCE = new ShardLockFactory();
 
-    private LockFactoryUtil() {
+    private LockFactoryFactory() {
     }
 
     /**
@@ -38,8 +38,12 @@ public final class LockFactoryUtil {
      * @param dir The directory to get the lock factory for.
      * @return A lock factory for the supplied directory.
      */
-    public static LockFactory get(final Path dir) {
-        return SimpleFSLockFactory.INSTANCE;
+    public static LockFactory get() {
+        LOGGER.trace(() -> "get()");
+        return INSTANCE;
+
+        // Old impl
+        //return SimpleFSLockFactory.INSTANCE;
     }
 
     /**
@@ -48,6 +52,7 @@ public final class LockFactoryUtil {
      *
      * @param dir The directory to remove lock files from.
      */
+    @Deprecated // Should no longer be needed if the new ShardLockFactory works ok
     public static void clean(final Path dir) {
         // Delete any lingering lock files from previous uses of the index shard.
         if (Files.isDirectory(dir)) {
@@ -56,11 +61,11 @@ public final class LockFactoryUtil {
                     try {
                         Files.deleteIfExists(file);
                     } catch (final IOException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.error(e::getMessage, e);
                     }
                 });
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
     }
