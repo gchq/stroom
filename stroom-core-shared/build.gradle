@@ -28,4 +28,7 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.hibernate_jpa_api
     compile libs.validation_api
+
+    testCompile libs.assertj_core
+    testCompile libs.junit
 }

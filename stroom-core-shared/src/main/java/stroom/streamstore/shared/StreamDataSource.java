@@ -70,6 +70,7 @@ public class StreamDataSource {
         FIELDS.add(createDateField(CREATE_TIME));
         FIELDS.add(createDateField(EFFECTIVE_TIME));
         FIELDS.add(createDateField(STATUS_TIME));
+        FIELDS.sort(DataSourceFieldNameComparator.getInstance());
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
         EXTENDED_FIELDS.addAll(FIELDS);
@@ -84,6 +85,7 @@ public class StreamDataSource {
         EXTENDED_FIELDS.add(createNumField(DURATION));
         EXTENDED_FIELDS.add(createNumField(FILE_SIZE));
         EXTENDED_FIELDS.add(createNumField(STREAM_SIZE));
+        EXTENDED_FIELDS.sort(DataSourceFieldNameComparator.getInstance());
         EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
     }
 
