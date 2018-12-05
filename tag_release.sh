@@ -47,6 +47,12 @@ main() {
         exit 1
     fi
 
+    if git tag | grep -q "^${version}$" "${changelog_file}"; then
+        echo -e "${RED}ERROR${GREEN}: This repository has already been tagged with [${BLUE}${version}${GREEN}].${NC}"
+        echo
+        exit 1
+    fi
+
     if ! grep -q "^\s*##\s*\[${version}\]" "${changelog_file}"; then
         echo -e "${RED}ERROR${GREEN}: Version [${BLUE}${version}${GREEN}] is not in the CHANGELOG.${NC}"
         echo
