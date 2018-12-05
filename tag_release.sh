@@ -27,6 +27,9 @@ main() {
         echo -e "${GREEN}Usage: ${BLUE}./tag_release.sh version${NC}"
         echo -e "${GREEN}e.g:   ${BLUE}./tag_release.sh v6.0-beta.17${NC}"
         echo
+        echo -e "${GREEN}This script will extract the changes from the ${BLUE}CHANGELOG.md${GREEN} file for the passed${NC}"
+        echo -e "${GREEN}version tag and create an annotatated git commit with it. The tag commit will be pushed${NC}"
+        echo -e "${GREEN}to the origin.${NC}"
         exit 1
     fi
 
