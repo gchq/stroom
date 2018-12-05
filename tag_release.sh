@@ -80,7 +80,7 @@ main() {
     if [ "$keyPressed" = 'y' ] || [ "$keyPressed" = 'Y' ]; then
         echo
         echo -e "${GREEN}Tagging the current commit${NC}"
-        git tag -a --file - "${version}"
+        echo -e "${change_text}" | git tag -a --file - "${version}"
 
         echo -e "${GREEN}Pushing the new tag${NC}"
         git push origin "${version}"
