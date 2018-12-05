@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change error logging in ContentSyncService to log stack trace
+
 * Uplift send_to_stroom.sh in the distribution to v2.0
 
 * Issue **#973** : Export servlet changed to a Resource API, added permission check, improved error responses.
