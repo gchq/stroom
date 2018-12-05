@@ -47,7 +47,7 @@ main() {
         exit 1
     fi
 
-    if git tag | grep -q "^${version}$" "${changelog_file}"; then
+    if git tag | grep -q "^${version}$"; then
         echo -e "${RED}ERROR${GREEN}: This repository has already been tagged with [${BLUE}${version}${GREEN}].${NC}"
         echo
         exit 1
