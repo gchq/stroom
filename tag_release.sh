@@ -47,8 +47,15 @@ main() {
         exit 1
     fi
 
-    if ! grep -q "${version}" "${changelog_file}"; then
+    if ! grep -q "^\s*##\s*\[${version}\]" "${changelog_file}"; then
         echo -e "${RED}ERROR${GREEN}: Version [${BLUE}${version}${GREEN}] is not in the CHANGELOG.${NC}"
+        echo
+        exit 1
+    fi
+
+    if ! grep -q "^\[${version}\]:" "${changelog_file}"; then
+        echo -e "${RED}ERROR${GREEN}: Version [${BLUE}${version}${GREEN}] does not have a link entry at the bottom of the CHANGELOG.${NC}"
+        echo -e "${GREEN}e.g ${BLUE}[v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17${NC}"
         echo
         exit 1
     fi
@@ -63,7 +70,7 @@ main() {
     # delete all lines upto and including the desired version header
     # then output all lines untill quitting when you hit the next 
     # version header
-    change_text="$(sed "1,/## \[$1\]/d;/## \[/Q" "${changelog_file}")"
+    change_text="$(sed "1,/^\s*##\s*\[${version}\]/d;/## \[/Q" "${changelog_file}")"
 
     # Add the release version as the top line of the commit msg, followed by
     # two new lines
