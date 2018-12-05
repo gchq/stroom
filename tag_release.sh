@@ -28,7 +28,7 @@ main() {
         echo -e "${GREEN}e.g:   ${BLUE}./tag_release.sh v6.0-beta.17${NC}"
         echo
         echo -e "${GREEN}This script will extract the changes from the ${BLUE}CHANGELOG.md${GREEN} file for the passed${NC}"
-        echo -e "${GREEN}version tag and create an annotatated git commit with it. The tag commit will be pushed${NC}"
+        echo -e "${GREEN}version tag and create an annotated git commit with it. The tag commit will be pushed${NC}"
         echo -e "${GREEN}to the origin.${NC}"
         exit 1
     fi
@@ -67,14 +67,14 @@ main() {
     fi
 
     if [ "$(git status --porcelain 2>/dev/null | wc -l)" -ne 0 ]; then
-        echo -e "${RED}ERROR${GREEN}: There are uncommited changes or untracked files. Commit them before tagging.${NC}"
+        echo -e "${RED}ERROR${GREEN}: There are uncommitted changes or untracked files. Commit them before tagging.${NC}"
         echo
         exit 1
     fi
 
     local change_text
-    # delete all lines upto and including the desired version header
-    # then output all lines untill quitting when you hit the next 
+    # delete all lines up to and including the desired version header
+    # then output all lines until quitting when you hit the next 
     # version header
     change_text="$(sed "1,/^\s*##\s*\[${version}\]/d;/## \[/Q" "${changelog_file}")"
 
@@ -105,7 +105,7 @@ main() {
         echo
     else
         echo
-        echo "${GREEN}Exiting with tagging${NC}"
+        echo "${GREEN}Exiting without tagging a commit${NC}"
         echo
         exit 0
     fi
