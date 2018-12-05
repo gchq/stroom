@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import stroom.security.SecurityContext;
 
 import org.springframework.stereotype.Component;
+import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -83,11 +84,14 @@ public class AuthorisationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@QueryParam("id") String userId) {
         try{
-            userService.createUser(userId);
+            UserRef existingUser = userService.getUserByName(userId);
+            if(existingUser == null){
+                userService.createUser(userId);
+            }
             return Response.ok().build();
         }
         catch(Exception e){
-            LOGGER.error("Unable to create user: {}", e);
+            LOGGER.error("Unable to create user: {}", e.getMessage());
             return Response.serverError().build();
         }
     }
