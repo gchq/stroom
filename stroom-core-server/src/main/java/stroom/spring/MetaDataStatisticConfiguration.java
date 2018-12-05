@@ -18,11 +18,11 @@ public class MetaDataStatisticConfiguration {
         final MetaDataStatisticImpl metaDataStatistic = new MetaDataStatisticImpl(internalStatisticsReceiver);
         metaDataStatistic.setTemplates(Arrays.asList(
                 new MetaDataStatisticTemplate(
-                        "Meta Data-Streams Received",
+                        "metaDataStreamSize",
                         "receivedTime",
                         Arrays.asList("Feed")),
                 new MetaDataStatisticTemplate(
-                        "Meta Data-Stream Size",
+                        "metaDataStreamsReceived",
                         "receivedTime",
                         "StreamSize",
                         Arrays.asList("Feed"))));

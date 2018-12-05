@@ -74,4 +74,15 @@ public class IndexShardKey {
         result = 31 * result + shardNo;
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "IndexShardKey{" +
+                "index=" + index +
+                ", partition='" + partition + '\'' +
+                ", shardNo=" + shardNo +
+                ", partitionFromTime=" + partitionFromTime +
+                ", partitionToTime=" + partitionToTime +
+                '}';
+    }
 }

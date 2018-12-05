@@ -442,7 +442,7 @@ public class SearchRequestMapper {
 
                     if (values != null) {
                         // Get limit from values.
-                        Integer limit = null;
+                        Integer limit = Integer.MAX_VALUE;
                         if (values.getLimit() != null) {
                             limit = values.getLimit().getSize();
                         }

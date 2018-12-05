@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
-import stroom.servlet.HttpSessionUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.servlet.Filter;
@@ -168,10 +167,6 @@ public class SecurityFilter implements Filter {
             if (useSession) {
                 // Set the user ref in the session.
                 UserRefSessionUtil.set(request.getSession(true), userRef);
-
-                // Get the user's API key and store it in the session
-                String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
-                HttpSessionUtil.setUserApiKey(request.getSession(true), apiKey);
             }
 
             continueAsUser(request, response, chain, userRef);
@@ -205,7 +200,7 @@ public class SecurityFilter implements Filter {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
             // Check the state is one we requested.
-            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request.getSession(false));
+            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request);
             if (state == null) {
                 LOGGER.warn("Unexpected state: " + stateId);
 
@@ -220,10 +215,6 @@ public class SecurityFilter implements Filter {
                     if (userRef != null) {
                         // Set the user ref in the session.
                         UserRefSessionUtil.set(request.getSession(true), userRef);
-
-                        // Get the user's API key and store it in the session
-                        String apiKey = authenticationServiceClients.getUsersApiToken(userRef.getName());
-                        HttpSessionUtil.setUserApiKey(request.getSession(true), apiKey);
 
                         loggedIn = true;
                     }
@@ -254,7 +245,7 @@ public class SecurityFilter implements Filter {
         final String url = request.getRequestURL().toString();
 
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request.getSession(true), url);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, url);
 
         // If we're using the request URL we want to trim off any trailing params
         final URI parsedRequestUrl = UriBuilder.fromUri(url).build();
@@ -285,7 +276,7 @@ public class SecurityFilter implements Filter {
         // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
         // log in as the 'admin' user but the browser is always presenting a certificate.
         String prompt = request.getParameter("prompt");
-        if(!Strings.isNullOrEmpty(prompt)){
+        if (!Strings.isNullOrEmpty(prompt)) {
             authenticationRequestParams += "&prompt=" + prompt;
         }
 
@@ -324,8 +315,7 @@ public class SecurityFilter implements Filter {
                 // If we can't exchange the accessCode for an idToken then this probably means the
                 // accessCode doesn't exist any more, or has already been used. so we can't proceed.
                 LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
-            }
-            else {
+            } else {
                 LOGGER.error("Unable to retrieve idToken!", e);
             }
         } catch (final MalformedClaimException e) {

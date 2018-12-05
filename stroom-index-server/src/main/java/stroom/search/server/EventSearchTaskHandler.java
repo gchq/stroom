@@ -26,7 +26,7 @@ import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.Sizes;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -91,7 +91,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                 query, node, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
         // Create a collector to store search results.
-        final StoreSize storeSize = new StoreSize(getStoreSizes());
+        final Sizes storeSize = Sizes.create(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
         final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(

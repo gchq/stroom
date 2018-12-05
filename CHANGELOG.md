@@ -6,6 +6,54 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift send_to_stroom.sh in the distribution to v2.0
+
+* Issue **#973** : Export servlet changed to a Resource API, added permission check, improved error responses.
+
+## [v6.0-beta.17] - 2018-12-04
+
+* Issue **#969** : The code now suppresses errors for index shards being locked for writing as it is expected. We now lock shards using maps rather than the file system as it is more reliable between restarts.
+
+* Issue **#941** : Internal Meta Stats are now being written
+
+## [v6.0-beta.16] - 2018-12-04
+
+* Issue **#970** : Add stream type of `Records` for translated stroom app events.
+
+## [v6.0-beta.15] - 2018-12-03
+
+* Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
+
+* Issue **#938** : Fixed an NPE in authentication session state.
+
+* Change the proxy yaml configuration for the stack to add `remotedn` and `remotecertexpiry` headers to the receive log
+
+* Change logback archived logs to be gzip compressed for stroom and proxy
+
+* Uplift stroom-logs content pack to v2.0-alpha.3
+
+* Uplift send_to_stroom script to v1.8.1
+
+* Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
+
+* Issue **#945** : More changes to fix some visualisations only showing 10 data points.
+
+## [v6.0-beta.14] - 2018-11-28
+
+* Issue **#945** : Visualisations now show an unlimited number of data points unless constrained by their parent table or their own maximum value setting.
+
+* Issue **#948** : Catching Spring initialisation runtime errors and ensuring they are logged.
+
+* Add `set_log_levels.sh` script to the distribution
+
+* Uplift visualisations content pack to v3.0.6 in the gradle build
+
+* Issue **#952** : Remote data sources now execute calls within the context of the user for the active query. As a result all running search `destroy()` calls will now be made as the same user that initiated the search.
+
+* Issue **#566** : Info and warning icons are now displayed in stepping screen when needed.
+
+* Issue **#923** : Dashboard queries will now terminate if there are no index shards to search.
+
 * Issue **#959** : Remove Material UI from Login and from password management pages
 
 * Issue **#933** : Add health check for password resets
@@ -44,7 +92,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#920** : Fix error handling for sql stats queries
 
-## [v6.0-beta.13]
+## [v6.0-beta.13] - 2018-11-19
 
 * Remove log sending cron process from docker images (now handled by stroom-log-sender).
 
@@ -64,7 +112,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#903** : Feed names can now contain wildcard characters when filtering in the data browser.
 
-## [v6.0-beta.12]
+## [v6.0-beta.12] - 2018-11-14
 
 * Add API to allow creation of an internal Stroom user.
 
@@ -94,17 +142,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix invalid requestLog logFormat in proxy configuration
 
-## [v6.0-beta.11]
+## [v6.0-beta.11] - 2018-11-07
 
 * Stop service discovery health checks being registered if stroom.serviceDiscovery.enabled=false
 
-## [v6.0-beta.10]
+## [v6.0-beta.10] - 2018-11-06
 
 * Add fixed version of send_to_stroom.sh to release distribution
 
 * Uplift docker base image for stroom & proxy to openjdk:8u181-jdk-alpine3.8
 
-## [v6.0-beta.9]
+## [v6.0-beta.9] - 2018-11-02
 
 * Add a health check for getting a public key from the authentication service.
 
@@ -156,7 +204,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#884** : Added extra fonts to stroom docker image to fix bug downloading xls search results.
 
-## [v6.0-beta.8]
+## [v6.0-beta.8] - 2018-10-17
 
 * Issue **#879** : Fixed bug where reprocess and delete did not work if no stream status was set in the filter.
 
@@ -186,15 +234,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Improved Stroom instance management scripts
 
-## [v6.0-beta.7]
+## [v6.0-beta.7] - 2018-10-12
 
 * Add contentPack import
 
-## [v6.0-beta.6]
+## [v6.0-beta.6] - 2018-10-10
 
 * Fix typo in Dockerfile
 
-## [v6.0-beta.5]
+## [v6.0-beta.5] - 2018-10-10
 
 * Issue **#859** : Change application startup to keep retrying when establishing a DB connection except for certain connection errors like access denied.
 
@@ -206,7 +254,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#855** : Fixed stepping data that contains a BOM.
 
-## [v6.0-beta.4]
+## [v6.0-beta.4] - 2018-10-04
 
 * Change base docker image to openjdk:8u171-jdk-alpine
 
@@ -264,6 +312,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix background colour to white on activity pane.
 
+## [v6.0-beta.3] - 2018-09-18
+
 * Changed `splitWhenBiggerThan` property to `rollSize` and added the property to the rolling appenders for consistency.
 
 * Issue **#838** : Fix bug where calculation of written and read bytes was being accounted for twice due to the use of Java internal `FilterInputStream` and `FilterOutputStream` behaviour. This was leading to files being split at half od the expected size. Replaced Java internal classes with our own `WrappedInputStream` and `WrappedOutputStream` code.
@@ -308,11 +358,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#805** : Fix for dashboard date time formatting to use local time zone.
 
-## [v6.0-beta.2]
+## [v6.0-beta.2] - 2018-07-09
 
 * Issue **#803** : Fix for group key conversion to an appropriate value for visualisations.
 
-## [v6.0-beta.1]
+## [v6.0-beta.1] - 2018-07-04
 
 * Issue **#802** : Restore lucene-backward-codecs to the build
 
@@ -1273,7 +1323,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.13...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.17...6.0
+[v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17
+[v6.0-beta.16]: https://github.com/gchq/stroom/compare/v6.0-beta.15...v6.0-beta.16
+[v6.0-beta.15]: https://github.com/gchq/stroom/compare/v6.0-beta.14...v6.0-beta.15
+[v6.0-beta.14]: https://github.com/gchq/stroom/compare/v6.0-beta.13...v6.0-beta.14
 [v6.0-beta.13]: https://github.com/gchq/stroom/compare/v6.0-beta.12...v6.0-beta.13
 [v6.0-beta.12]: https://github.com/gchq/stroom/compare/v6.0-beta.11...v6.0-beta.12
 [v6.0-beta.11]: https://github.com/gchq/stroom/compare/v6.0-beta.10...v6.0-beta.11

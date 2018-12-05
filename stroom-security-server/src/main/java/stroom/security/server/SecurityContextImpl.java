@@ -59,7 +59,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserCache userCache;
     private final DocumentPermissionService documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
-    private final AuthenticationServiceClients authenticationServiceClients;
+    private final ApiTokenCache apiTokenCache;
 
     @Inject
     SecurityContextImpl(
@@ -69,14 +69,14 @@ class SecurityContextImpl implements SecurityContext {
             final UserCache userCache,
             final DocumentPermissionService documentPermissionService,
             final DocumentTypePermissions documentTypePermissions,
-            final AuthenticationServiceClients authenticationServiceClients) {
+            final ApiTokenCache apiTokenCache) {
         this.documentPermissionsCache = documentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
         this.documentPermissionService = documentPermissionService;
         this.documentTypePermissions = documentTypePermissions;
-        this.authenticationServiceClients = authenticationServiceClients;
+        this.apiTokenCache = apiTokenCache;
     }
 
     @Override
@@ -147,7 +147,7 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public String getApiToken() {
-        return authenticationServiceClients.getUsersApiToken(getUserId());
+        return apiTokenCache.get(getUserId());
     }
 
     @Override

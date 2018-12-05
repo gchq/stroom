@@ -81,20 +81,7 @@ import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
-import stroom.servlet.CacheControlFilter;
-import stroom.servlet.DashboardServlet;
-import stroom.servlet.DebugServlet;
-import stroom.servlet.DynamicCSSServlet;
-import stroom.servlet.EchoServlet;
-import stroom.servlet.ExportConfigServlet;
-import stroom.servlet.HttpServletRequestFilter;
-import stroom.servlet.ImportFileServlet;
-import stroom.servlet.RejectPostFilter;
-import stroom.servlet.SessionListListener;
-import stroom.servlet.SessionListServlet;
-import stroom.servlet.SessionResourceStoreImpl;
-import stroom.servlet.StatusServlet;
-import stroom.servlet.StroomServlet;
+import stroom.servlet.*;
 import stroom.spring.MetaDataStatisticConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
@@ -247,7 +234,7 @@ public class App extends Application<Config> {
 
         // Start the spring context.
         LOGGER.info("Loading Spring context");
-        final ApplicationContext applicationContext = loadApplcationContext(configuration, environment);
+        final ApplicationContext applicationContext = loadApplicationContext(configuration, environment);
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
@@ -277,7 +264,6 @@ public class App extends Application<Config> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, ResourcePaths.ROOT_PATH + "/importfile.rpc");
         SpringUtil.addServlet(servletContextHandler, applicationContext, ScriptServlet.class, ResourcePaths.ROOT_PATH + "/script");
         SpringUtil.addServlet(servletContextHandler, applicationContext, ClusterCallServiceRPC.class, ResourcePaths.ROOT_PATH + "/clustercall.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ExportConfigServlet.class, ResourcePaths.ROOT_PATH + "/export");
         SpringUtil.addServlet(servletContextHandler, applicationContext, StatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
         SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ResourcePaths.ROOT_PATH + "/echo");
         SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
@@ -292,6 +278,7 @@ public class App extends Application<Config> {
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
+        SpringUtil.addResource(environment.jersey(), applicationContext, ExportConfigResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, DictionaryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
@@ -321,7 +308,7 @@ public class App extends Application<Config> {
         return DbUtil.waitForConnection(driverClassname, driverUrl, driverUsername, driverPassword);
     }
 
-    private ApplicationContext loadApplcationContext(final Configuration configuration, final Environment environment) {
+    private ApplicationContext loadApplicationContext(final Configuration configuration, final Environment environment) {
         final AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
         applicationContext.getEnvironment().setActiveProfiles(StroomSpringProfiles.PROD, SecurityConfiguration.PROD_SECURITY);
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
@@ -347,7 +334,12 @@ public class App extends Application<Config> {
                 ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
-        applicationContext.refresh();
+        try {
+            applicationContext.refresh();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
         return applicationContext;
     }
 

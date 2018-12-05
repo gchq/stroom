@@ -225,12 +225,18 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final StreamType streamType = streamTypeService.load(stream.getStreamType());
                     if (streamType.isStreamTypeProcessed()) {
                         processedStreams.add(stream);
+                    } else if (streamType.isStreamTypeError()) {
+                        final StreamSource errorStreamSource = streamStore.openStreamSource(stream.getId());
+                        final byte[] streamBytes = StreamUtil.streamToBytes(errorStreamSource.getInputStream());
+                        String str = new String(streamBytes);
+                        LOGGER.warn("Found error stream with ID {}, dumping contents:\n{}", stream.getId(), str);
+                        streamStore.closeStreamSource(errorStreamSource);
                     }
                 }
 
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
-                // TODO : If we get an error stream would be good to dump it out to make debugging easier
-                // or you can just run the pipeline in stroom
+                // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
+                // if the above error stream dump doesn't help
                 Assert.assertTrue(processedStreams.size() > 0);
 
                 // Copy the contents of the latest written stream to the output.

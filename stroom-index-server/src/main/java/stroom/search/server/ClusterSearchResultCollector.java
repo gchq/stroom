@@ -25,7 +25,7 @@ import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreSize;
+import stroom.query.common.v2.Sizes;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.CollectorId;
@@ -63,7 +63,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final List<Integer> defaultMaxResultsSizes;
-    private final StoreSize storeSize;
+    private final Sizes storeSize;
 
     private volatile boolean terminated;
 
@@ -77,7 +77,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                          final ClusterResultCollectorCache clusterResultCollectorCache,
                                          final ResultHandler resultHandler,
                                          final List<Integer> defaultMaxResultsSizes,
-                                         final StoreSize storeSize) {
+                                         final Sizes storeSize) {
         this.taskManager = taskManager;
         this.task = task;
         this.node = node;
@@ -100,7 +100,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                                       final ClusterResultCollectorCache clusterResultCollectorCache,
                                                       final ResultHandler resultHandler,
                                                       final List<Integer> defaultMaxResultsSizes,
-                                                      final StoreSize storeSize) {
+                                                      final Sizes storeSize) {
         return new ClusterSearchResultCollector(taskManager, task, node, highlights,
                 clusterResultCollectorCache, resultHandler, defaultMaxResultsSizes, storeSize);
     }
@@ -231,7 +231,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public StoreSize getStoreSize() {
+    public Sizes getStoreSize() {
         return storeSize;
     }
 
@@ -282,6 +282,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     public void registerChangeListner(final Runnable changeListener) {
         changeListeners.add(Objects.requireNonNull(changeListener));
+        notifyListenersOfChange();
     }
 
     private void notifyListenersOfChange() {

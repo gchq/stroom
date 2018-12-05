@@ -196,10 +196,10 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                         }
 
                         final Severity severity = error.getSeverity();
-                        AceAnnotationType annotationType = AceAnnotationType.INFORMATION;
+                        AceAnnotationType annotationType = AceAnnotationType.INFO;
                         switch (severity) {
                             case INFO:
-                                annotationType = AceAnnotationType.INFORMATION;
+                                annotationType = AceAnnotationType.INFO;
                                 break;
                             case WARNING:
                                 annotationType = AceAnnotationType.WARNING;
@@ -208,7 +208,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                                 annotationType = AceAnnotationType.ERROR;
                                 break;
                             case FATAL_ERROR:
-                                annotationType = AceAnnotationType.ERROR;
+                                annotationType = AceAnnotationType.FATAL_ERROR;
                                 break;
                         }
 
