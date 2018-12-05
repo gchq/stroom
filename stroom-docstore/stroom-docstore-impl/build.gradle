@@ -16,5 +16,5 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
 
-    testCompile libs.junit
+    testCompile libs.junit_jupiter
 }

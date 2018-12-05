@@ -22,7 +22,7 @@ dependencies {
     compile libs.slf4j_api
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile libs.junit
+    testCompile libs.junit_jupiter
 }
 //
 //war {

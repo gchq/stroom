@@ -55,7 +55,7 @@ dependencies {
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
     testCompile libs.commons_io
-    testCompile libs.junit
+    testCompile libs.junit_jupiter
     testCompile libs.mockito_core
     testCompile libs.assertj_core
 

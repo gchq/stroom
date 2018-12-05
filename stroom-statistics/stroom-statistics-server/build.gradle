@@ -53,7 +53,7 @@ dependencies {
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     testCompile libs.assertj_core
-    testCompile libs.junit
+    testCompile libs.junit_jupiter
     testCompile libs.mockito_core
 
     // The following logging libs are needed when running junits outside dropwizard

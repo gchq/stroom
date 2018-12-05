@@ -4,7 +4,7 @@ dependencies {
     compile libs.stroomDocRef
 
     testCompile libs.hamcrest_core
-    testCompile libs.junit
+    testCompile libs.junit_jupiter
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

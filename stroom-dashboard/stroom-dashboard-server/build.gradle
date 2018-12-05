@@ -34,7 +34,7 @@ dependencies {
 //    testCompile project(':stroom-test-common')
 
     testCompile libs.hamcrest_core
-    testCompile libs.junit
+    testCompile libs.junit_jupiter
     testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
