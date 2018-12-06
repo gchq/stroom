@@ -206,7 +206,9 @@ public class App extends Application<Config> {
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
 
         // Sync content.
-        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getContentSyncConfig() != null) {
+        if (configuration.getProxyConfig() != null &&
+                configuration.getProxyConfig().getContentSyncConfig() != null &&
+                configuration.getProxyConfig().getContentSyncConfig().isContentSyncEnabled()) {
             // Create a map of import handlers.
             final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
             importExportActionHandlers.put(RuleSet.DOCUMENT_TYPE, injector.getInstance(RuleSetService.class));
