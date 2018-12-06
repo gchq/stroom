@@ -68,7 +68,7 @@ public class ContentSyncService implements Managed , HasHealthCheck {
             try {
                 final String url = contentSyncConfig.getUpstreamUrl().get(type);
                 if (url != null) {
-                    LOGGER.info("Synching content from '" + url + "'");
+                    LOGGER.info("Syncing content from '" + url + "'");
                     final Response response = createClient(url, "/list").get();
                     if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                         LOGGER.error(response.getStatusInfo().getReasonPhrase());
@@ -78,7 +78,7 @@ public class ContentSyncService implements Managed , HasHealthCheck {
                     }
                 }
             } catch (final Exception e) {
-                LOGGER.error(e.getMessage());
+                LOGGER.error("Error syncing content of type {}", type, e);
             }
         });
     }
