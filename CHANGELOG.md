@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **gchq/stroom-content#31** : Uplift stroom-logs content pack to v2.0-alpha.5.
+
 * Issue **#982** : Stop proxy trying to health check the content syncing if it isn't enabled.
 
 * Change error logging in ContentSyncService to log stack trace
