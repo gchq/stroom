@@ -79,8 +79,8 @@ public class StreamDataSource {
 
 
         // Single Items
-        EXTENDED_FIELDS.add(createNumField(DURATION));
         EXTENDED_FIELDS.add(createDocRefField(FEED_NAME, Feed.ENTITY_TYPE));
+        EXTENDED_FIELDS.add(createNumField(DURATION));
         EXTENDED_FIELDS.add(createStringField(NODE));
         EXTENDED_FIELDS.add(createDocRefField(PIPELINE_UUID, PipelineEntity.ENTITY_TYPE));
         EXTENDED_FIELDS.add(createStringField(STATUS));
@@ -91,12 +91,12 @@ public class StreamDataSource {
         EXTENDED_FIELDS.add(createIdField(PARENT_STREAM_ID));
 
         // Counts
-        EXTENDED_FIELDS.add(createNumField(REC_ERROR));
-        EXTENDED_FIELDS.add(createNumField(REC_FATAL));
-        EXTENDED_FIELDS.add(createNumField(REC_INFO));
         EXTENDED_FIELDS.add(createNumField(REC_READ));
-        EXTENDED_FIELDS.add(createNumField(REC_WARN));
         EXTENDED_FIELDS.add(createNumField(REC_WRITE));
+        EXTENDED_FIELDS.add(createNumField(REC_FATAL));
+        EXTENDED_FIELDS.add(createNumField(REC_ERROR));
+        EXTENDED_FIELDS.add(createNumField(REC_WARN));
+        EXTENDED_FIELDS.add(createNumField(REC_INFO));
 
         // Times
         EXTENDED_FIELDS.add(createDateField(CREATE_TIME));

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#978** : Re-ordering the fields in stream data source
+
 * Issue **#982** : Stop proxy trying to health check the content syncing if it isn't enabled.
 
 * Change error logging in ContentSyncService to log stack trace
