@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#989** : Upgraded stroom-expression to v1.4.13 to add new dashboard `link` function.
+
 * Issue **#988** : Changed `generate-url` XSLT function to `link` so it matches the dashboard expression. Changed the parameters to create 4 variants of the function to make creation of simple links easier.
 
 * Issue **#980** : Fix for NPE when fetching dependencies for scripts.
