@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.DocRef;
@@ -45,10 +44,6 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
         this.securityContext = securityContext;
 
         final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
-        final String annotationsPath = stroomPropertyService
-                .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ANNOTATIONS_INDEX);
-        final String elasticPath = stroomPropertyService
-                .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX);
 
         if (!Strings.isNullOrEmpty(basePath)) {
             //TODO the path strings are defined in ResourcePaths but this is not accessible from here
@@ -56,8 +51,6 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
             urlMap = new HashMap<>();
             urlMap.put("Index", basePath + "/api/stroom-index/v2");
             urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
-            urlMap.put(ExternalDocRefConstants.ANNOTATIONS_INDEX, annotationsPath + "/queryApi/v1");
-            urlMap.put(ExternalDocRefConstants.ELASTIC_INDEX, elasticPath + "/queryApi/v1");
             //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
             //you can run service discovery
 

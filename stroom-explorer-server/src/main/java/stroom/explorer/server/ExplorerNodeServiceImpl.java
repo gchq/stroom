@@ -31,8 +31,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     static {
         DEFAULT_TAG_MAP.put("StatisticStore", "DataSource");
-        DEFAULT_TAG_MAP.put("ElasticIndex", "DataSource");
-        DEFAULT_TAG_MAP.put("AnnotationsIndex", "DataSource");
         DEFAULT_TAG_MAP.put("StroomStatsStore", "DataSource");
         DEFAULT_TAG_MAP.put("Index", "DataSource");
     }

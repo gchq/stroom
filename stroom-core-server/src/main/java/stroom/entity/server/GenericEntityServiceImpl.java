@@ -229,11 +229,7 @@ public class GenericEntityServiceImpl implements GenericEntityService {
             final String entityType) {
         Object entityService = entityServiceBeanRegistry.getEntityService(entityType);
 
-        //if (entityService == null || !(entityService instanceof EntityService)) {
-        //    entityService = externalDocRefServices.get(entityType);
-        //}
-
-        if (entityService == null || !(entityService instanceof EntityService)) {
+        if (!(entityService instanceof EntityService)) {
             throw new EntityServiceException("Cannot find entity service for " + entityType, null, false);
         }
 

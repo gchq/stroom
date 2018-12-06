@@ -5,7 +5,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.server.errorhandler.LoggedException;
@@ -32,7 +31,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache {
     ElasticIndexCacheImpl(final CacheManager cacheManager,
                           final SecurityContext securityContext,
                           final StroomPropertyService propertyService) {
-        final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX;
+        final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + "ElasticIndex";
         docRefHttpClient = new DocRefResourceHttpClient<>(propertyService.getProperty(urlPropKey));
 
         this.securityContext = securityContext;

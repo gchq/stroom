@@ -27,7 +27,6 @@ import stroom.cluster.server.ClusterNodeManagerImpl;
 import stroom.dashboard.server.QueryServiceImpl;
 import stroom.dictionary.server.DictionaryStoreImpl;
 import stroom.explorer.server.ExplorerActionHandlers;
-import stroom.externaldoc.server.ExternalDocumentEntityServiceImpl;
 import stroom.feed.server.FeedServiceImpl;
 import stroom.feed.server.MockFeedService;
 import stroom.importexport.server.ImportExportActionHandlers;
@@ -135,7 +134,6 @@ import stroom.xmlschema.shared.XMLSchema;
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ClusterNodeManagerImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseCommonTestControl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DictionaryStoreImpl.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ExternalDocumentEntityServiceImpl.class),
         // @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value =
         // EntityPathResolverImpl.class),
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = FeedServiceImpl.class),
