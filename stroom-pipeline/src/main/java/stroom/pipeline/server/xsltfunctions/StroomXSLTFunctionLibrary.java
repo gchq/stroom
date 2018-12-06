@@ -129,21 +129,6 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
-                .functionName("generate-url")
-                .library(this)
-                .minArgs(4)
-                .maxArgs(4)
-                .argTypes(new SequenceType[]{
-                        SequenceType.SINGLE_STRING,
-                        SequenceType.SINGLE_STRING,
-                        SequenceType.SINGLE_STRING,
-                        SequenceType.SINGLE_STRING
-                })
-                .delegateClass(GenerateURL.class)
-                .resultType(SequenceType.OPTIONAL_STRING)
-                .build());
-
-        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("get")
                 .library(this)
                 .delegateClass(Get.class)
@@ -227,6 +212,21 @@ public class StroomXSLTFunctionLibrary {
                         SequenceType.SINGLE_STRING
                 })
                 .resultType(SequenceType.NODE_SEQUENCE)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("link")
+                .library(this)
+                .minArgs(1)
+                .maxArgs(4)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING
+                })
+                .delegateClass(Link.class)
+                .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()

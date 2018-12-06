@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#988** : Changed `generate-url` XSLT function to `link` so it matches the dashboard expression. Changed the parameters to create 4 variants of the function to make creation of simple links easier.
+
 * Issue **#980** : Fix for NPE when fetching dependencies for scripts.
 
 * Issue **#978** : Re-ordering the fields in stream data source
