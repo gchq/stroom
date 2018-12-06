@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import stroom.entity.server.DocumentEntityServiceImpl;
 import stroom.entity.server.ObjectMarshaller;
 import stroom.entity.server.QueryAppender;
-import stroom.entity.server.util.HqlBuilder;
 import stroom.entity.server.util.StroomEntityManager;
 import stroom.entity.shared.DocRefs;
 import stroom.importexport.server.ImportExportHelper;
@@ -77,7 +76,10 @@ public class ScriptServiceImpl extends DocumentEntityServiceImpl<Script, FindScr
     private Set<DocRef> getDependencies(final DocRef docRef) {
         try {
             final Script script = loadByUuid(docRef.getUuid());
-            return new HashSet<>(script.getDependencies().getDoc());
+            if (script != null && script.getDependencies() != null) {
+                return new HashSet<>(script.getDependencies().getDoc());
+            }
+            return Collections.emptySet();
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
