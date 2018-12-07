@@ -510,7 +510,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void presentIFrameDialog(final Hyperlink hyperlink) {
         switch (hyperlink.getTarget()) {
             case DIALOG: {
-                final PopupSize popupSize = new PopupSize(800, 600);
+                final PopupSize popupSize = new PopupSize(800, 600, true);
                 final IFramePresenter presenter = iFramePresenterProvider.get();
                 presenter.setHyperlink(hyperlink);
                 ShowPopupEvent.fire(TablePresenter.this,

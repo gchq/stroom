@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1002** : Popup dialogs shown when clicking dashboard hyperlinks are now resizable.
+
 * Issue **#993** : Moving documents in the explorer no longer affects items that are being edited as they are not updated in the process.
 
 * Issue **#996** : Updated functions in dashboard function picker.
