@@ -17,7 +17,6 @@ import java.util.logging.Logger;
  *
  */
 public class Hyperlink {
-
     private static final Logger LOGGER = Logger.getLogger(Hyperlink.class.getName());
 
     private String title;
@@ -80,6 +79,7 @@ public class Hyperlink {
 
         switch (this.target) {
             case STROOM_TAB:
+            case DASHBOARD:
             case DIALOG:
                 final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                 sb.appendHtmlConstant("<u>");

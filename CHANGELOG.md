@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1001** : Added dashboard link option to link to a dashboard using the `DASHBOARD` target name, e.g. `link(${UserId}, concat('type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>', ${UserId}), '', 'DASHBOARD')`.
+
 * Issue **#1002** : Popup dialogs shown when clicking dashboard hyperlinks are now resizable.
 
 * Issue **#993** : Moving documents in the explorer no longer affects items that are being edited as they are not updated in the process.

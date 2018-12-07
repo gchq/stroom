@@ -35,6 +35,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.SharedObject;
+import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
 
 import java.util.HashMap;
@@ -125,27 +126,8 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
                 tabDataToDocumentMap.put(tabData, docRef);
 
                 // Load the document and show the tab.
-                load(docRef)
-                        .onSuccess(doc -> {
-                            try {
-                                if (doc != null) {
-                                    // Read the newly loaded document.
-                                    documentEditPresenter.read(getDocRef(doc), doc);
-
-                                    // Open the tab.
-                                    final CloseHandler closeHandler = new EntityCloseHandler(tabData);
-                                    contentManager.open(closeHandler, tabData, documentEditPresenter);
-                                }
-                            } finally {
-                                // Stop spinning.
-                                TaskEndEvent.fire(DocumentPlugin.this);
-                            }
-                        })
-                        .onFailure(caught -> {
-                            GWT.log(caught.getMessage());
-                            // Stop spinning.
-                            TaskEndEvent.fire(DocumentPlugin.this);
-                        });
+                final CloseHandler closeHandler = new EntityCloseHandler(tabData);
+                showTab(docRef, documentEditPresenter, closeHandler, tabData);
 
             } else {
                 // Stop spinning.
@@ -154,6 +136,30 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         }
 
         return presenter;
+    }
+
+    protected void showTab(final DocRef docRef, final DocumentEditPresenter<?, D> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
+        // Load the document and show the tab.
+        load(docRef)
+                .onSuccess(doc -> {
+                    try {
+                        if (doc != null) {
+                            // Read the newly loaded document.
+                            documentEditPresenter.read(getDocRef(doc), doc);
+
+                            // Open the tab.
+                            contentManager.open(closeHandler, tabData, documentEditPresenter);
+                        }
+                    } finally {
+                        // Stop spinning.
+                        TaskEndEvent.fire(DocumentPlugin.this);
+                    }
+                })
+                .onFailure(caught -> {
+                    GWT.log(caught.getMessage());
+                    // Stop spinning.
+                    TaskEndEvent.fire(DocumentPlugin.this);
+                });
     }
 
     /**

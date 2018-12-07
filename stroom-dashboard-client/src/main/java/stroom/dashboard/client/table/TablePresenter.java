@@ -22,6 +22,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
@@ -39,6 +40,7 @@ import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.event.ShowDashboardEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -71,6 +73,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
@@ -507,8 +510,48 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(column);
     }
 
+    private Map<String, String> buildListParamMap(String queryString) {
+        final Map<String, String> out = new HashMap<>();
+        if (queryString != null && queryString.length() > 1) {
+            String qs = queryString.substring(1);
+
+            for (String kvPair : qs.split("&")) {
+                String[] kv = kvPair.split("=", 2);
+
+                String key = kv[0];
+                if (key.isEmpty()) {
+                    continue;
+                }
+
+                String val = kv.length > 1 ? kv[1] : "";
+                try {
+                    val = URL.decodeQueryString(val);
+                } catch (final RuntimeException e) {
+                    GWT.log("Cannot decode a URL query string parameter=" + key +
+                            " value=" + val, e);
+                }
+
+                out.putIfAbsent(key, val);
+            }
+        }
+
+        return out;
+    }
+
     private void presentIFrameDialog(final Hyperlink hyperlink) {
         switch (hyperlink.getTarget()) {
+            case DASHBOARD: {
+                final Map<String, String> map = buildListParamMap(hyperlink.getHref());
+                final String uuid = map.get("uuid");
+                final String params = map.get("params");
+                if (uuid == null) {
+                    AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
+                } else {
+                    final DocRef docRef = new DocRef(Dashboard.ENTITY_TYPE, uuid);
+                    ShowDashboardEvent.fire(this, hyperlink.getTitle(), docRef, params);
+                }
+                break;
+            }
             case DIALOG: {
                 final PopupSize popupSize = new PopupSize(800, 600, true);
                 final IFramePresenter presenter = iFramePresenterProvider.get();
@@ -567,7 +610,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         if (queryId != null) {
             final Component component = getComponents().get(queryId);
-            if (component != null && component instanceof QueryPresenter) {
+            if (component instanceof QueryPresenter) {
                 final QueryPresenter queryPresenter = (QueryPresenter) component;
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
