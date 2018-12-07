@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#996** : Updated functions in dashboard function picker.
+
 * Issue **#981** : Fixed dashboard deletion
 
 * Issue **#989** : Upgraded stroom-expression to v1.4.13 to add new dashboard `link` function.

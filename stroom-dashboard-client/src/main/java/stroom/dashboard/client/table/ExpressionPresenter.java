@@ -141,26 +141,37 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     private List<Item> createMenuItems() {
         final List<Item> children = new ArrayList<>();
-        int pos = 0;
-        children.add(createRowFunctons(pos++, "Row Functions..."));
-        children.add(createAggregateFunctons(pos++, "Aggregate Functions..."));
+        int item = 0;
+        children.add(createAggregateFunctons(item++, "Aggregate"));
+        children.add(createCastFunctions(item++, "Cast"));
+        children.add(createDateFunctions(item++, "Date"));
+        children.add(createLogicFunctions(item++, "Logic"));
+        children.add(createMathematicsFunctions(item++, "Mathematics"));
+        children.add(createRoundingFunctions(item++, "Rounding"));
+        children.add(createStringFunctions(item++, "String"));
+        children.add(createTypeCheckingFunctions(item++, "Type Checking"));
+        children.add(createUriFunctions(item++, "Uri"));
+        children.add(createValueFunctions(item++, "Value"));
         return children;
     }
 
-    private Item createRowFunctons(final int pos, final String func) {
+    private Item createAggregateFunctons(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
-        children.add(createCastSubMenuItems(item++, "Cast"));
-        children.add(createDateSubMenuItems(item++, "Date"));
-        children.add(createLogicSubMenuItems(item++, "Logic"));
-        children.add(createMathematicsSubMenuItems(item++, "Mathematics"));
-        children.add(createStringSubMenuItems(item++, "String"));
-        children.add(createUriSubMenuItems(item++, "Uri"));
-        children.add(createValueSubMenuItems(item++, "Value"));
+        children.add(createFunction(item++, "average($)", "average("));
+        children.add(createFunction(item++, "count()", "count()"));
+        children.add(createFunction(item++, "countGroups()", "countGroups()"));
+        children.add(createFunction(item++, "countUnique($)", "countUnique("));
+        children.add(createFunction(item++, "max($)", "max("));
+        children.add(createFunction(item++, "min($)", "min("));
+        children.add(createFunction(item++, "stDev($)", "stDev("));
+        children.add(createFunction(item++, "sum($)", "sum("));
+        children.add(createFunction(item++, "variance($)", "variance("));
+
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createCastSubMenuItems(final int pos, final String func) {
+    private Item createCastFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "toBoolean($)", "toBoolean("));
@@ -168,11 +179,10 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "toInteger($)", "toInteger("));
         children.add(createFunction(item++, "toLong($)", "toLong("));
         children.add(createFunction(item++, "toString($)", "toString("));
-        children.add(createFunction(item++, "typeOf($)", "typeOf("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createDateSubMenuItems(final int pos, final String func) {
+    private Item createDateFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "formatDate($,pattern,timeZone)", "formatDate("));
@@ -180,7 +190,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createLogicSubMenuItems(final int pos, final String func) {
+    private Item createLogicFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "equals($,$)", "equals("));
@@ -193,19 +203,29 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createMathematicsSubMenuItems(final int pos, final String func) {
+    private Item createMathematicsFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
+        children.add(createFunction(item++, "add($)", "add("));
         children.add(createFunction(item++, "average($)", "average("));
-        children.add(createCommonSubMenuItems(item++, "ceiling"));
-        children.add(createCommonSubMenuItems(item++, "floor"));
+        children.add(createFunction(item++, "divide($)", "divide("));
         children.add(createFunction(item++, "max($)", "max("));
         children.add(createFunction(item++, "min($)", "min("));
+        children.add(createFunction(item++, "multiply($)", "multiply("));
+        children.add(createFunction(item++, "negate($)", "negate("));
+        children.add(createFunction(item++, "power($)", "power("));
         children.add(createFunction(item++, "random()", "random()"));
-        children.add(createCommonSubMenuItems(item++, "round"));
-        children.add(createFunction(item++, "stDev($)", "stDev("));
+        children.add(createFunction(item++, "subtract($)", "subtract("));
         children.add(createFunction(item++, "sum($)", "sum("));
-        children.add(createFunction(item++, "variance($)", "variance("));
+        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+    }
+
+    private Item createRoundingFunctions(final int pos, final String func) {
+        final List<Item> children = new ArrayList<>();
+        int item = 0;
+        children.add(createCommonSubMenuItems(item++, "ceiling"));
+        children.add(createCommonSubMenuItems(item++, "floor"));
+        children.add(createCommonSubMenuItems(item++, "round"));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
@@ -222,7 +242,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createStringSubMenuItems(final int pos, final String func) {
+    private Item createStringFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "concat($,$)", "concat("));
@@ -232,6 +252,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "include($,[regex...])", "include("));
         children.add(createFunction(item++, "indexOf($,string)", "indexOf("));
         children.add(createFunction(item++, "lastIndexOf($,string)", "lastIndexOf("));
+        children.add(createFunction(item++, "link(title,host,path,target)", "link("));
         children.add(createFunction(item++, "lowerCase($)", "lowerCase("));
         children.add(createFunction(item++, "match($,regex)", "match("));
         children.add(createFunction(item++, "replace($,regex,replacement)", "replace("));
@@ -243,7 +264,23 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createUriSubMenuItems(final int pos, final String func) {
+    private Item createTypeCheckingFunctions(final int pos, final String func) {
+        final List<Item> children = new ArrayList<>();
+        int item = 0;
+        children.add(createFunction(item++, "isBoolean($)", "isBoolean("));
+        children.add(createFunction(item++, "isDouble($)", "isDouble("));
+        children.add(createFunction(item++, "isError($)", "isError("));
+        children.add(createFunction(item++, "isInteger($)", "isInteger("));
+        children.add(createFunction(item++, "isLong($)", "isLong("));
+        children.add(createFunction(item++, "isNull($)", "isNull("));
+        children.add(createFunction(item++, "isNumber($)", "isNumber("));
+        children.add(createFunction(item++, "isString($)", "isString("));
+        children.add(createFunction(item++, "isValue($)", "isValue("));
+        children.add(createFunction(item++, "typeOf($)", "typeOf("));
+        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+    }
+
+    private Item createUriFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "extractAuthorityFromUri($)", "extractAuthorityFromUri("));
@@ -251,33 +288,20 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "extractHostFromUri($)", "extractHostFromUri("));
         children.add(createFunction(item++, "extractPathFromUri($)", "extractPathFromUri("));
         children.add(createFunction(item++, "extractPortFromUri($)", "extractPortFromUri("));
+        children.add(createFunction(item++, "extractQueryFromUri($)", "extractQueryFromUri("));
         children.add(createFunction(item++, "extractSchemeFromUri($)", "extractSchemeFromUri("));
         children.add(createFunction(item++, "extractSchemeSpecificPartFromUri($)", "extractSchemeSpecificPartFromUri("));
-        children.add(createFunction(item++, "extractQueryFromUri($)", "extractQueryFromUri("));
         children.add(createFunction(item++, "extractUserInfoFromUri($)", "extractUserInfoFromUri("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
-    private Item createValueSubMenuItems(final int pos, final String func) {
+    private Item createValueFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "err()", "err()"));
         children.add(createFunction(item++, "false()", "false()"));
         children.add(createFunction(item++, "null()", "null()"));
         children.add(createFunction(item++, "true()", "true()"));
-        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
-    }
-
-    private Item createAggregateFunctons(final int pos, final String func) {
-        final List<Item> children = new ArrayList<>();
-        int item = 0;
-        children.add(createFunction(item++, "average($)", "average("));
-        children.add(createFunction(item++, "count()", "count()"));
-        children.add(createFunction(item++, "countGroups()", "countGroups()"));
-        children.add(createFunction(item++, "countUnique($)", "countUnique("));
-        children.add(createFunction(item++, "max($)", "max("));
-        children.add(createFunction(item++, "min($)", "min("));
-        children.add(createFunction(item++, "sum($)", "sum("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
