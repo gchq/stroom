@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.17] - 2018-12-07
+
 * Issue **#981** : Fixed dashboard deletion
 
 * Issue **#989** : Upgraded stroom-expression to v1.4.13 to add new dashboard `link` function.
@@ -1339,7 +1341,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.17...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.18...6.0
+[v6.0-beta.18]: https://github.com/gchq/stroom/compare/v6.0-beta.17...v6.0-beta.18
 [v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17
 [v6.0-beta.16]: https://github.com/gchq/stroom/compare/v6.0-beta.15...v6.0-beta.16
 [v6.0-beta.15]: https://github.com/gchq/stroom/compare/v6.0-beta.14...v6.0-beta.15
