@@ -59,8 +59,6 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     private String idFieldName;
     private DocRef indexRef;
 
-    private final ElasticIndexCache elasticIndexCache;
-
     private final StroomElasticProducerFactoryService elasticProducerFactoryService;
     private final SecurityContext securityContext;
 
@@ -71,12 +69,10 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @Inject
     public ElasticIndexingFilter(final LocationFactoryProxy locationFactory,
-                                 final ElasticIndexCache elasticIndexCache,
                                  final SecurityContext securityContext,
                                  final ErrorReceiverProxy errorReceiverProxy,
                                  final StroomElasticProducerFactoryService elasticProducerFactoryService) {
         this.locationFactory = locationFactory;
-        this.elasticIndexCache = elasticIndexCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticProducerFactoryService = elasticProducerFactoryService;
         this.securityContext = securityContext;
@@ -111,17 +107,20 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
     public void startProcessing() {
         try {
             if (indexRef == null) {
-                log(Severity.FATAL_ERROR, "Index has not been set", null);
-                throw new LoggedException("Index has not been set");
+                final String err = "Index has not been set";
+                log(Severity.FATAL_ERROR, err, null);
+                throw new LoggedException(err);
             }
 
             try (final SecurityHelper sh = SecurityHelper.asUser(
                     securityContext,
                     UserTokenUtil.create(STROOM_SERVICE_USER_NAME, null))) {
                 // Get the index and index fields from the cache.
-                indexConfig = elasticIndexCache.get(indexRef);
+                //indexConfig = elasticIndexCache.get(indexRef);
+                // TODO - Re-implement this is a service within Stroom
                 if (indexConfig == null) {
-                    log(Severity.FATAL_ERROR, "Unable to load index", null);
+                    final String err = "Unable to load index - feature not fully implemented";
+                    log(Severity.FATAL_ERROR, err, null);
                     throw new LoggedException("Unable to load index");
                 }
             }
