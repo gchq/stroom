@@ -48,12 +48,11 @@ import javax.persistence.Transient;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -319,15 +318,15 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     /**
      * This function is used when doing batch document copy operations.
-     *
+     * <p>
      * It can be used by any entities which serialize themselves into a single string field.
      * If that string field contains all the UUID's of dependant entities, then it is simple a case of
      * string replacing the original UUID's with the UUID's of the copies being made.
      *
-     * @param copyDocRef The Doc Ref of the new copy
+     * @param copyDocRef                The Doc Ref of the new copy
      * @param otherCopiesByOriginalUuid The map of copies of other documents, by their original UUID
-     * @param dataSupplier The getter
-     * @param dataReceiver The setter
+     * @param dataSupplier              The getter
+     * @param dataReceiver              The setter
      */
     protected DocRef makeCopyUuidReplacements(final DocRef copyDocRef,
                                               final Map<String, String> otherCopiesByOriginalUuid,
@@ -377,7 +376,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
             // Check create permissions of the parent folder.
             checkCreatePermission(parentFolderUUID);
 
-            return entityServiceHelper.save(document, queryAppender);
+            // No need to save as the document has not been changed
+            return document;
         } catch (final RuntimeException e) {
             throw e;
         } catch (final Exception e) {
@@ -387,11 +387,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     private E rename(final E document, final String name) {
         try {
-            // Validate the entity name.
-            NameValidationUtil.validate(getNamePattern(), name);
-            document.setName(name);
+            if (!Objects.equals(document.getName(), name)) {
+                // Validate the entity name.
+                NameValidationUtil.validate(getNamePattern(), name);
+                document.setName(name);
 
-            return entityServiceHelper.save(document, queryAppender);
+                return entityServiceHelper.save(document, queryAppender);
+            }
+            return document;
         } catch (final RuntimeException e) {
             throw e;
         } catch (final Exception e) {

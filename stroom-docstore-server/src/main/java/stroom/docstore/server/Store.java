@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -126,9 +127,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
 
     @Override
     public final DocRef moveDocument(final String uuid, final String parentFolderUUID) {
-        final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
-
         final D document = read(uuid);
 
         // If we are moving folder then make sure we are allowed to create items in the target folder.
@@ -137,27 +135,22 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to create items in this folder");
         }
 
-        document.setUpdateTime(now);
-        document.setUpdateUser(userId);
-
-        final D updated = update(document);
-        return createDocRef(updated);
+        // No need to save as the document has not been changed only moved.
+        return createDocRef(document);
     }
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
-        final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
-
         final D document = read(uuid);
 
-        document.setName(name);
-//        document.setVersion(UUID.randomUUID().toString());
-        document.setUpdateTime(now);
-        document.setUpdateUser(userId);
+        // Only update the document if the name has actually changed.
+        if (!Objects.equals(document.getName(), name)) {
+            document.setName(name);
+            final D updated = update(document);
+            return createDocRef(updated);
+        }
 
-        final D updated = update(document);
-        return createDocRef(updated);
+        return createDocRef(document);
     }
 
     @Override

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#993** : Moving documents in the explorer no longer affects items that are being edited as they are not updated in the process.
+
 * Issue **#996** : Updated functions in dashboard function picker.
 
 ## [v6.0-beta.18] - 2018-12-07
