@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0-beta.17] - 2018-12-07
+## [v6.0-beta.18] - 2018-12-07
 
 * Issue **#981** : Fixed dashboard deletion
 
