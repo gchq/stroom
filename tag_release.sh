@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# This script creates and pushes a git annotated tag with a commit message taken from
+# the appropriate section of the CHANGELOG.md.
 set -e
 
 setup_echo_colours() {
@@ -16,7 +19,17 @@ setup_echo_colours() {
     }
 }
 
+error_exit() {
+    msg="$1"
+    echo -e "${RED}ERROR${GREEN}: ${msg}${NC}"
+    echo
+    exit 1
+}
+
 main() {
+    # Git tags should match this regex to be a release tag
+    readonly RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
+
     setup_echo_colours
     echo
 
@@ -34,42 +47,37 @@ main() {
     fi
 
     local version=$1
+    
+    if [[ ! "${version}" =~ ${RELEASE_VERSION_REGEX} ]]; then
+        error_exit "Version [${BLUE}${version}${GREEN}] does not match the release version regex ${BLUE}${RELEASE_VERSION_REGEX}${NC}"
+    fi
 
     if [ ! -f "${changelog_file}" ]; then
-        echo -e "${RED}ERROR${GREEN}: The file ${BLUE}${changelog_file}${NC} does not exist in the current directory.${NC}"
-        echo
-        exit 1
+        error_exit "The file ${BLUE}${changelog_file}${GREEN} does not exist in the current directory.${NC}"
     fi
 
     if ! git rev-parse --show-toplevel > /dev/null 2>&1; then
-        echo -e "${RED}ERROR${GREEN}: You are not in a git repository. This script should be run from the root of a repository.${NC}"
-        echo
-        exit 1
+        error_exit "You are not in a git repository. This script should be run from the root of a repository.${NC}"
     fi
 
     if git tag | grep -q "^${version}$"; then
-        echo -e "${RED}ERROR${GREEN}: This repository has already been tagged with [${BLUE}${version}${GREEN}].${NC}"
-        echo
-        exit 1
+        error_exit "This repository has already been tagged with [${BLUE}${version}${GREEN}].${NC}"
     fi
 
     if ! grep -q "^\s*##\s*\[${version}\]" "${changelog_file}"; then
-        echo -e "${RED}ERROR${GREEN}: Version [${BLUE}${version}${GREEN}] is not in the CHANGELOG.${NC}"
-        echo
-        exit 1
+        error_exit "Version [${BLUE}${version}${GREEN}] is not in the CHANGELOG.${NC}"
     fi
 
     if ! grep -q "^\[${version}\]:" "${changelog_file}"; then
         echo -e "${RED}ERROR${GREEN}: Version [${BLUE}${version}${GREEN}] does not have a link entry at the bottom of the CHANGELOG.${NC}"
-        echo -e "${GREEN}e.g ${BLUE}[v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17${NC}"
+        echo -e "${GREEN}e.g.:${NC}"
+        echo -e "${BLUE}[v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17${NC}"
         echo
         exit 1
     fi
 
     if [ "$(git status --porcelain 2>/dev/null | wc -l)" -ne 0 ]; then
-        echo -e "${RED}ERROR${GREEN}: There are uncommitted changes or untracked files. Commit them before tagging.${NC}"
-        echo
-        exit 1
+        error_exit "There are uncommitted changes or untracked files. Commit them before tagging.${NC}"
     fi
 
     local change_text

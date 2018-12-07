@@ -110,7 +110,7 @@ COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
 
 # Copy all the fat jars for the application and connectors
 # Most likely to have changed last
-COPY --chown=stroom:stroom docker-entrypoint.sh /stroom/
+COPY --chown=stroom:stroom *.sh /stroom/
 COPY --chown=stroom:stroom ./build/prod.yml /stroom/config/config.yml
 COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
 
@@ -122,3 +122,6 @@ ARG GIT_TAG=unspecified
 LABEL \
     git_commit="$GIT_COMMIT" \
     git_tag="$GIT_TAG"
+# Pass the GIT_TAG through to the running container
+# This should not be set at container run time
+ENV GIT_TAG=$GIT_TAG
