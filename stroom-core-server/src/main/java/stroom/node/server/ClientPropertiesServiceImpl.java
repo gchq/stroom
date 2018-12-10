@@ -72,15 +72,6 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
             }
         }
 
-        final String externalTypesList = StroomProperties.getProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES);
-        props.put(ClientProperties.EXTERNAL_DOC_REF_TYPES, externalTypesList);
-        if (null != externalTypesList) {
-            final String[] externalTypes = externalTypesList.split(",");
-            for (final String externalType : externalTypes) {
-                addProperty(props, ClientProperties.URL_DOC_REF_UI_BASE + externalType);
-            }
-        }
-
         return props;
     }
 

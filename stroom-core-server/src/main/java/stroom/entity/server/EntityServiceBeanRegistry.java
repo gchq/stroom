@@ -48,30 +48,14 @@ public class EntityServiceBeanRegistry implements ApplicationContextAware {
     private ApplicationContext applicationContext;
     private volatile boolean init;
 
-    private final Map<String, Object> externalDocRefServices = new HashMap<>();
-
-    /**
-     * Used to register services that are instantiations of a generic class. These are services that cannot
-     * be found using Spring Bean reflection.
-     * @param type The doc ref type this service will manage
-     * @param service An instance of the service to use.
-     */
-    public void addExternal(final String type, final Object service) {
-        this.externalDocRefServices.put(type, service);
-    }
-
     public Object getEntityService(final Class<?> clazz) {
         final String beanName = getEntityServiceName(clazz, clazz);
         return applicationContext.getBean(beanName);
     }
 
     public Object getEntityService(final String entityType) {
-        if (externalDocRefServices.containsKey(entityType)) {
-            return externalDocRefServices.get(entityType);
-        } else {
-            final String beanName = getEntityServiceName(entityType);
-            return applicationContext.getBean(beanName);
-        }
+        final String beanName = getEntityServiceName(entityType);
+        return applicationContext.getBean(beanName);
     }
 
     public Object invoke(final String methodName, final Object... args) {

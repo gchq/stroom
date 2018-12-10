@@ -50,7 +50,6 @@ import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.explorer.server.ExplorerConfiguration;
-import stroom.externaldoc.spring.ExternalDocRefConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.healthchecks.LogLevelInspector;
 import stroom.importexport.server.ImportExportActionHandler;
@@ -332,7 +331,6 @@ public class App extends Application<Config> {
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class,
-                ExternalDocRefConfiguration.class,
                 ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
