@@ -111,7 +111,7 @@ public class Hyperlink {
         }
 
         public HyperlinkBuilder type(final HyperlinkType type) {
-            this.instance.type = type.name();
+            this.instance.type = type.name().toLowerCase();
             return this;
         }
 

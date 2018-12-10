@@ -69,7 +69,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         HyperlinkType hyperlinkType = null;
         if (hyperlink.getType() != null) {
             try {
-                hyperlinkType = HyperlinkType.valueOf(hyperlink.getType());
+                hyperlinkType = HyperlinkType.valueOf(hyperlink.getType().toUpperCase());
             } catch (final RuntimeException e) {
                 GWT.log("Could not parse open type value of " + hyperlink.getType());
             }
@@ -81,7 +81,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     ShowDashboardEvent.fire(this, title, href);
                     break;
                 }
-                case STROOM_TAB: {
+                case TAB: {
                     final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
                     presenter.setHyperlink(hyperlink);
                     contentManager.open(callback ->
@@ -110,7 +110,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                             null);
                     break;
                 }
-                case BROWSER_TAB: {
+                case BROWSER: {
                     Window.open(href, "_blank", "");
                 }
                 default:

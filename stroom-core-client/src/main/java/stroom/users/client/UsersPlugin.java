@@ -49,7 +49,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                                 final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                         .title("Users")
                                         .href(usersUiUrl)
-                                        .type(HyperlinkType.STROOM_TAB)
+                                        .type(HyperlinkType.TAB)
                                         .build();
                                 final IFrameContentPresenter presenter = presenterProvider.get();
                                 presenter.setHyperlink(hyperlink);

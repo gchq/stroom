@@ -50,7 +50,7 @@ public class ElasticPlugin extends Plugin {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                     .title("Elastic Search")
                                     .href(elasticUiUrl)
-                                    .type(HyperlinkType.BROWSER_TAB)
+                                    .type(HyperlinkType.BROWSER)
                                     .build();
                             final IFrameContentPresenter presenter = iFramePresenterProvider.get();
                             presenter.setHyperlink(hyperlink);

@@ -50,7 +50,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                                 final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                         .title("API Keys")
                                         .href(apiKeysUi)
-                                        .type(HyperlinkType.STROOM_TAB)
+                                        .type(HyperlinkType.TAB)
                                         .build();
                                 final IFrameContentPresenter presenter = presenterProvider.get();
                                 presenter.setHyperlink(hyperlink);

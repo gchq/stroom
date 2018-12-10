@@ -22,20 +22,20 @@ public class HyperlinkTest {
                 .href("http://colors/orange")
                 .type(HyperlinkType.DIALOG)
                 .build());
-        testLinks.put("[Blue](http://colors/get?id=blue){STROOM_TAB}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[Blue](http://colors/get?id=blue){TAB}", new Hyperlink.HyperlinkBuilder()
                 .title("Blue")
                 .href("http://colors/get?id=blue")
-                .type(HyperlinkType.STROOM_TAB)
+                .type(HyperlinkType.TAB)
                 .build());
-        testLinks.put("[Magenta](http://shades.com/shop/item?id=kinda%20purple){STROOM_TAB}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[Magenta](http://shades.com/shop/item?id=kinda%20purple){TAB}", new Hyperlink.HyperlinkBuilder()
                 .title("Magenta")
                 .href("http://shades.com/shop/item?id=kinda%20purple")
-                .type(HyperlinkType.STROOM_TAB)
+                .type(HyperlinkType.TAB)
                 .build());
-        testLinks.put("[First](http//some-url/First){BROWSER_TAB}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[First](http//some-url/First){BROWSER}", new Hyperlink.HyperlinkBuilder()
                 .title("First")
                 .href("http//some-url/First")
-                .type(HyperlinkType.BROWSER_TAB)
+                .type(HyperlinkType.BROWSER)
                 .build());
 
         // When
@@ -51,10 +51,10 @@ public class HyperlinkTest {
         // Given
         final List<String> testLinks = new ArrayList<>();
         testLinks.add("[Blue](http://colors/get?id=blue){STROOM_TABULATION}");
-        testLinks.add("Orange](http://colors/orange)(whats this?){STROOM_TAB}");
-        testLinks.add("Orange](http://colors/orange)(whats this?){STROOM_TAB}");
-        testLinks.add("[Blue](http://co(wrapped parenth)lors/get?id=blue{STROOM_TAB}");
-        testLinks.add("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{STROOM_TAB}");
+        testLinks.add("Orange](http://colors/orange)(whats this?){TAB}");
+        testLinks.add("Orange](http://colors/orange)(whats this?){TAB}");
+        testLinks.add("[Blue](http://co(wrapped parenth)lors/get?id=blue{TAB}");
+        testLinks.add("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{TAB}");
 
         // When, url detection applied
         // Then, all should have returned null hyperlinks
