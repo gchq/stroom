@@ -113,7 +113,7 @@ main() {
         echo
     else
         echo
-        echo "${GREEN}Exiting without tagging a commit${NC}"
+        echo -e "${GREEN}Exiting without tagging a commit${NC}"
         echo
         exit 0
     fi
