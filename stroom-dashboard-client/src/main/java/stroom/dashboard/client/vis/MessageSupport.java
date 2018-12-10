@@ -18,22 +18,30 @@ package stroom.dashboard.client.vis;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
+import com.google.web.bindery.event.shared.EventBus;
+import stroom.cell.clickable.client.Hyperlink;
+import stroom.cell.clickable.client.Hyperlink.HyperlinkBuilder;
+import stroom.dashboard.client.event.HyperlinkEvent;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.util.client.JSONUtil;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MessageSupport implements FrameListener {
+public class MessageSupport implements FrameListener, HasHandlers {
     private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
     private static int callbackId;
+    private final EventBus eventBus;
     private final Element frame;
     private final int frameId;
 
-    public MessageSupport(final Element frame) {
+    public MessageSupport(final EventBus eventBus, final Element frame) {
+        this.eventBus = eventBus;
         this.frame = frame;
         frameIdCounter++;
         frameId = frameIdCounter;
@@ -65,26 +73,34 @@ public class MessageSupport implements FrameListener {
     @Override
     public void receiveMessage(final MessageEvent event, final JSONObject message) {
         final Integer callbackId = JSONUtil.getInteger(message.get("callbackId"));
+        final String functionName = JSONUtil.getString(message.get("functionName"));
 
-        // Test to see if this is a callback message.
-        if (callbackId != null) {
-            final Callback<String, Exception> callback = callbacks.remove(callbackId);
-            if (callback != null) {
-                final String functionName = JSONUtil.getString(message.get("functionName"));
-                final String param = JSONUtil.getString(message.get("param"));
+        if ("link".equals(functionName)) {
+            final String title = JSONUtil.getString(message.get("title"));
+            final String href = JSONUtil.getString(message.get("href"));
+            final String target = JSONUtil.getString(message.get("target"));
+            final Hyperlink hyperlink = new HyperlinkBuilder().title(title).href(href).type(target).build();
+            HyperlinkEvent.fire(this, hyperlink);
 
-                if ("onSuccess".equals(functionName)) {
-                    callback.onSuccess(param);
-                } else if ("onFailure".equals(functionName)) {
-                    callback.onFailure(new RuntimeException(param));
-                }
-            }
         } else {
-            final String exception = JSONUtil.getString(message.get("exception"));
-            if (exception != null) {
-                Window.alert(exception);
+            // Test to see if this is a callback message.
+            if (callbackId != null) {
+                final Callback<String, Exception> callback = callbacks.remove(callbackId);
+                if (callback != null) {
+                    final String param = JSONUtil.getString(message.get("param"));
+                    if ("onSuccess".equals(functionName)) {
+                        callback.onSuccess(param);
+                    } else if ("onFailure".equals(functionName)) {
+                        callback.onFailure(new RuntimeException(param));
+                    }
+                }
             } else {
-                Window.alert("Unexpected message - " + message.toString());
+                final String exception = JSONUtil.getString(message.get("exception"));
+                if (exception != null) {
+                    Window.alert(exception);
+                } else {
+                    Window.alert("Unexpected message - " + message.toString());
+                }
             }
         }
     }
@@ -92,5 +108,10 @@ public class MessageSupport implements FrameListener {
     @Override
     public int getFrameId() {
         return frameId;
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

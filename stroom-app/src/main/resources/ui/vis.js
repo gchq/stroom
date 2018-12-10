@@ -14,10 +14,33 @@
  * limitations under the License.
  */
 
+var stroomParent;
+var stroomFrameId;
+
+// Send a message to Stroom to open a link
+// e.g. `stroomLink('hello from vis', 'type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&params=userId%3Duser2', 'DASHBOARD')`
+var stroomLink = function(title, href, target) {
+    if (stroomParent && stroomFrameId) {
+        var obj = {
+          frameId : stroomFrameId,
+          functionName : 'link',
+          title : title,
+          href : href,
+          target : target,
+        };
+
+        var message = JSON.stringify(obj);
+        stroomParent.postMessage(message, event.origin);
+    }
+}
+
 /**
  * AN OBJECT TO SEND CALLBACK MESSAGES TO Stroom
  */
 function Callback(event, frameId, callbackId) {
+  stroomParent = event.source;
+  stroomFrameId = frameId;
+
   var event = event;
   var frameId = frameId;
   var callbackId = callbackId;

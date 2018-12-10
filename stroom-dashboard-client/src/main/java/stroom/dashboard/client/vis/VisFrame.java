@@ -27,6 +27,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Frame;
+import com.google.web.bindery.event.shared.EventBus;
 import stroom.script.shared.Script;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
@@ -37,7 +38,7 @@ public class VisFrame extends Frame implements VisPane {
     private final MessageSupport messageSupport;
     private VisFunction function;
 
-    public VisFrame() {
+    public VisFrame(final EventBus eventBus) {
         super("vis.html");// + "?time=" + System.currentTimeMillis());
 
         final Style style = getElement().getStyle();
@@ -52,7 +53,7 @@ public class VisFrame extends Frame implements VisPane {
         style.setPadding(0, Unit.PX);
         style.setBorderWidth(0, Unit.PX);
 
-        messageSupport = new MessageSupport(getElement());
+        messageSupport = new MessageSupport(eventBus, getElement());
     }
 
     public void bind() {

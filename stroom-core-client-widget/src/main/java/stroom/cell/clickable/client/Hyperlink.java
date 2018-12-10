@@ -1,59 +1,52 @@
 package stroom.cell.clickable.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
-
-import java.util.Map;
-import java.util.logging.Logger;
+import java.util.Objects;
 
 /**
  * This class is used to detect table cell values that contain URL's to be turned into hyperlinks.
- *
+ * <p>
  * [:title](http://some-url/:id){:hyperlinkTarget}
- *
  */
 public class Hyperlink {
-    private static final Logger LOGGER = Logger.getLogger(Hyperlink.class.getName());
-
     private String title;
     private String href;
-    private HyperlinkTarget target;
+    private String type;
 
-    public static Hyperlink detect(final String value, final Map<String, String> namedUrlLookups) {
+    public static Hyperlink detect(final String value) {
         Hyperlink result = null;
 
-        if (value.startsWith("[") && value.endsWith("}")) {
-            final int firstDividerPosition = value.indexOf("](");
-            final int secondDividerPosition = value.indexOf("){");
+        String title = null;
+        String href = null;
+        String type = null;
 
-            if ((firstDividerPosition > 0) && (secondDividerPosition > 0)) {
-                final String title = value.substring(1, firstDividerPosition);
-                String href = value.substring(firstDividerPosition + 2, secondDividerPosition);
-                final String openTypeStr = value.substring(secondDividerPosition + 2, value.length() - 1);
-
-                for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrlLookups.entrySet()) {
-                    href = href.replaceAll("__" + namedUrlLookupEntry.getKey() + "__", namedUrlLookupEntry.getValue());
-                }
-
-                try {
-                    final HyperlinkTarget target = HyperlinkTarget.valueOf(openTypeStr);
-
-                    result = new Hyperlink.HyperlinkBuilder()
-                            .title(title)
-                            .href(href)
-                            .target(target)
-                            .build();
-                } catch (Exception e) {
-                    LOGGER.warning("Could not parse open type value of " + openTypeStr);
-                }
+        title = extract(value, 0, "[]");
+        if (title != null) {
+            href = extract(value, title.length() + 2, "()");
+            if (href != null) {
+                type = extract(value, title.length() + href.length() + 4, "{}");
             }
         }
 
+        if (title != null && href != null) {
+            result = new Hyperlink.HyperlinkBuilder()
+                    .title(title)
+                    .href(href)
+                    .type(type)
+                    .build();
+        }
+
         return result;
+    }
+
+    private static String extract(final String value, final int pos, final String brakets) {
+        int start = value.indexOf(brakets.charAt(0), pos);
+        if (start == pos) {
+            int end = value.indexOf(brakets.charAt(1), start);
+            if (end != -1) {
+                return value.substring(start + 1, end);
+            }
+        }
+        return null;
     }
 
     public Hyperlink() {
@@ -67,71 +60,33 @@ public class Hyperlink {
         return href;
     }
 
-    public HyperlinkTarget getTarget() {
-        return target;
-    }
-
-    public SafeHtml toSafeHtml() {
-        if (null == TEMPLATE) {
-            // Lazy create to prevent tests from failing
-            TEMPLATE = GWT.create(OpenUrlNewBrowserTabTemplate.class);
-        }
-
-        switch (this.target) {
-            case STROOM_TAB:
-            case DASHBOARD:
-            case DIALOG:
-                final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-                sb.appendHtmlConstant("<u>");
-                sb.appendEscaped(title);
-                sb.appendHtmlConstant("</u>");
-                return sb.toSafeHtml();
-            case BROWSER_TAB:
-                SafeUri href = UriUtils.fromString(this.href);
-                SafeHtml title = new SafeHtmlBuilder()
-                        .appendHtmlConstant(this.title)
-                        .toSafeHtml();
-                return TEMPLATE.hyperlink(title, href);
-            default:
-                return null;
-        }
+    public String getType() {
+        return type;
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        Hyperlink hyperlink = (Hyperlink) o;
-
-        if (title != null ? !title.equals(hyperlink.title) : hyperlink.title != null) return false;
-        return href != null ? href.equals(hyperlink.href) : hyperlink.href == null;
+        final Hyperlink hyperlink = (Hyperlink) o;
+        return Objects.equals(title, hyperlink.title) &&
+                Objects.equals(href, hyperlink.href) &&
+                Objects.equals(type, hyperlink.type);
     }
 
     @Override
     public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
-        result = 31 * result + (href != null ? href.hashCode() : 0);
-        result = 31 * result + (target != null ? target.hashCode() : 0);
-        return result;
+        return Objects.hash(title, href, type);
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Hyperlink{");
-        sb.append("title='").append(title).append('\'');
-        sb.append(", href='").append(href).append('\'');
-        sb.append(", hyperlinkTarget='").append(target).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "Hyperlink{" +
+                "title='" + title + '\'' +
+                ", href='" + href + '\'' +
+                ", type=" + type +
+                '}';
     }
-
-    public interface OpenUrlNewBrowserTabTemplate extends SafeHtmlTemplates {
-        @Template("<a target='_blank' href=\"{1}\">{0}</a>")
-        SafeHtml hyperlink(SafeHtml title, SafeUri href);
-    }
-
-    private static OpenUrlNewBrowserTabTemplate TEMPLATE;
 
     public static class HyperlinkBuilder {
         private final Hyperlink instance;
@@ -150,8 +105,13 @@ public class Hyperlink {
             return this;
         }
 
-        public HyperlinkBuilder target(final HyperlinkTarget target) {
-            this.instance.target = target;
+        public HyperlinkBuilder type(final String type) {
+            this.instance.type = type;
+            return this;
+        }
+
+        public HyperlinkBuilder type(final HyperlinkType type) {
+            this.instance.type = type.name();
             return this;
         }
 

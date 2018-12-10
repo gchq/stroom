@@ -19,6 +19,7 @@ package stroom.dashboard.client.gin;
 import com.google.inject.Singleton;
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
+import stroom.dashboard.client.HyperlinkEventHandlerImpl;
 import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.dashboard.client.main.DashboardLayoutPresenter;
 import stroom.dashboard.client.main.DashboardLayoutViewImpl;
@@ -34,6 +35,7 @@ public class DashboardModule extends PluginModule {
     protected void configure() {
         bind(ComponentRegistry.class).in(Singleton.class);
 
+        bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
         bindPlugin(DashboardPlugin.class);
         bindPresenterWidget(DashboardPresenter.class, DashboardPresenter.DashboardView.class, DashboardViewImpl.class);
         bindPresenterWidget(DashboardLayoutPresenter.class, DashboardLayoutPresenter.DashboardLayoutView.class, DashboardLayoutViewImpl.class);

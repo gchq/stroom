@@ -19,20 +19,18 @@ package stroom.dashboard.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import stroom.cell.clickable.client.Hyperlink;
 
-public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
+public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
     private static Type<Handler> TYPE;
+    private final Hyperlink hyperlink;
 
-    private final String title;
-    private final String href;
-
-    private ShowDashboardEvent(final String title, final String href) {
-        this.title = title;
-        this.href = href;
+    private HyperlinkEvent(final Hyperlink hyperlink) {
+        this.hyperlink = hyperlink;
     }
 
-    public static void fire(final HasHandlers handlers, final String title, final String href) {
-        handlers.fireEvent(new ShowDashboardEvent(title, href));
+    public static void fire(final HasHandlers handlers, final Hyperlink hyperlink) {
+        handlers.fireEvent(new HyperlinkEvent(hyperlink));
     }
 
     public static Type<Handler> getType() {
@@ -49,18 +47,14 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onChange(this);
+        handler.onLink(this);
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getHref() {
-        return href;
+    public Hyperlink getHyperlink() {
+        return hyperlink;
     }
 
     public interface Handler extends EventHandler {
-        void onChange(ShowDashboardEvent event);
+        void onLink(HyperlinkEvent event);
     }
 }

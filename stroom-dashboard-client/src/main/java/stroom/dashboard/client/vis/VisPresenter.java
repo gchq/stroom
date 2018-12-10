@@ -93,7 +93,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         this.scriptCache = new ScriptCache(eventBus);
         this.dispatcher = dispatcher;
 
-        visFrame = new VisFrame();
+        visFrame = new VisFrame(eventBus);
         visPane = visFrame;
         view.setVisPane(visPane);
 
@@ -188,7 +188,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         visSettings.setTableId(tableId);
 
         final Component component = getComponents().get(visSettings.getTableId());
-        if (component != null && component instanceof TablePresenter) {
+        if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
             visSettings.setTableSettings(tablePresenter.getSettings());
             final String queryId = tablePresenter.getSettings().getQueryId();
@@ -543,7 +543,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Override
     public VisComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof VisComponentSettings)) {
+        if (!(settings instanceof VisComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }

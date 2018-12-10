@@ -1,6 +1,6 @@
 package stroom.cell.clickable.client;
 
-public enum HyperlinkTarget {
+public enum HyperlinkType {
     DIALOG,
     STROOM_TAB,
     BROWSER_TAB,

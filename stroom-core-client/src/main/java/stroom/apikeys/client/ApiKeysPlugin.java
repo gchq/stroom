@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.HyperlinkTarget;
+import stroom.cell.clickable.client.HyperlinkType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -41,33 +41,33 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(FindUserCriteria.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final IconMenuItem apiKeysMenuItem;
-                    final SvgPreset icon = SvgPresets.PASSWORD;
-                    final String apiKeysUi = result.get(ClientProperties.API_KEYS_UI_URL);
-                    if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
-                        apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
-                            final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                                    .title("API Keys")
-                                    .href(apiKeysUi)
-                                    .target(HyperlinkTarget.STROOM_TAB)
-                                    .build();
-                            final IFrameContentPresenter presenter = presenterProvider.get();
-                            presenter.setHyperlink(hyperlink);
-                            presenter.setIcon(icon);
-                            contentManager.open(
-                                    callback -> {
-                                        callback.closeTab(true);
-                                        presenter.close();
-                                    },
-                                    presenter, presenter);
-                        });
-                    } else {
-                        apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);
-                    }
-                    event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
-                })
-                .onFailure(caught -> AlertEvent.fireError(ApiKeysPlugin.this, caught.getMessage(), null));
+                    .onSuccess(result -> {
+                        final IconMenuItem apiKeysMenuItem;
+                        final SvgPreset icon = SvgPresets.PASSWORD;
+                        final String apiKeysUi = result.get(ClientProperties.API_KEYS_UI_URL);
+                        if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
+                            apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
+                                final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
+                                        .title("API Keys")
+                                        .href(apiKeysUi)
+                                        .type(HyperlinkType.STROOM_TAB)
+                                        .build();
+                                final IFrameContentPresenter presenter = presenterProvider.get();
+                                presenter.setHyperlink(hyperlink);
+                                presenter.setIcon(icon);
+                                contentManager.open(
+                                        callback -> {
+                                            callback.closeTab(true);
+                                            presenter.close();
+                                        },
+                                        presenter, presenter);
+                            });
+                        } else {
+                            apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);
+                        }
+                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
+                    })
+                    .onFailure(caught -> AlertEvent.fireError(ApiKeysPlugin.this, caught.getMessage(), null));
         }
     }
 }

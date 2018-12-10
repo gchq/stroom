@@ -22,7 +22,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.http.client.URL;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
@@ -38,9 +37,8 @@ import stroom.cell.clickable.client.ClickableSafeHtml;
 import stroom.cell.clickable.client.ClickableSafeHtmlCell;
 import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.event.ShowDashboardEvent;
+import stroom.dashboard.client.event.HyperlinkEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -73,15 +71,12 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -96,13 +91,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
-
-    private static final Logger LOGGER = Logger.getLogger(TablePresenter.class.getName());
-
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
 
@@ -118,15 +109,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
     private final DataGridView<Row> dataGrid;
-    private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
-    private final Provider<IFramePresenter> iFramePresenterProvider;
-    private final ContentManager contentManager;
 
     private int lastExpanderColumnWidth;
     private int currentExpanderColumnWidth;
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
-    private Map<String, String> namedUrls;
 
     // TODO : Temporary action mechanism.
     private int streamIdIndex = -1;
@@ -152,20 +139,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final DownloadPresenter downloadPresenter,
                           final ClientDispatchAsync dispatcher,
                           final ClientPropertyCache clientPropertyCache,
-                          final TimeZones timeZones,
-                          final Provider<IFramePresenter> iFramePresenterProvider,
-                          final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
-                          final ContentManager contentManager) {
+                          final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
-        this.iFramePresenterProvider = iFramePresenterProvider;
-        this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.dataGrid = new DataGridViewImpl<>(true);
-        this.contentManager = contentManager;
 
         view.setTableView(dataGrid);
 
@@ -183,7 +164,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE);
                     final String value = result.get(ClientProperties.DEFAULT_MAX_RESULTS);
                     if (value != null) {
                         final String[] parts = value.split(",");
@@ -249,21 +229,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
                     final Field field = new Field(indexFieldName);
                     field.setExpression(ParamUtil.makeParam(indexFieldName));
-                    final DataSourceField indexField = getIndexFieldsMap().get(indexFieldName);
-                    if (indexField != null) {
-                        switch (indexField.getType()) {
-                            case DATE_FIELD:
-                                field.setFormat(new Format(Type.DATE_TIME));
-                                break;
-                            case NUMERIC_FIELD:
-                                field.setFormat(new Format(Type.NUMBER));
-                                break;
-                            case ID:
-                                field.setFormat(new Format(Type.NUMBER));
-                                break;
-                            default:
-                                field.setFormat(new Format(Type.GENERAL));
-                                break;
+                    final DataSourceFieldsMap indexFieldsMap = getIndexFieldsMap();
+                    if (indexFieldsMap != null) {
+                        final DataSourceField indexField = indexFieldsMap.get(indexFieldName);
+                        if (indexField != null) {
+                            switch (indexField.getType()) {
+                                case DATE_FIELD:
+                                    field.setFormat(new Format(Type.DATE_TIME));
+                                    break;
+                                case NUMERIC_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case ID:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                default:
+                                    field.setFormat(new Format(Type.GENERAL));
+                                    break;
+                            }
                         }
                     }
 
@@ -456,7 +439,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void addColumn(final Field field, final int pos) {
-        final ClickableSafeHtmlCell cell = new ClickableSafeHtmlCell(this::presentIFrameDialog);
+        final ClickableSafeHtmlCell cell = new ClickableSafeHtmlCell(hyperlink -> HyperlinkEvent.fire(this, hyperlink));
         final Column<Row, ClickableSafeHtml> column = new Column<Row, ClickableSafeHtml>(cell) {
             @Override
             public ClickableSafeHtml getValue(final Row row) {
@@ -468,11 +451,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 if (values != null) {
                     final String value = values[pos];
                     if (value != null) {
-                        final Hyperlink hyperlink = Hyperlink.detect(value, namedUrls);
+                        final Hyperlink hyperlink = Hyperlink.detect(value);
+                        if (hyperlink != null) {
+                            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+                            sb.appendHtmlConstant("<u>");
+                            sb.appendEscaped(hyperlink.getTitle());
+                            sb.appendHtmlConstant("</u>");
 
-                        if (null != hyperlink) {
                             return ClickableSafeHtml
-                                    .safeHtml(hyperlink.toSafeHtml())
+                                    .safeHtml(sb.toSafeHtml())
                                     .hyperlink(hyperlink)
                                     .build();
                         } else if (field.getGroup() != null && field.getGroup() >= row.depth) {
@@ -510,95 +497,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(column);
     }
 
-    private Map<String, String> buildListParamMap(String queryString) {
-        final Map<String, String> out = new HashMap<>();
-        if (queryString != null && queryString.length() > 1) {
-            String qs = queryString.substring(1);
-
-            for (String kvPair : qs.split("&")) {
-                String[] kv = kvPair.split("=", 2);
-
-                String key = kv[0];
-                if (key.isEmpty()) {
-                    continue;
-                }
-
-                String val = kv.length > 1 ? kv[1] : "";
-                try {
-                    val = URL.decodeQueryString(val);
-                } catch (final RuntimeException e) {
-                    GWT.log("Cannot decode a URL query string parameter=" + key +
-                            " value=" + val, e);
-                }
-
-                out.putIfAbsent(key, val);
-            }
-        }
-
-        return out;
-    }
-
-    private void presentIFrameDialog(final Hyperlink hyperlink) {
-        switch (hyperlink.getTarget()) {
-            case DASHBOARD: {
-                final Map<String, String> map = buildListParamMap(hyperlink.getHref());
-                final String uuid = map.get("uuid");
-                final String params = map.get("params");
-                if (uuid == null) {
-                    AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
-                } else {
-                    final DocRef docRef = new DocRef(Dashboard.ENTITY_TYPE, uuid);
-                    ShowDashboardEvent.fire(this, hyperlink.getTitle(), docRef, params);
-                }
-                break;
-            }
-            case DIALOG: {
-                final PopupSize popupSize = new PopupSize(800, 600, true);
-                final IFramePresenter presenter = iFramePresenterProvider.get();
-                presenter.setHyperlink(hyperlink);
-                ShowPopupEvent.fire(TablePresenter.this,
-                        presenter,
-                        PopupType.CLOSE_DIALOG,
-                        null,
-                        popupSize,
-                        hyperlink.getTitle(),
-                        null,
-                        null);
-                break;
-            }
-            case STROOM_TAB: {
-                final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
-                presenter.setHyperlink(hyperlink);
-                contentManager.open(callback ->
-                                ConfirmEvent.fire(TablePresenter.this,
-                                        "Are you sure you want to close " + hyperlink.getTitle() + "?",
-                                        res -> {
-                                            if (res) {
-                                                presenter.close();
-                                            }
-                                            callback.closeTab(res);
-                                        })
-                        , presenter, presenter);
-                break;
-            }
-            case BROWSER_TAB:
-                // do nothing
-                break;
-        }
-
-
-    }
-
     private void performRowAction(final Row result) {
         selectedStreamId = null;
         selectedEventId = null;
         if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
             final String[] values = result.values;
             if (values.length > streamIdIndex && values[streamIdIndex] != null) {
-                selectedStreamId = values[streamIdIndex].toString();
+                selectedStreamId = values[streamIdIndex];
             }
             if (values.length > eventIdIndex && values[eventIdIndex] != null) {
-                selectedEventId = values[eventIdIndex].toString();
+                selectedEventId = values[eventIdIndex];
             }
         }
 
@@ -810,7 +718,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public TableComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof TableComponentSettings)) {
+        if (!(settings instanceof TableComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }

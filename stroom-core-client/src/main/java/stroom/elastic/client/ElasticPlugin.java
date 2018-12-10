@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.HyperlinkTarget;
+import stroom.cell.clickable.client.HyperlinkType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
@@ -50,7 +50,7 @@ public class ElasticPlugin extends Plugin {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                     .title("Elastic Search")
                                     .href(elasticUiUrl)
-                                    .target(HyperlinkTarget.BROWSER_TAB)
+                                    .type(HyperlinkType.BROWSER_TAB)
                                     .build();
                             final IFrameContentPresenter presenter = iFramePresenterProvider.get();
                             presenter.setHyperlink(hyperlink);

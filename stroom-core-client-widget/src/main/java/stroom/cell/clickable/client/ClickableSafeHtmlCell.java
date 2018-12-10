@@ -19,7 +19,6 @@ public class ClickableSafeHtmlCell extends AbstractCell<ClickableSafeHtml> {
 
     public ClickableSafeHtmlCell(final Consumer<Hyperlink> urlClickHandler) {
         super(ENABLED_EVENTS);
-
         this.urlClickHandler = urlClickHandler;
     }
 

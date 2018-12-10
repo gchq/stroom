@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.HyperlinkTarget;
+import stroom.cell.clickable.client.HyperlinkType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
@@ -53,7 +53,7 @@ public class ChangePasswordPlugin extends Plugin {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
                                     .title("Change password")
                                     .href(changePasswordUiUrl)
-                                    .target(HyperlinkTarget.STROOM_TAB)
+                                    .type(HyperlinkType.STROOM_TAB)
                                     .build();
                             final IFrameContentPresenter presenter = presenterProvider.get();
                             presenter.setHyperlink(hyperlink);
