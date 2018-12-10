@@ -1,4 +1,4 @@
-package stroom.cell.clickable.client;
+package stroom.hyperlink.client;
 
 public enum HyperlinkType {
     TAB,

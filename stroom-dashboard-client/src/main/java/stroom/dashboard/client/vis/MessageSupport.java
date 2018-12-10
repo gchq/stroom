@@ -23,9 +23,9 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.Hyperlink.HyperlinkBuilder;
-import stroom.dashboard.client.event.HyperlinkEvent;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.Hyperlink.Builder;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.util.client.JSONUtil;
 
@@ -79,7 +79,7 @@ public class MessageSupport implements FrameListener, HasHandlers {
             final String title = JSONUtil.getString(message.get("title"));
             final String href = JSONUtil.getString(message.get("href"));
             final String target = JSONUtil.getString(message.get("target"));
-            final Hyperlink hyperlink = new HyperlinkBuilder().title(title).href(href).type(target).build();
+            final Hyperlink hyperlink = new Builder().title(title).href(href).type(target).build();
             HyperlinkEvent.fire(this, hyperlink);
 
         } else {

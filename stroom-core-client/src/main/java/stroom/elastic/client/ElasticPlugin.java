@@ -1,34 +1,27 @@
 package stroom.elastic.client;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.HyperlinkType;
-import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.Hyperlink.Builder;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ElasticPlugin extends Plugin {
-    private final Provider<IFrameContentPresenter> iFramePresenterProvider;
-    private final ContentManager contentManager;
     private final ClientPropertyCache clientPropertyCache;
 
     @Inject
     public ElasticPlugin(final EventBus eventBus,
-                         final Provider<IFrameContentPresenter> iFramePresenterProvider,
-                         final ContentManager contentManager,
                          final ClientPropertyCache clientPropertyCache) {
         super(eventBus);
-        this.iFramePresenterProvider = iFramePresenterProvider;
-        this.contentManager = contentManager;
         this.clientPropertyCache = clientPropertyCache;
     }
 
@@ -47,20 +40,13 @@ public class ElasticPlugin extends Plugin {
                     final String elasticUiUrl = result.get(ClientProperties.URL_KIBANA_UI);
                     if (elasticUiUrl != null && elasticUiUrl.trim().length() > 0) {
                         annotationsMenuItem = new IconMenuItem(6, SvgPresets.ELASTIC_SEARCH, null, "Elastic Search", null, true, () -> {
-                            final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
+                            final Hyperlink hyperlink = new Builder()
                                     .title("Elastic Search")
                                     .href(elasticUiUrl)
                                     .type(HyperlinkType.BROWSER)
+                                    .icon(SvgPresets.ELASTIC_SEARCH)
                                     .build();
-                            final IFrameContentPresenter presenter = iFramePresenterProvider.get();
-                            presenter.setHyperlink(hyperlink);
-                            presenter.setIcon(SvgPresets.ELASTIC_SEARCH);
-                            contentManager.open(
-                                    callback -> {
-                                        callback.closeTab(true);
-                                        presenter.close();
-                                    },
-                                    presenter, presenter);
+                            HyperlinkEvent.fire(this, hyperlink);
                         });
                     } else {
                         annotationsMenuItem = new IconMenuItem(5, SvgPresets.ELASTIC_SEARCH, SvgPresets.ELASTIC_SEARCH, "Elastic Search UI is not configured!", null, false, null);
@@ -69,7 +55,5 @@ public class ElasticPlugin extends Plugin {
                     event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, annotationsMenuItem);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ElasticPlugin.this, caught.getMessage(), null));
-
-
     }
 }

@@ -1,4 +1,4 @@
-package stroom.dashboard.client;
+package stroom.hyperlink.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -11,11 +11,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.HyperlinkType;
 import stroom.core.client.ContentManager;
-import stroom.dashboard.client.event.HyperlinkEvent;
-import stroom.dashboard.client.event.ShowDashboardEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
 import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
@@ -83,7 +79,9 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 }
                 case TAB: {
                     final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
-                    presenter.setHyperlink(hyperlink);
+                    presenter.setUrl(hyperlink.getHref());
+                    presenter.setTitle(hyperlink.getTitle());
+                    presenter.setIcon(hyperlink.getIcon());
                     contentManager.open(callback ->
                                     ConfirmEvent.fire(this,
                                             "Are you sure you want to close " + hyperlink.getTitle() + "?",
@@ -99,7 +97,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 case DIALOG: {
                     final PopupSize popupSize = new PopupSize(800, 600, true);
                     final IFramePresenter presenter = iFramePresenterProvider.get();
-                    presenter.setHyperlink(hyperlink);
+                    presenter.setUrl(hyperlink.getHref());
                     ShowPopupEvent.fire(this,
                             presenter,
                             PopupType.CLOSE_DIALOG,

@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.cell.clickable.client.Hyperlink;
 
 public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView> {
     @Inject
@@ -28,8 +27,8 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
         super(eventBus, view);
     }
 
-    public void setHyperlink(final Hyperlink hyperlink) {
-        getView().setUrl(hyperlink.getHref());
+    public void setUrl(final String url) {
+        getView().setUrl(url);
     }
 
     public interface IFrameView extends View {

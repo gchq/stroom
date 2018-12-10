@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1004** : Table cells now support multiple links.
+
 * Issue **#1001** : Changed link types to `tab`, `dialog`, `dashboard`, `browser`.
 
 * Issue **#1001** : Added dashboard link option to link to a dashboard from within a vis, e.g. `stroomLink(d.name, 'type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&params=userId%3D' + d.name, 'DASHBOARD')`.

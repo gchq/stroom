@@ -53,6 +53,7 @@ import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.item.client.presenter.ListPresenter.ListView;
 import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
@@ -89,6 +90,8 @@ public class AppModule extends AbstractPresenterModule {
         // install(new DefaultModule(AppPlaceManager.class));
 
         bind(KeyboardInterceptor.class).asEagerSingleton();
+
+        bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 
         // bind(CurrentUser.class).in(Singleton.class);
 

@@ -22,8 +22,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
@@ -33,12 +31,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.clickable.client.ClickableSafeHtml;
-import stroom.cell.clickable.client.ClickableSafeHtmlCell;
-import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.client.event.HyperlinkEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -439,45 +433,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void addColumn(final Field field, final int pos) {
-        final ClickableSafeHtmlCell cell = new ClickableSafeHtmlCell(hyperlink -> HyperlinkEvent.fire(this, hyperlink));
-        final Column<Row, ClickableSafeHtml> column = new Column<Row, ClickableSafeHtml>(cell) {
+        final TableCell cell = new TableCell(this, field, pos);
+        final Column<Row, Row> column = new Column<Row, Row>(cell) {
             @Override
-            public ClickableSafeHtml getValue(final Row row) {
-                if (row == null) {
-                    return null;
-                }
-
-                final String[] values = row.values;
-                if (values != null) {
-                    final String value = values[pos];
-                    if (value != null) {
-                        final Hyperlink hyperlink = Hyperlink.detect(value);
-                        if (hyperlink != null) {
-                            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-                            sb.appendHtmlConstant("<u>");
-                            sb.appendEscaped(hyperlink.getTitle());
-                            sb.appendHtmlConstant("</u>");
-
-                            return ClickableSafeHtml
-                                    .safeHtml(sb.toSafeHtml())
-                                    .hyperlink(hyperlink)
-                                    .build();
-                        } else if (field.getGroup() != null && field.getGroup() >= row.depth) {
-                            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-                            sb.appendHtmlConstant("<b>");
-                            sb.appendEscaped(value);
-                            sb.appendHtmlConstant("</b>");
-
-                            return ClickableSafeHtml
-                                    .safeHtml(sb.toSafeHtml())
-                                    .build();
-                        }
-                        return ClickableSafeHtml
-                                .safeHtml(SafeHtmlUtils.fromString(value))
-                                .build();
-                    }
-                }
-                return null;
+            public Row getValue(final Row row) {
+                return row;
             }
 
             @Override

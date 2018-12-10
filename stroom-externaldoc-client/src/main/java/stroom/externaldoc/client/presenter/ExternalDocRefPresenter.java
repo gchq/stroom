@@ -3,7 +3,6 @@ package stroom.externaldoc.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.clickable.client.Hyperlink;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.ExternalDocRefConstants;
@@ -42,16 +41,12 @@ public class ExternalDocRefPresenter
     @Override
     protected void onRead(final DocRef docRef, final SharedDocRef document) {
         this.docRef = docRef;
-        final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                .href(this.uiUrls.get(document.getType()) + "/" + document.getUuid())
-                .build();
         this.settingsPresenter.setIcon(getIcon());
-        this.settingsPresenter.setHyperlink(hyperlink);
+        this.settingsPresenter.setUrl(this.uiUrls.get(document.getType()) + "/" + document.getUuid());
     }
 
     @Override
     protected void onWrite(final SharedDocRef annotationsIndex) {
-
     }
 
     @Override

@@ -25,7 +25,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
-import stroom.dashboard.client.event.ShowDashboardEvent;
+import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.shared.Dashboard;
 import stroom.dispatch.client.ClientDispatchAsync;

@@ -59,6 +59,7 @@
     <inherits name="stroom.menubar.Menubar"/>
     <inherits name="stroom.node.Node"/>
     <inherits name="stroom.util.Util"/>
+    <inherits name="stroom.hyperlink.Hyperlink" />
 
     <!-- Additional -->
     <inherits name="stroom.dashboard.Dashboard"/>
