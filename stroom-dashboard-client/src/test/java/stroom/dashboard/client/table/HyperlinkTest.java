@@ -17,22 +17,22 @@ public class HyperlinkTest {
     @Test
     public void testValidUrl() {
         final Map<String, Hyperlink> testLinks = new HashMap<>();
-        testLinks.put("[Orange](http://colors/orange){DIALOG}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[Orange](http://colors/orange){dialog}", new Hyperlink.HyperlinkBuilder()
                 .title("Orange")
                 .href("http://colors/orange")
                 .type(HyperlinkType.DIALOG)
                 .build());
-        testLinks.put("[Blue](http://colors/get?id=blue){TAB}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[Blue](http://colors/get?id=blue){tab}", new Hyperlink.HyperlinkBuilder()
                 .title("Blue")
                 .href("http://colors/get?id=blue")
                 .type(HyperlinkType.TAB)
                 .build());
-        testLinks.put("[Magenta](http://shades.com/shop/item?id=kinda%20purple){TAB}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[Magenta](http://shades.com/shop/item?id=kinda%20purple){tab}", new Hyperlink.HyperlinkBuilder()
                 .title("Magenta")
                 .href("http://shades.com/shop/item?id=kinda%20purple")
                 .type(HyperlinkType.TAB)
                 .build());
-        testLinks.put("[First](http//some-url/First){BROWSER}", new Hyperlink.HyperlinkBuilder()
+        testLinks.put("[First](http//some-url/First){browser}", new Hyperlink.HyperlinkBuilder()
                 .title("First")
                 .href("http//some-url/First")
                 .type(HyperlinkType.BROWSER)
@@ -50,11 +50,11 @@ public class HyperlinkTest {
     public void testInvalidUrls() {
         // Given
         final List<String> testLinks = new ArrayList<>();
-        testLinks.add("[Blue](http://colors/get?id=blue){STROOM_TABULATION}");
-        testLinks.add("Orange](http://colors/orange)(whats this?){TAB}");
-        testLinks.add("Orange](http://colors/orange)(whats this?){TAB}");
-        testLinks.add("[Blue](http://co(wrapped parenth)lors/get?id=blue{TAB}");
-        testLinks.add("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{TAB}");
+        testLinks.add("[Blue](http://colors/get?id=blue){tab}");
+        testLinks.add("Orange](http://colors/orange)(whats this?){tab}");
+        testLinks.add("Orange](http://colors/orange)(whats this?){tab}");
+        testLinks.add("[Blue](http://co(wrapped parenth)lors/get?id=blue{tab}");
+        testLinks.add("(Magenta)[http://shades.com/shop/item?id=kinda%20purple]{tab}");
 
         // When, url detection applied
         // Then, all should have returned null hyperlinks
