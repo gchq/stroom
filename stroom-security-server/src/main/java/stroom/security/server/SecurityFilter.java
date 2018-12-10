@@ -249,16 +249,24 @@ public class SecurityFilter implements Filter {
 
         // If we're using the request URL we want to trim off any trailing params
         final URI parsedRequestUrl = UriBuilder.fromUri(url).build();
-        String redirectUrl = parsedRequestUrl.getScheme() + "://" + parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
-        if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
-            redirectUrl += parsedRequestUrl.getPath();
-        }
+        String redirectUrl;
 
-        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
             LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
             redirectUrl = config.getAdvertisedStroomUrl();
+        } else {
+            redirectUrl = parsedRequestUrl.getScheme() + "://" + parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
         }
+
+        // Putting the path and query back on
+        if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
+            redirectUrl += parsedRequestUrl.getPath();
+            redirectUrl += "?";
+            redirectUrl += request.getQueryString();
+        }
+
+        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
+
 
         String authenticationRequestParams = "" +
                 "?scope=openid" +
