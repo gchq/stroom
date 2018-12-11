@@ -33,6 +33,7 @@ dependencies {
 
 //    testCompile project(':stroom-test-common')
 
+    testCompile libs.assertj_core
     testCompile libs.hamcrest_core
     testCompile libs.junit_jupiter
     testCompile libs.mockito_core

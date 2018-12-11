@@ -23,6 +23,6 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 
-    testCompile libs.junit_jupiter
     testCompile libs.assertj_core
+    testCompile libs.junit_jupiter
 }

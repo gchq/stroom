@@ -16,6 +16,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.slf4j_api
 
+    testCompile libs.assertj_core
     testCompile libs.junit_jupiter
 }
 
