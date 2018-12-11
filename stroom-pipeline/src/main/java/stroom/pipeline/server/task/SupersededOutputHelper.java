@@ -15,6 +15,7 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @Scope(StroomScope.TASK)
@@ -28,6 +29,7 @@ public class SupersededOutputHelper {
     private StreamTask streamTask;
     private long processStartTime;
 
+    private boolean initialised;
     private boolean superseded;
 
     @Inject
@@ -45,6 +47,13 @@ public class SupersededOutputHelper {
      */
     public boolean isSuperseded() {
         try {
+            if (!initialised) {
+                throw new RuntimeException("SupersededOutputHelper has not been initialised");
+            }
+
+            Objects.requireNonNull(sourceStream, "Source stream must not be null");
+            Objects.requireNonNull(streamProcessor, "Stream processor must not be null");
+
             if (!superseded) {
                 final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
                 findStreamCriteria.obtainParentStreamIdSet().add(sourceStream);
@@ -104,5 +113,7 @@ public class SupersededOutputHelper {
         this.streamProcessor = streamProcessor;
         this.streamTask = streamTask;
         this.processStartTime = processStartTime;
+
+        initialised = true;
     }
 }

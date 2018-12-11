@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1012** : Fix for NPE caused when checking if an output is superseded.
+
 * Issue **#1011** : Old UI versions running in browsers often cause Stroom to throw an NPE as it can't find the appropriate GWT serialisation policy. Stroom will no longer throw an NPE but will report an `IncompatibleRemoteServiceException` instead. This is the default GWT behaviour.
 
 * Issue **#1007** : Max visualisation results are now limited by default to the maximum number of results defined for the first level of the parent table. This can be further limited by settings in the visualisation.
