@@ -48,8 +48,9 @@ const TestForm = () => (
   </Formik>
 );
 
-const stories = storiesOf("Permission Inheritance Picker", module).addDecorator(
-  StroomDecorator
-);
+const stories = storiesOf(
+  "Pickers/Permission Inheritance",
+  module
+).addDecorator(StroomDecorator);
 
 addThemedStories(stories, <TestForm />);

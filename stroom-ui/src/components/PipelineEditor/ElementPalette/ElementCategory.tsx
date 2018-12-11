@@ -51,7 +51,10 @@ const ElementCategory = ({
 }: EnhancedProps) => (
   <div className="element-palette-category">
     <div onClick={() => setIsOpen(!isOpen)}>
-      <FontAwesomeIcon icon="caret-down" className="borderless" />{" "}
+      <FontAwesomeIcon
+        icon={isOpen ? "caret-right" : "caret-down"}
+        className="borderless"
+      />{" "}
       {displayTitle}
     </div>
     <div className="flat">

@@ -46,6 +46,6 @@ const TestRenameDialog = connect<
   </div>
 ));
 
-storiesOf("Rename Doc Ref Dialog", module)
+storiesOf("Explorer/Rename Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => <TestRenameDialog testDocRef={testDocRef} />);

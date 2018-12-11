@@ -64,6 +64,6 @@ const TestForm = () => (
   </Formik>
 );
 
-storiesOf("Doc Type Filters", module)
+storiesOf("Pickers/Doc Ref Type", module)
   .addDecorator(StroomDecorator)
   .add("Doc Type Filter", () => <TestForm />);

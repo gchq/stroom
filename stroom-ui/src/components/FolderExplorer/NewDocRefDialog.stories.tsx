@@ -45,6 +45,6 @@ const TestNewDocRefDialog = connect<
   </div>
 ));
 
-storiesOf("Create Doc Ref Dialog", module)
+storiesOf("Explorer/Create Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => <TestNewDocRefDialog testDestination={testFolder2} />);

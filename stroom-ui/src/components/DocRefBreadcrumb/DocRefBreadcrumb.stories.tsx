@@ -52,7 +52,7 @@ const BreadcrumbOpen = enhance(
 
 const testPipelineUuid = Object.keys(testPipelines)[0];
 
-storiesOf("Doc Ref Breadcrumb", module)
+storiesOf("Doc Ref/Breadcrumb", module)
   .addDecorator(StroomDecorator)
   .add("first pipeline", () => (
     <BreadcrumbOpen docRefUuid={testPipelineUuid} />

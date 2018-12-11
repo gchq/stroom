@@ -65,7 +65,7 @@ const enhance = compose<PassedOnProps, Props>(
 
 const TestDocRefInfoModal = enhance(DocRefInfoModal);
 
-storiesOf("Doc Ref Info Modal", module)
+storiesOf("Doc Ref/Info Modal", module)
   .addDecorator(StroomDecorator)
   .add("Doc Ref Info Modal", () => (
     <TestDocRefInfoModal

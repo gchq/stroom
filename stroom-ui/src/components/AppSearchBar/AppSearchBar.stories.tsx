@@ -134,7 +134,7 @@ class AppSearchAsNavigator extends React.Component<
   }
 }
 
-const stories = storiesOf("App Search Bar", module);
+const stories = storiesOf("Doc Ref/App Search Bar", module);
 
 stories
   .addDecorator(StroomDecorator)

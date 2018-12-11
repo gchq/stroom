@@ -90,24 +90,15 @@ const enhance = compose<{}, Props>(
 
 const TestErrorPage = enhance(ErrorPage);
 
-storiesOf("ErrorPage", module)
+storiesOf("Sections/ErrorPage", module)
   .addDecorator(StroomDecorator)
-  .add("No details", () => <TestErrorPage />);
-
-storiesOf("ErrorPage", module)
-  .addDecorator(StroomDecorator)
+  .add("No details", () => <TestErrorPage />)
   .add("Just error message", () => (
     <TestErrorPage errorMessage={errorMessage} />
-  ));
-
-storiesOf("ErrorPage", module)
-  .addDecorator(StroomDecorator)
+  ))
   .add("Error message and stack trace", () => (
     <TestErrorPage errorMessage={errorMessage} stackTrace={stackTrace} />
-  ));
-
-storiesOf("ErrorPage", module)
-  .addDecorator(StroomDecorator)
+  ))
   .add("Everything", () => (
     <TestErrorPage
       errorMessage={errorMessage}

@@ -59,7 +59,7 @@ const enhance = compose<ExpressionSearchBarProps, Props>(
 
 const TestExpressionSearchBar = enhance(ExpressionSearchBar);
 
-storiesOf("ExpressionSearchBar", module)
+storiesOf("Expression/Search Bar", module)
   .addDecorator(StroomDecorator)
   .add("Basic", () => (
     <TestExpressionSearchBar

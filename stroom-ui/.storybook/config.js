@@ -75,7 +75,7 @@ setOptions({
    *   /\/|\./ - split by `/` or `.`
    * @type {Regex}
    */
-  hierarchySeparator: null,
+  hierarchySeparator: /\/|\./, // matches a . or /
   /**
    * regex for finding the hierarchy root separator
    * @example:
@@ -83,7 +83,7 @@ setOptions({
    *   /\|/ - split by `|`
    * @type {Regex}
    */
-  hierarchyRootSeparator: null,
+  hierarchyRootSeparator: /\|/, //matches a |
   /**
    * sidebar tree animations
    * @type {Boolean}

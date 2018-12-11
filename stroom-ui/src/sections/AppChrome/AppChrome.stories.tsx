@@ -33,7 +33,7 @@ const AppChromeWithRouter = () => (
   </Switch>
 );
 
-storiesOf("App Chrome", module)
+storiesOf("Sections/App Chrome", module)
   .addDecorator(StroomDecorator)
   .add("Just the chrome", () => (
     <AppChrome activeMenuItem="welcome" content={<div>Stuff goes here</div>} />

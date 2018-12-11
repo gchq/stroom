@@ -73,19 +73,17 @@ const NewElement = ({
 }: EnhancedProps) =>
   connectDragSource(
     <div
-      className={`element-palette-element raised-low borderless ${
+      className={`Pipeline-element raised-low borderless ${
         hasFocus ? "focus" : "no-focus"
       }`}
     >
-      <div className="element-palette-element__button-contents">
-        <ElementImage icon={element.icon} />
-        <Button
-          className="element-palette__type"
-          onFocus={() => setHasFocus(true)}
-          onBlur={() => setHasFocus(false)}
-          text={recycleData ? recycleData.id : element.type}
-        />
-      </div>
+      <ElementImage className="Pipeline-element__icon" icon={element.icon} />
+      <Button
+        className="Pipeline-element__type"
+        onFocus={() => setHasFocus(true)}
+        onBlur={() => setHasFocus(false)}
+        text={recycleData ? recycleData.id : element.type}
+      />
     </div>
   );
 

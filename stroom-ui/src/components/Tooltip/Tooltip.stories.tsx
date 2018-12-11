@@ -5,7 +5,9 @@ import { addThemedStories } from "../../lib/themedStoryGenerator";
 
 import Tooltip from "./Tooltip";
 
-const stories = storiesOf("Tooltip", module).addDecorator(StroomDecorator);
+const stories = storiesOf("General Purpose/Tooltip", module).addDecorator(
+  StroomDecorator
+);
 
 addThemedStories(
   stories,

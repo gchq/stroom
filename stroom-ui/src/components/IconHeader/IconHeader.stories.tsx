@@ -22,7 +22,7 @@ import IconHeader from "./IconHeader";
 
 import "../../styles/main.css";
 
-const iconHeaderStories = storiesOf("IconHeader", module);
+const iconHeaderStories = storiesOf("General Purpose/Icon Header", module);
 addThemedStories(
   iconHeaderStories,
   <IconHeader icon="angle-up" text="Good morrow fellow human" />,

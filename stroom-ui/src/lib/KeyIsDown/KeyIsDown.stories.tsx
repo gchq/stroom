@@ -54,6 +54,6 @@ const TestHarness = compose<Props, {}>(
   </div>
 ));
 
-storiesOf("Key Is Down", module)
+storiesOf("General Purpose/Key Is Down", module)
   .addDecorator(StroomDecorator)
   .add("Test Component", () => <TestHarness />);

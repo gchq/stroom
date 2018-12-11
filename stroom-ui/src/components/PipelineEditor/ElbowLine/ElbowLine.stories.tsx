@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import DataViewer from "./DataViewer";
-import { addThemedStories } from "../../lib/themedStoryGenerator";
-import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import ElbowLine from "./ElbowLine";
 
-import "../../styles/main.css";
+import "../../../styles/main.css";
 
-const stories = storiesOf("Data/Viewer", module).addDecorator(StroomDecorator);
-
-addThemedStories(stories, <DataViewer dataViewerId="test" />);
+storiesOf("Pipeline/Elbow Line", module).add("Elbow Line", () => (
+  <div className={`Pipeline-editor__elements_cell ELBOW`}>
+    <ElbowLine />
+  </div>
+));

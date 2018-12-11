@@ -23,9 +23,10 @@ import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
 import "../../styles/main.css";
 
-const pipelineStories = storiesOf("Pipeline Editor", module).addDecorator(
-  StroomDecorator
-);
+const pipelineStories = storiesOf(
+  "Document Editors/Pipeline",
+  module
+).addDecorator(StroomDecorator);
 
 Object.keys(testPipelines).forEach(k => {
   pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />);

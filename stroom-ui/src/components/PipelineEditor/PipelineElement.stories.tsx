@@ -13,16 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import DataViewer from "./DataViewer";
-import { addThemedStories } from "../../lib/themedStoryGenerator";
+import PipelineElement from "./PipelineElement";
+import Pipeline from "./Pipeline";
+
+import { testPipelines } from "./test";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
 import "../../styles/main.css";
+import { PipelineElementType } from "src/types";
 
-const stories = storiesOf("Data/Viewer", module).addDecorator(StroomDecorator);
+const pipelineStories = storiesOf("Pipeline/Element", module).addDecorator(
+  StroomDecorator
+);
 
-addThemedStories(stories, <DataViewer dataViewerId="test" />);
+testPipelines.simple.merged.elements.add!.forEach((k: PipelineElementType) => {
+  pipelineStories.add(k.id, () => (
+    <React.Fragment>
+      <div className="Pipeline-editor__elements_cell element">
+        <PipelineElement pipelineId="simple" elementId={k.id} />
+      </div>
+      <div style={{ display: "none" }}>
+        <Pipeline pipelineId="simple" />
+      </div>{" "}
+    </React.Fragment>
+  ));
+});

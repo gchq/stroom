@@ -23,8 +23,9 @@ import { addThemedStories } from "../../lib/themedStoryGenerator";
 
 import "../../styles/main.css";
 
-const pipelineStories = storiesOf("Path not found", module).addDecorator(
-  StroomDecorator
-);
+const pipelineStories = storiesOf(
+  "Sections/Path not found",
+  module
+).addDecorator(StroomDecorator);
 
 addThemedStories(pipelineStories, <PathNotFound />);

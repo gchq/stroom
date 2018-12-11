@@ -23,6 +23,8 @@ import "../../styles/main.css";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 import { addThemedStories } from "../../lib/themedStoryGenerator";
 
-const stories = storiesOf("Welcome", module).addDecorator(StroomDecorator);
+const stories = storiesOf("Sections/Welcome", module).addDecorator(
+  StroomDecorator
+);
 
 addThemedStories(stories, <Welcome />);

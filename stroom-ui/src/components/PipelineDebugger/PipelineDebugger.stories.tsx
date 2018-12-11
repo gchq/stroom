@@ -24,7 +24,7 @@ import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
 import "../../styles/main.css";
 
-const pipelineStories = storiesOf("Pipeline Debugger", module).addDecorator(
+const pipelineStories = storiesOf("Pipeline/Debugger", module).addDecorator(
   StroomDecorator
 );
 

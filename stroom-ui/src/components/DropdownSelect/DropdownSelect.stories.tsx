@@ -118,6 +118,6 @@ const TestForm = () => (
   </Formik>
 );
 
-storiesOf("Dropdown Select", module)
+storiesOf("General Purpose/Dropdown Select", module)
   .addDecorator(StroomDecorator)
   .add("simple pickers", () => <TestForm />);

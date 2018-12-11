@@ -22,7 +22,9 @@ import XsltEditor from "./XsltEditor";
 import "../../styles/main.css";
 import StroomDecorator from "../../lib/storybook/StroomDecorator";
 
-const stories = storiesOf("XSLT Editor", module).addDecorator(StroomDecorator);
+const stories = storiesOf("Document Editors/XSLT", module).addDecorator(
+  StroomDecorator
+);
 
 Object.entries(testXslt)
   .map(k => ({

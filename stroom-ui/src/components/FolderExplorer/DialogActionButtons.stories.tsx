@@ -51,6 +51,6 @@ let TestHarness = enhance(
   )
 );
 
-storiesOf("Dialog Action Buttons", module)
+storiesOf("Explorer/Dialog Action Buttons", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => <TestHarness />);

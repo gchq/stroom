@@ -46,7 +46,7 @@ const TestCopyDialog = connect<
   </div>
 ));
 
-storiesOf("Copy Doc Ref Dialog", module)
+storiesOf("Explorer/Copy Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => (
     <TestCopyDialog

@@ -69,10 +69,10 @@ const enhance = compose(
 
 const TestElementDetails = enhance(ElementDetails);
 
-const stories = storiesOf("Element Details", module);
+const stories = storiesOf("Pipeline/Element/Details", module);
 
 Object.entries(testPipelines).map(pipeline => {
-  pipeline[1].merged.elements.add.map(element => {
+  pipeline[1].merged.elements.add!.map(element => {
     stories.add(`${pipeline[1].docRef.uuid} - ${element.id}`, () => (
       <TestElementDetails
         testElements={elements}

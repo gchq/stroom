@@ -25,17 +25,15 @@ import {
 import { connect } from "react-redux";
 
 import Loader from "../Loader";
-// import { mapObject } from "../../lib/treeUtils";
 import PipelineElement from "./PipelineElement";
+import ElbowLine from "./ElbowLine/ElbowLine";
 import { fetchPipeline } from "./pipelineResourceClient";
 import { fetchElements, fetchElementProperties } from "./elementResourceClient";
 import {
   getPipelineLayoutGrid,
   PipelineLayoutGrid,
   CellType
-  // PipelinelayoutGrid
 } from "./pipelineUtils";
-// import { PipelineElementType } from "../../types";
 import { StoreState as ElementStoreState } from "./redux/elementReducer";
 import { StoreStateById as PipelineStatesStoreStateById } from "./redux/pipelineStatesReducer";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -97,12 +95,9 @@ const enhance = compose<EnhancedProps, Props>(
       !(pipelineState && pipelineState.pipeline && elements),
     renderComponent(() => <Loader message="Loading pipeline..." />)
   ),
-  withProps(({ pipelineState: { asTree } }) => {
-    let layoutGrid = getPipelineLayoutGrid(asTree);
-
-    console.log("Fc", { layoutGrid });
-    return { layoutGrid };
-  })
+  withProps(({ pipelineState: { asTree } }) => ({
+    layoutGrid: getPipelineLayoutGrid(asTree)
+  }))
 );
 
 const Pipeline = ({
@@ -117,13 +112,13 @@ const Pipeline = ({
           let cellClassNames = ["Pipeline-editor__elements_cell"];
           switch (column.cellType) {
             case CellType.ELBOW:
-              cellClassNames.push("elbow");
+              cellClassNames.push("ELBOW");
               break;
             case CellType.ELEMENT:
-              cellClassNames.push("element");
+              cellClassNames.push("ELEMENT");
               break;
             case CellType.EMPTY:
-              cellClassNames.push("empty");
+              cellClassNames.push("EMPTY");
               break;
           }
           return (
@@ -140,6 +135,7 @@ const Pipeline = ({
                       elementId={e.id}
                     />
                   ))}
+              {column.cellType == CellType.ELBOW && <ElbowLine />}
             </div>
           );
         })}

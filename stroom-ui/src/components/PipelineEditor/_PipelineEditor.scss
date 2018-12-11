@@ -53,21 +53,11 @@ $palette-width: 12rem;
 }
 
 .Pipeline-editor__elements_cell {
-  border: solid thick black;
-}
-
-.Pipeline-editor__elements_cell.empty {
-  background-color: red;
-  width: 80px;
-  height: 80px;
-}
-.Pipeline-editor__elements_cell.elbow {
-  background-color: green;
-  width: 80px;
-  height: 80px;
-}
-.Pipeline-editor__elements_cell.element {
-  background-color: blue;
+  width: 8rem;
+  height: 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .Pipeline-editor__element-palette {

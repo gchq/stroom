@@ -15,14 +15,17 @@
  */
 
 import * as React from "react";
-import { storiesOf } from "@storybook/react";
 
-import DataViewer from "./DataViewer";
-import { addThemedStories } from "../../lib/themedStoryGenerator";
-import StroomDecorator from "../../lib/storybook/StroomDecorator";
+/**
+ * This element can be used to place an elbowed line things like pipelines and expressions
+ */
+const ElbowLine = () => (
+  <div className="ElbowLine">
+    <div className="ElbowLine__quarter" />
+    <div className="ElbowLine__quarter" />
+    <div className="ElbowLine__quarter" />
+    <div className="ElbowLine__quarter" />
+  </div>
+);
 
-import "../../styles/main.css";
-
-const stories = storiesOf("Data/Viewer", module).addDecorator(StroomDecorator);
-
-addThemedStories(stories, <DataViewer dataViewerId="test" />);
+export default ElbowLine;

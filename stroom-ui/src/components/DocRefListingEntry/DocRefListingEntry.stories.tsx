@@ -135,7 +135,7 @@ let TestDocRefListingEntry = enhance(
   )
 );
 
-storiesOf("Doc Ref Listing Entry", module)
+storiesOf("Doc Ref/Listing Entry", module)
   .addDecorator(StroomDecorator)
   .add("docRef", () => (
     <TestDocRefListingEntry listingId="one" docRefs={[testDocRef]} />

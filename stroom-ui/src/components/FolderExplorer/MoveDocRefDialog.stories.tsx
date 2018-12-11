@@ -42,7 +42,7 @@ const TestMoveDialog = connect(
   </div>
 ));
 
-storiesOf("Move Doc Ref Dialog", module)
+storiesOf("Explorer/Move Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => (
     <TestMoveDialog

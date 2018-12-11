@@ -22,7 +22,7 @@ import StroomDecorator from "../../../lib/storybook/StroomDecorator";
 
 import "../../../styles/main.css";
 
-storiesOf("DataDetails", module)
+storiesOf("Data/Details", module)
   .addDecorator(StroomDecorator)
   .add("Showing errors", () => <DataDetails data={errorData} />)
   .add("Showing events", () => <DataDetails data={eventData} />);

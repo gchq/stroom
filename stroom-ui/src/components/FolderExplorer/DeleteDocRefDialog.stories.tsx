@@ -38,7 +38,7 @@ const TestDeleteDialog = connect(
   </div>
 ));
 
-storiesOf("Delete Doc Ref Dialog", module)
+storiesOf("Explorer/Delete Doc Ref Dialog", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => (
     <TestDeleteDialog

@@ -10,6 +10,6 @@ const { fromSetupSampleData } = require("./test");
 
 const testFolder1 = fromSetupSampleData.children[0];
 
-storiesOf("Folder Explorer", module)
+storiesOf("Explorer/Folder", module)
   .addDecorator(StroomDecorator)
   .add("simple", () => <FolderExplorer folderUuid={testFolder1.uuid} />);

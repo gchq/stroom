@@ -31,7 +31,7 @@ const EnabledCheckbox = () => (
 
 // TODO some properties that don't seem to exist on the component?
 
-storiesOf("HorizontalPanel", module)
+storiesOf("General Purpose/Horizontal Panel", module)
   .add("div content", () => (
     <HorizontalPanel
       title="Some title"

@@ -23,7 +23,7 @@ import Button from "./Button";
 
 import "../../styles/main.css";
 
-const stories = storiesOf("Button", module);
+const stories = storiesOf("General Purpose/Button", module);
 stories.addDecorator(StroomDecorator);
 
 stories.add("button group - icon only", () => (

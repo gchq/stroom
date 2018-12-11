@@ -21,6 +21,6 @@ import StroomDecorator from "../../../lib/storybook/StroomDecorator";
 
 import "../../../styles/main.css";
 
-storiesOf("Element Palette", module)
+storiesOf("Pipeline/Element/Palette", module)
   .addDecorator(StroomDecorator)
   .add("Element Palette", () => <ElementPalette pipelineId="longPipeline" />);

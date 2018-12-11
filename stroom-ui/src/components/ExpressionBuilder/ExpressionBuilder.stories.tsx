@@ -58,7 +58,7 @@ const enhance = compose<ExpressionBuilderProps, Props>(
 
 const TestExpressionBuilder = enhance(ExpressionBuilder);
 
-storiesOf("Expression Builder", module)
+storiesOf("Expression/Builder", module)
   .addDecorator(StroomDecorator)
   .add("Populated Editable", () => (
     <TestExpressionBuilder

@@ -24,7 +24,7 @@ import { addThemedStories } from "../../lib/themedStoryGenerator";
 
 import "../../styles/main.css";
 
-const stories = storiesOf("User Settings", module).addDecorator(
+const stories = storiesOf("Sections/User Settings", module).addDecorator(
   StroomDecorator
 );
 
