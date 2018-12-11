@@ -29,6 +29,7 @@ import stroom.entity.shared.Action;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionException;
 import stroom.security.SecurityContext;
+import stroom.security.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.server.TaskHandlerBean;
@@ -36,7 +37,6 @@ import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedObject;
-import stroom.security.UserTokenUtil;
 import stroom.util.task.TaskIdFactory;
 
 import javax.inject.Inject;
@@ -168,12 +168,13 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
             throw new RuntimeException(msg);
         }
 
-        String serializationPolicyFilePath = String.format(gwtRpcPath.get(), strongName);
-
+        final String serializationPolicyFilePath = String.format(gwtRpcPath.get(), strongName);
         try (InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)) {
             return SerializationPolicyLoader.loadFromStream(is, null);
-        } catch (ParseException | IOException e) {
-            throw new RuntimeException(e);
+        } catch (ParseException | IOException | RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
+
+        return null;
     }
 }
