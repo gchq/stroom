@@ -242,7 +242,11 @@ public class SecurityFilter implements Filter {
         final String authenticationRequestBaseUrl = config.getAuthenticationServiceUrl() + "/authenticate";
 
         // Get the redirect URL for the auth service from the current request.
-        final String url = request.getRequestURL().toString();
+        String url = request.getRequestURL().toString();
+        String query = request.getQueryString();
+        if(!Strings.isNullOrEmpty(query)){
+           url += "?" + query;
+        }
 
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, url);
@@ -262,7 +266,9 @@ public class SecurityFilter implements Filter {
         if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
             redirectUrl += parsedRequestUrl.getPath();
             redirectUrl += "?";
-            redirectUrl += request.getQueryString();
+            if(!Strings.isNullOrEmpty(query)) {
+                redirectUrl += query;
+            }
         }
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
