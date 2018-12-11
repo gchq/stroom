@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.19] - 2018-12-11
+
 * Issue **#1012** : Fix for NPE caused when checking if an output is superseded.
 
 * Issue **#1011** : Old UI versions running in browsers often cause Stroom to throw an NPE as it can't find the appropriate GWT serialisation policy. Stroom will no longer throw an NPE but will report an `IncompatibleRemoteServiceException` instead. This is the default GWT behaviour.
@@ -1361,7 +1363,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.18...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.19...6.0
+[v6.0-beta.19]: https://github.com/gchq/stroom/compare/v6.0-beta.18...v6.0-beta.19
 [v6.0-beta.18]: https://github.com/gchq/stroom/compare/v6.0-beta.17...v6.0-beta.18
 [v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17
 [v6.0-beta.16]: https://github.com/gchq/stroom/compare/v6.0-beta.15...v6.0-beta.16
