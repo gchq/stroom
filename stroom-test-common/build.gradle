@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-util')
 
     compile libs.junit_jupiter
+    compile libs.assertj_core
     compile libs.slf4j_api
 
     //the following logging libs are needed when running junits outside dropwizard
