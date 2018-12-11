@@ -24,8 +24,8 @@ import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Store;
 import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
 import stroom.task.cluster.ClusterResultCollector;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.CollectorId;
@@ -62,7 +62,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Node node;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
-    private final List<Integer> defaultMaxResultsSizes;
+    private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
 
     private volatile boolean terminated;
@@ -76,7 +76,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                          final Set<String> highlights,
                                          final ClusterResultCollectorCache clusterResultCollectorCache,
                                          final ResultHandler resultHandler,
-                                         final List<Integer> defaultMaxResultsSizes,
+                                         final Sizes defaultMaxResultsSizes,
                                          final Sizes storeSize) {
         this.taskManager = taskManager;
         this.task = task;
@@ -99,7 +99,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                                       final Set<String> highlights,
                                                       final ClusterResultCollectorCache clusterResultCollectorCache,
                                                       final ResultHandler resultHandler,
-                                                      final List<Integer> defaultMaxResultsSizes,
+                                                      final Sizes defaultMaxResultsSizes,
                                                       final Sizes storeSize) {
         return new ClusterSearchResultCollector(taskManager, task, node, highlights,
                 clusterResultCollectorCache, resultHandler, defaultMaxResultsSizes, storeSize);
@@ -226,7 +226,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public List<Integer> getDefaultMaxResultsSizes() {
+    public Sizes getDefaultMaxResultsSizes() {
         return defaultMaxResultsSizes;
     }
 
@@ -272,7 +272,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private void notifyListenersOfCompletion() {
         //Call isComplete to ensure we are complete and not terminated
         if (isComplete()) {
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null;){
+            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
                 //when notified they will check isComplete
                 LOGGER.debug("Notifying {} {} that we are complete", listener.getClass().getName(), listener);
                 listener.onCompletion();

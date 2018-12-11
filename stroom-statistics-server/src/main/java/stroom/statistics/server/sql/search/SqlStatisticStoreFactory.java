@@ -8,9 +8,9 @@ import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.query.common.v2.Sizes;
 import stroom.statistics.server.sql.datasource.StatisticStoreCache;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.task.server.ExecutorProvider;
@@ -21,8 +21,6 @@ import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -86,8 +84,8 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreEntity);
 
-        final Sizes storeSize = Sizes.create(getStoreSizes());
-        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        final Sizes storeSize = getStoreSizes();
+        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
         //wrap the resultHandler in a new store, initiating the search in the process
@@ -103,7 +101,6 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
         return store;
     }
-
 
 
     private HasTerminate getTaskMonitor() {
@@ -124,14 +121,12 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         };
     }
 
-
-
-    private List<Integer> getDefaultMaxResultsSizes() {
+    private Sizes getDefaultMaxResultsSizes() {
         final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
         return extractValues(value);
     }
 
-    private List<Integer> getStoreSizes() {
+    private Sizes getStoreSizes() {
         final String value = stroomPropertyService.getProperty(PROP_KEY_STORE_SIZE);
         return extractValues(value);
     }
@@ -140,18 +135,17 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         return stroomPropertyService.getIntProperty(PROP_KEY_RESULT_HANDLER_BATCH_SIZE, DEFAULT_ROWS_IN_BATCH);
     }
 
-    private List<Integer> extractValues(String value) {
+    private Sizes extractValues(String value) {
         if (value != null) {
             try {
-                return Arrays.stream(value.split(","))
+                return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Integer::valueOf)
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toList()));
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Collections.emptyList();
+        return Sizes.create(Integer.MAX_VALUE);
     }
-
 }

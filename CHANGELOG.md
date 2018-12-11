@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1007** : Max visualisation results are now limited by default to the maximum number of results defined for the first level of the parent table. This can be further limited by settings in the visualisation.
+
 * Issue **#1004** : Table cells now support multiple links.
 
 * Issue **#1001** : Changed link types to `tab`, `dialog`, `dashboard`, `browser`.

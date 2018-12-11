@@ -37,9 +37,7 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -91,8 +89,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                 query, node, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
         // Create a collector to store search results.
-        final Sizes storeSize = Sizes.create(getStoreSizes());
-        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        final Sizes storeSize = getStoreSizes();
+        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
         final ClusterSearchResultCollector searchResultCollector = ClusterSearchResultCollector.create(
                 taskManager,
@@ -152,27 +150,27 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         return eventRefs;
     }
 
-    private List<Integer> getDefaultMaxResultsSizes() {
+    private Sizes getDefaultMaxResultsSizes() {
         final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
         return extractValues(value);
     }
 
-    private List<Integer> getStoreSizes() {
+    private Sizes getStoreSizes() {
         final String value = stroomPropertyService.getProperty(ClusterSearchResultCollector.PROP_KEY_STORE_SIZE);
         return extractValues(value);
     }
 
-    private List<Integer> extractValues(String value) {
+    private Sizes extractValues(String value) {
         if (value != null) {
             try {
-                return Arrays.stream(value.split(","))
+                return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Integer::valueOf)
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toList()));
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Collections.emptyList();
+        return Sizes.create(Integer.MAX_VALUE);
     }
 }

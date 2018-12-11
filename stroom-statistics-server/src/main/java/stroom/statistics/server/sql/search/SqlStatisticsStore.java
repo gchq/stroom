@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.node.server.StroomPropertyService;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionListener;
@@ -23,8 +22,8 @@ import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.SearchResultHandler;
-import stroom.query.common.v2.Store;
 import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
 import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
@@ -61,7 +60,7 @@ public class SqlStatisticsStore implements Store {
 
     private final ResultHandler resultHandler;
     private final int resultHandlerBatchSize;
-    private final List<Integer> defaultMaxResultsSizes;
+    private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
     private final AtomicBoolean isComplete;
     private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
@@ -74,7 +73,7 @@ public class SqlStatisticsStore implements Store {
     SqlStatisticsStore(final SearchRequest searchRequest,
                        final StatisticStoreEntity statisticStoreEntity,
                        final StatisticsSearchService statisticsSearchService,
-                       final List<Integer> defaultMaxResultsSizes,
+                       final Sizes defaultMaxResultsSizes,
                        final Sizes storeSize,
                        final int resultHandlerBatchSize,
                        final Executor executor,
@@ -147,7 +146,7 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public List<Integer> getDefaultMaxResultsSizes() {
+    public Sizes getDefaultMaxResultsSizes() {
         return defaultMaxResultsSizes;
     }
 
