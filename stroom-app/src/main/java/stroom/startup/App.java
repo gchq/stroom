@@ -49,6 +49,7 @@ import stroom.dispatch.shared.DispatchService;
 import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
+import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.healthchecks.LogLevelInspector;
@@ -96,6 +97,8 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -286,6 +289,9 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
+
+        // Map exceptions to helpful HTTP responses
+        environment.jersey().register(PermissionExceptionMapper.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);
