@@ -28,7 +28,11 @@ import stroom.entity.server.event.EntityEventHandler;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.PermissionException;
 import stroom.query.api.v2.DocRef;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.util.cache.CacheManager;
 
@@ -51,15 +55,18 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     private final StatisticStoreEntityService statisticsDataSourceService;
     private final CacheManager cacheManager;
+    private final SecurityContext securityContext;
 
     private volatile LoadingCache<String, Optional<StatisticStoreEntity>> cacheByName;
     private volatile LoadingCache<DocRef, Optional<StatisticStoreEntity>> cacheByRef;
 
     @Inject
     StatisticsDataSourceCacheImpl(final StatisticStoreEntityService statisticsDataSourceService,
-                                  final CacheManager cacheManager) {
+                                  final CacheManager cacheManager,
+                                  final SecurityContext securityContext) {
         this.statisticsDataSourceService = statisticsDataSourceService;
         this.cacheManager = cacheManager;
+        this.securityContext = securityContext;
     }
 
     private LoadingCache<String, Optional<StatisticStoreEntity>> getCacheByName() {
@@ -69,15 +76,17 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                     final CacheLoader<String, Optional<StatisticStoreEntity>> cacheLoader = CacheLoader.from(k -> {
                         // Id and key not found in cache so try pulling it from the DB
 
-                        final BaseResultList<StatisticStoreEntity> results = statisticsDataSourceService
-                                .find(FindStatisticsEntityCriteria.instanceByName(k));
+                        try (SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                            final BaseResultList<StatisticStoreEntity> results = statisticsDataSourceService
+                                    .find(FindStatisticsEntityCriteria.instanceByName(k));
 
-                        if (results.size() > 1) {
-                            throw new RuntimeException(String.format(
-                                    "Found multiple StatisticDataSource entities with name %s, engine %s and type %s.  This should not happen",
-                                    k));
-                        } else if (results.size() == 1) {
-                            return Optional.ofNullable(results.iterator().next());
+                            if (results.size() > 1) {
+                                throw new RuntimeException(String.format(
+                                        "Found multiple StatisticDataSource entities with name %s, engine %s and type %s.  This should not happen",
+                                        k));
+                            } else if (results.size() == 1) {
+                                return Optional.ofNullable(results.iterator().next());
+                            }
                         }
 
                         return Optional.empty();
@@ -93,7 +102,12 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
-                    final CacheLoader<DocRef, Optional<StatisticStoreEntity>> cacheLoader = CacheLoader.from(k -> Optional.ofNullable(statisticsDataSourceService.loadByUuid(k.getUuid())));
+                    final CacheLoader<DocRef, Optional<StatisticStoreEntity>> cacheLoader =
+                            CacheLoader.from(k -> {
+                                try (SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                                    return Optional.ofNullable(statisticsDataSourceService.loadByUuid(k.getUuid()));
+                                }
+                            });
                     cacheByRef = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID, cacheLoader);
                 }
             }
@@ -111,14 +125,27 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cache;
     }
 
+    private boolean permissionFilter(final StatisticStoreEntity entity) {
+        if (!securityContext.hasDocumentPermission(StatisticStoreEntity.ENTITY_TYPE, entity.getUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException(securityContext.getUserId(), "Not permitted to read " + entity.getName());
+        }
+        return true;
+    }
+
     @Override
     public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
-        return getCacheByRef().getUnchecked(docRef).orElse(null);
+        return getCacheByRef()
+                .getUnchecked(docRef)
+                .filter(this::permissionFilter)
+                .orElse(null);
     }
 
     @Override
     public StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
-        return getCacheByName().getUnchecked(statisticName).orElse(null);
+        return getCacheByName()
+                .getUnchecked(statisticName)
+                .filter(this::permissionFilter)
+                .orElse(null);
     }
 
     @Override
