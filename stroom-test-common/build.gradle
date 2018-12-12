@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.test.common'
 dependencies {
     compile project(':stroom-util')
 
-    compile libs.junit_jupiter
     compile libs.assertj_core
     compile libs.slf4j_api
 

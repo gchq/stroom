@@ -43,7 +43,6 @@ dependencies {
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter
-    testCompile libs.mockito_core
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.javax_activation

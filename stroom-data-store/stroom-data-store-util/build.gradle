@@ -16,7 +16,6 @@ dependencies {
 
     compile libs.slf4j_api
     
-    testCompile libs.assertj_core
     testCompile libs.junit_jupiter
     
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
