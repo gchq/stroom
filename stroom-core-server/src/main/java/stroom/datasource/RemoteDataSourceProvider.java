@@ -21,6 +21,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
+import stroom.entity.shared.PermissionException;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -58,27 +59,30 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     public DataSource getDataSource(final DocRef docRef) {
         LOGGER.trace("getDataSource() called for docRef {} on url {}", docRef, url);
         //TODO this needs to be backed by a short life cache to avoid repeated trips over the net
-        return post(docRef, DATA_SOURCE_ENDPOINT, DataSource.class);
+        return post(docRef, docRef, DATA_SOURCE_ENDPOINT, DataSource.class);
     }
 
     @Override
     public SearchResponse search(final SearchRequest request) {
         LOGGER.trace("search() called for request {} on url {}", request, url);
-        return post(request, SEARCH_ENDPOINT, SearchResponse.class);
+        return post(request.getQuery().getDataSource(), request, SEARCH_ENDPOINT, SearchResponse.class);
     }
 
     @Override
     public Boolean destroy(final QueryKey queryKey) {
         try {
             LOGGER.trace("destroy() called for queryKey {} on url {}", queryKey, url);
-            return post(queryKey, DESTROY_ENDPOINT, Boolean.class);
+            return post(null, queryKey, DESTROY_ENDPOINT, Boolean.class);
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to destroy active query for queryKey {} on url {}", queryKey, url, e);
         }
         return Boolean.FALSE;
     }
 
-    private <T> T post(final Object request, String path, final Class<T> responseClass) {
+    private <T> T post(final DocRef docRef,
+                       final Object request,
+                       String path,
+                       final Class<T> responseClass) {
         try {
             LOGGER.trace("Sending request {} to {}", request, path);
             Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
@@ -94,14 +98,21 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
             final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
-            if (HttpServletResponse.SC_OK == response.getStatus()) {
-                return response.readEntity(responseClass);
-            } else if (HttpServletResponse.SC_UNAUTHORIZED == response.getStatus()) {
-                throw new RuntimeException("The user is not authorized to make this request! The user was " +
-                        securityContext.getUserId());
-            } else {
-                throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
-                        response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
+            switch (response.getStatus()) {
+                case (HttpServletResponse.SC_OK):
+                    return response.readEntity(responseClass);
+                case HttpServletResponse.SC_UNAUTHORIZED:
+                case HttpServletResponse.SC_FORBIDDEN:
+                    final StringBuilder msg = new StringBuilder("The user is not authorized to make this request! ");
+                    msg.append(path);
+                    if (docRef != null) {
+                        msg.append(", ");
+                        msg.append(docRef);
+                    }
+                    throw new PermissionException(securityContext.getUserId(),msg.toString());
+                default:
+                    throw new RuntimeException(String.format("Error %s sending request %s to %s: %s",
+                            response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
             }
 
         } catch (final RuntimeException e) {
