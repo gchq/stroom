@@ -113,6 +113,7 @@ public class SearchResponseMapper {
                     int valueOffset = 0;
 
                     final Map<Integer, List<String>> typeMap = new HashMap<>();
+                    final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
                     int maxDepth = 0;
                     for (final Field field : fields) {
                         // Ignore key and depth fields.
@@ -125,6 +126,13 @@ public class SearchResponseMapper {
                                 type = field.getFormat().getType().name();
                             }
                             typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
+
+                            // The vizes need to know what the sort direction is for the various fields/keys
+                            String sortDirection = null;
+                            if (field.getSort() != null && field.getSort().getDirection() != null) {
+                                sortDirection = field.getSort().getDirection().getDisplayValue();
+                            }
+                            sortDirectionMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(sortDirection);
 
                             if (field.getGroup() != null) {
                                 maxDepth = Math.max(maxDepth, field.getGroup());
@@ -148,6 +156,19 @@ public class SearchResponseMapper {
                         types[group] = row;
                     }
 
+                    // Create an array of sortDirections
+                    String[][] sortDirections = new String[maxDepth + 1][];
+                    for (final Entry<Integer, List<String>> entry : sortDirectionMap.entrySet()) {
+                        int group = maxDepth;
+                        if (entry.getKey() != null) {
+                            group = entry.getKey();
+                        }
+
+                        String[] row = new String[entry.getValue().size()];
+                        row = entry.getValue().toArray(row);
+                        sortDirections[group] = row;
+                    }
+
                     final int valueCount = fields.size() - valueOffset;
 
                     final Map<Object, List<List<Object>>> map = new HashMap<>();
@@ -155,7 +176,7 @@ public class SearchResponseMapper {
                         map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
                     }
 
-                    store = getStore(null, map, types, valueCount, maxDepth, 0);
+                    store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
                 }
             } catch (final Exception e) {
                 error = e.getMessage();
@@ -165,7 +186,13 @@ public class SearchResponseMapper {
         return new VisResult(store, visResult.getSize(), error);
     }
 
-    private Store getStore(final Object key, final Map<Object, List<List<Object>>> map, final String[][] types, final int valueCount, final int maxDepth, final int depth) {
+    private Store getStore(final Object key,
+                           final Map<Object, List<List<Object>>> map,
+                           final String[][] types,
+                           final String[][] sortDirections,
+                           final int valueCount,
+                           final int maxDepth,
+                           final int depth) {
         Store store = null;
 
         final List<List<Object>> rows = map.get(key);
@@ -177,7 +204,8 @@ public class SearchResponseMapper {
 
             for (final List<Object> row : rows) {
                 if (depth < maxDepth) {
-                    final Store childStore = getStore(row.get(1), map, types, valueCount, maxDepth, depth + 1);
+                    final Store childStore = getStore(
+                            row.get(1), map, types, sortDirections, valueCount, maxDepth, depth + 1);
                     if (childStore != null) {
                         values.add(childStore);
 
@@ -206,9 +234,17 @@ public class SearchResponseMapper {
                 List list = (List) key;
                 store.key = list.get(list.size() - 1);
             }
+            // The type/sortDirection for all the keys in the level below (i.e in the values[])
             store.keyType = types[depth][0];
+            store.keySortDirection = sortDirections[depth][0];
+
+            // The child values (that may be branches or leaves)
             store.values = values.toArray(new Object[0]);
+
+            // The types/sortDirections of the leaf values, where array position == field position
             store.types = types[types.length - 1];
+            store.sortDirections = sortDirections[sortDirections.length - 1];
+
             store.min = min;
             store.max = max;
             store.sum = sum;
