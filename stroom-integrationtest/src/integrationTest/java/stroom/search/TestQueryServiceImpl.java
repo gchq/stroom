@@ -17,8 +17,8 @@
 
 package stroom.search;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
@@ -27,22 +27,23 @@ import stroom.dashboard.QueryService;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.index.IndexStore;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
-import stroom.security.UserService;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 import java.util.Collections;
 
-public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static final String QUERY_COMPONENT = "Test Component";
     private static Logger LOGGER = LoggerFactory.getLogger(TestQueryServiceImpl.class);
 
@@ -90,7 +91,7 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testQueryRetrieval() {
+    void testQueryRetrieval() {
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardUuid(dashboard.getUuid());
         criteria.setQueryId(QUERY_COMPONENT);
@@ -98,17 +99,17 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final BaseResultList<QueryEntity> list = queryService.find(criteria);
 
-        Assert.assertEquals(2, list.size());
+        assertThat(list.size()).isEqualTo(2);
 
         final QueryEntity query = list.get(0);
 
-        Assert.assertNotNull(query);
-        Assert.assertEquals("Test query", query.getName());
-        Assert.assertNotNull(query.getData());
+        assertThat(query).isNotNull();
+        assertThat(query.getName()).isEqualTo("Test query");
+        assertThat(query.getData()).isNotNull();
 
         final ExpressionOperator root = query.getQuery().getExpression();
 
-        Assert.assertEquals(1, root.getChildren().size());
+        assertThat(root.getChildren().size()).isEqualTo(1);
 
         final StringBuilder sb = new StringBuilder();
         sb.append("<expression>\n");
@@ -126,18 +127,18 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         actual = actual.replaceAll("\\s*", "");
         String expected = sb.toString();
         expected = expected.replaceAll("\\s*", "");
-        Assert.assertTrue(actual.contains(expected));
+        assertThat(actual.contains(expected)).isTrue();
     }
 
     @Test
-    public void testOldHistoryDeletion() {
+    void testOldHistoryDeletion() {
         final FindQueryCriteria criteria = new FindQueryCriteria();
         criteria.setDashboardUuid(dashboard.getUuid());
         criteria.setQueryId(QUERY_COMPONENT);
         criteria.setSort(FindQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
         BaseResultList<QueryEntity> list = queryService.find(criteria);
-        Assert.assertEquals(2, list.size());
+        assertThat(list.size()).isEqualTo(2);
 
         QueryEntity query = list.get(0);
 
@@ -156,42 +157,42 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         queryHistoryCleanExecutor.clean(null, false);
 
         list = queryService.find(criteria);
-        Assert.assertEquals(100, list.size());
+        assertThat(list.size()).isEqualTo(100);
     }
 
     @Test
-    public void testLoad() {
+    void testLoad() {
         QueryEntity query = new QueryEntity();
         query.setId(testQuery.getId());
         query = queryService.load(query);
 
-        Assert.assertNotNull(query);
-        Assert.assertEquals("Test query", query.getName());
-        Assert.assertNotNull(query.getData());
+        assertThat(query).isNotNull();
+        assertThat(query.getName()).isEqualTo("Test query");
+        assertThat(query.getData()).isNotNull();
         final ExpressionOperator root = query.getQuery().getExpression();
-        Assert.assertEquals(1, root.getChildren().size());
+        assertThat(root.getChildren().size()).isEqualTo(1);
     }
 
 //    @Test
 //    public void testLoadById() {
 //        final QueryEntity query = queryService.loadById(testQuery.getId());
 //
-//        Assert.assertNotNull(query);
-//        Assert.assertEquals("Test query", query.getName());
-//        Assert.assertNotNull(query.getData());
+//        assertThat(query).isNotNull();
+//        assertThat(query.getName()).isEqualTo("Test query");
+//        assertThat(query.getData()).isNotNull();
 //        final ExpressionOperator root = query.getQuery().getExpression();
-//        Assert.assertEquals(1, root.getChildren().size());
+//        assertThat(root.getChildren().size()).isEqualTo(1);
 //    }
 
     @Test
-    public void testClientSideStuff1() {
+    void testClientSideStuff1() {
         QueryEntity query = queryService.loadByUuid(refQuery.getUuid());
         query = ((QueryEntity) new BaseEntityDeProxyProcessor(true).process(query));
         queryService.save(query);
     }
 
     @Test
-    public void testClientSideStuff2() {
+    void testClientSideStuff2() {
         QueryEntity query = queryService.loadByUuid(testQuery.getUuid());
         query = ((QueryEntity) new BaseEntityDeProxyProcessor(true).process(query));
         queryService.save(query);
@@ -206,8 +207,8 @@ public class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
 //
 //        query = queryService.loadByUuid(testQuery.getUuid());
 //
-//        Assert.assertEquals("Test query", query.getName());
+//        assertThat(query.getName()).isEqualTo("Test query");
 //        root = query.getQuery().getExpression();
-//        Assert.assertNull(root.getChildren());
+//        assertThat(root.getChildren()).isNull();
 //    }
 }

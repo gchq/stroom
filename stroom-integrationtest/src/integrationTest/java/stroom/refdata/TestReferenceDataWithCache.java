@@ -17,17 +17,15 @@
 
 package stroom.refdata;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.lifecycle.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.store.MapDefinition;
@@ -46,7 +44,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
-public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
     private static final String TEST_FEED_1 = "TEST_FEED_1";
     private static final String TEST_FEED_2 = "TEST_FEED_2";
@@ -72,8 +72,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     private RefDataStore refDataStore;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
@@ -81,7 +81,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    public void testSimple() {
+    void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1 = feedStore.createDocument("TEST_FEED_1");
 //            feed1.setReference(true);
@@ -179,15 +179,15 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences, final String mapName) {
-        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"));
-        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("1111", lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1"));
+        assertThat(lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1")).isEqualTo("B1111");
+        assertThat(lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("B1111");
+        assertThat(lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1")).isEqualTo("A1111");
+        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("A1111");
+        assertThat(lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1")).isEqualTo("1111");
 
-        Assert.assertNull(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X"));
-        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "USERNAME_TO_PF_X", "user1"));
+        assertThat(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1")).isNull();
+        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X")).isNull();
+        assertThat(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "USERNAME_TO_PF_X", "user1")).isNull();
     }
 
     private String addSuffix(final String str, int id) {
@@ -198,7 +198,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    public void testNestedMaps() {
+    void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feedRef = feedStore.createDocument("TEST_FEED_V3");
 //            feed.setReference(true);
@@ -250,7 +250,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 for (int i = 1; i <= 3; i++) {
                     LOGGER.info("Assertion iteration {}", i);
 
-                    Assertions.assertThat(
+                    assertThat(
                             lookup(referenceData,
                                     pipelineReferences,
                                     0,
@@ -258,22 +258,22 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                                     addSuffix("cardNo", i)))
                             .isEqualTo(addSuffix("user", i));
 
-                    Assertions.assertThat(
+                    assertThat(
                             lookup(referenceData, pipelineReferences, 0, "USERNAME_TO_PAYROLL_NUMBER", addSuffix("user", i)))
                             .isEqualTo(addSuffix("payrollNo", i));
 
-                    Assertions.assertThat(
+                    assertThat(
                             lookup(referenceData, pipelineReferences, 0, "PAYROLL_NUMBER_TO_LOCATION", addSuffix("payrollNo", i)))
                             .isEqualTo(addSuffix("location", i));
 
                     // now do a nested lookup
-                    Assertions.assertThat(
+                    assertThat(
                             lookup(referenceData, pipelineReferences, 0,
                                     "CARD_NUMBER_TO_USERNAME/USERNAME_TO_PAYROLL_NUMBER", addSuffix("cardNo", i)))
                             .isEqualTo(addSuffix("payrollNo", i));
 
                     // now do a double nested lookup
-                    Assertions.assertThat(
+                    assertThat(
                             lookup(referenceData, pipelineReferences, 0,
                                     "CARD_NUMBER_TO_USERNAME/USERNAME_TO_PAYROLL_NUMBER/PAYROLL_NUMBER_TO_LOCATION",
                                     addSuffix("cardNo", i)))

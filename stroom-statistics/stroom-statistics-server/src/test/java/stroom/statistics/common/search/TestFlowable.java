@@ -3,8 +3,8 @@ package stroom.statistics.common.search;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TestFlowable {
+class TestFlowable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFlowable.class);
 
     @Test
-    public void testFlowable() {
+    void testFlowable() {
 
         AtomicInteger counter = new AtomicInteger();
         Flowable
@@ -55,9 +55,9 @@ public class TestFlowable {
 
     }
 
-    @Ignore //manual test
+    @Disabled //manual test
     @Test
-    public void testFlowableWithUsing() {
+    void testFlowableWithUsing() {
 
         Flowable<Integer> flowableInt = Flowable
                 .using(
@@ -109,9 +109,9 @@ public class TestFlowable {
 
     }
 
-    @Ignore //manual test
+    @Disabled //manual test
     @Test
-    public void testFlowableWithDispose() throws InterruptedException {
+    void testFlowableWithDispose() throws InterruptedException {
 
         final AtomicInteger counter = new AtomicInteger();
         final Disposable disposable = Flowable
@@ -157,9 +157,9 @@ public class TestFlowable {
         LOGGER.debug("disposed");
     }
 
-    @Ignore //manual test
+    @Disabled //manual test
     @Test
-    public void testFlowableWithUsingAndDispose() throws InterruptedException {
+    void testFlowableWithUsingAndDispose() throws InterruptedException {
 
         Flowable<Integer> flowableInt = Flowable
                 .using(
@@ -222,9 +222,9 @@ public class TestFlowable {
         LOGGER.debug("disposed");
     }
 
-    @Ignore //manual test
+    @Disabled //manual test
     @Test
-    public void testFlowableWithWindow() {
+    void testFlowableWithWindow() {
 
         AtomicInteger counter = new AtomicInteger();
         Flowable
@@ -276,9 +276,9 @@ public class TestFlowable {
 
     }
 
-    @Ignore //manual test
+    @Disabled //manual test
     @Test
-    public void testFlowableWithWindowImediateComplete() {
+    void testFlowableWithWindowImediateComplete() {
 
         AtomicInteger counter = new AtomicInteger();
         Flowable

@@ -16,26 +16,28 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestSQLStatisticsEventValidator {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSQLStatisticsEventValidator {
     private final SQLStatisticsEventValidator validator = new SQLStatisticsEventValidator();
 
     @Test
-    public void testValidateEvent_NoTags() {
+    void testValidateEvent_NoTags() {
         final StatisticEvent event = StatisticEvent.createCount(123L, "statName", null, 1);
 
         final List<String> warnings = validator.validateEvent(event);
 
-        Assert.assertEquals(0, warnings.size());
+        assertThat(warnings.size()).isEqualTo(0);
     }
 
     @Test
-    public void testValidateEvent_badTag() {
+    void testValidateEvent_badTag() {
         final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x", "someValue1"));
         tags.add(new StatisticTag("yy", "someValue2"));
@@ -44,11 +46,11 @@ public class TestSQLStatisticsEventValidator {
 
         final List<String> warnings = validator.validateEvent(event);
 
-        Assert.assertEquals(1, warnings.size());
+        assertThat(warnings.size()).isEqualTo(1);
     }
 
     @Test
-    public void testValidateEvent_badValue() {
+    void testValidateEvent_badValue() {
         final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("xx", "someValue1"));
         tags.add(new StatisticTag("yy", "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value2"));
@@ -57,11 +59,11 @@ public class TestSQLStatisticsEventValidator {
 
         final List<String> warnings = validator.validateEvent(event);
 
-        Assert.assertEquals(1, warnings.size());
+        assertThat(warnings.size()).isEqualTo(1);
     }
 
     @Test
-    public void testValidateEvent_badTagsAndValues() {
+    void testValidateEvent_badTagsAndValues() {
         final List<StatisticTag> tags = new ArrayList<>();
         tags.add(new StatisticTag("x" + SQLStatisticConstants.NAME_SEPARATOR + "x",
                 "some" + SQLStatisticConstants.NAME_SEPARATOR + "Value1"));
@@ -72,47 +74,47 @@ public class TestSQLStatisticsEventValidator {
 
         final List<String> warnings = validator.validateEvent(event);
 
-        Assert.assertEquals(4, warnings.size());
+        assertThat(warnings.size()).isEqualTo(4);
     }
 
     @Test
-    public void testCleanString_dirty() {
+    void testCleanString_dirty() {
         final String dirtyString = "abc" + SQLStatisticConstants.NAME_SEPARATOR + "def";
 
         final String cleanString = validator.cleanString(dirtyString);
 
-        Assert.assertEquals("abc#def", cleanString);
+        assertThat(cleanString).isEqualTo("abc#def");
 
     }
 
     @Test
-    public void testCleanString_clean() {
+    void testCleanString_clean() {
         final String stringToClean = "0123456789aAzZ .()-_$\\/[]{}_!\"'£$%^&*+-=~@";
 
         final String cleanString = validator.cleanString(stringToClean);
 
-        Assert.assertEquals(stringToClean, cleanString);
+        assertThat(cleanString).isEqualTo(stringToClean);
 
     }
 
     @Test
-    public void testIsKeyToLong_tooLong() {
+    void testIsKeyToLong_tooLong() {
         final StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = 0; i < SQLStatisticConstants.STAT_VAL_SRC_NAME_COLUMN_LENGTH + 1; i++) {
             stringBuilder.append("x");
         }
 
-        Assert.assertTrue(SQLStatisticsEventValidator.isKeyToLong(stringBuilder.toString()));
+        assertThat(SQLStatisticsEventValidator.isKeyToLong(stringBuilder.toString())).isTrue();
 
     }
 
     @Test
-    public void testIsKeyToLong_notTooLong() {
+    void testIsKeyToLong_notTooLong() {
         final StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append("x");
 
-        Assert.assertFalse(SQLStatisticsEventValidator.isKeyToLong(stringBuilder.toString()));
+        assertThat(SQLStatisticsEventValidator.isKeyToLong(stringBuilder.toString())).isFalse();
     }
 }

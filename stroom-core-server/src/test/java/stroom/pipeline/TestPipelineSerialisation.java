@@ -16,8 +16,8 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -25,39 +25,37 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-public class TestPipelineSerialisation {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestPipelineSerialisation {
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
     @Test
-    public void testEmpty() throws JAXBException {
+    void testEmpty() throws JAXBException {
         final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
         final PipelineData pipelineData = new PipelineData();
         final String string = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
-        Assert.assertEquals(string.trim(),
-                "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                        "<pipeline/>"
-        );
+        assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                "<pipeline/>").isEqualTo(string.trim());
     }
 
     @Test
-    public void testElements() throws JAXBException {
+    void testElements() throws JAXBException {
         final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         final String string = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
-        Assert.assertEquals(string.trim(),
-                "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                        "<pipeline>\n" +
-                        "   <elements>\n" +
-                        "      <add>\n" +
-                        "         <element>\n" +
-                        "            <id>test1</id>\n" +
-                        "            <type>TestElement</type>\n" +
-                        "         </element>\n" +
-                        "      </add>\n" +
-                        "   </elements>\n" +
-                        "</pipeline>"
-        );
+        assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
+                "<pipeline>\n" +
+                "   <elements>\n" +
+                "      <add>\n" +
+                "         <element>\n" +
+                "            <id>test1</id>\n" +
+                "            <type>TestElement</type>\n" +
+                "         </element>\n" +
+                "      </add>\n" +
+                "   </elements>\n" +
+                "</pipeline>").isEqualTo(string.trim());
     }
 }

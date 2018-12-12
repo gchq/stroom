@@ -17,8 +17,8 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
@@ -46,7 +46,9 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
@@ -55,7 +57,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     private FileSystemStreamMaintenanceService streamMaintenanceService;
 
     @Test
-    public void testSimpleSingleFile() throws IOException {
+    void testSimpleSingleFile() throws IOException {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
@@ -78,7 +80,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testSimpleSingleFileReadThreeTimes() throws IOException {
+    void testSimpleSingleFileReadThreeTimes() throws IOException {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
@@ -102,7 +104,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testSimpleSingleFileWithMetaAndContext() throws IOException {
+    void testSimpleSingleFileWithMetaAndContext() throws IOException {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
@@ -138,7 +140,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testMultiFileWithMetaAndContext() throws IOException {
+    void testMultiFileWithMetaAndContext() throws IOException {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
@@ -184,7 +186,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testMultiFile() throws IOException {
+    void testMultiFile() throws IOException {
         final Path file = getCurrentTestDir().resolve(
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
@@ -243,7 +245,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 foundFiles.add(fileName);
             }
         }
-        Assert.assertEquals("Checking expected output files", expectedFiles, foundFiles);
+        assertThat(foundFiles).as("Checking expected output files").isEqualTo(expectedFiles);
 
         // Test full content
         StreamSource source = streamStore.openStreamSource(handlerList.get(0).getStreamSet().iterator().next().getId());
@@ -251,9 +253,9 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final String key = entry.getKey();
             final String content = entry.getValue();
             if (key == null) {
-                Assert.assertEquals(content, StreamUtil.streamToString(source.getInputStream()));
+                assertThat(StreamUtil.streamToString(source.getInputStream())).isEqualTo(content);
             } else {
-                Assert.assertEquals(content, StreamUtil.streamToString(source.getChildStream(key).getInputStream()));
+                assertThat(StreamUtil.streamToString(source.getChildStream(key).getInputStream())).isEqualTo(content);
             }
         }
         streamStore.closeStreamSource(source);
@@ -266,16 +268,16 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             if (key == null) {
                 final NestedInputStream inputStream = source.getNestedInputStream();
                 for (final String nestedContent : nestedContentList) {
-                    Assert.assertTrue(inputStream.getNextEntry());
-                    Assert.assertEquals(nestedContent, StreamUtil.streamToString(inputStream, false));
+                    assertThat(inputStream.getNextEntry()).isTrue();
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo(nestedContent);
                     inputStream.closeEntry();
                 }
                 inputStream.close();
             } else {
                 final NestedInputStream inputStream = source.getChildStream(key).getNestedInputStream();
                 for (final String nestedContent : nestedContentList) {
-                    Assert.assertTrue(inputStream.getNextEntry());
-                    Assert.assertEquals(nestedContent, StreamUtil.streamToString(inputStream, false));
+                    assertThat(inputStream.getNextEntry()).isTrue();
+                    assertThat(StreamUtil.streamToString(inputStream, false)).isEqualTo(nestedContent);
                     inputStream.closeEntry();
                 }
                 inputStream.close();

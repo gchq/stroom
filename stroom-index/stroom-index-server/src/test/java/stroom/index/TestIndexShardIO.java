@@ -19,9 +19,7 @@ package stroom.index;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.SearcherManager;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -32,7 +30,6 @@ import stroom.node.shared.VolumeEntity;
 import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,8 +37,9 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestIndexShardIO {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIndexShardIO {
 
     //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
     private static final List<IndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
@@ -59,6 +57,12 @@ public class TestIndexShardIO {
         INDEX_CONFIG = new IndexStructure(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
     }
 
+    public static void main(final String[] args) {
+        for (final Object s : System.getProperties().keySet()) {
+            System.out.println(s + "=" + System.getProperty((String) s));
+        }
+    }
+
     private Document buildDocument(final int id) {
         final Document d = new Document();
         d.add(FieldFactory.create(IndexField.createIdField("Id"), id));
@@ -68,14 +72,8 @@ public class TestIndexShardIO {
         return d;
     }
 
-    public static void main(final String[] args) {
-        for (final Object s : System.getProperties().keySet()) {
-            System.out.println(s + "=" + System.getProperty((String) s));
-        }
-    }
-
     @Test
-    public void testOpenCloseManyWrite() throws IOException {
+    void testOpenCloseManyWrite() throws IOException {
         final VolumeEntity volume = new VolumeEntity();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexDoc index = new IndexDoc();
@@ -99,13 +97,13 @@ public class TestIndexShardIO {
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
-            Assert.assertEquals(i, writer.getDocumentCount());
+            assertThat(writer.getDocumentCount()).isEqualTo(i);
             writer.close();
         }
     }
 
     @Test
-    public void testOpenCloseManyReadWrite() throws IOException {
+    void testOpenCloseManyReadWrite() throws IOException {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
@@ -128,13 +126,13 @@ public class TestIndexShardIO {
             final IndexShardWriter writer = new IndexShardWriterImpl(null, INDEX_CONFIG, indexShardKey, idx1);
             writer.addDocument(buildDocument(i));
             writer.close();
-            Assert.assertEquals(i, writer.getDocumentCount());
+            assertThat(writer.getDocumentCount()).isEqualTo(i);
 
             final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1);
             final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
             final IndexSearcher searcher = searcherManager.acquire();
             try {
-                Assert.assertEquals(i, searcher.getIndexReader().maxDoc());
+                assertThat(searcher.getIndexReader().maxDoc()).isEqualTo(i);
             } finally {
                 searcherManager.release(searcher);
             }
@@ -143,7 +141,7 @@ public class TestIndexShardIO {
     }
 
     @Test
-    public void testShardCorruption() {
+    void testShardCorruption() {
 //        final Executor executor = Executors.newCachedThreadPool();
 //
 //        final Index index = new Index();
@@ -257,7 +255,7 @@ public class TestIndexShardIO {
 //        final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
 //        final IndexSearcher searcher = searcherManager.acquire();
 ////        try {
-//            Assert.assertEquals(1, searcher.getIndexReader().maxDoc());
+//            assertThat(searcher.getIndexReader().maxDoc()).isEqualTo(1);
 ////        } finally {
 ////            searcherManager.release(searcher);
 ////        }
@@ -273,7 +271,7 @@ public class TestIndexShardIO {
 //            final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
 //            final IndexSearcher searcher = searcherManager.acquire();
 //            try {
-//                Assert.assertEquals(i, searcher.getIndexReader().maxDoc());
+//                assertThat(searcher.getIndexReader().maxDoc()).isEqualTo(i);
 //            } finally {
 //                searcherManager.release(searcher);
 //            }
@@ -282,7 +280,7 @@ public class TestIndexShardIO {
     }
 
     @Test
-    public void testFailToCloseAndReopen() throws IOException {
+    void testFailToCloseAndReopen() throws IOException {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
@@ -306,14 +304,14 @@ public class TestIndexShardIO {
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
             writer.flush();
-            Assert.assertEquals(i, writer.getDocumentCount());
+            assertThat(writer.getDocumentCount()).isEqualTo(i);
         }
 
         writer.close();
     }
 
     @Test
-    public void testFailToCloseFlushAndReopen() throws IOException {
+    void testFailToCloseFlushAndReopen() throws IOException {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
@@ -337,14 +335,14 @@ public class TestIndexShardIO {
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
             writer.flush();
-            Assert.assertEquals("No docs flushed ", i, writer.getDocumentCount());
+            assertThat(writer.getDocumentCount()).as("No docs flushed ").isEqualTo(i);
         }
 
         writer.close();
     }
 
     @Test
-    public void testWriteLoadsNoFlush() throws IOException {
+    void testWriteLoadsNoFlush() throws IOException {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
@@ -389,13 +387,12 @@ public class TestIndexShardIO {
 
         }
         // TODO - TO Fix
-        // Assert.assertEquals("Some flush happened before we expected it "
-        // + flushSet, 0, flushSet.size());
+        // assertThat(flushSet.size()).as("Some flush happened before we expected it "
+        // + flushSet).isEqualTo(0);
 
         writer.close();
-        Assert.assertTrue("Expected not to flush", flushSet.isEmpty());
-        // Assert.assertEquals("Expected to flush every 2048 docs...","[2048,
-        // 6144, 4096, 8192]",
-        // flushSet.toString());
+        assertThat(flushSet.isEmpty()).as("Expected not to flush").isTrue();
+        // assertThat(// flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
+        // 6144, 4096, 8192]");
     }
 }

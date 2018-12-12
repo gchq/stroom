@@ -16,8 +16,8 @@
 
 package stroom.pipeline.destination;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.MockStreamStore;
@@ -29,12 +29,14 @@ import stroom.util.scheduler.SimpleCron;
 import javax.inject.Inject;
 import java.io.IOException;
 
-public class TestRollingStreamDestination extends TestBase {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRollingStreamDestination extends TestBase {
     @Inject
     private MockStreamStore streamStore;
 
     @Test
-    public void testFrequency() throws IOException {
+    void testFrequency() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final DataProperties dataProperties = new DataProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(dataProperties);
@@ -48,13 +50,13 @@ public class TestRollingStreamDestination extends TestBase {
                 streamTarget,
                 "test");
 
-        Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time));
-        Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time + 60000));
-        Assert.assertTrue(rollingStreamDestination.tryFlushAndRoll(false, time + 60001));
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time)).isFalse();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60001)).isTrue();
     }
 
     @Test
-    public void testSchedule() throws IOException {
+    void testSchedule() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final DataProperties dataProperties = new DataProperties.Builder().typeName(StreamTypeNames.EVENTS).build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(dataProperties);
@@ -68,8 +70,8 @@ public class TestRollingStreamDestination extends TestBase {
                 streamTarget,
                 "test");
 
-        Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time));
-        Assert.assertFalse(rollingStreamDestination.tryFlushAndRoll(false, time + 60000));
-        Assert.assertTrue(rollingStreamDestination.tryFlushAndRoll(false, time + 60001));
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time)).isFalse();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
+        assertThat(rollingStreamDestination.tryFlushAndRoll(false, time + 60001)).isTrue();
     }
 }

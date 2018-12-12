@@ -16,14 +16,15 @@
 
 package stroom.task;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestTaskThread {
+class TestTaskThread {
     @Test
-    public void test_toString() {
+    void test_toString() {
         final TaskThread root = new TaskThread(null);
         root.info("root");
         final TaskThread child1 = new TaskThread(null);

@@ -147,7 +147,7 @@ public abstract class AbstractBatchDeleteExecutor {
         return count;
     }
 
-    protected abstract List<Long> getDeleteIdList(final long age, final int batchSize);
+    protected abstract List getDeleteIdList(final long age, final int batchSize);
 
     protected final void deleteWithJoin(final String fromTable, final String fromColumn, final String type,
                                         final long total) {

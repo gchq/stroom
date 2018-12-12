@@ -16,11 +16,9 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -28,6 +26,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -47,9 +46,12 @@ import javax.inject.Provider;
 import java.io.InputStream;
 import java.nio.file.Path;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 // FIXME : reinstate test
-@Ignore("Removed test data")
-public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
+
+class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     private static final int EXPECTED_RESULTS = 4;
     private static final String PIPELINE = "XMLHttpBlankTokenFix/XMLHttpBlankTokenFix.Pipeline.data.xml";
     private static final String INPUT = "XMLHttpBlankTokenFix/HttpProblem.in";
@@ -81,7 +83,7 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
      * Tests the XMLTransformer on some sample Windows XML events.
      */
     @Test
-    public void testXMLTransformer() {
+    void testXMLTransformer() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
             final RecordCount recordCount = recordCountProvider.get();
@@ -141,17 +143,17 @@ public class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
             final String xml = StreamUtil.fileToString(outputFile);
             System.out.println(xml);
 
-            Assert.assertTrue(errorReceiver.toString(), recordCount.getRead() > 0);
-            Assert.assertTrue(errorReceiver.toString(), recordCount.getWritten() > 0);
-            Assert.assertEquals(errorReceiver.toString(), recordCount.getRead(), recordCount.getWritten());
-            Assert.assertEquals(errorReceiver.toString(), EXPECTED_RESULTS, recordCount.getRead());
-            Assert.assertEquals(errorReceiver.toString(), EXPECTED_RESULTS, recordCount.getWritten());
-            Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.WARNING));
-            Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.ERROR));
-            Assert.assertEquals(errorReceiver.toString(), 0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+            assertThat(recordCount.getRead() > 0).as(errorReceiver.toString()).isTrue();
+            assertThat(recordCount.getWritten() > 0).as(errorReceiver.toString()).isTrue();
+            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(recordCount.getRead());
+            assertThat(recordCount.getRead()).as(errorReceiver.toString()).isEqualTo(EXPECTED_RESULTS);
+            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(EXPECTED_RESULTS);
+            assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiver.toString()).isEqualTo(0);
+            assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiver.toString()).isEqualTo(0);
+            assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).as(errorReceiver.toString()).isEqualTo(0);
 
             if (!loggingErrorReceiver.isAllOk()) {
-                Assert.fail(errorReceiver.toString());
+                fail(errorReceiver.toString());
             }
         });
     }

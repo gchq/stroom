@@ -16,8 +16,8 @@
 
 package stroom.activity.server;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.FindActivityCriteria;
@@ -26,12 +26,14 @@ import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 
-public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private ActivityService activityService;
 
     @Test
-    public void test() {
+    void test() {
         // Save 1
         Activity activity1 = new Activity();
         activity1.getDetails().add(createProp("foo"), "bar");
@@ -41,7 +43,7 @@ public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
 
         // Find one
         final BaseResultList<Activity> list = activityService.find(new FindActivityCriteria());
-        Assert.assertEquals(1, list.size());
+        assertThat(list.size()).isEqualTo(1);
 
         // Save 2
         Activity activity2 = new Activity();
@@ -51,26 +53,26 @@ public class TestActivityServiceImpl extends AbstractCoreIntegrationTest {
 
         // Find both
         final BaseResultList<Activity> list1 = activityService.find(new FindActivityCriteria());
-        Assert.assertEquals(2, list1.size());
+        assertThat(list1.size()).isEqualTo(2);
 
         // Find each
         final BaseResultList<Activity> list2 = activityService.find(FindActivityCriteria.create("bar"));
-        Assert.assertEquals(1, list2.size());
-        Assert.assertEquals(activity1.getId(), list2.get(0).getId());
+        assertThat(list2.size()).isEqualTo(1);
+        assertThat(list2.get(0).getId()).isEqualTo(activity1.getId());
 
         final BaseResultList<Activity> list3 = activityService.find(FindActivityCriteria.create("ipsum"));
-        Assert.assertEquals(1, list3.size());
-        Assert.assertEquals(activity2.getId(), list3.get(0).getId());
+        assertThat(list3.size()).isEqualTo(1);
+        assertThat(list3.get(0).getId()).isEqualTo(activity2.getId());
 
         // Delete one
         activityService.delete(activity1);
         final BaseResultList<Activity> list4 = activityService.find(new FindActivityCriteria());
-        Assert.assertEquals(1, list4.size());
+        assertThat(list4.size()).isEqualTo(1);
 
         // Delete the other
         activityService.delete(activity2);
         final BaseResultList<Activity> list5 = activityService.find(new FindActivityCriteria());
-        Assert.assertEquals(0, list5.size());
+        assertThat(list5.size()).isEqualTo(0);
     }
 
     private Prop createProp(final String name) {

@@ -16,10 +16,9 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -30,15 +29,15 @@ import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestSQLStatisticEventStore extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong createCount = new AtomicLong();
     private final AtomicLong destroyCount = new AtomicLong();
     private final AtomicLong eventCount = new AtomicLong();
@@ -64,8 +63,8 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     @Captor
     private ArgumentCaptor<SQLStatisticAggregateMap> aggregateMapCaptor;
 
-    @Before
-    public void beforeTest() {
+    @BeforeEach
+    void beforeTest() {
         MockitoAnnotations.initMocks(this);
         createCount.set(0);
         destroyCount.set(0);
@@ -83,7 +82,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     @Test
-    public void test() throws InterruptedException {
+    void test() throws InterruptedException {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(5, 10, 10000, null,
@@ -109,13 +108,13 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
 
         simpleExecutor.stop(false);
 
-        Assert.assertTrue(createCount.get() > 0);
-        Assert.assertTrue(destroyCount.get() > 0);
+        assertThat(createCount.get() > 0).isTrue();
+        assertThat(destroyCount.get() > 0).isTrue();
 
     }
 
     @Test
-    public void testIdle() throws InterruptedException {
+    void testIdle() throws InterruptedException {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(10, 10, 100, null,
@@ -132,26 +131,26 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
             }
         };
 
-        Assert.assertEquals(0, store.getNumIdle());
-        Assert.assertEquals(0, store.getNumActive());
+        assertThat(store.getNumIdle()).isEqualTo(0);
+        assertThat(store.getNumActive()).isEqualTo(0);
 
         store.putEvent(createEvent());
 
-        Assert.assertEquals(1, store.getNumIdle());
-        Assert.assertEquals(0, store.getNumActive());
+        assertThat(store.getNumIdle()).isEqualTo(1);
+        assertThat(store.getNumActive()).isEqualTo(0);
 
         Thread.sleep(200);
 
         // store required manually evicting
         store.evict();
 
-        Assert.assertEquals(0, store.getNumIdle());
-        Assert.assertEquals(0, store.getNumActive());
+        assertThat(store.getNumIdle()).isEqualTo(0);
+        assertThat(store.getNumActive()).isEqualTo(0);
 
     }
 
     @Test
-    public void testEmptyPropString() {
+    void testEmptyPropString() {
         final int eventCount = 100;
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1);
 
@@ -162,7 +161,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     @Test
-    public void testAllEventsTooOld() {
+    void testAllEventsTooOld() {
         final int eventCount = 100;
         // ten day old events
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(10);
@@ -176,7 +175,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     }
 
     @Test
-    public void testSomeEventsTooOld() {
+    void testSomeEventsTooOld() {
         final int eventCount = 100;
         // events starting at 100 days old with each a day newer
         // add 10secs to ensure give the test time to run, otherwise it only
@@ -210,8 +209,8 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
             count += aggregateMap.size();
         }
 
-        Assert.assertNotNull(aggregateMaps);
+        assertThat(aggregateMaps).isNotNull();
 
-        Assert.assertEquals(expectedProcessedCount, count);
+        assertThat(count).isEqualTo(expectedProcessedCount);
     }
 }

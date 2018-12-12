@@ -17,8 +17,8 @@
 
 package stroom.statistics.common;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -41,7 +41,9 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 
-public class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
@@ -63,7 +65,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
      * second one
      */
     @Test
-    public void testStatisticsDataSource() {
+    void testStatisticsDataSource() {
         final DocRef docRef = explorerService.create(StatisticStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
         final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         statisticsDataSource.setDescription("My Description");
@@ -73,7 +75,7 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
         statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
         statisticStoreStore.writeDocument(statisticsDataSource);
 
-        Assert.assertEquals(1, statisticStoreStore.list().size());
+        assertThat(statisticStoreStore.list().size()).isEqualTo(1);
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -82,31 +84,30 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
 
-        Assert.assertEquals(2, FileUtil.count(testDataDir));
+        assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
         clean(true);
 
-        Assert.assertEquals(0, statisticStoreStore.list().size());
+        assertThat(statisticStoreStore.list().size()).isEqualTo(0);
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         final List<DocRef> dataSources = statisticStoreStore.list();
 
-        Assert.assertEquals(1, dataSources.size());
+        assertThat(dataSources.size()).isEqualTo(1);
 
         final StatisticStoreDoc importedDataSource = statisticStoreStore.readDocument(dataSources.get(0));
 
-        Assert.assertEquals(statisticsDataSource.getName(), importedDataSource.getName());
-        Assert.assertEquals(statisticsDataSource.getStatisticType(), importedDataSource.getStatisticType());
-        Assert.assertEquals(statisticsDataSource.getDescription(), importedDataSource.getDescription());
+        assertThat(importedDataSource.getName()).isEqualTo(statisticsDataSource.getName());
+        assertThat(importedDataSource.getStatisticType()).isEqualTo(statisticsDataSource.getStatisticType());
+        assertThat(importedDataSource.getDescription()).isEqualTo(statisticsDataSource.getDescription());
 
-        Assert.assertEquals(statisticsDataSource.getConfig(),
-                importedDataSource.getConfig());
+        assertThat(importedDataSource.getConfig()).isEqualTo(statisticsDataSource.getConfig());
     }
 
     @Test
-    public void testDeSerialiseOnLoad() {
+    void testDeSerialiseOnLoad() {
         final DocRef docRef = statisticStoreStore.createDocument("StatName1");
         final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         statisticsDataSource.setDescription("My Description");
@@ -120,19 +121,19 @@ public class TestStatisticsDataSourceImportExportSerializer extends AbstractCore
 
         final DocRef statisticStoreRef = statisticStoreStore.list().get(0);
         final StatisticStoreDoc statisticsDataSource2 = statisticStoreStore.readDocument(statisticStoreRef);
-        Assert.assertNotNull(statisticsDataSource2);
+        assertThat(statisticsDataSource2).isNotNull();
 
         final StatisticStoreDoc statisticsDataSource3 = statisticStoreStore.readDocument(statisticStoreRef);
 
-        // Assert.assertNotNull(((StatisticsDataSource)
-        // statisticsDataSource3).getStatisticDataSourceData());
-        Assert.assertNotNull(statisticsDataSource3);
-        Assert.assertNotNull(statisticsDataSource3.getConfig());
+        // assertThat(((StatisticsDataSource)
+        // statisticsDataSource3).getStatisticDataSourceData()).isNotNull();
+        assertThat(statisticsDataSource3).isNotNull();
+        assertThat(statisticsDataSource3.getConfig()).isNotNull();
 
         DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
 
         final DataSource dataSource = statisticsDataSourceProvider.getDataSource(statisticDataSource3DocRef);
 
-        Assert.assertNotNull(dataSource.getFields());
+        assertThat(dataSource.getFields()).isNotNull();
     }
 }

@@ -16,32 +16,31 @@
 
 package stroom.streamtask.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.streamtask.shared.ProcessorFilterTracker;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamProcessorFilterTracker extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamProcessorFilterTracker extends StroomUnitTest {
     @Test
-    public void testPercent() {
+    void testPercent() {
         final ProcessorFilterTracker track = new ProcessorFilterTracker();
         track.setMinStreamCreateMs(0L);
         track.setMaxStreamCreateMs(100L);
         track.setStreamCreateMs(50L);
 
-        Assert.assertEquals(50, track.getTrackerStreamCreatePercentage().intValue());
+        assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(50);
     }
 
     @Test
-    public void testPercentReal() {
+    void testPercentReal() {
         final ProcessorFilterTracker track = new ProcessorFilterTracker();
         track.setMinStreamCreateMs(1413456996578L);
         track.setMaxStreamCreateMs(1413553741788L);
         track.setStreamCreateMs(1413553752020L);
 
-        Assert.assertEquals(100, track.getTrackerStreamCreatePercentage().intValue());
+        assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(100);
     }
 }

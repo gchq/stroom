@@ -16,14 +16,12 @@
 
 package stroom.streamtask;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+import org.junit.jupiter.api.Disabled;
 import stroom.util.test.StroomUnitTest;
 
-@Ignore
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamTaskCreatorRecentStreamDetails extends StroomUnitTest {
+
+@Disabled
+class TestStreamTaskCreatorRecentStreamDetails extends StroomUnitTest {
 //    @Test
 //    public void testSimple() {
 //        final ProcessorFilter filter = new ProcessorFilter();
@@ -35,27 +33,27 @@ public class TestStreamTaskCreatorRecentStreamDetails extends StroomUnitTest {
 //        // No history
 //        StreamTaskCreatorRecentStreamDetails details = new StreamTaskCreatorRecentStreamDetails(null, 0L);
 //
-//        Assert.assertFalse(details.hasRecentDetail());
-//        Assert.assertTrue(details.isApplicable(filter, findStreamCriteria));
+//        assertThat(details.hasRecentDetail()).isFalse();
+//        assertThat(details.isApplicable(filter, findStreamCriteria)).isTrue();
 //        filter.getStreamProcessorFilterTracker().setMinStreamId(1L);
 //
 //        // Fake that 10 streams came in for feed 2
 //        details = new StreamTaskCreatorRecentStreamDetails(details, 10L);
 //        details.addRecentFeedId(2L);
 //
-//        Assert.assertTrue(details.hasRecentDetail());
-//        Assert.assertFalse(details.isApplicable(filter, findStreamCriteria));
+//        assertThat(details.hasRecentDetail()).isTrue();
+//        assertThat(details.isApplicable(filter, findStreamCriteria)).isFalse();
 //
 //        // Now add some more for feed 1
 //        details = new StreamTaskCreatorRecentStreamDetails(details, 21L);
 //        details.addRecentFeedId(1L);
 //
-//        Assert.assertTrue(details.hasRecentDetail());
-//        Assert.assertTrue(details.isApplicable(filter, findStreamCriteria));
+//        assertThat(details.hasRecentDetail()).isTrue();
+//        assertThat(details.isApplicable(filter, findStreamCriteria)).isTrue();
 //
 //        // Now add some more for feed 2
 //        details = new StreamTaskCreatorRecentStreamDetails(details, 23L);
 //        details.addRecentFeedId(2L);
-//        Assert.assertFalse(details.isApplicable(filter, findStreamCriteria));
+//        assertThat(details.isApplicable(filter, findStreamCriteria)).isFalse();
 //    }
 }

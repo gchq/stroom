@@ -16,17 +16,16 @@
 
 package stroom.benchmark;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.Period;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
     @Test
-    public void testSimple() {
+    void testSimple() {
         final BenchmarkClusterExecutor benchmarkClusterTaskHandler = new BenchmarkClusterExecutor(
                 null,
                 null,
@@ -40,7 +39,7 @@ public class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
                 null,
                 null,
                 new BenchmarkClusterConfig());
-        Assert.assertEquals("1000 EPS", 1000, benchmarkClusterTaskHandler.toEPS(1000, new Period(0L, 1000L)));
-        Assert.assertEquals("1000000 EPS", 1000000, benchmarkClusterTaskHandler.toEPS(1000000L, new Period(0L, 1000L)));
+        assertThat(benchmarkClusterTaskHandler.toEPS(1000, new Period(0L, 1000L))).as("1000 EPS").isEqualTo(1000);
+        assertThat(benchmarkClusterTaskHandler.toEPS(1000000L, new Period(0L, 1000L))).as("1000000 EPS").isEqualTo(1000000);
     }
 }

@@ -16,18 +16,17 @@
 
 package stroom.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBuildInfoUtil {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBuildInfoUtil {
     @Test
-    public void testSimple() {
-        Assert.assertNotNull(BuildInfoUtil.getBuildVersion());
-        Assert.assertNotNull(BuildInfoUtil.getBuildDate());
-        Assert.assertNotNull(BuildInfoUtil.getUpDate());
+    void testSimple() {
+        assertThat(BuildInfoUtil.getBuildVersion()).isNotNull();
+        assertThat(BuildInfoUtil.getBuildDate()).isNotNull();
+        assertThat(BuildInfoUtil.getUpDate()).isNotNull();
     }
 
 }

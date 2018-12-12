@@ -16,10 +16,9 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -32,6 +31,7 @@ import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.filter.XMLFilterFork;
 import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -59,7 +59,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject
@@ -80,7 +82,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Test
-    public void testAll() {
+    void testAll() {
         final String dir = "TestRecordOutputFilter/";
         final DocRef textConverterRef = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
@@ -92,7 +94,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
     }
 
     @Test
-    public void testMultiPart() {
+    void testMultiPart() {
         final String dir = "TestRecordOutputFilter/";
         final DocRef textConverterRef = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
@@ -174,7 +176,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
 
                 // Get the input streams.
                 final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
-                Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
+                assertThat(Files.isDirectory(inputDir)).as("Can't find input dir").isTrue();
 
                 List<Path> inputFiles = new ArrayList<>();
                 try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, inputStem + "*.in")) {
@@ -182,7 +184,7 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 }
                 inputFiles.sort(Comparator.naturalOrder());
 
-                Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
+                assertThat(inputFiles.size() > 0).as("Can't find any input files").isTrue();
 
                 pipeline.startProcessing();
 
@@ -197,14 +199,14 @@ public class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 // Close all streams that have been written.,
                 streamCloserProvider.get().close();
 
-                Assert.assertTrue(recordCountProvider.get().getRead() > 0);
-                Assert.assertTrue(recordCountProvider.get().getWritten() > 0);
-                // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
-                Assert.assertEquals(200, recordCountProvider.get().getRead());
-                Assert.assertEquals(200 - 59, recordCountProvider.get().getWritten());
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-                Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+                assertThat(recordCountProvider.get().getRead() > 0).isTrue();
+                assertThat(recordCountProvider.get().getWritten() > 0).isTrue();
+                // assertThat(recordCount.getWritten()).isEqualTo(recordCount.getRead());
+                assertThat(recordCountProvider.get().getRead()).isEqualTo(200);
+                assertThat(recordCountProvider.get().getWritten()).isEqualTo(200 - 59);
+                assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).isEqualTo(0);
+                assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).isEqualTo(59);
+                assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
 
                 final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(dir + outputXMLStem + ".out");
                 final Path tmpFile = refFile.getParent().resolve(outputXMLStem + ".out_tmp");

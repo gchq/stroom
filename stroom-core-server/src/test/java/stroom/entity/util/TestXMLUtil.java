@@ -16,19 +16,18 @@
 
 package stroom.entity.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestXMLUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestXMLUtil extends StroomUnitTest {
     @Test
-    public void testWords() {
-        Assert.assertEquals("xmlUtil", XMLUtil.toXMLName(XMLUtil.class.getSimpleName()));
-        Assert.assertEquals("string", XMLUtil.toXMLName(String.class.getSimpleName()));
-        Assert.assertEquals("stringBuilder", XMLUtil.toXMLName(StringBuilder.class.getSimpleName()));
-        Assert.assertEquals("testXMLUtil", XMLUtil.toXMLName(TestXMLUtil.class.getSimpleName()));
+    void testWords() {
+        assertThat(XMLUtil.toXMLName(XMLUtil.class.getSimpleName())).isEqualTo("xmlUtil");
+        assertThat(XMLUtil.toXMLName(String.class.getSimpleName())).isEqualTo("string");
+        assertThat(XMLUtil.toXMLName(StringBuilder.class.getSimpleName())).isEqualTo("stringBuilder");
+        assertThat(XMLUtil.toXMLName(TestXMLUtil.class.getSimpleName())).isEqualTo("testXMLUtil");
     }
 }

@@ -16,33 +16,32 @@
 
 package stroom.util.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.shared.CompareUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestCompareUtil {
+import org.junit.jupiter.api.Test;
+import stroom.util.shared.CompareUtil;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestCompareUtil {
     @Test
-    public void testStringCompare() {
-        Assert.assertEquals(0, CompareUtil.compareString(null, null));
-        Assert.assertEquals(0, CompareUtil.compareString("A", "A"));
-        Assert.assertEquals(0, CompareUtil.compareString("A", "a"));
-        Assert.assertEquals(-1, CompareUtil.compareString("A", "B"));
-        Assert.assertEquals(1, CompareUtil.compareString("B", "a"));
-        Assert.assertEquals(1, CompareUtil.compareString("B", null));
-        Assert.assertEquals(-1, CompareUtil.compareString(null, "B"));
+    void testStringCompare() {
+        assertThat(CompareUtil.compareString(null, null)).isEqualTo(0);
+        assertThat(CompareUtil.compareString("A", "A")).isEqualTo(0);
+        assertThat(CompareUtil.compareString("A", "a")).isEqualTo(0);
+        assertThat(CompareUtil.compareString("A", "B")).isEqualTo(-1);
+        assertThat(CompareUtil.compareString("B", "a")).isEqualTo(1);
+        assertThat(CompareUtil.compareString("B", null)).isEqualTo(1);
+        assertThat(CompareUtil.compareString(null, "B")).isEqualTo(-1);
     }
 
     @Test
-    public void testLongCompare() {
-        Assert.assertEquals(0, CompareUtil.compareLong(null, null));
-        Assert.assertEquals(0, CompareUtil.compareLong(1L, 1L));
-        Assert.assertEquals(-1, CompareUtil.compareLong(1L, 2L));
-        Assert.assertEquals(1, CompareUtil.compareLong(2L, 1L));
-        Assert.assertEquals(1, CompareUtil.compareLong(2L, null));
-        Assert.assertEquals(-1, CompareUtil.compareLong(null, 2L));
+    void testLongCompare() {
+        assertThat(CompareUtil.compareLong(null, null)).isEqualTo(0);
+        assertThat(CompareUtil.compareLong(1L, 1L)).isEqualTo(0);
+        assertThat(CompareUtil.compareLong(1L, 2L)).isEqualTo(-1);
+        assertThat(CompareUtil.compareLong(2L, 1L)).isEqualTo(1);
+        assertThat(CompareUtil.compareLong(2L, null)).isEqualTo(1);
+        assertThat(CompareUtil.compareLong(null, 2L)).isEqualTo(-1);
     }
 
 }

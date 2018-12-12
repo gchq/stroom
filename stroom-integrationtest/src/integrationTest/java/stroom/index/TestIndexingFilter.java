@@ -19,12 +19,10 @@ package stroom.index;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
@@ -38,6 +36,7 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
@@ -51,7 +50,9 @@ import javax.inject.Provider;
 import java.io.InputStream;
 import java.util.List;
 
-public class TestIndexingFilter extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.data.xml";
 
     @Inject
@@ -71,14 +72,14 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
-    @Before
-    @After
-    public void clear() {
+    @BeforeEach
+    @AfterEach
+    void clear() {
         indexShardWriterCache.shutdown();
     }
 
     @Test
-    public void testSimpleDocuments() {
+    void testSimpleDocuments() {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
@@ -88,66 +89,66 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/SimpleDocuments.xml", indexFields);
 
-        Assert.assertEquals(3, documents.size());
+        assertThat(documents.size()).isEqualTo(3);
         final Document doc = documents.get(0);
-        Assert.assertTrue(doc.getField("sid2").fieldType().stored());
-        Assert.assertTrue(doc.getField("sid2").fieldType().indexOptions().equals(IndexOptions.DOCS));
-        Assert.assertTrue(doc.getField("sid2").fieldType().omitNorms());
-        Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectors());
-        Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectorPositions());
-        Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectorOffsets());
-        Assert.assertFalse(doc.getField("sid2").fieldType().storeTermVectorPayloads());
+        assertThat(doc.getField("sid2").fieldType().stored()).isTrue();
+        assertThat(doc.getField("sid2").fieldType().indexOptions().equals(IndexOptions.DOCS)).isTrue();
+        assertThat(doc.getField("sid2").fieldType().omitNorms()).isTrue();
+        assertThat(doc.getField("sid2").fieldType().storeTermVectors()).isFalse();
+        assertThat(doc.getField("sid2").fieldType().storeTermVectorPositions()).isFalse();
+        assertThat(doc.getField("sid2").fieldType().storeTermVectorOffsets()).isFalse();
+        assertThat(doc.getField("sid2").fieldType().storeTermVectorPayloads()).isFalse();
 
-        Assert.assertNull(doc.getField("size"));
+        assertThat(doc.getField("size")).isNull();
 
-        Assert.assertEquals("someuser", documents.get(1).getField("sid").stringValue());
-        Assert.assertEquals("someuser", documents.get(2).getField("sid").stringValue());
+        assertThat(documents.get(1).getField("sid").stringValue()).isEqualTo("someuser");
+        assertThat(documents.get(2).getField("sid").stringValue()).isEqualTo("someuser");
     }
 
     @Test
-    public void testDuplicateFields() {
+    void testDuplicateFields() {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createDateField("eventTime"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/DuplicateFields.xml", indexFields);
 
-        Assert.assertEquals(4, documents.size());
-        Assert.assertEquals(2, documents.get(0).getFields("sid").length);
-        Assert.assertEquals(1, documents.get(1).getFields("sid").length);
-        Assert.assertEquals(1, documents.get(2).getFields("sid").length);
-        Assert.assertEquals(0, documents.get(3).getFields("sid").length);
+        assertThat(documents.size()).isEqualTo(4);
+        assertThat(documents.get(0).getFields("sid").length).isEqualTo(2);
+        assertThat(documents.get(1).getFields("sid").length).isEqualTo(1);
+        assertThat(documents.get(2).getFields("sid").length).isEqualTo(1);
+        assertThat(documents.get(3).getFields("sid").length).isEqualTo(0);
     }
 
     @Test
-    public void testBlankDocuments() {
+    void testBlankDocuments() {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/BlankDocuments.xml", indexFields);
-        Assert.assertNull(documents);
+        assertThat(documents).isNull();
     }
 
     @Test
-    public void testInvalidContent1() {
+    void testInvalidContent1() {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/InvalidContent1.xml", indexFields);
-        Assert.assertNull(documents);
+        assertThat(documents).isNull();
     }
 
     @Test
-    public void testInvalidContent2() {
+    void testInvalidContent2() {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/InvalidContent2.xml", indexFields);
-        Assert.assertEquals(1, documents.size());
+        assertThat(documents.size()).isEqualTo(1);
     }
 
     @Test
-    public void testComplexContent() {
+    void testComplexContent() {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("f1", AnalyzerType.ALPHA_NUMERIC, false, true, true, true));
         indexFields.add(IndexField.createField("f2", AnalyzerType.ALPHA_NUMERIC, false, false, true, false));
@@ -157,16 +158,15 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/ComplexContent.xml", indexFields);
 
-        Assert.assertEquals(1, documents.size());
+        assertThat(documents.size()).isEqualTo(1);
         final IndexableFieldType fieldType = documents.get(0).getField("f1").fieldType();
-        Assert.assertTrue(fieldType.stored());
-        Assert.assertTrue(fieldType.indexOptions().equals(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS));
-        Assert.assertTrue(fieldType.tokenized());
+        assertThat(fieldType.stored()).isTrue();
+        assertThat(fieldType.indexOptions().equals(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)).isTrue();
+        assertThat(fieldType.tokenized()).isTrue();
 
-        Assert.assertFalse(documents.get(0).getField("f2").fieldType().stored());
+        assertThat(documents.get(0).getField("f2").fieldType().stored()).isFalse();
 
-        Assert.assertEquals(DateUtil.parseUnknownString("2010-01-01T12:00:00.000Z"),
-                ((documents.get(0).getField("d1")).numericValue().longValue()));
+        assertThat(((documents.get(0).getField("d1")).numericValue().longValue())).isEqualTo(DateUtil.parseUnknownString("2010-01-01T12:00:00.000Z"));
 
     }
 
@@ -210,8 +210,8 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
             // Wrote anything ?
             final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
             if (indexShardWriterCache.getWriters().size() > 0) {
-                Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
-                Assert.assertTrue(indexShardWriterCache.getWriters().containsKey(indexShardKey));
+                assertThat(indexShardWriterCache.getWriters().size()).isEqualTo(1);
+                assertThat(indexShardWriterCache.getWriters().containsKey(indexShardKey)).isTrue();
 
                 // Get a writer from the pool.
                 for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {

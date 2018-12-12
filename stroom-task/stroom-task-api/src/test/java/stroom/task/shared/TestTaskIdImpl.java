@@ -17,7 +17,6 @@
 package stroom.task.shared;
 
 import org.junit.jupiter.api.Test;
-import stroom.task.shared.TaskIdImpl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

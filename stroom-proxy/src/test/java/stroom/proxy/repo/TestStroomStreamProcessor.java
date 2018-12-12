@@ -1,13 +1,11 @@
 package stroom.proxy.repo;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,10 +19,12 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStroomStreamProcessor {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestStroomStreamProcessor {
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
                 "Sample Data".getBytes(StreamUtil.DEFAULT_CHARSET));
 
@@ -45,15 +45,13 @@ public class TestStroomStreamProcessor {
         stroomZipOutputStream.close();
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("StreamSize:11\nTEST:VALUE\n",
-                StreamUtil.streamToString(stroomZipFile.getInputStream("001", StroomZipFileType.Meta)));
-        Assert.assertEquals("Sample Data",
-                StreamUtil.streamToString(stroomZipFile.getInputStream("001", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("001", StroomZipFileType.Meta))).isEqualTo("StreamSize:11\nTEST:VALUE\n");
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("001", StroomZipFileType.Data))).isEqualTo("Sample Data");
         stroomZipFile.close();
     }
 
     @Test
-    public void testGZIPErrorSimple() throws IOException {
+    void testGZIPErrorSimple() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
         gzipOutputStream.write("Sample Data".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -82,14 +80,14 @@ public class TestStroomStreamProcessor {
             final String msg = StreamUtil.streamToString(stroomZipFile.getInputStream("001", StroomZipFileType.Meta));
 
             stroomZipFile.close();
-            Assert.fail("expecting error but wrote - " + msg);
+            fail("expecting error but wrote - " + msg);
         } catch (final StroomStreamException ex) {
-            Assert.assertEquals(StroomStatusCode.COMPRESSED_STREAM_INVALID, ex.getStroomStatusCode());
+            assertThat(ex.getStroomStatusCode()).isEqualTo(StroomStatusCode.COMPRESSED_STREAM_INVALID);
         }
     }
 
     @Test
-    public void testZIPErrorSimple() throws IOException {
+    void testZIPErrorSimple() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         zipOutputStream.putNextEntry(new ZipEntry("001.hdr"));
@@ -124,14 +122,14 @@ public class TestStroomStreamProcessor {
             final String msg = StreamUtil.streamToString(stroomZipFile.getInputStream("001", StroomZipFileType.Data));
 
             stroomZipFile.close();
-            Assert.fail("expecting error but wrote - " + msg);
+            fail("expecting error but wrote - " + msg);
         } catch (final StroomStreamException ex) {
-            Assert.assertEquals(StroomStatusCode.COMPRESSED_STREAM_INVALID, ex.getStroomStatusCode());
+            assertThat(ex.getStroomStatusCode()).isEqualTo(StroomStatusCode.COMPRESSED_STREAM_INVALID);
         }
     }
 
     @Test
-    public void testZIPNoEntries() throws IOException {
+    void testZIPNoEntries() throws IOException {
         final InputStream inputStream = getClass().getClassLoader().getResourceAsStream("stroom/proxy/repo/BlankZip.zip");
         final byte[] fullData = StreamUtil.streamToBuffer(inputStream).toByteArray();
 
@@ -153,11 +151,11 @@ public class TestStroomStreamProcessor {
         stroomStreamProcessor.process(byteArrayInputStream, "");
         stroomZipOutputStream.close();
 
-        Assert.assertFalse("Blank zips should get ignored", Files.isRegularFile(zipFile));
+        assertThat(Files.isRegularFile(zipFile)).as("Blank zips should get ignored").isFalse();
     }
 
     @Test
-    public void testOrder1() throws IOException {
+    void testOrder1() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 1; i <= 10; i++) {
@@ -171,9 +169,9 @@ public class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("1.txt", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1.txt", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "1.txt", "TEST:VALUE");
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("2.txt", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2.txt", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "2.txt", "TEST:VALUE");
 
         assertMeta(stroomZipFile, "2.txt", "TEST:VALUE");
@@ -182,7 +180,7 @@ public class TestStroomStreamProcessor {
     }
 
     @Test
-    public void testOrder2() throws IOException {
+    void testOrder2() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 1; i <= 10; i++) {
@@ -200,10 +198,10 @@ public class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "1", "META:VALUE1");
         assertMeta(stroomZipFile, "1", "TEST:VALUE");
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "2", "META:VALUE2");
         assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
@@ -211,7 +209,7 @@ public class TestStroomStreamProcessor {
     }
 
     @Test
-    public void testOrder3() throws IOException {
+    void testOrder3() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 1; i <= 10; i++) {
@@ -229,10 +227,10 @@ public class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "1", "META:VALUE1");
         assertMeta(stroomZipFile, "1", "TEST:VALUE");
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "2", "META:VALUE2");
         assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
@@ -240,7 +238,7 @@ public class TestStroomStreamProcessor {
     }
 
     @Test
-    public void testOrder4() throws IOException {
+    void testOrder4() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -258,10 +256,10 @@ public class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "1", "META:VALUE1");
         assertMeta(stroomZipFile, "1", "TEST:VALUE");
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "2", "META:VALUE2");
         assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
@@ -269,7 +267,7 @@ public class TestStroomStreamProcessor {
     }
 
     @Test
-    public void testOrder5_Pass() throws IOException {
+    void testOrder5_Pass() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -289,10 +287,10 @@ public class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "1", "META:VALUE1");
         assertMeta(stroomZipFile, "1", "TEST:VALUE");
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "2", "META:VALUE2");
         assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
@@ -300,7 +298,7 @@ public class TestStroomStreamProcessor {
     }
 
     @Test
-    public void testOrder5_PassDueToHeaderBuffer() throws IOException {
+    void testOrder5_PassDueToHeaderBuffer() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -321,10 +319,10 @@ public class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "1", "META:VALUE1");
         assertMeta(stroomZipFile, "1", "TEST:VALUE");
-        Assert.assertEquals("data", StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data)));
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.Data))).isEqualTo("data");
         assertMeta(stroomZipFile, "2", "META:VALUE2");
         assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
@@ -332,7 +330,7 @@ public class TestStroomStreamProcessor {
     }
 
     @Test
-    public void testOrder5_FailDueToHeaderBufferNotUsed() throws IOException {
+    void testOrder5_FailDueToHeaderBufferNotUsed() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
         for (int i = 10; i > 0; i--) {
@@ -355,7 +353,7 @@ public class TestStroomStreamProcessor {
 
     void assertMeta(final StroomZipFile stroomZipFile, final String baseName, final String expectedMeta) throws IOException {
         final String fullMeta = StreamUtil.streamToString(stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta));
-        Assert.assertTrue("Expecting " + expectedMeta + " in " + fullMeta, fullMeta.contains(expectedMeta));
+        assertThat(fullMeta.contains(expectedMeta)).as("Expecting " + expectedMeta + " in " + fullMeta).isTrue();
 
     }
 
@@ -383,7 +381,7 @@ public class TestStroomStreamProcessor {
 
             stroomStreamProcessor.process(byteArrayInputStream, "");
             if (fail) {
-                Assert.fail("Expecting a fail");
+                fail("Expecting a fail");
             }
         } catch (final RuntimeException e) {
             if (!fail) {

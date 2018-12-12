@@ -1,7 +1,7 @@
 package stroom.feed;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
 
 import java.io.IOException;
@@ -10,9 +10,9 @@ import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestAttributeMap {
+class TestAttributeMap {
     @Test
-    public void testSimple() {
+    void testSimple() {
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("person", "person1");
 
@@ -38,7 +38,7 @@ public class TestAttributeMap {
     }
 
     @Test
-    public void testRemove() {
+    void testRemove() {
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("a", "a1");
         attributeMap.put("B", "b1");
@@ -49,29 +49,29 @@ public class TestAttributeMap {
     }
 
     @Test
-    public void testReadWrite() throws IOException {
+    void testReadWrite() throws IOException {
         AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
         assertThat(attributeMap.get("a")).isEqualTo("1");
         assertThat(attributeMap.get("b")).isEqualTo("2");
-        Assert.assertNull(attributeMap.get("z"));
+        assertThat(attributeMap.get("z")).isNull();
 
         assertThat(new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET)).isEqualTo("a:1\nb:2\nz\n");
     }
 
     @Test
-    public void testtoString() throws IOException {
+    void testtoString() throws IOException {
         AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
 
         // AttributeMap's are used in log output and so check that they do output
         // the map values.
-        Assert.assertTrue(attributeMap.toString(), attributeMap.toString().contains("b=2"));
-        Assert.assertTrue(attributeMap.toString(), attributeMap.toString().contains("a=1"));
+        assertThat(attributeMap.toString().contains("b=2")).as(attributeMap.toString()).isTrue();
+        assertThat(attributeMap.toString().contains("a=1")).as(attributeMap.toString()).isTrue();
     }
 
     @Test
-    public void testTrim() {
+    void testTrim() {
         AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(" person ", "person1");
         attributeMap.put("PERSON", "person2");

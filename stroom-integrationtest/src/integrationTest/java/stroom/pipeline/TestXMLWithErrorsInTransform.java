@@ -16,16 +16,16 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import stroom.pipeline.scope.PipelineScopeRunnable;
+
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -34,7 +34,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -47,9 +46,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 // TODO : Add test data
-@Ignore("Make new test data")
-public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
+
+class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
     private static final int N4 = 4;
     private static final String PIPELINE = "XMLWithErrorsInTransform/XMLWithErrorsInTransform.Pipeline.data.xml";
     private static final String INPUT = "XMLWithErrorsInTransform/HttpProblem.in";
@@ -81,7 +83,7 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
      * Tests the XMLTransformer on some sample Windows XML events.
      */
     @Test
-    public void testXMLTransformer() {
+    void testXMLTransformer() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
             final RecordCount recordCount = recordCountProvider.get();
@@ -137,16 +139,16 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
             final InputStream input = StroomPipelineTestFileUtil.getInputStream(INPUT);
             pipeline.process(input);
 
-            Assert.assertEquals(errorReceiver.toString(), N4, recordCount.getRead());
-            Assert.assertEquals(errorReceiver.toString(), 0, recordCount.getWritten());
-            Assert.assertEquals(errorReceiver.toString(), N4, recordErrorReceiver.getRecords(Severity.WARNING));
-            Assert.assertEquals(errorReceiver.toString(), N4, recordErrorReceiver.getRecords(Severity.ERROR));
+            assertThat(recordCount.getRead()).as(errorReceiver.toString()).isEqualTo(N4);
+            assertThat(recordCount.getWritten()).as(errorReceiver.toString()).isEqualTo(0);
+            assertThat(recordErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiver.toString()).isEqualTo(N4);
+            assertThat(recordErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiver.toString()).isEqualTo(N4);
 
             // Make sure no output file was produced.
-            Assert.assertTrue(!Files.isRegularFile(outputFile));
+            assertThat(!Files.isRegularFile(outputFile)).isTrue();
 
             if (recordErrorReceiver.isAllOk()) {
-                Assert.fail("Expecting to fail the schema");
+                fail("Expecting to fail the schema");
             }
         });
     }

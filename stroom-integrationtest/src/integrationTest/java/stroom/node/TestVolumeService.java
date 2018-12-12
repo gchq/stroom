@@ -17,8 +17,8 @@
 
 package stroom.node;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -26,12 +26,14 @@ import stroom.test.AbstractCoreIntegrationTest;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestVolumeService extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestVolumeService extends AbstractCoreIntegrationTest {
     @Inject
     private VolumeService volumeService;
 
     @Test
-    public void testFind() {
+    void testFind() {
         final FindVolumeCriteria criteria = new FindVolumeCriteria();
         final List<VolumeEntity> volumeList = volumeService.find(criteria);
 
@@ -39,6 +41,6 @@ public class TestVolumeService extends AbstractCoreIntegrationTest {
             volumeService.save(volume);
         }
 
-        Assert.assertEquals(volumeList.size(), volumeService.find(criteria).size());
+        assertThat(volumeService.find(criteria)).hasSize(volumeList.size());
     }
 }

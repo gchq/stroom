@@ -1,14 +1,15 @@
 package stroom.feed;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestAttributeMapUtil {
+class TestAttributeMapUtil {
     @Test
-    public void testDataFormatter1() {
+    void testDataFormatter1() {
         final String inputDateStr = "Sep  9 16:16:45 2018 GMT";
         final LocalDateTime outputDateTime = LocalDateTime.parse(
                 inputDateStr, AttributeMapUtil.CERT_EXPIRY_DATE_FORMATTER);
@@ -18,7 +19,7 @@ public class TestAttributeMapUtil {
     }
 
     @Test
-    public void testDataFormatter2() {
+    void testDataFormatter2() {
         final String inputDateStr = "Sep 10 06:39:20 2292 GMT";
         final LocalDateTime outputDateTime = LocalDateTime.parse(
                 inputDateStr, AttributeMapUtil.CERT_EXPIRY_DATE_FORMATTER);

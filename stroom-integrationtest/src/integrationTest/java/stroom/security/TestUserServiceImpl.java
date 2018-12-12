@@ -16,8 +16,8 @@
 
 package stroom.security;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -26,17 +26,19 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestUserServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestUserServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private UserService userService;
 
     @Test
-    public void testSaveAndGetBasic() {
+    void testSaveAndGetBasic() {
         createUser(FileSystemTestUtil.getUniqueTestString());
     }
 
     @Test
-    public void testSaveAndGetUserGroups() {
+    void testSaveAndGetUserGroups() {
         final UserRef user1 = createUser(FileSystemTestUtil.getUniqueTestString());
         final UserRef user2 = createUser(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
@@ -78,54 +80,54 @@ public class TestUserServiceImpl extends AbstractCoreIntegrationTest {
 
     private void checkGroupsForUser(final UserRef user, final UserRef... groups) {
         final List<UserRef> list = userService.findGroupsForUser(user);
-        Assert.assertEquals(groups.length, list.size());
+        assertThat(list.size()).isEqualTo(groups.length);
         for (final UserRef group : groups) {
-            Assert.assertTrue(list.contains(group));
+            assertThat(list.contains(group)).isTrue();
         }
     }
 
     private void checkUsersInGroup(final UserRef group, final UserRef... users) {
         final List<UserRef> list = userService.findUsersInGroup(group);
-        Assert.assertEquals(users.length, list.size());
+        assertThat(list.size()).isEqualTo(users.length);
         for (final UserRef user : users) {
-            Assert.assertTrue(list.contains(user));
+            assertThat(list.contains(user)).isTrue();
         }
     }
 
     @Test
-    public void testFindUsers() {
+    void testFindUsers() {
         final UserRef user1 = createUser(FileSystemTestUtil.getUniqueTestString());
         final UserRef user2 = createUser(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
 
-        Assert.assertEquals(1, userService.find(new FindUserCriteria(user1.getName(), false)).size());
-        Assert.assertEquals(1, userService.find(new FindUserCriteria(user2.getName(), false)).size());
-        Assert.assertEquals(1, userService.find(new FindUserCriteria(userGroup1.getName(), true)).size());
-        Assert.assertEquals(1, userService.find(new FindUserCriteria(userGroup2.getName(), true)).size());
+        assertThat(userService.find(new FindUserCriteria(user1.getName(), false)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(user2.getName(), false)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(userGroup1.getName(), true)).size()).isEqualTo(1);
+        assertThat(userService.find(new FindUserCriteria(userGroup2.getName(), true)).size()).isEqualTo(1);
 
-        Assert.assertEquals(0, userService.find(new FindUserCriteria(user1.getName(), true)).size());
-        Assert.assertEquals(0, userService.find(new FindUserCriteria(user2.getName(), true)).size());
-        Assert.assertEquals(0, userService.find(new FindUserCriteria(userGroup1.getName(), false)).size());
-        Assert.assertEquals(0, userService.find(new FindUserCriteria(userGroup2.getName(), false)).size());
+        assertThat(userService.find(new FindUserCriteria(user1.getName(), true)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(user2.getName(), true)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(userGroup1.getName(), false)).size()).isEqualTo(0);
+        assertThat(userService.find(new FindUserCriteria(userGroup2.getName(), false)).size()).isEqualTo(0);
 
-        Assert.assertEquals(2, userService.find(new FindUserCriteria(false)).size());
-        Assert.assertEquals(2, userService.find(new FindUserCriteria(true)).size());
+        assertThat(userService.find(new FindUserCriteria(false)).size()).isEqualTo(2);
+        assertThat(userService.find(new FindUserCriteria(true)).size()).isEqualTo(2);
     }
 
     private UserRef createUser(final String name) {
         UserRef userRef = userService.createUser(name);
-        Assert.assertNotNull(userRef);
+        assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
-        Assert.assertNotNull(user);
+        assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
         UserRef userRef = userService.createUserGroup(name);
-        Assert.assertNotNull(userRef);
+        assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
-        Assert.assertNotNull(user);
+        assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 }

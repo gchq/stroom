@@ -16,63 +16,61 @@
 
 package stroom.data.store;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+import org.junit.jupiter.api.Disabled;
 import stroom.util.test.StroomUnitTest;
 
-@Ignore
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamRange extends StroomUnitTest {
+
+@Disabled
+class TestStreamRange extends StroomUnitTest {
 //    @Test
 //    public void testParseNothing() {
 //        final StreamRange streamRange = new StreamRange("");
-//        Assert.assertFalse(streamRange.isFileLocation());
+//        assertThat(streamRange.isFileLocation()).isFalse();
 //    }
 //
 //    @Test
 //    public void testParseEvents() {
 //        final StreamRange streamRange = new StreamRange("EVENTS");
-//        Assert.assertFalse(streamRange.isFileLocation());
+//        assertThat(streamRange.isFileLocation()).isFalse();
 //    }
 //
 //    @Test
 //    public void testParseShortDate() {
 //        final StreamRange streamRange = new StreamRange("EVENTS/2011/01");
-//        Assert.assertFalse(streamRange.isFileLocation());
+//        assertThat(streamRange.isFileLocation()).isFalse();
 //    }
 //
 //    @Test
 //    public void testParseSmallRange() {
 //        final StreamRange streamRange = new StreamRange("EVENTS/2011/01/01");
-//        Assert.assertTrue(streamRange.isFileLocation());
-//        Assert.assertFalse(streamRange.isInvalidPath());
-//        Assert.assertEquals(1L, streamRange.getFrom().longValue());
-//        Assert.assertEquals(1000L, streamRange.getTo().longValue());
-//        Assert.assertTrue(streamRange.getCreatePeriod().getFrom()
-//                .equals(DateUtil.parseNormalDateTimeString("2011-01-01T00:00:00.000Z")));
-//        Assert.assertTrue(streamRange.getCreatePeriod().getTo()
-//                .equals(DateUtil.parseNormalDateTimeString("2011-01-02T00:00:00.000Z")));
+//        assertThat(streamRange.isFileLocation()).isTrue();
+//        assertThat(streamRange.isInvalidPath()).isFalse();
+//        assertThat(streamRange.getFrom().longValue()).isEqualTo(1L);
+//        assertThat(streamRange.getTo().longValue()).isEqualTo(1000L);
+//        assertThat(streamRange.getCreatePeriod().getFrom()
+//                .equals(DateUtil.parseNormalDateTimeString("2011-01-01T00:00:00.000Z"))).isTrue();
+//        assertThat(streamRange.getCreatePeriod().getTo()
+//                .equals(DateUtil.parseNormalDateTimeString("2011-01-02T00:00:00.000Z"))).isTrue();
 //    }
 //
 //    @Test
 //    public void testParseBigRange() {
 //        final StreamRange streamRange = new StreamRange("EVENTS/2011/01/01/101/500");
-//        Assert.assertTrue(streamRange.isFileLocation());
-//        Assert.assertFalse(streamRange.isInvalidPath());
-//        Assert.assertEquals(101500000L, streamRange.getFrom().longValue());
-//        Assert.assertEquals(101501000L, streamRange.getTo().longValue());
-//        Assert.assertTrue(streamRange.getCreatePeriod().getFrom()
-//                .equals(DateUtil.parseNormalDateTimeString("2011-01-01T00:00:00.000Z")));
-//        Assert.assertTrue(streamRange.getCreatePeriod().getTo()
-//                .equals(DateUtil.parseNormalDateTimeString("2011-01-02T00:00:00.000Z")));
+//        assertThat(streamRange.isFileLocation()).isTrue();
+//        assertThat(streamRange.isInvalidPath()).isFalse();
+//        assertThat(streamRange.getFrom().longValue()).isEqualTo(101500000L);
+//        assertThat(streamRange.getTo().longValue()).isEqualTo(101501000L);
+//        assertThat(streamRange.getCreatePeriod().getFrom()
+//                .equals(DateUtil.parseNormalDateTimeString("2011-01-01T00:00:00.000Z"))).isTrue();
+//        assertThat(streamRange.getCreatePeriod().getTo()
+//                .equals(DateUtil.parseNormalDateTimeString("2011-01-02T00:00:00.000Z"))).isTrue();
 //    }
 //
 //    @Test
 //    public void testParseBigRangeOddFolder() {
 //        final StreamRange streamRange1 = new StreamRange("EVENTS/2011/01/01/101/500/X");
-//        Assert.assertTrue(streamRange1.isInvalidPath());
+//        assertThat(streamRange1.isInvalidPath()).isTrue();
 //        final StreamRange streamRange2 = new StreamRange("EVENTS/X/X/X");
-//        Assert.assertTrue(streamRange2.isInvalidPath());
+//        assertThat(streamRange2.isInvalidPath()).isTrue();
 //    }
 }

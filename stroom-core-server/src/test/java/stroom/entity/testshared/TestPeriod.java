@@ -16,21 +16,20 @@
 
 package stroom.entity.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.entity.util.PeriodUtil;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.Period;
-import stroom.util.test.StroomJUnit4ClassRunner;
+import stroom.entity.util.PeriodUtil;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestPeriod extends StroomUnitTest {
-    @Test
-    public void testPrecision() {
-        Assert.assertEquals(3, new Period(0L, 1000L).getPrecision(1));
+import static org.assertj.core.api.Assertions.assertThat;
 
-        Assert.assertEquals(7, PeriodUtil.createYearPeriod(2013).getPrecision(1000));
+class TestPeriod extends StroomUnitTest {
+    @Test
+    void testPrecision() {
+        assertThat(new Period(0L, 1000L).getPrecision(1)).isEqualTo(3);
+
+        assertThat(PeriodUtil.createYearPeriod(2013).getPrecision(1000)).isEqualTo(7);
     }
 
 }

@@ -16,8 +16,8 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
@@ -30,9 +30,11 @@ import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.List;
 
-public class TestFetchMarkerHandler extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestFetchMarkerHandler extends StroomUnitTest {
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         doTest(4, 12);
 
         doTest(7, 12, Severity.WARNING);
@@ -45,14 +47,14 @@ public class TestFetchMarkerHandler extends StroomUnitTest {
     private void doTest(final int expectedSize, final int expectedTotal, final Severity... expanded) throws IOException {
         // Get the testing directory.
         final Path testDataDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
-        final Path testDir = testDataDir.resolve( "TestFetchMarkerHandler");
+        final Path testDir = testDataDir.resolve("TestFetchMarkerHandler");
         final Path inFile = testDir.resolve("001.dat");
         final String string = StreamUtil.fileToString(inFile);
 
         final MarkerListCreator fetchMarkerHandler = new MarkerListCreator();
         final List<Marker> markersList = fetchMarkerHandler.createFullList(new StringReader(string), expanded);
 
-        Assert.assertEquals(expectedSize, markersList.size());
+        assertThat(markersList.size()).isEqualTo(expectedSize);
 
         int total = 0;
         for (final Marker marker : markersList) {
@@ -61,6 +63,6 @@ public class TestFetchMarkerHandler extends StroomUnitTest {
             }
         }
 
-        Assert.assertEquals(expectedTotal, total);
+        assertThat(total).isEqualTo(expectedTotal);
     }
 }

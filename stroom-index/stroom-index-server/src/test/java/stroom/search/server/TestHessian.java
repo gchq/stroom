@@ -1,10 +1,11 @@
 package stroom.search.server;
 
 import com.caucho.hessian.io.Hessian2Output;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.docref.DocRef;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
@@ -12,7 +13,6 @@ import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.query.api.v2.DateTimeFormat;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -43,9 +43,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TestHessian {
+class TestHessian {
     @Test
-    public void testClusterSearchTask() throws IOException {
+    void testClusterSearchTask() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
                 .addOperator(
                         new ExpressionOperator.Builder()
@@ -118,7 +118,7 @@ public class TestHessian {
     }
 
     @Test
-    public void testNodeResult() throws IOException {
+    void testNodeResult() throws IOException {
         final GroupKey key = new GroupKey(ValString.create("test"));
         final UnsafePairQueue<GroupKey, Item> pairQueue = new UnsafePairQueue<>();
         pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v1"), getGenerator("v2")}, 0));

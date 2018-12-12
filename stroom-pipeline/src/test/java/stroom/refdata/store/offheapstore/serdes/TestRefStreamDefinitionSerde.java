@@ -17,15 +17,16 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.RefStreamDefinition;
 
 import java.util.UUID;
 
-public class TestRefStreamDefinitionSerde extends AbstractSerdeTest<RefStreamDefinition, RefStreamDefinitionSerde> {
+class TestRefStreamDefinitionSerde extends AbstractSerdeTest<RefStreamDefinition, RefStreamDefinitionSerde> {
 
     @Test
-    public void testSerialisationDeserialisation() {
+    void testSerialisationDeserialisation() {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),

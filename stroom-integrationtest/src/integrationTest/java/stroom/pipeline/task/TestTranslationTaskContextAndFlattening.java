@@ -16,18 +16,16 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.test.StoreCreationTool;
 import stroom.node.NodeCache;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.StoreCreationTool;
 
 import javax.inject.Inject;
 
-@Ignore("TODO 2015-10-21: Restore tests or delete the class.")
-public class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegrationTest {
+class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTaskContextAndFlattening/";
     private static final String FLATTENING_DIR = DIR + "TEST_FEED_FLATTENING/1";
 
@@ -51,23 +49,21 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
      * Tests Task with a valid resource and feed.
      */
     @Test
-    public void test() {
+    void test() {
         // FIXME : Fix this.
 
         // setup();
-        // Assert.assertEquals(0, streamStore.getLockCount());
+        // assertThat(streamStore.getLockCount()).isEqualTo(0);
         //
         // final List<TranslationTaskResult> results = doTest();
-        // Assert.assertEquals(1, results.size());
+        // assertThat(results.size()).isEqualTo(1);
         // for (final TranslationTaskResult result : results) {
         // Assert
-        // .assertTrue(result.toString(),
-        // result.getRecordsWritten() > 0);
-        // Assert.assertTrue(result.toString(),
-        // result.getRecordsRead() <= result.getRecordsWritten());
-        // Assert.assertEquals(result.toString(), 0, result
-        // .getRecordsWarning());
-        // Assert.assertEquals(result.toString(), 0, result.getRecordsError());
+        // .assertThat(// result.getRecordsWritten() > 0).as(result.toString()).isTrue();
+        // assertThat(// result.getRecordsRead() <= result.getRecordsWritten()).as(result.toString()).isTrue();
+        // assertThat(result
+        // .getRecordsWarning()).as(result.toString()).isEqualTo(0);
+        // assertThat(result.getRecordsError()).as(result.toString()).isEqualTo(0);
         // }
         //
         // for (final Stream stream : streamStore.getFileData().keySet()) {
@@ -81,7 +77,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
         // }
         //
         // // Make sure 1 record was written.
-        // Assert.assertEquals(1, results.loadByName(0).getRecordsWritten());
+        // assertThat(results.loadByName(0).getRecordsWritten()).isEqualTo(1);
         //
         // // Compare all files.
         // ComparisonHelper.compareFiles(StroomProcessTestFileUtil
@@ -90,9 +86,9 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
         // // Make sure flattening dir exists.
         // final Path flatteningDir = StroomProcessTestFileUtil
         // .getTestDataDir().resolve(FLATTENING_DIR);
-        // Assert.assertTrue(Files.isDirectory(flatteningDir));
+        // assertThat(Files.isDirectory(flatteningDir)).isTrue();
         // final Path flatFile = flatteningDir.resolve("2_STROOM.out");
-        // Assert.assertTrue(Files.isRegularFile(flatFile));
+        // assertThat(Files.isRegularFile(flatFile)).isTrue();
     }
 
     // private List<TranslationTaskResult> doTest() {

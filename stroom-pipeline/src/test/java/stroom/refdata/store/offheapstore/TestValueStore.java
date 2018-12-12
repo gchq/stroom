@@ -17,17 +17,18 @@
 
 package stroom.refdata.store.offheapstore;
 
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.StringValue;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreMetaDb;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
@@ -35,25 +36,23 @@ import stroom.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.PooledByteBuffer;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestValueStore extends AbstractLmdbDbTest {
+class TestValueStore extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStore.class);
-
+    private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
+    private final ByteBufferPool byteBufferPool = new ByteBufferPool();
     private ValueStore valueStore = null;
     private ValueStoreDb valueStoreDb = null;
     private ValueStoreMetaDb valueStoreMetaDb = null;
 
-    private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
-
-    private final ByteBufferPool byteBufferPool = new ByteBufferPool();
-
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         valueStoreDb = new ValueStoreDb(
@@ -85,7 +84,7 @@ public class TestValueStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGetOrCreate() {
+    void testGetOrCreate() {
 
         // 1 & 2 have the same hashcode, 3 has a different hashcode
         final String stringValueStr1 = "Aa";
@@ -197,7 +196,7 @@ public class TestValueStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testDereference() {
+    void testDereference() {
 
         StringValue value1 = StringValue.of("1111");
         StringValue value2 = StringValue.of("2222");

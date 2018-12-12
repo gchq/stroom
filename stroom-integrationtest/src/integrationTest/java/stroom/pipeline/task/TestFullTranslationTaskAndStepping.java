@@ -16,7 +16,8 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -25,7 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 
-public class TestFullTranslationTaskAndStepping extends TranslationTest {
+class TestFullTranslationTaskAndStepping extends TranslationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
     @Override
@@ -35,57 +36,57 @@ public class TestFullTranslationTaskAndStepping extends TranslationTest {
     }
 
     @Test
-    public void testBOMXMLEvents() throws IOException {
+    void testBOMXMLEvents() throws IOException {
         testStepping("BOM_XML-EVENTS");
     }
 
     @Test
-    public void testBOMAndReplaceXMLEvents() throws IOException {
+    void testBOMAndReplaceXMLEvents() throws IOException {
         testStepping("BOM_AND_REPLACE_XML-EVENTS");
     }
 
     @Test
-    public void testDataSplitterEvents() throws IOException {
+    void testDataSplitterEvents() throws IOException {
         testStepping("DATA_SPLITTER-EVENTS");
     }
 
     @Test
-    public void testFileToLocationReference() throws IOException {
+    void testFileToLocationReference() throws IOException {
         testStepping("FILENO_TO_LOCATION-REFERENCE");
     }
 
     @Test
-    public void testJSONEvents() throws IOException {
+    void testJSONEvents() throws IOException {
         testStepping("JSON-EVENTS");
     }
 
     @Test
-    public void testRawStreamingEvents() throws IOException {
+    void testRawStreamingEvents() throws IOException {
         testStepping("RAW_STREAMING-EVENTS");
     }
 
     @Test
-    public void testRawStreamingForkEvents() throws IOException {
+    void testRawStreamingForkEvents() throws IOException {
         testStepping("RAW_STREAMING_FORK-EVENTS");
     }
 
     @Test
-    public void testXMLFragmentEvents() throws IOException {
+    void testXMLFragmentEvents() throws IOException {
         testStepping("XML_FRAGMENT-EVENTS");
     }
 
     @Test
-    public void testXMLEvents() throws IOException {
+    void testXMLEvents() throws IOException {
         testStepping("XML-EVENTS");
     }
 
     @Test
-    public void testXMLReaderEvents() throws IOException {
+    void testXMLReaderEvents() throws IOException {
         testStepping("XML_READER-EVENTS");
     }
 
     @Test
-    public void testZipTestDataSplitterEvents() throws IOException {
+    void testZipTestDataSplitterEvents() throws IOException {
         testStepping("ZIP_TEST-DATA_SPLITTER-EVENTS");
     }
 

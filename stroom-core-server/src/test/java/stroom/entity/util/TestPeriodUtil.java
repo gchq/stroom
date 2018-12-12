@@ -16,15 +16,14 @@
 
 package stroom.entity.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.Period;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestPeriodUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestPeriodUtil extends StroomUnitTest {
     private static final int N2000 = 2000;
     private static final int N2001 = 2001;
     private static final int N2002 = 2002;
@@ -33,16 +32,16 @@ public class TestPeriodUtil extends StroomUnitTest {
     private static final int N31 = 31;
 
     @Test
-    public void test1() {
-        Assert.assertTrue(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2001, N1, N1)));
-        Assert.assertTrue(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2001, N12, N31)));
-        Assert.assertFalse(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2000, N12, N31)));
-        Assert.assertFalse(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2002, N1, N1)));
+    void test1() {
+        assertThat(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2001, N1, N1))).isTrue();
+        assertThat(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2001, N12, N31))).isTrue();
+        assertThat(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2000, N12, N31))).isFalse();
+        assertThat(PeriodUtil.createYearPeriod(N2001).contains(PeriodUtil.createDate(N2002, N1, N1))).isFalse();
     }
 
     @Test
-    public void testGetPrecision() {
-        Assert.assertEquals(0, PeriodUtil.getPrecision(new Period(0L, 100L).duration(), 100));
-        Assert.assertEquals(1, PeriodUtil.getPrecision(new Period(0L, 100L).duration(), 10));
+    void testGetPrecision() {
+        assertThat(PeriodUtil.getPrecision(new Period(0L, 100L).duration(), 100)).isEqualTo(0);
+        assertThat(PeriodUtil.getPrecision(new Period(0L, 100L).duration(), 10)).isEqualTo(1);
     }
 }

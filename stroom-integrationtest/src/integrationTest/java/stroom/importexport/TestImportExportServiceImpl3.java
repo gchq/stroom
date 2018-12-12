@@ -17,8 +17,8 @@
 
 package stroom.importexport;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -35,14 +35,16 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
     @Inject
     private ExplorerService explorerService;
 
     @Test
-    public void testImportZip() throws IOException {
+    void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
             explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
@@ -56,17 +58,17 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
 
         importExportService.exportConfig(null, testFile, msgList);
 
-        Assert.assertEquals(0, msgList.size());
+        assertThat(msgList.size()).isEqualTo(0);
 
         final List<String> list = ZipUtil.pathList(testFile);
 
         // Expected size is 1 greater than batch size because it should contain the parent folder for the feeds.
         final int expectedSize = BATCH_SIZE * 2;
 
-        Assert.assertEquals(expectedSize, list.size());
+        assertThat(list.size()).isEqualTo(expectedSize);
 
         final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
 
-        Assert.assertEquals(BATCH_SIZE, confirmList.size());
+        assertThat(confirmList.size()).isEqualTo(BATCH_SIZE);
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.test;
 
-import org.junit.Assert;
+
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.OutputStreamProvider;
@@ -55,9 +55,6 @@ import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.Processor;
-import stroom.test.CommonTestControl;
-import stroom.test.CommonTestScenarioCreator;
-import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -74,9 +71,12 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * A tool used to add data to a stream store.
  */
+
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
     private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
@@ -170,7 +170,7 @@ public final class StoreCreationTool {
 
         try {
             final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
-            Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
+            assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
             streamStore.closeStreamSource(checkSource);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -325,7 +325,7 @@ public final class StoreCreationTool {
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
         final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getStream().getId());
-        Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
+        assertThat(StreamUtil.streamToString(checkSource.getInputStream())).isEqualTo(data);
         streamStore.closeStreamSource(checkSource);
     }
 
@@ -536,7 +536,7 @@ public final class StoreCreationTool {
         String data = null;
         if (textConverterLocation != null) {
             data = StreamUtil.fileToString(textConverterLocation);
-            Assert.assertNotNull("Did not find " + FileUtil.getCanonicalPath(textConverterLocation), data);
+            assertThat(data).as("Did not find " + FileUtil.getCanonicalPath(textConverterLocation)).isNotNull();
         }
 
         // Create a new text converter entity.
@@ -564,7 +564,7 @@ public final class StoreCreationTool {
         String data = null;
         if (xsltLocation != null) {
             data = StreamUtil.fileToString(xsltLocation);
-            Assert.assertNotNull("Did not find " + xsltLocation, data);
+            assertThat(data).as("Did not find " + xsltLocation).isNotNull();
         }
 
         // Create the new XSLT entity.

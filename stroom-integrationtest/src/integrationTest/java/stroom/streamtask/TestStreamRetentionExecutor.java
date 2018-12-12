@@ -17,21 +17,21 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedStore;
-import stroom.feed.shared.FeedDoc;
-import stroom.data.store.StreamRetentionExecutor;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.store.StreamRetentionExecutor;
+import stroom.docref.DocRef;
+import stroom.entity.shared.BaseResultList;
+import stroom.feed.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -40,9 +40,12 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 // TODO : @66 FIX DATA RETENTION
-@Ignore
-public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
+
+@Disabled
+class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamRetentionExecutor.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
 
@@ -54,7 +57,7 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     private StreamRetentionExecutor streamRetentionExecutor;
 
     @Test
-    public void testMultipleRuns() {
+    void testMultipleRuns() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final long now = System.currentTimeMillis();
@@ -104,12 +107,12 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
 
         dumpStreams();
 
-        Assert.assertEquals(DataStatus.UNLOCKED, streamInsideRetention.getStatus());
-        Assert.assertEquals(DataStatus.DELETED, streamOutsideRetention.getStatus());
+        assertThat(streamInsideRetention.getStatus()).isEqualTo(DataStatus.UNLOCKED);
+        assertThat(streamOutsideRetention.getStatus()).isEqualTo(DataStatus.DELETED);
         // no change to the record
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
+        assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
         // record changed
-        Assert.assertTrue(streamOutsideRetention.getStatusMs() > lastStatusMsOutside);
+        assertThat(streamOutsideRetention.getStatusMs() > lastStatusMsOutside).isTrue();
 
         lastStatusMsInside = streamInsideRetention.getStatusMs();
         lastStatusMsOutside = streamOutsideRetention.getStatusMs();
@@ -123,17 +126,17 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
 
         dumpStreams();
 
-        Assert.assertEquals(DataStatus.UNLOCKED, streamInsideRetention.getStatus());
-        Assert.assertEquals(DataStatus.DELETED, streamOutsideRetention.getStatus());
+        assertThat(streamInsideRetention.getStatus()).isEqualTo(DataStatus.UNLOCKED);
+        assertThat(streamOutsideRetention.getStatus()).isEqualTo(DataStatus.DELETED);
         // no change to the records
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
-        Assert.assertEquals(lastStatusMsOutside, streamOutsideRetention.getStatusMs());
+        assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
+        assertThat(streamOutsideRetention.getStatusMs()).isEqualTo(lastStatusMsOutside);
     }
 
     private void dumpStreams() {
         final BaseResultList<Data> streams = streamMetaService.find(new FindDataCriteria());
 
-        Assert.assertEquals(2, streams.size());
+        assertThat(streams.size()).isEqualTo(2);
 
         for (final Data stream : streams) {
             LOGGER.info("stream: {}, createMs: {}, statusMs: {}, status: {}", stream,

@@ -17,51 +17,49 @@
 
 package stroom.refdata.store.offheapstore.databases;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.ByteSizeUnit;
 import stroom.util.test.StroomUnitTest;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
     private static final long DB_MAX_SIZE = ByteSizeUnit.KIBIBYTE.longBytes(1000);
-
-    @Rule
-    public final TemporaryFolder tmpDir = new TemporaryFolder();
-
     protected Env<ByteBuffer> lmdbEnv = null;
+    private Path dbDir = null;
 
-    @Before
-    public void setup() {
-
-        Path dbDir = tmpDir.getRoot().toPath();
+    @BeforeEach
+    protected void setup() throws IOException {
+        dbDir = Files.createTempDirectory("stroom");
         LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
 
-        lmdbEnv = Env.<ByteBuffer>create()
+        lmdbEnv = Env.create()
                 .setMapSize(getMaxSizeBytes())
                 .setMaxDbs(10)
                 .open(dbDir.toFile());
     }
 
-    @After
-    public void teardown() {
+    @AfterEach
+    public void teardown() throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
         lmdbEnv = null;
+        Files.deleteIfExists(dbDir);
     }
 
-
+    protected Path getDbDir() {
+        return dbDir;
+    }
 
     protected long getMaxSizeBytes() {
         return DB_MAX_SIZE;

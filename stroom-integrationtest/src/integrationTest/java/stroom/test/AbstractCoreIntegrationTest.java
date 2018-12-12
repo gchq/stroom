@@ -18,7 +18,8 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import stroom.persist.PersistService;
 import stroom.task.TaskManager;
 
@@ -35,13 +36,13 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         injector.getInstance(TaskManager.class).startup();
     }
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before(final TestInfo testInfo) {
 //        final Injector childInjector = injector.createChildInjector();
 //        childInjector.injectMembers(this);
 
         injector.injectMembers(this);
-        super.before();
+        super.before(testInfo);
     }
 //
 //    @After

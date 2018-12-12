@@ -386,10 +386,6 @@ class TestConfigMapper {
 
     private static class TestConfig implements IsConfig {
 
-        public enum State {
-            ON, IN_BETWEEN, OFF
-        }
-
         private String stringProp = "initial value";
         private List<String> stringListProp = new ArrayList<>();
         private List<Integer> intListProp = new ArrayList<>();
@@ -400,7 +396,6 @@ class TestConfigMapper {
                 new DocRef("MyType2", UUID.randomUUID().toString(), "MyDocRef2"));
         private State stateProp = State.OFF;
         private List<State> stateListProp = List.of(State.ON, State.IN_BETWEEN);
-
         // sub-configs
         private TestPrimitiveConfig testPrimitiveConfig = new TestPrimitiveConfig();
         private TestBoxedConfig testBoxedConfig = new TestBoxedConfig();
@@ -499,6 +494,10 @@ class TestConfigMapper {
 
         void setStateListProp(final List<State> stateListProp) {
             this.stateListProp = stateListProp;
+        }
+
+        public enum State {
+            ON, IN_BETWEEN, OFF
         }
     }
 

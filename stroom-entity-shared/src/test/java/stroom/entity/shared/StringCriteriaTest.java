@@ -16,15 +16,17 @@
 
 package stroom.entity.shared;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StringCriteriaTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class StringCriteriaTest {
     @Test
-    public void testConvertStringList() {
+    void testConvertStringList() {
         List<String> strings = new ArrayList<>();
         strings.add("abcdef");
         strings.add("ABCDEF");
@@ -32,7 +34,7 @@ public class StringCriteriaTest {
         List<StringCriteria> criteriaList = StringCriteria.convertStringList(strings);
 
         for (int i = 0; i < strings.size(); i++) {
-            Assert.assertEquals(strings.get(i).toString(), criteriaList.get(i).toString());
+            assertThat(criteriaList.get(i).toString()).isEqualTo(strings.get(i).toString());
 
         }
 

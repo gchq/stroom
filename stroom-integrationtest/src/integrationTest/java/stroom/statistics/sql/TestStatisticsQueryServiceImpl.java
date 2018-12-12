@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -68,7 +68,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
+class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStatisticsQueryServiceImpl.class);
 
     private static final String STAT_NAME = "MyStat";
@@ -157,7 +157,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatisticsData_TwoTags() throws SQLException {
+    void testSearchStatisticsData_TwoTags() throws SQLException {
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             tags.add(new StatisticTag(TAG1, TAG1_VAL));
@@ -174,7 +174,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatisticsData_TwoTags_incrementalNoTimeout() throws SQLException {
+    void testSearchStatisticsData_TwoTags_incrementalNoTimeout() throws SQLException {
 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
@@ -203,7 +203,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatisticsData_TwoTags_incremental10sTimeout() throws SQLException {
+    void testSearchStatisticsData_TwoTags_incremental10sTimeout() throws SQLException {
 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
@@ -231,7 +231,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
 
     @Test
-    public void testSearchStatisticsData_OneTagTwoOptions() throws SQLException {
+    void testSearchStatisticsData_OneTagTwoOptions() throws SQLException {
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             tags.add(new StatisticTag(TAG1, TAG1_VAL));
@@ -253,7 +253,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatisticsData_TwoTagsOneNull() throws SQLException {
+    void testSearchStatisticsData_TwoTagsOneNull() throws SQLException {
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             tags.add(new StatisticTag(TAG1, null));
@@ -275,7 +275,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     }
 
     @Test
-    public void testSearchStatisticsData_TwoTagsOneHasNastyChars() throws SQLException {
+    void testSearchStatisticsData_TwoTagsOneHasNastyChars() throws SQLException {
 
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();

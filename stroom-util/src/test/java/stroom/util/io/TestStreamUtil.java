@@ -16,37 +16,36 @@
 
 package stroom.util.io;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamUtil {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamUtil {
     private static final int SIZE = 25;
 
     @Test
-    public void testFullRead() throws IOException {
+    void testFullRead() throws IOException {
         byte[] buffer = new byte[10];
 
         InputStream testStream = new TestInputStream();
-        Assert.assertEquals(10, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(10, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(5, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(-1, StreamUtil.eagerRead(testStream, buffer));
-        Assert.assertEquals(-1, StreamUtil.eagerRead(testStream, buffer));
+        assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(10);
+        assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(10);
+        assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(5);
+        assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(-1);
+        assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(-1);
     }
 
     @Test
-    public void testException() {
+    void testException() {
         try {
             throw new RuntimeException();
         } catch (RuntimeException ex) {
             String callStack = StreamUtil.exceptionCallStack(ex);
-            Assert.assertTrue(callStack, callStack.contains("testException"));
+            assertThat(callStack.contains("testException")).as(callStack).isTrue();
         }
     }
 

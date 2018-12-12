@@ -16,42 +16,44 @@
 
 package stroom.statistics.shared.common;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class TestCustomRollUpMask {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestCustomRollUpMask {
     @Test
-    public void testIsTagRolledUp() {
+    void testIsTagRolledUp() {
         final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));
 
-        Assert.assertTrue(mask.isTagRolledUp(3));
-        Assert.assertFalse(mask.isTagRolledUp(2));
-        Assert.assertTrue(mask.isTagRolledUp(1));
-        Assert.assertTrue(mask.isTagRolledUp(0));
+        assertThat(mask.isTagRolledUp(3)).isTrue();
+        assertThat(mask.isTagRolledUp(2)).isFalse();
+        assertThat(mask.isTagRolledUp(1)).isTrue();
+        assertThat(mask.isTagRolledUp(0)).isTrue();
     }
 
     @Test
-    public void testSetRollUpState() {
+    void testSetRollUpState() {
         final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));
 
-        Assert.assertFalse(mask.isTagRolledUp(2));
-        Assert.assertTrue(mask.isTagRolledUp(3));
+        assertThat(mask.isTagRolledUp(2)).isFalse();
+        assertThat(mask.isTagRolledUp(3)).isTrue();
 
         mask.setRollUpState(2, false);
-        Assert.assertFalse(mask.isTagRolledUp(2));
+        assertThat(mask.isTagRolledUp(2)).isFalse();
 
         mask.setRollUpState(2, true);
-        Assert.assertTrue(mask.isTagRolledUp(2));
+        assertThat(mask.isTagRolledUp(2)).isTrue();
 
         mask.setRollUpState(2, false);
-        Assert.assertFalse(mask.isTagRolledUp(2));
+        assertThat(mask.isTagRolledUp(2)).isFalse();
 
         mask.setRollUpState(3, true);
-        Assert.assertTrue(mask.isTagRolledUp(3));
+        assertThat(mask.isTagRolledUp(3)).isTrue();
 
         mask.setRollUpState(3, false);
-        Assert.assertFalse(mask.isTagRolledUp(3));
+        assertThat(mask.isTagRolledUp(3)).isFalse();
     }
 }

@@ -17,16 +17,17 @@
 
 package stroom.refdata.store.onheapstore;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.RefStreamDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestKeyValueMapKey {
+class TestKeyValueMapKey {
 
     @Test
-    public void testEqualsAndHashcode() {
+    void testEqualsAndHashcode() {
         KeyValueMapKey key1 = new KeyValueMapKey(
                 new MapDefinition(
                         new RefStreamDefinition("uid1", "ver1", 123L),
@@ -44,7 +45,7 @@ public class TestKeyValueMapKey {
     }
 
     @Test
-    public void testEqualsAndHashcode_differentKey() {
+    void testEqualsAndHashcode_differentKey() {
         KeyValueMapKey key1 = new KeyValueMapKey(
                 new MapDefinition(
                         new RefStreamDefinition("uid1", "ver1", 123L),

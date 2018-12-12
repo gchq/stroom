@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import org.junit.Assert;
+
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -47,13 +47,11 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     @Inject
     private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
-
-    protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, searchResponseCreatorManager);
-    }
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final SearchResponseCreatorManager searchResponseCreatorManager) {
@@ -70,21 +68,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         return response;
-    }
-
-    public void testInteractive(
-            final ExpressionOperator.Builder expressionIn,
-            final int expectResultCount,
-            final List<String> componentIds,
-            final Function<Boolean, TableSettings> tableSettingsCreator,
-            final boolean extractValues,
-            final Consumer<Map<String, List<Row>>> resultMapConsumer,
-            final int maxShardTasks,
-            final int maxExtractionTasks,
-            final IndexStore indexStore) {
-        testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, maxShardTasks,
-                maxExtractionTasks, indexStore, searchResponseCreatorManager);
     }
 
     public static void testInteractive(
@@ -112,7 +95,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
-        Assert.assertNotNull("Index is null", index);
+        assertThat(index).as("Index is null").isNotNull();
 
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
@@ -146,10 +129,29 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         if (expectResultCount == 0) {
-            Assert.assertEquals(0, rows.size());
+            assertThat(rows).isEmpty();
         } else {
-            Assert.assertEquals(componentIds.size(), rows.size());
+            assertThat(rows).hasSize(componentIds.size());
         }
         resultMapConsumer.accept(rows);
+    }
+
+    protected SearchResponse search(SearchRequest searchRequest) {
+        return search(searchRequest, searchResponseCreatorManager);
+    }
+
+    public void testInteractive(
+            final ExpressionOperator.Builder expressionIn,
+            final int expectResultCount,
+            final List<String> componentIds,
+            final Function<Boolean, TableSettings> tableSettingsCreator,
+            final boolean extractValues,
+            final Consumer<Map<String, List<Row>>> resultMapConsumer,
+            final int maxShardTasks,
+            final int maxExtractionTasks,
+            final IndexStore indexStore) {
+        testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
+                extractValues, resultMapConsumer, maxShardTasks,
+                maxExtractionTasks, indexStore, searchResponseCreatorManager);
     }
 }

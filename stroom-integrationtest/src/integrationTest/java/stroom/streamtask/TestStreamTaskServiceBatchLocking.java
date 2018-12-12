@@ -17,7 +17,8 @@
 
 package stroom.streamtask;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.StroomEntityManager;
 import stroom.node.NodeCache;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -25,7 +26,7 @@ import stroom.test.CommonTestScenarioCreator;
 
 import javax.inject.Inject;
 
-public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
+class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -45,7 +46,7 @@ public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTe
     }
 
     @Test
-    public void test() {
+    void test() {
     }
 
     //
@@ -118,7 +119,7 @@ public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTe
     //
     // threadPoolExecutor.awaitTermination(1000, TimeUnit.SECONDS);
     //
-    // Assert.assertEquals("No threads are expected to fail", 0, failedCount);
+    // assertThat(failedCount).as("No threads are expected to fail").isEqualTo(0);
     //
     // }
 }

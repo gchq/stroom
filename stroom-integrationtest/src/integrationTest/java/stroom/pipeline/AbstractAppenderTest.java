@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
+
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
@@ -58,6 +58,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
@@ -164,7 +166,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
             // Get the input streams.
             final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
-            Assert.assertTrue("Can't find input dir", Files.isDirectory(inputDir));
+            assertThat(Files.isDirectory(inputDir)).as("Can't find input dir").isTrue();
 
             final List<Path> inputFiles = new ArrayList<>();
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, name + "*.in")) {
@@ -174,7 +176,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
             }
             inputFiles.sort(Comparator.naturalOrder());
 
-            Assert.assertTrue("Can't find any input files", inputFiles.size() > 0);
+            assertThat(inputFiles.size() > 0).as("Can't find any input files").isTrue();
 
             pipeline.startProcessing();
 
@@ -198,21 +200,21 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     void validateProcess() {
         final RecordCount recordCount = recordCountProvider.get();
-        Assert.assertTrue(recordCount.getRead() > 0);
-        Assert.assertTrue(recordCount.getWritten() > 0);
-        // Assert.assertEquals(recordCount.getRead(), recordCount.getWritten());
-        Assert.assertEquals(200, recordCount.getRead());
-        Assert.assertEquals(200 - 59, recordCount.getWritten());
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-        Assert.assertEquals(59, loggingErrorReceiver.getRecords(Severity.ERROR));
-        Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+        assertThat(recordCount.getRead() > 0).isTrue();
+        assertThat(recordCount.getWritten() > 0).isTrue();
+        // assertThat(recordCount.getWritten()).isEqualTo(recordCount.getRead());
+        assertThat(recordCount.getRead()).isEqualTo(200);
+        assertThat(recordCount.getWritten()).isEqualTo(200 - 59);
+        assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).isEqualTo(0);
+        assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).isEqualTo(59);
+        assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
     }
 
     void validateOuptut(final String outputReference,
                         final String type) {
         try {
             final List<Data> list = dataMetaService.find(new FindDataCriteria());
-            Assert.assertEquals(1, list.size());
+            assertThat(list.size()).isEqualTo(1);
 
             final long id = list.get(0).getId();
             checkOuterData(id, type.equalsIgnoreCase("text"));
@@ -333,7 +335,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
         final String refData = StreamUtil.fileToString(refFile);
         final String data = StreamUtil.streamToString(streamSource.getInputStream());
-        Assert.assertEquals(refData, data);
+        assertThat(data).isEqualTo(refData);
         streamStore.closeStreamSource(streamSource);
     }
 
@@ -341,14 +343,14 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
 
-        Assert.assertEquals(count, segmentInputStream.count());
+        assertThat(segmentInputStream.count()).isEqualTo(count);
 
         // Include the first and last segment only.
         segmentInputStream.include(0);
         segmentInputStream.include(segmentInputStream.count() - 1);
 
         final String data = StreamUtil.streamToString(segmentInputStream);
-        Assert.assertEquals(ref, data);
+        assertThat(data).isEqualTo(ref);
 
         streamStore.closeStreamSource(streamSource);
     }
@@ -357,7 +359,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
 
-        Assert.assertEquals(count, segmentInputStream.count());
+        assertThat(segmentInputStream.count()).isEqualTo(count);
 
         // Include the first and last segment only.
         segmentInputStream.include(0);
@@ -366,7 +368,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         segmentInputStream.include(segmentInputStream.count() - 1);
 
         final String data = StreamUtil.streamToString(segmentInputStream);
-        Assert.assertEquals(ref, data);
+        assertThat(data).isEqualTo(ref);
 
         streamStore.closeStreamSource(streamSource);
     }

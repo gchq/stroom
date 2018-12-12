@@ -16,48 +16,47 @@
 
 package stroom.entity.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.CriteriaSet;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestCriteriaSet extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestCriteriaSet extends StroomUnitTest {
     @Test
-    public void testSimple() {
+    void testSimple() {
         final CriteriaSet<Integer> testCase = new CriteriaSet<>();
 
-        Assert.assertFalse(testCase.isConstrained());
-        Assert.assertTrue(testCase.isMatch(1));
+        assertThat(testCase.isConstrained()).isFalse();
+        assertThat(testCase.isMatch(1)).isTrue();
 
         testCase.setMatchNull(true);
 
-        Assert.assertTrue(testCase.isConstrained());
-        Assert.assertFalse(testCase.isMatch(1));
-        Assert.assertTrue(testCase.isMatch(null));
+        assertThat(testCase.isConstrained()).isTrue();
+        assertThat(testCase.isMatch(1)).isFalse();
+        assertThat(testCase.isMatch(null)).isTrue();
 
         testCase.add(1);
-        Assert.assertTrue(testCase.isMatch(1));
+        assertThat(testCase.isMatch(1)).isTrue();
     }
 
     @Test
-    public void testFlags() {
+    void testFlags() {
         final CriteriaSet<Long> totalFolderIdSet = new CriteriaSet<>();
         totalFolderIdSet.setMatchAll(false);
 
-        Assert.assertTrue(totalFolderIdSet.isConstrained());
-        Assert.assertTrue(totalFolderIdSet.isMatchNothing());
+        assertThat(totalFolderIdSet.isConstrained()).isTrue();
+        assertThat(totalFolderIdSet.isMatchNothing()).isTrue();
 
     }
 
     @Test
-    public void testNullMatches() {
+    void testNullMatches() {
         final CriteriaSet<Long> totalFolderIdSet = new CriteriaSet<>();
         totalFolderIdSet.add(1L);
-        Assert.assertFalse(totalFolderIdSet.isMatch((Long) null));
+        assertThat(totalFolderIdSet.isMatch((Long) null)).isFalse();
         totalFolderIdSet.setMatchNull(Boolean.TRUE);
-        Assert.assertTrue(totalFolderIdSet.isMatch((Long) null));
+        assertThat(totalFolderIdSet.isMatch((Long) null)).isTrue();
     }
 }

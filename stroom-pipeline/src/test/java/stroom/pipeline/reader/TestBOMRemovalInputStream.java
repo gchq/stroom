@@ -16,13 +16,11 @@
 
 package stroom.pipeline.reader;
 
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import stroom.util.ZipResource;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
@@ -31,26 +29,37 @@ import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipInputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 // TODO : Add test data
-@Ignore("Add test data")
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBOMRemovalInputStream extends StroomUnitTest {
-    @ClassRule
-    public static ZipResource bomBlank = new ZipResource("stroom/resource/server/BOM_BLANK");
-    @ClassRule
-    public static ZipResource bomContent = new ZipResource("stroom/resource/server/BOM_CONTENT");
+
+class TestBOMRemovalInputStream extends StroomUnitTest {
+    private static ZipResource bomBlank = new ZipResource("stroom/resource/server/BOM_BLANK");
+    private static ZipResource bomContent = new ZipResource("stroom/resource/server/BOM_CONTENT");
+
+    @BeforeAll
+    static void before() throws IOException {
+        bomBlank.before();
+        bomContent.before();
+    }
+
+    @AfterAll
+    static void after() {
+        bomBlank.after();
+        bomContent.after();
+    }
 
     @Test
-    public void testBlank() throws IOException {
+    void testBlank() throws IOException {
         final LineNumberReader lineNumberReader = getLineNumberReader(bomBlank);
-        Assert.assertNull(lineNumberReader.readLine());
+        assertThat(lineNumberReader.readLine()).isNull();
         lineNumberReader.close();
     }
 
     @Test
-    public void testContent() throws IOException {
+    void testContent() throws IOException {
         final LineNumberReader lineNumberReader = getLineNumberReader(bomContent);
-        Assert.assertNotNull(lineNumberReader.readLine());
+        assertThat(lineNumberReader.readLine()).isNotNull();
         lineNumberReader.close();
     }
 
@@ -58,8 +67,7 @@ public class TestBOMRemovalInputStream extends StroomUnitTest {
         final ZipInputStream zipInputStream = zipResource.getZipInputStream();
         zipInputStream.getNextEntry();
 
-        final LineNumberReader lineNumberReader = new LineNumberReader(new InputStreamReader(
+        return new LineNumberReader(new InputStreamReader(
                 new BOMRemovalInputStream(zipInputStream, StandardCharsets.UTF_8.toString()), StandardCharsets.UTF_8));
-        return lineNumberReader;
     }
 }

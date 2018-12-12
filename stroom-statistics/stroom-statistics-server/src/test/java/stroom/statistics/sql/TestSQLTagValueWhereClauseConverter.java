@@ -16,11 +16,9 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import stroom.entity.util.SqlBuilder;
 import stroom.statistics.sql.search.FilterOperationMode;
 import stroom.statistics.sql.search.FilterTermsTree;
@@ -30,18 +28,17 @@ import stroom.util.test.StroomUnitTest;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 
-public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
-    @Rule
-    public TestName testName = new TestName();
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Before
-    public void before() {
-        System.out.println("\nTest: " + testName.getMethodName());
+class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
+    @BeforeEach
+    void before(TestInfo testInfo) {
+        System.out.println("\nTest: " + testInfo.getDisplayName());
         System.out.println("----------------------------------");
     }
 
     @Test
-    public void testOneTermNode() {
+    void testOneTermNode() {
         final FilterTermsTree.TermNode termNode = new FilterTermsTree.TermNode("Tag1", "Tag1Val1");
 
         final FilterTermsTree tree = new FilterTermsTree(termNode);
@@ -52,7 +49,7 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
     }
 
     @Test
-    public void testTwoTermsInAnd() {
+    void testTwoTermsInAnd() {
         final PrintableNode termNode1 = new FilterTermsTree.TermNode("Tag1", "Tag1Val1");
         final PrintableNode termNode2 = new FilterTermsTree.TermNode("Tag2", "Tag2Val1");
         final FilterTermsTree.OperatorNode opNode = new FilterTermsTree.OperatorNode(FilterOperationMode.AND, Arrays.asList(termNode1, termNode2));
@@ -66,7 +63,7 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
     }
 
     @Test
-    public void testOneTermAndNotTwoTermsInAnd() {
+    void testOneTermAndNotTwoTermsInAnd() {
         final PrintableNode termNode1 = new FilterTermsTree.TermNode("Tag1", "Tag1Val1");
         final PrintableNode termNode2 = new FilterTermsTree.TermNode("Tag2", "Tag2Val1");
         final PrintableNode termNode3 = new FilterTermsTree.TermNode("Tag3", "Tag3Val1");
@@ -86,12 +83,12 @@ public class TestSQLTagValueWhereClauseConverter extends StroomUnitTest {
     }
 
     private void checkExpectedBinds(final int expectedCount, final SqlBuilder sqlBuilder) {
-        Assert.assertEquals(expectedCount, sqlBuilder.getArgCount());
-        Assert.assertEquals(expectedCount, getNumOfOccurrences(sqlBuilder.toString(), "?"));
+        assertThat(sqlBuilder.getArgCount()).isEqualTo(expectedCount);
+        assertThat(getNumOfOccurrences(sqlBuilder.toString(), "?")).isEqualTo(expectedCount);
     }
 
     private void checkExpectedOperatorCount(final int expectedCount, final String operator, final SqlBuilder sqlBuilder) {
-        Assert.assertEquals(expectedCount, getNumOfOccurrences(sqlBuilder.toString(), operator));
+        assertThat(getNumOfOccurrences(sqlBuilder.toString(), operator)).isEqualTo(expectedCount);
     }
 
     private SqlBuilder convertAndDump(final FilterTermsTree tree) {

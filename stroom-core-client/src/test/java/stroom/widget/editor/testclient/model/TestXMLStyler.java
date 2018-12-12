@@ -16,7 +16,8 @@
 
 package stroom.widget.editor.testclient.model;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.editor.client.model.XMLStyler;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomCoreClientTestFileUtil;
@@ -25,47 +26,47 @@ import stroom.util.io.StreamUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class TestXMLStyler {
+class TestXMLStyler {
     private static final String PRE_START_ELEMENT = "<pre class=\"xmlArea-ContentPre\">";
     private static final String PRE_END_ELEMENT = "</pre>";
 
     @Test
-    public void testXML() throws IOException {
+    void testXML() throws IOException {
         test("XML");
     }
 
     @Test
-    public void testXSLT() throws IOException {
+    void testXSLT() throws IOException {
         test("XSLT");
     }
 
     @Test
-    public void testWhitespace() throws IOException {
+    void testWhitespace() throws IOException {
         test("TestWhitespace");
     }
 
     @Test
-    public void testComments() throws IOException {
+    void testComments() throws IOException {
         test("TestComments");
     }
 
     @Test
-    public void testAttributes() throws IOException {
+    void testAttributes() throws IOException {
         test("TestAttributes");
     }
 
     @Test
-    public void testAttributes2() throws IOException {
+    void testAttributes2() throws IOException {
         test("TestAttributes2");
     }
 
     @Test
-    public void testAttributes3() throws IOException {
+    void testAttributes3() throws IOException {
         test("TestAttributes3");
     }
 
     @Test
-    public void testAttributes4() throws IOException {
+    void testAttributes4() throws IOException {
         test("TestAttributes4");
     }
 

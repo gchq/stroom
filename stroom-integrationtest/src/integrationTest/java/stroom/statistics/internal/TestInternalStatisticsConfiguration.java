@@ -1,7 +1,7 @@
 package stroom.statistics.internal;
 
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
+class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestInternalStatisticsConfiguration.class);
 
@@ -31,7 +31,7 @@ public class TestInternalStatisticsConfiguration extends AbstractCoreIntegration
      * in dev.yml
      */
     @Test
-    public void testGet() {
+    void testGet() {
 
         assertThat(internalStatisticsConfig).isNotNull();
 

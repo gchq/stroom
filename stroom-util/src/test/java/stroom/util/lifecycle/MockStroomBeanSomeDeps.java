@@ -16,9 +16,10 @@
 
 package stroom.util.lifecycle;
 
-import org.junit.Assert;
 
 import javax.inject.Inject;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
     private final MockStroomBeanNoDeps stroomBeanNoDeps;
@@ -31,7 +32,7 @@ public class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
     @Override
     @StroomStartup(priority = 99)
     public void start() {
-        Assert.assertTrue(stroomBeanNoDeps.isRunning());
+        assertThat(stroomBeanNoDeps.isRunning()).isTrue();
 
         super.start();
     }

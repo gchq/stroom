@@ -16,179 +16,179 @@
 
 package stroom.util.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestModelStringUtil {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestModelStringUtil {
     @Test
-    public void testCsv() {
-        Assert.assertEquals("", ModelStringUtil.formatCsv((Integer) null));
-        Assert.assertEquals("1", ModelStringUtil.formatCsv(1L));
-        Assert.assertEquals("123", ModelStringUtil.formatCsv(123L));
-        Assert.assertEquals("1,234", ModelStringUtil.formatCsv(1234L));
-        Assert.assertEquals("123,123", ModelStringUtil.formatCsv(123123L));
-        Assert.assertEquals("1,123,123", ModelStringUtil.formatCsv(1123123L));
+    void testCsv() {
+        assertThat(ModelStringUtil.formatCsv((Integer) null)).isEqualTo("");
+        assertThat(ModelStringUtil.formatCsv(1L)).isEqualTo("1");
+        assertThat(ModelStringUtil.formatCsv(123L)).isEqualTo("123");
+        assertThat(ModelStringUtil.formatCsv(1234L)).isEqualTo("1,234");
+        assertThat(ModelStringUtil.formatCsv(123123L)).isEqualTo("123,123");
+        assertThat(ModelStringUtil.formatCsv(1123123L)).isEqualTo("1,123,123");
     }
 
     @Test
-    public void testDurationString() {
-        Assert.assertEquals("", ModelStringUtil.formatDurationString(null));
-        Assert.assertEquals("-10.0ms", ModelStringUtil.formatDurationString(-10L));
-        Assert.assertEquals("0.0ms", ModelStringUtil.formatDurationString(0L));
-        Assert.assertEquals("1.0ms", ModelStringUtil.formatDurationString(1L));
-        Assert.assertEquals("999ms", ModelStringUtil.formatDurationString(999L));
-        Assert.assertEquals("1.0s", ModelStringUtil.formatDurationString(1000L));
-        Assert.assertEquals("2.0s", ModelStringUtil.formatDurationString(2000L));
-        Assert.assertEquals("10s", ModelStringUtil.formatDurationString(10000L));
-        Assert.assertEquals("1.0m", ModelStringUtil.formatDurationString(60 * 1000L));
-        Assert.assertEquals("1.0h", ModelStringUtil.formatDurationString(60 * 60 * 1000L));
+    void testDurationString() {
+        assertThat(ModelStringUtil.formatDurationString(null)).isEqualTo("");
+        assertThat(ModelStringUtil.formatDurationString(-10L)).isEqualTo("-10.0ms");
+        assertThat(ModelStringUtil.formatDurationString(0L)).isEqualTo("0.0ms");
+        assertThat(ModelStringUtil.formatDurationString(1L)).isEqualTo("1.0ms");
+        assertThat(ModelStringUtil.formatDurationString(999L)).isEqualTo("999ms");
+        assertThat(ModelStringUtil.formatDurationString(1000L)).isEqualTo("1.0s");
+        assertThat(ModelStringUtil.formatDurationString(2000L)).isEqualTo("2.0s");
+        assertThat(ModelStringUtil.formatDurationString(10000L)).isEqualTo("10s");
+        assertThat(ModelStringUtil.formatDurationString(60 * 1000L)).isEqualTo("1.0m");
+        assertThat(ModelStringUtil.formatDurationString(60 * 60 * 1000L)).isEqualTo("1.0h");
     }
 
     @Test
-    public void testDurationStringStrippingZeros() {
-        Assert.assertEquals("", ModelStringUtil.formatDurationString(null, true));
-        Assert.assertEquals("-10ms", ModelStringUtil.formatDurationString(-10L, true));
-        Assert.assertEquals("0ms", ModelStringUtil.formatDurationString(0L, true));
-        Assert.assertEquals("1ms", ModelStringUtil.formatDurationString(1L, true));
-        Assert.assertEquals("999ms", ModelStringUtil.formatDurationString(999L, true));
-        Assert.assertEquals("1s", ModelStringUtil.formatDurationString(1000L, true));
-        Assert.assertEquals("2s", ModelStringUtil.formatDurationString(2000L, true));
-        Assert.assertEquals("10s", ModelStringUtil.formatDurationString(10000L, true));
-        Assert.assertEquals("1m", ModelStringUtil.formatDurationString(60 * 1000L, true));
-        Assert.assertEquals("1h", ModelStringUtil.formatDurationString(60 * 60 * 1000L, true));
+    void testDurationStringStrippingZeros() {
+        assertThat(ModelStringUtil.formatDurationString(null, true)).isEqualTo("");
+        assertThat(ModelStringUtil.formatDurationString(-10L, true)).isEqualTo("-10ms");
+        assertThat(ModelStringUtil.formatDurationString(0L, true)).isEqualTo("0ms");
+        assertThat(ModelStringUtil.formatDurationString(1L, true)).isEqualTo("1ms");
+        assertThat(ModelStringUtil.formatDurationString(999L, true)).isEqualTo("999ms");
+        assertThat(ModelStringUtil.formatDurationString(1000L, true)).isEqualTo("1s");
+        assertThat(ModelStringUtil.formatDurationString(2000L, true)).isEqualTo("2s");
+        assertThat(ModelStringUtil.formatDurationString(10000L, true)).isEqualTo("10s");
+        assertThat(ModelStringUtil.formatDurationString(60 * 1000L, true)).isEqualTo("1m");
+        assertThat(ModelStringUtil.formatDurationString(60 * 60 * 1000L, true)).isEqualTo("1h");
     }
 
     @Test
-    public void testFormatMetricByteSizeString() {
-        Assert.assertEquals("1.0B", ModelStringUtil.formatMetricByteSizeString(1L));
-        Assert.assertEquals("999B", ModelStringUtil.formatMetricByteSizeString(999L));
-        Assert.assertEquals("1.0K", ModelStringUtil.formatMetricByteSizeString(1000L));
-        Assert.assertEquals("1.0K", ModelStringUtil.formatMetricByteSizeString(1096L));
-        Assert.assertEquals("1.1K", ModelStringUtil.formatMetricByteSizeString(1127L));
-        Assert.assertEquals("1.9K", ModelStringUtil.formatMetricByteSizeString(1946L));
-        Assert.assertEquals("10K", ModelStringUtil.formatMetricByteSizeString(10240L));
+    void testFormatMetricByteSizeString() {
+        assertThat(ModelStringUtil.formatMetricByteSizeString(1L)).isEqualTo("1.0B");
+        assertThat(ModelStringUtil.formatMetricByteSizeString(999L)).isEqualTo("999B");
+        assertThat(ModelStringUtil.formatMetricByteSizeString(1000L)).isEqualTo("1.0K");
+        assertThat(ModelStringUtil.formatMetricByteSizeString(1096L)).isEqualTo("1.0K");
+        assertThat(ModelStringUtil.formatMetricByteSizeString(1127L)).isEqualTo("1.1K");
+        assertThat(ModelStringUtil.formatMetricByteSizeString(1946L)).isEqualTo("1.9K");
+        assertThat(ModelStringUtil.formatMetricByteSizeString(10240L)).isEqualTo("10K");
     }
 
     @Test
-    public void testFormatIECByteSizeString() {
-        Assert.assertEquals("1.0B", ModelStringUtil.formatIECByteSizeString(1L));
-        Assert.assertEquals("999B", ModelStringUtil.formatIECByteSizeString(999L));
-        Assert.assertEquals("1.0K", ModelStringUtil.formatIECByteSizeString(1024L));
-        Assert.assertEquals("1.0K", ModelStringUtil.formatIECByteSizeString(1126L));
-        Assert.assertEquals("1.1K", ModelStringUtil.formatIECByteSizeString(1127L));
-        Assert.assertEquals("1.9K", ModelStringUtil.formatIECByteSizeString(1946L));
-        Assert.assertEquals("10K", ModelStringUtil.formatIECByteSizeString(10240L));
+    void testFormatIECByteSizeString() {
+        assertThat(ModelStringUtil.formatIECByteSizeString(1L)).isEqualTo("1.0B");
+        assertThat(ModelStringUtil.formatIECByteSizeString(999L)).isEqualTo("999B");
+        assertThat(ModelStringUtil.formatIECByteSizeString(1024L)).isEqualTo("1.0K");
+        assertThat(ModelStringUtil.formatIECByteSizeString(1126L)).isEqualTo("1.0K");
+        assertThat(ModelStringUtil.formatIECByteSizeString(1127L)).isEqualTo("1.1K");
+        assertThat(ModelStringUtil.formatIECByteSizeString(1946L)).isEqualTo("1.9K");
+        assertThat(ModelStringUtil.formatIECByteSizeString(10240L)).isEqualTo("10K");
     }
 
     @Test
-    public void testParseString() {
-        Assert.assertNull(ModelStringUtil.parseNumberString(""));
-        Assert.assertNull(ModelStringUtil.parseNumberString(" "));
-        Assert.assertEquals(1, ModelStringUtil.parseNumberString("1").longValue());
-        Assert.assertEquals(1, ModelStringUtil.parseNumberString("1.0").longValue());
-        Assert.assertEquals(1000, ModelStringUtil.parseNumberString("1k").longValue());
-        Assert.assertEquals(1000, ModelStringUtil.parseNumberString("1 k").longValue());
-        Assert.assertEquals(1100, ModelStringUtil.parseNumberString("1.1 k").longValue());
-        Assert.assertEquals(1000000, ModelStringUtil.parseNumberString("1m").longValue());
-        Assert.assertEquals(1000000, ModelStringUtil.parseNumberString("1M").longValue());
-        Assert.assertEquals(199000000000L, ModelStringUtil.parseNumberString("199G").longValue());
-        Assert.assertEquals(1000000000000L, ModelStringUtil.parseNumberString("1000G").longValue());
-        Assert.assertEquals(1000000000000L, ModelStringUtil.parseNumberString("1T").longValue());
+    void testParseString() {
+        assertThat(ModelStringUtil.parseNumberString("")).isNull();
+        assertThat(ModelStringUtil.parseNumberString(" ")).isNull();
+        assertThat(ModelStringUtil.parseNumberString("1").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("1.0").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("1k").longValue()).isEqualTo(1000);
+        assertThat(ModelStringUtil.parseNumberString("1 k").longValue()).isEqualTo(1000);
+        assertThat(ModelStringUtil.parseNumberString("1.1 k").longValue()).isEqualTo(1100);
+        assertThat(ModelStringUtil.parseNumberString("1m").longValue()).isEqualTo(1000000);
+        assertThat(ModelStringUtil.parseNumberString("1M").longValue()).isEqualTo(1000000);
+        assertThat(ModelStringUtil.parseNumberString("199G").longValue()).isEqualTo(199000000000L);
+        assertThat(ModelStringUtil.parseNumberString("1000G").longValue()).isEqualTo(1000000000000L);
+        assertThat(ModelStringUtil.parseNumberString("1T").longValue()).isEqualTo(1000000000000L);
 
-        Assert.assertEquals(1000, ModelStringUtil.parseNumberString("1K").longValue());
+        assertThat(ModelStringUtil.parseNumberString("1K").longValue()).isEqualTo(1000);
     }
 
     @Test
-    public void testParseMetricByteSizeString() {
-        Assert.assertNull(ModelStringUtil.parseMetricByteSizeString(""));
-        Assert.assertNull(ModelStringUtil.parseMetricByteSizeString(" "));
-        Assert.assertEquals(1, ModelStringUtil.parseMetricByteSizeString("1").longValue());
-        Assert.assertEquals(1, ModelStringUtil.parseMetricByteSizeString("1bytes").longValue());
-        Assert.assertEquals(1, ModelStringUtil.parseMetricByteSizeString("1 bytes").longValue());
-        Assert.assertEquals(1000, ModelStringUtil.parseMetricByteSizeString("1kb").longValue());
-        Assert.assertEquals(1000, ModelStringUtil.parseMetricByteSizeString("1 KB").longValue());
-        Assert.assertEquals(10000, ModelStringUtil.parseMetricByteSizeString("10 KB").longValue());
-        Assert.assertEquals(1000000, ModelStringUtil.parseMetricByteSizeString("1 Mb").longValue());
+    void testParseMetricByteSizeString() {
+        assertThat(ModelStringUtil.parseMetricByteSizeString("")).isNull();
+        assertThat(ModelStringUtil.parseMetricByteSizeString(" ")).isNull();
+        assertThat(ModelStringUtil.parseMetricByteSizeString("1").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseMetricByteSizeString("1bytes").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseMetricByteSizeString("1 bytes").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseMetricByteSizeString("1kb").longValue()).isEqualTo(1000);
+        assertThat(ModelStringUtil.parseMetricByteSizeString("1 KB").longValue()).isEqualTo(1000);
+        assertThat(ModelStringUtil.parseMetricByteSizeString("10 KB").longValue()).isEqualTo(10000);
+        assertThat(ModelStringUtil.parseMetricByteSizeString("1 Mb").longValue()).isEqualTo(1000000);
     }
 
     @Test
-    public void testParseIECByteSizeString() {
-        Assert.assertNull(ModelStringUtil.parseIECByteSizeString(""));
-        Assert.assertNull(ModelStringUtil.parseIECByteSizeString(" "));
-        Assert.assertEquals(1, ModelStringUtil.parseIECByteSizeString("1").longValue());
-        Assert.assertEquals(1, ModelStringUtil.parseIECByteSizeString("1bytes").longValue());
-        Assert.assertEquals(1, ModelStringUtil.parseIECByteSizeString("1 bytes").longValue());
-        Assert.assertEquals(1024, ModelStringUtil.parseIECByteSizeString("1KiB").longValue());
-        Assert.assertEquals(1024, ModelStringUtil.parseIECByteSizeString("1 KiB").longValue());
-        Assert.assertEquals(10240, ModelStringUtil.parseIECByteSizeString("10 KiB").longValue());
-        Assert.assertEquals(1048576, ModelStringUtil.parseIECByteSizeString("1 Mib").longValue());
+    void testParseIECByteSizeString() {
+        assertThat(ModelStringUtil.parseIECByteSizeString("")).isNull();
+        assertThat(ModelStringUtil.parseIECByteSizeString(" ")).isNull();
+        assertThat(ModelStringUtil.parseIECByteSizeString("1").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseIECByteSizeString("1bytes").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseIECByteSizeString("1 bytes").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseIECByteSizeString("1KiB").longValue()).isEqualTo(1024);
+        assertThat(ModelStringUtil.parseIECByteSizeString("1 KiB").longValue()).isEqualTo(1024);
+        assertThat(ModelStringUtil.parseIECByteSizeString("10 KiB").longValue()).isEqualTo(10240);
+        assertThat(ModelStringUtil.parseIECByteSizeString("1 Mib").longValue()).isEqualTo(1048576);
     }
 
     @Test
-    public void testDurationString2() {
-        Assert.assertEquals(1000 * 60 * 60 * 24, ModelStringUtil.parseDurationString("1d").longValue());
-        Assert.assertEquals(1000 * 60 * 60 * 24, ModelStringUtil.parseDurationString("1 d").longValue());
-        Assert.assertEquals(1000 * 60, ModelStringUtil.parseDurationString("1m").longValue());
+    void testDurationString2() {
+        assertThat(ModelStringUtil.parseDurationString("1d").longValue()).isEqualTo(1000 * 60 * 60 * 24);
+        assertThat(ModelStringUtil.parseDurationString("1 d").longValue()).isEqualTo(1000 * 60 * 60 * 24);
+        assertThat(ModelStringUtil.parseDurationString("1m").longValue()).isEqualTo(1000 * 60);
     }
 
     @Test
-    public void testParseStringAsInt() {
+    void testParseStringAsInt() {
         try {
             ModelStringUtil.parseNumberStringAsInt("1T");
-            Assert.fail("Expecting exception");
+            fail("Expecting exception");
         } catch (final NumberFormatException nfex) {
         }
-        Assert.assertEquals(2000000000, ModelStringUtil.parseNumberStringAsInt("2G").intValue());
-        Assert.assertEquals("2,000,000,000", ModelStringUtil.formatCsv(ModelStringUtil.parseNumberStringAsInt("2G")));
+        assertThat(ModelStringUtil.parseNumberStringAsInt("2G").intValue()).isEqualTo(2000000000);
+        assertThat(ModelStringUtil.formatCsv(ModelStringUtil.parseNumberStringAsInt("2G"))).isEqualTo("2,000,000,000");
 
     }
 
     @Test
-    public void testParseStringAsDuration() {
-        Assert.assertEquals(1L, ModelStringUtil.parseDurationString("1").longValue());
-        Assert.assertEquals(10L, ModelStringUtil.parseDurationString("10").longValue());
-        Assert.assertEquals(1000L, ModelStringUtil.parseDurationString("1s").longValue());
-        Assert.assertEquals(1000L, ModelStringUtil.parseDurationString("1 s").longValue());
-        Assert.assertEquals(1L, ModelStringUtil.parseDurationString("1ms").longValue());
-        Assert.assertEquals(1L, ModelStringUtil.parseDurationString("1 ms").longValue());
-        Assert.assertEquals(60L * 1000L, ModelStringUtil.parseDurationString("1 m").longValue());
+    void testParseStringAsDuration() {
+        assertThat(ModelStringUtil.parseDurationString("1").longValue()).isEqualTo(1L);
+        assertThat(ModelStringUtil.parseDurationString("10").longValue()).isEqualTo(10L);
+        assertThat(ModelStringUtil.parseDurationString("1s").longValue()).isEqualTo(1000L);
+        assertThat(ModelStringUtil.parseDurationString("1 s").longValue()).isEqualTo(1000L);
+        assertThat(ModelStringUtil.parseDurationString("1ms").longValue()).isEqualTo(1L);
+        assertThat(ModelStringUtil.parseDurationString("1 ms").longValue()).isEqualTo(1L);
+        assertThat(ModelStringUtil.parseDurationString("1 m").longValue()).isEqualTo(60L * 1000L);
 
     }
 
     @Test
-    public void testParseStringQuotes() {
-        Assert.assertNull(ModelStringUtil.parseNumberString("\'\'"));
-        Assert.assertNull(ModelStringUtil.parseNumberString("\""));
-        Assert.assertEquals(1, ModelStringUtil.parseNumberString("\'1").longValue());
-        Assert.assertEquals(1, ModelStringUtil.parseNumberString("\'1.0\'").longValue());
-        Assert.assertEquals(1000, ModelStringUtil.parseNumberString("\"1k\"").longValue());
+    void testParseStringQuotes() {
+        assertThat(ModelStringUtil.parseNumberString("\'\'")).isNull();
+        assertThat(ModelStringUtil.parseNumberString("\"")).isNull();
+        assertThat(ModelStringUtil.parseNumberString("\'1").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("\'1.0\'").longValue()).isEqualTo(1);
+        assertThat(ModelStringUtil.parseNumberString("\"1k\"").longValue()).isEqualTo(1000);
     }
 
     @Test
-    public void testToCamelCase() {
-        Assert.assertEquals("xmlSchema", ModelStringUtil.toCamelCase("XMLSchema"));
-        Assert.assertEquals("test", ModelStringUtil.toCamelCase("Test"));
-        Assert.assertEquals("newClassType", ModelStringUtil.toCamelCase("NewClassType"));
-        Assert.assertEquals("temp", ModelStringUtil.toCamelCase("temp"));
+    void testToCamelCase() {
+        assertThat(ModelStringUtil.toCamelCase("XMLSchema")).isEqualTo("xmlSchema");
+        assertThat(ModelStringUtil.toCamelCase("Test")).isEqualTo("test");
+        assertThat(ModelStringUtil.toCamelCase("NewClassType")).isEqualTo("newClassType");
+        assertThat(ModelStringUtil.toCamelCase("temp")).isEqualTo("temp");
     }
 
     @Test
-    public void testToDisplayValue() {
-        Assert.assertEquals("XML Schema", ModelStringUtil.toDisplayValue("XMLSchema"));
-        Assert.assertEquals("Test", ModelStringUtil.toDisplayValue("Test"));
-        Assert.assertEquals("New Class Type", ModelStringUtil.toDisplayValue("NewClassType"));
-        Assert.assertEquals("temp", ModelStringUtil.toDisplayValue("temp"));
+    void testToDisplayValue() {
+        assertThat(ModelStringUtil.toDisplayValue("XMLSchema")).isEqualTo("XML Schema");
+        assertThat(ModelStringUtil.toDisplayValue("Test")).isEqualTo("Test");
+        assertThat(ModelStringUtil.toDisplayValue("NewClassType")).isEqualTo("New Class Type");
+        assertThat(ModelStringUtil.toDisplayValue("temp")).isEqualTo("temp");
     }
 
     @Test
-    public void testSortPath() {
+    void testSortPath() {
         final ArrayList<String> t1 = new ArrayList<>();
         t1.add("a");
         t1.add("zz");
@@ -207,59 +207,59 @@ public class TestModelStringUtil {
         t2.add("za");
         t2.add("zz");
 
-        Assert.assertEquals(t2, t1);
+        assertThat(t1).isEqualTo(t2);
 
     }
 
     @Test
-    public void testTimeSizeDividerNull() {
+    void testTimeSizeDividerNull() {
         doTest("", null);
     }
 
     @Test
-    public void testTimeSizeDivider1() {
+    void testTimeSizeDivider1() {
         doTest("1", 1L);
     }
 
     @Test
-    public void testTimeSizeDivider1000() {
+    void testTimeSizeDivider1000() {
         doTest("1000", 1000L);
     }
 
     @Test
-    public void testTimeSizeDivider1Ms() {
+    void testTimeSizeDivider1Ms() {
         doTest("1MS", 1L);
     }
 
     @Test
-    public void testTimeSizeDivider1ms() {
+    void testTimeSizeDivider1ms() {
         doTest("1 ms", 1L);
     }
 
     @Test
-    public void testTimeSizeDivider1s() {
+    void testTimeSizeDivider1s() {
         doTest("1 s", 1000L);
     }
 
     @Test
-    public void testTimeSizeDivider1m() {
+    void testTimeSizeDivider1m() {
         doTest("1 m", 60 * 1000L);
     }
 
     @Test
-    public void testTimeSizeDivider1h() {
+    void testTimeSizeDivider1h() {
         doTest("1 h", 60 * 60 * 1000L);
     }
 
     @Test
-    public void testTimeSizeDivider1d() {
+    void testTimeSizeDivider1d() {
         doTest("1 d", 24 * 60 * 60 * 1000L);
     }
 
     private Long doTest(String input, Long expected) {
         Long output = ModelStringUtil.parseDurationString(input);
 
-        Assert.assertEquals(expected, output);
+        assertThat(output).isEqualTo(expected);
 
         System.out.println(input + " = " + output);
 

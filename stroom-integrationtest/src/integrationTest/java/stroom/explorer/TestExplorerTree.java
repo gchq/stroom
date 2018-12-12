@@ -16,7 +16,8 @@
 
 package stroom.explorer;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.explorer.impl.db.ExplorerTreeDao;
 import stroom.explorer.impl.db.ExplorerTreeNode;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -24,12 +25,12 @@ import stroom.test.AbstractCoreIntegrationTest;
 import javax.inject.Inject;
 import java.util.UUID;
 
-public class TestExplorerTree extends AbstractCoreIntegrationTest {
+class TestExplorerTree extends AbstractCoreIntegrationTest {
     @Inject
     private ExplorerTreeDao explorerTreeDao;
 
     @Test
-    public void testCreateTree() {
+    void testCreateTree() {
         ExplorerTreeNode root = explorerTreeDao.createRoot(newTreePojo("System"));
         ExplorerTreeNode a = explorerTreeDao.addChild(root, newTreePojo("A"));
         ExplorerTreeNode b = explorerTreeDao.addChild(root, newTreePojo("B"));

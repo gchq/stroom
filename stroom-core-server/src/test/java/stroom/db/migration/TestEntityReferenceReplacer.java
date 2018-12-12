@@ -16,52 +16,54 @@
 
 package stroom.db.migration;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.io.StreamUtil;
 
 import java.io.InputStream;
 import java.sql.Connection;
 
-public class TestEntityReferenceReplacer {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestEntityReferenceReplacer {
     @Test
-    public void testEntityStreamType() {
+    void testEntityStreamType() {
         final String original = "<property><element>test</element><name>streamType</name><value><entity><type>StreamType</type><path>Events</path></entity></value></property>";
         final String expected = "<property><element>test</element><name>streamType</name><value><string>Events</string></value></property>";
         final String actual = new Replacer().replaceEntityReferences(null, original);
 
-        Assert.assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void testReferenceStreamType() {
+    void testReferenceStreamType() {
         final String original = "<reference><streamType><type>StreamType</type><path>Reference</path></streamType></reference>";
         final String expected = "<reference><streamType>Reference</streamType></reference>";
         final String actual = new Replacer().replaceEntityReferences(null, original);
 
-        Assert.assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void testEntity1() {
+    void testEntity1() {
         final String original = "<property><element>test</element><name>xslt</name><value><entity><type>XSLT</type><id>1234</id><path>/Test/Test XSLT</path></entity></value></property>";
         final String expected = "<property><element>test</element><name>xslt</name><value><entity><type>XSLT</type><uuid>uuid</uuid><name>Test XSLT</name></entity></value></property>";
         final String actual = new Replacer().replaceEntityReferences(null, original);
 
-        Assert.assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void testEntity2() {
+    void testEntity2() {
         final String original = "<property><element>test</element><name>xslt</name><value><entity><type>XSLT</type><id>1234</id><name>Test XSLT</name></entity></value></property>";
         final String expected = "<property><element>test</element><name>xslt</name><value><entity><type>XSLT</type><uuid>uuid</uuid><name>Test XSLT</name></entity></value></property>";
         final String actual = new Replacer().replaceEntityReferences(null, original);
 
-        Assert.assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    public void fullTest() {
+    void fullTest() {
         final InputStream originalIS = getClass().getResourceAsStream("Sample.Pipeline.data.xml");
         final String original = StreamUtil.streamToString(originalIS);
 
@@ -70,7 +72,7 @@ public class TestEntityReferenceReplacer {
 
         final String actual = new Replacer().replaceEntityReferences(null, original);
 
-        Assert.assertEquals(updated, actual);
+        assertThat(actual).isEqualTo(updated);
     }
 
     private class Replacer extends EntityReferenceReplacer {

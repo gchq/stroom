@@ -16,18 +16,17 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.Arrays;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBitmap extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBitmap extends StroomUnitTest {
     @Test
-    public void testBitmap() {
+    void testBitmap() {
         int value = 0x1001;
         int bit = 0;
         while (value > 0) {
@@ -36,6 +35,6 @@ public class TestBitmap extends StroomUnitTest {
             bit++;
         }
 
-        Assert.assertTrue(Arrays.equals(Bitmap.getBits(0x1001), new int[]{0, 12}));
+        assertThat(Arrays.equals(Bitmap.getBits(0x1001), new int[]{0, 12})).isTrue();
     }
 }

@@ -16,8 +16,8 @@
 
 package stroom.volume;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
@@ -28,51 +28,53 @@ import stroom.util.test.StroomUnitTest;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestVolumeSelector extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestVolumeSelector extends StroomUnitTest {
     @Test
-    public void testMostFree() {
+    void testMostFree() {
         test(new MostFreeVolumeSelector());
     }
 
     @Test
-    public void testMostFreePercent() {
+    void testMostFreePercent() {
         test(new MostFreePercentVolumeSelector());
     }
 
     @Test
-    public void testRandom() {
+    void testRandom() {
         test(new RandomVolumeSelector());
     }
 
     @Test
-    public void testWeightedFreeRandom() {
+    void testWeightedFreeRandom() {
         test(new WeightedFreeRandomVolumeSelector());
     }
 
     @Test
-    public void testWeightedFreePercentRandom() {
+    void testWeightedFreePercentRandom() {
         test(new WeightedFreePercentRandomVolumeSelector());
     }
 
     @Test
-    public void testRoundRobin() {
+    void testRoundRobin() {
         test(new RoundRobinVolumeSelector());
     }
 
     @Test
-    public void testRoundRobinIgnoreLeastFree() {
+    void testRoundRobinIgnoreLeastFree() {
         test(new RoundRobinIgnoreLeastFreeVolumeSelector());
     }
 
     @Test
-    public void testRoundRobinIgnoreLeastFreePercent() {
+    void testRoundRobinIgnoreLeastFreePercent() {
         test(new RoundRobinIgnoreLeastFreePercentVolumeSelector());
     }
 
     private void test(final VolumeSelector volumeSelector) {
         final List<VolumeEntity> volumes = createVolumeList();
         for (int i = 0; i < 100; i++) {
-            Assert.assertNotNull(volumeSelector.select(volumes));
+            assertThat(volumeSelector.select(volumes)).isNotNull();
         }
     }
 

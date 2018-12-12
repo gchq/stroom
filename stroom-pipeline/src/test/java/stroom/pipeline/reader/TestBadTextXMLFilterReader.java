@@ -16,16 +16,17 @@
 
 package stroom.pipeline.reader;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestBadTextXMLFilterReader {
+class TestBadTextXMLFilterReader {
     static final String m_aTrivialValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<TopLevelEntity>"
             + " <Level1>First level one text</Level1>" + " <Level1>Second level one text</Level1>"
             + "</TopLevelEntity>");
@@ -56,7 +57,7 @@ public class TestBadTextXMLFilterReader {
             res.put((char) ch);
         }
         final String filteredVal = String.copyValueOf(res.array(), 0, res.position());
-        assertEquals(filteredVal, correct);
+        assertThat(correct).isEqualTo(filteredVal);
     }
 
     private void checkByArray(final String in, final String correct) throws IOException {
@@ -70,43 +71,43 @@ public class TestBadTextXMLFilterReader {
             final int num_chunks = inLen / chunkSize;
             for (int chunk = 0; chunk < num_chunks; chunk++) {
                 final int rret = filtered.read(res);
-                assertEquals(rret, chunkSize);
+                assertThat(chunkSize).isEqualTo(rret);
                 for (int ch = 0; ch != rret; ch++)
-                    assertEquals(res[ch], correctChars[chunk * chunkSize + ch]);
+                    assertThat(correctChars[chunk * chunkSize + ch]).isEqualTo(res[ch]);
             }
             if (trail_size > 0) {
                 final int rret = filtered.read(res);
-                assertEquals(rret, trail_size);
+                assertThat(trail_size).isEqualTo(rret);
                 for (int ch = 0; ch != rret; ch++)
-                    assertEquals(res[ch], correctChars[num_chunks * chunkSize + ch]);
+                    assertThat(correctChars[num_chunks * chunkSize + ch]).isEqualTo(res[ch]);
             }
             final int rret = filtered.read(res);
-            assertEquals(rret, -1);
+            assertThat(-1).isEqualTo(rret);
         }
     }
 
     @Test
-    public void testTrivialValidXMLbyChar() throws IOException {
+    void testTrivialValidXMLbyChar() throws IOException {
         checkByChar(m_aTrivialValidXML, m_aTrivialValidXML);
     }
 
     @Test
-    public void testTrivialValidXMLbyArray() throws IOException {
+    void testTrivialValidXMLbyArray() throws IOException {
         checkByArray(m_aTrivialValidXML, m_aTrivialValidXML);
     }
 
     @Test
-    public void testTrivialInValidXMLbyChar() throws IOException {
+    void testTrivialInValidXMLbyChar() throws IOException {
         checkByChar(m_aTrivialInValidXML, m_aTrivialInValidXMLcorrected);
     }
 
     @Test
-    public void testTrivialInValidXMLbyArray() throws IOException {
+    void testTrivialInValidXMLbyArray() throws IOException {
         checkByChar(m_aTrivialInValidXML, m_aTrivialInValidXMLcorrected);
     }
 
     @Test
-    public void testOddValidXMLbyChar() throws IOException {
+    void testOddValidXMLbyChar() throws IOException {
         checkByChar(m_aOddValidXML, m_aOddValidXML);
     }
 

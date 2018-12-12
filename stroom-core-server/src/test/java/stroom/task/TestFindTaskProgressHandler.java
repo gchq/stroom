@@ -16,8 +16,8 @@
 
 package stroom.task;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.Sort.Direction;
 import stroom.node.shared.Node;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -30,9 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-public class TestFindTaskProgressHandler {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestFindTaskProgressHandler {
     @Test
-    public void testSortByAge() {
+    void testSortByAge() {
         final FindTaskProgressHandler findTaskProgressHandler = new FindTaskProgressHandler(null, null);
         final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
 
@@ -92,14 +94,14 @@ public class TestFindTaskProgressHandler {
             // Is this a parent.
             if (taskProgress.getId().getParentId() == null) {
                 if (lastParent != null) {
-                    Assert.assertTrue(compareFunction.apply(lastParent, taskProgress));
+                    assertThat(compareFunction.apply(lastParent, taskProgress)).isTrue();
                 }
 
                 lastParent = taskProgress;
                 lastChild = null;
             } else {
                 if (lastChild != null) {
-                    Assert.assertTrue(compareFunction.apply(lastChild, taskProgress));
+                    assertThat(compareFunction.apply(lastChild, taskProgress)).isTrue();
                 }
 
                 lastChild = taskProgress;

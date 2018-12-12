@@ -16,15 +16,13 @@
 
 package stroom.util;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBackupConfig extends StroomUnitTest {
+class TestBackupConfig extends StroomUnitTest {
     @Test
-    public void testLine() {
+    void testLine() {
         final String line = "user1 \tuser2";
         final String parts[] = line.split("\\s+");
         for (final String part : parts) {

@@ -16,19 +16,17 @@
 
 package stroom.util;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestAbstractCommandLineTool extends StroomUnitTest {
+class TestAbstractCommandLineTool extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAbstractCommandLineTool.class);
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         final TestProgram testProgram = new TestProgram();
         testProgram.doMain(new String[]{"prop1=11"});
         testProgram.traceArguments(System.out);

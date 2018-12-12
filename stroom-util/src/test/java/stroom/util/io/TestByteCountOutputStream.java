@@ -16,33 +16,35 @@
 
 package stroom.util.io;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class TestByteCountOutputStream {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestByteCountOutputStream {
     @Test
-    public void test1() throws IOException {
+    void test1() throws IOException {
         final ByteCountOutputStream byteCountOutputStream = new ByteCountOutputStream(new ByteArrayOutputStream());
         for (int i = 0; i < 10; i++) {
             byteCountOutputStream.write(0);
         }
-        Assert.assertEquals(10, byteCountOutputStream.getCount());
+        assertThat(byteCountOutputStream.getCount()).isEqualTo(10);
     }
 
     @Test
-    public void test2() throws IOException {
+    void test2() throws IOException {
         final ByteCountOutputStream byteCountOutputStream = new ByteCountOutputStream(new ByteArrayOutputStream());
         byteCountOutputStream.write(new byte[10]);
-        Assert.assertEquals(10, byteCountOutputStream.getCount());
+        assertThat(byteCountOutputStream.getCount()).isEqualTo(10);
     }
 
     @Test
-    public void test3() throws IOException {
+    void test3() throws IOException {
         final ByteCountOutputStream byteCountOutputStream = new ByteCountOutputStream(new ByteArrayOutputStream());
         byteCountOutputStream.write(new byte[10], 0, 10);
-        Assert.assertEquals(10, byteCountOutputStream.getCount());
+        assertThat(byteCountOutputStream.getCount()).isEqualTo(10);
     }
 }

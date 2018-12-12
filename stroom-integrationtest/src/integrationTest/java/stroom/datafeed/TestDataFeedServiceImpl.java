@@ -17,9 +17,9 @@
 
 package stroom.datafeed;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.feed.StroomHeaderArguments;
 import stroom.util.date.DateUtil;
@@ -37,11 +37,13 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * The combination of mock and prod classes means this test needs its own
  * context.
  */
-public class TestDataFeedServiceImpl extends TestBase {
+class TestDataFeedServiceImpl extends TestBase {
     @Inject
     private DataFeedServlet dataFeedService;
     @Inject
@@ -51,31 +53,30 @@ public class TestDataFeedServiceImpl extends TestBase {
     @Inject
     private MockStreamStore streamStore;
 
-    @Before
-    public void init() {
+    @BeforeEach
+    void init() {
         request.resetMock();
         response.resetMock();
         streamStore.clear();
     }
 
     @Test
-    public void testErrorNoParameters() throws IOException, ServletException {
+    void testErrorNoParameters() throws IOException, ServletException {
         dataFeedService.doPost(request, response);
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Feed must be specified");
     }
 
     private void checkError(final int code, final String msg) {
-        Assert.assertEquals(code, response.getResponseCode());
-        Assert.assertTrue("Expecting '" + msg + "' but was '" + response.getSendErrorMessage() + "'",
-                response.getSendErrorMessage().contains(msg));
+        assertThat(response.getResponseCode()).isEqualTo(code);
+        assertThat(response.getSendErrorMessage().contains(msg)).as("Expecting '" + msg + "' but was '" + response.getSendErrorMessage() + "'").isTrue();
     }
 
     private void checkOK() {
-        Assert.assertEquals(response.getSendErrorMessage(), HttpServletResponse.SC_OK, response.getResponseCode());
+        assertThat(response.getResponseCode()).as(response.getSendErrorMessage()).isEqualTo(HttpServletResponse.SC_OK);
     }
 
     @Test
-    public void testErrorCompressionInvalid() throws IOException, ServletException {
+    void testErrorCompressionInvalid() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("effectiveTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "UNKNOWN");
@@ -84,11 +85,11 @@ public class TestDataFeedServiceImpl extends TestBase {
         dataFeedService.doPost(request, response);
 
         checkError(HttpServletResponse.SC_NOT_ACCEPTABLE, "Unknown compression");
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
     }
 
     @Test
-    public void testOkCompressionNone() throws IOException, ServletException {
+    void testOkCompressionNone() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("effectiveTime", DateUtil.createNormalDateTimeString());
         request.addHeader("compression", "NONE");
@@ -98,13 +99,13 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         checkOK();
 
-        Assert.assertEquals("SOME TEST DATA", StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream()));
-        Assert.assertEquals(1, streamStore.getStreamStoreCount());
+        assertThat(StreamUtil
+                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
     @Test
-    public void testOkWithQueryString() throws IOException, ServletException {
+    void testOkWithQueryString() throws IOException, ServletException {
         request.setQueryString("feed=TEST-FEED" + "&periodStartTime=" + DateUtil.createNormalDateTimeString()
                 + "&periodEndTime=" + DateUtil.createNormalDateTimeString());
         request.setInputStream("SOME TEST DATA".getBytes());
@@ -113,13 +114,13 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         checkOK();
 
-        Assert.assertEquals("SOME TEST DATA", StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream()));
-        Assert.assertEquals(1, streamStore.getStreamStoreCount());
+        assertThat(StreamUtil
+                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
     @Test
-    public void testOkCompressionBlank() throws IOException, ServletException {
+    void testOkCompressionBlank() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -130,13 +131,13 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         checkOK();
 
-        Assert.assertEquals("SOME TEST DATA", StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream()));
-        Assert.assertEquals(1, streamStore.getStreamStoreCount());
+        assertThat(StreamUtil
+                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
     @Test
-    public void testOkCompressionNotStated() throws IOException, ServletException {
+    void testOkCompressionNotStated() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -146,13 +147,13 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         checkOK();
 
-        Assert.assertEquals("SOME TEST DATA", StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream()));
-        Assert.assertEquals(1, streamStore.getStreamStoreCount());
+        assertThat(StreamUtil
+                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 
     @Test
-    public void testErrorCompressionGZIP() throws IOException, ServletException {
+    void testErrorCompressionGZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -167,7 +168,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testErrorCompressionZIP() throws IOException, ServletException {
+    void testErrorCompressionZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -182,7 +183,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testEmptyCompressionZIP() throws IOException, ServletException {
+    void testEmptyCompressionZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -196,7 +197,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOKCompressionGZIP() throws IOException, ServletException {
+    void testOKCompressionGZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -212,12 +213,12 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         checkOK();
 
-        Assert.assertEquals("SOME TEST DATA", StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream()));
+        assertThat(StreamUtil
+                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("SOME TEST DATA");
     }
 
     @Test
-    public void testOKCompressionGZIP2() throws IOException, ServletException {
+    void testOKCompressionGZIP2() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -237,12 +238,12 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         checkOK();
 
-        Assert.assertEquals("LINE1\nLINE2\n", StreamUtil
-                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream()));
+        assertThat(StreamUtil
+                .streamToString(streamStore.openStreamSource(streamStore.getLastStream().getId()).getInputStream())).isEqualTo("LINE1\nLINE2\n");
     }
 
     @Test
-    public void testOKCompressionZeroContent() throws IOException, ServletException {
+    void testOKCompressionZeroContent() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -256,7 +257,7 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testOKCompressionZIP() throws IOException, ServletException {
+    void testOKCompressionZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -277,22 +278,22 @@ public class TestDataFeedServiceImpl extends TestBase {
     }
 
     @Test
-    public void testIOErrorWhileWriteUncompressesd() throws IOException, ServletException {
+    void testIOErrorWhileWriteUncompressesd() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream("SOME TEST DATA".getBytes()), 10));
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
 
         dataFeedService.doPost(request, response);
 
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
 
     @Test
-    public void testIOErrorWhileWriteGZIP() throws IOException, ServletException {
+    void testIOErrorWhileWriteGZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -306,17 +307,17 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
 
         dataFeedService.doPost(request, response);
 
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }
 
     @Test
-    public void testIOErrorWhileWriteZIP() throws IOException, ServletException {
+    void testIOErrorWhileWriteZIP() throws IOException, ServletException {
         request.addHeader("feed", "TEST-FEED");
         request.addHeader("periodStartTime", DateUtil.createNormalDateTimeString());
         request.addHeader("periodEndTime", DateUtil.createNormalDateTimeString());
@@ -331,9 +332,9 @@ public class TestDataFeedServiceImpl extends TestBase {
 
         request.setInputStream(new CorruptInputStream(new ByteArrayInputStream(outputStream.toByteArray()), 10));
 
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
         dataFeedService.doPost(request, response);
-        Assert.assertEquals(0, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(0);
 
         checkError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Expected IO Junit Error at byte ");
     }

@@ -16,8 +16,8 @@
 
 package stroom.statistics.sql.rollup;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
 import javax.xml.bind.DatatypeConverter;
@@ -30,9 +30,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-public class TestRollUpBitMask extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class TestRollUpBitMask extends StroomUnitTest {
     @Test
-    public void testHex() {
+    void testHex() {
         final RollUpBitMask rowKeyBitMap = RollUpBitMask.fromTagPositions(new ArrayList<>());
 
         final byte[] bytes = rowKeyBitMap.asBytes();
@@ -41,11 +44,11 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
         System.out.println(hex);
 
-        Assert.assertEquals("0000", hex);
+        assertThat(hex).isEqualTo("0000");
     }
 
     @Test
-    public void testToBytesAndBack() {
+    void testToBytesAndBack() {
         final RollUpBitMask rowKeyBitMap = RollUpBitMask
                 .fromMask(new short[]{0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
@@ -57,192 +60,200 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
         System.out.println(rowKeyBitMap2.toString());
 
-        Assert.assertEquals(rowKeyBitMap, rowKeyBitMap2);
+        assertThat(rowKeyBitMap2).isEqualTo(rowKeyBitMap);
     }
 
     @Test
-    public void testFromTagPositions() {
+    void testFromTagPositions() {
         final RollUpBitMask rowKeyBitMap1 = RollUpBitMask.fromTagPositions(Arrays.asList(1, 4, 14));
 
         final RollUpBitMask rowKeyBitMap2 = RollUpBitMask
                 .fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
 
-        Assert.assertEquals(rowKeyBitMap1, rowKeyBitMap2);
+        assertThat(rowKeyBitMap2).isEqualTo(rowKeyBitMap1);
     }
 
     @Test
-    public void testFromTagPositionsNotInOrder() {
+    void testFromTagPositionsNotInOrder() {
         final RollUpBitMask rowKeyBitMap1 = RollUpBitMask.fromTagPositions(Arrays.asList(1, 0));
 
         final RollUpBitMask rowKeyBitMap2 = RollUpBitMask.fromTagPositions(Arrays.asList(0, 1));
 
-        Assert.assertEquals(rowKeyBitMap1, rowKeyBitMap2);
+        assertThat(rowKeyBitMap2).isEqualTo(rowKeyBitMap1);
     }
 
     @Test
-    public void testToString() {
+    void testToString() {
         final RollUpBitMask rowKeyBitMap = RollUpBitMask
                 .fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
 
-        Assert.assertEquals("100000000010010", rowKeyBitMap.toString());
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testFromTagPositionsInvalidPosition() {
-        RollUpBitMask.fromTagPositions(Arrays.asList(1, 4, 22));
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testFromMaskInvalidMask() {
-        // one value too many
-        RollUpBitMask.fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0});
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void fromMaskInvalidMaskValue() {
-        // one value too many
-        RollUpBitMask.fromMask(new short[]{9, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+        assertThat(rowKeyBitMap.toString()).isEqualTo("100000000010010");
     }
 
     @Test
-    public void testGetRollUpPermutationsAsBooleansTagCountZero() {
+    void testFromTagPositionsInvalidPosition() {
+        assertThatThrownBy(() -> {
+            RollUpBitMask.fromTagPositions(Arrays.asList(1, 4, 22));
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testFromMaskInvalidMask() {
+        assertThatThrownBy(() -> {
+            // one value too many
+            RollUpBitMask.fromMask(new short[]{0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0});
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void fromMaskInvalidMaskValue() {
+        assertThatThrownBy(() -> {
+            // one value too many
+            RollUpBitMask.fromMask(new short[]{9, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testGetRollUpPermutationsAsBooleansTagCountZero() {
         final Set<List<Boolean>> perms = RollUpBitMask.getRollUpPermutationsAsBooleans(0);
 
-        Assert.assertEquals(1, perms.size());
+        assertThat(perms.size()).isEqualTo(1);
 
         final List<Boolean> perm = perms.iterator().next();
 
-        Assert.assertEquals(1, perm.size());
-        Assert.assertEquals(false, perm.get(0));
+        assertThat(perm.size()).isEqualTo(1);
+        assertThat(perm.get(0)).isEqualTo(false);
 
     }
 
     @Test
-    public void testGetRollUpPermutationsAsBooleansTagCountOne() {
+    void testGetRollUpPermutationsAsBooleansTagCountOne() {
         final Set<List<Boolean>> perms = RollUpBitMask.getRollUpPermutationsAsBooleans(1);
 
-        Assert.assertEquals(2, perms.size());
-        Assert.assertEquals(1, perms.iterator().next().size());
-        Assert.assertEquals(1, perms.iterator().next().size());
+        assertThat(perms.size()).isEqualTo(2);
+        assertThat(perms.iterator().next().size()).isEqualTo(1);
+        assertThat(perms.iterator().next().size()).isEqualTo(1);
 
     }
 
     @Test
-    public void testGetRollUpPermutationsAsBooleansTagCountTwo() {
+    void testGetRollUpPermutationsAsBooleansTagCountTwo() {
         final Set<List<Boolean>> perms = RollUpBitMask.getRollUpPermutationsAsBooleans(2);
 
-        Assert.assertEquals(4, perms.size());
+        assertThat(perms.size()).isEqualTo(4);
 
-        Assert.assertTrue(perms.contains(Arrays.asList(false, false)));
-        Assert.assertTrue(perms.contains(Arrays.asList(false, true)));
-        Assert.assertTrue(perms.contains(Arrays.asList(true, false)));
-        Assert.assertTrue(perms.contains(Arrays.asList(true, true)));
+        assertThat(perms.contains(Arrays.asList(false, false))).isTrue();
+        assertThat(perms.contains(Arrays.asList(false, true))).isTrue();
+        assertThat(perms.contains(Arrays.asList(true, false))).isTrue();
+        assertThat(perms.contains(Arrays.asList(true, true))).isTrue();
 
     }
 
     @Test
-    public void testGetRollUpPermutationsAsPositionsTagCountZero() {
+    void testGetRollUpPermutationsAsPositionsTagCountZero() {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(0);
 
-        Assert.assertEquals(1, perms.size());
-        Assert.assertTrue(perms.contains(Collections.<Integer>emptyList()));
+        assertThat(perms.size()).isEqualTo(1);
+        assertThat(perms.contains(Collections.<Integer>emptyList())).isTrue();
 
     }
 
     @Test
-    public void testGetRollUpPermutationsAsPositionsTagCountOne() {
+    void testGetRollUpPermutationsAsPositionsTagCountOne() {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(1);
 
-        Assert.assertEquals(2, perms.size());
-        Assert.assertTrue(perms.contains(Collections.<Integer>emptyList()));
-        Assert.assertTrue(perms.contains(Arrays.asList(0)));
+        assertThat(perms.size()).isEqualTo(2);
+        assertThat(perms.contains(Collections.<Integer>emptyList())).isTrue();
+        assertThat(perms.contains(Arrays.asList(0))).isTrue();
 
     }
 
     @Test
-    public void testGetRollUpPermutationsAsPositionsTagCountTwo() {
+    void testGetRollUpPermutationsAsPositionsTagCountTwo() {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(2);
 
-        Assert.assertEquals(4, perms.size());
+        assertThat(perms.size()).isEqualTo(4);
 
-        Assert.assertTrue(perms.contains(Collections.<Integer>emptyList()));
-        Assert.assertTrue(perms.contains(Arrays.asList(1)));
-        Assert.assertTrue(perms.contains(Arrays.asList(0)));
-        Assert.assertTrue(perms.contains(Arrays.asList(0, 1)));
+        assertThat(perms.contains(Collections.<Integer>emptyList())).isTrue();
+        assertThat(perms.contains(Arrays.asList(1))).isTrue();
+        assertThat(perms.contains(Arrays.asList(0))).isTrue();
+        assertThat(perms.contains(Arrays.asList(0, 1))).isTrue();
 
     }
 
     @Test
-    public void testGetRollUpBitMasksTagCountZero() {
+    void testGetRollUpBitMasksTagCountZero() {
         final Set<RollUpBitMask> perms = RollUpBitMask.getRollUpBitMasks(0);
 
-        Assert.assertEquals(1, perms.size());
+        assertThat(perms.size()).isEqualTo(1);
 
         final RollUpBitMask mask = perms.iterator().next();
 
-        Assert.assertEquals("0000", mask.asHexString());
+        assertThat(mask.asHexString()).isEqualTo("0000");
     }
 
     @Test
-    public void testGetRollUpBitMasksTagCountOne() {
+    void testGetRollUpBitMasksTagCountOne() {
         final Set<RollUpBitMask> perms = RollUpBitMask.getRollUpBitMasks(1);
 
-        Assert.assertEquals(2, perms.size());
+        assertThat(perms.size()).isEqualTo(2);
 
-        Assert.assertTrue(perms.contains(RollUpBitMask.fromTagPositions(Collections.emptyList())));
-        Assert.assertTrue(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(0))));
+        assertThat(perms.contains(RollUpBitMask.fromTagPositions(Collections.emptyList()))).isTrue();
+        assertThat(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(0)))).isTrue();
 
     }
 
     @Test
-    public void testGetRollUpBitMasksTagCountTwo() {
+    void testGetRollUpBitMasksTagCountTwo() {
         final Set<RollUpBitMask> perms = RollUpBitMask.getRollUpBitMasks(2);
 
-        Assert.assertEquals(4, perms.size());
+        assertThat(perms.size()).isEqualTo(4);
 
-        Assert.assertTrue(perms.contains(RollUpBitMask.fromTagPositions(Collections.emptyList())));
-        Assert.assertTrue(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(0))));
-        Assert.assertTrue(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(1))));
-        Assert.assertTrue(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1))));
+        assertThat(perms.contains(RollUpBitMask.fromTagPositions(Collections.emptyList()))).isTrue();
+        assertThat(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(0)))).isTrue();
+        assertThat(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(1)))).isTrue();
+        assertThat(perms.contains(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1)))).isTrue();
 
     }
 
     @Test
-    public void testAsShort() {
+    void testAsShort() {
         final short mask = 2;
 
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromShort(mask);
 
-        Assert.assertEquals(mask, rollUpBitMask.asShort());
+        assertThat(rollUpBitMask.asShort()).isEqualTo(mask);
 
     }
 
     @Test
-    public void testFromShort() {
+    void testFromShort() {
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromShort((short) 2);
 
-        Assert.assertEquals("0002", rollUpBitMask.asHexString());
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testFromShortTooSmall() {
-        final short tooSmall = -1;
-
-        RollUpBitMask.fromShort(tooSmall);
+        assertThat(rollUpBitMask.asHexString()).isEqualTo("0002");
     }
 
     @Test
-    public void testFromShortAllValues() {
+    void testFromShortTooSmall() {
+        assertThatThrownBy(() -> {
+            final short tooSmall = -1;
+
+            RollUpBitMask.fromShort(tooSmall);
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testFromShortAllValues() {
         // check every possible value
         for (short maskVal = Short.MAX_VALUE; maskVal >= 0; maskVal--) {
             final RollUpBitMask rollUpBitMask = RollUpBitMask.fromShort(maskVal);
 
-            Assert.assertEquals(maskVal, rollUpBitMask.asShort());
+            assertThat(rollUpBitMask.asShort()).isEqualTo(maskVal);
         }
     }
 
     @Test
-    public void testToBinaryString() {
+    void testToBinaryString() {
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(Arrays.asList(5, 6, 8));
 
         System.out.println("[" + Integer.toBinaryString(rollUpBitMask.asShort()) + "]");
@@ -250,7 +261,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testGetTagPositions() {
+    void testGetTagPositions() {
         // for each possible short value construct a RollUpBitMask object then
         // convert it to a list of tag positions and
         // back, asserting the two objects are equal
@@ -262,7 +273,7 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
             final RollUpBitMask rollUpBitMask2 = RollUpBitMask.fromTagPositions(tagPositions);
 
-            Assert.assertEquals(rollUpBitMask, rollUpBitMask2);
+            assertThat(rollUpBitMask2).isEqualTo(rollUpBitMask);
 
             // System.out.println(i + " - " + rollUpBitMask.toString() + " - " +
             // rollUpBitMask.getTagPositions());
@@ -271,32 +282,34 @@ public class TestRollUpBitMask extends StroomUnitTest {
     }
 
     @Test
-    public void testIsTagPositionRolledUp() {
+    void testIsTagPositionRolledUp() {
         final List<Integer> tagPositions = Arrays.asList(0, 2, 3);
 
         final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(tagPositions);
 
         // for (Integer tagPos : tagPositions) {
-        // Assert.assertTrue(rollUpBitMask.isTagPositionRolledUp(tagPos));
+        // assertThat(rollUpBitMask.isTagPositionRolledUp(tagPos)).isTrue();
         // }
 
         for (int i = 0; i <= 5; i++) {
             if (tagPositions.contains(i)) {
-                Assert.assertTrue(rollUpBitMask.isTagPositionRolledUp(i));
+                assertThat(rollUpBitMask.isTagPositionRolledUp(i)).isTrue();
             } else {
-                Assert.assertFalse(rollUpBitMask.isTagPositionRolledUp(i));
+                assertThat(rollUpBitMask.isTagPositionRolledUp(i)).isFalse();
             }
         }
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testIsTagPositionRolledUp_Exception() {
-        final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(Arrays.asList(0, 2, 3));
-        rollUpBitMask.isTagPositionRolledUp(-1);
+    @Test
+    void testIsTagPositionRolledUp_Exception() {
+        assertThatThrownBy(() -> {
+            final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(Arrays.asList(0, 2, 3));
+            rollUpBitMask.isTagPositionRolledUp(-1);
+        }).isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    public void testConvert_AddedTags() {
+    void testConvert_AddedTags() {
         final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,c] => [a,b,c,d] (added pos 1 and 3)
@@ -311,19 +324,18 @@ public class TestRollUpBitMask extends StroomUnitTest {
         final RollUpBitMask mask3 = RollUpBitMask.fromTagPositions(Arrays.asList(1));
         final RollUpBitMask mask4 = RollUpBitMask.fromTagPositions(Arrays.asList(0, 1));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Collections.emptyList()),
-                mask1.convert(newToOldPosMap));
+        assertThat(mask1.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Collections.emptyList()));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0)), mask2.convert(newToOldPosMap));
+        assertThat(mask2.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(2)), mask3.convert(newToOldPosMap));
+        assertThat(mask3.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(2)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0, 2)), mask4.convert(newToOldPosMap));
+        assertThat(mask4.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0, 2)));
 
     }
 
     @Test
-    public void testConvert_RemovedTags() {
+    void testConvert_RemovedTags() {
         final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,b,c,d] => [b,d] (removed pos 1 and 3)
@@ -338,24 +350,22 @@ public class TestRollUpBitMask extends StroomUnitTest {
         final RollUpBitMask mask5 = RollUpBitMask.fromTagPositions(Arrays.asList(0, 1, 2, 3));
         final RollUpBitMask mask6 = RollUpBitMask.fromTagPositions(Arrays.asList(1, 3));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Collections.emptyList()),
-                mask1.convert(newToOldPosMap));
+        assertThat(mask1.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Collections.emptyList()));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Collections.emptyList()),
-                mask2.convert(newToOldPosMap));
+        assertThat(mask2.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Collections.emptyList()));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0)), mask3.convert(newToOldPosMap));
+        assertThat(mask3.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0)), mask4.convert(newToOldPosMap));
+        assertThat(mask4.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1)), mask5.convert(newToOldPosMap));
+        assertThat(mask5.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1)), mask6.convert(newToOldPosMap));
+        assertThat(mask6.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1)));
 
     }
 
     @Test
-    public void testConvert_ReOrdered() {
+    void testConvert_ReOrdered() {
         final Map<Integer, Integer> newToOldPosMap = new HashMap<>();
 
         // [a,b,c] => [b,c,a]
@@ -371,50 +381,49 @@ public class TestRollUpBitMask extends StroomUnitTest {
         final RollUpBitMask mask5 = RollUpBitMask.fromTagPositions(Arrays.asList(0, 1, 2));
         final RollUpBitMask mask6 = RollUpBitMask.fromTagPositions(Arrays.asList(0, 2));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Collections.emptyList()),
-                mask1.convert(newToOldPosMap));
+        assertThat(mask1.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Collections.emptyList()));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(2)), mask2.convert(newToOldPosMap));
+        assertThat(mask2.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(2)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0)), mask3.convert(newToOldPosMap));
+        assertThat(mask3.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0, 2)), mask4.convert(newToOldPosMap));
+        assertThat(mask4.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0, 2)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1, 2)), mask5.convert(newToOldPosMap));
+        assertThat(mask5.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(0, 1, 2)));
 
-        Assert.assertEquals(RollUpBitMask.fromTagPositions(Arrays.asList(1, 2)), mask6.convert(newToOldPosMap));
+        assertThat(mask6.convert(newToOldPosMap)).isEqualTo(RollUpBitMask.fromTagPositions(Arrays.asList(1, 2)));
 
     }
 
     @Test
-    public void testGetBooleanMask() {
+    void testGetBooleanMask() {
         RollUpBitMask mask;
         List<Integer> posList;
 
         posList = Arrays.asList(0, 1, 2, 3, 4);
         mask = RollUpBitMask.fromTagPositions(posList);
-        Assert.assertEquals(Arrays.asList(true, true, true, true, true), mask.getBooleanMask(5));
+        assertThat(mask.getBooleanMask(5)).isEqualTo(Arrays.asList(true, true, true, true, true));
 
         posList = Arrays.asList(0, 2, 4);
         mask = RollUpBitMask.fromTagPositions(posList);
-        Assert.assertEquals(Arrays.asList(true, false, true, false, true), mask.getBooleanMask(5));
+        assertThat(mask.getBooleanMask(5)).isEqualTo(Arrays.asList(true, false, true, false, true));
 
         posList = Arrays.asList();
         mask = RollUpBitMask.fromTagPositions(posList);
-        Assert.assertEquals(Arrays.asList(false, false, false, false, false), mask.getBooleanMask(5));
+        assertThat(mask.getBooleanMask(5)).isEqualTo(Arrays.asList(false, false, false, false, false));
     }
 
     @Test
-    public void testGetTagPositionsAsList() {
+    void testGetTagPositionsAsList() {
         final List<Integer> tagPositionsInput = Arrays.asList(0, 2, 4);
 
         final RollUpBitMask mask = RollUpBitMask.fromTagPositions(tagPositionsInput);
 
-        Assert.assertEquals(tagPositionsInput, mask.getTagPositionsAsList());
+        assertThat(mask.getTagPositionsAsList()).isEqualTo(tagPositionsInput);
     }
 
     @Test
-    public void testByteValueFromTagList() {
+    void testByteValueFromTagList() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "tag3,tag1";
 
@@ -422,11 +431,11 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
         final byte[] expectedMaskVal = RollUpBitMask.fromTagPositions(Arrays.asList(0, 2)).asBytes();
 
-        Assert.assertTrue(Arrays.equals(expectedMaskVal, maskVal));
+        assertThat(Arrays.equals(expectedMaskVal, maskVal)).isTrue();
     }
 
     @Test
-    public void testByteValueFromTagList_noRollups() {
+    void testByteValueFromTagList_noRollups() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "";
 
@@ -434,19 +443,21 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
         final byte[] expectedMaskVal = RollUpBitMask.ZERO_MASK.asBytes();
 
-        Assert.assertTrue(Arrays.equals(expectedMaskVal, maskVal));
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testByteValueFromTagList_missingTag() {
-        final String allTags = "tag2,tag4,tag1,tag3";
-        final String rolledUpTags = "tag3,tagBad";
-
-        final byte[] maskVal = RollUpBitMask.byteValueFromTagList(allTags, rolledUpTags);
+        assertThat(Arrays.equals(expectedMaskVal, maskVal)).isTrue();
     }
 
     @Test
-    public void testIntValueFromTagList() {
+    void testByteValueFromTagList_missingTag() {
+        assertThatThrownBy(() -> {
+            final String allTags = "tag2,tag4,tag1,tag3";
+            final String rolledUpTags = "tag3,tagBad";
+
+            final byte[] maskVal = RollUpBitMask.byteValueFromTagList(allTags, rolledUpTags);
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testIntValueFromTagList() {
         final String allTags = "tag2,tag4,tag1,tag3";
         final String rolledUpTags = "tag3,tag1";
 
@@ -454,14 +465,16 @@ public class TestRollUpBitMask extends StroomUnitTest {
 
         final int expectedMaskVal = RollUpBitMask.fromTagPositions(Arrays.asList(0, 2)).asShort();
 
-        Assert.assertEquals(expectedMaskVal, maskVal);
+        assertThat(maskVal).isEqualTo(expectedMaskVal);
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testIntValueFromTagList_missingTag() {
-        final String allTags = "tag2,tag4,tag1,tag3";
-        final String rolledUpTags = "tag3,tagBad";
+    @Test
+    void testIntValueFromTagList_missingTag() {
+        assertThatThrownBy(() -> {
+            final String allTags = "tag2,tag4,tag1,tag3";
+            final String rolledUpTags = "tag3,tagBad";
 
-        final int maskVal = RollUpBitMask.intValueFromTagList(allTags, rolledUpTags);
+            final int maskVal = RollUpBitMask.intValueFromTagList(allTags, rolledUpTags);
+        }).isInstanceOf(RuntimeException.class);
     }
 }

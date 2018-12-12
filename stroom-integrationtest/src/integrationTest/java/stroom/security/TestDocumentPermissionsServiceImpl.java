@@ -17,8 +17,8 @@
 
 package stroom.security;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -34,7 +34,9 @@ import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
     @Inject
@@ -49,7 +51,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
     private DocumentPermissionsCache documentPermissionsCache;
 
     @Test
-    public void test() {
+    void test() {
         final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
@@ -62,7 +64,7 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
 
         final DocumentPermissions documentPermissions = documentPermissionService
                 .getPermissionsForDocument(docRef);
-        Assert.assertArrayEquals(permissions, documentPermissions.getAllPermissions());
+        assertThat(documentPermissions.getAllPermissions()).isEqualTo(permissions);
 
         addPermissions(userGroup1, docRef, c1, p1);
         addPermissions(userGroup2, docRef, c1, p2);
@@ -110,9 +112,9 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
         final DocumentPermissions documentPermissions = documentPermissionService
                 .getPermissionsForDocument(docRef);
         final Set<String> permissionSet = documentPermissions.getPermissionsForUser(user);
-        Assert.assertEquals(permissions.length, permissionSet.size());
+        assertThat(permissionSet.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
-            Assert.assertTrue(permissionSet.contains(permission));
+            assertThat(permissionSet.contains(permission)).isTrue();
         }
 
         checkUserPermissions(user, docRef, permissions);
@@ -130,9 +132,9 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
             combinedPermissions.addAll(userPermissions);
         }
 
-        Assert.assertEquals(permissions.length, combinedPermissions.size());
+        assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
-            Assert.assertTrue(combinedPermissions.contains(permission));
+            assertThat(combinedPermissions.contains(permission)).isTrue();
         }
 
         checkUserCachePermissions(user, docRef, permissions);
@@ -153,25 +155,25 @@ public class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationT
             combinedPermissions.addAll(userPermissions);
         }
 
-        Assert.assertEquals(permissions.length, combinedPermissions.size());
+        assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
-            Assert.assertTrue(combinedPermissions.contains(permission));
+            assertThat(combinedPermissions.contains(permission)).isTrue();
         }
     }
 
     private UserRef createUser(final String name) {
         UserRef userRef = userService.createUser(name);
-        Assert.assertNotNull(userRef);
+        assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
-        Assert.assertNotNull(user);
+        assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
         UserRef userRef = userService.createUserGroup(name);
-        Assert.assertNotNull(userRef);
+        assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
-        Assert.assertNotNull(user);
+        assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 }

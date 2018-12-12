@@ -17,8 +17,8 @@
 
 package stroom.xmlschema;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -27,14 +27,16 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private XmlSchemaStore xmlSchemaStore;
     @Inject
     private CommonTestControl commonTestControl;
 
     @Test
-    public void test() {
+    void test() {
         // Import the schemas.
         commonTestControl.createRequiredXMLSchemas();
 
@@ -42,25 +44,25 @@ public class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
         FindXMLSchemaCriteria criteria = new FindXMLSchemaCriteria();
 
         List<XmlSchemaDoc> list = xmlSchemaStore.find(criteria);
-        Assert.assertNotNull(list);
-        Assert.assertTrue(list.size() > 1);
+        assertThat(list).isNotNull();
+        assertThat(list.size() > 1).isTrue();
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setNamespaceURI("event-logging:3");
         list = xmlSchemaStore.find(criteria);
-        Assert.assertNotNull(list);
-        Assert.assertEquals(2, list.size());
+        assertThat(list).isNotNull();
+        assertThat(list.size()).isEqualTo(2);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
         list = xmlSchemaStore.find(criteria);
-        Assert.assertNotNull(list);
-        Assert.assertEquals(1, list.size());
+        assertThat(list).isNotNull();
+        assertThat(list.size()).isEqualTo(1);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSchemaGroup("EVENTS");
         list = xmlSchemaStore.find(criteria);
-        Assert.assertNotNull(list);
-        Assert.assertEquals(2, list.size());
+        assertThat(list).isNotNull();
+        assertThat(list.size()).isEqualTo(2);
     }
 }

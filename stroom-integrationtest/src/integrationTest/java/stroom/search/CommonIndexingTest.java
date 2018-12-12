@@ -16,14 +16,14 @@
 
 package stroom.search;
 
-import org.junit.Assert;
+
 import stroom.docref.DocRef;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.pipeline.task.PipelineStreamProcessor;
-import stroom.test.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
+import stroom.test.StoreCreationTool;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -33,9 +33,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Class to create test data for use in all search tests.
  */
+
 public class CommonIndexingTest {
     private static final int N1 = 1;
 
@@ -83,24 +86,24 @@ public class CommonIndexingTest {
         // 3 ref data streams pluss our data streams
         int expectedTaskCount = 3 + dataFileCount;
 
-        Assert.assertEquals(expectedTaskCount, results.size());
+        assertThat(results.size()).isEqualTo(expectedTaskCount);
         for (final StreamProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
-            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
-            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
-            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
+            assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
+            assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
+            assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
         }
 
         // Add index.
         storeCreationTool.addIndex("Test index", INDEX_XSLT, maxDocsPerShard);
         // Translate data.
         results = commonTranslationTest.processAll();
-        Assert.assertEquals(N1, results.size());
+        assertThat(results.size()).isEqualTo(N1);
         for (final StreamProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
-            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
-            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
-            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
+            assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
+            assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
+            assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
         }
 
         // Flush all newly created index shards.

@@ -16,29 +16,31 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-public class TestNumericIP extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestNumericIP extends StroomUnitTest {
     @Test
-    public void test() {
+    void test() {
         final NumericIP numericIP = new NumericIP();
 
         String out = numericIP.convert("192.168.1.1");
         System.out.println(out);
-        Assert.assertEquals("3232235777", out);
+        assertThat(out).isEqualTo("3232235777");
         out = numericIP.convert("192.168.1.2");
         System.out.println(out);
-        Assert.assertEquals("3232235778", out);
+        assertThat(out).isEqualTo("3232235778");
         out = numericIP.convert("255.255.255.255");
         System.out.println(out);
-        Assert.assertEquals("4294967295", out);
+        assertThat(out).isEqualTo("4294967295");
         out = numericIP.convert("0.0.0.0");
         System.out.println(out);
-        Assert.assertEquals("0", out);
+        assertThat(out).isEqualTo("0");
         out = numericIP.convert("1.1.1.1");
         System.out.println(out);
-        Assert.assertEquals("16843009", out);
+        assertThat(out).isEqualTo("16843009");
     }
 }

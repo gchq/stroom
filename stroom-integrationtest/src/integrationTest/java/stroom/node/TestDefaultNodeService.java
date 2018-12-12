@@ -17,23 +17,25 @@
 
 package stroom.node;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 
-public class TestDefaultNodeService extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestDefaultNodeService extends AbstractCoreIntegrationTest {
     @Inject
     private NodeCache nodeCache;
     @Inject
     private NodeService nodeService;
 
     @Test
-    public void testBasic() {
+    void testBasic() {
         // This should get lazy created
-        Assert.assertNotNull(nodeCache.getDefaultNode());
-        Assert.assertTrue(nodeService.find(new FindNodeCriteria()).size() > 0);
+        assertThat(nodeCache.getDefaultNode()).isNotNull();
+        assertThat(nodeService.find(new FindNodeCriteria()).size() > 0).isTrue();
     }
 }

@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * type (XML and text) correctly and that it inserts segment boundaries in the
  * correct places.
  */
+
 class TestStreamTargetUtil {
     @Test
     void testSimpleWriteThenRead() {

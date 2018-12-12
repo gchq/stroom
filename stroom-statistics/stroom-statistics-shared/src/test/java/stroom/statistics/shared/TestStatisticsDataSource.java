@@ -16,8 +16,8 @@
 
 package stroom.statistics.shared;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
@@ -28,86 +28,81 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class TestStatisticsDataSource {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStatisticsDataSource {
     private static final String FIELD1 = "field1";
     private static final String FIELD2 = "field2";
     private static final String FIELD3 = "field3";
 
     @Test
-    public void testIsValidFieldPass() {
+    void testIsValidFieldPass() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         final String fieldToTest = FIELD1;
 
-        Assert.assertTrue(sds.isValidField(fieldToTest));
+        assertThat(sds.isValidField(fieldToTest)).isTrue();
     }
 
     @Test
-    public void testIsValidFieldFailBadFieldName() {
+    void testIsValidFieldFailBadFieldName() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         final String fieldToTest = "BadFieldName";
 
-        Assert.assertFalse(sds.isValidField(fieldToTest));
+        assertThat(sds.isValidField(fieldToTest)).isFalse();
     }
 
     @Test
-    public void testIsValidFieldFailNoFields() {
+    void testIsValidFieldFailNoFields() {
         // build with no fields
         final StatisticStoreDoc sds = buildStatisticsDataSource(false);
 
         final String fieldToTest = "BadFieldName";
 
-        Assert.assertFalse(sds.isValidField(fieldToTest));
+        assertThat(sds.isValidField(fieldToTest)).isFalse();
     }
 
     @Test
-    public void testListOrder1() {
+    void testListOrder1() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        Assert.assertEquals(
-                Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                new ArrayList<>(sds.getConfig().getStatisticFields()));
+        assertThat(new ArrayList<>(sds.getConfig().getStatisticFields())).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
+        assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), sds.getFieldNames());
+        assertThat(sds.getFieldNames()).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
     }
 
     @Test
-    public void testListOrder2() {
+    void testListOrder2() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        Assert.assertEquals(
-                Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                sds.getConfig().getStatisticFields());
+        assertThat(sds.getConfig().getStatisticFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
+        assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), sds.getFieldNames());
+        assertThat(sds.getFieldNames()).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
         // remove an item and check the order
 
         sds.getConfig().removeStatisticField(new StatisticField(FIELD2));
 
-        Assert.assertEquals(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD3)),
-                sds.getConfig().getStatisticFields());
+        assertThat(sds.getConfig().getStatisticFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD3)));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD3), getFieldNames(sds));
+        assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD3));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD3), sds.getFieldNames());
+        assertThat(sds.getFieldNames()).isEqualTo(Arrays.asList(FIELD1, FIELD3));
 
         // add an item back in and check the order
 
         sds.getConfig().addStatisticField(new StatisticField(FIELD2));
 
-        Assert.assertEquals(
-                Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                sds.getConfig().getStatisticFields());
+        assertThat(sds.getConfig().getStatisticFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
+        assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
-        Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), sds.getFieldNames());
+        assertThat(sds.getFieldNames()).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
     }
 
     private List<String> getFieldNames(final StatisticStoreDoc sds) {
@@ -119,73 +114,73 @@ public class TestStatisticsDataSource {
     }
 
     @Test
-    public void testFieldPositions() {
+    void testFieldPositions() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        Assert.assertEquals(0, sds.getPositionInFieldList(FIELD1).intValue());
-        Assert.assertEquals(1, sds.getPositionInFieldList(FIELD2).intValue());
-        Assert.assertEquals(2, sds.getPositionInFieldList(FIELD3).intValue());
+        assertThat(sds.getPositionInFieldList(FIELD1).intValue()).isEqualTo(0);
+        assertThat(sds.getPositionInFieldList(FIELD2).intValue()).isEqualTo(1);
+        assertThat(sds.getPositionInFieldList(FIELD3).intValue()).isEqualTo(2);
 
         sds.getConfig().removeStatisticField(new StatisticField(FIELD2));
 
-        Assert.assertEquals(0, sds.getPositionInFieldList(FIELD1).intValue());
-        Assert.assertEquals(null, sds.getPositionInFieldList(FIELD2));
-        Assert.assertEquals(1, sds.getPositionInFieldList(FIELD3).intValue());
+        assertThat(sds.getPositionInFieldList(FIELD1).intValue()).isEqualTo(0);
+        assertThat(sds.getPositionInFieldList(FIELD2)).isEqualTo(null);
+        assertThat(sds.getPositionInFieldList(FIELD3).intValue()).isEqualTo(1);
 
         sds.getConfig().addStatisticField(new StatisticField(FIELD2));
 
-        Assert.assertEquals(0, sds.getPositionInFieldList(FIELD1).intValue());
-        Assert.assertEquals(1, sds.getPositionInFieldList(FIELD2).intValue());
-        Assert.assertEquals(2, sds.getPositionInFieldList(FIELD3).intValue());
+        assertThat(sds.getPositionInFieldList(FIELD1).intValue()).isEqualTo(0);
+        assertThat(sds.getPositionInFieldList(FIELD2).intValue()).isEqualTo(1);
+        assertThat(sds.getPositionInFieldList(FIELD3).intValue()).isEqualTo(2);
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_nullList() {
+    void testIsRollUpCombinationSupported_nullList() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        Assert.assertTrue(sds.isRollUpCombinationSupported(null));
+        assertThat(sds.isRollUpCombinationSupported(null)).isTrue();
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_emptyList() {
+    void testIsRollUpCombinationSupported_emptyList() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>()));
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>())).isTrue();
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_rollUpTypeAll() {
+    void testIsRollUpCombinationSupported_rollUpTypeAll() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.ALL);
 
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1))));
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1)))).isTrue();
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_rollUpTypeNone() {
+    void testIsRollUpCombinationSupported_rollUpTypeNone() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.NONE);
 
-        Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1))));
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1)))).isFalse();
     }
 
     @Test
-    public void testIsRollUpCombinationSupported_rollUpTypeCustom() {
+    void testIsRollUpCombinationSupported_rollUpTypeCustom() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.CUSTOM);
 
         // check it copes in or out of order
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1, FIELD2, FIELD3))));
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD2, FIELD3, FIELD1))));
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1, FIELD2, FIELD3)))).isTrue();
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD2, FIELD3, FIELD1)))).isTrue();
 
         // check the other valid combinations
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1, FIELD2))));
-        Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1))));
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1, FIELD2)))).isTrue();
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD1)))).isTrue();
 
-        Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD3))));
+        assertThat(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD3)))).isFalse();
     }
 
     private StatisticStoreDoc buildStatisticsDataSource(final boolean addFields) {

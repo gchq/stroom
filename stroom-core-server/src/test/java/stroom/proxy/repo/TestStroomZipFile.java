@@ -1,7 +1,7 @@
 package stroom.proxy.repo;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.io.CloseableUtil;
 
 import java.io.IOException;
@@ -12,11 +12,13 @@ import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class TestStroomZipFile {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStroomZipFile {
     @Test
-    public void testRealZip1() throws IOException {
+    void testRealZip1() throws IOException {
         Path uniqueTestDir = Files.createTempDirectory("stroom");
-        Assert.assertTrue(Files.isDirectory(uniqueTestDir));
+        assertThat(Files.isDirectory(uniqueTestDir)).isTrue();
         final Path file = Files.createTempFile(uniqueTestDir, "TestStroomZipFile", ".zip");
         System.out.println(file.toAbsolutePath().toString());
         ZipOutputStream zipOutputStream = null;
@@ -34,11 +36,10 @@ public class TestStroomZipFile {
         try {
             stroomZipFile = new StroomZipFile(file);
 
-            Assert.assertEquals(stroomZipFile.getStroomZipNameSet().getBaseNameSet(),
-                    new HashSet<>(Collections.singleton("test/test.dat")));
+            assertThat(new HashSet<>(Collections.singleton("test/test.dat"))).isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
-            Assert.assertNotNull(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Data));
-            Assert.assertNull(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Context));
+            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Data)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Context)).isNull();
 
         } finally {
             CloseableUtil.close(stroomZipFile);
@@ -47,7 +48,7 @@ public class TestStroomZipFile {
     }
 
     @Test
-    public void testRealZip2() throws IOException {
+    void testRealZip2() throws IOException {
         final Path file = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         ZipOutputStream zipOutputStream = null;
         try {
@@ -70,12 +71,11 @@ public class TestStroomZipFile {
         try {
             stroomZipFile = new StroomZipFile(file);
 
-            Assert.assertEquals(stroomZipFile.getStroomZipNameSet().getBaseNameSet(),
-                    new HashSet<>(Collections.singleton("request")));
+            assertThat(new HashSet<>(Collections.singleton("request"))).isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
-            Assert.assertNotNull(stroomZipFile.getInputStream("request", StroomZipFileType.Data));
-            Assert.assertNotNull(stroomZipFile.getInputStream("request", StroomZipFileType.Meta));
-            Assert.assertNotNull(stroomZipFile.getInputStream("request", StroomZipFileType.Context));
+            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Data)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Meta)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Context)).isNotNull();
 
         } finally {
             CloseableUtil.close(stroomZipFile);

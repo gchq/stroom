@@ -17,8 +17,8 @@
 
 package stroom.search;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
@@ -27,12 +27,14 @@ import stroom.test.AbstractCoreIntegrationTest;
 import javax.inject.Inject;
 import java.util.Collections;
 
-public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private DictionaryStore dictionaryStore;
 
     @Test
-    public void test() {
+    void test() {
         // Create a dictionary and save it.
         final DocRef docRef = dictionaryStore.createDocument("TEST");
         final DictionaryDoc dictionary = dictionaryStore.readDocument(docRef);
@@ -41,13 +43,13 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
 
         // Make sure we can get it back.
         final DictionaryDoc loaded = dictionaryStore.readDocument(docRef);
-        Assert.assertNotNull(loaded);
-        Assert.assertEquals(dictionary.getData(), loaded.getData());
-        Assert.assertEquals(dictionary.getData(), dictionaryStore.getCombinedData(docRef));
+        assertThat(loaded).isNotNull();
+        assertThat(loaded.getData()).isEqualTo(dictionary.getData());
+        assertThat(dictionaryStore.getCombinedData(docRef)).isEqualTo(dictionary.getData());
     }
 
     @Test
-    public void testImport() {
+    void testImport() {
         // Create a dictionary and save it.
         final DocRef docRef1 = dictionaryStore.createDocument("TEST");
         final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
@@ -69,8 +71,8 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
         dictionaryStore.writeDocument(dictionary3);
 
         // Make sure we can get it back.
-        Assert.assertEquals("dic1", dictionaryStore.getCombinedData(docRef1));
-        Assert.assertEquals("dic1\ndic2", dictionaryStore.getCombinedData(docRef2));
-        Assert.assertEquals("dic1\ndic2\ndic3", dictionaryStore.getCombinedData(docRef3));
+        assertThat(dictionaryStore.getCombinedData(docRef1)).isEqualTo("dic1");
+        assertThat(dictionaryStore.getCombinedData(docRef2)).isEqualTo("dic1\ndic2");
+        assertThat(dictionaryStore.getCombinedData(docRef3)).isEqualTo("dic1\ndic2\ndic3");
     }
 }

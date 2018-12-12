@@ -17,7 +17,8 @@
 
 package stroom.dashboard;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -37,7 +38,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
+class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private DashboardStore dashboardStore;
     @Inject
@@ -46,7 +47,7 @@ public class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
     private ScriptStore scriptStore;
 
     @Test
-    public void test() {
+    void test() {
         final VisComponentSettings visSettings = getVisSettings();
 
         final DocRef dashboardRef = dashboardStore.createDocument("Test Dashboard");

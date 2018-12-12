@@ -16,7 +16,8 @@
 
 package stroom.dashboard;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
@@ -30,9 +31,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class TestSearchResponseMapper {
+class TestSearchResponseMapper {
     @Test
-    public void testResponse() {
+    void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
         final stroom.dashboard.shared.SearchResponse result = mapper.mapResponse(getSearchResponse());
         System.out.println(result);

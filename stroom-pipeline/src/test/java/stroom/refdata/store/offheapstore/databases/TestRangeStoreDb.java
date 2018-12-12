@@ -21,22 +21,23 @@ import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.apache.hadoop.util.ThreadUtil;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.refdata.util.ByteBufferPool;
-import stroom.refdata.util.ByteBufferUtils;
 import stroom.refdata.store.offheapstore.RangeStoreKey;
 import stroom.refdata.store.offheapstore.UID;
 import stroom.refdata.store.offheapstore.ValueStoreKey;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.refdata.util.ByteBufferUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -53,19 +54,17 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRangeStoreDb extends AbstractLmdbDbTest {
+class TestRangeStoreDb extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRangeStoreDb.class);
-
-    private RangeStoreDb rangeStoreDb;
-
     final UID uid1 = UID.of(0, 0, 0, 1);
     final UID uid2 = UID.of(0, 0, 0, 2);
     final UID uid3 = UID.of(0, 0, 0, 3);
+    private RangeStoreDb rangeStoreDb;
 
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         rangeStoreDb = new RangeStoreDb(
@@ -76,7 +75,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGet() {
+    void testGet() {
 
         final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
 
@@ -99,11 +98,11 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
             for (int i = 0; i < uids.size(); i++) {
                 LOGGER.debug("Iteration {}, testing with UID {}", i, uids.get(i));
 
-                getAndAssert(txn, uids.get(i), 1, (i *  10) + 1); // on range start
-                getAndAssert(txn, uids.get(i), 5, (i *  10) + 1); // in range middle
-                getAndAssert(txn, uids.get(i), 10, (i *  10) + 1); // on range end
-                getAndAssert(txn, uids.get(i), 11, (i *  10) + 2); // on range start
-                getAndAssert(txn, uids.get(i), 300, (i *  10) + 5); // on range end
+                getAndAssert(txn, uids.get(i), 1, (i * 10) + 1); // on range start
+                getAndAssert(txn, uids.get(i), 5, (i * 10) + 1); // in range middle
+                getAndAssert(txn, uids.get(i), 10, (i * 10) + 1); // on range end
+                getAndAssert(txn, uids.get(i), 11, (i * 10) + 2); // on range start
+                getAndAssert(txn, uids.get(i), 300, (i * 10) + 5); // on range end
 
                 getAndAssertNotFound(txn, uids.get(i), 0); // not in a range
                 getAndAssertNotFound(txn, uids.get(i), 50); // not in a range
@@ -113,7 +112,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testContainsMapDefinition() {
+    void testContainsMapDefinition() {
 
         final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
         final UID uid4 = UID.of(0, 0, 0, 4);
@@ -151,6 +150,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
         assertThat(optValueStoreKey).isNotEmpty();
         assertThat(optValueStoreKey.get()).isEqualTo(val(expectedValue));
     }
+
     private void getAndAssertNotFound(Txn<ByteBuffer> txn, UID uid, long key) {
         LOGGER.debug("getAndAssertNotFound {}, {}, {}", uid, key);
 
@@ -158,9 +158,9 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
         assertThat(optValueStoreKey).isEmpty();
     }
 
-    @Ignore // ReferenceDataFilter will prevent neg values
+    @Disabled // ReferenceDataFilter will prevent neg values
     @Test
-    public void testGetWithNegativeNumbers() {
+    void testGetWithNegativeNumbers() {
 
         final List<UID> uids = Arrays.asList(uid1);
 
@@ -189,11 +189,11 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void forEachEntry() {
+    void forEachEntry() {
 
-        final UID uid1 = UID.of(1,0,0,1);
-        final UID uid2 = UID.of(2,0,0,2);
-        final UID uid3 = UID.of(3,0,0,3);
+        final UID uid1 = UID.of(1, 0, 0, 1);
+        final UID uid2 = UID.of(2, 0, 0, 2);
+        final UID uid3 = UID.of(3, 0, 0, 3);
 
         final RangeStoreKey rangeStoreKey11 = new RangeStoreKey(uid1, Range.of(10L, 20L));
         final RangeStoreKey rangeStoreKey21 = new RangeStoreKey(uid2, Range.of(20L, 25L));
@@ -281,9 +281,9 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
         return new ValueStoreKey(val, (short) val);
     }
 
-    @Ignore // a bit of manual testing of a Striped Semaphore
+    @Disabled // a bit of manual testing of a Striped Semaphore
     @Test
-    public void testStripedSemaphore() throws InterruptedException {
+    void testStripedSemaphore() throws InterruptedException {
 
         final List<String> keys = Arrays.asList(
                 "one",
@@ -293,7 +293,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
 
         final Map<String, AtomicInteger> map = keys.stream()
                 .map(k ->
-                    Tuple.of(k, new AtomicInteger())
+                        Tuple.of(k, new AtomicInteger())
                 )
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
@@ -301,7 +301,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
 
         final ExecutorService executorService = Executors.newFixedThreadPool(6);
 
-        IntStream.rangeClosed(1,1000000)
+        IntStream.rangeClosed(1, 1000000)
                 .forEach(i -> {
                     executorService.submit(() -> {
                         String key = keys.get(new Random().nextInt(keys.size()));

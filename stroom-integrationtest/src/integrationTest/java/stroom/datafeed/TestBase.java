@@ -2,11 +2,12 @@ package stroom.datafeed;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
+
 
 public class TestBase {
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         final Injector injector = Guice.createInjector(new TestBaseModule());
         injector.injectMembers(this);
     }

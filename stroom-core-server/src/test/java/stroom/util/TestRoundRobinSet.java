@@ -17,11 +17,8 @@
 package stroom.util;
 
 import org.apache.commons.lang3.mutable.MutableLong;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.docref.SharedObject;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.Collection;
@@ -29,11 +26,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Tests that the round robin list works correctly.
  */
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRoundRobinSet extends StroomUnitTest {
+
+class TestRoundRobinSet extends StroomUnitTest {
     private static final int N3 = 3;
     private static final int N4 = 4;
 
@@ -41,22 +40,22 @@ public class TestRoundRobinSet extends StroomUnitTest {
      * Tests that the round robin list works correctly.
      */
     @Test
-    public void test() {
+    void test() {
         final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<>();
         rrList.add(new RoundRobinSetTestObject(1));
         rrList.add(new RoundRobinSetTestObject(2));
         rrList.add(new RoundRobinSetTestObject(N3));
         rrList.add(new RoundRobinSetTestObject(N4));
 
-        Assert.assertEquals("123", getString(rrList));
-        Assert.assertEquals("234", getString(rrList));
-        Assert.assertEquals("341", getString(rrList));
-        Assert.assertEquals("412", getString(rrList));
-        Assert.assertEquals("123", getString(rrList));
+        assertThat(getString(rrList)).isEqualTo("123");
+        assertThat(getString(rrList)).isEqualTo("234");
+        assertThat(getString(rrList)).isEqualTo("341");
+        assertThat(getString(rrList)).isEqualTo("412");
+        assertThat(getString(rrList)).isEqualTo("123");
     }
 
     @Test
-    public void testSync() throws InterruptedException {
+    void testSync() throws InterruptedException {
         final RoundRobinSet<RoundRobinSetTestObject> rrList = new RoundRobinSet<>();
         rrList.add(new RoundRobinSetTestObject(1));
         rrList.add(new RoundRobinSetTestObject(2));
@@ -89,7 +88,7 @@ public class TestRoundRobinSet extends StroomUnitTest {
         executorService.shutdown();
         executorService.awaitTermination(2, TimeUnit.MINUTES);
 
-        Assert.assertEquals(0, failureCount.longValue());
+        assertThat(failureCount.longValue()).isEqualTo(0);
     }
 
     private String getString(final Collection<RoundRobinSetTestObject> c) {

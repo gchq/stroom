@@ -16,7 +16,6 @@
 
 package stroom.util;
 
-import org.junit.rules.ExternalResource;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
@@ -43,7 +42,7 @@ import java.util.zip.ZipInputStream;
  * public static ZipResource bomBlank = new ZipResource("files/ZIP_FOLDER");
  * </pre>
  */
-public class ZipResource extends ExternalResource {
+public class ZipResource {
     private static final String RESOURCES = "src/test/resources/";
     private static final String ZIP_EXTENSION = ".zip";
 
@@ -70,14 +69,12 @@ public class ZipResource extends ExternalResource {
         return new ZipInputStream(new ByteArrayInputStream(getBytes()));
     }
 
-    @Override
     public void before() throws IOException {
         Path inputDir = Paths.get(RESOURCES + folderToZip);
         zip = Paths.get(RESOURCES + folderToZip + ZIP_EXTENSION);
         ZipUtil.zip(zip, inputDir);
     }
 
-    @Override
     public void after() {
         try {
             Files.deleteIfExists(zip);

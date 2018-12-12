@@ -16,14 +16,12 @@
 
 package stroom.streamtask;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
-@Ignore("TODO 2015-10-21: Restore tests or delete.")
-public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrationTest {
+class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrationTest {
     @Test
-    public void test() {
+    void test() {
     }
     // @Inject
     // private CommonTestControl commonTestControl;
@@ -41,7 +39,7 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     // /**
     // * Test set up.
     // */
-    // @Before
+    // @BeforeEach
     // public void setUp() {
     // commonTestControl.deleteAll();
     // }
@@ -61,8 +59,8 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     // // Create tasks.
     // streamTaskCreator.createAllTasks();
     //
-    // Assert.assertEquals(1, commonTestControl
-    // .countEntity(TranslationStreamTask.class));
+    // assertThat(commonTestControl
+    // .countEntity(TranslationStreamTask.class)).isEqualTo(1);
     //
     // FindTranslationStreamTaskCriteria criteria =
     // FindTranslationStreamTaskCriteria
@@ -90,21 +88,21 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     // new TranslationStreamTaskServiceImportExportSettings());
     // taskManager.exec(exportTask);
     //
-    // Assert.assertTrue(testFile.isFile());
+    // assertThat(testFile.isFile()).isTrue();
     //
     // StroomZipFile stroomZipFile = new StroomZipFile(testFile);
     //
-    // Assert.assertEquals(2, stroomZipFile.getStroomZipNameSet().getBaseNameSet()
-    // .size());
-    // Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Data));
-    // Assert.assertTrue(stroomZipFile.containsEntry("002", StroomZipFileType.Data));
-    // Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Meta));
-    // Assert.assertTrue(stroomZipFile.containsEntry("002", StroomZipFileType.Meta));
+    // assertThat(stroomZipFile.getStroomZipNameSet().getBaseNameSet()
+    // .size()).isEqualTo(2);
+    // assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Data)).isTrue();
+    // assertThat(stroomZipFile.containsEntry("002", StroomZipFileType.Data)).isTrue();
+    // assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Meta)).isTrue();
+    // assertThat(stroomZipFile.containsEntry("002", StroomZipFileType.Meta)).isTrue();
     //
     // stroomZipFile.close();
     //
-    // Assert.assertEquals(1, translationStreamTaskService.find(
-    // new FindTranslationStreamTaskCriteria()).size());
+    // assertThat(translationStreamTaskService.find(
+    // new FindTranslationStreamTaskCriteria()).size()).isEqualTo(1);
     //
     // // Create another file
     // commonTestScenarioCreator.createSample2LineRawFile(efd1);
@@ -119,7 +117,7 @@ public class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIn
     // // Create tasks.
     // streamTaskCreator.createAllTasks();
     //
-    // Assert.assertEquals(5, translationStreamTaskService.find(
-    // new FindTranslationStreamTaskCriteria()).size());
+    // assertThat(translationStreamTaskService.find(
+    // new FindTranslationStreamTaskCriteria()).size()).isEqualTo(5);
     // }
 }

@@ -19,8 +19,7 @@ package stroom.dashboard;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stroom.dashboard.vis.VisSettings;
 import stroom.util.io.StreamUtil;
 
@@ -28,11 +27,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class TestVisSettings {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestVisSettings {
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         final Path jsonFile = Paths.get(getClass().getClassLoader().getResource("TestVisSettings/settings.json").toURI());
-        Assert.assertTrue(Files.isRegularFile(jsonFile));
+        assertThat(Files.isRegularFile(jsonFile)).isTrue();
         final String json = StreamUtil.fileToString(jsonFile);
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -55,6 +56,6 @@ public class TestVisSettings {
         System.out.println(in);
         System.out.println(out);
 
-        Assert.assertEquals(in, out);
+        assertThat(out).isEqualTo(in);
     }
 }

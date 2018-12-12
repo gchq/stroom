@@ -16,8 +16,8 @@
 
 package stroom.pipeline.destination;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 
@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class TestRollingFileDestination {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRollingFileDestination {
     @Test
-    public void testFrequency() throws IOException {
+    void testFrequency() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
@@ -43,13 +45,13 @@ public class TestRollingFileDestination {
                 dir,
                 file);
 
-        Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time));
-        Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time + 60000));
-        Assert.assertTrue(rollingFileDestination.tryFlushAndRoll(false, time + 60001));
+        assertThat(rollingFileDestination.tryFlushAndRoll(false, time)).isFalse();
+        assertThat(rollingFileDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
+        assertThat(rollingFileDestination.tryFlushAndRoll(false, time + 60001)).isTrue();
     }
 
     @Test
-    public void testSchedule() throws IOException {
+    void testSchedule() throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
@@ -64,8 +66,8 @@ public class TestRollingFileDestination {
                 dir,
                 file);
 
-        Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time));
-        Assert.assertFalse(rollingFileDestination.tryFlushAndRoll(false, time + 60000));
-        Assert.assertTrue(rollingFileDestination.tryFlushAndRoll(false, time + 60001));
+        assertThat(rollingFileDestination.tryFlushAndRoll(false, time)).isFalse();
+        assertThat(rollingFileDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
+        assertThat(rollingFileDestination.tryFlushAndRoll(false, time + 60001)).isTrue();
     }
 }

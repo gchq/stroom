@@ -17,15 +17,13 @@
 
 package stroom.search;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexStore;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.docref.DocRef;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -50,7 +48,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class TestTagCloudSearch extends AbstractSearchTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestTagCloudSearch extends AbstractSearchTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
     private static boolean doneSetup;
     @Inject
@@ -67,12 +67,12 @@ public class TestTagCloudSearch extends AbstractSearchTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         final String componentId = "table-1";
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
-        Assert.assertNotNull("Index is null", index);
+        assertThat(index).as("Index is null").isNotNull();
 
         // Create text field.
         final Field fldText = new Field.Builder()
@@ -120,11 +120,11 @@ public class TestTagCloudSearch extends AbstractSearchTest {
         LOGGER.info("Values found:\n" + values);
 
         // Make sure we got what we expected.
-        Assert.assertEquals("Incorrect number of hits found", 8, values.size());
+        assertThat(values.size()).as("Incorrect number of hits found").isEqualTo(8);
         final Row firstResult = values.get(0);
-        Assert.assertNotNull(firstResult);
+        assertThat(firstResult).isNotNull();
         final String text = firstResult.getValues().get(0);
-        Assert.assertNotNull("Incorrect heading", text);
+        assertThat(text).as("Incorrect heading").isNotNull();
 
         // Make sure we got what we expected.
         boolean found = false;
@@ -138,8 +138,8 @@ public class TestTagCloudSearch extends AbstractSearchTest {
                 count = Integer.parseInt(field2);
             }
         }
-        Assert.assertTrue("Unable to find expected value", found);
-        Assert.assertEquals("Value does not have expected word count", 4, count);
+        assertThat(found).as("Unable to find expected value").isTrue();
+        assertThat(count).as("Value does not have expected word count").isEqualTo(4);
     }
 
     private ExpressionOperator.Builder buildExpression(final String user, final String from,

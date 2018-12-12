@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stroom.query.api.v2.SearchRequest;
 
 import javax.xml.bind.JAXBContext;
@@ -37,7 +37,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * Checks serialisation by converting to and from the SearchRequest objects and comparing the results
  */
-public class TestSearchRequestSerialisation {
+
+class TestSearchRequestSerialisation {
 
     private static ObjectMapper getMapper(final boolean indent) {
         final ObjectMapper mapper = new ObjectMapper();
@@ -50,7 +51,7 @@ public class TestSearchRequestSerialisation {
     }
 
     @Test
-    public void testJsonSearchRequestSerialisation() throws IOException {
+    void testJsonSearchRequestSerialisation() throws IOException {
         // Given
         SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
         ObjectMapper objectMapper = getMapper(true);
@@ -66,7 +67,7 @@ public class TestSearchRequestSerialisation {
     }
 
     @Test
-    public void testXmlSearchRequestSerialisation() throws JAXBException {
+    void testXmlSearchRequestSerialisation() throws JAXBException {
         // Given
         SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
         final JAXBContext context = JAXBContext.newInstance(SearchRequest.class);

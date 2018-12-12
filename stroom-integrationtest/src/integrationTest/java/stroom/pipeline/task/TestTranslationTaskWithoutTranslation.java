@@ -16,12 +16,11 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.test.StoreCreationTool;
 import stroom.node.NodeCache;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTask;
@@ -31,6 +30,7 @@ import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
+import stroom.test.StoreCreationTool;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -42,7 +42,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTaskWithoutTranslation/";
     private static final String FEED_NAME = "TEST_FEED";
     private static final Path RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");
@@ -66,21 +68,21 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
      * @throws IOException Could be thrown.
      */
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         setup(FEED_NAME, RESOURCE_NAME);
-        Assert.assertEquals(0, streamMetaService.getLockCount());
+        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
 
         final List<StreamProcessorTaskExecutor> results = processAll();
-        Assert.assertEquals(1, results.size());
+        assertThat(results.size()).isEqualTo(1);
 
         for (final StreamProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
             final String message = "Count = " + processor.getRead() + "," + processor.getWritten() + ","
                     + processor.getMarkerCount(Severity.SEVERITIES);
 
-            Assert.assertTrue(message, processor.getWritten() > 0);
-            Assert.assertTrue(message, processor.getRead() <= processor.getWritten());
-            Assert.assertEquals(message, 0, processor.getMarkerCount(Severity.SEVERITIES));
+            assertThat(processor.getWritten() > 0).as(message).isTrue();
+            assertThat(processor.getRead() <= processor.getWritten()).as(message).isTrue();
+            assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(message).isEqualTo(0);
         }
 
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
@@ -103,7 +105,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         }
 
         // Make sure 10 records were written.
-        Assert.assertEquals(10, ((PipelineStreamProcessor) results.get(0)).getWritten());
+        assertThat(((PipelineStreamProcessor) results.get(0)).getWritten()).isEqualTo(10);
     }
 
     /**

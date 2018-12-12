@@ -16,17 +16,19 @@
 
 package stroom.util.thread;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class TestCondition {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestCondition {
     @Test
-    public void test() {
+    void test() {
         final ReentrantLock lock = new ReentrantLock();
         final Condition condition = lock.newCondition();
         final AtomicLong sleepTime = new AtomicLong();
@@ -69,6 +71,6 @@ public class TestCondition {
             Thread.currentThread().interrupt();
         }
 
-        Assert.assertTrue(sleepTime.get() < 2000);
+        assertThat(sleepTime.get() < 2000).isTrue();
     }
 }

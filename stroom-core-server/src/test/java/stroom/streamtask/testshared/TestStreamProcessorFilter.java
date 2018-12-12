@@ -17,22 +17,20 @@
 package stroom.streamtask.testshared;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTracker;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamProcessorFilter extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamProcessorFilter extends StroomUnitTest {
     @Test
-    public void testCompare() {
+    void testCompare() {
         final ProcessorFilter t1 = new ProcessorFilter();
         t1.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         t1.getStreamProcessorFilterTracker().setMinStreamId(1L);
@@ -48,9 +46,9 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
         t3.getStreamProcessorFilterTracker().setMinStreamId(3L);
         t3.setPriority(3);
 
-        Assert.assertTrue(t1.isHigherPriority(t2));
-        Assert.assertTrue(t3.isHigherPriority(t2));
-        Assert.assertTrue(t3.isHigherPriority(t1));
+        assertThat(t1.isHigherPriority(t2)).isTrue();
+        assertThat(t3.isHigherPriority(t2)).isTrue();
+        assertThat(t3.isHigherPriority(t1)).isTrue();
 
         final ArrayList<ProcessorFilter> taskList = new ArrayList<>();
         taskList.add(t1);
@@ -59,13 +57,13 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
 
         Collections.sort(taskList, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
-        Assert.assertTrue(taskList.get(0) == t3);
-        Assert.assertTrue(taskList.get(1) == t1);
-        Assert.assertTrue(taskList.get(2) == t2);
+        assertThat(taskList.get(0) == t3).isTrue();
+        assertThat(taskList.get(1) == t1).isTrue();
+        assertThat(taskList.get(2) == t2).isTrue();
     }
 
     @Test
-    public void testSort() {
+    void testSort() {
         final LinkedList<ProcessorFilter> newStreamTaskList = new LinkedList<>();
         for (int i = 0; i < 10000; i++) {
             newStreamTaskList.add(createFilter());
@@ -84,7 +82,7 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
     }
 
     @Test
-    public void testPercent1() {
+    void testPercent1() {
         final long now = System.currentTimeMillis();
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
@@ -92,11 +90,11 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
         filter.setMinStreamCreateMs(1414074711896L);
         filter.setMaxStreamCreateMs(1414075927731L);
 
-        Assert.assertEquals(100, filter.getTrackerStreamCreatePercentage(now).intValue());
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(100);
     }
 
     @Test
-    public void testPercent2() {
+    void testPercent2() {
         // Simple example of 50% done
 
         final long now = System.currentTimeMillis();
@@ -106,31 +104,31 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
         filter.setMaxStreamCreateMs(1000L);
         filter.setStreamCreateMs(500L);
 
-        Assert.assertEquals(50, filter.getTrackerStreamCreatePercentage(now).intValue());
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
     }
 
     @Test
-    public void testPercentNullHandling() {
+    void testPercentNullHandling() {
         // Simple example of unknown done
 
         final long now = System.currentTimeMillis();
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
 
-        Assert.assertNull(filter.getTrackerStreamCreatePercentage(now));
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
         filter.setMinStreamCreateMs(0L);
-        Assert.assertNull(filter.getTrackerStreamCreatePercentage(now));
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
         filter.setStreamCreateMs(100L);
-        Assert.assertNotNull(filter.getTrackerStreamCreatePercentage(now));
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
 
         filter.setMaxStreamCreateMs(100L);
-        Assert.assertNotNull(filter.getTrackerStreamCreatePercentage(now));
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNotNull();
     }
 
     @Test
-    public void testPercent50PercentDone() {
+    void testPercent50PercentDone() {
         // Simple example of unknown done
 
         final long now = System.currentTimeMillis();
@@ -138,16 +136,16 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
 
         final ProcessorFilterTracker filter = new ProcessorFilterTracker();
 
-        Assert.assertNull(filter.getTrackerStreamCreatePercentage(now));
+        assertThat(filter.getTrackerStreamCreatePercentage(now)).isNull();
 
         filter.setMinStreamCreateMs(now - (10 * oneDayMs));
         filter.setStreamCreateMs(now - (5 * oneDayMs));
 
         // Stream Max derived to be today
-        Assert.assertEquals(50, filter.getTrackerStreamCreatePercentage(now).intValue());
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
 
         filter.setMaxStreamCreateMs(now);
-        Assert.assertEquals(50, filter.getTrackerStreamCreatePercentage(now).intValue());
+        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
 
     }
 }

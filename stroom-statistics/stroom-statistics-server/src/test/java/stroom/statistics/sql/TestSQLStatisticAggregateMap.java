@@ -17,23 +17,25 @@
 package stroom.statistics.sql;
 
 import org.apache.commons.lang3.mutable.MutableLong;
-import org.junit.Test;
-import stroom.statistics.sql.exception.StatisticsEventValidationException;
-import stroom.statistics.sql.rollup.RollUpBitMask;
-import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
+import org.junit.jupiter.api.Test;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
+import stroom.statistics.sql.exception.StatisticsEventValidationException;
+import stroom.statistics.sql.rollup.RollUpBitMask;
+import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
-public class TestSQLStatisticAggregateMap extends StroomUnitTest {
+class TestSQLStatisticAggregateMap extends StroomUnitTest {
     private static final long timeMs = 101_000L;
     private static final String statName = "MyStat";
     private static final long precision = 1_000L;
@@ -51,43 +53,43 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
     private static final String TAG3_VALUE = "user1";
 
     @Test
-    public void testAddRolledUpEventOneCountEvent() throws StatisticsEventValidationException {
+    void testAddRolledUpEventOneCountEvent() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(buildEvent(COUNT_VAL), precision);
 
         // one event with 8 perms so 8 entries
-        assertEquals(8, aggregateMap.size());
+        assertThat(aggregateMap.size()).isEqualTo(8);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
-            assertEquals(1, entry.getValue().longValue());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
+            assertThat(entry.getValue().longValue()).isEqualTo(1);
         }
     }
 
     @Test
-    public void testAddRolledUpEventOneValueEvent() throws StatisticsEventValidationException {
+    void testAddRolledUpEventOneValueEvent() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(buildEvent(VALUE_VAL), precision);
 
         // one event with 8 perms so 8 entries
-        assertEquals(8, aggregateMap.size());
+        assertThat(aggregateMap.size()).isEqualTo(8);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
-            assertEquals(VALUE_VAL, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
+            assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL, within(JUNIT_DOUBLE_DELTA));
         }
     }
 
     @Test
-    public void testAddRolledUpEventThreeCountEventsWithSameKey() throws StatisticsEventValidationException {
+    void testAddRolledUpEventThreeCountEventsWithSameKey() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(buildEvent(COUNT_VAL), precision);
@@ -95,21 +97,21 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         aggregateMap.addRolledUpEvent(buildEvent(COUNT_VAL), precision);
 
         // one event with 8 perms so 8 entries
-        assertEquals(8, aggregateMap.size());
+        assertThat(aggregateMap.size()).isEqualTo(8);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // three events each with a count of 1 so value in map should be 3
-            assertEquals(3, entry.getValue().longValue());
+            assertThat(entry.getValue().longValue()).isEqualTo(3);
         }
     }
 
     @Test
-    public void testAddRolledUpEventThreeValueEventsWithSameKey() throws StatisticsEventValidationException {
+    void testAddRolledUpEventThreeValueEventsWithSameKey() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(buildEvent(VALUE_VAL), precision);
@@ -117,21 +119,21 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         aggregateMap.addRolledUpEvent(buildEvent(VALUE_VAL), precision);
 
         // one event with 8 perms so 8 entries
-        assertEquals(8, aggregateMap.size());
+        assertThat(aggregateMap.size()).isEqualTo(8);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // three events each with a count of 1 so value in map should be 3
-            assertEquals(VALUE_VAL * 3, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+            assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL * 3, within(JUNIT_DOUBLE_DELTA));
         }
     }
 
     @Test
-    public void testAddRolledUpEventThreeCountEventsWithDifferentKeys() throws StatisticsEventValidationException {
+    void testAddRolledUpEventThreeCountEventsWithDifferentKeys() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(buildEvent("_1", COUNT_VAL), precision);
@@ -142,7 +144,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         // them are for all tags rolled up
         // 'MyStat0007/colour/*/state/*/user/*' so they go into the same key,
         // thus we take two off
-        assertEquals((8 * 3) - 2, aggregateMap.size());
+        assertThat(aggregateMap.size()).isEqualTo((8 * 3) - 2);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
@@ -152,7 +154,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
             System.out.println(
                     entry.getKey() + "  val: " + entry.getValue().longValue() + " markerCount: " + markerCount);
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // all event perms are put into different keys so value should be 1
             // unless it is the all rolled up version
@@ -160,16 +162,16 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
             // Use split as a bit of a hack to count the number of roll up
             // marker chars in the name
             if (markerCount == 3) {
-                assertEquals(3, entry.getValue().longValue());
+                assertThat(entry.getValue().longValue()).isEqualTo(3);
             } else {
-                assertEquals(1, entry.getValue().longValue());
+                assertThat(entry.getValue().longValue()).isEqualTo(1);
             }
 
         }
     }
 
     @Test
-    public void testAddRolledUpEventThreeValueEventsWithDifferentKeys() throws StatisticsEventValidationException {
+    void testAddRolledUpEventThreeValueEventsWithDifferentKeys() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(buildEvent("_1", VALUE_VAL), precision);
@@ -180,7 +182,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         // them are for all tags rolled up
         // 'MyStat0007/colour/*/state/*/user/*' so they go into the same key,
         // thus we take two off
-        assertEquals((8 * 3) - 2, aggregateMap.size());
+        assertThat(aggregateMap.size()).isEqualTo((8 * 3) - 2);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
@@ -190,7 +192,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
             System.out.println(
                     entry.getKey() + "  val: " + entry.getValue().longValue() + " markerCount: " + markerCount);
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // all event perms are put into different keys so value should be 1
             // unless it is the all rolled up version
@@ -198,16 +200,16 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
             // Use split as a bit of a hack to count the number of roll up
             // marker chars in the name
             if (markerCount == 3) {
-                assertEquals(VALUE_VAL * 3, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+                assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL * 3, within(JUNIT_DOUBLE_DELTA));
             } else {
-                assertEquals(VALUE_VAL, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+                assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL, within(JUNIT_DOUBLE_DELTA));
             }
 
         }
     }
 
     @Test
-    public void testAdd_TwoMapsEachWithThreeCountEventsWithSameKey() throws StatisticsEventValidationException {
+    void testAdd_TwoMapsEachWithThreeCountEventsWithSameKey() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap1 = new SQLStatisticAggregateMap();
 
         aggregateMap1.addRolledUpEvent(buildEvent(COUNT_VAL), precision);
@@ -221,26 +223,26 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         aggregateMap2.addRolledUpEvent(buildEvent(COUNT_VAL), precision);
 
         // one event with 8 perms so 8 entries
-        assertEquals(8, aggregateMap1.size());
-        assertEquals(8, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo(8);
+        assertThat(aggregateMap2.size()).isEqualTo(8);
 
         aggregateMap1.add(aggregateMap2);
-        assertEquals(8, aggregateMap1.size());
-        assertEquals(8, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo(8);
+        assertThat(aggregateMap2.size()).isEqualTo(8);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap1.countEntrySet()) {
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // three events each with a count of 1 so value in map should be 3
-            assertEquals(6, entry.getValue().longValue());
+            assertThat(entry.getValue().longValue()).isEqualTo(6);
         }
     }
 
     @Test
-    public void testAdd_TwoMapsEachWithThreeValueEventsWithSameKey() throws StatisticsEventValidationException {
+    void testAdd_TwoMapsEachWithThreeValueEventsWithSameKey() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap1 = new SQLStatisticAggregateMap();
 
         aggregateMap1.addRolledUpEvent(buildEvent(VALUE_VAL), precision);
@@ -254,26 +256,26 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         aggregateMap2.addRolledUpEvent(buildEvent(VALUE_VAL), precision);
 
         // one event with 8 perms so 8 entries
-        assertEquals(8, aggregateMap1.size());
-        assertEquals(8, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo(8);
+        assertThat(aggregateMap2.size()).isEqualTo(8);
 
         aggregateMap1.add(aggregateMap2);
-        assertEquals(8, aggregateMap1.size());
-        assertEquals(8, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo(8);
+        assertThat(aggregateMap2.size()).isEqualTo(8);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap1.countEntrySet()) {
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // three events each with a count of 1 so value in map should be 3
-            assertEquals(VALUE_VAL * 6, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+            assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL * 6, within(JUNIT_DOUBLE_DELTA));
         }
     }
 
     @Test
-    public void testAdd_TwoMapsEachWithThreeCountEventsWithDifferentKeys() throws StatisticsEventValidationException {
+    void testAdd_TwoMapsEachWithThreeCountEventsWithDifferentKeys() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap1 = new SQLStatisticAggregateMap();
 
         aggregateMap1.addRolledUpEvent(buildEvent("_1", COUNT_VAL), precision);
@@ -290,13 +292,13 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         // them are for all tags rolled up
         // 'MyStat0007/colour/*/state/*/user/*' so they go into the same key,
         // thus we take two off
-        assertEquals((8 * 3) - 2, aggregateMap1.size());
-        assertEquals((8 * 3) - 2, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo((8 * 3) - 2);
+        assertThat(aggregateMap2.size()).isEqualTo((8 * 3) - 2);
 
         aggregateMap1.add(aggregateMap2);
 
-        assertEquals((8 * 3) - 2, aggregateMap1.size());
-        assertEquals((8 * 3) - 2, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo((8 * 3) - 2);
+        assertThat(aggregateMap2.size()).isEqualTo((8 * 3) - 2);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
@@ -306,7 +308,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
             System.out.println(
                     entry.getKey() + "  val: " + entry.getValue().longValue() + " markerCount: " + markerCount);
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // all event perms are put into different keys so value should be 1
             // unless it is the all rolled up version
@@ -314,16 +316,16 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
             // Use split as a bit of a hack to count the number of roll up
             // marker chars in the name
             if (markerCount == 3) {
-                assertEquals(3 * 2, entry.getValue().longValue());
+                assertThat(entry.getValue().longValue()).isEqualTo(3 * 2);
             } else {
-                assertEquals(1 * 2, entry.getValue().longValue());
+                assertThat(entry.getValue().longValue()).isEqualTo(1 * 2);
             }
 
         }
     }
 
     @Test
-    public void testAdd_TwoMapsEachWithThreeValueEventsWithDifferentKeys() throws StatisticsEventValidationException {
+    void testAdd_TwoMapsEachWithThreeValueEventsWithDifferentKeys() throws StatisticsEventValidationException {
         final SQLStatisticAggregateMap aggregateMap1 = new SQLStatisticAggregateMap();
 
         aggregateMap1.addRolledUpEvent(buildEvent("_1", VALUE_VAL), precision);
@@ -340,13 +342,13 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         // them are for all tags rolled up
         // 'MyStat0007/colour/*/state/*/user/*' so they go into the same key,
         // thus we take two off
-        assertEquals((8 * 3) - 2, aggregateMap1.size());
-        assertEquals((8 * 3) - 2, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo((8 * 3) - 2);
+        assertThat(aggregateMap2.size()).isEqualTo((8 * 3) - 2);
 
         aggregateMap1.add(aggregateMap2);
 
-        assertEquals((8 * 3) - 2, aggregateMap1.size());
-        assertEquals((8 * 3) - 2, aggregateMap2.size());
+        assertThat(aggregateMap1.size()).isEqualTo((8 * 3) - 2);
+        assertThat(aggregateMap2.size()).isEqualTo((8 * 3) - 2);
 
         // time gets rounded to 100_000L
         final long expectedKeyTime = (timeMs / precision) * precision;
@@ -356,7 +358,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
             System.out.println(
                     entry.getKey() + "  val: " + entry.getValue().longValue() + " markerCount: " + markerCount);
-            assertEquals(expectedKeyTime, entry.getKey().getMs());
+            assertThat(entry.getKey().getMs()).isEqualTo(expectedKeyTime);
 
             // all event perms are put into different keys so value should be 1
             // unless it is the all rolled up version
@@ -364,25 +366,26 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
             // Use split as a bit of a hack to count the number of roll up
             // marker chars in the name
             if (markerCount == 3) {
-                assertEquals(VALUE_VAL * 3 * 2, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+                assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL * 3 * 2, within(JUNIT_DOUBLE_DELTA));
             } else {
-                assertEquals(VALUE_VAL * 2, entry.getValue().longValue(), JUNIT_DOUBLE_DELTA);
+                assertThat(entry.getValue().doubleValue()).isCloseTo(VALUE_VAL * 2, within(JUNIT_DOUBLE_DELTA));
             }
         }
     }
 
-    @Test(expected = StatisticsEventValidationException.class)
-    public void testAddRolledUpEventKeyTooLong() throws StatisticsEventValidationException {
-        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+    @Test
+    void testAddRolledUpEventKeyTooLong() {
+        assertThatThrownBy(() -> {
+            final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
-        final StringBuilder statNameBuilder = new StringBuilder();
+            final StringBuilder statNameBuilder = new StringBuilder();
 
-        for (int i = 0; i < SQLStatisticConstants.STAT_VAL_SRC_NAME_COLUMN_LENGTH + 1; i++) {
-            statNameBuilder.append("x");
-        }
+            for (int i = 0; i < SQLStatisticConstants.STAT_VAL_SRC_NAME_COLUMN_LENGTH + 1; i++) {
+                statNameBuilder.append("x");
+            }
 
-        aggregateMap.addRolledUpEvent(buildEvent(statNameBuilder.toString(), "", COUNT_VAL), precision);
-
+            aggregateMap.addRolledUpEvent(buildEvent(statNameBuilder.toString(), "", COUNT_VAL), precision);
+        }).isInstanceOf(StatisticsEventValidationException.class);
     }
 
     private int countStringInString(final String text, final String searchString) {

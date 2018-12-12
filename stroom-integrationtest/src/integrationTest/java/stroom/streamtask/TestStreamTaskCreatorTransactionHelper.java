@@ -16,9 +16,9 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Data;
@@ -50,7 +50,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest {
     public static final Logger LOGGER = LoggerFactory.getLogger(TestStreamTaskCreatorTransactionHelper.class);
 
     @Inject
@@ -69,39 +71,35 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     private DataMetaService streamMetaService;
 
     @Test
-    public void testBasic() {
+    void testBasic() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
-        Assert.assertEquals(0, commonTestControl.countEntity(ProcessorFilterTask.class));
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
         final List<Data> streams = streamMetaService.find(new FindDataCriteria());
-        Assert.assertEquals(1, streams.size());
+        assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
-        Assert.assertEquals(1,
-                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
+        assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName).build();
-        Assert.assertEquals(1,
-                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
+        assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "otherFed").build();
-        Assert.assertEquals(0,
-                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
+        assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.PIPELINE_UUID, Condition.EQUALS, "1234").build();
-        Assert.assertEquals(0,
-                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
+        assertThat(streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
     }
 
     @Test
-    public void testDeleteQuery() {
+    void testDeleteQuery() {
         streamTaskDeleteExecutor.delete(0);
     }
 
-    @Ignore //performance test to compare time
+    @Disabled //performance test to compare time
     @Test
-    public void testMultiInsertPerformance() throws SQLException {
+    void testMultiInsertPerformance() throws SQLException {
 
         /*
         create table insert_test (

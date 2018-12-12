@@ -17,11 +17,11 @@
 
 package stroom.search;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -49,7 +49,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class TestEventSearch extends AbstractSearchTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestEventSearch extends AbstractSearchTest {
     private static boolean doneSetup;
     @Inject
     private CommonIndexingTest commonIndexingTest;
@@ -68,7 +70,7 @@ public class TestEventSearch extends AbstractSearchTest {
      * Positive case insensitive test.
      */
     @Test
-    public void positiveCaseInsensitiveTest() {
+    void positiveCaseInsensitiveTest() {
         final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",
                 "2016-01-02T00:00:00.000Z", "Description", "e0567");
         test(expression, 5);
@@ -87,7 +89,7 @@ public class TestEventSearch extends AbstractSearchTest {
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
-        Assert.assertNotNull("Index is null", index);
+        assertThat(index).as("Index is null").isNotNull();
 
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
@@ -131,14 +133,14 @@ public class TestEventSearch extends AbstractSearchTest {
         // }
 
         if (expectResultCount == 0) {
-            Assert.assertEquals(0, rows.size());
+            assertThat(rows.size()).isEqualTo(0);
         } else {
-            Assert.assertEquals(componentIds.size(), rows.size());
+            assertThat(rows).hasSize(componentIds.size());
         }
 
         for (final List<Row> values : rows.values()) {
             if (expectResultCount == 0) {
-                Assert.assertEquals(0, values.size());
+                assertThat(values.size()).isEqualTo(0);
 
             } else {
                 // Make sure we got what we expected.
@@ -146,12 +148,12 @@ public class TestEventSearch extends AbstractSearchTest {
                 if (values != null && values.size() > 0) {
                     firstResult = values.get(0);
                 }
-                Assert.assertNotNull("No results found", firstResult);
+                assertThat(firstResult).as("No results found").isNotNull();
 
                 if (extractValues) {
                     final String time = firstResult.getValues().get(1);
-                    Assert.assertNotNull("Incorrect heading", time);
-                    Assert.assertEquals("Incorrect number of hits found", expectResultCount, values.size());
+                    assertThat(time).as("Incorrect heading").isNotNull();
+                    assertThat(values.size()).as("Incorrect number of hits found").isEqualTo(expectResultCount);
                     boolean found = false;
                     for (final Row hit : values) {
                         final String str = hit.getValues().get(1);
@@ -159,7 +161,7 @@ public class TestEventSearch extends AbstractSearchTest {
                             found = true;
                         }
                     }
-                    Assert.assertTrue("Unable to find expected hit", found);
+                    assertThat(found).as("Unable to find expected hit").isTrue();
                 }
             }
         }

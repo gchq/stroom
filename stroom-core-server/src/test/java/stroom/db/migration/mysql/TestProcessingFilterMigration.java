@@ -1,14 +1,14 @@
 package stroom.db.migration.mysql;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-@Ignore
-public class TestProcessingFilterMigration {
+@Disabled
+class TestProcessingFilterMigration {
     private static final String TEST_USER = "stroomuser";
     private static final String TEST_PASSWORD = "stroompassword1";
 
@@ -19,7 +19,7 @@ public class TestProcessingFilterMigration {
      * @throws Exception If anything goes wrong, just go bang
      */
     @Test
-    @Ignore
+    @Disabled
     public void testMigrateOnDockerImage() throws Exception {
         final V6_0_0_9__ProcessingFilter filter = new V6_0_0_9__ProcessingFilter(false);
 

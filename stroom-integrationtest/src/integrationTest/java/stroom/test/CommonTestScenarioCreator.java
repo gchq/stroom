@@ -17,10 +17,10 @@
 
 package stroom.test;
 
-import org.junit.Assert;
+
 import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -48,6 +48,8 @@ import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Help class to create some basic scenarios for testing.
@@ -113,7 +115,7 @@ public class CommonTestScenarioCreator {
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setIndexFields(indexFields);
         indexStore.writeDocument(index);
-        Assert.assertNotNull(index);
+        assertThat(index).isNotNull();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);

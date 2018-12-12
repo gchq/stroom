@@ -17,33 +17,35 @@
 
 package stroom.refdata.store.offheapstore.databases;
 
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataProcessingInfo;
 import stroom.refdata.store.RefStreamDefinition;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
+import stroom.refdata.util.ByteBufferPool;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestProcessingInfoDb extends AbstractLmdbDbTest {
+class TestProcessingInfoDb extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProcessingInfoDb.class);
 
     private ProcessingInfoDb processingInfoDb = null;
 
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         processingInfoDb = new ProcessingInfoDb(
@@ -54,7 +56,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testPutAndGet() {
+    void testPutAndGet() {
 
         byte version = 0;
         final RefStreamDefinition refStreamDefinitionA = buildUniqueRefStreamDefinition();
@@ -90,7 +92,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void updateState() {
+    void updateState() {
 
         byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -138,7 +140,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testUpdateLastAccessTime() {
+    void testUpdateLastAccessTime() {
 
         byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -166,7 +168,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testDelete() {
+    void testDelete() {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 

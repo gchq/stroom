@@ -22,11 +22,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
@@ -36,7 +35,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
-public class TestHDFSFileAppender extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestHDFSFileAppender extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
     private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
     private static final String FS_DEFAULT_FS = "file:///";
@@ -45,8 +46,8 @@ public class TestHDFSFileAppender extends StroomUnitTest {
     private UserGroupInformation userGroupInformation;
     private FileSystem hdfs;
 
-    @Before
-    public void setup() throws IOException {
+    @BeforeEach
+    void setup() throws IOException {
         conf = HDFSFileAppender.buildConfiguration(FS_DEFAULT_FS);
         // force it to use the local file system instead of a HDFS cluster
         conf.set("fs.defaultFS", FS_DEFAULT_FS);
@@ -73,13 +74,13 @@ public class TestHDFSFileAppender extends StroomUnitTest {
         });
     }
 
-    @After
+    @AfterEach
     public void teardown() throws IOException {
     }
 
-    @Ignore
+    @Disabled
     @Test
-    public void basicTest() throws IOException {
+    void basicTest() throws IOException {
         final Path path = new Path("/dateTest.txt");
 
         HDFSFileAppender.runOnHDFS(userGroupInformation, conf, hdfs -> {
@@ -96,7 +97,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
     }
 
     @Test
-    public void testCycleDirs() throws IOException {
+    void testCycleDirs() throws IOException {
         final HDFSFileAppender provider = buildTestObject();
 
         boolean found1 = false;
@@ -121,7 +122,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
 
             HDFSFileAppender.runOnHDFS(userGroupInformation, conf, hdfs -> {
                 try {
-                    Assert.assertTrue(hdfs.exists(file));
+                    assertThat(hdfs.exists(file)).isTrue();
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -136,7 +137,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
             }
         }
 
-        Assert.assertTrue(found1 && found2 && found3);
+        assertThat(found1 && found2 && found3).isTrue();
     }
 
     private HDFSFileAppender buildTestObject() {

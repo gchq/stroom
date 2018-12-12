@@ -16,38 +16,38 @@
 
 package stroom.util.config;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class TestVersionSortComparator {
-    @Test
-    public void testSplit() {
-        Assert.assertEquals(Arrays.asList("app", "3", "1", "1"),
-                Arrays.asList(VersionSortComparator.parts("app-3.1.1")));
+import static org.assertj.core.api.Assertions.assertThat;
 
-        Assert.assertEquals(Arrays.asList("app", "3", "1", "1", "abc"),
-                Arrays.asList(VersionSortComparator.parts("app-3.1.1-abc")));
+class TestVersionSortComparator {
+    @Test
+    void testSplit() {
+        assertThat(Arrays.asList(VersionSortComparator.parts("app-3.1.1"))).isEqualTo(Arrays.asList("app", "3", "1", "1"));
+
+        assertThat(Arrays.asList(VersionSortComparator.parts("app-3.1.1-abc"))).isEqualTo(Arrays.asList("app", "3", "1", "1", "abc"));
     }
 
     @Test
-    public void testCompare1() {
+    void testCompare1() {
         doTest(Arrays.asList("app-3.0.0", "app-3.0.1", "app-3.0.1-beta-2"),
                 Arrays.asList("app-3.0.0", "app-3.0.1-beta-2", "app-3.0.1"));
     }
 
     @Test
-    public void testCompare2() {
+    void testCompare2() {
         doTest(Arrays.asList("app-3.0.7", "app-3.0.0", "app-3.0.4"),
                 Arrays.asList("app-3.0.0", "app-3.0.4", "app-3.0.7"));
     }
 
     @Test
-    public void testCompare3() {
+    void testCompare3() {
         doTest(Arrays.asList("app-3.0.77", "app-3.0.0", "app-3.0.9"),
                 Arrays.asList("app-3.0.0", "app-3.0.9", "app-3.0.77"));
     }
@@ -57,7 +57,7 @@ public class TestVersionSortComparator {
         sortList.addAll(testCase);
         Collections.sort(sortList, new VersionSortComparator());
 
-        Assert.assertEquals(expectedList, sortList);
+        assertThat(sortList).isEqualTo(expectedList);
 
     }
 }

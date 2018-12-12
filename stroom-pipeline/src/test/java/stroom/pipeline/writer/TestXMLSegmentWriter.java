@@ -16,15 +16,11 @@
 
 package stroom.pipeline.writer;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 // TODO : Add test data
-@Ignore("Add test data")
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestXMLSegmentWriter extends StroomUnitTest {
+
+class TestXMLSegmentWriter extends StroomUnitTest {
 //    private static final int N20 = 20;
 //    private static final int N100 = 100;
 //
@@ -127,7 +123,7 @@ public class TestXMLSegmentWriter extends StroomUnitTest {
 //                        new ErrorReceiverProxy(new FatalErrorReceiver()), recordCountFilter,
 //                        new LocationFactoryProxy());
 //
-//                Assert.assertEquals(recordCount.toString(), expected, recordCount.getRead());
+//                assertThat(recordCount.getRead()).as(recordCount.toString()).isEqualTo(expected);
 //            }
 //        }
 //    }

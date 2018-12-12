@@ -16,14 +16,11 @@
 
 package stroom.entity.util;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+import org.junit.jupiter.api.Disabled;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-@Ignore
-public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
+@Disabled
+class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
 //    @Test
 //    public void testDeProxy() {
 //        final DummyStreamType streamType = new DummyStreamType();
@@ -33,8 +30,8 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
 //
 //        final StreamEntity deproxy = (StreamEntity) (new BaseEntityDeProxyProcessor(true).process(stream));
 //
-//        Assert.assertEquals(deproxy.getType().getClass(), StreamTypeEntity.class);
-//        Assert.assertEquals(100L, deproxy.getType().getId());
+//        assertThat(StreamTypeEntity.class).isEqualTo(deproxy.getType().getClass());
+//        assertThat(deproxy.getType().getId()).isEqualTo(100L);
 //    }
 //
 //    public static class DummyStreamType extends StreamTypeEntity implements HibernateProxy {

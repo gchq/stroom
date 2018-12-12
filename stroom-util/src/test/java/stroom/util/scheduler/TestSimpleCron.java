@@ -16,20 +16,20 @@
 
 package stroom.util.scheduler;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.text.ParseException;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestSimpleCron {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestSimpleCron {
     private Long currentTime = null;
 
     @Test
-    public void testMinRollAny1() throws ParseException {
+    void testMinRollAny1() throws ParseException {
         textNext("* * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
         textNext("* * *", "2010-01-01T04:04:20.000Z", "2010-01-01T04:05:00.000Z");
         textNext("* * *", "2010-01-01T04:59:20.000Z", "2010-01-01T05:00:00.000Z");
@@ -37,7 +37,7 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testMinRollExact1() throws ParseException {
+    void testMinRollExact1() throws ParseException {
         textNext("1,2,3,4,55 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
         textNext("1,2,3,4,55 * *", "2010-01-01T04:01:00.000Z", "2010-01-01T04:02:00.000Z");
         textNext("1,2,3,4,55 * *", "2010-01-01T04:02:00.000Z", "2010-01-01T04:03:00.000Z");
@@ -56,21 +56,21 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testHourRollAny1() throws ParseException {
+    void testHourRollAny1() throws ParseException {
         textNext("0 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T05:00:00.000Z");
         textNext("0 * *", "2010-01-01T04:30:00.000Z", "2010-01-01T05:00:00.000Z");
         textNext("0 * *", "2010-01-01T04:59:59.000Z", "2010-01-01T05:00:00.000Z");
     }
 
     @Test
-    public void testHourRollAny2() throws ParseException {
+    void testHourRollAny2() throws ParseException {
         textNext("3,57 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:03:00.000Z");
         textNext("3,57 * *", "2010-01-01T04:03:00.000Z", "2010-01-01T04:57:00.000Z");
         textNext("3,57 * *", "2010-01-01T04:57:00.000Z", "2010-01-01T05:03:00.000Z");
     }
 
     @Test
-    public void testHourEveryMinOnHours1Forward() throws ParseException {
+    void testHourEveryMinOnHours1Forward() throws ParseException {
         textNext("* 1,2 *", "2010-01-01T00:00:00.000Z", "2010-01-01T01:00:00.000Z");
         textNext("* 1,2 *", "2010-01-01T01:00:00.000Z", "2010-01-01T01:01:00.000Z");
         textNext("* 1,2 *", "2010-01-01T02:00:00.000Z", "2010-01-01T02:01:00.000Z");
@@ -79,7 +79,7 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testHourEveryMinOnHours1Backward() throws ParseException {
+    void testHourEveryMinOnHours1Backward() throws ParseException {
         textLast("* 1,2 *", "2010-01-01T00:00:00.000Z", "2009-12-31T02:59:00.000Z");
         textLast("* 1,2 *", "2010-01-01T01:00:00.000Z", "2009-12-31T02:59:00.000Z");
         textLast("* 1,2 *", "2010-01-01T02:00:00.000Z", "2010-01-01T01:59:00.000Z");
@@ -88,7 +88,7 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testWrapBoundaries() throws ParseException {
+    void testWrapBoundaries() throws ParseException {
         textNext("0 0 1,29", "2010-01-01T00:00:00.000Z", "2010-01-29T00:00:00.000Z");
         textLast("0 0 1,29", "2010-01-01T00:00:00.000Z", "2009-12-29T00:00:00.000Z");
         textNext("0 0 1,29", "2009-12-29T00:00:00.000Z", "2010-01-01T00:00:00.000Z");
@@ -102,7 +102,7 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testACoupleOfDaysPerMonthTwiceInADay1() throws ParseException {
+    void testACoupleOfDaysPerMonthTwiceInADay1() throws ParseException {
         String startTime = "2010-01-02T00:00:00.000Z";
         startTime = textNext("0 1,2 14,15", startTime, "2010-01-14T01:00:00.000Z");
         startTime = textNext("0 1,2 14,15", startTime, "2010-01-14T02:00:00.000Z");
@@ -112,12 +112,12 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testACoupleOfDaysPerMonthTwiceInADay2() throws ParseException {
+    void testACoupleOfDaysPerMonthTwiceInADay2() throws ParseException {
         textNext("0 1,2 14,15", "2010-01-15T02:00:00.000Z", "2010-02-14T01:00:00.000Z");
     }
 
     @Test
-    public void testAEveryDayPerMonth1() throws ParseException {
+    void testAEveryDayPerMonth1() throws ParseException {
         String startTime = "2010-01-02T00:00:00.000Z";
         startTime = textNext("0 0 *", startTime, "2010-01-03T00:00:00.000Z");
         startTime = textNext("0 0 *", startTime, "2010-01-04T00:00:00.000Z");
@@ -127,7 +127,7 @@ public class TestSimpleCron {
     }
 
     @Test
-    public void testOverBSTPeriod1() throws ParseException {
+    void testOverBSTPeriod1() throws ParseException {
         String startTime = "2010-03-26T00:00:00.000Z";
         startTime = textNext("0 0 *", startTime, "2010-03-27T00:00:00.000Z");
         startTime = textNext("0 0 *", startTime, "2010-03-28T00:00:00.000Z");
@@ -139,12 +139,12 @@ public class TestSimpleCron {
             SimpleCron cron = SimpleCron.compile(expression);
             Long time = DateUtil.parseNormalDateTimeString(start);
 
-            Assert.assertEquals(start, DateUtil.createNormalDateTimeString(time));
+            assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo(start);
 
-            Assert.assertEquals(end, DateUtil.createNormalDateTimeString(cron.getNextTime(time)));
+            assertThat(DateUtil.createNormalDateTimeString(cron.getNextTime(time))).isEqualTo(end);
 
         } catch (final RuntimeException e) {
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
         return end;
     }
@@ -154,18 +154,18 @@ public class TestSimpleCron {
             SimpleCron cron = SimpleCron.compile(expression);
             Long time = DateUtil.parseNormalDateTimeString(start);
 
-            Assert.assertEquals(start, DateUtil.createNormalDateTimeString(time));
+            assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo(start);
 
-            Assert.assertEquals(end, DateUtil.createNormalDateTimeString(cron.getLastTime(time)));
+            assertThat(DateUtil.createNormalDateTimeString(cron.getLastTime(time))).isEqualTo(end);
 
         } catch (final RuntimeException e) {
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
         return end;
     }
 
     @Test
-    public void testUnderLoadTypical() throws ParseException {
+    void testUnderLoadTypical() throws ParseException {
         // Every Day
         SimpleCronScheduler executor = new SimpleCronScheduler(SimpleCron.compile("0 0 *")) {
             @Override
@@ -177,73 +177,73 @@ public class TestSimpleCron {
         // Application starts at 2pm
         currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T14:00:00.000Z");
 
-        Assert.assertFalse(executor.execute());
-        Assert.assertFalse(executor.execute());
+        assertThat(executor.execute()).isFalse();
+        assertThat(executor.execute()).isFalse();
 
         // Our 1 minute thread timer fires a bit later
         currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T14:01:10.000Z");
-        Assert.assertFalse(executor.execute());
+        assertThat(executor.execute()).isFalse();
         // And Again
         currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T14:02:11.000Z");
-        Assert.assertFalse(executor.execute());
+        assertThat(executor.execute()).isFalse();
 
         // And just before it rolls
         currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T23:59:59.999Z");
-        Assert.assertFalse(executor.execute());
+        assertThat(executor.execute()).isFalse();
 
         // Now it should roll but we are under load to we don't fire under a lot
         // later
         currentTime = DateUtil.parseNormalDateTimeString("2010-03-30T01:59:59.999Z");
-        Assert.assertTrue(executor.execute());
-        Assert.assertFalse(executor.execute());
+        assertThat(executor.execute()).isTrue();
+        assertThat(executor.execute()).isFalse();
     }
 
     @Test
-    public void testMove() {
+    void testMove() {
         SimpleCron cron = SimpleCron.compile("0,10,20,30,40,50 * *");
 
-        Assert.assertEquals("2010-01-01T08:10:00.000Z", DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:00:00.000Z"))));
+        assertThat(DateUtil.createNormalDateTimeString(
+                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:00:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
 
-        Assert.assertEquals("2010-01-01T08:10:00.000Z", DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:05:00.000Z"))));
+        assertThat(DateUtil.createNormalDateTimeString(
+                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:05:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
 
-        Assert.assertEquals("2010-01-01T08:10:00.000Z", DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:09:00.000Z"))));
+        assertThat(DateUtil.createNormalDateTimeString(
+                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:09:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
     }
 
     @Test
-    public void testNextAndLast() {
+    void testNextAndLast() {
         final long time = 1331803020017L;
-        Assert.assertEquals("2012-03-15T09:17:00.017Z", DateUtil.createNormalDateTimeString(time));
+        assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo("2012-03-15T09:17:00.017Z");
         SimpleCron cron = SimpleCron.compile("* * *");
         long nextExecute = cron.getNextTime(time);
-        Assert.assertEquals("2012-03-15T09:18:00.000Z", DateUtil.createNormalDateTimeString(nextExecute));
+        assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-15T09:18:00.000Z");
         long lastExecute = cron.getLastTime(time);
-        Assert.assertEquals("2012-03-15T09:17:00.000Z", DateUtil.createNormalDateTimeString(lastExecute));
+        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T09:17:00.000Z");
 
         cron = SimpleCron.compile("0,10,20,30,40,50 * *");
         nextExecute = cron.getNextTime(time);
-        Assert.assertEquals("2012-03-15T09:20:00.000Z", DateUtil.createNormalDateTimeString(nextExecute));
+        assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-15T09:20:00.000Z");
         lastExecute = cron.getLastTime(time);
-        Assert.assertEquals("2012-03-15T09:10:00.000Z", DateUtil.createNormalDateTimeString(lastExecute));
+        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T09:10:00.000Z");
 
         cron = SimpleCron.compile("0 * *");
         nextExecute = cron.getNextTime(time);
-        Assert.assertEquals("2012-03-15T10:00:00.000Z", DateUtil.createNormalDateTimeString(nextExecute));
+        assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-15T10:00:00.000Z");
         lastExecute = cron.getLastTime(time);
-        Assert.assertEquals("2012-03-15T09:00:00.000Z", DateUtil.createNormalDateTimeString(lastExecute));
+        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T09:00:00.000Z");
 
         cron = SimpleCron.compile("0 0 *");
         nextExecute = cron.getNextTime(time);
-        Assert.assertEquals("2012-03-16T00:00:00.000Z", DateUtil.createNormalDateTimeString(nextExecute));
+        assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-16T00:00:00.000Z");
         lastExecute = cron.getLastTime(time);
-        Assert.assertEquals("2012-03-15T00:00:00.000Z", DateUtil.createNormalDateTimeString(lastExecute));
+        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T00:00:00.000Z");
 
         cron = SimpleCron.compile("0 0 1");
         nextExecute = cron.getNextTime(time);
-        Assert.assertEquals("2012-04-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(nextExecute));
+        assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-04-01T00:00:00.000Z");
         lastExecute = cron.getLastTime(time);
-        Assert.assertEquals("2012-03-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(lastExecute));
+        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-01T00:00:00.000Z");
     }
 }

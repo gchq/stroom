@@ -1,10 +1,11 @@
 package stroom.test;
 
-import org.junit.Test;
 
-public class TestAbstractCoreIntegrationTest extends AbstractCoreIntegrationTest {
+import org.junit.jupiter.api.Test;
+
+class TestAbstractCoreIntegrationTest extends AbstractCoreIntegrationTest {
     @Test
-    public void testSetupAndTearDown() {
+    void testSetupAndTearDown() {
         //do nothing, just checking to make sure setup and teardown work in isolation
     }
 }

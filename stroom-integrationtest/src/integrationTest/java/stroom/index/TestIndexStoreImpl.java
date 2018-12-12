@@ -17,19 +17,21 @@
 
 package stroom.index;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
-import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
 
@@ -51,13 +53,13 @@ public class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testIndexRetrieval() {
-        Assert.assertEquals(2, indexStore.list().size());
+    void testIndexRetrieval() {
+        assertThat(indexStore.list().size()).isEqualTo(2);
 
         final IndexDoc index = indexStore.readDocument(indexStore.list().get(1));
 
-        Assert.assertNotNull(index);
-        Assert.assertEquals("Test index", index.getName());
+        assertThat(index).isNotNull();
+        assertThat(index.getName()).isEqualTo("Test index");
 
         final IndexSerialiser indexSerialiser = new IndexSerialiser();
         final String xml = "" +
@@ -101,18 +103,18 @@ public class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 "   </field>\n" +
                 "</fields>\n";
         final IndexFields indexFields = indexSerialiser.getIndexFieldsFromLegacyXML(xml);
-        Assert.assertEquals(indexFields.getIndexFields(), index.getIndexFields());
+        assertThat(index.getIndexFields()).isEqualTo(indexFields.getIndexFields());
     }
 
     @Test
-    public void testLoad() {
+    void testLoad() {
         IndexDoc index = indexStore.readDocument(testIndex);
-        Assert.assertNotNull(index);
-        Assert.assertEquals("Test index", index.getName());
+        assertThat(index).isNotNull();
+        assertThat(index.getName()).isEqualTo("Test index");
     }
 
     @Test
-    public void testClientSideStuff1() {
+    void testClientSideStuff1() {
         IndexDoc index = indexStore.readDocument(refIndex);
         index = ((IndexDoc) new BaseEntityDeProxyProcessor(true).process(index));
         indexStore.writeDocument(index);
@@ -120,7 +122,7 @@ public class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testClientSideStuff2() {
+    void testClientSideStuff2() {
         IndexDoc index = indexStore.readDocument(testIndex);
         index = ((IndexDoc) new BaseEntityDeProxyProcessor(true).process(index));
         indexStore.writeDocument(index);

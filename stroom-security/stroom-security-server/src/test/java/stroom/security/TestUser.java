@@ -16,30 +16,29 @@
 
 package stroom.security;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestUser extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestUser extends StroomUnitTest {
     @Test
-    public void testSimple() {
+    void testSimple() {
         final User user = new User();
         user.updateStatus(UserStatus.ENABLED);
-        Assert.assertTrue(user.isStatusEnabled());
+        assertThat(user.isStatusEnabled()).isTrue();
         user.updateStatus(UserStatus.LOCKED);
-        Assert.assertFalse(user.isStatusEnabled());
+        assertThat(user.isStatusEnabled()).isFalse();
 
         user.setStatusEnabled(false);
-        Assert.assertEquals(UserStatus.LOCKED, user.getStatus());
+        assertThat(user.getStatus()).isEqualTo(UserStatus.LOCKED);
         user.setStatusEnabled(true);
-        Assert.assertEquals(UserStatus.ENABLED, user.getStatus());
+        assertThat(user.getStatus()).isEqualTo(UserStatus.ENABLED);
 
         user.updateStatus(UserStatus.DISABLED);
-        Assert.assertFalse(user.isStatusEnabled());
+        assertThat(user.isStatusEnabled()).isFalse();
         user.setStatusEnabled(true);
-        Assert.assertTrue(user.isStatusEnabled());
+        assertThat(user.isStatusEnabled()).isTrue();
     }
 }

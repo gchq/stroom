@@ -17,12 +17,10 @@
 
 package stroom.importexport;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -30,7 +28,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomExpectedException;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -38,8 +35,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestContentPackImport {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestContentPackImport {
     private static Path CONTENT_PACK_DIR;
 
     static {
@@ -47,8 +45,7 @@ public class TestContentPackImport {
     }
 
     //This is needed as you can't have to RunWith annotations
-    //so this is the same as @RunWith(MockitoJUnitRunner.class)
-    @Rule
+    //so this is the same as     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
     @Mock
     private ImportExportService importExportService;
@@ -59,8 +56,8 @@ public class TestContentPackImport {
     private Path testPack2 = CONTENT_PACK_DIR.resolve("testPack2.zip");
     private Path testPack3 = CONTENT_PACK_DIR.resolve("testPack3.badExtension");
 
-    @Before
-    public void setup() throws IOException {
+    @BeforeEach
+    void setup() throws IOException {
         Path contentPackDir = FileUtil.getTempDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
 
@@ -78,8 +75,8 @@ public class TestContentPackImport {
         }
     }
 
-    @After
-    public void teardown() throws IOException {
+    @AfterEach
+    void teardown() throws IOException {
         deleteTestFiles();
     }
 
@@ -91,7 +88,7 @@ public class TestContentPackImport {
 
 
     @Test
-    public void testStartup_disabled() throws IOException {
+    void testStartup_disabled() throws IOException {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(false);
         ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
 
@@ -100,11 +97,11 @@ public class TestContentPackImport {
         contentPackImport.startup();
 
         Mockito.verifyZeroInteractions(importExportService);
-        Assert.assertTrue(Files.exists(testPack1));
+        assertThat(Files.exists(testPack1)).isTrue();
     }
 
     @Test
-    public void testStartup_enabledNoFiles() {
+    void testStartup_enabledNoFiles() {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
         contentPackImport.startup();
@@ -112,7 +109,7 @@ public class TestContentPackImport {
     }
 
     @Test
-    public void testStartup_enabledThreeFiles() throws IOException {
+    void testStartup_enabledThreeFiles() throws IOException {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
 
@@ -129,11 +126,11 @@ public class TestContentPackImport {
         Mockito.verify(importExportService, Mockito.times(0))
                 .performImportWithoutConfirmation(testPack3);
 
-        Assert.assertFalse(Files.exists(testPack1));
+        assertThat(Files.exists(testPack1)).isFalse();
 
         //File should have moved into the imported dir
-        Assert.assertFalse(Files.exists(testPack1));
-        Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.IMPORTED_DIR).resolve(testPack1.getFileName())));
+        assertThat(Files.exists(testPack1)).isFalse();
+        assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.IMPORTED_DIR).resolve(testPack1.getFileName()))).isTrue();
     }
 
     @Test
@@ -151,7 +148,7 @@ public class TestContentPackImport {
         contentPackImport.startup();
 
         //File should have moved into the failed dir
-        Assert.assertFalse(Files.exists(testPack1));
-        Assert.assertTrue(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName())));
+        assertThat(Files.exists(testPack1)).isFalse();
+        assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName()))).isTrue();
     }
 }

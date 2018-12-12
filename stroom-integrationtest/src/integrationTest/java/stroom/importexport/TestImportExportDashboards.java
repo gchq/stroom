@@ -17,8 +17,8 @@
 
 package stroom.importexport;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.dashboard.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
@@ -28,8 +28,9 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.shared.Doc;
+import stroom.docref.DocRef;
 import stroom.docstore.DocumentStore;
+import stroom.docstore.shared.Doc;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -40,7 +41,6 @@ import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -59,7 +59,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
     @Inject
@@ -84,27 +86,27 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExplorerNodeService explorerNodeService;
 
     @Test
-    public void testComplete() {
+    void testComplete() {
         test(false, false, false);
     }
 
     @Test
-    public void testUpdate() {
+    void testUpdate() {
         test(false, false, true);
     }
 
     @Test
-    public void testSkipVisCreation() {
+    void testSkipVisCreation() {
         test(true, false, false);
     }
 
     @Test
-    public void testSkipVisExport() {
+    void testSkipVisExport() {
         test(false, true, false);
     }
 
     @Test
-    public void testSkipVisCreationAndExport() {
+    void testSkipVisCreationAndExport() {
         test(true, true, false);
     }
 
@@ -115,7 +117,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Group2", null, null);
 
         final List<ExplorerNode> nodes = explorerNodeService.getDescendants(null);
-        Assert.assertEquals(3, nodes.size());
+        assertThat(nodes.size()).isEqualTo(3);
 
         DocRef visRef = null;
         if (!skipVisCreation) {
@@ -123,29 +125,29 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
             ScriptDoc script = scriptStore.readDocument(scriptRef);
             script.setData("Test Data");
             scriptStore.writeDocument(script);
-            Assert.assertEquals(1, scriptStore.list().size());
+            assertThat(scriptStore.list().size()).isEqualTo(1);
 
             visRef = explorerService.create(VisualisationDoc.DOCUMENT_TYPE, "Test Vis", folder2, null);
             final VisualisationDoc vis = visualisationStore.readDocument(visRef);
             vis.setScriptRef(scriptRef);
             visualisationStore.writeDocument(vis);
-            Assert.assertEquals(1, visualisationStore.list().size());
+            assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
 
         final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Test Pipeline", folder1, null);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         pipelineStore.writeDocument(pipelineDoc);
-        Assert.assertEquals(1, pipelineStore.list().size());
+        assertThat(pipelineStore.list().size()).isEqualTo(1);
 
         final DocRef indexRef = explorerService.create(IndexDoc.DOCUMENT_TYPE, "Test Index", folder1, null);
         final IndexDoc index = indexStore.readDocument(indexRef);
         indexStore.writeDocument(index);
-        Assert.assertEquals(1, indexStore.list().size());
+        assertThat(indexStore.list().size()).isEqualTo(1);
 
         final DocRef dictionaryRef = explorerService.create(DictionaryDoc.ENTITY_TYPE, "Test Dictionary", folder1, null);
         final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
         dictionaryStore.writeDocument(dictionary);
-        Assert.assertEquals(1, dictionaryStore.list().size());
+        assertThat(dictionaryStore.list().size()).isEqualTo(1);
 
         // Create query.
         final QueryComponentSettings queryComponentSettings = new QueryComponentSettings();
@@ -195,7 +197,7 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
         dashboard.setDashboardConfig(dashboardData);
         dashboard = dashboardStore.writeDocument(dashboard);
-        Assert.assertEquals(1, dashboardStore.list().size());
+        assertThat(dashboardStore.list().size()).isEqualTo(1);
 
         int startVisualisationSize = visualisationStore.list().size();
         final int startPipelineSize = pipelineStore.list().size();
@@ -235,11 +237,11 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-        Assert.assertEquals(startVisualisationSize, visualisationStore.list().size());
-        Assert.assertEquals(startPipelineSize, pipelineStore.list().size());
-        Assert.assertEquals(startIndexSize, indexStore.list().size());
-        Assert.assertEquals(startDictionarySize, dictionaryStore.list().size());
-        Assert.assertEquals(startDashboardSize, dashboardStore.list().size());
+        assertThat(visualisationStore.list().size()).isEqualTo(startVisualisationSize);
+        assertThat(pipelineStore.list().size()).isEqualTo(startPipelineSize);
+        assertThat(indexStore.list().size()).isEqualTo(startIndexSize);
+        assertThat(dictionaryStore.list().size()).isEqualTo(startDictionarySize);
+        assertThat(dashboardStore.list().size()).isEqualTo(startDashboardSize);
 
         // Load the dashboard.
         final VisualisationDoc loadedVisualisation = first(visualisationStore);
@@ -256,17 +258,16 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisComponentSettings loadedVisSettings = (VisComponentSettings) loadedVis.getSettings();
 
         // Verify all entity references have been restored.
-        Assert.assertEquals(loadedIndex, loadedQueryData.getDataSource());
-        Assert.assertEquals(stroom.docstore.shared.DocRefUtil.create(loadedDictionary),
-                ((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary());
-        Assert.assertEquals(loadedPipeline, loadedTableSettings.getExtractionPipeline());
+        assertThat(loadedQueryData.getDataSource()).isEqualTo(loadedIndex);
+        assertThat(((ExpressionTerm) loadedQueryData.getExpression().getChildren().get(1)).getDictionary()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedDictionary));
+        assertThat(loadedTableSettings.getExtractionPipeline()).isEqualTo(loadedPipeline);
 
         if (!skipVisExport || skipVisCreation) {
-            Assert.assertEquals(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation), loadedVisSettings.getVisualisation());
+            assertThat(loadedVisSettings.getVisualisation()).isEqualTo(stroom.docstore.shared.DocRefUtil.create(loadedVisualisation));
         } else {
-            Assert.assertNotNull(loadedVisSettings.getVisualisation());
-            Assert.assertNotNull(loadedVisSettings.getVisualisation().getType());
-            Assert.assertNotNull(loadedVisSettings.getVisualisation().getUuid());
+            assertThat(loadedVisSettings.getVisualisation()).isNotNull();
+            assertThat(loadedVisSettings.getVisualisation().getType()).isNotNull();
+            assertThat(loadedVisSettings.getVisualisation().getUuid()).isNotNull();
         }
     }
 
@@ -281,11 +282,11 @@ public class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void deleteAllAndCheck() {
         clean(true);
 
-        Assert.assertEquals(0, visualisationStore.list().size());
-        Assert.assertEquals(0, pipelineStore.list().size());
-        Assert.assertEquals(0, indexStore.list().size());
-        Assert.assertEquals(0, dictionaryStore.list().size());
-        Assert.assertEquals(0, dashboardStore.list().size());
+        assertThat(visualisationStore.list().size()).isEqualTo(0);
+        assertThat(pipelineStore.list().size()).isEqualTo(0);
+        assertThat(indexStore.list().size()).isEqualTo(0);
+        assertThat(dictionaryStore.list().size()).isEqualTo(0);
+        assertThat(dashboardStore.list().size()).isEqualTo(0);
     }
 
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {

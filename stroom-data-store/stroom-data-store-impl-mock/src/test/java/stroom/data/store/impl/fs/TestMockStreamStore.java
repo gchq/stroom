@@ -17,9 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamSource;
@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Test the mock as it is quite complicated.
  * </p>
  */
+
 class TestMockStreamStore {
     @Test
     void testExample() throws IOException {

@@ -16,46 +16,47 @@
 
 package stroom.statistics.shared.common;
 
-import org.junit.Assert;
-import org.junit.Test;
 
-public class TestEventStoreTimeIntervalEnum {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestEventStoreTimeIntervalEnum {
     @Test
-    public void testFromColumnInterval() {
+    void testFromColumnInterval() {
         for (final EventStoreTimeIntervalEnum intervalEnum : EventStoreTimeIntervalEnum.values()) {
-            Assert.assertEquals(intervalEnum,
-                    EventStoreTimeIntervalEnum.fromColumnInterval(intervalEnum.columnInterval()));
+            assertThat(EventStoreTimeIntervalEnum.fromColumnInterval(intervalEnum.columnInterval())).isEqualTo(intervalEnum);
         }
     }
 
     @Test
-    public void testFromShortName() {
+    void testFromShortName() {
         for (final EventStoreTimeIntervalEnum intervalEnum : EventStoreTimeIntervalEnum.values()) {
-            Assert.assertEquals(intervalEnum, EventStoreTimeIntervalEnum.fromShortName(intervalEnum.shortName()));
+            assertThat(EventStoreTimeIntervalEnum.fromShortName(intervalEnum.shortName())).isEqualTo(intervalEnum);
         }
     }
 
     @Test
-    public void testRoundTimeToColumnInterval() {
+    void testRoundTimeToColumnInterval() {
         for (final EventStoreTimeIntervalEnum interval : EventStoreTimeIntervalEnum.values()) {
             final long timeMs = (interval.columnInterval() * 2) + 1;
             final long expectedTimeMs = (interval.columnInterval() * 2);
 
             final long roundedTime = interval.roundTimeToColumnInterval(timeMs);
 
-            Assert.assertEquals(expectedTimeMs, roundedTime);
+            assertThat(roundedTime).isEqualTo(expectedTimeMs);
         }
     }
 
     @Test
-    public void testRoundTimeToRowKeyInterval() {
+    void testRoundTimeToRowKeyInterval() {
         for (final EventStoreTimeIntervalEnum interval : EventStoreTimeIntervalEnum.values()) {
             final long timeMs = (interval.rowKeyInterval() * 2) + 1;
             final long expectedTimeMs = (interval.rowKeyInterval() * 2);
 
             final long roundedTime = interval.roundTimeToRowKeyInterval(timeMs);
 
-            Assert.assertEquals(expectedTimeMs, roundedTime);
+            assertThat(roundedTime).isEqualTo(expectedTimeMs);
         }
     }
 }

@@ -18,9 +18,8 @@ package stroom.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
@@ -28,20 +27,18 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.List;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestIndexShardPoolImpl2 extends StroomUnitTest {
-    @Before
-    public void before() {
+class TestIndexShardPoolImpl2 extends StroomUnitTest {
+    @BeforeEach
+    void before() {
         FileUtil.deleteContents(getCurrentTestDir().resolve("index"));
     }
 
     @Test
-    public void testThreadingLikeTheRealThing() throws InterruptedException {
+    void testThreadingLikeTheRealThing() throws InterruptedException {
         final IndexField indexField = IndexField.createField("test");
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);

@@ -16,18 +16,20 @@
 
 package stroom.xml.converter.ds3;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-public class TestUniqueInt extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestUniqueInt extends StroomUnitTest {
     @Test
-    public void test() {
+    void test() {
         final UniqueInt uniqueInt = new UniqueInt();
 
-        Assert.assertEquals(-1, uniqueInt.getMax());
-        Assert.assertNull(uniqueInt.getArr());
-        Assert.assertEquals("", uniqueInt.toString());
+        assertThat(uniqueInt.getMax()).isEqualTo(-1);
+        assertThat(uniqueInt.getArr()).isNull();
+        assertThat(uniqueInt.toString()).isEqualTo("");
 
         uniqueInt.add(3);
         uniqueInt.add(1);
@@ -35,22 +37,22 @@ public class TestUniqueInt extends StroomUnitTest {
         uniqueInt.add(10);
         uniqueInt.add(0);
 
-        Assert.assertEquals(10, uniqueInt.getMax());
-        Assert.assertEquals(5, uniqueInt.getArr().length);
-        Assert.assertEquals("0,1,3,5,10", uniqueInt.toString());
+        assertThat(uniqueInt.getMax()).isEqualTo(10);
+        assertThat(uniqueInt.getArr().length).isEqualTo(5);
+        assertThat(uniqueInt.toString()).isEqualTo("0,1,3,5,10");
 
         uniqueInt.add(4);
         uniqueInt.add(10);
 
-        Assert.assertEquals(10, uniqueInt.getMax());
-        Assert.assertEquals(6, uniqueInt.getArr().length);
-        Assert.assertEquals("0,1,3,4,5,10", uniqueInt.toString());
+        assertThat(uniqueInt.getMax()).isEqualTo(10);
+        assertThat(uniqueInt.getArr().length).isEqualTo(6);
+        assertThat(uniqueInt.toString()).isEqualTo("0,1,3,4,5,10");
 
         uniqueInt.add(22);
         uniqueInt.add(10);
 
-        Assert.assertEquals(22, uniqueInt.getMax());
-        Assert.assertEquals(7, uniqueInt.getArr().length);
-        Assert.assertEquals("0,1,3,4,5,10,22", uniqueInt.toString());
+        assertThat(uniqueInt.getMax()).isEqualTo(22);
+        assertThat(uniqueInt.getArr().length).isEqualTo(7);
+        assertThat(uniqueInt.toString()).isEqualTo("0,1,3,4,5,10,22");
     }
 }

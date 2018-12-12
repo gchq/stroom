@@ -16,19 +16,18 @@
 
 package stroom.util.io;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestPreviewInputStream {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestPreviewInputStream {
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         final StringBuilder sb = new StringBuilder();
         for (int line = 1; line <= 100; line++) {
             sb.append("line");
@@ -47,27 +46,27 @@ public class TestPreviewInputStream {
         String data = previewInputStream.previewAsString(200, StreamUtil.DEFAULT_CHARSET_NAME);
         System.out.println(data);
 
-        Assert.assertTrue(input.startsWith(data));
+        assertThat(input.startsWith(data)).isTrue();
 
         data = previewInputStream.previewAsString(200, StreamUtil.DEFAULT_CHARSET_NAME);
         System.out.println(data);
 
-        Assert.assertTrue(input.startsWith(data));
+        assertThat(input.startsWith(data)).isTrue();
 
         data = previewInputStream.previewAsString(200, StreamUtil.DEFAULT_CHARSET_NAME);
         System.out.println(data);
 
-        Assert.assertTrue(input.startsWith(data));
+        assertThat(input.startsWith(data)).isTrue();
 
         final String output = StreamUtil.streamToString(previewInputStream, true);
-        Assert.assertEquals(input, output);
+        assertThat(output).isEqualTo(input);
     }
 
     @Test
-    public void testDeclRemoval() {
+    void testDeclRemoval() {
         final Pattern XML_DECL_PATTERN = Pattern.compile("<\\?\\s*xml[^>]*>", Pattern.CASE_INSENSITIVE);
         String data = "  <?XML version=\"1.0\" encoding=\"UTF-8\"?>    ";
         data = XML_DECL_PATTERN.matcher(data).replaceFirst("");
-        Assert.assertEquals(0, data.trim().length());
+        assertThat(data.trim().length()).isEqualTo(0);
     }
 }

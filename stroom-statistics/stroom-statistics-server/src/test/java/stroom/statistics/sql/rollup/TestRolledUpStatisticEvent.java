@@ -16,48 +16,49 @@
 
 package stroom.statistics.sql.rollup;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.TimeAgnosticStatisticEvent;
-import stroom.statistics.shared.StatisticType;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
-public class TestRolledUpStatisticEvent extends StroomUnitTest {
+class TestRolledUpStatisticEvent extends StroomUnitTest {
     private static final double JUNIT_DOUBLE_EQUALITY_DELTA = 0.001;
 
     private final List<StatisticTag> tags = new ArrayList<>();
     private StatisticEvent event;
 
     @Test
-    public void testRolledUpStatisticEventStatisticEventListOfListOfStatisticTag() {
+    void testRolledUpStatisticEventStatisticEventListOfListOfStatisticTag() {
         buildEvent();
     }
 
     @Test
-    public void testRolledUpStatisticEventStatisticEvent() {
+    void testRolledUpStatisticEventStatisticEvent() {
         buildEvent();
 
         final RolledUpStatisticEvent rolledUpStatisticEvent = new RolledUpStatisticEvent(event);
 
         compareEvents(event, rolledUpStatisticEvent);
 
-        assertTrue(rolledUpStatisticEvent.iterator().hasNext());
+        assertThat(rolledUpStatisticEvent.iterator().hasNext()).isTrue();
 
         int counter = 0;
         for (final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent : rolledUpStatisticEvent) {
-            assertEquals(event.getTimeAgnosticStatisticEvent(), timeAgnosticStatisticEvent);
+            assertThat(timeAgnosticStatisticEvent).isEqualTo(event.getTimeAgnosticStatisticEvent());
 
             counter++;
         }
 
-        assertEquals(1, counter);
+        assertThat(counter).isEqualTo(1);
     }
 
     private void buildEvent() {
@@ -70,14 +71,14 @@ public class TestRolledUpStatisticEvent extends StroomUnitTest {
 
     private void compareEvents(final StatisticEvent statisticEvent,
                                final RolledUpStatisticEvent rolledUpStatisticEvent) {
-        assertEquals(statisticEvent.getTimeMs(), rolledUpStatisticEvent.getTimeMs());
-        assertEquals(statisticEvent.getName(), rolledUpStatisticEvent.getName());
-        assertEquals(statisticEvent.getType(), rolledUpStatisticEvent.getType());
+        assertThat(rolledUpStatisticEvent.getTimeMs()).isEqualTo(statisticEvent.getTimeMs());
+        assertThat(rolledUpStatisticEvent.getName()).isEqualTo(statisticEvent.getName());
+        assertThat(rolledUpStatisticEvent.getType()).isEqualTo(statisticEvent.getType());
 
         if (statisticEvent.getType().equals(StatisticType.COUNT)) {
-            assertEquals(statisticEvent.getCount(), rolledUpStatisticEvent.getCount());
+            assertThat(rolledUpStatisticEvent.getCount()).isEqualTo(statisticEvent.getCount());
         } else {
-            assertEquals(statisticEvent.getValue(), rolledUpStatisticEvent.getValue(), JUNIT_DOUBLE_EQUALITY_DELTA);
+            assertThat(rolledUpStatisticEvent.getValue()).isCloseTo(statisticEvent.getValue(), within(JUNIT_DOUBLE_EQUALITY_DELTA));
         }
     }
 }

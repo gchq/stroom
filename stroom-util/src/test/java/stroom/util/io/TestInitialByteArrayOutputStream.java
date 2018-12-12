@@ -16,33 +16,32 @@
 
 package stroom.util.io;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestInitialByteArrayOutputStream {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestInitialByteArrayOutputStream {
     @Test
-    public void testReuse() throws IOException {
+    void testReuse() throws IOException {
         byte[] reuseBuffer = new byte[2];
 
         InitialByteArrayOutputStream initialByteArrayOutputStream = null;
         try {
             initialByteArrayOutputStream = new InitialByteArrayOutputStream(reuseBuffer);
-            Assert.assertTrue(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer);
+            assertThat(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer).isTrue();
 
             initialByteArrayOutputStream.write(1);
-            Assert.assertTrue(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer);
+            assertThat(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer).isTrue();
 
             initialByteArrayOutputStream.write(1);
-            Assert.assertTrue(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer);
+            assertThat(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer).isTrue();
 
             initialByteArrayOutputStream.write(1);
-            Assert.assertFalse(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer);
-            Assert.assertTrue(initialByteArrayOutputStream.getBufferPos().getBuffer().length > 2);
+            assertThat(initialByteArrayOutputStream.getBufferPos().getBuffer() == reuseBuffer).isFalse();
+            assertThat(initialByteArrayOutputStream.getBufferPos().getBuffer().length > 2).isTrue();
         } finally {
             CloseableUtil.close(initialByteArrayOutputStream);
         }

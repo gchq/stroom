@@ -17,8 +17,9 @@
 
 package stroom.importexport;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -29,7 +30,6 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -50,7 +50,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -73,7 +75,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testExport() throws IOException {
+    void testExport() throws IOException {
         final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
         FeedDoc eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("Original Description");
@@ -92,7 +94,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
-        Assert.assertTrue(list.size() > 0);
+        assertThat(list.size() > 0).isTrue();
 
         // Should all be relative
         Map<DocRef, ImportState> map = new HashMap<>();
@@ -100,7 +102,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        Assert.assertEquals(State.EQUAL, map.get(docRef).getState());
+        assertThat(map.get(docRef).getState()).isEqualTo(State.EQUAL);
 
         eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("New Description");
@@ -119,9 +121,9 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        Assert.assertTrue(list.size() > 0);
-        Assert.assertEquals(State.UPDATE, map.get(docRef).getState());
-        Assert.assertTrue(map.get(docRef).getUpdatedFieldList().contains("description"));
+        assertThat(list.size() > 0).isTrue();
+        assertThat(map.get(docRef).getState()).isEqualTo(State.UPDATE);
+        assertThat(map.get(docRef).getUpdatedFieldList().contains("description")).isTrue();
 
         // Remove all entities from the database.
         clean(true);
@@ -129,23 +131,23 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
 
-        Assert.assertTrue(list.size() > 0);
-        Assert.assertEquals(State.NEW, list.get(0).getState());
-        Assert.assertEquals(State.NEW, list.get(1).getState());
+        assertThat(list.size() > 0).isTrue();
+        assertThat(list.get(0).getState()).isEqualTo(State.NEW);
+        assertThat(list.get(1).getState()).isEqualTo(State.NEW);
 
         importExportSerializer.read(testDataDir, list, ImportMode.IGNORE_CONFIRMATION);
         allSchemas = xmlSchemaStore.list();
 
         for (final DocRef ref : allSchemas) {
             final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
-            Assert.assertNotSame("XML", xmlSchema.getData());
+            assertThat(xmlSchema.getData()).isNotSameAs("XML");
         }
 
-        Assert.assertNotNull(testDataDir);
+        assertThat(testDataDir).isNotNull();
     }
 
     @Test
-    public void testPipeline() throws IOException {
+    void testPipeline() throws IOException {
         final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
         final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
         final DocRef childPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Child", folder, null);
@@ -153,7 +155,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         childPipeline.setParentPipeline(parentPipelineRef);
         pipelineStore.writeDocument(childPipeline);
 
-        Assert.assertEquals(2, pipelineStore.list().size());
+        assertThat(pipelineStore.list().size()).isEqualTo(2);
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -167,21 +169,20 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
         final String childJson = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
 
-        Assert.assertTrue("Parent reference not serialised\n" + childJson,
-                childJson.contains("\"name\" : \"Parent\""));
+        assertThat(childJson.contains("\"name\" : \"Parent\"")).as("Parent reference not serialised\n" + childJson).isTrue();
 
         // Remove all entities from the database.
         clean(true);
 
-        Assert.assertEquals(0, pipelineStore.list().size());
+        assertThat(pipelineStore.list().size()).isEqualTo(0);
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        Assert.assertEquals(2, pipelineStore.list().size());
+        assertThat(pipelineStore.list().size()).isEqualTo(2);
     }
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
         final Path outDir = StroomCoreServerTestFileUtil.getTestOutputDir().resolve("samples/config");
 

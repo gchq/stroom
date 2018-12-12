@@ -16,8 +16,8 @@
 
 package stroom.statistics.sql.rollup;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -30,12 +30,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
     /**
      * Go from B, C, D to A,B,D
      */
     @Test
-    public void testExec() {
+    void testExec() {
         final StatisticField fieldA = new StatisticField("A");
         final StatisticField fieldB = new StatisticField("B");
         final StatisticField fieldC = new StatisticField("C");
@@ -64,18 +66,18 @@ public class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
 
         final StatisticsDataSourceData result = handler.exec(action);
 
-        Assert.assertNotNull(result);
+        assertThat(result).isNotNull();
 
-        Assert.assertEquals(4, result.getCustomRollUpMasks().size());
+        assertThat(result.getCustomRollUpMasks().size()).isEqualTo(4);
 
         final CustomRollUpMask newMask1 = new CustomRollUpMask(new ArrayList<>());
         final CustomRollUpMask newMask2 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(1, 2)));
         final CustomRollUpMask newMask3 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(1)));
         final CustomRollUpMask newMask5 = new CustomRollUpMask(new ArrayList<>(Arrays.asList(2)));
 
-        Assert.assertTrue(result.getCustomRollUpMasks().contains(newMask1));
-        Assert.assertTrue(result.getCustomRollUpMasks().contains(newMask2));
-        Assert.assertTrue(result.getCustomRollUpMasks().contains(newMask3));
-        Assert.assertTrue(result.getCustomRollUpMasks().contains(newMask5));
+        assertThat(result.getCustomRollUpMasks().contains(newMask1)).isTrue();
+        assertThat(result.getCustomRollUpMasks().contains(newMask2)).isTrue();
+        assertThat(result.getCustomRollUpMasks().contains(newMask3)).isTrue();
+        assertThat(result.getCustomRollUpMasks().contains(newMask5)).isTrue();
     }
 }

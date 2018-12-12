@@ -1,6 +1,7 @@
 package stroom.util.concurrent;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,17 +13,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-public class TestModelCache {
+class TestModelCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestModelCache.class);
 
     private static final Long ONE_SECOND = 1000L;
     private static final Long MAXIMUM_AGE = 10 * ONE_SECOND;
 
     @Test
-    public void testForceRebuild() {
+    void testForceRebuild() {
 
         final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
         final TimeSupplier timeSupplier = new TimeSupplier();
@@ -36,7 +37,7 @@ public class TestModelCache {
     }
 
     @Test
-    public void testAge() {
+    void testAge() {
         final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
         final TimeSupplier timeSupplier = new TimeSupplier();
         final ModelCache<String> modelCache = new ModelCache.Builder<String>()
@@ -49,7 +50,7 @@ public class TestModelCache {
     }
 
     @Test
-    public void testCombined() {
+    void testCombined() {
         final SlowSupplier<String> valueSupplier = new SlowSupplier<>(ONE_SECOND);
         final TimeSupplier timeSupplier = new TimeSupplier();
         final ModelCache<String> modelCache = new ModelCache.Builder<String>()
@@ -66,16 +67,101 @@ public class TestModelCache {
     }
 
     /**
+     * General form of a test that moves the value supplier between two values, with some event to trigger the rebuild.
+     *
+     * @param valueSupplier The underlying supplier of values
+     * @param timeSupplier  The time supplier
+     * @param modelCache    The model cache object under test
+     * @param causeRebuild  A function that should cause a rebuild
+     */
+    private void testRefreshRequired(final SlowSupplier<String> valueSupplier,
+                                     final TimeSupplier timeSupplier,
+                                     final ModelCache<String> modelCache,
+                                     final Runnable causeRebuild) {
+
+        final String firstValue = UUID.randomUUID().toString();
+        final String secondValue = UUID.randomUUID().toString();
+
+        LOGGER.info(String.format("Testing Refresh with First: %s, Second: %s", firstValue, secondValue));
+
+        // Give the supplier a value to serve up
+        valueSupplier.setCurrentValue(firstValue);
+
+        // Try and get that value
+        final String result0 = modelCache.get();
+        assertThat(result0).isEqualTo(firstValue);
+
+        // Call get a bunch more times, multiple threads at once
+        thrashWithThreads(modelCache::get, timeSupplier, firstValue);
+
+        // These subsequent calls should not result in additional calls to the underlying supplier
+        assertThat(valueSupplier.getNumberRequestsForValue()).isEqualTo(1);
+
+        // Change the value of the underlying supplier
+        valueSupplier.setCurrentValue(secondValue);
+
+        // Get the value again, it should still be the first one
+        final String result1 = modelCache.get();
+        assertThat(result1).isEqualTo(firstValue);
+
+        // Since the ageing modelCache has not been told to rebuild, the underlying supplier should be left untouched
+        assertThat(valueSupplier.getNumberRequestsForValue()).isEqualTo(0);
+
+        // Now trigger the rebuild on the next fetch
+        causeRebuild.run();
+
+        // Call get a bunch more times, multiple threads at once
+        thrashWithThreads(modelCache::get, timeSupplier, secondValue);
+
+        // Now that a rebuild has been forced, the next get should return the updated value
+        // All of those accesses should have resulted in a single call to underlying supplier
+        // All other calls should have waited for the first
+        assertThat(valueSupplier.getNumberRequestsForValue()).isEqualTo(1);
+    }
+
+    /**
+     * Given a modelCache cache, it spins up a pool of threads to repeatedly hammer it.
+     * It should find that the underlying supplier is not called any more times,
+     *
+     * @param valueSupplier The modelCache cache under test
+     * @param expectedValue The value being supplied through this test
+     * @param <T>           The type that the cache is tied to
+     */
+    private <T> void thrashWithThreads(final Supplier<T> valueSupplier,
+                                       final Supplier<Long> timeSupplier,
+                                       final T expectedValue) {
+
+        // Call get a bunch more times, multiple threads at once
+        final long successiveCalls = 5;
+        final MultithreadedCaller<T> caller0 = new MultithreadedCaller<>(valueSupplier, timeSupplier);
+        final ExecutorService exec = Executors.newFixedThreadPool((int) successiveCalls);
+
+        LongStream.range(0, successiveCalls)
+                .forEach(i -> exec.submit(caller0));
+
+        try {
+            exec.awaitTermination(3, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            fail(e.getLocalizedMessage());
+
+            // Continue to interrupt this thread.
+            Thread.currentThread().interrupt();
+        }
+
+        final long matchingFirst = caller0.matchingValue(expectedValue);
+        assertThat(matchingFirst).isEqualTo(successiveCalls);
+    }
+
+    /**
      * Used as the supplier of values, with the supply function taking time defined by sleep time
+     *
      * @param <T>
      */
     private class SlowSupplier<T> implements Supplier<T> {
 
-        private T currentValue;
-
-        private long numberRequestsForValue;
-
         private final long sleepTime;
+        private T currentValue;
+        private long numberRequestsForValue;
 
         SlowSupplier(long sleepTime) {
             this.sleepTime = sleepTime;
@@ -115,21 +201,6 @@ public class TestModelCache {
      */
     private class MultithreadedCaller<T> implements Runnable {
 
-        private class TimedValue<T> {
-            private final T value;
-            private final Long timestamp;
-            
-            TimedValue(final T value, final Long timestamp) 
-            {
-                this.value = value;
-                this.timestamp = timestamp;
-            }
-
-            public T getValue() {
-                return value;
-            }
-        }
-        
         private final ConcurrentLinkedDeque<TimedValue<T>> values;
         private final Supplier<T> valueSupplier;
         private final Supplier<Long> timeSupplier;
@@ -150,12 +221,26 @@ public class TestModelCache {
 
         long matchingValue(final T value) {
             LOGGER.info(String.format("Checking for Value %s", value));
-            
+
             return values.stream()
                     .peek(d -> LOGGER.info(String.format("\t%s at %d", d.value.toString(), d.timestamp)))
                     .map(TimedValue::getValue)
                     .filter(value::equals)
                     .count();
+        }
+
+        private class TimedValue<T> {
+            private final T value;
+            private final Long timestamp;
+
+            TimedValue(final T value, final Long timestamp) {
+                this.value = value;
+                this.timestamp = timestamp;
+            }
+
+            public T getValue() {
+                return value;
+            }
         }
     }
 
@@ -174,91 +259,5 @@ public class TestModelCache {
         public Long get() {
             return System.currentTimeMillis() + timeToJump;
         }
-    }
-
-    /**
-     * General form of a test that moves the value supplier between two values, with some event to trigger the rebuild.
-     * 
-     * @param valueSupplier The underlying supplier of values
-     * @param timeSupplier  The time supplier
-     * @param modelCache      The model cache object under test
-     * @param causeRebuild  A function that should cause a rebuild
-     */
-    private void testRefreshRequired(final SlowSupplier<String> valueSupplier,
-                                     final TimeSupplier timeSupplier,
-                                     final ModelCache<String> modelCache,
-                                     final Runnable causeRebuild) {
-
-        final String firstValue = UUID.randomUUID().toString();
-        final String secondValue = UUID.randomUUID().toString();
-
-        LOGGER.info(String.format("Testing Refresh with First: %s, Second: %s", firstValue, secondValue));
-
-        // Give the supplier a value to serve up
-        valueSupplier.setCurrentValue(firstValue);
-
-        // Try and get that value
-        final String result0 = modelCache.get();
-        assertEquals(firstValue, result0);
-
-        // Call get a bunch more times, multiple threads at once
-        thrashWithThreads(modelCache::get, timeSupplier, firstValue);
-
-        // These subsequent calls should not result in additional calls to the underlying supplier
-        assertEquals(1, valueSupplier.getNumberRequestsForValue());
-
-        // Change the value of the underlying supplier
-        valueSupplier.setCurrentValue(secondValue);
-
-        // Get the value again, it should still be the first one
-        final String result1 = modelCache.get();
-        assertEquals(firstValue, result1);
-
-        // Since the ageing modelCache has not been told to rebuild, the underlying supplier should be left untouched
-        assertEquals(0, valueSupplier.getNumberRequestsForValue());
-
-        // Now trigger the rebuild on the next fetch
-        causeRebuild.run();
-
-        // Call get a bunch more times, multiple threads at once
-        thrashWithThreads(modelCache::get, timeSupplier, secondValue);
-
-        // Now that a rebuild has been forced, the next get should return the updated value
-        // All of those accesses should have resulted in a single call to underlying supplier
-        // All other calls should have waited for the first
-        assertEquals(1, valueSupplier.getNumberRequestsForValue());
-    }
-
-    /**
-     * Given a modelCache cache, it spins up a pool of threads to repeatedly hammer it.
-     * It should find that the underlying supplier is not called any more times,
-     *
-     * @param valueSupplier The modelCache cache under test
-     * @param expectedValue The value being supplied through this test
-     * @param <T> The type that the cache is tied to
-     */
-    private <T> void thrashWithThreads(final Supplier<T> valueSupplier,
-                                       final Supplier<Long> timeSupplier,
-                                       final T expectedValue) {
-
-        // Call get a bunch more times, multiple threads at once
-        final long successiveCalls = 5;
-        final MultithreadedCaller<T> caller0 = new MultithreadedCaller<>(valueSupplier, timeSupplier);
-        final ExecutorService exec = Executors.newFixedThreadPool((int) successiveCalls);
-
-        LongStream.range(0, successiveCalls)
-                .forEach(i -> exec.submit(caller0));
-
-        try {
-            exec.awaitTermination(3, TimeUnit.SECONDS);
-        } catch (final InterruptedException e) {
-            fail(e.getLocalizedMessage());
-
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
-        }
-
-        final long matchingFirst = caller0.matchingValue(expectedValue);
-        assertEquals(successiveCalls, matchingFirst);
     }
 }

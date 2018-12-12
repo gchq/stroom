@@ -16,7 +16,8 @@
 
 package stroom.xml;
 
-import org.junit.Assert;
+
+import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.TextConverterStore;
@@ -36,7 +37,6 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.writer.TestAppender;
-import stroom.docref.DocRef;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -45,11 +45,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 /**
  * <p>
  * Reusable Functions for the tests.
  * </p>
  */
+
 public class F2XTestUtil {
     private final PipelineFactory pipelineFactory;
     private final FeedHolder feedHolder;
@@ -154,16 +158,15 @@ public class F2XTestUtil {
         testAppender.setOutputStream(out);
 
         pipeline.process(dataStream);
-        Assert.assertTrue(errorReceiverProxy.toString(), recordCount.getRead() > 0);
-        Assert.assertTrue(errorReceiverProxy.toString(), recordCount.getWritten() > 0);
-        Assert.assertEquals(errorReceiverProxy.toString(), recordCount.getRead(), recordCount.getWritten());
-        Assert.assertEquals(errorReceiverProxy.toString(), expectedWarnings,
-                loggingErrorReceiver.getRecords(Severity.WARNING));
-        Assert.assertEquals(errorReceiverProxy.toString(), 0, loggingErrorReceiver.getRecords(Severity.ERROR));
-        Assert.assertEquals(errorReceiverProxy.toString(), 0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+        assertThat(recordCount.getRead() > 0).as(errorReceiverProxy.toString()).isTrue();
+        assertThat(recordCount.getWritten() > 0).as(errorReceiverProxy.toString()).isTrue();
+        assertThat(recordCount.getWritten()).as(errorReceiverProxy.toString()).isEqualTo(recordCount.getRead());
+        assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).as(errorReceiverProxy.toString()).isEqualTo(expectedWarnings);
+        assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).as(errorReceiverProxy.toString()).isEqualTo(0);
+        assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).as(errorReceiverProxy.toString()).isEqualTo(0);
 
         if (!loggingErrorReceiver.isAllOk()) {
-            Assert.fail(errorReceiverProxy.toString());
+            fail(errorReceiverProxy.toString());
         }
 
         return out.toString();
@@ -214,7 +217,7 @@ public class F2XTestUtil {
         pipeline.process(inputStream);
 
         if (!loggingErrorReceiver.isAllOk()) {
-            Assert.fail(errorReceiverProxy.toString());
+            fail(errorReceiverProxy.toString());
         }
 
         return out.toString();

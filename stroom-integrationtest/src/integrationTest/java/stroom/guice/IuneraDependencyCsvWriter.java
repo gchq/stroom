@@ -11,13 +11,12 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * This class generates a CSV file that can be visualised using the iunera Code Analysis tool.
- *
+ * <p>
  * https://github.com/iunera/codeanalysis
- *
  */
 class IuneraDependencyCsvWriter implements Closeable {
 

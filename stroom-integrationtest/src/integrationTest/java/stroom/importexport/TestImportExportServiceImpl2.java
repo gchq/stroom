@@ -17,11 +17,9 @@
 
 package stroom.importexport;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.importexport.shared.ImportState;
-import stroom.pipeline.PipelineStore;
-import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
@@ -34,12 +32,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
 
     @Test
-    public void testImportZip() throws IOException {
+    void testImportZip() throws IOException {
         final Path rootTestDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
         final Path importDir = rootTestDir.resolve("samples/config");
         final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID().toString() + ".zip");
@@ -47,11 +47,11 @@ public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
         ZipUtil.zip(zipFile, importDir, Pattern.compile("Feeds and Translations/Benchmark.*|.*Folder\\.xml"),
                 Pattern.compile(".*/\\..*"));
 
-        Assert.assertTrue(Files.isRegularFile(zipFile));
-        Assert.assertTrue(Files.isDirectory(importDir));
+        assertThat(Files.isRegularFile(zipFile)).isTrue();
+        assertThat(Files.isDirectory(importDir)).isTrue();
 
         final List<ImportState> confirmList = importExportService.createImportConfirmationList(zipFile);
-        Assert.assertNotNull(confirmList);
+        assertThat(confirmList).isNotNull();
 
         importExportService.performImportWithoutConfirmation(zipFile);
     }

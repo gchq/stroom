@@ -17,9 +17,8 @@
 
 package stroom.xml.converter.json;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -43,7 +42,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.BufferedOutputStream;
@@ -58,22 +56,24 @@ import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestJSONParser extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestJSONParser extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestJSONParser.class);
 
     @Test
-    public void testKV() throws IOException {
+    void testKV() throws IOException {
         positiveTest("KV");
     }
 
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         positiveTest("Simple");
     }
 
     @Test
-    public void testMulti() throws IOException {
+    void testMulti() throws IOException {
         positiveTest("Multi");
     }
 
@@ -117,7 +117,7 @@ public class TestJSONParser extends StroomUnitTest {
         FileUtil.deleteFile(outTempJSON);
         FileUtil.deleteFile(errTemp);
 
-        Assert.assertTrue(FileUtil.getCanonicalPath(input) + " does not exist", Files.isRegularFile(input));
+        assertThat(Files.isRegularFile(input)).as(FileUtil.getCanonicalPath(input) + " does not exist").isTrue();
 
         final OutputStream xmlOS = new BufferedOutputStream(Files.newOutputStream(outTempXML));
         final OutputStream jsonOS = new BufferedOutputStream(Files.newOutputStream(outTempJSON));
@@ -207,9 +207,9 @@ public class TestJSONParser extends StroomUnitTest {
 
         // Only output errors if there were any.
         if (expectedErrors && errorReceiver.isAllOk()) {
-            Assert.fail("Expected errors but none were found");
+            fail("Expected errors but none were found");
         } else if (!expectedErrors && !errorReceiver.isAllOk()) {
-            Assert.fail("Did not expect any errors but some were found.");
+            fail("Did not expect any errors but some were found.");
         }
 
         compareFiles(outTempXML, outXML);

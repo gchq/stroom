@@ -1,7 +1,7 @@
 package stroom.util.test.data;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -11,10 +11,12 @@ import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class TestTestDataGenerator {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestTestDataGenerator {
 
     @Test
-    public void testCsv_default() {
+    void testCsv_default() {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
@@ -27,12 +29,12 @@ public class TestTestDataGenerator {
                 .generate();
 
         //addition of header row
-        Assert.assertEquals(recCount + 1, lines.size());
+        assertThat(lines.size()).isEqualTo(recCount + 1);
         lines.forEach(System.out::println);
     }
 
     @Test
-    public void testCsv_custom() {
+    void testCsv_custom() {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
@@ -49,12 +51,12 @@ public class TestTestDataGenerator {
                 .generate();
 
         //no header row so lines == recCount
-        Assert.assertEquals(recCount, lines.size());
+        assertThat(lines.size()).isEqualTo(recCount);
         lines.forEach(System.out::println);
     }
 
     @Test
-    public void testXmlElements_default() {
+    void testXmlElements_default() {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
@@ -67,12 +69,12 @@ public class TestTestDataGenerator {
                 .generate();
 
         //addition of xml declaration, plus opening/closing root elements
-        Assert.assertEquals(recCount + 3, lines.size());
+        assertThat(lines.size()).isEqualTo(recCount + 3);
         lines.forEach(System.out::println);
     }
 
     @Test
-    public void testXmlElements_custom() {
+    void testXmlElements_custom() {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
@@ -89,12 +91,12 @@ public class TestTestDataGenerator {
                 .generate();
 
         //addition of xml declaration, plus opening/closing root elements
-        Assert.assertEquals(recCount + 3, lines.size());
+        assertThat(lines.size()).isEqualTo(recCount + 3);
         lines.forEach(System.out::println);
     }
 
     @Test
-    public void testXmlAttributes_default() {
+    void testXmlAttributes_default() {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
@@ -107,12 +109,12 @@ public class TestTestDataGenerator {
                 .generate();
 
         //addition of xml declaration, plus opening/closing root elements
-        Assert.assertEquals(recCount + 3, lines.size());
+        assertThat(lines.size()).isEqualTo(recCount + 3);
         lines.forEach(System.out::println);
     }
 
     @Test
-    public void testXmlAttributes_custom() {
+    void testXmlAttributes_custom() {
         TestDataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
         int recCount = 10;
@@ -130,12 +132,12 @@ public class TestTestDataGenerator {
                 .generate();
 
         //addition of xml declaration, plus opening/closing root elements
-        Assert.assertEquals(recCount + 3, lines.size());
+        assertThat(lines.size()).isEqualTo(recCount + 3);
         lines.forEach(System.out::println);
     }
 
     @Test
-    public void testRandomWordsField_singleItem() {
+    void testRandomWordsField_singleItem() {
         Field field = TestDataGenerator.randomWordsField(
                 "myField",
                 2,
@@ -147,8 +149,8 @@ public class TestTestDataGenerator {
         System.out.println("val = " + val);
     }
 
-    @Test (expected = RuntimeException.class)
-    public void testRandomWordsField_emptyList() {
+    @Test
+    void testRandomWordsField_emptyList() {
         Field field = TestDataGenerator.randomWordsField(
                 "myField",
                 2,

@@ -20,9 +20,7 @@ package stroom.refdata.store;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.scope.PipelineScopeModule;
@@ -30,37 +28,29 @@ import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
+import java.io.IOException;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
     private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
-
-    @Rule
-    public final TemporaryFolder tmpDir = new TemporaryFolder();
-//    @Inject
-//    protected RefDataStoreHolder refDataStoreHolder;
-
-    @Inject
-    private RefDataStoreFactory refDataStoreFactory;
-
-    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
-
     protected RefDataStore refDataStore;
     protected Injector injector;
+    @Inject
+    private RefDataStoreFactory refDataStoreFactory;
+    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
 
     @Override
     protected long getMaxSizeBytes() {
         return DB_MAX_SIZE;
     }
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    public void setup() throws IOException {
+        super.setup();
 
-        Path dbDir = tmpDir.getRoot().toPath();
-        LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
+        LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        refDataStoreConfig.setLocalDir(dbDir.toAbsolutePath().toString());
+        refDataStoreConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
 
         setDbMaxSizeProperty();
 

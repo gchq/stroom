@@ -1,22 +1,24 @@
 package stroom.proxy.repo;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.io.StreamUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 
-public class TestProxyRepositoryManager extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-//    @Before
+class TestProxyRepositoryManager extends StroomUnitTest {
+
+//    @BeforeEach
 //    public void setup() {
 //        clearTestDir();
 //    }
 
     @Test
-    public void testRolling() throws IOException, InterruptedException {
+    void testRolling() throws IOException, InterruptedException {
         final Scheduler scheduler = new Scheduler() {
             @Override
             public boolean execute() {
@@ -52,11 +54,11 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
         // Roll this REPO
         proxyRepositoryManager.doRunWork();
 
-        Assert.assertEquals(2, proxyRepositoryManager.getReadableRepository().size());
+        assertThat(proxyRepositoryManager.getReadableRepository().size()).isEqualTo(2);
     }
 
     @Test
-    public void testNonRolling() throws IOException {
+    void testNonRolling() throws IOException {
         final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(getCurrentTestDir(), "${pathId}/${id}", null);
 
         final StroomZipRepository proxyRepository1 = proxyRepositoryManager.getActiveRepository();
@@ -78,7 +80,7 @@ public class TestProxyRepositoryManager extends StroomUnitTest {
         // Nothing happens
         proxyRepositoryManager.doRunWork();
 
-        Assert.assertEquals(1, proxyRepositoryManager.getReadableRepository().size());
+        assertThat(proxyRepositoryManager.getReadableRepository().size()).isEqualTo(1);
 
     }
 }

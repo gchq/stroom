@@ -16,30 +16,32 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.Test;
 
-public class TestSQLSafe {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSQLSafe {
     @Test
-    public void testEscapeChars_backslash() {
+    void testEscapeChars_backslash() {
         final String dirtyString = "ab\\c";
         doEscapeCharsTest(dirtyString, "ab\\\\c");
     }
 
     @Test
-    public void testEscapeChars_doubelQuote() {
+    void testEscapeChars_doubelQuote() {
         final String dirtyString = "a\"bc";
         doEscapeCharsTest(dirtyString, "a\\\"bc");
     }
 
     @Test
-    public void testEscapeChars_singleQuote() {
+    void testEscapeChars_singleQuote() {
         final String dirtyString = "abc'";
         doEscapeCharsTest(dirtyString, "abc\\'");
     }
 
     @Test
-    public void testEscapeChars_lotsOfChars() {
+    void testEscapeChars_lotsOfChars() {
         final String dirtyString = "a\"b\\c'";
         doEscapeCharsTest(dirtyString, "a\\\"b\\\\c\\'");
     }
@@ -48,23 +50,23 @@ public class TestSQLSafe {
         final String cleanString = SQLSafe.escapeChars(dirtyString);
         System.out.println(String.format("Dirty string [%s], clean string [%s], expectedOutput [%s]", dirtyString,
                 cleanString, expectedOutput));
-        Assert.assertEquals(expectedOutput, cleanString);
+        assertThat(cleanString).isEqualTo(expectedOutput);
     }
 
     @Test
-    public void testCleanWhiteSpace() {
+    void testCleanWhiteSpace() {
         final String dirty = "a\tb c\nd\fe";
         final String cleanString = SQLSafe.cleanWhiteSpace(dirty);
-        Assert.assertEquals("a b c d e", cleanString);
+        assertThat(cleanString).isEqualTo("a b c d e");
     }
 
     @Test
-    public void testRegexTerm() {
+    void testRegexTerm() {
         final String dirty = "abc\\^$.|?*+()[{def";
         final String expected = "abc\\\\\\^\\$\\.\\|\\?\\*\\+\\(\\)\\[\\{def";
         final String cleaned = SQLSafe.cleanRegexpTerm(dirty);
         System.out.println(dirty);
         System.out.println(cleaned);
-        Assert.assertEquals(expected, cleaned);
+        assertThat(cleaned).isEqualTo(expected);
     }
 }

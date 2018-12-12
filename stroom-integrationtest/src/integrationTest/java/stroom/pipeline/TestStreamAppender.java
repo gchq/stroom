@@ -16,8 +16,8 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
@@ -29,20 +29,22 @@ import stroom.util.io.StreamUtil;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestStreamAppender extends AbstractStreamAppenderTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamAppender extends AbstractStreamAppenderTest {
     @Inject
     private DataMetaService dataMetaService;
     @Inject
     private StreamStore streamStore;
 
     @Test
-    public void testXML() throws Exception {
+    void testXML() throws Exception {
         test("TestStreamAppender", "XML");
         validateOuptut("TestStreamAppender/TestStreamAppender_XML.out", "XML");
     }
 
     @Test
-    public void testXMLRolling() throws Exception {
+    void testXMLRolling() throws Exception {
         test("TestStreamAppender", "XML_Rolling");
 
         final List<Data> list = dataMetaService.find(new FindDataCriteria());
@@ -50,12 +52,12 @@ public class TestStreamAppender extends AbstractStreamAppenderTest {
         final StreamSource streamSource = streamStore.openStreamSource(id);
         final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(streamSource.getInputStream());
         StreamUtil.streamToString(byteCountInputStream);
-        Assert.assertEquals(1198, byteCountInputStream.getCount());
+        assertThat(byteCountInputStream.getCount()).isEqualTo(1198);
         streamStore.closeStreamSource(streamSource);
     }
 
     @Test
-    public void testText() throws Exception {
+    void testText() throws Exception {
         test("TestStreamAppender", "Text");
         validateOuptut("TestStreamAppender/TestStreamAppender_Text.out", "Text");
     }

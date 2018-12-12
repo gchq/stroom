@@ -16,14 +16,15 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Component test class for <code>TransDevServiceImpl</code>.
  */
-public class TestFullTranslationTask extends TranslationTest {
+class TestFullTranslationTask extends TranslationTest {
     @Test
-    public void test() {
+    void test() {
         testTranslationTask(false, true);
     }
 }

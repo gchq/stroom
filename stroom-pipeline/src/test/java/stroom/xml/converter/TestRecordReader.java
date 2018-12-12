@@ -16,88 +16,88 @@
 
 package stroom.xml.converter;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.StringReader;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test that we can chunk up a input stream into records.
  */
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRecordReader extends StroomUnitTest {
+
+class TestRecordReader extends StroomUnitTest {
     private RecordReader createTest(final String buffer, final String delimiter) {
         final StringReader stringReader = new StringReader(buffer);
         return new RecordReader(stringReader, delimiter);
     }
 
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         final RecordReader recordReader = createTest("line1\nline2\nline3", null);
-        Assert.assertEquals("line1", recordReader.readRecord());
-        Assert.assertEquals("line2", recordReader.readRecord());
-        Assert.assertEquals("line3", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1");
+        assertThat(recordReader.readRecord()).isEqualTo("line2");
+        assertThat(recordReader.readRecord()).isEqualTo("line3");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testBlankLineBreak() throws IOException {
+    void testBlankLineBreak() throws IOException {
         final RecordReader recordReader = createTest("line1\nline2\n\nline3", "\n\n");
-        Assert.assertEquals("line1\nline2", recordReader.readRecord());
-        Assert.assertEquals("line3", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1\nline2");
+        assertThat(recordReader.readRecord()).isEqualTo("line3");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testBlankLineBreak2() throws IOException {
+    void testBlankLineBreak2() throws IOException {
         final RecordReader recordReader = createTest("line1\nline2\n\nline3\n", "\n\n");
-        Assert.assertEquals("line1\nline2", recordReader.readRecord());
-        Assert.assertEquals("line3\n", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1\nline2");
+        assertThat(recordReader.readRecord()).isEqualTo("line3\n");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testBlankLineBreak3() throws IOException {
+    void testBlankLineBreak3() throws IOException {
         final RecordReader recordReader = createTest("line1\nline2\n\nline3\n\n", "\n\n");
-        Assert.assertEquals("line1\nline2", recordReader.readRecord());
-        Assert.assertEquals("line3", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1\nline2");
+        assertThat(recordReader.readRecord()).isEqualTo("line3");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testBlankLineBreak4StartingWithBlankLine() throws IOException {
+    void testBlankLineBreak4StartingWithBlankLine() throws IOException {
         final RecordReader recordReader = createTest("\nline1\nline2\n\nline3\n\n", "\n\n");
-        Assert.assertEquals("\nline1\nline2", recordReader.readRecord());
-        Assert.assertEquals("line3", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("\nline1\nline2");
+        assertThat(recordReader.readRecord()).isEqualTo("line3");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testUnixMultiLineFormat1() throws IOException {
+    void testUnixMultiLineFormat1() throws IOException {
         final RecordReader recordReader = createTest("----\nline1\nline2\n----\nline3\n----\n", "----\n");
-        Assert.assertEquals("line1\nline2\n", recordReader.readRecord());
-        Assert.assertEquals("line3\n", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1\nline2\n");
+        assertThat(recordReader.readRecord()).isEqualTo("line3\n");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testUnixMultiLineFormat2() throws IOException {
+    void testUnixMultiLineFormat2() throws IOException {
         final RecordReader recordReader = createTest("line1\nline2\n----\nline3\n----\n", "\n----\n");
-        Assert.assertEquals("line1\nline2", recordReader.readRecord());
-        Assert.assertEquals("line3", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1\nline2");
+        assertThat(recordReader.readRecord()).isEqualTo("line3");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
     @Test
-    public void testUnixMultiLineFormat3OddDelimiters() throws IOException {
+    void testUnixMultiLineFormat3OddDelimiters() throws IOException {
         final RecordReader recordReader = createTest("line1\nline2\n----\nline3\n----\n----\n----\n", "----\n");
-        Assert.assertEquals("line1\nline2\n", recordReader.readRecord());
-        Assert.assertEquals("line3\n", recordReader.readRecord());
-        Assert.assertNull(recordReader.readRecord());
+        assertThat(recordReader.readRecord()).isEqualTo("line1\nline2\n");
+        assertThat(recordReader.readRecord()).isEqualTo("line3\n");
+        assertThat(recordReader.readRecord()).isNull();
     }
 
 }

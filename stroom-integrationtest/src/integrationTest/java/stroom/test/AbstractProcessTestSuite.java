@@ -1,31 +1,28 @@
 package stroom.test;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.junit.jupiter.api.Disabled;
 
-@Ignore("Don't run this test suite automatically as the tests are already run on their own")
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-        stroom.index.TestIndexingFilter.class,
-        stroom.index.TestIndexingPipeline.class,
-        stroom.pipeline.TestFileAppender.class,
-        stroom.pipeline.TestRecordOutputFilter.class,
-        stroom.pipeline.TestRollingFileAppender.class,
-        stroom.pipeline.TestRollingStreamAppender.class,
-        stroom.pipeline.TestStreamAppender.class,
-//        stroom.pipeline.TestXMLHttpBlankTokenFix.class,
-        stroom.pipeline.TestXMLTransformer.class,
-//        stroom.pipeline.TestXMLWithErrorsInTransform.class,
-        stroom.pipeline.factory.TestPipelineFactory.class,
-        stroom.pipeline.task.TestTranslationTask.class,
-        stroom.pipeline.task.TestTranslationTaskContextAndFlattening.class,
-//        stroom.pipeline.task.TestTranslationTaskFactory.class,
-        stroom.pipeline.task.TestTranslationTaskWithoutTranslation.class,
-        stroom.streamtask.TestStreamTargetStroomStreamHandler.class,
-//        stroom.xml.converter.datasplitter.TestDataSplitter.class,
-        stroom.xml.converter.datasplitter.TestDataSplitter2.class,
-        stroom.xml.converter.xmlfragment.TestXMLFragmentWrapper.class
-})
+//@Suite.SuiteClasses({
+//        stroom.index.TestIndexingFilter.class,
+//        stroom.index.TestIndexingPipeline.class,
+//        stroom.pipeline.TestFileAppender.class,
+//        stroom.pipeline.TestRecordOutputFilter.class,
+//        stroom.pipeline.TestRollingFileAppender.class,
+//        stroom.pipeline.TestRollingStreamAppender.class,
+//        stroom.pipeline.TestStreamAppender.class,
+////        stroom.pipeline.TestXMLHttpBlankTokenFix.class,
+//        stroom.pipeline.TestXMLTransformer.class,
+////        stroom.pipeline.TestXMLWithErrorsInTransform.class,
+//        stroom.pipeline.factory.TestPipelineFactory.class,
+//        stroom.pipeline.task.TestTranslationTask.class,
+//        stroom.pipeline.task.TestTranslationTaskContextAndFlattening.class,
+////        stroom.pipeline.task.TestTranslationTaskFactory.class,
+//        stroom.pipeline.task.TestTranslationTaskWithoutTranslation.class,
+//        stroom.streamtask.TestStreamTargetStroomStreamHandler.class,
+////        stroom.xml.converter.datasplitter.TestDataSplitter.class,
+//        stroom.xml.converter.datasplitter.TestDataSplitter2.class,
+//        stroom.xml.converter.xmlfragment.TestXMLFragmentWrapper.class
+//})
+@Disabled
 public class AbstractProcessTestSuite {
 }

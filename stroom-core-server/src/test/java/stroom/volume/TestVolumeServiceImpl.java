@@ -16,10 +16,9 @@
 
 package stroom.volume;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.StroomEntityManager;
@@ -37,7 +36,6 @@ import stroom.security.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.nio.file.Files;
@@ -47,8 +45,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestVolumeServiceImpl extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_VOLUMES_PATH;
     private static final Path DEFAULT_INDEX_VOLUME_PATH;
     private static final Path DEFAULT_STREAM_VOLUME_PATH;
@@ -74,7 +73,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
             VolumeState.create(0, 1000));
     private final VolumeEntity public2b = VolumeEntity.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-
+    private final Security security = new SecurityImpl(new MockSecurityContext());
     private VolumeConfig volumeConfig = new VolumeConfig();
     private MockVolumeService volumeServiceImpl = null;
     @Mock
@@ -82,10 +81,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     @Mock
     private EntityManagerSupport entityManagerSupport;
 
-    private final Security security = new SecurityImpl(new MockSecurityContext());
-
-    @Before
-    public void init() {
+    @BeforeEach
+    void init() {
         MockitoAnnotations.initMocks(this);
         deleteDefaultVolumesDir();
 
@@ -102,95 +99,95 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     }
 
     @Test
-    public void testNode1aNodeWithCacheAndSomePuckerLocalStorage() {
+    void testNode1aNodeWithCacheAndSomePuckerLocalStorage() {
         final Set<VolumeEntity> call1 = volumeServiceImpl.getStreamVolumeSet(node1a);
         final Set<VolumeEntity> call2 = volumeServiceImpl.getStreamVolumeSet(node1a);
-        Assert.assertEquals(2, call1.size());
-        Assert.assertEquals(2, call2.size());
+        assertThat(call1.size()).isEqualTo(2);
+        assertThat(call2.size()).isEqualTo(2);
 
         // Check that we only write once in a rack
-        Assert.assertTrue(call1.contains(public1a) ^ call1.contains(public1b));
-        Assert.assertTrue(call1.contains(public2a) ^ call1.contains(public2b));
-        Assert.assertTrue(call2.contains(public1a) ^ call2.contains(public1b));
-        Assert.assertTrue(call2.contains(public2a) ^ call2.contains(public2b));
+        assertThat(call1.contains(public1a) ^ call1.contains(public1b)).isTrue();
+        assertThat(call1.contains(public2a) ^ call1.contains(public2b)).isTrue();
+        assertThat(call2.contains(public1a) ^ call2.contains(public1b)).isTrue();
+        assertThat(call2.contains(public2a) ^ call2.contains(public2b)).isTrue();
 
         // Check that we round robin OK
-        Assert.assertTrue(call1.contains(public2a) ^ call2.contains(public2a));
-        Assert.assertTrue(call1.contains(public2b) ^ call2.contains(public2b));
+        assertThat(call1.contains(public2a) ^ call2.contains(public2a)).isTrue();
+        assertThat(call1.contains(public2b) ^ call2.contains(public2b)).isTrue();
     }
 
     @Test
-    public void testNode1cNodeWithNoStorage() {
+    void testNode1cNodeWithNoStorage() {
         final Set<VolumeEntity> call1 = volumeServiceImpl.getStreamVolumeSet(node1c);
         final Set<VolumeEntity> call2 = volumeServiceImpl.getStreamVolumeSet(node1c);
-        Assert.assertEquals(2, call1.size());
-        Assert.assertEquals(2, call2.size());
+        assertThat(call1.size()).isEqualTo(2);
+        assertThat(call2.size()).isEqualTo(2);
 
         // Check that we only write once in a rack
-        Assert.assertTrue(call1.contains(public1a) ^ call1.contains(public1b));
-        Assert.assertTrue(call1.contains(public2a) ^ call1.contains(public2b));
-        Assert.assertTrue(call2.contains(public1a) ^ call2.contains(public1b));
-        Assert.assertTrue(call2.contains(public2a) ^ call2.contains(public2b));
+        assertThat(call1.contains(public1a) ^ call1.contains(public1b)).isTrue();
+        assertThat(call1.contains(public2a) ^ call1.contains(public2b)).isTrue();
+        assertThat(call2.contains(public1a) ^ call2.contains(public1b)).isTrue();
+        assertThat(call2.contains(public2a) ^ call2.contains(public2b)).isTrue();
 
         // Check that we round robin OK
-        Assert.assertTrue(call1.contains(public1a) ^ call2.contains(public1a));
-        Assert.assertTrue(call1.contains(public1b) ^ call2.contains(public1b));
-        Assert.assertTrue(call1.contains(public2a) ^ call2.contains(public2a));
-        Assert.assertTrue(call1.contains(public2b) ^ call2.contains(public2b));
+        assertThat(call1.contains(public1a) ^ call2.contains(public1a)).isTrue();
+        assertThat(call1.contains(public1b) ^ call2.contains(public1b)).isTrue();
+        assertThat(call1.contains(public2a) ^ call2.contains(public2a)).isTrue();
+        assertThat(call1.contains(public2b) ^ call2.contains(public2b)).isTrue();
     }
 
     @Test
-    public void testNode2aNodeWithNoCache() {
+    void testNode2aNodeWithNoCache() {
         final Set<VolumeEntity> call1 = volumeServiceImpl.getStreamVolumeSet(node2a);
         final Set<VolumeEntity> call2 = volumeServiceImpl.getStreamVolumeSet(node2a);
-        Assert.assertEquals(2, call1.size());
-        Assert.assertEquals(2, call2.size());
+        assertThat(call1.size()).isEqualTo(2);
+        assertThat(call2.size()).isEqualTo(2);
 
         // Check that we only write once in a rack
-        Assert.assertTrue(call1.contains(public1a) ^ call1.contains(public1b));
-        Assert.assertTrue(call1.contains(public2a) ^ call1.contains(public2b));
-        Assert.assertTrue(call2.contains(public1a) ^ call2.contains(public1b));
-        Assert.assertTrue(call2.contains(public2a) ^ call2.contains(public2b));
+        assertThat(call1.contains(public1a) ^ call1.contains(public1b)).isTrue();
+        assertThat(call1.contains(public2a) ^ call1.contains(public2b)).isTrue();
+        assertThat(call2.contains(public1a) ^ call2.contains(public1b)).isTrue();
+        assertThat(call2.contains(public2a) ^ call2.contains(public2b)).isTrue();
 
         // Check that we round robin OK on rack 1
-        Assert.assertTrue(call1.contains(public1a) ^ call2.contains(public1a));
-        Assert.assertTrue(call1.contains(public1b) ^ call2.contains(public1b));
+        assertThat(call1.contains(public1a) ^ call2.contains(public1a)).isTrue();
+        assertThat(call1.contains(public1b) ^ call2.contains(public1b)).isTrue();
     }
 
     @Test
-    public void testStartup_Disabled() {
+    void testStartup_Disabled() {
         volumeConfig.setCreateDefaultOnStart(false);
 
-        Assert.assertFalse(volumeServiceImpl.saveCalled);
-        Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
-        Assert.assertFalse(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
+        assertThat(volumeServiceImpl.saveCalled).isFalse();
+        assertThat(Files.exists(DEFAULT_INDEX_VOLUME_PATH)).isFalse();
+        assertThat(Files.exists(DEFAULT_STREAM_VOLUME_PATH)).isFalse();
     }
 
     @Test
-    public void testStartup_EnabledExistingVolumes() {
+    void testStartup_EnabledExistingVolumes() {
         volumeConfig.setCreateDefaultOnStart(true);
 
-        Assert.assertFalse(volumeServiceImpl.saveCalled);
-        Assert.assertFalse(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
-        Assert.assertFalse(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
+        assertThat(volumeServiceImpl.saveCalled).isFalse();
+        assertThat(Files.exists(DEFAULT_INDEX_VOLUME_PATH)).isFalse();
+        assertThat(Files.exists(DEFAULT_STREAM_VOLUME_PATH)).isFalse();
     }
 
     @Test
-    public void testStartup_EnabledNoExistingVolumes() {
+    void testStartup_EnabledNoExistingVolumes() {
         volumeConfig.setCreateDefaultOnStart(true);
         volumeServiceImpl.volumeList.clear();
         volumeServiceImpl.getStreamVolumeSet(node1a);
 //        volumeServiceImpl.startup();
 
-        Assert.assertTrue(volumeServiceImpl.saveCalled);
+        assertThat(volumeServiceImpl.saveCalled).isTrue();
         //make sure both paths have been saved
-        Assert.assertEquals(2, volumeServiceImpl.savedVolumes.stream()
+        assertThat(volumeServiceImpl.savedVolumes.stream()
                 .map(VolumeEntity::getPath)
                 .filter(path -> path.equals(FileUtil.getCanonicalPath(DEFAULT_INDEX_VOLUME_PATH)) ||
                         path.equals(FileUtil.getCanonicalPath(DEFAULT_STREAM_VOLUME_PATH)))
-                .count());
-        Assert.assertTrue(Files.exists(DEFAULT_INDEX_VOLUME_PATH));
-        Assert.assertTrue(Files.exists(DEFAULT_STREAM_VOLUME_PATH));
+                .count()).isEqualTo(2);
+        assertThat(Files.exists(DEFAULT_INDEX_VOLUME_PATH)).isTrue();
+        assertThat(Files.exists(DEFAULT_STREAM_VOLUME_PATH)).isTrue();
     }
 
     private void deleteDefaultVolumesDir() {

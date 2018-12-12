@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -31,7 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest {
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
@@ -42,7 +44,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
 
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         // commonTestControl.deleteDir();
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
@@ -53,10 +55,10 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         final List<Path> files = streamMaintenanceService.findAllStreamFile(md);
 
-        Assert.assertTrue(files.size() > 0);
+        assertThat(files.size() > 0).isTrue();
 
         final FindDataVolumeCriteria findStreamVolumeCriteria = FindDataVolumeCriteria.create(md);
-        Assert.assertTrue(streamVolumeService.find(findStreamVolumeCriteria).size() > 0);
+        assertThat(streamVolumeService.find(findStreamVolumeCriteria).size() > 0).isTrue();
 
         final Path dir = files.iterator().next().getParent();
 

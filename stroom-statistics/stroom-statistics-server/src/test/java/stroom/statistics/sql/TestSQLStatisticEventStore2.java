@@ -16,8 +16,8 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -40,7 +40,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestSQLStatisticEventStore2 extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class TestSQLStatisticEventStore2 extends StroomUnitTest {
     private static final long EVENT_TIME = 1234L;
     private static final String EVENT_NAME = "MyStatistic";
     private static final long EVENT_COUNT = 1;
@@ -54,7 +57,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     private static final String ROLLED_UP_VALUE = "*";
 
     @Test
-    public void testGenerateTagRollUpsTwoTagsAllRollUps() {
+    void testGenerateTagRollUpsTwoTagsAllRollUps() {
         final StatisticEvent event = buildEvent(buildTagList());
 
         final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource();
@@ -62,7 +65,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        Assert.assertEquals(4, rolledUpStatisticEvent.getPermutationCount());
+        assertThat(rolledUpStatisticEvent.getPermutationCount()).isEqualTo(4);
 
         final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<>();
 
@@ -85,27 +88,27 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
             // make sure we don't already have one like this.
-            Assert.assertFalse(timeAgnosticStatisticEvents.contains(eventPerm));
+            assertThat(timeAgnosticStatisticEvents.contains(eventPerm)).isFalse();
 
-            Assert.assertEquals(event.getName(), eventPerm.getName());
-            Assert.assertEquals(event.getType(), eventPerm.getType());
-            Assert.assertEquals(event.getCount(), eventPerm.getCount());
-            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            assertThat(eventPerm.getName()).isEqualTo(event.getName());
+            assertThat(eventPerm.getType()).isEqualTo(event.getType());
+            assertThat(eventPerm.getCount()).isEqualTo(event.getCount());
+            assertThat(eventPerm.getTagList()).hasSize(event.getTagList().size());
 
             System.out.println(eventPerm.getTagList());
 
-            Assert.assertTrue(expectedTagPerms.contains(eventPerm.getTagList()));
+            assertThat(expectedTagPerms.contains(eventPerm.getTagList())).isTrue();
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
-                Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
+                assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
+                assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
+                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
 
     @Test
-    public void testGenerateTagRollUpsTwoTagsCustomRollUps() {
+    void testGenerateTagRollUpsTwoTagsCustomRollUps() {
         final StatisticEvent event = buildEvent(buildTagList());
 
         final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.CUSTOM);
@@ -113,7 +116,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        Assert.assertEquals(3, rolledUpStatisticEvent.getPermutationCount());
+        assertThat(rolledUpStatisticEvent.getPermutationCount()).isEqualTo(3);
 
         final List<TimeAgnosticStatisticEvent> timeAgnosticStatisticEvents = new ArrayList<>();
 
@@ -140,27 +143,27 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
             // make sure we don't already have one like this.
-            Assert.assertFalse(timeAgnosticStatisticEvents.contains(eventPerm));
+            assertThat(timeAgnosticStatisticEvents.contains(eventPerm)).isFalse();
 
-            Assert.assertEquals(event.getName(), eventPerm.getName());
-            Assert.assertEquals(event.getType(), eventPerm.getType());
-            Assert.assertEquals(event.getCount(), eventPerm.getCount());
-            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            assertThat(eventPerm.getName()).isEqualTo(event.getName());
+            assertThat(eventPerm.getType()).isEqualTo(event.getType());
+            assertThat(eventPerm.getCount()).isEqualTo(event.getCount());
+            assertThat(eventPerm.getTagList()).hasSize(event.getTagList().size());
 
             System.out.println(eventPerm.getTagList());
 
-            Assert.assertTrue(expectedTagPerms.contains(eventPerm.getTagList()));
+            assertThat(expectedTagPerms.contains(eventPerm.getTagList())).isTrue();
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
-                Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
+                assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
+                assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
+                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
 
     @Test
-    public void testGenerateTagRollUpsNoTags() {
+    void testGenerateTagRollUpsNoTags() {
         final StatisticEvent event = buildEvent(new ArrayList<>());
 
         final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource();
@@ -168,25 +171,25 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        Assert.assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
+        assertThat(rolledUpStatisticEvent.getPermutationCount()).isEqualTo(1);
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
-            Assert.assertEquals(event.getName(), eventPerm.getName());
-            Assert.assertEquals(event.getType(), eventPerm.getType());
-            Assert.assertEquals(event.getCount(), eventPerm.getCount());
-            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            assertThat(eventPerm.getName()).isEqualTo(event.getName());
+            assertThat(eventPerm.getType()).isEqualTo(event.getType());
+            assertThat(eventPerm.getCount()).isEqualTo(event.getCount());
+            assertThat(eventPerm.getTagList()).hasSize(event.getTagList().size());
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
-                Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
+                assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
+                assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
+                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
 
     }
 
     @Test
-    public void testGenerateTagRollUpsNotEnabled() {
+    void testGenerateTagRollUpsNotEnabled() {
         final StatisticEvent event = buildEvent(buildTagList());
 
         final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.NONE);
@@ -194,18 +197,18 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
 
-        Assert.assertEquals(1, rolledUpStatisticEvent.getPermutationCount());
+        assertThat(rolledUpStatisticEvent.getPermutationCount()).isEqualTo(1);
 
         for (final TimeAgnosticStatisticEvent eventPerm : rolledUpStatisticEvent) {
-            Assert.assertEquals(event.getName(), eventPerm.getName());
-            Assert.assertEquals(event.getType(), eventPerm.getType());
-            Assert.assertEquals(event.getCount(), eventPerm.getCount());
-            Assert.assertEquals(event.getTagList().size(), eventPerm.getTagList().size());
+            assertThat(eventPerm.getName()).isEqualTo(event.getName());
+            assertThat(eventPerm.getType()).isEqualTo(event.getType());
+            assertThat(eventPerm.getCount()).isEqualTo(event.getCount());
+            assertThat(eventPerm.getTagList()).hasSize(event.getTagList().size());
 
             for (int i = 0; i < event.getTagList().size(); i++) {
-                Assert.assertEquals(event.getTagList().get(i).getTag(), eventPerm.getTagList().get(i).getTag());
-                Assert.assertTrue(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue()));
+                assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
+                assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
+                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -254,41 +257,43 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         return statisticsDataSource;
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testBuildCriteria_noDate() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+    @Test
+    void testBuildCriteria_noDate() {
+        assertThatThrownBy(() -> {
+            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
+            final Query query = new Query(null, rootOperator.build());
+            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
+            dataSource.setName("MyDataSource");
 
-        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testBuildCriteria_invalidDateCondition() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
-
-        final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
-
-        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
-                Condition.IN_DICTIONARY, dateTerm);
-
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
-
-        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-
+            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        }).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
-    public void testBuildCriteria_validDateTerm() {
+    void testBuildCriteria_invalidDateCondition() {
+        assertThatThrownBy(() -> {
+            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+
+            final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
+
+            rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
+                    Condition.IN_DICTIONARY, dateTerm);
+
+            final Query query = new Query(null, rootOperator.build());
+            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
+
+            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
+            dataSource.setName("MyDataSource");
+
+            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        }).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void testBuildCriteria_validDateTerm() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -308,60 +313,64 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
-        Assert.assertNotNull(criteria);
-        Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
-        Assert.assertEquals(toDate + 1, criteria.getPeriod().getTo().longValue());
+        assertThat(criteria).isNotNull();
+        assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);
+        assertThat(criteria.getPeriod().getTo().longValue()).isEqualTo(toDate + 1);
 
         // only a date term so the filter tree has noting in it as the date is
         // handled outside of the tree
-        Assert.assertEquals(FilterTermsTree.emptyTree(), criteria.getFilterTermsTree());
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testBuildCriteria_invalidDateTermOnlyOneDate() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
-
-        final String fromDateStr = "2000-01-01T00:00:00.000Z";
-        final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
-
-        final String dateTerm = fromDateStr;
-
-        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
-
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
-
-        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
-        final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
-
-        final String fromDateStr = "2000-01-01T00:00:00.000Z";
-        final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
-        final String toDateStr = "2010-01-01T00:00:00.000Z";
-        final long toDate = DateUtil.parseNormalDateTimeString(toDateStr);
-
-        final String dateTerm = fromDateStr + "," + toDateStr;
-
-        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
-        rootOperator.addTerm(null, Condition.EQUALS, "xxx");
-
-        final Query query = new Query(null, rootOperator.build());
-        final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
-
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
-
-        StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        assertThat(criteria.getFilterTermsTree()).isEqualTo(FilterTermsTree.emptyTree());
     }
 
     @Test
-    public void testBuildCriteria_validDateTermOtherTermMissingFieldValue() {
+    public void testBuildCriteria_invalidDateTermOnlyOneDate() {
+        assertThatThrownBy(() -> {
+            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+
+            final String fromDateStr = "2000-01-01T00:00:00.000Z";
+            final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
+
+            final String dateTerm = fromDateStr;
+
+            rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+
+            final Query query = new Query(null, rootOperator.build());
+            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
+
+            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
+            dataSource.setName("MyDataSource");
+
+            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    public void testBuildCriteria_validDateTermOtherTermMissingFieldName() {
+        assertThatThrownBy(() -> {
+            final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
+
+            final String fromDateStr = "2000-01-01T00:00:00.000Z";
+            final long fromDate = DateUtil.parseNormalDateTimeString(fromDateStr);
+            final String toDateStr = "2010-01-01T00:00:00.000Z";
+            final long toDate = DateUtil.parseNormalDateTimeString(toDateStr);
+
+            final String dateTerm = fromDateStr + "," + toDateStr;
+
+            rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+            rootOperator.addTerm(null, Condition.EQUALS, "xxx");
+
+            final Query query = new Query(null, rootOperator.build());
+            final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
+
+            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
+            dataSource.setName("MyDataSource");
+
+            StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
+        }).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testBuildCriteria_validDateTermOtherTermMissingFieldValue() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -382,12 +391,12 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
-        Assert.assertNotNull(criteria);
-        Assert.assertEquals("[]", criteria.getFilterTermsTree().toString());
+        assertThat(criteria).isNotNull();
+        assertThat(criteria.getFilterTermsTree().toString()).isEqualTo("[]");
     }
 
     @Test
-    public void testBuildCriteria_validDateTermAndOtherTerm() {
+    void testBuildCriteria_validDateTermAndOtherTerm() {
         final ExpressionOperator.Builder rootOperator = new ExpressionOperator.Builder(Op.AND);
 
         final String fromDateStr = "2000-01-01T00:00:00.000Z";
@@ -409,12 +418,12 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
 
-        Assert.assertNotNull(criteria);
-        Assert.assertEquals(fromDate, criteria.getPeriod().getFrom().longValue());
-        Assert.assertEquals(toDate + 1, criteria.getPeriod().getTo().longValue());
+        assertThat(criteria).isNotNull();
+        assertThat(criteria.getPeriod().getFrom().longValue()).isEqualTo(fromDate);
+        assertThat(criteria.getPeriod().getTo().longValue()).isEqualTo(toDate + 1);
 
         // only a date term so the filter tree has noting in it as the date is
         // handled outside of the tree
-        Assert.assertEquals("[MyField=xxx]", criteria.getFilterTermsTree().toString());
+        assertThat(criteria.getFilterTermsTree().toString()).isEqualTo("[MyField=xxx]");
     }
 }

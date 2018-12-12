@@ -16,8 +16,8 @@
 
 package stroom.search;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.streamtask.InclusiveRanges;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.util.test.StroomUnitTest;
@@ -25,16 +25,18 @@ import stroom.util.test.StroomUnitTest;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestEventRanges extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestEventRanges extends StroomUnitTest {
     @Test
-    public void bigTest() {
+    void bigTest() {
         for (int i = 0; i < 100; i++) {
             test();
         }
     }
 
     @Test
-    public void test() {
+    void test() {
         final InclusiveRanges ref = new InclusiveRanges();
 
         final List<Long> segs = new ArrayList<>();
@@ -52,7 +54,7 @@ public class TestEventRanges extends StroomUnitTest {
     }
 
     @Test
-    public void test2() {
+    void test2() {
         final InclusiveRanges ref = new InclusiveRanges();
         ref.addEvent(1);
         ref.addEvent(2);
@@ -62,7 +64,7 @@ public class TestEventRanges extends StroomUnitTest {
     }
 
     @Test
-    public void test3() {
+    void test3() {
         final InclusiveRanges ref = new InclusiveRanges();
         ref.addEvent(1);
         ref.addEvent(3);
@@ -72,7 +74,7 @@ public class TestEventRanges extends StroomUnitTest {
     }
 
     @Test
-    public void test4() {
+    void test4() {
         final InclusiveRanges ref = new InclusiveRanges();
         ref.addEvent(3);
         ref.addEvent(2);
@@ -82,7 +84,7 @@ public class TestEventRanges extends StroomUnitTest {
     }
 
     @Test
-    public void test5() {
+    void test5() {
         final InclusiveRanges ref = new InclusiveRanges();
         ref.addEvent(3);
         ref.addEvent(2);
@@ -92,7 +94,7 @@ public class TestEventRanges extends StroomUnitTest {
     }
 
     @Test
-    public void test6() {
+    void test6() {
         final InclusiveRanges ref = new InclusiveRanges();
         ref.addEvent(10);
         ref.addEvent(5);
@@ -100,42 +102,42 @@ public class TestEventRanges extends StroomUnitTest {
         ref.addEvent(3);
         ref.addEvent(7);
 
-        Assert.assertEquals(5, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(5);
         check(ref);
 
         addRange(ref, 8L, 9L);
 
-        Assert.assertEquals(4, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(4);
         check(ref);
 
         addRange(ref, 2L, 2L);
 
-        Assert.assertEquals(3, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(3);
         check(ref);
 
         addRange(ref, 4L, 4L);
 
-        Assert.assertEquals(2, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(2);
         check(ref);
 
         addRange(ref, 20L, 25L);
 
-        Assert.assertEquals(3, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(3);
         check(ref);
 
         addRange(ref, 18L, 30L);
 
-        Assert.assertEquals(3, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(3);
         check(ref);
 
         addRange(ref, 20L, 35L);
 
-        Assert.assertEquals(3, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(3);
         check(ref);
 
         addRange(ref, 15L, 20L);
 
-        Assert.assertEquals(3, ref.getRanges().size());
+        assertThat(ref.getRanges().size()).isEqualTo(3);
         check(ref);
     }
 
@@ -150,11 +152,11 @@ public class TestEventRanges extends StroomUnitTest {
         InclusiveRange lastRange = null;
         for (final InclusiveRange range : ranges) {
             System.out.println(range);
-            Assert.assertTrue(range.getMin() <= range.getMax());
+            assertThat(range.getMin() <= range.getMax()).isTrue();
 
             if (lastRange != null) {
-                Assert.assertTrue(lastRange.getMin() < range.getMin() - 1);
-                Assert.assertTrue(lastRange.getMax() < range.getMin() - 1);
+                assertThat(lastRange.getMin() < range.getMin() - 1).isTrue();
+                assertThat(lastRange.getMax() < range.getMin() - 1).isTrue();
             }
 
             lastRange = range;
@@ -162,8 +164,8 @@ public class TestEventRanges extends StroomUnitTest {
 
         final String str = ref.rangesToString();
         System.out.println(str);
-        Assert.assertTrue(str.length() > 0);
+        assertThat(str.length() > 0).isTrue();
         final List<InclusiveRange> converted = InclusiveRanges.rangesFromString(str);
-        Assert.assertEquals(ranges, converted);
+        assertThat(converted).isEqualTo(ranges);
     }
 }

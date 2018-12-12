@@ -31,7 +31,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRASegmentStreams {
+class TestRASegmentStreams {
     private static final String A = "A";
     private static final String B = "B";
     private static final String C = "C";

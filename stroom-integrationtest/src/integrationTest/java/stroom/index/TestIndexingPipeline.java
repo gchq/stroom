@@ -16,12 +16,12 @@
 
 package stroom.index;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
@@ -35,12 +35,12 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.Data;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -51,10 +51,11 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
+class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     private static final String PIPELINE = "TestIndexingPipeline/TestIndexingPipeline.Pipeline.data.xml";
     private static final String SAMPLE_INDEX_INPUT = "TestIndexingPipeline/TestIndexes.out";
 
@@ -79,14 +80,14 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
-    @Before
-    @After
-    public void clear() {
+    @BeforeEach
+    @AfterEach
+    void clear() {
         indexShardWriterCache.shutdown();
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // Setup the XSLT.
             final DocRef xsltRef = xsltStore.createDocument("Indexing XSLT");
@@ -135,18 +136,18 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             pipeline.process(inputStream);
 
             // Make sure we only used one writer.
-            Assert.assertEquals(1, indexShardWriterCache.getWriters().size());
+            assertThat(indexShardWriterCache.getWriters().size()).isEqualTo(1);
 
             // Get the writer from the pool.
             final Map<IndexShardKey, IndexShardWriter> writers = indexShardWriterCache.getWriters();
             final MockIndexShardWriter writer = (MockIndexShardWriter) writers.values().iterator().next();
 
             // Check that we indexed 4 documents.
-            Assert.assertEquals(4, writer.getDocuments().size());
-            Assert.assertEquals("Authenticate", writer.getDocuments().get(0).getField("Action").stringValue());
-            Assert.assertEquals("Process", writer.getDocuments().get(1).getField("Action").stringValue());
-            Assert.assertEquals("Process", writer.getDocuments().get(2).getField("Action").stringValue());
-            Assert.assertEquals("Process", writer.getDocuments().get(3).getField("Action").stringValue());
+            assertThat(writer.getDocuments().size()).isEqualTo(4);
+            assertThat(writer.getDocuments().get(0).getField("Action").stringValue()).isEqualTo("Authenticate");
+            assertThat(writer.getDocuments().get(1).getField("Action").stringValue()).isEqualTo("Process");
+            assertThat(writer.getDocuments().get(2).getField("Action").stringValue()).isEqualTo("Process");
+            assertThat(writer.getDocuments().get(3).getField("Action").stringValue()).isEqualTo("Process");
 
             for (int i = 0; i < 4; i++) {
                 final String streamId = writer.getDocuments().get(i).getField("StreamId").stringValue();
@@ -155,9 +156,9 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
                 System.out.println(streamId + ":" + eventId);
 
-                Assert.assertEquals(String.valueOf(id), streamId);
-                Assert.assertEquals(Integer.toString(i + 1), eventId);
-                Assert.assertEquals("user" + (i + 1), userId);
+                assertThat(streamId).isEqualTo(String.valueOf(id));
+                assertThat(eventId).isEqualTo(Integer.toString(i + 1));
+                assertThat(userId).isEqualTo("user" + (i + 1));
             }
 
             // // Return the writer to the pool.

@@ -23,9 +23,9 @@ import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
@@ -72,7 +72,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRefDataOnHeapStore {
+class TestRefDataOnHeapStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
 
@@ -90,8 +90,8 @@ public class TestRefDataOnHeapStore {
 
     private RefDataStore refDataStore;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
@@ -105,7 +105,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testTreeMapReverseOrdering() {
+    void testTreeMapReverseOrdering() {
         Comparator<Long> comparator = Comparator.reverseOrder();
         NavigableMap<Long, String> treeMap = new TreeMap<>(comparator);
 
@@ -136,15 +136,15 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void getProcessingInfo() {
+    void getProcessingInfo() {
     }
 
     @Test
-    public void isDataLoaded_true() {
+    void isDataLoaded_true() {
     }
 
     @Test
-    public void isDataLoaded_false() {
+    void isDataLoaded_false() {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
@@ -153,7 +153,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doOverwrite_keyValueStore() {
+    void testOverwrite_doOverwrite_keyValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -164,7 +164,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doOverwrite_rangeValueStore() {
+    void testOverwrite_doOverwrite_rangeValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -175,7 +175,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite_keyValueStore() {
+    void testOverwrite_doNotOverwrite_keyValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -186,7 +186,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite_rangeValueStore() {
+    void testOverwrite_doNotOverwrite_rangeValueStore() {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -263,7 +263,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_noOverwriteBigCommitInterval() {
+    void loader_noOverwriteBigCommitInterval() {
         boolean overwriteExisting = false;
         int commitInterval = Integer.MAX_VALUE;
 
@@ -271,7 +271,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_noOverwriteSmallCommitInterval() {
+    void loader_noOverwriteSmallCommitInterval() {
         boolean overwriteExisting = false;
         int commitInterval = 2;
 
@@ -279,7 +279,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_noOverwriteWithDuplicateData() {
+    void loader_noOverwriteWithDuplicateData() {
         int commitInterval = Integer.MAX_VALUE;
 
         RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -292,7 +292,7 @@ public class TestRefDataOnHeapStore {
     }
 
     @Test
-    public void loader_overwriteWithDuplicateData() {
+    void loader_overwriteWithDuplicateData() {
         int commitInterval = Integer.MAX_VALUE;
 
         RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -305,10 +305,10 @@ public class TestRefDataOnHeapStore {
     }
 
 
-    @Ignore // The on heap store will probably not be thread safe as we will have one store per pipeline process
+    @Disabled // The on heap store will probably not be thread safe as we will have one store per pipeline process
     // for loading transient context data into
     @Test
-    public void testLoaderConcurrency() {
+    void testLoaderConcurrency() {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         final long effectiveTimeMs = System.currentTimeMillis();
@@ -385,10 +385,10 @@ public class TestRefDataOnHeapStore {
      * Each task is trying to load data for a different {@link RefStreamDefinition} so they will all be fighting over
      * the write txn
      */
-    @Ignore // The on heap store will probably not be thread safe as we will have one store per pipeline process
+    @Disabled // The on heap store will probably not be thread safe as we will have one store per pipeline process
     // for loading transient context data into
     @Test
-    public void testLoaderConcurrency_multipleStreamDefs() {
+    void testLoaderConcurrency_multipleStreamDefs() {
 
         final long effectiveTimeMs = System.currentTimeMillis();
         final int recCount = 1_000;
@@ -468,7 +468,7 @@ public class TestRefDataOnHeapStore {
      * Make entryCount very big for manual performance testing or profiling
      */
     @Test
-    public void testBigLoadForPerfTesting() {
+    void testBigLoadForPerfTesting() {
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
@@ -932,13 +932,13 @@ public class TestRefDataOnHeapStore {
         return entriesPerMapDef * mapNames.size();
     }
 
+    RefDataStore getRefDataStore() {
+        return refDataStoreFactory.createOnHeapStore();
+    }
+
     private interface MapNamFunc {
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
-    }
-
-    RefDataStore getRefDataStore() {
-        return refDataStoreFactory.createOnHeapStore();
     }
 
 }

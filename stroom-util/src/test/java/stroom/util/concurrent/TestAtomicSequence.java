@@ -16,53 +16,52 @@
 
 package stroom.util.concurrent;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestAtomicSequence {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestAtomicSequence {
     @Test
-    public void testSimple() {
+    void testSimple() {
         AtomicSequence atomicSequence = new AtomicSequence(3);
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(1, atomicSequence.next());
-        Assert.assertEquals(2, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(1);
+        assertThat(atomicSequence.next()).isEqualTo(2);
+        assertThat(atomicSequence.next()).isEqualTo(0);
     }
 
     @Test
-    public void testCallLimit1() {
+    void testCallLimit1() {
         AtomicSequence atomicSequence = new AtomicSequence(1);
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(0);
     }
 
     @Test
-    public void testCallLimit2() {
+    void testCallLimit2() {
         AtomicSequence atomicSequence = new AtomicSequence();
-        Assert.assertEquals(0, atomicSequence.next(2));
-        Assert.assertEquals(1, atomicSequence.next(2));
-        Assert.assertEquals(0, atomicSequence.next(2));
-        Assert.assertEquals(1, atomicSequence.next(2));
-        Assert.assertEquals(0, atomicSequence.next(2));
+        assertThat(atomicSequence.next(2)).isEqualTo(0);
+        assertThat(atomicSequence.next(2)).isEqualTo(1);
+        assertThat(atomicSequence.next(2)).isEqualTo(0);
+        assertThat(atomicSequence.next(2)).isEqualTo(1);
+        assertThat(atomicSequence.next(2)).isEqualTo(0);
     }
 
     @Test
-    public void testCallLimit3() {
+    void testCallLimit3() {
         AtomicSequence atomicSequence = new AtomicSequence(3);
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(1, atomicSequence.next());
-        Assert.assertEquals(2, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(1, atomicSequence.next());
-        Assert.assertEquals(2, atomicSequence.next());
-        Assert.assertEquals(0, atomicSequence.next());
-        Assert.assertEquals(1, atomicSequence.next());
-        Assert.assertEquals(2, atomicSequence.next());
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(1);
+        assertThat(atomicSequence.next()).isEqualTo(2);
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(1);
+        assertThat(atomicSequence.next()).isEqualTo(2);
+        assertThat(atomicSequence.next()).isEqualTo(0);
+        assertThat(atomicSequence.next()).isEqualTo(1);
+        assertThat(atomicSequence.next()).isEqualTo(2);
     }
 }

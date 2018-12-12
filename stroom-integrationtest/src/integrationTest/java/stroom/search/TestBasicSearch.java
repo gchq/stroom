@@ -25,9 +25,8 @@ import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
-import org.junit.Assert;
-import org.junit.Test;
-import stroom.entity.shared.DocRefUtil;
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.index.FieldFactory;
 import stroom.index.IndexShardKeyUtil;
 import stroom.index.IndexShardService;
@@ -41,7 +40,6 @@ import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.docref.DocRef;
 import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -51,7 +49,9 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
-public class TestBasicSearch extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBasicSearch extends AbstractCoreIntegrationTest {
     @Inject
     private Indexer indexer;
     @Inject
@@ -64,7 +64,7 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
     private IndexStore indexStore;
 
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         final IndexField idField = IndexField.createField("IdTreeNode", AnalyzerType.ALPHA_NUMERIC, false, true, true, false);
         final IndexField testField = IndexField.createField("test", AnalyzerType.ALPHA_NUMERIC, false, true, true,
@@ -125,27 +125,27 @@ public class TestBasicSearch extends AbstractCoreIntegrationTest {
         final TermQuery termQuery = new TermQuery(new Term("test", "test"));
         final MaxHitCollector maxHitCollector = new MaxHitCollector(3000);
         indexSearcher.search(termQuery, maxHitCollector);
-        Assert.assertEquals(indexTestSize, maxHitCollector.getDocIdList().size());
+        assertThat(maxHitCollector.getDocIdList().size()).isEqualTo(indexTestSize);
 
         for (final Integer id : maxHitCollector.getDocIdList()) {
             final Document doc = indexSearcher.doc(id);
             final IndexableField testFld = doc.getField("test");
-            Assert.assertNotNull(testFld);
-            Assert.assertEquals("test", testFld.stringValue());
+            assertThat(testFld).isNotNull();
+            assertThat(testFld.stringValue()).isEqualTo("test");
         }
 
         final TermQuery termQuery2 = new TermQuery(new Term("nonstore", "test"));
         final MaxHitCollector maxHitCollector2 = new MaxHitCollector(3000);
         indexSearcher.search(termQuery2, maxHitCollector2);
-        Assert.assertEquals(indexTestSize, maxHitCollector2.getDocIdList().size());
+        assertThat(maxHitCollector2.getDocIdList().size()).isEqualTo(indexTestSize);
 
         for (final Integer id : maxHitCollector2.getDocIdList()) {
             final Document doc = indexSearcher.doc(id);
             final IndexableField testFld = doc.getField("test");
-            Assert.assertNotNull(testFld);
-            Assert.assertEquals("test", testFld.stringValue());
+            assertThat(testFld).isNotNull();
+            assertThat(testFld.stringValue()).isEqualTo("test");
             final IndexableField nonstoreField = doc.getField("nonstore");
-            Assert.assertNull(nonstoreField);
+            assertThat(nonstoreField).isNull();
         }
 
         // Release searchers

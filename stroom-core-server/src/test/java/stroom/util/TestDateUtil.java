@@ -16,17 +16,16 @@
 
 package stroom.util;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestDateUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestDateUtil extends StroomUnitTest {
     @Test
-    public void testSimpleZuluTimes() {
+    void testSimpleZuluTimes() {
         doTest("2008-11-18T09:47:50.548Z");
         doTest("2008-11-18T09:47:00.000Z");
         doTest("2008-11-18T13:47:00.000Z");
@@ -38,19 +37,17 @@ public class TestDateUtil extends StroomUnitTest {
         final long date = DateUtil.parseNormalDateTimeString(dateString);
 
         // Convert Back to string
-        Assert.assertEquals(dateString, DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo(dateString);
     }
 
     @Test
-    public void testSimple() {
-        Assert.assertEquals("2010-01-01T23:59:59.000Z",
-                DateUtil.createNormalDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z")));
+    void testSimple() {
+        assertThat(DateUtil.createNormalDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo("2010-01-01T23:59:59.000Z");
 
     }
 
     @Test
-    public void testSimpleFileFormat() {
-        Assert.assertEquals("2010-01-01T23#59#59,000Z",
-                DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z")));
+    void testSimpleFileFormat() {
+        assertThat(DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z"))).isEqualTo("2010-01-01T23#59#59,000Z");
     }
 }

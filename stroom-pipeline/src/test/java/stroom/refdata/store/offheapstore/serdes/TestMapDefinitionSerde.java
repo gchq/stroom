@@ -17,20 +17,21 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
-import stroom.refdata.util.ByteBufferUtils;
+
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.RefStreamDefinition;
+import stroom.refdata.util.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinitionSerde> {
+class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinitionSerde> {
 
     @Test
-    public void serialize() {
+    void serialize() {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
@@ -41,7 +42,7 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, Map
     }
 
     @Test
-    public void serialize_nullMapName() {
+    void serialize_nullMapName() {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
@@ -53,7 +54,7 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, Map
     }
 
     @Test
-    public void serialize_nullMapName_verifySerialisedForm() {
+    void serialize_nullMapName_verifySerialisedForm() {
         RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
         MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
 

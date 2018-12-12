@@ -17,8 +17,7 @@
 package stroom.xml.util;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -46,7 +45,10 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 
-public class TestXMLWriter extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestXMLWriter extends StroomUnitTest {
     private static final SAXParserFactory PARSER_FACTORY;
     private static final Logger LOGGER = LoggerFactory.getLogger(TestXMLWriter.class);
 
@@ -55,7 +57,7 @@ public class TestXMLWriter extends StroomUnitTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         final Path testInputDir = StroomPipelineTestFileUtil.getTestResourcesDir();
         final Path testOutputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve("TestXMLWriter");
 
@@ -63,14 +65,14 @@ public class TestXMLWriter extends StroomUnitTest {
     }
 
     @Test
-    public void testPrettyPrintErrorHandler() {
+    void testPrettyPrintErrorHandler() {
         boolean error = false;
         try {
             XMLUtil.prettyPrintXML(new ByteArrayInputStream("Test".getBytes()), new ByteArrayOutputStream());
         } catch (final RuntimeException e) {
             error = true;
         }
-        Assert.assertTrue(error);
+        assertThat(error).isTrue();
     }
 
     private void processDir(final Path inputDir, final Path outputDir) {
@@ -118,7 +120,7 @@ public class TestXMLWriter extends StroomUnitTest {
                 bw.close();
 
             } catch (final IOException | SAXException | ParserConfigurationException | RuntimeException e) {
-                Assert.fail(e.getMessage());
+                fail(e.getMessage());
             }
         } catch (final IOException | RuntimeException e) {
             // Ignore...
