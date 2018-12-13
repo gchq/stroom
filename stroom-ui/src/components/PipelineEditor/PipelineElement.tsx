@@ -253,28 +253,27 @@ const enhance = compose<EnhancedProps, Props>(
       const classNames = ["Pipeline-element"];
       let isIconDisabled = false;
 
-      if (isOver) {
-        classNames.push("Pipeline-element__over");
-      }
-      if (isDragging) {
-        classNames.push("Pipeline-element__dragging");
-      }
-      if (isOver) {
+      if (!!draggingItemType) {
+        if (isOver) {
+          classNames.push("over");
+        }
+        if (isDragging) {
+          classNames.push("dragging");
+        }
+
         if (canDrop) {
-          classNames.push("Pipeline-element__over_can_drop");
+          classNames.push("can_drop");
         } else {
           isIconDisabled = true;
-          classNames.push("Pipeline-element__cannot_drop");
+          classNames.push("cannot_drop");
         }
-      } else if (canDrop) {
-        classNames.push("Pipeline-element__not_over_can_drop");
-      } else if (!!draggingItemType) {
-        isIconDisabled = true;
-        classNames.push("Pipeline-element__cannot_drop");
-      }
 
-      if (selectedElementId === elementId) {
-        classNames.push("selected");
+        if (selectedElementId === elementId) {
+          classNames.push("selected");
+        }
+      } else {
+        classNames.push("raised-low");
+        classNames.push("borderless");
       }
 
       return {
@@ -314,20 +313,26 @@ const PipelineElement = ({
   connectDropTarget,
   elementDefinition,
   className,
-  onElementClick
+  onElementClick,
+  isOver,
+  canDrop,
+  isDragging,
+  draggingItemType
 }: EnhancedProps) =>
   connectDragSource(
     connectDropTarget(
-      <div
-        className={`${className || ""} raised-low borderless `}
-        onClick={onElementClick}
-      >
+      <div className={className} onClick={onElementClick}>
         {elementDefinition && (
           <ElementImage
             className="Pipeline-element__icon"
             icon={elementDefinition.icon}
           />
         )}
+        <p>{`Class: ${className}`}</p>
+        <p>{`IsOver: ${isOver}`}</p>
+        <p>{`CanDrop: ${canDrop}`}</p>
+        <p>{`isDragging: ${isDragging}`}</p>
+        <p>{`dragItemType: ${String(draggingItemType)}`}</p>
         <Button className="Pipeline-element__type" text={elementId} />
       </div>
     )

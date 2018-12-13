@@ -44,49 +44,49 @@
 
 table {
   @include themify($themes) {
-    background-color: themed("raised-low__background-color") !important ;
-    color: themed("text__color") !important;
-    border: themed("border") !important;
+    background-color: themed("raised-low__background-color");
+    color: themed("text__color");
+    border: themed("border");
   }
 
   td {
     @include themify($themes) {
-      color: themed("text__color") !important;
+      color: themed("text__color");
     }
   }
 
   th {
     @include themify($themes) {
-      background-color: themed("raised-low__background-color") !important ;
-      color: themed("text__color") !important;
+      background-color: themed("raised-low__background-color");
+      color: themed("text__color");
     }
   }
 }
 
 .dropdown__content {
   @include themify($themes) {
-    background-color: themed("background__color") !important;
+    background-color: themed("background__color");
   }
 }
 
 input {
   @include themify($themes) {
-    background-color: themed("background__color") !important;
-    color: themed("text__color") !important;
+    background-color: themed("background__color");
+    color: themed("text__color");
   }
 }
 
 .form {
   label {
     @include themify($themes) {
-      color: themed("text__color") !important;
+      color: themed("text__color");
     }
   }
 
   input {
     @include themify($themes) {
-      background-color: themed("background__color") !important;
-      color: themed("text__color") !important;
+      background-color: themed("background__color");
+      color: themed("text__color");
     }
   }
 }
@@ -96,23 +96,23 @@ input {
 .dropdown {
   // This styles the main drop-down box
   @include themify($themes) {
-    background-color: themed("dropdown__background-color") !important;
-    color: themed("text__color") !important;
-    border: themed("dropdown__border") ;
+    background-color: themed("dropdown__background-color");
+    color: themed("text__color");
+    border: themed("dropdown__border");
   }
   // This styles the actual drop-down bit.
   .menu {
     @include themify($themes) {
-      background-color: themed("dropdown__background-color") !important;
-      color: themed("text__color") !important;
-      border: themed("dropdown__border") !important;
+      background-color: themed("dropdown__background-color");
+      color: themed("text__color");
+      border: themed("dropdown__border");
     }
   }
 
   // This makes sure the text is the right colour
   .text {
     @include themify($themes) {
-      color: themed("text__color") !important;
+      color: themed("text__color");
     }
   }
 
@@ -121,9 +121,9 @@ input {
   .active,
   .item,
   .icon {
-    border: 0 !important;
+    border: 0;
     @include themify($themes) {
-      color: themed("text__color") !important;
+      color: themed("text__color");
     }
   }
 
@@ -131,145 +131,141 @@ input {
   .item:hover,
   .text:hover {
     @include themify($themes) {
-      background-color: themed("dropdown__hover-color") !important;
+      background-color: themed("dropdown__hover-color");
     }
   }
 }
 
 .button {
   @include themify($themes) {
-    background-color: themed("background__color") !important;
-    color: themed("text__color") !important;
+    background-color: themed("background__color");
+    color: themed("text__color");
   }
 }
 
 .button.positive {
   @include themify($themes) {
-    background-color: themed("selected-color") !important;
-    color: themed("text__color") !important;
+    background-color: themed("selected-color");
+    color: themed("text__color");
   }
 }
 
 .hoverable:hover {
   @include themify($themes) {
-    background-color: themed("hover-color") !important;
+    background-color: themed("hover-color");
   }
 }
 
 :focus .inFocus {
   @include themify($themes) {
-    background-color: themed("raised-high__selected-background-color") !important;
+    background-color: themed("raised-high__selected-background-color");
   }
 }
 
 .raised-high .selected {
   @include themify($themes) {
-    background-color: themed(
-      "raised-high__selected-background-color"
-    ) !important;
+    background-color: themed("raised-high__selected-background-color");
   }
 }
 
 :focus .raised-high .inFocus {
   @include themify($themes) {
-    background-color: themed("raised-high__selected-background-color") !important;
+    background-color: themed("raised-high__selected-background-color");
   }
 }
 
 .flat {
   @include themify($themes) {
-    background-color: themed("background__color") !important;
-    color: themed("text__color") !important;
+    background-color: themed("background__color");
+    color: themed("text__color");
   }
 }
 
 .flat-text {
   @include themify($themes) {
-    color: themed("text__color") !important;
+    color: themed("text__color");
   }
 }
 
 .raised-low {
   @include themify($themes) {
-    background-color: themed("raised-low__background-color") !important;
-    color: themed("text__color") !important;
+    background-color: themed("raised-low__background-color");
+    color: themed("text__color");
   }
 }
 
 .selected {
   @include themify($themes) {
-    background-color: themed("selected-color") !important;
+    background-color: themed("selected-color");
   }
 }
 
 .selected:hover {
   @include themify($themes) {
-    background-color: themed("selected-color") !important;
+    background-color: themed("selected-color");
   }
 }
 
 .raised-high {
   @include themify($themes) {
-    background-color: themed("raised-high__background-color") !important;
-    color: themed("text__color") !important;
+    background-color: themed("raised-high__background-color");
+    color: themed("text__color");
   }
 }
 
 .border {
   @include themify($themes) {
-    border: themed("border") !important;
+    border: themed("border");
   }
 }
 
 .raised-border {
   @include themify($themes) {
-    border: themed("raised-element__border") !important;
+    border: themed("raised-element__border");
   }
 }
 
 .borderless {
   @include themify($themes) {
-    border: 0 !important;
+    border: 0;
   }
 }
 
 .button {
   @include themify($themes) {
-    border: themed("icon-button__border") !important;
+    border: themed("icon-button__border");
     background-color: themed("icon-button__background-color");
-    color: themed("icon-button__color") !important;
+    color: themed("icon-button__color");
   }
 }
 
 .button.selected {
   @include themify($themes) {
-    background-color: themed("selected-color") !important;
+    background-color: themed("selected-color");
   }
 }
 
 .button:hover:enabled,
 .button:focus:enabled {
   @include themify($themes) {
-    color: themed("icon-button__color--hover") !important;
-    background-color: themed("icon-button__background-color--hover") !important;
+    color: themed("icon-button__color--hover");
+    background-color: themed("icon-button__background-color--hover");
   }
 }
 
 .button.raised-high:hover:enabled,
 .button.raised-high:focus:enabled {
   @include themify($themes) {
-    color: themed("text__color--deemphasised") !important;
-    background-color: themed("raised-high__selected-background-color") !important;
+    color: themed("text__color--deemphasised");
+    background-color: themed("raised-high__selected-background-color");
   }
 }
 
-
 .button:disabled,
-.button[disabled]{
-  background-color: #cccccc !important;
-  color: #666666 !important;
+.button[disabled] {
+  background-color: #cccccc;
+  color: #666666;
 }
-
 
 /////////////////////
 // Specific styles //
@@ -285,31 +281,30 @@ input {
     color: themed("text__color--deemphasised");
   }
 }
-.sidebar__menu-item.is-active{
+.sidebar__menu-item.is-active {
   @include themify($themes) {
-    background-color:themed('raised-high__selected-background-color');
+    background-color: themed("raised-high__selected-background-color");
   }
 }
-.sidebar__menu-item.nav:hover{
+.sidebar__menu-item.nav:hover {
   @include themify($themes) {
-    background-color:themed('raised-high__selected-background-color');
+    background-color: themed("raised-high__selected-background-color");
   }
-} 
+}
 
-.sidebar__menu-item.doc:hover{
+.sidebar__menu-item.doc:hover {
   @include themify($themes) {
-    background-color:themed('raised-high__selected-background-color');
+    background-color: themed("raised-high__selected-background-color");
   }
-} 
-
+}
 
 .tooltip-popup {
   @include themify($themes) {
     &.place-top {
       &:after {
-        border-top-color: themed("raised-high__background-color") !important;
-        border-top-style: solid !important;
-        border-top-width: 6px !important;
+        border-top-color: themed("raised-high__background-color");
+        border-top-style: solid;
+        border-top-width: 6px;
       }
     }
   }
@@ -317,39 +312,39 @@ input {
 
 .breadcrumb__divider {
   @include themify($themes) {
-    color: themed("breadcrumb__divider___color") !important;
+    color: themed("breadcrumb__divider___color");
   }
 }
 .breadcrumb__section {
   @include themify($themes) {
-    color: themed("breadcrumb__section___color") !important;
+    color: themed("breadcrumb__section___color");
   }
 }
 .breadcrumb__section--active {
   @include themify($themes) {
-    color: themed("breadcrumb__section--active___color") !important;
+    color: themed("breadcrumb__section--active___color");
   }
 }
 
 .pagination__container .pagination a {
   @include themify($themes) {
-    color: themed("text__color") !important;
+    color: themed("text__color");
   }
 }
 .pagination__container .pagination .active {
   @include themify($themes) {
-    background-color: themed("selected-color") !important;
+    background-color: themed("selected-color");
   }
 }
 
 .react-sweet-progress-line {
   @include themify($themes) {
-    background-color: themed("raised-low__background-color") !important;
+    background-color: themed("raised-low__background-color");
   }
 }
 .react-sweet-progress-line-inner {
   @include themify($themes) {
-    background-color: themed("selected-color") !important;
+    background-color: themed("selected-color");
   }
 }
 
@@ -357,46 +352,45 @@ body ::-webkit-scrollbar {
 }
 body ::-webkit-scrollbar-track {
   @include themify($themes) {
-    background-color: themed("scrollbar__track-color") !important;
+    background-color: themed("scrollbar__track-color");
   }
 }
 body ::-webkit-scrollbar-thumb {
   @include themify($themes) {
-    background-color: themed("scrollbar__thumb-color") !important;
+    background-color: themed("scrollbar__thumb-color");
   }
 }
 
 .tabs {
   .tabular.menu {
-    border-bottom: 1px solid #5f5f5f !important;
+    border-bottom: 1px solid #5f5f5f;
 
     .active.item {
       @include themify($themes) {
-        background-color: themed("background__color") !important;
-        color: themed("text__color") !important;
-        border: themed("border") !important;
+        background-color: themed("background__color");
+        color: themed("text__color");
+        border: themed("border");
       }
     }
     .item {
       @include themify($themes) {
-        background-color: themed("background__color") !important;
-        color: themed("text__color") !important;
-        border: none !important;
+        background-color: themed("background__color");
+        color: themed("text__color");
+        border: none;
       }
     }
   }
   .tab {
     @include themify($themes) {
-      background-color: themed("background__color") !important;
-      color: themed("text__color") !important;
-      border: none !important;
+      background-color: themed("background__color");
+      color: themed("text__color");
+      border: none;
     }
   }
 }
 
 .app-chrome__sidebar_header:hover {
   @include themify($themes) {
-    background-color:themed('raised-high__selected-background-color');
+    background-color: themed("raised-high__selected-background-color");
   }
 }
-

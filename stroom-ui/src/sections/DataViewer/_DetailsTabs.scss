@@ -20,7 +20,7 @@
 .DetailsTabs__Tab .tab {
   width: 100%;
   height: 100%;
-  padding: 0 !important;
+  padding: 0;
 }
 
 .DetailsTabs__Tab .tabular.menu {
@@ -28,6 +28,6 @@
 }
 
 .DetailsTabs__Tab .tabular.menu .item {
-  padding: 7px !important;
+  padding: 7px;
   height: 30px;
 }

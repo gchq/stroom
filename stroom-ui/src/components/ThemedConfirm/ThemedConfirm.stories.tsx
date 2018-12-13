@@ -83,7 +83,7 @@ let TestConfirm = enhance(
   )
 );
 
-const stories = storiesOf("Themed/Confirm", module).addDecorator(
+const stories = storiesOf("General Purpose/Themed Confirm", module).addDecorator(
   StroomDecorator
 );
 

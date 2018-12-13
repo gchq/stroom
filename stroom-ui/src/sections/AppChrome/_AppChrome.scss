@@ -19,7 +19,7 @@
 }
 
 .app-chrome__sidebar--expanded {
-  width:20rem;
+  width: 20rem;
 }
 
 .app-chrome__sidebar--collapsed {
@@ -28,20 +28,20 @@
 
 .app-chrome__sidebar-menu {
   overflow-y: auto;
-  position:absolute;
+  position: absolute;
   height: calc(100% - 2.2rem);
   width: 100%;
 }
 
 .app-chrome__sidebar-menu__container {
-  outline: none !important;
-  position:relative;
+  outline: none;
+  position: relative;
   display: flex;
-  flex-direction:column;
+  flex-direction: column;
 }
 
 .app-chrome__sidebar__buttons .button {
-  color: white !important;
+  color: white;
 }
 
 .app-chrome__sidebar_header {
@@ -51,13 +51,12 @@
 
 .sidebar__menu-item {
   display: inline-flex;
-  outline:none !important;
-  width:100%;
+  outline: none;
+  width: 100%;
 }
 
-
 .sidebar__menu-item.nav {
-  padding: 0.35rem 0 0.35rem 0.1rem ;
+  padding: 0.35rem 0 0.35rem 0.1rem;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -88,11 +87,11 @@
 }
 
 .sidebar__menu-item.doc.collapsed {
-  padding: 0 0 0 0.1rem !important ;
+  padding: 0 0 0 0.1rem;
 }
 
 .sidebar__menu-item.child.collapsed {
-  padding-left: 0 !important ;
+  padding-left: 0;
 }
 
 .sidebar__menu-item.nav.collapsed {
@@ -105,7 +104,7 @@
   color: red;
 }
 .sidebar__toggle {
-  width: 1.5rem !important;
+  width: 1.5rem;
 }
 
 .sidebar__children {
@@ -139,11 +138,11 @@
 }
 
 .content-tabs__grid {
-  display: block !important;
+  display: block;
 }
 
 .app-chrome__content .ui.grid .column {
-  padding: 0.3rem !important;
+  padding: 0.3rem;
 }
 
 .content-tabs__close-btn {
@@ -165,10 +164,10 @@
   padding: 0 0.3125rem 0 0.4125rem;
 }
 
-.sidebar__menu-item.has-children--open{
+.sidebar__menu-item.has-children--open {
   padding-bottom: 0;
 }
 
-.menu-item__text{
+.menu-item__text {
   padding-left: 0.65rem;
 }

@@ -1,7 +1,7 @@
-@import "./Element";
 .Pipeline-element {
   padding: 0.5rem;
-  width: 8rem;
+  height: 16rem;
+  width: 10rem;
   font-size: 0.8rem;
   border-style: solid;
   border-width: thin;
@@ -10,8 +10,6 @@
   overflow: hidden;
   background-color: white; // box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1), 0 2px 2px 0 rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  height: 60px;
-  width: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -42,32 +40,28 @@
 .Pipeline-element__icon {
   width: 0.7rem;
   margin-right: 0.3rem;
-  height: 25px !important;
+  height: 25px;
 }
 
 .Pipeline-element:hover {
   background-color: $hover-item-colour;
 }
 
-.Pipeline-element__over {
-  // No common styles for a straight-forward hover at the moment
+.Pipeline-element.can_drop {
+  border-color: #68ee3f;
 }
 
-.Pipeline-element__over_can_drop {
+.Pipeline-element.over.can_drop {
   border-color: rgb(30, 136, 229);
   background-color: $selected-item-colour;
 }
 
-.Pipeline-element__cannot_drop {
-  border-color: lightgrey;
+.Pipeline-element.cannot_drop {
+  border-color: red;
   color: lightgray;
 }
 
-.Pipeline-element__not_over_can_drop {
-  border-color: #68ee3f;
-}
-
-.Pipeline-element__dragging {
+.Pipeline-element.dragging {
   border-style: dotted;
   opacity: 0.5;
 }

@@ -58,7 +58,8 @@ const dropCollect: DropTargetCollector<DropCollectedProps> = (
 ) => ({
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
-  draggingItemType: monitor.getItemType()
+  draggingItemType: monitor.getItemType(),
+  canDrop: monitor.canDrop()
 });
 
 const enhance = compose<EnhancedProps, Props>(

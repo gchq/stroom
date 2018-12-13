@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-@import './ProcessingList/ProcessingList';
-@import './ProcessingDetails/ProcessingDetails';
+@import "./ProcessingList/ProcessingList";
+@import "./ProcessingDetails/ProcessingDetails";
 
 .tracker-container {
   position: relative;
@@ -29,7 +29,7 @@
 }
 
 .tracker-container .SplitPane {
-  position: relative !important;
+  position: relative;
 }
 
 .tracker-container .SplitPane .Pane1 {
@@ -45,13 +45,13 @@
   height: 100%;
 }
 
-.ui.grid>.row {
-  padding-top: 1px !important;
-  padding-bottom: 1px !important;
+.ui.grid > .row {
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 
 .trackers-container {
-  margin: 0 auto !important;
+  margin: 0 auto;
   width: 900px;
 }
 
@@ -62,16 +62,16 @@
 }
 
 .react-datepicker__time-list {
-  padding-left: 0px !important;
+  padding-left: 0px;
 }
 
 .tracker-table .td {
-  padding: 0px !important;
+  padding: 0px;
 }
 
 .tracker-table .progress {
-  margin: 0px !important;
-  padding: 0px !important;
+  margin: 0px;
+  padding: 0px;
 }
 
 .tracker-table .progress-column .progress {
@@ -79,36 +79,36 @@
 }
 
 .tracker-table .name-column .label {
-  width: 100% !important;
+  width: 100%;
 }
 
 .tracker-row td {
-  padding-top: 0.185714em !important;
-  padding-right: 0.1785714em !important;
-  padding-bottom: 0.1785714em !important;
-  padding-left: 0.1785714em !important;
+  padding-top: 0.185714em;
+  padding-right: 0.1785714em;
+  padding-bottom: 0.1785714em;
+  padding-left: 0.1785714em;
 }
 
 .tracker-details-table .progress {
-  margin: 0px !important;
-  padding: 0px !important;
+  margin: 0px;
+  padding: 0px;
 }
 
 .tracker-details-table {
-  border: 5px 0px 0px 0px !important;
-  padding: 10px !important;
+  border: 5px 0px 0px 0px;
+  padding: 10px;
 }
 
 .ui.active.progress .bar::after {
   /* This disables 'active' animation. This is the point of the 'active' class but 
 unfortunately it's applied when the 'indicating' class is added and there's noo 
 way to have the neat colourisation from 'indicating' without the 'active' class also being applied. So we need to stomp on the annoying animation here. */
-  -webkit-animation: none !important;
-  animation: none !important;
+  -webkit-animation: none;
+  animation: none;
 }
 
 .search-container {
-  width: 100% !important;
+  width: 100%;
   top: 0px;
   left: 0px;
   height: 45px;
@@ -117,7 +117,7 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
 }
 
 .search-container .input {
-  width: 100% !important;
+  width: 100%;
 }
 
 .tracker-dashboard .table-container {
@@ -151,62 +151,57 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
 }
 
 .tracker-dashboard .details-container .card {
-  padding: 0px !important;
+  padding: 0px;
 }
 
 .tracker-dashboard .pagination-container {
-  width: 100% !important;
+  width: 100%;
   text-align: center;
   border: solid 1px lightgray;
 }
 
 .tracker-dashboard .pagination-container .ui.menu {
-  border: none !important;
+  border: none;
   -webkit-box-shadow: none;
   box-shadow: none;
 }
 
-
-.processing__table__container{
+.processing__table__container {
   position: relative;
   height: 100%;
   overflow-y: auto;
 }
 
-
-
 .processing__header-container {
-  display: inline-flex !important;
+  display: inline-flex;
   padding-bottom: 10px;
   padding-top: 3px;
 }
 
 .processing__header-container .header {
-  // We don't want this header to be obnoxious about it's surrounding space 
+  // We don't want this header to be obnoxious about it's surrounding space
   // -- this is a header bar not a flowing page of text.
-  margin-bottom: 0px !important;
+  margin-bottom: 0px;
   // We want to space the header from the left hand-edge.
-  padding-left: 6px !important;
+  padding-left: 6px;
 }
 
-.processing__header-container .content.header{
+.processing__header-container .content.header {
   // These paddings are all about alignment of the header text with the icon
-  padding-top: 10px !important;
-  padding-left: 3px !important;
-  padding-bottom: 8px !important;
+  padding-top: 10px;
+  padding-left: 3px;
+  padding-bottom: 8px;
 }
-
 
 .processing__header-container .input {
-  margin-left: 20px !important;
+  margin-left: 20px;
   margin-top: 5px;
   height: 40px;
   min-width: 200px;
   flex-grow: 1;
 }
 
-
 .processing__search__help {
-  margin-top:15px !important;
-  padding-left:5px;
+  margin-top: 15px;
+  padding-left: 5px;
 }

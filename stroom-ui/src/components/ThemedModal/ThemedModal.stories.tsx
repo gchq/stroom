@@ -52,6 +52,6 @@ const TestModal = enhance(({ modalIsOpen, setModalIsOpen }: WithModalOpen) => (
   </React.Fragment>
 ));
 
-const stories = storiesOf("Themed/Modal", module).addDecorator(StroomDecorator);
+const stories = storiesOf("General Purpose/Themed Modal", module).addDecorator(StroomDecorator);
 
 addThemedStories(stories, <TestModal />);

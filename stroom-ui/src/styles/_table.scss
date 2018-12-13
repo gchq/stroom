@@ -22,7 +22,7 @@
 }
 
 .table__reactTable .rt-td {
-  padding: 2px 2px !important;
+  padding: 2px 2px;
 }
 
 .table__reactTable .rt-tbody .rt-td {
@@ -34,19 +34,20 @@
 }
 
 .ReactTable {
-  width: 100%;  
+  width: 100%;
 }
 
 .ReactTable .rt-tbody .rt-tr-group {
   max-height: 23px;
 }
 
-.ReactTable .rt-th, .ReactTable .rt-td {
-  padding: 2px 2px !important;
+.ReactTable .rt-th,
+.ReactTable .rt-td {
+  padding: 2px 2px;
 }
 
 .ReactTable .rt-thead.-header {
-  box-shadow: none; 
+  box-shadow: none;
   border-bottom: solid 1px lightgrey;
 }
 
