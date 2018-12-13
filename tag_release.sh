@@ -47,6 +47,8 @@ main() {
     fi
 
     local version=$1
+    local curr_date
+    curr_date="$(date +%Y-%m-%d)"
     
     if [[ ! "${version}" =~ ${RELEASE_VERSION_REGEX} ]]; then
         error_exit "Version [${BLUE}${version}${GREEN}] does not match the release version regex ${BLUE}${RELEASE_VERSION_REGEX}${NC}"
@@ -66,6 +68,10 @@ main() {
 
     if ! grep -q "^\s*##\s*\[${version}\]" "${changelog_file}"; then
         error_exit "Version [${BLUE}${version}${GREEN}] is not in the CHANGELOG.${NC}"
+    fi
+
+    if ! grep -q "^\s*##\s*\[${version}\] - ${curr_date}" "${changelog_file}"; then
+        error_exit "Cannot find a heading with today's date [${BLUE}## [${version}] - ${curr_date}${GREEN}] in the CHANGELOG.${NC}"
     fi
 
     if ! grep -q "^\[${version}\]:" "${changelog_file}"; then
