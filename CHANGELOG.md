@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1021** : Multiple changes to improve vis, dashboard and external linking in Stroom.
 
-* Issue **#986**: Fix direct dashboard links.
+* Issue **#1019**: Fix visualisations settings dialog so you can un-set text and list controls.
+
+* Issue **#986**: Fix direct dasbhoard links
 
 * Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN
 
