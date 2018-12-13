@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1015**: Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
 
+* Issue **#1019**: Fix visualisations settings dialog so you can un-set text and list controls.
+
 * Issue **#986**: Fix direct dasbhoard links
 
 * Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN
