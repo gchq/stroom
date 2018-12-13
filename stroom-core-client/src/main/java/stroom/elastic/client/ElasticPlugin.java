@@ -41,7 +41,7 @@ public class ElasticPlugin extends Plugin {
                     if (elasticUiUrl != null && elasticUiUrl.trim().length() > 0) {
                         annotationsMenuItem = new IconMenuItem(6, SvgPresets.ELASTIC_SEARCH, null, "Elastic Search", null, true, () -> {
                             final Hyperlink hyperlink = new Builder()
-                                    .title("Elastic Search")
+                                    .text("Elastic Search")
                                     .href(elasticUiUrl)
                                     .type(HyperlinkType.BROWSER)
                                     .icon(SvgPresets.ELASTIC_SEARCH)

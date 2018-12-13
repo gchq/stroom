@@ -6,6 +6,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.Hyperlink.Builder;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.ClientPropertyCache;
@@ -39,11 +40,12 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                         if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
                             apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
                                 final Hyperlink hyperlink = new Builder()
-                                        .title("API Keys")
+                                        .text("API Keys")
                                         .href(apiKeysUi)
                                         .type(HyperlinkType.TAB)
                                         .icon(icon)
                                         .build();
+                                HyperlinkEvent.fire(this, hyperlink);
                             });
                         } else {
                             apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);

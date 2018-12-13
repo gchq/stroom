@@ -42,12 +42,12 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
-import stroom.widget.iframe.client.presenter.IFramePresenter.IFrameView;
-import stroom.widget.iframe.client.view.IFrameContentViewImpl;
-import stroom.widget.iframe.client.view.IFrameViewImpl;
+import stroom.iframe.client.presenter.IFrameContentPresenter;
+import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
+import stroom.iframe.client.presenter.IFramePresenter;
+import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
+import stroom.iframe.client.view.IFrameContentViewImpl;
+import stroom.iframe.client.view.IFrameViewImpl;
 
 public class DashboardAppModule extends AbstractPresenterModule {
     @Override
