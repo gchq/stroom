@@ -252,7 +252,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "include($,[regex...])", "include("));
         children.add(createFunction(item++, "indexOf($,string)", "indexOf("));
         children.add(createFunction(item++, "lastIndexOf($,string)", "lastIndexOf("));
-        children.add(createFunction(item++, "link(title,host,path,target)", "link("));
+        children.add(createFunction(item++, "link(title,url,type)", "link("));
         children.add(createFunction(item++, "lowerCase($)", "lowerCase("));
         children.add(createFunction(item++, "match($,regex)", "match("));
         children.add(createFunction(item++, "replace($,regex,replacement)", "replace("));
