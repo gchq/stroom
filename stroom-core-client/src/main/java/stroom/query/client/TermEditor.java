@@ -273,7 +273,8 @@ public class TermEditor extends Composite {
             conditions = field.getConditions();
         } else {
             if (DataSourceFieldType.DOC_REF.equals(field.getType())) {
-                conditions = Arrays.asList(Condition.EQUALS,
+                conditions = Arrays.asList(
+                        Condition.EQUALS,
                         Condition.CONTAINS,
                         Condition.IN,
                         Condition.IN_DICTIONARY,

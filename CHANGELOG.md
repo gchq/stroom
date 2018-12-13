@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
+
 * Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
 
 ## [v6.0-beta.20] - 2018-12-13
