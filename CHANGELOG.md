@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.21] - 2018-12-13
+
 * Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
 
 * Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
@@ -1377,7 +1379,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.20...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.21...6.0
+[v6.0-beta.21]: https://github.com/gchq/stroom/compare/v6.0-beta.20...v6.0-beta.21
 [v6.0-beta.20]: https://github.com/gchq/stroom/compare/v6.0-beta.19...v6.0-beta.20
 [v6.0-beta.19]: https://github.com/gchq/stroom/compare/v6.0-beta.18...v6.0-beta.19
 [v6.0-beta.18]: https://github.com/gchq/stroom/compare/v6.0-beta.17...v6.0-beta.18
