@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#986**: Fix direct dasbhoard links
+
+* Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN
+
 ## [v6.0-beta.19] - 2018-12-11
 
 * Issue **#1012** : Fix for NPE caused when checking if an output is superseded.
