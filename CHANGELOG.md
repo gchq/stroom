@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
+
 ## [v6.0-beta.20] - 2018-12-13
 
 * Issue **#1021** : Multiple changes to improve vis, dashboard and external linking in Stroom.
