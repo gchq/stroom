@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift stroom-query to v2.1-beta.20
+
+* Issue **#1015**: Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
+
 * Issue **#986**: Fix direct dasbhoard links
 
 * Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN
