@@ -16,8 +16,8 @@
 
 package stroom.pipeline.writer;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -25,9 +25,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 
-public class TestRandomOutputStreamProvider extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRandomOutputStreamProvider extends StroomUnitTest {
     @Test
-    public void testCycleDirs() throws IOException {
+    void testCycleDirs() throws IOException {
         final FileAppender provider = buildTestObject();
 
         boolean found1 = false;
@@ -53,7 +55,7 @@ public class TestRandomOutputStreamProvider extends StroomUnitTest {
             }
         }
 
-        Assert.assertTrue(found1 && found2 && found3);
+        assertThat(found1 && found2 && found3).isTrue();
     }
 
     private FileAppender buildTestObject() {

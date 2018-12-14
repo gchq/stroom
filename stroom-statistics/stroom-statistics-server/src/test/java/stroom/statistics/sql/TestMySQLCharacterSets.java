@@ -16,10 +16,10 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -30,15 +30,17 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test class to explore issues with character sets between Java and MySql.
  * Currently ignored as most of the tests require human oversight. Left in, in
  * case it proves useful.
  */
-@Ignore
-public class TestMySQLCharacterSets {
-    @BeforeClass
-    public static void setup() throws SQLException {
+@Disabled
+class TestMySQLCharacterSets {
+    @BeforeAll
+    static void setup() throws SQLException {
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE IF EXISTS CHAR_SET_TEST")) {
                 preparedStatement.execute();
@@ -49,8 +51,23 @@ public class TestMySQLCharacterSets {
         }
     }
 
+    private static Connection getConnection() throws SQLException {
+        final String driverClassname = "com.mysql.jdbc.Driver";
+        final String driverUrl = "jdbc:mysql://localhost/stroom";
+        final String driverUsername = System.getProperty("user.name");
+        final String driverPassword = "password";
+
+        try {
+            Class.forName(driverClassname);
+        } catch (final ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
+    }
+
     @Test
-    public void testRegexOnNotSign() throws SQLException {
+    void testRegexOnNotSign() throws SQLException {
         final String tabCharValue = "a¬b";
         final String tabCharRegex = "a[¬]b(¬|$)";
         final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
@@ -73,14 +90,14 @@ public class TestMySQLCharacterSets {
                         i++;
                     }
                 }
-                Assert.assertEquals(1, i);
-                Assert.assertEquals(tabCharValue, result);
+                assertThat(i).isEqualTo(1);
+                assertThat(result).isEqualTo(tabCharValue);
             }
         }
     }
 
     @Test
-    public void testEscapingTab() throws SQLException {
+    void testEscapingTab() throws SQLException {
         final String vTab = new String(new byte[]{11});
         final String tabCharValue = "a" + vTab + "b" + vTab;
         final String tabCharRegex = "a[" + vTab + "]b(" + vTab + "|$)";
@@ -105,14 +122,14 @@ public class TestMySQLCharacterSets {
                     }
                 }
 
-                Assert.assertEquals(1, i);
-                Assert.assertEquals(tabCharValue, result);
+                assertThat(i).isEqualTo(1);
+                assertThat(result).isEqualTo(tabCharValue);
             }
         }
     }
 
     @Test
-    public void testEscaping() throws SQLException {
+    void testEscaping() throws SQLException {
         final String dirtyValue = "\\_\"_'";
         final String insertBit = "INSERT INTO CHAR_SET_TEST VALUES (";
 
@@ -132,7 +149,7 @@ public class TestMySQLCharacterSets {
     }
 
     @Test
-    public void testDelimiter() throws SQLException {
+    void testDelimiter() throws SQLException {
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO CHAR_SET_TEST VALUES (?)")) {
                 preparedStatement.setString(1, "a¬b¬c¬d");
@@ -149,7 +166,7 @@ public class TestMySQLCharacterSets {
     }
 
     @Test
-    public void testString() {
+    void testString() {
         final String delim = "¬";
         final Charset charset = Charset.forName("ISO8859_1");
         final byte[] latinBytes = delim.getBytes(charset);
@@ -162,32 +179,15 @@ public class TestMySQLCharacterSets {
     private void dumpAllRows() throws SQLException {
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM CHAR_SET_TEST")) {
-                int i = 0;
                 System.out.println("---Results---");
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final String result = resultSet.getString(1);
                         System.out.println(result);
-                        i++;
                     }
                 }
                 System.out.println("-------------");
             }
         }
-    }
-
-    private static Connection getConnection() throws SQLException {
-        final String driverClassname = "com.mysql.jdbc.Driver";
-        final String driverUrl = "jdbc:mysql://localhost/stroom";
-        final String driverUsername = System.getProperty("user.name");
-        final String driverPassword = "password";
-
-        try {
-            Class.forName(driverClassname);
-        } catch (final ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        return DriverManager.getConnection(driverUrl, driverUsername, driverPassword);
     }
 }

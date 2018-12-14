@@ -17,15 +17,16 @@
 package stroom.statistics.sql;
 
 import org.apache.commons.lang3.SerializationUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestTimeAgnosticStatisticEvent {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestTimeAgnosticStatisticEvent {
     @Test
-    public void serialiseTest() {
+    void serialiseTest() {
         final List<StatisticTag> tagList = new ArrayList<>();
         tagList.add(new StatisticTag("tag1", "val1"));
         tagList.add(new StatisticTag("tag2", "val2"));
@@ -39,6 +40,6 @@ public class TestTimeAgnosticStatisticEvent {
         final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent2 = (TimeAgnosticStatisticEvent) SerializationUtils
                 .deserialize(serializedForm);
 
-        Assert.assertEquals(timeAgnosticStatisticEvent, timeAgnosticStatisticEvent2);
+        assertThat(timeAgnosticStatisticEvent2).isEqualTo(timeAgnosticStatisticEvent);
     }
 }

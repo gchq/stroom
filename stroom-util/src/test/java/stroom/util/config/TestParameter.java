@@ -16,51 +16,50 @@
 
 package stroom.util.config;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestParameter {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestParameter {
     @Test
-    public void testNodeName() {
+    void testNodeName() {
         Parameter parameter = new Parameter();
         parameter.setRegEx("[a-zA-Z0-9-_]+");
 
         parameter.setValue("");
-        Assert.assertFalse(parameter.validate());
+        assertThat(parameter.validate()).isFalse();
 
         parameter.setValue("bad.value");
-        Assert.assertFalse(parameter.validate());
+        assertThat(parameter.validate()).isFalse();
 
         parameter.setValue("goodValue");
-        Assert.assertTrue(parameter.validate());
+        assertThat(parameter.validate()).isTrue();
 
         parameter.setValue("goodValue123");
-        Assert.assertTrue(parameter.validate());
+        assertThat(parameter.validate()).isTrue();
 
         parameter.setValue("UNUSUAL-123_goodValue");
-        Assert.assertTrue(parameter.validate());
+        assertThat(parameter.validate()).isTrue();
 
     }
 
     @Test
-    public void testPortPrefix() {
+    void testPortPrefix() {
         Parameter parameter = new Parameter();
         parameter.setRegEx("[0-9]{2}");
 
         parameter.setValue("1");
-        Assert.assertFalse(parameter.validate());
+        assertThat(parameter.validate()).isFalse();
 
         parameter.setValue("999");
-        Assert.assertFalse(parameter.validate());
+        assertThat(parameter.validate()).isFalse();
 
         parameter.setValue("12");
-        Assert.assertTrue(parameter.validate());
+        assertThat(parameter.validate()).isTrue();
 
         parameter.setValue("99");
-        Assert.assertTrue(parameter.validate());
+        assertThat(parameter.validate()).isTrue();
 
     }
 

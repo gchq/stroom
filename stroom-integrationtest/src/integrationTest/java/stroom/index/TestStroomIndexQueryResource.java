@@ -6,12 +6,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -36,10 +35,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
-public class TestStroomIndexQueryResource {
+
+class TestStroomIndexQueryResource {
 
     // local.yml is not in source control and is created using local.yml.sh
     @ClassRule
@@ -86,9 +88,9 @@ public class TestStroomIndexQueryResource {
         return objectMapper.writeValueAsString(searchRequest);
     }
 
-    @Ignore
+    @Disabled
     @Test
-    public void testSavedFromFile() throws IOException {
+    void testSavedFromFile() throws IOException {
         // Given
         String searchRequestJson = new String(Files.readAllBytes(Paths.get("src/integrationTest/resources/searchRequest.json")));
         ObjectMapper objectMapper = new ObjectMapper();
@@ -105,15 +107,15 @@ public class TestStroomIndexQueryResource {
         SearchResponse searchResponse = response.readEntity(SearchResponse.class);
 
         // Then
-        Assertions.assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-        Assertions.assertThat(searchResponse.getResults().size()).isEqualTo(5);
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(searchResponse.getResults().size()).isEqualTo(5);
 
         System.out.println(response.toString());
     }
 
-    @Ignore
+    @Disabled
     @Test
-    public void test() throws JsonProcessingException {
+    void test() throws JsonProcessingException {
         // Given
         SearchRequest searchRequest = getSearchRequest();
 
@@ -127,7 +129,7 @@ public class TestStroomIndexQueryResource {
                 .post(Entity.json(searchRequest));
 
         // Then
-        Assertions.assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
         System.out.println(response.toString());
     }
 }

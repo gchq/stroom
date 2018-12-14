@@ -21,8 +21,9 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// TODO : @66 Fix this test
+
 @Disabled
-        // TODO : @66 Fix this test
 class TestKafkaExternalLoader {
     private static final String DEV_EXTERNAL_LIB_DIR = System.getenv("HOME") + "/.stroom/plugins";
 

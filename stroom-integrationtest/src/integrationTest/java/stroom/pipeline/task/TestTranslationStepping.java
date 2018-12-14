@@ -16,18 +16,16 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import org.junit.jupiter.api.Test;
 import stroom.data.store.api.StreamStore;
-import stroom.test.StoreCreationTool;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.StoreCreationTool;
 
 import javax.inject.Inject;
 
-@Ignore("TODO: uncomment and update tests or delete")
-public class TestTranslationStepping extends AbstractCoreIntegrationTest {
+class TestTranslationStepping extends AbstractCoreIntegrationTest {
     private static final String DIR = "TestTranslationStepping/";
 
     private static final String DATASPLITTER_FORMAT_DEFINITION = DIR + "SimpleCSVSplitter.ds";
@@ -44,25 +42,24 @@ public class TestTranslationStepping extends AbstractCoreIntegrationTest {
     private TaskManager taskManager;
 
     @Test
-    public void testDataSplitterTransformation() {
+    void testDataSplitterTransformation() {
         test(DATASPLITTER_FORMAT_DEFINITION, DATASPLITTER_XSLT, INPUT_DIR, ".csv", TextConverterType.DATA_SPLITTER,
                 "DataSplitter");
     }
 
     @Test
-    public void testXMLFragmentTransformation() {
+    void testXMLFragmentTransformation() {
         test(XMLFRAGMENT_FORMAT_DEFINITION, DATASPLITTER_XSLT, INPUT_DIR, ".nxml", TextConverterType.XML_FRAGMENT,
                 "XMLFragment");
     }
 
     @Test
-    public void testXMLTransformation() {
+    void testXMLTransformation() {
         test(null, DATASPLITTER_XSLT, INPUT_DIR, ".xml", TextConverterType.NONE, "XML");
     }
 
     private void test(final String converterDefinitionLocation, final String xsltLocation, final String inputDir,
-                      final String extension, final TextConverterType textConverterType, final String outputName)
-            {
+                      final String extension, final TextConverterType textConverterType, final String outputName) {
         // FIXME : Fix this.
     }
 }

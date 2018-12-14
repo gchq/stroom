@@ -16,16 +16,18 @@
 
 package stroom.statistics.sql.rollup;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.statistics.sql.StatisticTag;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestRollUpBitMaskUtil {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRollUpBitMaskUtil {
     @Test
-    public void testFromSortedTagList() {
+    void testFromSortedTagList() {
         final List<StatisticTag> tagList = new ArrayList<>();
         tagList.add(new StatisticTag("Tag0", "someValue"));
         tagList.add(new StatisticTag("Tag1", RollUpBitMask.ROLL_UP_TAG_VALUE));
@@ -34,22 +36,22 @@ public class TestRollUpBitMaskUtil {
 
         final RollUpBitMask rowKeyBitMap = RollUpBitMaskUtil.fromSortedTagList(tagList);
 
-        Assert.assertEquals("000000000001010", rowKeyBitMap.toString());
+        assertThat(rowKeyBitMap.toString()).isEqualTo("000000000001010");
     }
 
     @Test
-    public void testFromSortedTagListEmptyList() {
+    void testFromSortedTagListEmptyList() {
         final List<StatisticTag> tagList = new ArrayList<>();
 
         final RollUpBitMask rowKeyBitMap = RollUpBitMaskUtil.fromSortedTagList(tagList);
 
-        Assert.assertEquals("000000000000000", rowKeyBitMap.toString());
+        assertThat(rowKeyBitMap.toString()).isEqualTo("000000000000000");
     }
 
     @Test
-    public void testFromSortedTagListNullList() {
+    void testFromSortedTagListNullList() {
         final RollUpBitMask rowKeyBitMap = RollUpBitMaskUtil.fromSortedTagList(null);
 
-        Assert.assertEquals("000000000000000", rowKeyBitMap.toString());
+        assertThat(rowKeyBitMap.toString()).isEqualTo("000000000000000");
     }
 }

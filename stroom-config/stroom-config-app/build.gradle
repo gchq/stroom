@@ -22,6 +22,7 @@ dependencies {
    compile libs.jackson_databind
    compile libs.jackson_dataformat_yaml
    compile libs.javax_inject
+    
    testCompile libs.assertj_core
    testCompile libs.junit_jupiter
 }

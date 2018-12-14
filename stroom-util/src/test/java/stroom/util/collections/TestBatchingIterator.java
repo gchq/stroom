@@ -1,6 +1,7 @@
 package stroom.util.collections;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,10 +10,10 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestBatchingIterator {
+class TestBatchingIterator {
 
     @Test
-    public void batchedStreamOf() {
+    void batchedStreamOf() {
 
         Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
                 .boxed();
@@ -21,14 +22,14 @@ public class TestBatchingIterator {
                 .collect(Collectors.toList());
 
         assertThat(batches).hasSize(4);
-        assertThat(batches.get(0)).containsExactly(1,2,3);
-        assertThat(batches.get(1)).containsExactly(4,5,6);
-        assertThat(batches.get(2)).containsExactly(7,8,9);
+        assertThat(batches.get(0)).containsExactly(1, 2, 3);
+        assertThat(batches.get(1)).containsExactly(4, 5, 6);
+        assertThat(batches.get(2)).containsExactly(7, 8, 9);
         assertThat(batches.get(3)).containsExactly(10);
     }
 
     @Test
-    public void batchedStreamOf_exact() {
+    void batchedStreamOf_exact() {
 
         Stream<Integer> sourceStream = IntStream.rangeClosed(1, 10)
                 .boxed();
@@ -37,12 +38,12 @@ public class TestBatchingIterator {
                 .collect(Collectors.toList());
 
         assertThat(batches).hasSize(2);
-        assertThat(batches.get(0)).containsExactly(1,2,3,4,5);
-        assertThat(batches.get(1)).containsExactly(6,7,8,9,10);
+        assertThat(batches.get(0)).containsExactly(1, 2, 3, 4, 5);
+        assertThat(batches.get(1)).containsExactly(6, 7, 8, 9, 10);
     }
 
     @Test
-    public void batchedStreamOf_empty() {
+    void batchedStreamOf_empty() {
 
         Stream<Integer> sourceStream = Stream.empty();
 

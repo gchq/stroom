@@ -16,11 +16,16 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.policy.DataRetentionExecutor;
@@ -30,12 +35,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -45,9 +44,12 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 // TODO : @66 FIX DATA RETENTION
-@Ignore
-public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
+
+@Disabled
+class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
 
@@ -59,7 +61,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private DataRetentionService dataRetentionService;
 
     @Test
-    public void testMultipleRuns() {
+    void testMultipleRuns() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final long now = System.currentTimeMillis();
@@ -113,12 +115,12 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         dumpStreams();
 
-        Assert.assertEquals(DataStatus.UNLOCKED, streamInsideRetention.getStatus());
-        Assert.assertEquals(DataStatus.DELETED, streamOutsideRetention.getStatus());
+        assertThat(streamInsideRetention.getStatus()).isEqualTo(DataStatus.UNLOCKED);
+        assertThat(streamOutsideRetention.getStatus()).isEqualTo(DataStatus.DELETED);
         // no change to the record
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
+        assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
         // record changed
-        Assert.assertTrue(streamOutsideRetention.getStatusMs() > lastStatusMsOutside);
+        assertThat(streamOutsideRetention.getStatusMs() > lastStatusMsOutside).isTrue();
 
         lastStatusMsInside = streamInsideRetention.getStatusMs();
         lastStatusMsOutside = streamOutsideRetention.getStatusMs();
@@ -132,11 +134,11 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         dumpStreams();
 
-        Assert.assertEquals(DataStatus.UNLOCKED, streamInsideRetention.getStatus());
-        Assert.assertEquals(DataStatus.DELETED, streamOutsideRetention.getStatus());
+        assertThat(streamInsideRetention.getStatus()).isEqualTo(DataStatus.UNLOCKED);
+        assertThat(streamOutsideRetention.getStatus()).isEqualTo(DataStatus.DELETED);
         // no change to the records
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
-        Assert.assertEquals(lastStatusMsOutside, streamOutsideRetention.getStatusMs());
+        assertThat(streamInsideRetention.getStatusMs()).isEqualTo(lastStatusMsInside);
+        assertThat(streamOutsideRetention.getStatusMs()).isEqualTo(lastStatusMsOutside);
     }
 
     private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final stroom.streamstore.shared.TimeUnit timeUnit) {
@@ -146,7 +148,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private void dumpStreams() {
         final BaseResultList<Data> streams = streamMetaService.find(new FindDataCriteria());
 
-        Assert.assertEquals(2, streams.size());
+        assertThat(streams.size()).isEqualTo(2);
 
         for (final Data stream : streams) {
             LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,

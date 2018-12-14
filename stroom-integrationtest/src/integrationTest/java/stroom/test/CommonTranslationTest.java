@@ -16,19 +16,19 @@
 
 package stroom.test;
 
-import org.junit.Assert;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.DataMetaService;
 import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.data.meta.api.DataMetaService;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.api.SimpleTaskContext;
 import stroom.task.TaskManager;
+import stroom.task.api.SimpleTaskContext;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -41,14 +41,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class CommonTranslationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
     public static final String FEED_NAME = "TEST_FEED";
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
     private static final String DIR = "CommonTranslationTest/";
+    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
     private static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
-    public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
-
     //    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
     private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
     private static final Path XSLT_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
@@ -152,6 +153,6 @@ public class CommonTranslationTest {
             }
         });
 
-        Assert.assertEquals(0, streamMetaService.getLockCount());
+        assertThat(streamMetaService.getLockCount()).isEqualTo(0);
     }
 }

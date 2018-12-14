@@ -16,14 +16,15 @@
 
 package stroom.dashboard.download;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class TestCSVWriter {
+class TestCSVWriter {
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         final StringWriter writer = new StringWriter();
         final CSVWriter csvWriter = new CSVWriter(writer);
 

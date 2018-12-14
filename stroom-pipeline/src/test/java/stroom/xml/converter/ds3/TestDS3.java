@@ -16,10 +16,8 @@
 
 package stroom.xml.converter.ds3;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -40,7 +38,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.xml.converter.SchemaFilterFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
@@ -63,17 +60,18 @@ import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 // TODO : Reinstate tests.
 
-@Ignore("Removed test data")
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestDS3 extends StroomUnitTest {
+class TestDS3 extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
 
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
 
     @Test
-    public void testBuildConfig() {
+    void testBuildConfig() {
         final RootFactory rootFactory = new RootFactory();
 
         final ExpressionFactory headings = new RegexFactory(rootFactory, "headingsRegex", "^[^\n]+");
@@ -96,7 +94,7 @@ public class TestDS3 extends StroomUnitTest {
     // TODO : Add new test data to fully exercise DS3.
 
     @Test
-    public void testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
+    void testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
         // Get the testing directory.
         final Path testDir = getTestDir();
         final List<Path> paths = new ArrayList<>();
@@ -169,8 +167,8 @@ public class TestDS3 extends StroomUnitTest {
         FileUtil.deleteFile(outtmp);
         FileUtil.deleteFile(errtmp);
 
-        Assert.assertTrue(FileUtil.getCanonicalPath(config) + " does not exist", Files.isRegularFile(config));
-        Assert.assertTrue(FileUtil.getCanonicalPath(input) + " does not exist", Files.isRegularFile(input));
+        assertThat(Files.isRegularFile(config)).as(FileUtil.getCanonicalPath(config) + " does not exist").isTrue();
+        assertThat(Files.isRegularFile(input)).as(FileUtil.getCanonicalPath(input) + " does not exist").isTrue();
 
         final OutputStream os = new BufferedOutputStream(Files.newOutputStream(outtmp));
 
@@ -247,9 +245,9 @@ public class TestDS3 extends StroomUnitTest {
 
         // Only output errors if there were any.
         if (expectedErrors && errorReceiver.isAllOk()) {
-            Assert.fail("Expected errors but none were found");
+            fail("Expected errors but none were found");
         } else if (!expectedErrors && !errorReceiver.isAllOk()) {
-            Assert.fail("Did not expect any errors but some were found.");
+            fail("Did not expect any errors but some were found.");
         }
 
         compareFiles(outtmp, out);
@@ -277,7 +275,7 @@ public class TestDS3 extends StroomUnitTest {
         factory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
-        Assert.assertTrue("Configuration of parser failed: " + errorReceiver.getMessage(), errorReceiver.isAllOk());
+        assertThat(errorReceiver.isAllOk()).as("Configuration of parser failed: " + errorReceiver.getMessage()).isTrue();
 
         final XMLReader reader = factory.getParser();
         reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));

@@ -16,29 +16,28 @@
 
 package stroom.util.config;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestConfigure {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestConfigure {
     @Test
-    public void testNotOK() {
+    void testNotOK() {
         final Parameter parameter = new Parameter();
         parameter.setValue("some.value");
         parameter.setRegEx("[a-zA-Z0-9-]+");
-        Assert.assertFalse(parameter.validate());
+        assertThat(parameter.validate()).isFalse();
     }
 
     @Test
-    public void test_marshal() {
+    void test_marshal() {
         final ParameterFile list = new ParameterFile();
         list.getParameter().add(new Parameter("param1", "param2", "param3", null));
         list.getParameter().add(new Parameter("param4", "param5", "param6", "A"));
@@ -48,7 +47,7 @@ public class TestConfigure {
     }
 
     @Test
-    public void test_Main() throws IOException {
+    void test_Main() throws IOException {
         final Path testFile = Files.createTempFile("TestConfigure_server", "xml");
         final Path sourceFile = Paths.get("./src/test/resources/stroom/util/config/server.xml");
         Files.deleteIfExists(testFile);

@@ -29,7 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestRACompoundInputStream {
     private Path datFile;
@@ -53,10 +53,10 @@ class TestRACompoundInputStream {
 
     private void setup(final int bdyCount, final int segPerBdy) throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                () ->new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                () ->new LockingFileOutputStream(bdyFile, true));
+                () -> new LockingFileOutputStream(bdyFile, true));
 
         for (int b = 1; b <= bdyCount; b++) {
             boundaryStream.putNextEntry();
@@ -228,14 +228,9 @@ class TestRACompoundInputStream {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
-        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
-
-        try {
-            compoundInputStream.getNextInputStream(2);
-            fail("Expecting IO Error");
-        } catch (final IOException e) {
+        try (final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true))) {
+            assertThatThrownBy(() -> compoundInputStream.getNextInputStream(2)).isInstanceOf(IOException.class);
         }
-        compoundInputStream.close();
     }
 
     @Test
@@ -243,18 +238,14 @@ class TestRACompoundInputStream {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
-        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        SegmentInputStream seg = null;
-
-        try {
-            seg = compoundInputStream.getNextInputStream(1);
-            seg.include(2);
-            fail("Expecting IO Error");
-        } catch (final RuntimeException e) {
+        try (final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true))) {
+            assertThatThrownBy(() -> {
+                try (final SegmentInputStream seg = compoundInputStream.getNextInputStream(1)) {
+                    seg.include(2);
+                }
+            }).isInstanceOf(IOException.class);
         }
-        StreamUtil.close(seg);
-        compoundInputStream.close();
     }
 
     @Test

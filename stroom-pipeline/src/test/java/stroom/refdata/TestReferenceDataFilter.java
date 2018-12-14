@@ -19,9 +19,8 @@ package stroom.refdata;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.fastinfoset.FastInfosetException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -39,15 +38,14 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.util.ProcessorUtil;
-import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.store.FastInfosetValue;
-import stroom.refdata.util.PooledByteBufferOutputStream;
 import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.refdata.util.PooledByteBufferOutputStream;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
@@ -64,8 +62,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestReferenceDataFilter extends StroomUnitTest {
+class TestReferenceDataFilter extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataFilter.class);
 
     private static final String BASE_PATH = "TestReferenceDataFilter/";
@@ -88,13 +85,13 @@ public class TestReferenceDataFilter extends StroomUnitTest {
 //    @Captor
 //    private ArgumentCaptor<Range<Long>> rangeValueKeyCaptor;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    public void testStringKeyValues() {
+    void testStringKeyValues() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_STRING_VALUE_1, null);
 
@@ -112,7 +109,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     @Test
-    public void testStringRangeValues() {
+    void testStringRangeValues() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_STRING_VALUE_2, null);
 
@@ -136,7 +133,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     @Test
-    public void testFastInfosetKeyValues() {
+    void testFastInfosetKeyValues() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_1, null);
 
@@ -168,7 +165,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     @Test
-    public void testFastInfosetKeyValues_localPrefixes() {
+    void testFastInfosetKeyValues_localPrefixes() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_2, null);
 
@@ -200,7 +197,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     @Test
-    public void testFastInfosetRangeValues() {
+    void testFastInfosetRangeValues() {
 
         LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_3, null);
 
@@ -304,7 +301,6 @@ public class TestReferenceDataFilter extends StroomUnitTest {
                 .collect(Collectors.toList());
 
         actualXmlList.forEach(System.out::println);
-
 
 
         final String actualSax = testSAXEventFilter.getOutput().trim();
@@ -443,7 +439,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
                 assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
                 RefDataValue valueCopy = fastInfosetValue.copy(
                         () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
-                assertThat(((FastInfosetValue)valueCopy).getByteBuffer().position()).isEqualTo(0);
+                assertThat(((FastInfosetValue) valueCopy).getByteBuffer().position()).isEqualTo(0);
                 keyValueValues.add(valueCopy);
             } else {
                 keyValueValues.add(value);
@@ -458,7 +454,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
                 assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
                 RefDataValue valueCopy = fastInfosetValue.copy(
                         () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
-                assertThat(((FastInfosetValue)valueCopy).getByteBuffer().position()).isEqualTo(0);
+                assertThat(((FastInfosetValue) valueCopy).getByteBuffer().position()).isEqualTo(0);
                 rangeValueValues.add(valueCopy);
             } else {
                 rangeValueValues.add(value);

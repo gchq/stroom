@@ -16,8 +16,7 @@
 
 package stroom.pipeline.filter;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.LocationFactoryProxy;
@@ -26,7 +25,6 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
@@ -39,13 +37,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Unit test class for <code>XMLTransformer</code>.
- */
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestSplitFilter extends StroomUnitTest {
+class TestSplitFilter extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSplitFilter.class);
 
     private static final String INPUT = "TestSplitFilter/input.xml";
@@ -72,63 +66,63 @@ public class TestSplitFilter extends StroomUnitTest {
     private static final int THREE = 3;
 
     @Test
-    public void testXMLSplitterDepth0Count1() {
+    void testXMLSplitterDepth0Count1() {
         final String expectedXml = getString(XML_OUTPUT_0);
         final String expectedSax = getString(SAX_OUTPUT_0);
         testXMLSplitter(0, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth1Count1() {
+    void testXMLSplitterDepth1Count1() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_1_x, 2);
         final String expectedSax = getString(SAX_OUTPUT_1);
         testXMLSplitter(1, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth2Count1() {
+    void testXMLSplitterDepth2Count1() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_2_x, 4);
         final String expectedSax = getString(SAX_OUTPUT_2);
         testXMLSplitter(2, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth3Count1() {
+    void testXMLSplitterDepth3Count1() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_3_x, 2);
         final String expectedSax = getString(SAX_OUTPUT_3);
         testXMLSplitter(THREE, 1, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth3Count2() {
+    void testXMLSplitterDepth3Count2() {
         final String expectedXml = getString(XML_OUTPUT_4);
         final String expectedSax = getString(SAX_OUTPUT_4);
         testXMLSplitter(THREE, 2, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth3Count0() {
+    void testXMLSplitterDepth3Count0() {
         final String expectedXml = getString(XML_OUTPUT_4);
         final String expectedSax = getString(SAX_OUTPUT_4);
         testXMLSplitter(THREE, 0, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterDepth2Count2() {
+    void testXMLSplitterDepth2Count2() {
         final List<String> expectedXml = getStrings(XML_OUTPUT_5_x, 2);
         final String expectedSax = getString(SAX_OUTPUT_5);
         testXMLSplitter(2, 2, INPUT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterRootAndContent() {
+    void testXMLSplitterRootAndContent() {
         final String expectedXml = getString(XML_OUTPUT_6);
         final String expectedSax = getString(SAX_OUTPUT_6);
         testXMLSplitter(0, 0, INPUT_ROOT_AND_CONTENT, expectedXml, expectedSax);
     }
 
     @Test
-    public void testXMLSplitterRootOnly() {
+    void testXMLSplitterRootOnly() {
         final String expectedXml = getString(XML_OUTPUT_7);
         final String expectedSax = getString(SAX_OUTPUT_7);
         testXMLSplitter(0, 0, INPUT_ROOT_ONLY, expectedXml, expectedSax);
@@ -183,8 +177,7 @@ public class TestSplitFilter extends StroomUnitTest {
         LOGGER.info(String.format("Actual List %d", actualXmlList.size()));
         actualXmlList.forEach(LOGGER::info);
 
-
-        assertEquals(expectedXmlList.size(), actualXmlList.size()); // first just check the size
+        assertThat(actualXmlList).hasSize(expectedXmlList.size()); // first just check the size
         final Iterator<String> actualXmlIter = actualXmlList.iterator();
         for (String expectedXml : expectedXmlList) {
             final String actualXml = actualXmlIter.next();

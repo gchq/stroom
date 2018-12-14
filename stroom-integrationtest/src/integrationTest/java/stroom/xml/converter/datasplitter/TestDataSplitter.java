@@ -16,9 +16,8 @@
 
 package stroom.xml.converter.datasplitter;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.feed.shared.FeedDoc;
 import stroom.lifecycle.StroomBeanStore;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -31,9 +30,11 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 // TODO : Add test data
-@Ignore("Add test data")
-public class TestDataSplitter extends AbstractProcessIntegrationTest {
+
+class TestDataSplitter extends AbstractProcessIntegrationTest {
     @Inject
     private StroomBeanStore beanStore;
 
@@ -41,7 +42,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * Tests a basic CSV file.
      */
     @Test
-    public void testBasicCSV() {
+    void testBasicCSV() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
                 new ByteArrayInputStream("h1,h2\ntoken1a,token1b\ntoken2a,token2b\n".getBytes()));
 
@@ -52,18 +53,18 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
                 + "</record><record>" + "<data name=\"h1\" value=\"token2a\"/>"
                 + "<data name=\"h2\" value=\"token2b\"/>" + "</record></records>";
 
-        Assert.assertEquals(example, xml);
+        assertThat(xml).isEqualTo(example);
     }
 
     /**
      * Tests a sample network monitoring CSV file.
      */
     @Test
-    public void testNetworkMonitoringSample() {
+    void testNetworkMonitoringSample() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/CSVWithHeading.ds",
                 StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/NetworkMonitoringSample.in"));
 
-        Assert.assertTrue(xml.indexOf("<data name=\"IPAddress\" value=\"192.168.0.3\"/>") != -1);
+        assertThat(xml.indexOf("<data name=\"IPAddress\" value=\"192.168.0.3\"/>") != -1).isTrue();
     }
 
     /**
@@ -71,7 +72,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * XSL.
      */
     @Test
-    public void testNetworkMonitoringSampleWithXSL() {
+    void testNetworkMonitoringSampleWithXSL() {
         runFullTest(new FeedDoc("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/SimpleCSVSplitter.ds", "TestDataSplitter/NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
@@ -84,7 +85,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * @throws Exception Might be thrown while performing the test.
      */
     @Test
-    public void testDS3NetworkMonitoringSampleWithXSL() {
+    void testDS3NetworkMonitoringSampleWithXSL() {
         runFullTest(new FeedDoc("NetworkMonitoring-EVENTS"), TextConverterType.DATA_SPLITTER,
                 "TestDataSplitter/CSVWithHeading.ds", "TestDataSplitter/DS3NetworkMonitoring.xsl",
                 "TestDataSplitter/NetworkMonitoringSample.in", 0);
@@ -94,18 +95,18 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
      * First stage ref data change.
      */
     @Test
-    public void testRefDataCSV() {
+    void testRefDataCSV() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
                 StroomPipelineTestFileUtil.getInputStream("TestDataSplitter/SampleRefData-HostNameToIP.in"));
 
-        Assert.assertTrue(xml.indexOf("<data name=\"IP Address\" value=\"192.168.0.10\"/>") != -1);
+        assertThat(xml.indexOf("<data name=\"IP Address\" value=\"192.168.0.10\"/>") != -1).isTrue();
     }
 
     /**
      * Tests a sample ref data CSV file and tries to transform it with XSL.
      */
     @Test
-    public void testRefDataCSVWithXSL() {
+    void testRefDataCSVWithXSL() {
         final FeedDoc refFeed = new FeedDoc("HostNameToIP-REFERENCE");
         refFeed.setReference(true);
         runFullTest(refFeed, TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
@@ -137,7 +138,7 @@ public class TestDataSplitter extends AbstractProcessIntegrationTest {
         // Start by validating the resource.
         if (textConverterType == TextConverterType.DATA_SPLITTER) {
             final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-            Assert.assertTrue(message, message.length() == 0);
+            assertThat(message.length() == 0).as(message).isTrue();
         }
     }
 }

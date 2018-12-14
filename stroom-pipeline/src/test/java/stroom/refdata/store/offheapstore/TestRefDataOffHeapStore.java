@@ -20,7 +20,7 @@ package stroom.refdata.store.offheapstore;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
@@ -68,14 +68,12 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
+class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
@@ -86,15 +84,15 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void getProcessingInfo() {
+    void getProcessingInfo() {
     }
 
     @Test
-    public void isDataLoaded_true() {
+    void isDataLoaded_true() {
     }
 
     @Test
-    public void isDataLoaded_false() {
+    void isDataLoaded_false() {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
@@ -103,7 +101,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testNoReadAhead() {
+    void testNoReadAhead() {
         getRefDataStoreConfig().setReadAheadEnabled(false);
 
         // ensure loading and reading works with the NOREADAHEAD flag set
@@ -111,7 +109,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testOverwrite_doOverwrite_keyValueStore() throws Exception {
+    void testOverwrite_doOverwrite_keyValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -122,7 +120,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testOverwrite_doOverwrite_rangeValueStore() throws Exception {
+    void testOverwrite_doOverwrite_rangeValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -133,7 +131,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite_keyValueStore() throws Exception {
+    void testOverwrite_doNotOverwrite_keyValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -144,7 +142,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite_rangeValueStore() throws Exception {
+    void testOverwrite_doNotOverwrite_rangeValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -221,7 +219,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void loader_noOverwriteBigCommitInterval() throws Exception {
+    void loader_noOverwriteBigCommitInterval() throws Exception {
         boolean overwriteExisting = false;
         int commitInterval = Integer.MAX_VALUE;
 
@@ -229,7 +227,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void loader_noOverwriteSmallCommitInterval() throws Exception {
+    void loader_noOverwriteSmallCommitInterval() throws Exception {
         boolean overwriteExisting = false;
         int commitInterval = 2;
 
@@ -237,7 +235,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void loader_noOverwriteWithDuplicateData() throws Exception {
+    void loader_noOverwriteWithDuplicateData() throws Exception {
         int commitInterval = Integer.MAX_VALUE;
 
         RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -250,7 +248,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void loader_overwriteWithDuplicateData() throws Exception {
+    void loader_overwriteWithDuplicateData() throws Exception {
         int commitInterval = Integer.MAX_VALUE;
 
         RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
@@ -264,7 +262,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
 
     @Test
-    public void testLoaderConcurrency() {
+    void testLoaderConcurrency() {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         final long effectiveTimeMs = System.currentTimeMillis();
@@ -342,7 +340,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
      * the write txn
      */
     @Test
-    public void testLoaderConcurrency_multipleStreamDefs() {
+    void testLoaderConcurrency_multipleStreamDefs() {
 
         final long effectiveTimeMs = System.currentTimeMillis();
         final int recCount = 1_000;
@@ -419,7 +417,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
 
     @Test
-    public void testDoWithRefStreamDefinitionLock() {
+    void testDoWithRefStreamDefinitionLock() {
 
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
@@ -433,7 +431,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testPurgeOldData_all() {
+    void testPurgeOldData_all() {
 
         // two different ref stream definitions
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
@@ -460,7 +458,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
 
     @Test
-    public void testPurgeOldData_partial() {
+    void testPurgeOldData_partial() {
 
         setPurgeAgeProperty("1d");
         int refStreamDefCount = 4;
@@ -508,7 +506,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testPurgeOldData_nothingToPurge() {
+    void testPurgeOldData_nothingToPurge() {
 
         setPurgeAgeProperty("1d");
         int refStreamDefCount = 4;
@@ -550,7 +548,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testPurgeOldData_deReferenceValues() {
+    void testPurgeOldData_deReferenceValues() {
 
         setPurgeAgeProperty("1d");
         int refStreamDefCount = 1;
@@ -626,7 +624,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
      * Make entryCount very big for manual performance testing or profiling
      */
     @Test
-    public void testBigLoadForPerfTesting() {
+    void testBigLoadForPerfTesting() {
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 

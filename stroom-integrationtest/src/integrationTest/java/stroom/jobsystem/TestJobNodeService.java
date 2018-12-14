@@ -17,7 +17,8 @@
 
 package stroom.jobsystem;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
 import stroom.node.NodeCache;
@@ -26,7 +27,7 @@ import stroom.test.CommonTestControl;
 
 import javax.inject.Inject;
 
-public class TestJobNodeService extends AbstractCoreIntegrationTest {
+class TestJobNodeService extends AbstractCoreIntegrationTest {
     @Inject
     private JobService jobService;
     @Inject
@@ -37,7 +38,7 @@ public class TestJobNodeService extends AbstractCoreIntegrationTest {
     private NodeCache nodeCache;
 
     @Test
-    public void testSaveJob() {
+    void testSaveJob() {
         Job job = new Job();
         job.setName("Test Job" + System.currentTimeMillis());
         job.setEnabled(true);
@@ -56,7 +57,7 @@ public class TestJobNodeService extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testStartup() {
+    void testStartup() {
         jobNodeService.startup();
     }
 }

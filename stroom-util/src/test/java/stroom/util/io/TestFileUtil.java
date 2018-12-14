@@ -17,20 +17,19 @@
 package stroom.util.io;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestFileUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestFileUtil extends StroomUnitTest {
     @Test
-    public void testMkdirs() throws InterruptedException {
+    void testMkdirs() throws InterruptedException {
         final String tempDir = FileUtil.getCanonicalPath(getCurrentTestDir());
         final String rootDir = tempDir + "/TestFileUtil_" + System.currentTimeMillis();
 
@@ -57,7 +56,7 @@ public class TestFileUtil extends StroomUnitTest {
         simpleExecutor.waitForComplete();
         simpleExecutor.stop(false);
 
-        Assert.assertFalse(exception.get());
+        assertThat(exception.get()).isFalse();
 
         FileUtil.deleteDir(Paths.get(rootDir));
     }
@@ -74,10 +73,10 @@ public class TestFileUtil extends StroomUnitTest {
     }
 
     @Test
-    public void testMkdirsUnableToCreate() {
+    void testMkdirsUnableToCreate() {
         try {
             FileUtil.mkdirs(Paths.get("/dev/null"));
-            Assert.fail("Not expecting that this directory can be created");
+            fail("Not expecting that this directory can be created");
         } catch (final RuntimeException e) {
             // Ignore.
         }

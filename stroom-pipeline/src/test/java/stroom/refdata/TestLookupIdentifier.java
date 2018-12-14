@@ -17,16 +17,16 @@
 
 package stroom.refdata;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
-public class TestLookupIdentifier {
+class TestLookupIdentifier {
 
     @Test
-    public void isMapNested_true() {
-
+    void isMapNested_true() {
         String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
                 "map2" + LookupIdentifier.NEST_SEPARATOR +
                 "map3";
@@ -36,30 +36,32 @@ public class TestLookupIdentifier {
     }
 
     @Test
-    public void isMapNested_false() {
+    void isMapNested_false() {
 
         LookupIdentifier identifier = new LookupIdentifier("map1", "key1", 12345);
         assertThat(identifier.isMapNested()).isFalse();
     }
 
-    @Test(expected = RuntimeException.class)
-    public void isMapNested_badlyFormatted1() {
+    @Test
+    void isMapNested_badlyFormatted1() {
+        assertThatThrownBy(() -> {
+            String map = "map1" + LookupIdentifier.NEST_SEPARATOR;
 
-        String map = "map1" + LookupIdentifier.NEST_SEPARATOR;
-
-        LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void isMapNested_badlyFormatted2() {
-
-        String map =  LookupIdentifier.NEST_SEPARATOR + "map1";
-
-        LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+            LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+        }).isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    public void getPrimaryMapName_nested() {
+    void isMapNested_badlyFormatted2() {
+        assertThatThrownBy(() -> {
+            String map = LookupIdentifier.NEST_SEPARATOR + "map1";
+
+            LookupIdentifier identifier = new LookupIdentifier(map, "key1", 12345);
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void getPrimaryMapName_nested() {
         String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
                 "map2" + LookupIdentifier.NEST_SEPARATOR +
                 "map3";
@@ -70,14 +72,14 @@ public class TestLookupIdentifier {
     }
 
     @Test
-    public void getPrimaryMapName_notNested() {
+    void getPrimaryMapName_notNested() {
         LookupIdentifier identifier = new LookupIdentifier("map1", "key1", 12345);
         String primaryMapName = identifier.getPrimaryMapName();
         assertThat(identifier.getPrimaryMapName()).isEqualTo(identifier.getMap());
     }
 
     @Test
-    public void getNestedLookupIdentifier() {
+    void getNestedLookupIdentifier() {
         String map = "map1" + LookupIdentifier.NEST_SEPARATOR +
                 "map2" + LookupIdentifier.NEST_SEPARATOR +
                 "map3";

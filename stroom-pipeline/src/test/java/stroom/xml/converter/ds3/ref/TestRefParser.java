@@ -16,15 +16,17 @@
 
 package stroom.xml.converter.ds3.ref;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.List;
 
-public class TestRefParser extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRefParser extends StroomUnitTest {
     @Test
-    public void testSingle() {
+    void testSingle() {
         final RefParser refParser = new RefParser();
 
         List<RefFactory> sections = null;
@@ -33,111 +35,111 @@ public class TestRefParser extends StroomUnitTest {
 
         // Try null.
         sections = refParser.parse(null);
-        Assert.assertEquals(0, sections.size());
+        assertThat(sections.size()).isEqualTo(0);
 
         // Try empty string.
         sections = refParser.parse("");
-        Assert.assertEquals(0, sections.size());
+        assertThat(sections.size()).isEqualTo(0);
 
         // Try remote ref.
         sections = refParser.parse("$heading$");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertEquals("heading", refDesc.getRefId());
-        Assert.assertEquals(0, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading");
+        assertThat(refDesc.getRefGroup()).isEqualTo(0);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertNull(matchIndex);
+        assertThat(matchIndex).isNull();
 
         // Try group.
         sections = refParser.parse("$");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertNull(refDesc.getRefId());
-        Assert.assertEquals(0, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isNull();
+        assertThat(refDesc.getRefGroup()).isEqualTo(0);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertNull(matchIndex);
+        assertThat(matchIndex).isNull();
 
         // Try numbered group.
         sections = refParser.parse("$6");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertNull(refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isNull();
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertNull(matchIndex);
+        assertThat(matchIndex).isNull();
 
         // Try numbered group with array.
         sections = refParser.parse("$6[2]");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertNull(refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isNull();
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(false, matchIndex.isOffset());
-        Assert.assertEquals(2, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(false);
+        assertThat(matchIndex.getIndex()).isEqualTo(2);
 
         // Try numbered group with array with positive offset.
         sections = refParser.parse("$6[+2]");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertNull(refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isNull();
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(true, matchIndex.isOffset());
-        Assert.assertEquals(2, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(true);
+        assertThat(matchIndex.getIndex()).isEqualTo(2);
 
         // Try numbered group with array with negative offset.
         sections = refParser.parse("$6[-2]");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertNull(refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isNull();
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(true, matchIndex.isOffset());
-        Assert.assertEquals(-2, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(true);
+        assertThat(matchIndex.getIndex()).isEqualTo(-2);
 
         // Try remote ref and numbered group.
         sections = refParser.parse("$heading$6");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertEquals("heading", refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading");
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertNull(matchIndex);
+        assertThat(matchIndex).isNull();
 
         // Try remote ref and numbered group and array.
         sections = refParser.parse("$heading$6[2]");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertEquals("heading", refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading");
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(false, matchIndex.isOffset());
-        Assert.assertEquals(2, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(false);
+        assertThat(matchIndex.getIndex()).isEqualTo(2);
 
         // Try remote ref and numbered group and array with positive offset.
         sections = refParser.parse("$heading$6[+2]");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertEquals("heading", refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading");
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(true, matchIndex.isOffset());
-        Assert.assertEquals(2, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(true);
+        assertThat(matchIndex.getIndex()).isEqualTo(2);
 
         // Try remote ref and numbered group and array with negative offset.
         sections = refParser.parse("$heading$6[-2]");
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertEquals("heading", refDesc.getRefId());
-        Assert.assertEquals(6, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading");
+        assertThat(refDesc.getRefGroup()).isEqualTo(6);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(true, matchIndex.isOffset());
-        Assert.assertEquals(-2, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(true);
+        assertThat(matchIndex.getIndex()).isEqualTo(-2);
     }
 
     @Test
-    public void testComposite() {
+    void testComposite() {
         StoreRefFactory refDesc = null;
         MatchIndex matchIndex = null;
         TextRefFactory textDesc = null;
@@ -145,64 +147,64 @@ public class TestRefParser extends StroomUnitTest {
         final RefParser refParser = new RefParser();
         final List<RefFactory> sections = refParser.parse("$heading$1[+3]+'test'+'2'+$heading2$+$3+$heading3$[5]");
 
-        Assert.assertEquals(6, sections.size());
+        assertThat(sections.size()).isEqualTo(6);
 
         refDesc = (StoreRefFactory) sections.get(0);
-        Assert.assertEquals("heading", refDesc.getRefId());
-        Assert.assertEquals(1, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading");
+        assertThat(refDesc.getRefGroup()).isEqualTo(1);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(true, matchIndex.isOffset());
-        Assert.assertEquals(3, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(true);
+        assertThat(matchIndex.getIndex()).isEqualTo(3);
 
         textDesc = (TextRefFactory) sections.get(1);
-        Assert.assertEquals("test", textDesc.getText());
+        assertThat(textDesc.getText()).isEqualTo("test");
 
         textDesc = (TextRefFactory) sections.get(2);
-        Assert.assertEquals("2", textDesc.getText());
+        assertThat(textDesc.getText()).isEqualTo("2");
 
         refDesc = (StoreRefFactory) sections.get(3);
-        Assert.assertEquals("heading2", refDesc.getRefId());
-        Assert.assertEquals(0, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading2");
+        assertThat(refDesc.getRefGroup()).isEqualTo(0);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertNull(matchIndex);
+        assertThat(matchIndex).isNull();
 
         refDesc = (StoreRefFactory) sections.get(4);
-        Assert.assertNull(refDesc.getRefId());
-        Assert.assertEquals(3, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isNull();
+        assertThat(refDesc.getRefGroup()).isEqualTo(3);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertNull(matchIndex);
+        assertThat(matchIndex).isNull();
 
         refDesc = (StoreRefFactory) sections.get(5);
-        Assert.assertEquals("heading3", refDesc.getRefId());
-        Assert.assertEquals(0, refDesc.getRefGroup());
+        assertThat(refDesc.getRefId()).isEqualTo("heading3");
+        assertThat(refDesc.getRefGroup()).isEqualTo(0);
         matchIndex = refDesc.getMatchIndex();
-        Assert.assertEquals(false, matchIndex.isOffset());
-        Assert.assertEquals(5, matchIndex.getIndex());
+        assertThat(matchIndex.isOffset()).isEqualTo(false);
+        assertThat(matchIndex.getIndex()).isEqualTo(5);
     }
 
     @Test
-    public void testFixed() {
+    void testFixed() {
         TextRefFactory textDesc = null;
 
         final RefParser refParser = new RefParser();
         final List<RefFactory> sections = refParser.parse("some heading");
 
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
 
         textDesc = (TextRefFactory) sections.get(0);
-        Assert.assertEquals("some heading", textDesc.getText());
+        assertThat(textDesc.getText()).isEqualTo("some heading");
     }
 
     @Test
-    public void testFixedWithQuotes() {
+    void testFixedWithQuotes() {
         TextRefFactory textDesc = null;
 
         final RefParser refParser = new RefParser();
         final List<RefFactory> sections = refParser.parse("'some ''other'' heading'");
 
-        Assert.assertEquals(1, sections.size());
+        assertThat(sections.size()).isEqualTo(1);
 
         textDesc = (TextRefFactory) sections.get(0);
-        Assert.assertEquals("some 'other' heading", textDesc.getText());
+        assertThat(textDesc.getText()).isEqualTo("some 'other' heading");
     }
 }

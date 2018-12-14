@@ -1,7 +1,7 @@
 package stroom.proxy.repo;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,11 +9,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
-public class TestStroomZipOutputStream {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStroomZipOutputStream {
     private final static int TEST_SIZE = 100;
 
     @Test
-    public void testBigFile() throws IOException {
+    void testBigFile() throws IOException {
         final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         try {
@@ -37,19 +39,19 @@ public class TestStroomZipOutputStream {
 
             final StroomZipFile stroomZipFile = new StroomZipFile(testFile);
 
-            Assert.assertEquals(TEST_SIZE, stroomZipFile.getStroomZipNameSet().getBaseNameSet().size());
+            assertThat(stroomZipFile.getStroomZipNameSet().getBaseNameSet().size()).isEqualTo(TEST_SIZE);
 
             stroomZipFile.close();
         } finally {
-            Assert.assertTrue(Files.deleteIfExists(testFile));
+            assertThat(Files.deleteIfExists(testFile)).isTrue();
         }
     }
 
     @Test
-    public void testBlankProducesNothing() throws IOException {
+    void testBlankProducesNothing() throws IOException {
         final Path testFile = Files.createTempFile(Files.createTempDirectory("stroom"), "TestStroomZipFile", ".zip");
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(testFile);
         stroomZipOutputStream.close();
-        Assert.assertFalse("Not expecting to write a file", Files.isRegularFile(testFile));
+        assertThat(Files.isRegularFile(testFile)).as("Not expecting to write a file").isFalse();
     }
 }

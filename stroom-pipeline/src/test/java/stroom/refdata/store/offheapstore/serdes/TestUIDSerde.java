@@ -17,13 +17,14 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.offheapstore.UID;
 
-public class TestUIDSerde extends AbstractSerdeTest<UID, UIDSerde> {
+class TestUIDSerde extends AbstractSerdeTest<UID, UIDSerde> {
 
     @Test
-    public void testSerialisationDeserialisation() {
+    void testSerialisationDeserialisation() {
 
         final UID uid = UID.of(0, 1, 2, 3);
 

@@ -17,9 +17,8 @@
 
 package stroom.refdata.store.offheapstore;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
@@ -27,15 +26,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.store.offheapstore.databases.MapUidReverseDb;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.ByteBufferUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -51,8 +51,9 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
+class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMapDefinitionUIDStore.class);
 
@@ -60,9 +61,9 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     private MapUidForwardDb mapUidForwardDb;
     private MapUidReverseDb mapUidReverseDb;
 
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
@@ -82,7 +83,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
      * Noddy test to verify how LMDB copes with different buffer capacities
      */
     @Test
-    public void testSmallDbKey() {
+    void testSmallDbKey() {
         Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
         String keyStr = "greeting";
         final ByteBuffer key = ByteBuffer.allocateDirect(keyStr.length());
@@ -120,7 +121,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void getOrCreateId_emptyDB() {
+    void getOrCreateId_emptyDB() {
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -163,7 +164,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void getOrCreateId_multiple() {
+    void getOrCreateId_multiple() {
 
         int putCount = 5;
         String uuidStr = UUID.randomUUID().toString();
@@ -183,7 +184,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         final Map<UID, MapDefinition> loadedEntries = loadEntries(mapDefinitions);
 
-        assertThat(loadedEntries.size()).isEqualTo(mapDefinitions.size());
+        assertThat(loadedEntries).hasSize(mapDefinitions.size());
 
         final List<Long> values = loadedEntries.entrySet().stream()
                 .map(Map.Entry::getKey)
@@ -205,7 +206,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
             MapDefinition mapDefinitionLoaded = entry.getValue();
             UID uidFromGet = mapDefinitionUIDStore.getUid(mapDefinitionLoaded)
                     .orElseGet(() -> {
-                        Assertions.fail("Expecting to get a value back but didn't");
+                        fail("Expecting to get a value back but didn't");
                         return null;
                     });
             assertThat(uidFromGet).isEqualTo(uidLoaded);
@@ -213,7 +214,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGet_notFound() {
+    void testGet_notFound() {
 
         String uuidStr = UUID.randomUUID().toString();
         String versionUuidStr = UUID.randomUUID().toString();
@@ -232,7 +233,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGet_found() {
+    void testGet_found() {
 
         String uuidStr = UUID.randomUUID().toString();
         String versionUuidStr = UUID.randomUUID().toString();
@@ -252,7 +253,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testDeletePair() {
+    void testDeletePair() {
         String pipelineUuid = UUID.randomUUID().toString();
         String pipelineVersion = UUID.randomUUID().toString();
         RefStreamDefinition refStreamDefinition = new RefStreamDefinition(pipelineUuid, pipelineVersion, 1);
@@ -275,7 +276,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGetNextMapDefinition() {
+    void testGetNextMapDefinition() {
 
         String pipelineUuid = UUID.randomUUID().toString();
         String pipelineVersion = UUID.randomUUID().toString();
@@ -384,7 +385,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         });
 
         // make sure we each mapDefinition has resulted in a unique UID
-        assertThat(loadedEntries.size()).isEqualTo(mapDefinitions.size());
+        assertThat(loadedEntries).hasSize(mapDefinitions.size());
         assertThat(mapDefinitionUIDStore.getEntryCount()).isEqualTo(mapDefinitions.size());
 
         mapUidForwardDb.logDatabaseContents();

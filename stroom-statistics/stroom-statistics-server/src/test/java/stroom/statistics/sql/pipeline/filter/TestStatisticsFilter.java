@@ -17,11 +17,10 @@
 
 package stroom.statistics.sql.pipeline.filter;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.DataSourceField;
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.docstore.memory.MemoryPersistence;
@@ -30,9 +29,8 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.util.ProcessorUtil;
-import stroom.docref.DocRef;
-import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.SecurityContext;
+import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
@@ -43,18 +41,20 @@ import stroom.statistics.sql.Statistics;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.entity.StatisticStoreStoreImpl;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
+
 /**
  * Unit test class for <code>XMLTransformer</code>.
  */
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStatisticsFilter implements Statistics {
+class TestStatisticsFilter implements Statistics {
     private static final String INPUT_DIR = "TestStatisticsFilter/";
     private static final String STAT_NAME = "myStatName";
     private static final double JUNIT_DOUBLE_TOLLERANCE = 0.001;
@@ -81,13 +81,13 @@ public class TestStatisticsFilter implements Statistics {
         testEvents.add(statisticEvent);
     }
 
-    @Before
-    public void beforeTest() {
+    @BeforeEach
+    void beforeTest() {
         testEvents.clear();
     }
 
     @Test
-    public void test2GoodCountStats() {
+    void test2GoodCountStats() {
         final String inputPath = INPUT_DIR + "input01_2goodCountEvents.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -111,59 +111,55 @@ public class TestStatisticsFilter implements Statistics {
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals("Expecting 2 events", 2, testEvents.size());
+        assertThat(testEvents.size()).as("Expecting 2 events").isEqualTo(2);
 
-        Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"),
-                testEvents.get(0).getTimeMs());
-        Assert.assertEquals(STAT_NAME, testEvents.get(0).getName());
-        Assert.assertEquals(2, testEvents.get(0).getTagList().size());
-        Assert.assertEquals("tag1name", testEvents.get(0).getTagList().get(0).getTag());
-        Assert.assertEquals("1tag1value", testEvents.get(0).getTagList().get(0).getValue());
-        Assert.assertEquals("tag2name", testEvents.get(0).getTagList().get(1).getTag());
-        Assert.assertEquals("1tag2value", testEvents.get(0).getTagList().get(1).getValue());
-        Assert.assertEquals(1L, testEvents.get(0).getCount().longValue());
-        Assert.assertNull(testEvents.get(0).getValue());
+        assertThat(testEvents.get(0).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
+        assertThat(testEvents.get(0).getName()).isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(0).getTagList().size()).isEqualTo(2);
+        assertThat(testEvents.get(0).getTagList().get(0).getTag()).isEqualTo("tag1name");
+        assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
+        assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
+        assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
+        assertThat(testEvents.get(0).getCount().longValue()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getValue()).isNull();
 
-        Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"),
-                testEvents.get(1).getTimeMs());
-        Assert.assertEquals(STAT_NAME, testEvents.get(1).getName());
-        Assert.assertEquals(2, testEvents.get(1).getTagList().size());
-        Assert.assertEquals("tag1name", testEvents.get(1).getTagList().get(0).getTag());
-        Assert.assertEquals("2tag1value", testEvents.get(1).getTagList().get(0).getValue());
-        Assert.assertEquals("tag2name", testEvents.get(1).getTagList().get(1).getTag());
-        Assert.assertEquals("2tag2value", testEvents.get(1).getTagList().get(1).getValue());
-        Assert.assertEquals(1L, testEvents.get(1).getCount().longValue());
-        Assert.assertNull(testEvents.get(1).getValue());
-        // Assert.assertNull(testEvents.get(1).getCount());
-        // Assert.assertEquals(1L, testEvents.get(1).getValue().longValue());
+        assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
+        assertThat(testEvents.get(1).getName()).isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(1).getTagList().size()).isEqualTo(2);
+        assertThat(testEvents.get(1).getTagList().get(0).getTag()).isEqualTo("tag1name");
+        assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
+        assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
+        assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
+        assertThat(testEvents.get(1).getCount().longValue()).isEqualTo(1L);
+        assertThat(testEvents.get(1).getValue()).isNull();
+        // assertThat(testEvents.get(1).getCount()).isNull();
+        // assertThat(testEvents.get(1).getValue().longValue()).isEqualTo(1L);
 
         // <statistic time="2000-01-03T00:00:00.000Z" name="3oldstyle"
         // increment="1" precision="3600"/>
-        // Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-03T00:00:00.000Z"),
-        // testEvents.get(2)
-        // .getTimeMs());
-        // Assert.assertEquals("3oldstyle", testEvents.get(2).getName());
-        // Assert.assertEquals(3600L, testEvents.get(2).getPrecisionMs());
-        // Assert.assertEquals(0, testEvents.get(2).getTagList().size());
-        // Assert.assertEquals(2L, testEvents.get(2).getCount().longValue());
-        // Assert.assertNull(testEvents.get(2).getValue());
+        // assertThat(// testEvents.get(2)
+        // .getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-03T00:00:00.000Z"));
+        // assertThat(testEvents.get(2).getName()).isEqualTo("3oldstyle");
+        // assertThat(testEvents.get(2).getPrecisionMs()).isEqualTo(3600L);
+        // assertThat(testEvents.get(2).getTagList().size()).isEqualTo(0);
+        // assertThat(testEvents.get(2).getCount().longValue()).isEqualTo(2L);
+        // assertThat(testEvents.get(2).getValue()).isNull();
 
         // <statistic time="2000-01-04T00:00:00.000Z" name="3oldstyle"
         // precision="14400000"/>
-        // Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-04T00:00:00.000Z"),
-        // testEvents.get(3)
-        // .getTimeMs());
-        // Assert.assertEquals("4oldstyle", testEvents.get(3).getName());
-        // Assert.assertEquals(14400000L, testEvents.get(3).getPrecisionMs());
-        // Assert.assertEquals(0, testEvents.get(3).getTagList().size());
-        // Assert.assertEquals(1L, testEvents.get(3).getCount().longValue());
-        // Assert.assertNull(testEvents.get(3).getValue());
+        // assertThat(// testEvents.get(3)
+        // .getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-04T00:00:00.000Z"));
+        // assertThat(testEvents.get(3).getName()).isEqualTo("4oldstyle");
+        // assertThat(testEvents.get(3).getPrecisionMs()).isEqualTo(14400000L);
+        // assertThat(testEvents.get(3).getTagList().size()).isEqualTo(0);
+        // assertThat(testEvents.get(3).getCount().longValue()).isEqualTo(1L);
+        // assertThat(testEvents.get(3).getValue()).isNull();
 
     }
 
 
     @Test
-    public void test2GoodValueStats() {
+    void test2GoodValueStats() {
         final String inputPath = INPUT_DIR + "input02_2goodValueEvents.xml";
         final long precision = 60 * 1000L;
 
@@ -189,62 +185,62 @@ public class TestStatisticsFilter implements Statistics {
 
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals("Expecting 2 events", 2, testEvents.size());
+        assertThat(testEvents.size()).as("Expecting 2 events").isEqualTo(2);
 
-        Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"),
-                testEvents.get(0).getTimeMs());
-        Assert.assertEquals(STAT_NAME, testEvents.get(0).getName());
-        Assert.assertEquals(2, testEvents.get(0).getTagList().size());
-        Assert.assertEquals("tag1name", testEvents.get(0).getTagList().get(0).getTag());
-        Assert.assertEquals("1tag1value", testEvents.get(0).getTagList().get(0).getValue());
-        Assert.assertEquals("tag2name", testEvents.get(0).getTagList().get(1).getTag());
-        Assert.assertEquals("1tag2value", testEvents.get(0).getTagList().get(1).getValue());
-        Assert.assertEquals(1.5, testEvents.get(0).getValue().doubleValue(), JUNIT_DOUBLE_TOLLERANCE);
-        Assert.assertNull(testEvents.get(0).getCount());
+        assertThat(testEvents.get(0).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"));
+        assertThat(testEvents.get(0).getName()).isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(0).getTagList().size()).isEqualTo(2);
+        assertThat(testEvents.get(0).getTagList().get(0).getTag()).isEqualTo("tag1name");
+        assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
+        assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
+        assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
+        assertThat(testEvents.get(0).getValue().doubleValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(0).getCount()).isNull();
 
-        Assert.assertEquals(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"),
-                testEvents.get(1).getTimeMs());
-        Assert.assertEquals(STAT_NAME, testEvents.get(1).getName());
-        Assert.assertEquals(2, testEvents.get(1).getTagList().size());
-        Assert.assertEquals("tag1name", testEvents.get(1).getTagList().get(0).getTag());
-        Assert.assertEquals("2tag1value", testEvents.get(1).getTagList().get(0).getValue());
-        Assert.assertEquals("tag2name", testEvents.get(1).getTagList().get(1).getTag());
-        Assert.assertEquals("2tag2value", testEvents.get(1).getTagList().get(1).getValue());
-        Assert.assertEquals(3.9, testEvents.get(1).getValue().doubleValue(), JUNIT_DOUBLE_TOLLERANCE);
-        Assert.assertNull(testEvents.get(1).getCount());
+        assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
+        assertThat(testEvents.get(1).getName()).isEqualTo(STAT_NAME);
+        assertThat(testEvents.get(1).getTagList().size()).isEqualTo(2);
+        assertThat(testEvents.get(1).getTagList().get(0).getTag()).isEqualTo("tag1name");
+        assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
+        assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
+        assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
+        assertThat(testEvents.get(1).getValue().doubleValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(1).getCount()).isNull();
 
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testBadStatType() {
-        final String inputPath = INPUT_DIR + "input03_badType.xml";
-
-        final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
-
-        final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
-
-        final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
-
-        final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), this, statisticStoreStore);
-
-        statisticsFilter.setStatisticsDataSource(docRef);
-
-        // will throw an error as the type in the xml doesn't match the type in
-        // the SDS
-        ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
     }
 
     @Test
-    public void testNoCountElement() {
+    void testBadStatType() {
+        assertThatThrownBy(() -> {
+            final String inputPath = INPUT_DIR + "input03_badType.xml";
+
+            final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
+
+            final StatisticStoreStore statisticStoreStore = getStore();
+            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            // xml has a value element so set this to count
+            statisticsDataSource.setStatisticType(StatisticType.COUNT);
+            statisticsDataSource.setConfig(new StatisticsDataSourceData(
+                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
+            statisticsDataSource.setEnabled(true);
+            statisticStoreStore.writeDocument(statisticsDataSource);
+
+            final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
+
+            final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
+                    new LocationFactoryProxy(), this, statisticStoreStore);
+
+            statisticsFilter.setStatisticsDataSource(docRef);
+
+            // will throw an error as the type in the xml doesn't match the type in
+            // the SDS
+            ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testNoCountElement() {
         final String inputPath = INPUT_DIR + "input05_noCountOrValue.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -270,98 +266,104 @@ public class TestStatisticsFilter implements Statistics {
         // the SDS
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals("Expecting 1 event", 1, testEvents.size());
+        assertThat(testEvents.size()).as("Expecting 1 event").isEqualTo(1);
 
-        Assert.assertEquals(1L, testEvents.get(0).getCount().longValue());
-    }
-
-    @Test(expected = ProcessException.class)
-    public void testNoValueElement() {
-        final String inputPath = INPUT_DIR + "input05_noCountOrValue.xml";
-
-        final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
-
-        final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.VALUE);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
-
-        final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
-
-
-        final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), this, statisticStoreStore);
-
-        statisticsFilter.setStatisticsDataSource(docRef);
-
-        // will throw an error as the type in the xml doesn't match the type in
-        // the SDS
-        ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
-    }
-
-    @Test(expected = ProcessException.class)
-    public void testDisabledStatDataSource() {
-        final String inputPath = INPUT_DIR + "input01_2goodCountEvents.xml";
-
-        final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
-
-        final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(false);
-        statisticStoreStore.writeDocument(statisticsDataSource);
-
-        final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
-
-        final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), this, statisticStoreStore);
-
-        statisticsFilter.setStatisticsDataSource(docRef);
-
-        // will throw an error as the type in the xml doesn't match the type in
-        // the SDS
-        ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
-    }
-
-    @Test(expected = ProcessException.class)
-    public void testInvalidElement() {
-        final String inputPath = INPUT_DIR + "input06_invalidElement.xml";
-
-        final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
-
-        final StatisticStoreStore statisticStoreStore = getStore();
-        final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
-        statisticStoreStore.writeDocument(statisticsDataSource);
-
-        final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
-
-        final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
-                new LocationFactoryProxy(), this, statisticStoreStore);
-
-        statisticsFilter.setStatisticsDataSource(docRef);
-
-        // will throw an error as the type in the xml doesn't match the type in
-        // the SDS
-        ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
+        assertThat(testEvents.get(0).getCount().longValue()).isEqualTo(1L);
     }
 
     @Test
-    public void testEmptyCountElement() {
+    void testNoValueElement() {
+        assertThatThrownBy(() -> {
+            final String inputPath = INPUT_DIR + "input05_noCountOrValue.xml";
+
+            final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
+
+            final StatisticStoreStore statisticStoreStore = getStore();
+            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            // xml has a value element so set this to count
+            statisticsDataSource.setStatisticType(StatisticType.VALUE);
+            statisticsDataSource.setConfig(new StatisticsDataSourceData(
+                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
+            statisticsDataSource.setEnabled(true);
+            statisticStoreStore.writeDocument(statisticsDataSource);
+
+            final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
+
+
+            final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
+                    new LocationFactoryProxy(), this, statisticStoreStore);
+
+            statisticsFilter.setStatisticsDataSource(docRef);
+
+            // will throw an error as the type in the xml doesn't match the type in
+            // the SDS
+            ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
+        }).isInstanceOf(ProcessException.class);
+    }
+
+    @Test
+    void testDisabledStatDataSource() {
+        assertThatThrownBy(() -> {
+            final String inputPath = INPUT_DIR + "input01_2goodCountEvents.xml";
+
+            final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
+
+            final StatisticStoreStore statisticStoreStore = getStore();
+            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            // xml has a value element so set this to count
+            statisticsDataSource.setStatisticType(StatisticType.COUNT);
+            statisticsDataSource.setConfig(new StatisticsDataSourceData(
+                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
+            statisticsDataSource.setEnabled(false);
+            statisticStoreStore.writeDocument(statisticsDataSource);
+
+            final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
+
+            final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
+                    new LocationFactoryProxy(), this, statisticStoreStore);
+
+            statisticsFilter.setStatisticsDataSource(docRef);
+
+            // will throw an error as the type in the xml doesn't match the type in
+            // the SDS
+            ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
+        }).isInstanceOf(ProcessException.class);
+    }
+
+    @Test
+    void testInvalidElement() {
+        assertThatThrownBy(() -> {
+            final String inputPath = INPUT_DIR + "input06_invalidElement.xml";
+
+            final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
+
+            final StatisticStoreStore statisticStoreStore = getStore();
+            final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+            // xml has a value element so set this to count
+            statisticsDataSource.setStatisticType(StatisticType.COUNT);
+            statisticsDataSource.setConfig(new StatisticsDataSourceData(
+                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
+            statisticsDataSource.setEnabled(true);
+            statisticStoreStore.writeDocument(statisticsDataSource);
+
+            final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
+
+            final StatisticsFilter statisticsFilter = new StatisticsFilter(errorReceiverProxy,
+                    new LocationFactoryProxy(), this, statisticStoreStore);
+
+            statisticsFilter.setStatisticsDataSource(docRef);
+
+            // will throw an error as the type in the xml doesn't match the type in
+            // the SDS
+            ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
+        }).isInstanceOf(ProcessException.class);
+    }
+
+    @Test
+    void testEmptyCountElement() {
         final String inputPath = INPUT_DIR + "input07_emptyCountElement.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -387,13 +389,13 @@ public class TestStatisticsFilter implements Statistics {
         // the SDS
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals("Expecting 1 event", 1, testEvents.size());
+        assertThat(testEvents.size()).as("Expecting 1 event").isEqualTo(1);
 
-        Assert.assertEquals(1L, testEvents.get(0).getCount().longValue());
+        assertThat(testEvents.get(0).getCount().longValue()).isEqualTo(1L);
     }
 
     @Test
-    public void testNoStatisticElements() {
+    void testNoStatisticElements() {
         final String inputPath = INPUT_DIR + "input08_noStatisticElements.xml";
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
@@ -419,7 +421,7 @@ public class TestStatisticsFilter implements Statistics {
         // the SDS
         ProcessorUtil.processXml(input, errorReceiverProxy, statisticsFilter, new LocationFactoryProxy());
 
-        Assert.assertEquals("Expecting 0 event", 0, testEvents.size());
+        assertThat(testEvents.size()).as("Expecting 0 event").isEqualTo(0);
     }
 
     private String getString(final String resourceName) {

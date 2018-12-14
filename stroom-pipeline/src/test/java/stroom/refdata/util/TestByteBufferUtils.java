@@ -17,8 +17,7 @@
 
 package stroom.refdata.util;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,14 +25,14 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-
-public class TestByteBufferUtils {
+class TestByteBufferUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferUtils.class);
 
     @Test
-    public void testIntCompare() {
+    void testIntCompare() {
 
         ByteBuffer buf1 = ByteBuffer.allocate(Integer.BYTES);
         ByteBuffer buf2 = ByteBuffer.allocate(Integer.BYTES);
@@ -58,7 +57,7 @@ public class TestByteBufferUtils {
     }
 
     @Test
-    public void testLongCompare() {
+    void testLongCompare() {
 
         ByteBuffer buf1 = ByteBuffer.allocate(Long.BYTES);
         ByteBuffer buf2 = ByteBuffer.allocate(Long.BYTES);
@@ -82,21 +81,10 @@ public class TestByteBufferUtils {
     }
 
     @Test
-    public void testContainsPrefix_match() {
+    void testContainsPrefix_match() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4});
-
-        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    public void testContainsPrefix_match2() {
-
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {0});
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -104,10 +92,21 @@ public class TestByteBufferUtils {
     }
 
     @Test
-    public void testContainsPrefix_bufferTooShort() {
+    void testContainsPrefix_match2() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4});
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0});
+
+        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void testContainsPrefix_bufferTooShort() {
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -115,10 +114,10 @@ public class TestByteBufferUtils {
     }
 
     @Test
-    public void testContainsPrefix_noMatch() {
+    void testContainsPrefix_noMatch() {
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5});
-        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {1, 2, 3, 4});
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[]{1, 2, 3, 4});
 
         boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
 
@@ -146,7 +145,7 @@ public class TestByteBufferUtils {
                 cmpLong > 0 && cmpBuf > 0) {
             // comparison is the same
         } else {
-            Assertions.fail("Mismatch on %s [%s] to %s [%s]",
+            fail("Mismatch on %s [%s] to %s [%s]",
                     val1, ByteBufferUtils.byteBufferToHex(buf1), val2, ByteBufferUtils.byteBufferToHex(buf2));
         }
     }
@@ -172,13 +171,13 @@ public class TestByteBufferUtils {
                 cmpLong > 0 && cmpBuf > 0) {
             // comparison is the same
         } else {
-            Assertions.fail("Mismatch on %s [%s] to %s [%s]",
+            fail("Mismatch on %s [%s] to %s [%s]",
                     val1, ByteBufferUtils.byteBufferToHex(buf1), val2, ByteBufferUtils.byteBufferToHex(buf2));
         }
     }
 
     @Test
-    public void testHashCode() {
+    void testHashCode() {
 
         ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer1.position(2);

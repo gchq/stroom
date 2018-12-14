@@ -16,16 +16,15 @@
 
 package stroom.xml.converter.datasplitter;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import stroom.test.AbstractProcessIntegrationTest;
+import org.junit.jupiter.api.Test;
 import stroom.lifecycle.StroomBeanStore;
+import stroom.test.AbstractProcessIntegrationTest;
 
 import javax.inject.Inject;
 
 // FIXME : Fix this test.
-@Ignore("Create a new test")
-public class ComplexTest extends AbstractProcessIntegrationTest {
+
+class ComplexTest extends AbstractProcessIntegrationTest {
     private static final String INPUT = "ComplexTest/ComplexTestInput.nxml";
     private static final String OUTPUT = "ComplexTest/ComplexTestOutput.xml";
     private static final String SPLITTER = "ComplexTest/ComplexTestSplitter.xml";
@@ -34,7 +33,7 @@ public class ComplexTest extends AbstractProcessIntegrationTest {
     private StroomBeanStore beanStore;
 
     @Test
-    public void test() {
+    void test() {
 //		final Path expectedFile = StroomProcessTestFileUtil.getTestResourcesFile(OUTPUT);
 //		final Path actualFile = getCurrentTestDir().resolve("ComplexTestOutput.xml");
 //

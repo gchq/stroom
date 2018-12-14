@@ -16,26 +16,24 @@
 
 package stroom.util.cert;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.regex.Pattern;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestCertificateUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestCertificateUtil extends StroomUnitTest {
     @Test
-    public void testSpaceInCN() {
+    void testSpaceInCN() {
         final String dn = "CN=John Smith (johnsmith), OU=ouCode1, OU=ouCode2, O=oValue, C=GB";
 
-        Assert.assertEquals("CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB",
-                CertificateUtil.dnToRfc2253(dn));
-        Assert.assertEquals("John Smith (johnsmith)", CertificateUtil.extractCNFromDN(dn));
-        Assert.assertEquals("johnsmith", CertificateUtil.extractUserIdFromCN(CertificateUtil.extractCNFromDN(dn)));
+        assertThat(CertificateUtil.dnToRfc2253(dn)).isEqualTo("CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB");
+        assertThat(CertificateUtil.extractCNFromDN(dn)).isEqualTo("John Smith (johnsmith)");
+        assertThat(CertificateUtil.extractUserIdFromCN(CertificateUtil.extractCNFromDN(dn))).isEqualTo("johnsmith");
 
         final Pattern pattern = Pattern.compile("CN=[^ ]+ [^ ]+ \\(?([a-zA-Z0-9]+)\\)?");
-        Assert.assertEquals("johnsmith", CertificateUtil.extractUserIdFromDN(dn, pattern));
+        assertThat(CertificateUtil.extractUserIdFromDN(dn, pattern)).isEqualTo("johnsmith");
     }
 }

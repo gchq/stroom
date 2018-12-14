@@ -16,7 +16,7 @@
 
 package stroom.test;
 
-import org.junit.Assert;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
@@ -35,9 +35,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 /**
  * Provides methods that are used by multiple tests.
  */
+
 public final class ComparisonHelper {
     public static final String OUTPUT_EXTENSION = ".out";
     private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
@@ -60,7 +64,7 @@ public final class ComparisonHelper {
                 System.out.println("Expected XML was");
                 System.out.println(expected);
 
-                Assert.fail(message + index + " wrote output to system out");
+                fail(message + index + " wrote output to system out");
             }
         }
     }
@@ -113,8 +117,8 @@ public final class ComparisonHelper {
         final List<Path> inFiles = list(in);
         final List<Path> outFiles = list(out);
 
-        Assert.assertEquals("Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
-                + FileUtil.getCanonicalPath(out), inFiles.size(), outFiles.size());
+        assertThat(outFiles.size()).as("Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
+                + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
 
         for (final Path inFile : inFiles) {
             Path outFile = null;
@@ -128,14 +132,13 @@ public final class ComparisonHelper {
             }
 
             // Make sure we found the file.
-            Assert.assertNotNull("Output file not found for: " + FileUtil.getCanonicalPath(inFile), outFile);
+            assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)).isNotNull();
 
             LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(outFile) + "\"");
 
             if (Files.isDirectory(inFile)) {
                 // Make sure files are the same type.
-                Assert.assertTrue("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile),
-                        Files.isDirectory(outFile));
+                assertThat(Files.isDirectory(outFile)).as("Output file is not a directory for: " + FileUtil.getCanonicalPath(inFile)).isTrue();
 
                 // Recurse.
                 compareDirs(inFile, outFile);
@@ -173,7 +176,7 @@ public final class ComparisonHelper {
         try {
             compare(expectedFile, actualFile, ignoreWhitespace, xml);
         } catch (final RuntimeException e) {
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -220,14 +223,14 @@ public final class ComparisonHelper {
     public static void compareStreams(final InputStream is1, final InputStream is2, final boolean ignoreWhitespace,
                                       final boolean xml) {
         if (!doCompareReaders(new InputStreamReader(is1), new InputStreamReader(is2), ignoreWhitespace, xml)) {
-            Assert.fail("Content is not the same");
+            fail("Content is not the same");
         }
     }
 
     public static void compareReaders(final Reader reader1, final Reader reader2, final boolean ignoreWhitespace,
                                       final boolean xml) {
         if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
-            Assert.fail("Content is not the same");
+            fail("Content is not the same");
         }
     }
 
@@ -240,7 +243,7 @@ public final class ComparisonHelper {
                 return false;
             }
         } catch (final IOException e) {
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         } finally {
             if (reader1 != null) {
                 try {

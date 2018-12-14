@@ -16,14 +16,12 @@
 
 package stroom.test;
 
-import org.junit.After;
+
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
@@ -43,13 +41,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
     private static boolean XML_SCHEMAS_DOWNLOADED = false;
 
-    @Rule
-    public TestRule watcher = new TestWatcher() {
-        protected void starting(Description description) {
-            LOGGER.info(String.format("Started test: %s::%s", description.getClassName(), description.getMethodName()));
-        }
-    };
-
     @Inject
     private CommonTestControl commonTestControl;
 
@@ -66,6 +57,11 @@ public abstract class StroomIntegrationTest implements StroomTest {
     public static void afterClass() {
     }
 
+    private static int getTestCount() {
+        final State state = TestState.getState();
+        return state.getClassTestCount();
+    }
+
     protected void onBefore() {
     }
 
@@ -75,8 +71,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
     /**
      * Initialise required database entities.
      */
-    @Before
-    public void before() {
+    @BeforeEach
+    void before(final TestInfo testInfo) {
+        LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
+
         final State state = TestState.getState();
         state.incrementTestCount();
 
@@ -100,7 +98,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
     /**
      * Remove all entities from the database.
      */
-    @After
+    @AfterEach
     public void after() {
         onAfter();
     }
@@ -161,11 +159,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
         if (force || getTestCount() > 1) {
             commonTestControl.teardown();
         }
-    }
-
-    private static int getTestCount() {
-        final State state = TestState.getState();
-        return state.getClassTestCount();
     }
 
     @Override

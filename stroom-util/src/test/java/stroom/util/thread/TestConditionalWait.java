@@ -1,7 +1,6 @@
 package stroom.util.thread;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,31 +10,33 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TestConditionalWait {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestConditionalWait {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestConditionalWait.class);
 
     @Test
-    public void wait_zeroTimeout() {
+    void wait_zeroTimeout() {
 
         assertTimeTaken(Duration.ZERO, 300L, () -> {
             ConditionalWait.Outcome outcome = ConditionalWait.wait(() -> false, Duration.ZERO);
-            Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
+            assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
         });
     }
 
     @Test
-    public void wait_2secTimeout() {
+    void wait_2secTimeout() {
 
         final Duration duration = Duration.of(2, ChronoUnit.SECONDS);
         assertTimeTaken(duration, 300L, () -> {
             ConditionalWait.Outcome outcome = ConditionalWait.wait(() -> false, duration);
-            Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
+            assertThat(outcome).isEqualTo(ConditionalWait.Outcome.TIMED_OUT);
         });
     }
 
     @Test
-    public void wait_conditionCompletesBeforeTimeout() {
+    void wait_conditionCompletesBeforeTimeout() {
 
         final Duration waitDuration = Duration.of(2, ChronoUnit.SECONDS);
         final Duration sleepDuration = Duration.of(100, ChronoUnit.MILLIS);
@@ -60,10 +61,10 @@ public class TestConditionalWait {
             });
 
             //be sure it is false before waiting
-            Assertions.assertThat(atomicBoolean).isFalse();
+            assertThat(atomicBoolean).isFalse();
 
             ConditionalWait.Outcome outcome = ConditionalWait.wait(atomicBoolean::get, waitDuration);
-            Assertions.assertThat(outcome).isEqualTo(ConditionalWait.Outcome.CONDITION_MET);
+            assertThat(outcome).isEqualTo(ConditionalWait.Outcome.CONDITION_MET);
         });
     }
 
@@ -81,6 +82,6 @@ public class TestConditionalWait {
 //        long toleranceMs = (long) Math.max(expectedDuration.toMillis() * 0.2, 10);
 
         //check it is within 5%
-        Assertions.assertThat(durationDiffMs).isLessThan(toleranceMs);
+        assertThat(durationDiffMs).isLessThan(toleranceMs);
     }
 }

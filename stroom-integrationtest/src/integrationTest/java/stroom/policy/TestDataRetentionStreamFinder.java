@@ -16,18 +16,18 @@
 
 package stroom.policy;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.DictionaryStore;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Period;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.dictionary.DictionaryStore;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Period;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -39,9 +39,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionStreamFinder.class);
+import static org.assertj.core.api.Assertions.assertThat;
 
+class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionStreamFinder.class);
+    private static final int RETENTION_PERIOD_DAYS = 1;
     @Inject
     private DataMetaService streamMetaService;
     @Inject
@@ -49,10 +51,8 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     @Inject
     private DataSource dataSource;
 
-    private static final int RETENTION_PERIOD_DAYS = 1;
-
     @Test
-    public void testRowCount() throws SQLException {
+    void testRowCount() throws SQLException {
         try (final Connection connection = dataSource.getConnection()) {
             final String feedName = FileSystemTestUtil.getUniqueTestString();
 
@@ -92,7 +92,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             // TODO : @66 Re-implement finding streams for data retention
 //            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
 //                final long count = finder.getRowCount(ageRange, Collections.singleton(StreamDataSource.STREAM_ID));
-//                Assert.assertEquals(1, count);
+//                assertThat(count).isEqualTo(1);
 //            }
         }
     }
@@ -100,7 +100,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     private void dumpStreams() {
         final BaseResultList<Data> streams = streamMetaService.find(new FindDataCriteria());
 
-        Assert.assertEquals(2, streams.size());
+        assertThat(streams.size()).isEqualTo(2);
 
         for (final Data stream : streams) {
             LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,

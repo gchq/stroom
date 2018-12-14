@@ -17,8 +17,8 @@
 
 package stroom.search;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
@@ -37,7 +37,9 @@ import stroom.test.AbstractCoreIntegrationTest;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -52,7 +54,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testFindIndexedFields() {
+    void testFindIndexedFields() {
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
 
@@ -67,11 +69,11 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
                 .addConditions(actual.getConditions().toArray(new Condition[0]))
                 .build();
 
-        Assert.assertEquals("Expected to index action", expected, actual);
+        assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }
 
     @Test
-    public void testTermQuery() {
+    void testTermQuery() {
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
         expression.addTerm("UserId", Condition.CONTAINS, "user5");
 
@@ -79,7 +81,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testPhraseQuery() {
+    void testPhraseQuery() {
         final String field = "Command";
 
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
@@ -92,7 +94,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testBooleanQuery() {
+    void testBooleanQuery() {
         final String field = "Command";
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder()
                 .addOperator(new ExpressionOperator.Builder(Op.AND)
@@ -106,7 +108,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testNestedBooleanQuery() {
+    void testNestedBooleanQuery() {
         // Create an or query.
         final ExpressionOperator.Builder orCondition = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
         orCondition.addTerm("UserId", Condition.CONTAINS, "user6");
@@ -132,7 +134,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testRangeQuery() {
+    void testRangeQuery() {
         final ExpressionOperator.Builder expression = new ExpressionOperator.Builder();
         expression.addTerm("EventTime", Condition.BETWEEN, "2007-08-18T13:21:48.000Z,2007-08-18T13:23:49.000Z");
 

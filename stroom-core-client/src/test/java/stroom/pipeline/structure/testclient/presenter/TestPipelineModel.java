@@ -16,8 +16,9 @@
 
 package stroom.pipeline.structure.testclient.presenter;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -29,13 +30,14 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.docref.DocRef;
 import stroom.streamstore.shared.StreamTypeNames;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestPipelineModel {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestPipelineModel {
     private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
     private static final PipelinePropertyType PROP_TYPE1 = new PipelinePropertyType.Builder()
@@ -60,12 +62,12 @@ public class TestPipelineModel {
             .build();
 
     @Test
-    public void testBasic() {
+    void testBasic() {
         test(null, null, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -75,7 +77,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testComplex() {
+    void testComplex() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -90,7 +92,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testComplexWithProperties() {
+    void testComplexWithProperties() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -109,7 +111,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testComplexWithPropRemove() {
+    void testComplexWithPropRemove() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         pipelineData.addElement(ELEM_TYPE, "test2");
@@ -129,7 +131,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testUnknownElement() {
+    void testUnknownElement() {
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test");
         pipelineData.addLink("unknown", "test");
@@ -138,7 +140,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceAdditive() {
+    void testInheritanceAdditive() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -155,7 +157,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRemove() {
+    void testInheritanceRemove() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -173,7 +175,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritancePropertiesSame() {
+    void testInheritancePropertiesSame() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -190,7 +192,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritancePropertiesDiff() {
+    void testInheritancePropertiesDiff() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -207,7 +209,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritancePropertiesRemove() {
+    void testInheritancePropertiesRemove() {
         final List<PipelineData> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
@@ -224,7 +226,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRefsSame() {
+    void testInheritanceRefsSame() {
         final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
         final DocRef feed = new DocRef(FeedDoc.DOCUMENT_TYPE, "1");
 
@@ -246,7 +248,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRefsDiff() {
+    void testInheritanceRefsDiff() {
         final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
         final DocRef feed = new DocRef(FeedDoc.DOCUMENT_TYPE, "1");
 
@@ -268,7 +270,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testInheritanceRefsRemove() {
+    void testInheritanceRefsRemove() {
         final DocRef pipeline = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1");
         final DocRef feed = new DocRef(FeedDoc.DOCUMENT_TYPE, "1");
 
@@ -290,7 +292,7 @@ public class TestPipelineModel {
     }
 
     @Test
-    public void testMove() {
+    void testMove() {
         final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
 
         final PipelineElementType sourceElementType = new PipelineElementType("Source", null,
@@ -340,13 +342,13 @@ public class TestPipelineModel {
         pipelineModel.build();
         final PipelineData diff = pipelineModel.diff();
 
-        Assert.assertEquals(addedElements, diff.getAddedElements().size());
-        Assert.assertEquals(removedElements, diff.getRemovedElements().size());
-        Assert.assertEquals(addedProperties, diff.getAddedProperties().size());
-        Assert.assertEquals(removedProperties, diff.getRemovedProperties().size());
-        Assert.assertEquals(addedPipelineReferences, diff.getAddedPipelineReferences().size());
-        Assert.assertEquals(removedPipelineReferences, diff.getRemovedPipelineReferences().size());
-        Assert.assertEquals(addedLinks, diff.getAddedLinks().size());
-        Assert.assertEquals(removedLinks, diff.getRemovedLinks().size());
+        assertThat(diff.getAddedElements().size()).isEqualTo(addedElements);
+        assertThat(diff.getRemovedElements().size()).isEqualTo(removedElements);
+        assertThat(diff.getAddedProperties().size()).isEqualTo(addedProperties);
+        assertThat(diff.getRemovedProperties().size()).isEqualTo(removedProperties);
+        assertThat(diff.getAddedPipelineReferences().size()).isEqualTo(addedPipelineReferences);
+        assertThat(diff.getRemovedPipelineReferences().size()).isEqualTo(removedPipelineReferences);
+        assertThat(diff.getAddedLinks().size()).isEqualTo(addedLinks);
+        assertThat(diff.getRemovedLinks().size()).isEqualTo(removedLinks);
     }
 }

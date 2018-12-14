@@ -16,49 +16,48 @@
 
 package stroom.service.resource;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamUtil extends StroomUnitTest {
     private static final String REF_STRING = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\r\n<test>this is a bom test</test>";
 
     @Test
-    public void printCharsets() {
+    void printCharsets() {
     }
 
     @Test
-    public void readANSI() throws IOException {
+    void readANSI() throws IOException {
         test("TestStreamUtil/ansi.nxml", "US-ASCII");
     }
 
     @Test
-    public void readDOS() throws IOException {
+    void readDOS() throws IOException {
         test("TestStreamUtil/dos.nxml", "US-ASCII");
     }
 
     @Test
-    public void readUTF8() throws IOException {
+    void readUTF8() throws IOException {
         test("TestStreamUtil/utf-8.nxml", "UTF-8");
     }
 
     @Test
-    public void readUTF16() throws IOException {
+    void readUTF16() throws IOException {
         test("TestStreamUtil/utf-16le.nxml", "UTF-16LE");
     }
 
     @Test
-    public void readUTF16BE() throws IOException {
+    void readUTF16BE() throws IOException {
         test("TestStreamUtil/utf-16be.nxml", "UTF-16BE");
     }
 
@@ -70,7 +69,7 @@ public class TestStreamUtil extends StroomUnitTest {
         try {
             final Charset charset = Charset.forName(charsetName);
             String string = StreamUtil.streamToString(bomRemovalIS, charset);
-            Assert.assertEquals("Strings don't match", REF_STRING, string);
+            assertThat(string).as("Strings don't match").isEqualTo(REF_STRING);
 
             // Test reading single bytes.
             inputStream = StroomPipelineTestFileUtil.getInputStream(resourceName);
@@ -90,7 +89,7 @@ public class TestStreamUtil extends StroomUnitTest {
             }
 
             string = new String(buffer, 0, len, charsetName);
-            Assert.assertEquals("Strings don't match", REF_STRING, string);
+            assertThat(string).as("Strings don't match").isEqualTo(REF_STRING);
 
         } catch (final RuntimeException e) {
             throw new RuntimeException(e);

@@ -17,29 +17,30 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.FastInfosetValue;
 import stroom.refdata.store.StringValue;
 import stroom.refdata.store.offheapstore.ValueStoreMeta;
 
-public class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueStoreMetaSerde> {
+class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueStoreMetaSerde> {
 
     @Test
-    public void testSerializeDeserialize() {
+    void testSerializeDeserialize() {
         final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(FastInfosetValue.TYPE_ID, 123);
 
         doSerialisationDeserialisationTest(valueStoreMeta, ValueStoreMetaSerde::new);
     }
 
     @Test
-    public void testExtractTypeId() {
+    void testExtractTypeId() {
 
         ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
         doExtractionTest(valueStoreMeta, getSerde()::extractTypeId, ValueStoreMeta::getTypeId);
     }
 
     @Test
-    public void testExtractReferenceCount() {
+    void testExtractReferenceCount() {
 
         ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
         doExtractionTest(valueStoreMeta, getSerde()::extractReferenceCount, ValueStoreMeta::getReferenceCount);

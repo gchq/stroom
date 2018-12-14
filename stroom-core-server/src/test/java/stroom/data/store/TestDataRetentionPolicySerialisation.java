@@ -17,7 +17,8 @@
 
 package stroom.data.store;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionOperator;
@@ -32,9 +33,9 @@ import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestDataRetentionPolicySerialisation {
+class TestDataRetentionPolicySerialisation {
     @Test
-    public void test() throws JAXBException {
+    void test() throws JAXBException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, "Raw Events");
         builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");

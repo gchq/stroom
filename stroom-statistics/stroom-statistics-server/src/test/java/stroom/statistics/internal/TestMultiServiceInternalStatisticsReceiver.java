@@ -1,14 +1,11 @@
 package stroom.statistics.internal;
 
 import com.google.common.collect.ImmutableMap;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -18,8 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TestMultiServiceInternalStatisticsReceiver {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestMultiServiceInternalStatisticsReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMultiServiceInternalStatisticsReceiver.class);
 
@@ -56,18 +54,18 @@ public class TestMultiServiceInternalStatisticsReceiver {
     }
 
     @Test
-    public void putEvents() {
+    void putEvents() {
 
         //keyA has a docRef for both services
         Mockito.when(internalStatisticDocRefCache.getDocRefs(Mockito.eq(STAT_KEY_A)))
                 .thenReturn(Arrays.asList(DOC_REF_A1, DOC_REF_A2));
-        Assertions.assertThat(internalStatisticDocRefCache.getDocRefs(STAT_KEY_A))
+        assertThat(internalStatisticDocRefCache.getDocRefs(STAT_KEY_A))
                 .containsExactly(DOC_REF_A1, DOC_REF_A2);
 
         //keyB only has a docref for service1
         Mockito.when(internalStatisticDocRefCache.getDocRefs(Mockito.eq(STAT_KEY_B)))
                 .thenReturn(Arrays.asList(DOC_REF_B1));
-        Assertions.assertThat(internalStatisticDocRefCache.getDocRefs(STAT_KEY_B))
+        assertThat(internalStatisticDocRefCache.getDocRefs(STAT_KEY_B))
                 .containsExactly(DOC_REF_B1);
 
         //service1 supports docRefType1, etc.
@@ -90,18 +88,18 @@ public class TestMultiServiceInternalStatisticsReceiver {
 
         Mockito.verify(internalStatisticsService1, Mockito.times(1))
                 .putEvents(argCaptor1.capture());
-        Assertions.assertThat(argCaptor1.getValue().keySet())
+        assertThat(argCaptor1.getValue().keySet())
                 .containsExactlyInAnyOrder(DOC_REF_A1, DOC_REF_B1);
-        Assertions.assertThat(argCaptor1.getValue().get(DOC_REF_A1))
+        assertThat(argCaptor1.getValue().get(DOC_REF_A1))
                 .containsExactly(EVENT_A601, EVENT_A602, EVENT_A603);
-        Assertions.assertThat(argCaptor1.getValue().get(DOC_REF_B1))
+        assertThat(argCaptor1.getValue().get(DOC_REF_B1))
                 .containsExactly(EVENT_B701, EVENT_B702, EVENT_B703);
 
         Mockito.verify(internalStatisticsService2, Mockito.times(1))
                 .putEvents(argCaptor2.capture());
-        Assertions.assertThat(argCaptor2.getValue().keySet())
+        assertThat(argCaptor2.getValue().keySet())
                 .containsExactly(DOC_REF_A2);
-        Assertions.assertThat(argCaptor2.getValue().get(DOC_REF_A2))
+        assertThat(argCaptor2.getValue().get(DOC_REF_A2))
                 .containsExactly(EVENT_A601, EVENT_A602, EVENT_A603);
     }
 

@@ -16,13 +16,14 @@
 
 package stroom.entity;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-public class TestEntityServiceHandlerBeanRegistry extends StroomUnitTest {
+class TestEntityServiceHandlerBeanRegistry extends StroomUnitTest {
     @Test
-    public void test() {
+    void test() {
 //        final EntityServiceBeanRegistry beanRegistry = new EntityServiceBeanRegistry(null);
-//        Assert.assertEquals(Feed.class, beanRegistry.findParameterizedType(FeedServiceImpl.class, BaseEntity.class));
+//        assertThat(beanRegistry.findParameterizedType(FeedServiceImpl.class, BaseEntity.class)).isEqualTo(Feed.class);
     }
 }

@@ -28,7 +28,8 @@ dependencies {
 
     testCompile project(':stroom-util')
     testCompile project(':stroom-test-common')
-    testCompile libs.junit
+    testCompile libs.assertj_core
+    testCompile libs.junit_jupiter
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

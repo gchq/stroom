@@ -17,7 +17,8 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Before;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.store.offheapstore.lmdb.serde.Serde;
@@ -38,8 +39,8 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
     private S serde = null;
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         // serde is kept for the life of the test
         serde = null;
     }
@@ -149,8 +150,9 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
     /**
      * Used for testing the extraction of a single value from part of the serialised form.
-     * @param object The object to be serialised
-     * @param extractionFunc The extraction method on the serde to use
+     *
+     * @param object            The object to be serialised
+     * @param extractionFunc    The extraction method on the serde to use
      * @param expectedValueFunc The method on the object that gets the value being tested
      */
     <V> void doExtractionTest(final T object,

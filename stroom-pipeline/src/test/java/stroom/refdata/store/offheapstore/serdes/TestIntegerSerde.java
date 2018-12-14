@@ -17,21 +17,22 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
-public class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
 
     @Test
-    public void testSerialisationDeSerialisation() {
+    void testSerialisationDeSerialisation() {
 
         doSerialisationDeserialisationTest(123);
     }
 
     @Test
-    public void testIncrement() {
+    void testIncrement() {
         int input = 10;
 
         ByteBuffer inputBuf = serialize(input);
@@ -40,11 +41,11 @@ public class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
 
         Integer output = deserialize(inputBuf);
 
-        Assertions.assertThat(output).isEqualTo(input + 1);
+        assertThat(output).isEqualTo(input + 1);
     }
 
     @Test
-    public void testDecrement() {
+    void testDecrement() {
         int input = 10;
         ByteBuffer inputBuf = serialize(input);
 
@@ -52,7 +53,7 @@ public class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
 
         Integer output = deserialize(inputBuf);
 
-        Assertions.assertThat(output).isEqualTo(input - 1);
+        assertThat(output).isEqualTo(input - 1);
     }
 
     @Override

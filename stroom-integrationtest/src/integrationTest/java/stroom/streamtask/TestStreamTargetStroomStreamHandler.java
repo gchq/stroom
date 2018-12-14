@@ -17,8 +17,8 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.docref.DocRef;
@@ -34,7 +34,9 @@ import stroom.test.AbstractProcessIntegrationTest;
 import javax.inject.Inject;
 import java.io.IOException;
 
-public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest {
     @Inject
     private MockStreamStore streamStore;
     @Inject
@@ -49,7 +51,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
      * @throws IOException
      */
     @Test
-    public void testReferenceNonAggregation() throws IOException {
+    void testReferenceNonAggregation() throws IOException {
         streamStore.clear();
         feedDocCache.clear();
 
@@ -78,7 +80,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.close();
 
-        Assert.assertEquals(2, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(2);
     }
 
     /**
@@ -88,7 +90,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
      * @throws IOException
      */
     @Test
-    public void testFeedChange() throws IOException {
+    void testFeedChange() throws IOException {
         streamStore.clear();
 
         final AttributeMap attributeMap1 = new AttributeMap();
@@ -115,7 +117,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.close();
 
-        Assert.assertEquals(2, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(2);
     }
 
     /**
@@ -125,7 +127,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
      * @throws IOException
      */
     @Test
-    public void testFeedAggregation() throws IOException {
+    void testFeedAggregation() throws IOException {
         streamStore.clear();
 
         final AttributeMap attributeMap = new AttributeMap();
@@ -148,6 +150,6 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.close();
 
-        Assert.assertEquals(1, streamStore.getStreamStoreCount());
+        assertThat(streamStore.getStreamStoreCount()).isEqualTo(1);
     }
 }

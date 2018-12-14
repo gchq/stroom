@@ -1,7 +1,11 @@
 package stroom.statistics.internal;
 
-//@Ignore
-public class TestInternalStatisticDocRefCache {
+//
+
+import org.junit.jupiter.api.Disabled;
+
+@Disabled
+class TestInternalStatisticDocRefCache {
 
 //    private static final String statKey = "myStatKey";
 //    private static final String propKey = String.format(InternalStatisticDocRefCache.PROP_KEY_FORMAT, statKey);
@@ -29,9 +33,9 @@ public class TestInternalStatisticDocRefCache {
 //
 //        List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 //
-//        Assertions.assertThat(docRefs).hasSize(1);
+//        assertThat(docRefs).hasSize(1);
 //
-//        Assertions.assertThat(docRefs).containsExactly(expectedDocRef1);
+//        assertThat(docRefs).containsExactly(expectedDocRef1);
 //    }
 //
 //    @Test
@@ -45,9 +49,9 @@ public class TestInternalStatisticDocRefCache {
 //
 //        List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 //
-//        Assertions.assertThat(docRefs).hasSize(2);
+//        assertThat(docRefs).hasSize(2);
 //
-//        Assertions.assertThat(docRefs).containsExactly(expectedDocRef1, expectedDocRef2);
+//        assertThat(docRefs).containsExactly(expectedDocRef1, expectedDocRef2);
 //    }
 //
 //    @Test
@@ -61,7 +65,7 @@ public class TestInternalStatisticDocRefCache {
 //
 //        List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 //
-//        Assertions.assertThat(docRefs).hasSize(0);
+//        assertThat(docRefs).hasSize(0);
 //    }
 //
 //    @Test
@@ -75,11 +79,12 @@ public class TestInternalStatisticDocRefCache {
 //
 //        List<DocRef> docRefs = docRefCache.getDocRefs(statKey);
 //
-//        Assertions.assertThat(docRefs).hasSize(0);
+//        assertThat(docRefs).hasSize(0);
 //    }
 //
-//    @Test(expected = RuntimeException.class)
-//    public void getDocRefs_invalidPropVal() {
+//    @Test
+//    void getDocRefs_invalidPropVal() {
+//          assertThatThrownBy(() -> {
 //        final InternalStatisticsConfig internalStatisticsConfig = new InternalStatisticsConfig();
 //
 //        String propValue = docRefStr1 + "xxx";
@@ -88,5 +93,6 @@ public class TestInternalStatisticDocRefCache {
 //        InternalStatisticDocRefCache docRefCache = new InternalStatisticDocRefCache(internalStatisticsConfig);
 //
 //        docRefCache.getDocRefs(statKey);
+//          }).isInstanceOf(RuntimeException .class);
 //    }
 }

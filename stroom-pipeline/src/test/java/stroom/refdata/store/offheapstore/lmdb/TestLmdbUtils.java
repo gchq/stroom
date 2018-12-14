@@ -1,23 +1,24 @@
 package stroom.refdata.store.offheapstore.lmdb;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.util.ByteBufferUtils;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataProcessingInfo;
 import stroom.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
+import stroom.refdata.util.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestLmdbUtils {
+class TestLmdbUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbUtils.class);
 
     @Test
-    public void copyDirectBuffer() {
+    void copyDirectBuffer() {
         ByteBuffer sourceBuffer = ByteBuffer.allocateDirect(50);
 
 

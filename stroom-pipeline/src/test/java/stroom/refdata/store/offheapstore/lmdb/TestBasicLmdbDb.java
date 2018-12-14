@@ -17,18 +17,20 @@
 
 package stroom.refdata.store.offheapstore.lmdb;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.lmdbjava.KeyRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.ByteBufferUtils;
 import stroom.refdata.util.PooledByteBuffer;
-import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.refdata.store.offheapstore.serdes.StringSerde;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
@@ -38,16 +40,15 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestBasicLmdbDb extends AbstractLmdbDbTest {
-
+class TestBasicLmdbDb extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestBasicLmdbDb.class);
 
     private BasicLmdbDb<String, String> basicLmdbDb;
     private BasicLmdbDb<String, String> basicLmdbDb2;
 
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         basicLmdbDb = new BasicLmdbDb<>(
@@ -66,7 +67,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testBufferMutationAfterPut() {
+    void testBufferMutationAfterPut() {
 
         ByteBuffer keyBuffer = ByteBuffer.allocateDirect(50);
         ByteBuffer valueBuffer = ByteBuffer.allocateDirect(50);
@@ -93,9 +94,9 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
      * This test is an example of how to abuse LMDB. If run it will crash the JVM
      * as a direct bytebuffer returned from a put() was mutated outside the transaction.
      */
-    @Ignore // see javadoc above
+    @Disabled // see javadoc above
     @Test
-    public void testBufferMutationAfterGet() {
+    void testBufferMutationAfterGet() {
 
         basicLmdbDb.put("MyKey", "MyValue", false);
 
@@ -134,7 +135,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGetAsBytes() {
+    void testGetAsBytes() {
 
         basicLmdbDb.put("key1", "value1", false);
         basicLmdbDb.put("key2", "value2", false);
@@ -148,7 +149,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGetAsBytes2() {
+    void testGetAsBytes2() {
 
         basicLmdbDb.put("key1", "value1", false);
         basicLmdbDb.put("key2", "value2", false);
@@ -169,7 +170,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testStreamEntries() {
+    void testStreamEntries() {
         populateDb();
 
         List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
@@ -184,7 +185,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testStreamEntriesWithFilter() {
+    void testStreamEntriesWithFilter() {
         populateDb();
 
         List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
@@ -204,7 +205,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
 
     @Test
-    public void testStreamEntriesWithKeyRange() {
+    void testStreamEntriesWithKeyRange() {
         populateDb();
 
         KeyRange<String> keyRange = KeyRange.closed("06", "10");
@@ -220,7 +221,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testKeyReuse() {
+    void testKeyReuse() {
         // key 1 => key2 => value2 & value 3
         basicLmdbDb.put("key1", "key2", false);
         basicLmdbDb.put("key2", "value2", false);
@@ -273,7 +274,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testValueReuse() {
+    void testValueReuse() {
         basicLmdbDb.put("key1", "value1", false);
         basicLmdbDb.put("key2", "value2", false);
 
@@ -316,7 +317,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     private String buildKey(int i) {
-        return String.format("%02d",i);
+        return String.format("%02d", i);
     }
 
     private String buildValue(int i) {

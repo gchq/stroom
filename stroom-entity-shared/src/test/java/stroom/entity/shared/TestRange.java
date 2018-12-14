@@ -1,13 +1,14 @@
 package stroom.entity.shared;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRange {
+class TestRange {
 
     @Test
-    public void contains() {
+    void contains() {
         assertThat(Range.of(10L, 20L).contains(9)).isFalse();
         assertThat(Range.of(10L, 20L).contains(10)).isTrue();
         assertThat(Range.of(10L, 20L).contains(15)).isTrue();
@@ -16,7 +17,7 @@ public class TestRange {
     }
 
     @Test
-    public void after() {
+    void after() {
         assertThat(Range.of(10L, 20L).after(9)).isTrue();
         assertThat(Range.of(10L, 20L).after(10)).isFalse();
         assertThat(Range.of(10L, 20L).after(15)).isFalse();
@@ -25,7 +26,7 @@ public class TestRange {
     }
 
     @Test
-    public void before() {
+    void before() {
         assertThat(Range.of(10L, 20L).before(9)).isFalse();
         assertThat(Range.of(10L, 20L).before(10)).isFalse();
         assertThat(Range.of(10L, 20L).before(15)).isFalse();
@@ -34,7 +35,7 @@ public class TestRange {
     }
 
     @Test
-    public void isBounded() {
+    void isBounded() {
         assertThat(Range.of(10L, 20L).isBounded()).isTrue();
         assertThat(Range.from(10L).isBounded()).isFalse();
         assertThat(Range.to(20L).isBounded()).isFalse();
@@ -42,7 +43,7 @@ public class TestRange {
     }
 
     @Test
-    public void isConstrained() {
+    void isConstrained() {
         assertThat(Range.of(10L, 20L).isConstrained()).isTrue();
         assertThat(Range.from(10L).isConstrained()).isTrue();
         assertThat(Range.to(20L).isConstrained()).isTrue();

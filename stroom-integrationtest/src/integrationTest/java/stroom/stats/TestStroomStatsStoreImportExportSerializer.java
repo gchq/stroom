@@ -17,8 +17,8 @@
 
 package stroom.stats;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
@@ -38,7 +38,9 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 
-public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
@@ -60,7 +62,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
      * second one
      */
     @Test
-    public void testStatisticsDataSource() {
+    void testStatisticsDataSource() {
         final DocRef docRef = explorerService.create(StroomStatsStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
         final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(docRef);
         entity.setDescription("My Description");
@@ -70,7 +72,7 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         entity.getConfig().addStatisticField(new StatisticField("tag2"));
         stroomStatsStoreStore.writeDocument(entity);
 
-        Assert.assertEquals(1, stroomStatsStoreStore.list().size());
+        assertThat(stroomStatsStoreStore.list().size()).isEqualTo(1);
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -81,25 +83,25 @@ public class TestStroomStatsStoreImportExportSerializer extends AbstractCoreInte
         docRefs.add(docRef);
         importExportSerializer.write(testDataDir, docRefs, true, null);
 
-        Assert.assertEquals(2, FileUtil.count(testDataDir));
+        assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
         clean(true);
 
-        Assert.assertEquals(0, stroomStatsStoreStore.list().size());
+        assertThat(stroomStatsStoreStore.list().size()).isEqualTo(0);
 
         importExportSerializer.read(testDataDir, null, ImportState.ImportMode.IGNORE_CONFIRMATION);
 
         final List<DocRef> dataSources = stroomStatsStoreStore.list();
 
-        Assert.assertEquals(1, dataSources.size());
+        assertThat(dataSources.size()).isEqualTo(1);
 
         final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.get(0));
 
-        Assert.assertEquals(entity.getName(), importedDataSource.getName());
-        Assert.assertEquals(entity.getStatisticType(), importedDataSource.getStatisticType());
-        Assert.assertEquals(entity.getDescription(), importedDataSource.getDescription());
+        assertThat(importedDataSource.getName()).isEqualTo(entity.getName());
+        assertThat(importedDataSource.getStatisticType()).isEqualTo(entity.getStatisticType());
+        assertThat(importedDataSource.getDescription()).isEqualTo(entity.getDescription());
 
-        Assert.assertEquals(entity.getConfig(), importedDataSource.getConfig());
+        assertThat(importedDataSource.getConfig()).isEqualTo(entity.getConfig());
     }
 }

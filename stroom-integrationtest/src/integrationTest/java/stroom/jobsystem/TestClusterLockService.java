@@ -16,8 +16,8 @@
 
 package stroom.jobsystem;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -25,12 +25,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class TestClusterLockService extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestClusterLockService extends AbstractCoreIntegrationTest {
     @Inject
     private ClusterLockServiceInnerTransactions testClusterLockServiceTransaction;
 
     @Test
-    public void test() throws InterruptedException {
+    void test() throws InterruptedException {
         final CountDownLatch countDownLatch = new CountDownLatch(2);
         final List<Integer> sequence = new ArrayList<>(3);
 
@@ -52,9 +54,9 @@ public class TestClusterLockService extends AbstractCoreIntegrationTest {
 
         // Now make sure the sequence is as expected.
         countDownLatch.await();
-        Assert.assertEquals(3, sequence.size());
-        Assert.assertEquals(1, sequence.get(0).intValue());
-        Assert.assertEquals(2, sequence.get(1).intValue());
-        Assert.assertEquals(3, sequence.get(2).intValue());
+        assertThat(sequence.size()).isEqualTo(3);
+        assertThat(sequence.get(0).intValue()).isEqualTo(1);
+        assertThat(sequence.get(1).intValue()).isEqualTo(2);
+        assertThat(sequence.get(2).intValue()).isEqualTo(3);
     }
 }

@@ -17,12 +17,13 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
 
-public class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
+import org.junit.jupiter.api.Test;
+
+class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
 
     @Test
-    public void testSerialisationDeserialisation() {
+    void testSerialisationDeserialisation() {
         String str = "this is my string";
 
         doSerialisationDeserialisationTest(str);

@@ -17,9 +17,8 @@
 package stroom.headless;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.ComparisonHelper;
@@ -39,15 +38,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-@Ignore
-public class TestHeadless {
+import static org.assertj.core.api.Assertions.assertThat;
+
+@Disabled
+class TestHeadless {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
 
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
     private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         Path newTempDir = FileUtil.getTempDir().resolve("headless");
 //        StroomProperties.setOverrideProperty("stroom.temp", FileUtil.getCanonicalPath(newTempDir), StroomProperties.Source.TEST);
 
@@ -127,10 +128,10 @@ public class TestHeadless {
                 outputFilePath.toAbsolutePath().toString());
 
         // same number of lines output as expected
-        Assert.assertEquals(expectedLines.size(), outputLines.size());
+        assertThat(outputLines).hasSize(expectedLines.size());
 
         // make sure all lines are present in both
-        Assert.assertEquals(new HashSet<>(expectedLines), new HashSet<>(outputLines));
+        assertThat(new HashSet<>(outputLines)).isEqualTo(new HashSet<>(expectedLines));
 
         // content should exactly match expected file
         ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);

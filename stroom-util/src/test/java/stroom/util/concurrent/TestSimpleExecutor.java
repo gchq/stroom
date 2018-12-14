@@ -16,15 +16,14 @@
 
 package stroom.util.concurrent;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestSimpleExecutor {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSimpleExecutor {
     @Test
-    public void testSimpleShutDownNow() throws InterruptedException {
+    void testSimpleShutDownNow() throws InterruptedException {
         SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 100; i++) {
             // 10 sec task
@@ -34,12 +33,12 @@ public class TestSimpleExecutor {
 
         simpleExecutor.stop(true);
 
-        Assert.assertEquals(100, simpleExecutor.getExecutorSubmitCount());
-        Assert.assertEquals(5, simpleExecutor.getExecutorCompleteCount());
+        assertThat(simpleExecutor.getExecutorSubmitCount()).isEqualTo(100);
+        assertThat(simpleExecutor.getExecutorCompleteCount()).isEqualTo(5);
     }
 
     @Test
-    public void testSimpleShutDown() throws InterruptedException {
+    void testSimpleShutDown() throws InterruptedException {
         SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 very quick tasks
@@ -48,12 +47,12 @@ public class TestSimpleExecutor {
 
         simpleExecutor.stop(false);
 
-        Assert.assertEquals(10, simpleExecutor.getExecutorSubmitCount());
-        Assert.assertEquals(10, simpleExecutor.getExecutorCompleteCount());
+        assertThat(simpleExecutor.getExecutorSubmitCount()).isEqualTo(10);
+        assertThat(simpleExecutor.getExecutorCompleteCount()).isEqualTo(10);
     }
 
     @Test
-    public void testSimpleShutDownNowAndMoreTasksAdded() throws InterruptedException {
+    void testSimpleShutDownNowAndMoreTasksAdded() throws InterruptedException {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 slow tasks
@@ -70,26 +69,26 @@ public class TestSimpleExecutor {
 
         simpleExecutor.stop(true);
 
-        Assert.assertEquals(5, simpleExecutor.getExecutorCompleteCount());
+        assertThat(simpleExecutor.getExecutorCompleteCount()).isEqualTo(5);
     }
 
     @Test
-    public void testWaitForCompleteAndAddMore() throws InterruptedException {
+    void testWaitForCompleteAndAddMore() throws InterruptedException {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(5);
         for (int i = 0; i < 10; i++) {
             // Submit 10 quick tasks
             simpleExecutor.execute(new TestRunnable(10));
-            Assert.assertFalse(simpleExecutor.isStopped());
+            assertThat(simpleExecutor.isStopped()).isFalse();
         }
 
         simpleExecutor.waitForComplete();
-        Assert.assertFalse(simpleExecutor.isStopped());
+        assertThat(simpleExecutor.isStopped()).isFalse();
 
-        Assert.assertEquals(10, simpleExecutor.getExecutorSubmitCount());
-        Assert.assertEquals(10, simpleExecutor.getExecutorCompleteCount());
+        assertThat(simpleExecutor.getExecutorSubmitCount()).isEqualTo(10);
+        assertThat(simpleExecutor.getExecutorCompleteCount()).isEqualTo(10);
 
         simpleExecutor.waitForComplete();
-        Assert.assertFalse(simpleExecutor.isStopped());
+        assertThat(simpleExecutor.isStopped()).isFalse();
 
         for (int i = 0; i < 10; i++) {
             // Submit 10 quick tasks
@@ -98,12 +97,12 @@ public class TestSimpleExecutor {
 
         simpleExecutor.waitForComplete();
 
-        Assert.assertEquals(20, simpleExecutor.getExecutorSubmitCount());
-        Assert.assertEquals(20, simpleExecutor.getExecutorCompleteCount());
+        assertThat(simpleExecutor.getExecutorSubmitCount()).isEqualTo(20);
+        assertThat(simpleExecutor.getExecutorCompleteCount()).isEqualTo(20);
 
-        Assert.assertFalse(simpleExecutor.isStopped());
+        assertThat(simpleExecutor.isStopped()).isFalse();
         simpleExecutor.stop(true);
-        Assert.assertTrue(simpleExecutor.isStopped());
+        assertThat(simpleExecutor.isStopped()).isTrue();
     }
 
     static class TestRunnable implements Runnable {

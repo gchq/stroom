@@ -19,9 +19,8 @@ package stroom.refdata;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -53,9 +52,9 @@ import stroom.security.impl.mock.MockSecurityContext;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,8 +66,7 @@ import java.util.TreeSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
+class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
     private static final String USER_1 = "user1";
@@ -96,8 +94,9 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    @Override
+    public void setup() throws IOException {
         super.setup();
         injector.injectMembers(this);
 
@@ -113,7 +112,7 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_1");
             final DocRef feed2Ref = feedStore.createDocument("TEST_FEED_2");
@@ -331,7 +330,7 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testNestedMaps() {
+    void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
             final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
@@ -404,7 +403,7 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testRange() {
+    void testRange() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
             final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);

@@ -1,8 +1,6 @@
 package stroom.config.app;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import stroom.util.io.FileUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -27,7 +25,7 @@ class TestYamlUtil {
         YamlUtil.write(new AppConfig(), byteArrayOutputStream);
         final String actual = new String(byteArrayOutputStream.toByteArray());
 
-        Assertions.assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test

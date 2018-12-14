@@ -20,8 +20,8 @@ package stroom.refdata.util;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.util.concurrent.Striped;
 import org.assertj.core.api.Assertions;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,15 +46,15 @@ import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class TestByteBufferPool {
-
+class TestByteBufferPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferPool.class);
 
     private static final long RANDOM_SEED = 345649236493L;
 
     @Test
-    public void doWithBuffer() {
+    void doWithBuffer() {
 
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 
@@ -74,7 +74,7 @@ public class TestByteBufferPool {
     }
 
     @Test
-    public void doWithBuffer_differentSize() {
+    void doWithBuffer_differentSize() {
 
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 
@@ -108,7 +108,7 @@ public class TestByteBufferPool {
     }
 
     @Test
-    public void testBufferClearing() {
+    void testBufferClearing() {
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
@@ -134,7 +134,7 @@ public class TestByteBufferPool {
     }
 
     @Test
-    public void testConcurrency() throws InterruptedException {
+    void testConcurrency() throws InterruptedException {
         int threadCount = 50;
         int minCapacity = 10;
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
@@ -146,7 +146,7 @@ public class TestByteBufferPool {
     }
 
     @Test
-    public void testGetHealthCheck() {
+    void testGetHealthCheck() {
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
 
         PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1);
@@ -184,22 +184,24 @@ public class TestByteBufferPool {
     }
 
 
-    @Test(expected = IllegalStateException.class)
-    public void testGetByteBuffer_fail() {
-        final ByteBufferPool byteBufferPool = new ByteBufferPool();
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
-        pooledByteBuffer.getByteBuffer();
-        pooledByteBuffer.release();
+    @Test
+    void testGetByteBuffer_fail() {
+        assertThatThrownBy(() -> {
+            final ByteBufferPool byteBufferPool = new ByteBufferPool();
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
+            PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+            pooledByteBuffer.getByteBuffer();
+            pooledByteBuffer.release();
 
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
+            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
 
-        // will throw exception as buffer has been released
-        pooledByteBuffer.getByteBuffer();
+            // will throw exception as buffer has been released
+            pooledByteBuffer.getByteBuffer();
+        }).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    public void testGetByteBuffer() {
+    void testGetByteBuffer() {
         int capacity = 10;
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
@@ -248,18 +250,18 @@ public class TestByteBufferPool {
         completableFutures.clear();
     }
 
-    @Ignore // for manual perf testing only
+    @Disabled // for manual perf testing only
     @Test
-    public void testPoolPerformance() {
+    void testPoolPerformance() {
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
         final SimpleByteBufferPool simpleByteBufferPool = new SimpleByteBufferPool();
 
         final IntConsumer pooledMethod = minCapacity -> {
-            try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity)){
+            try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity)) {
 
                 ByteBuffer buffer = pooledByteBuffer.getByteBuffer();
                 for (int i = 0; i < buffer.limit(); i++) {
-                    buffer.put((byte)1);
+                    buffer.put((byte) 1);
                 }
 //                LOGGER.info("requested {}, got {}", minCapacity, buffer.capacity());
             }
@@ -271,7 +273,7 @@ public class TestByteBufferPool {
 
                 buffer = simpleByteBufferPool.getBuffer(minCapacity);
                 for (int i = 0; i < buffer.limit(); i++) {
-                    buffer.put((byte)1);
+                    buffer.put((byte) 1);
                 }
 //                LOGGER.info("requested {}, got {}", minCapacity, buffer.capacity());
             } finally {
@@ -284,7 +286,7 @@ public class TestByteBufferPool {
         final IntConsumer nonPooledMethod = capacity -> {
             ByteBuffer buffer = ByteBuffer.allocateDirect(capacity);
             for (int i = 0; i < buffer.limit(); i++) {
-                buffer.put((byte)1);
+                buffer.put((byte) 1);
             }
         };
 
@@ -380,7 +382,7 @@ public class TestByteBufferPool {
                     throw new RuntimeException("Expecting a direct ByteBuffer");
                 }
                 for (int i = buffer.position(); i < buffer.limit(); i++) {
-                    buffer.put((byte)0);
+                    buffer.put((byte) 0);
                 }
                 buffer.clear();
 

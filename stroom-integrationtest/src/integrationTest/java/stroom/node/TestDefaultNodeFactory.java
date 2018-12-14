@@ -16,18 +16,20 @@
 
 package stroom.node;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 
-public class TestDefaultNodeFactory extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestDefaultNodeFactory extends AbstractCoreIntegrationTest {
     @Inject
     private NodeCache nodeCache;
 
     @Test
-    public void test1() {
-        Assert.assertNotNull(nodeCache.getDefaultNode());
+    void test1() {
+        assertThat(nodeCache.getDefaultNode()).isNotNull();
     }
 }

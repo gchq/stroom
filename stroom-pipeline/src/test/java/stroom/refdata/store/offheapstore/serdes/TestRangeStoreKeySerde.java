@@ -17,15 +17,16 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.Range;
 import stroom.refdata.store.offheapstore.RangeStoreKey;
 import stroom.refdata.store.offheapstore.UID;
 
-public class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStoreKeySerde> {
+class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStoreKeySerde> {
 
     @Test
-    public void testSerialiseDeserialise() {
+    void testSerialiseDeserialise() {
         final UID uid = UID.of(0, 1, 2, 3);
         final Range<Long> range = new Range<>(23L, 52L);
 

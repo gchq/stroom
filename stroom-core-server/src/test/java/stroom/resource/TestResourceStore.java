@@ -16,49 +16,48 @@
 
 package stroom.resource;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.shared.ResourceKey;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestResourceStore extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestResourceStore extends StroomUnitTest {
     @Test
-    public void testSimple() throws IOException {
+    void testSimple() throws IOException {
         final ResourceStoreImpl resourceStore = new ResourceStoreImpl();
         getCurrentTestDir();
         resourceStore.execute();
 
         final ResourceKey key1 = resourceStore.createTempFile("TestResourceStore1.dat");
-        Assert.assertTrue(key1.toString().endsWith("TestResourceStore1.dat"));
+        assertThat(key1.toString().endsWith("TestResourceStore1.dat")).isTrue();
 
         final ResourceKey key2 = resourceStore.createTempFile("TestResourceStore2.dat");
-        Assert.assertTrue(key2.toString().endsWith("TestResourceStore2.dat"));
+        assertThat(key2.toString().endsWith("TestResourceStore2.dat")).isTrue();
 
         Files.createFile(resourceStore.getTempFile(key1));
         Files.createFile(resourceStore.getTempFile(key2));
 
-        Assert.assertTrue(Files.isRegularFile(resourceStore.getTempFile(key1)));
-        Assert.assertTrue(Files.isRegularFile(resourceStore.getTempFile(key2)));
+        assertThat(Files.isRegularFile(resourceStore.getTempFile(key1))).isTrue();
+        assertThat(Files.isRegularFile(resourceStore.getTempFile(key2))).isTrue();
 
         // Roll to Old
         resourceStore.execute();
         final Path file1 = resourceStore.getTempFile(key1);
-        Assert.assertTrue(Files.isRegularFile(file1));
+        assertThat(Files.isRegularFile(file1)).isTrue();
         final Path file2 = resourceStore.getTempFile(key2);
-        Assert.assertTrue(Files.isRegularFile(file2));
+        assertThat(Files.isRegularFile(file2)).isTrue();
 
         // Roll to Delete
         resourceStore.execute();
-        Assert.assertNull(resourceStore.getTempFile(key1));
-        Assert.assertFalse(Files.isRegularFile(file1));
-        Assert.assertNull(resourceStore.getTempFile(key2));
-        Assert.assertFalse(Files.isRegularFile(file2));
+        assertThat(resourceStore.getTempFile(key1)).isNull();
+        assertThat(Files.isRegularFile(file1)).isFalse();
+        assertThat(resourceStore.getTempFile(key2)).isNull();
+        assertThat(Files.isRegularFile(file2)).isFalse();
     }
 }

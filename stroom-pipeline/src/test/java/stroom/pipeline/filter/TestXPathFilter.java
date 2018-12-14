@@ -18,16 +18,13 @@ package stroom.pipeline.filter;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
 
@@ -42,8 +39,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestXPathFilter extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestXPathFilter extends StroomUnitTest {
     private static final String INPUT = "TestTranslationStepping/1.xml";
     private static final SAXParserFactory PARSER_FACTORY;
 
@@ -52,7 +50,7 @@ public class TestXPathFilter extends StroomUnitTest {
     }
 
     @Test
-    public void test() throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
+    void test() throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
         final Path input = StroomPipelineTestFileUtil.getTestResourcesFile(INPUT);
         final SAXParser parser = PARSER_FACTORY.newSAXParser();
         final XMLReader xmlReader = parser.getXMLReader();
@@ -81,7 +79,7 @@ public class TestXPathFilter extends StroomUnitTest {
         final XPathFilter xPathFilter = new XPathFilter();
         xPathFilter.setXPath(xPath);
         xPathFilter.setMatchType(MatchType.EXISTS);
-        Assert.assertTrue(match(xPathFilter, steppingFilter));
+        assertThat(match(xPathFilter, steppingFilter)).isTrue();
     }
 
     private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
@@ -89,7 +87,7 @@ public class TestXPathFilter extends StroomUnitTest {
         xPathFilter.setXPath(xPath);
         xPathFilter.setMatchType(MatchType.EQUALS);
         xPathFilter.setValue(value);
-        Assert.assertTrue(match(xPathFilter, steppingFilter));
+        assertThat(match(xPathFilter, steppingFilter)).isTrue();
     }
 
     @SuppressWarnings("unchecked")

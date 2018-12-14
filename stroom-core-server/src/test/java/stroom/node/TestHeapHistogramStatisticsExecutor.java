@@ -5,10 +5,8 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -22,7 +20,6 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.test.StroomExpectedException;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,21 +29,21 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestHeapHistogramStatisticsExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestHeapHistogramStatisticsExecutor.class);
+import static org.assertj.core.api.Assertions.assertThat;
 
+class TestHeapHistogramStatisticsExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestHeapHistogramStatisticsExecutor.class);
+    private static Function<InternalStatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = event ->
+            event.getTags().get(HeapHistogramStatisticsExecutor.TAG_NAME_CLASS_NAME);
     @Mock
     private InternalStatisticsReceiver mockInternalStatisticsReceiver;
-
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
-
     private HeapHistogramStatisticsExecutor executor;
     private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         try {
             MockitoAnnotations.initMocks(this);
             final Rack rack1 = Rack.create("rack1");
@@ -60,11 +57,8 @@ public class TestHeapHistogramStatisticsExecutor {
         }
     }
 
-    private static Function<InternalStatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = event ->
-            event.getTags().get(HeapHistogramStatisticsExecutor.TAG_NAME_CLASS_NAME);
-
     @Test
-    public void testExec_stroomClasses() {
+    void testExec_stroomClasses() {
 
         // These are here to help diagnose problems finding the jmap executable on your environment.
         // Ensure jmap is on your PATH
@@ -80,28 +74,28 @@ public class TestHeapHistogramStatisticsExecutor {
         List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
 
         //We must have some stroom classes in the list
-        Assert.assertTrue(argValues.get(0).size() > 0);
+        assertThat(argValues.get(0).size() > 0).isTrue();
 
         //the histo is duplicated as two separate stats so two lists of equal size
-        Assert.assertTrue(argValues.get(0).size() == argValues.get(1).size());
+        assertThat(argValues.get(0).size() == argValues.get(1).size()).isTrue();
 
 
         //Ensure all class names start with stroom as that was the regex applied in the property
         for (List<InternalStatisticEvent> statisticEvents : argValues) {
-            Assert.assertTrue(statisticEvents.stream()
+            assertThat(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
-                    .allMatch(className -> className.startsWith("stroom")));
+                    .allMatch(className -> className.startsWith("stroom"))).isTrue();
 
             //check this class features in the list
             Pattern thisClassPattern = Pattern.compile(this.getClass().getName());
-            Assert.assertTrue(statisticEvents.stream()
+            assertThat(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
-                    .anyMatch(thisClassPattern.asPredicate()));
+                    .anyMatch(thisClassPattern.asPredicate())).isTrue();
         }
     }
 
     @Test
-    public void testExec_allClasses() {
+    void testExec_allClasses() {
 
         //Given
         //no regex so should get all classes back
@@ -122,18 +116,18 @@ public class TestHeapHistogramStatisticsExecutor {
         List<List<InternalStatisticEvent>> argValues = eventsCaptor.getAllValues();
 
         //We must have some classes in the list
-        Assert.assertTrue(argValues.get(0).size() > 0);
+        assertThat(argValues.get(0).size() > 0).isTrue();
 
         //the histo is duplicated as two separate stats so two lists of equal size
-        Assert.assertTrue(argValues.get(0).size() == argValues.get(1).size());
+        assertThat(argValues.get(0).size() == argValues.get(1).size()).isTrue();
 
         //Ensure we have multiple starting letters of the class names to show a variety of classes are coming back
         for (List<InternalStatisticEvent> statisticEvents : argValues) {
-            Assert.assertTrue(statisticEvents.stream()
+            assertThat(statisticEvents.stream()
                     .map(STAT_TO_CLASS_NAME_MAPPER)
                     .map(className -> className.substring(0, 1))
                     .distinct()
-                    .count() > 1);
+                    .count() > 1).isTrue();
         }
     }
 
@@ -151,11 +145,11 @@ public class TestHeapHistogramStatisticsExecutor {
             thrownException = true;
         }
 
-        Assert.assertTrue(thrownException);
+        assertThat(thrownException).isTrue();
     }
 
     @Test
-    public void testRegex() {
+    void testRegex() {
         String regex = "((?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
 
         Pattern pattern = Pattern.compile(regex);
@@ -164,7 +158,7 @@ public class TestHeapHistogramStatisticsExecutor {
 
         String output = pattern.matcher(input).replaceAll("--");
 
-        Assert.assertEquals("stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$--", output);
+        assertThat(output).isEqualTo("stroom.query.audit.client.DocRefResourceHttpClient$$Lambda$--");
     }
 
     String executeCmd(final String... cmdPlusArgs) {

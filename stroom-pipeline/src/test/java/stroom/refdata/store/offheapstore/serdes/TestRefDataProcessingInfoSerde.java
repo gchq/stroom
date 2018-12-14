@@ -17,7 +17,8 @@
 
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.store.ProcessingState;
@@ -27,12 +28,12 @@ import java.nio.ByteBuffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessingInfo, RefDataProcessingInfoSerde> {
+class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessingInfo, RefDataProcessingInfoSerde> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataProcessingInfoSerde.class);
 
     @Test
-    public void testSerializeDeserialize() {
+    void testSerializeDeserialize() {
 
         final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                 1234567890L,
@@ -44,7 +45,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataPro
     }
 
     @Test
-    public void testUpdateState() {
+    void testUpdateState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
                 1,
                 1,
@@ -66,7 +67,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataPro
     }
 
     @Test
-    public void testUpdateLastAccessedTime() {
+    void testUpdateLastAccessedTime() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
                 1,
                 1,
@@ -87,7 +88,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataPro
     }
 
     @Test
-    public void testUpdateLastAccessedTimeAndState() {
+    void testUpdateLastAccessedTimeAndState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
                 1,
                 1,
@@ -110,7 +111,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataPro
     }
 
     @Test
-    public void wasAccessedAfter() {
+    void wasAccessedAfter() {
 
         RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                 0L,
@@ -137,7 +138,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataPro
     }
 
     @Test
-    public void testExtractProcessingState() {
+    void testExtractProcessingState() {
 
         for (ProcessingState processingState : ProcessingState.values()) {
             RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(

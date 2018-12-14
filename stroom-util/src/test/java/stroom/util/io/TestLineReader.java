@@ -16,18 +16,17 @@
 
 package stroom.util.io;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestLineReader {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestLineReader {
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         final StringBuilder in = new StringBuilder();
         for (int i = 0; i < 1000; i++) {
             in.append(i);
@@ -46,6 +45,6 @@ public class TestLineReader {
             out.append("\n");
         }
 
-        Assert.assertEquals(in.toString(), out.toString());
+        assertThat(out.toString()).isEqualTo(in.toString());
     }
 }

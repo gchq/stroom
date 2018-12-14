@@ -16,19 +16,18 @@
 
 package stroom.xml.converter.ds3;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestSplitMatcher extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSplitMatcher extends StroomUnitTest {
     private static final String TESTDATA = ",692289,2012-08-28 09:56:00,2012-08-28 09:56:00,\"562\",8,Suc\"c\"ess Audit event,  \"3\" ,  \"Objec\"t\" Access\"  ,   Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe,CODE123/,NT AUTHORITY\\SYSTEM,   \"  Handle Closed,  \"  \": Ob/,ject \" Se,rver: Security Handle ID: 5676 Process ID: 1144 Image File Name: C:\\WINNT\\system32\\svchost.exe ,\n";
     private static final char[] TESTARR = TESTDATA.toCharArray();
 
     @Test
-    public void test() {
+    void test() {
         final CharBuffer input = new CharBuffer(TESTARR, 0, TESTARR.length);
         final SplitFactory splitFactory = new SplitFactory(null, "split", "\nSecurity");
         final Split split = new Split(null, splitFactory);
@@ -36,12 +35,12 @@ public class TestSplitMatcher extends StroomUnitTest {
 
         final Match match = split.match();
 
-        Assert.assertEquals(0, match.start());
-        Assert.assertEquals(341, match.end());
+        assertThat(match.start()).isEqualTo(0);
+        assertThat(match.end()).isEqualTo(341);
     }
 
     @Test
-    public void testFilter() {
+    void testFilter() {
         final CharBuffer input = new CharBuffer(TESTARR, 0, TESTARR.length);
         final SplitFactory splitFactory = new SplitFactory(null, "split", "\nSecurity");
         final Split split = new Split(null, splitFactory);
@@ -49,12 +48,12 @@ public class TestSplitMatcher extends StroomUnitTest {
 
         final Match match = split.match();
 
-        Assert.assertEquals(TESTDATA, match.filter(input, 0).toString());
-        Assert.assertEquals(TESTDATA.trim(), match.filter(input, 1).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo(TESTDATA);
+        assertThat(match.filter(input, 1).toString()).isEqualTo(TESTDATA.trim());
     }
 
     @Test
-    public void testFilter2() {
+    void testFilter2() {
         final CharBuffer input = new CharBuffer(TESTARR, 0, TESTARR.length);
         final SplitFactory splitFactory = new SplitFactory(null, "split", 0, -1, null, ",", "/", "\"", "\"");
         final Split split = new Split(null, splitFactory);
@@ -62,86 +61,83 @@ public class TestSplitMatcher extends StroomUnitTest {
 
         Match match = split.match();
 
-        Assert.assertEquals(",", match.filter(input, 0).toString());
-        Assert.assertEquals("", match.filter(input, 1).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo(",");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("692289,", match.filter(input, 0).toString());
-        Assert.assertEquals("692289", match.filter(input, 1).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("692289,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("692289");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("2012-08-28 09:56:00,", match.filter(input, 0).toString());
-        Assert.assertEquals("2012-08-28 09:56:00", match.filter(input, 1).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("2012-08-28 09:56:00,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("2012-08-28 09:56:00");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("2012-08-28 09:56:00,", match.filter(input, 0).toString());
-        Assert.assertEquals("2012-08-28 09:56:00", match.filter(input, 1).toString());
-        Assert.assertEquals("2012-08-28 09:56:00", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("2012-08-28 09:56:00,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("2012-08-28 09:56:00");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("2012-08-28 09:56:00");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("\"562\",", match.filter(input, 0).toString());
-        Assert.assertEquals("562", match.filter(input, 1).toString());
-        Assert.assertEquals("562", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("\"562\",");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("562");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("562");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("8,", match.filter(input, 0).toString());
-        Assert.assertEquals("8", match.filter(input, 1).toString());
-        Assert.assertEquals("8", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("8,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("8");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("8");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("Suc\"c\"ess Audit event,", match.filter(input, 0).toString());
-        Assert.assertEquals("Suc\"c\"ess Audit event", match.filter(input, 1).toString());
-        Assert.assertEquals("Suc\"c\"ess Audit event", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("Suc\"c\"ess Audit event,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("Suc\"c\"ess Audit event");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("Suc\"c\"ess Audit event");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("  \"3\" ,", match.filter(input, 0).toString());
-        Assert.assertEquals("3", match.filter(input, 1).toString());
-        Assert.assertEquals("3", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("  \"3\" ,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("3");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("3");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("  \"Objec\"t\" Access\"  ,", match.filter(input, 0).toString());
-        Assert.assertEquals("Objec\"t\" Access", match.filter(input, 1).toString());
-        Assert.assertEquals("Objec\"t\" Access", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("  \"Objec\"t\" Access\"  ,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("Objec\"t\" Access");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("Objec\"t\" Access");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("   Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe,",
-                match.filter(input, 0).toString());
-        Assert.assertEquals("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe",
-                match.filter(input, 1).toString());
-        Assert.assertEquals("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe",
-                match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("   Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("CODE123/,NT AUTHORITY\\SYSTEM,", match.filter(input, 0).toString());
-        Assert.assertEquals("CODE123/,NT AUTHORITY\\SYSTEM", match.filter(input, 1).toString());
-        Assert.assertEquals("CODE123,NT AUTHORITY\\SYSTEM", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("CODE123/,NT AUTHORITY\\SYSTEM,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("CODE123/,NT AUTHORITY\\SYSTEM");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("CODE123,NT AUTHORITY\\SYSTEM");
 
         input.move(match.end());
         match = split.match();
 
-        Assert.assertEquals("   \"  Handle Closed,  \"  \": Ob/,ject \" Se,", match.filter(input, 0).toString());
-        Assert.assertEquals("Handle Closed,  \"  \": Ob/,ject \" Se", match.filter(input, 1).toString());
-        Assert.assertEquals("Handle Closed,  \"  \": Ob,ject \" Se", match.filter(input, 2).toString());
+        assertThat(match.filter(input, 0).toString()).isEqualTo("   \"  Handle Closed,  \"  \": Ob/,ject \" Se,");
+        assertThat(match.filter(input, 1).toString()).isEqualTo("Handle Closed,  \"  \": Ob/,ject \" Se");
+        assertThat(match.filter(input, 2).toString()).isEqualTo("Handle Closed,  \"  \": Ob,ject \" Se");
 
     }
 }

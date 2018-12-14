@@ -16,17 +16,16 @@
 
 package stroom.util.io;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestFileNameUtil {
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestFileNameUtil {
     @Test
-    public void testSimple() {
-        Assert.assertEquals("001", FileNameUtil.getBaseName("001.dat"));
-        Assert.assertEquals("001.001", FileNameUtil.getBaseName("001.001.dat"));
-        Assert.assertEquals("001", FileNameUtil.getBaseName("001"));
+    void testSimple() {
+        assertThat(FileNameUtil.getBaseName("001.dat")).isEqualTo("001");
+        assertThat(FileNameUtil.getBaseName("001.001.dat")).isEqualTo("001.001");
+        assertThat(FileNameUtil.getBaseName("001")).isEqualTo("001");
     }
 }

@@ -16,8 +16,8 @@
 
 package stroom.security;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.PermissionNames;
@@ -31,7 +31,10 @@ import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
     @Inject
@@ -44,7 +47,7 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     private UserAppPermissionsCache userAppPermissionsCache;
 
     @Test
-    public void test() {
+    void test() {
         final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
@@ -86,11 +89,11 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void test_getRequiredPermissionSet() {
+    void test_getRequiredPermissionSet() {
         final UserAppPermissionServiceImpl userAppPermissionServiceImpl = (UserAppPermissionServiceImpl) userAppPermissionService;
         final Set<String> set = userAppPermissionServiceImpl.getRequiredPermissionSet();
-        Assert.assertNotNull(set);
-        Assert.assertEquals(21, set.size());
+        assertThat(set).isNotNull();
+        assertThat(set.size()).isEqualTo(21);
 
         final Permission permission = new Permission();
         permission.setName(PermissionNames.ADMINISTRATOR);
@@ -101,7 +104,7 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
                 return;
             }
         }
-        Assert.fail();
+        fail("Shouldn't get here");
     }
 
     private void addPermissions(final UserRef user, final String... permissions) {
@@ -124,9 +127,9 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
         final UserAppPermissions userAppPermissions = userAppPermissionService
                 .getPermissionsForUser(user);
         final Set<String> permissionSet = userAppPermissions.getUserPermissons();
-        Assert.assertEquals(permissions.length, permissionSet.size());
+        assertThat(permissionSet.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
-            Assert.assertTrue(permissionSet.contains(permission));
+            assertThat(permissionSet.contains(permission)).isTrue();
         }
 
         checkUserPermissions(user, permissions);
@@ -144,9 +147,9 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
             combinedPermissions.addAll(userPermissions);
         }
 
-        Assert.assertEquals(permissions.length, combinedPermissions.size());
+        assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
-            Assert.assertTrue(combinedPermissions.contains(permission));
+            assertThat(combinedPermissions.contains(permission)).isTrue();
         }
 
         checkUserCachePermissions(user, permissions);
@@ -167,25 +170,25 @@ public class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
             combinedPermissions.addAll(userPermissions);
         }
 
-        Assert.assertEquals(permissions.length, combinedPermissions.size());
+        assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
-            Assert.assertTrue(combinedPermissions.contains(permission));
+            assertThat(combinedPermissions.contains(permission)).isTrue();
         }
     }
 
     private UserRef createUser(final String name) {
         UserRef userRef = userService.createUser(name);
-        Assert.assertNotNull(userRef);
+        assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
-        Assert.assertNotNull(user);
+        assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 
     private UserRef createUserGroup(final String name) {
         UserRef userRef = userService.createUserGroup(name);
-        Assert.assertNotNull(userRef);
+        assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
-        Assert.assertNotNull(user);
+        assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 }

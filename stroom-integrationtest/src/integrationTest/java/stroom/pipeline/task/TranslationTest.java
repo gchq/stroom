@@ -17,15 +17,15 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Assert;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -52,7 +52,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -61,8 +60,8 @@ import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.api.SimpleTaskContext;
 import stroom.task.TaskManager;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService;
@@ -89,6 +88,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
@@ -143,7 +145,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         processData(inputDir, outputDir, false, compareOutput, exceptions);
 
         if (exceptions.size() > 0) {
-            Assert.fail(exceptions.get(0).getMessage());
+            fail(exceptions.get(0).getMessage());
         }
     }
 
@@ -197,7 +199,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     try {
                         test(p, feedDoc, outputDir, stem, compareOutput, exceptions);
                     } catch (final IOException | RuntimeException e) {
-                        Assert.fail(e.getMessage());
+                        fail(e.getMessage());
                     }
                 });
             }
@@ -222,7 +224,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<StreamProcessorTask> tasks = getTasks();
-        Assert.assertTrue("There should be one task here", tasks.size() == 1);
+        assertThat(tasks.size() == 1).as("There should be one task here").isTrue();
 
         for (final StreamProcessorTask task : tasks) {
             final long startStreamId = getLatestStreamId();
@@ -264,7 +266,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
                 // If we get an error stream you can just run the pipeline in stroom, to try and diagnose the fault
                 // if the above error stream dump doesn't help
-                Assert.assertTrue(processedStreams.size() > 0);
+                assertThat(processedStreams.size() > 0).isTrue();
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
@@ -292,7 +294,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         // Make sure there are no more tasks.
         tasks = getTasks();
-        Assert.assertTrue("There should not be any more tasks here", tasks.size() == 0);
+        assertThat(tasks.size() == 0).as("There should not be any more tasks here").isTrue();
     }
 
     private void addStream(final Path file, final FeedDoc feed) throws IOException {
@@ -333,7 +335,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final byte[] original = Files.readAllBytes(file);
             final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
             streamStore.closeStreamSource(checkSource);
-            Assert.assertTrue(Arrays.equals(original, stored));
+            assertThat(Arrays.equals(original, stored)).isTrue();
         }
     }
 
@@ -376,10 +378,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);
         final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
-        Assert.assertTrue("No feeds found", feeds.isPresent());
+        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-        Assert.assertTrue("No pipelines found", pipelines != null && pipelines.size() > 0);
-        Assert.assertEquals("Expected 1 pipeline", 1, pipelines.size());
+        assertThat(pipelines != null && pipelines.size() > 0).as("No pipelines found").isTrue();
+        assertThat(pipelines.size()).as("Expected 1 pipeline").isEqualTo(1);
 
         final DocRef pipelineRef = pipelines.get(0);
         final FeedDoc feed = feeds.get();
@@ -428,10 +430,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final SharedStepData stepData = response.getStepData();
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
-            Assert.assertFalse("Translation stepping has output indicators.", elementData.getOutputIndicators() != null
-                    && elementData.getOutputIndicators().getMaxSeverity() != null);
-            Assert.assertFalse("Translation stepping has code indicators.", elementData.getCodeIndicators() != null
-                    && elementData.getCodeIndicators().getMaxSeverity() != null);
+            assertThat(elementData.getOutputIndicators() != null
+                    && elementData.getOutputIndicators().getMaxSeverity() != null).as("Translation stepping has output indicators.").isFalse();
+            assertThat(elementData.getCodeIndicators() != null
+                    && elementData.getCodeIndicators().getMaxSeverity() != null).as("Translation stepping has code indicators.").isFalse();
 
             final String stem = feed.getName() + "~STEPPING~" + elementId;
             if (elementData.getInput() != null) {
@@ -449,7 +451,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
 
         if (exceptions.size() > 0) {
-            Assert.fail(exceptions.get(0).getMessage());
+            fail(exceptions.get(0).getMessage());
         }
     }
 

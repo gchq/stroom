@@ -16,156 +16,157 @@
 
 package stroom.xml.converter.ds3;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRingBuffer extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestRingBuffer extends StroomUnitTest {
     @Test
-    public void testString() {
+    void testString() {
         test(Mode.STRING);
     }
 
     @Test
-    public void testCharArray() {
+    void testCharArray() {
         test(Mode.CHAR_ARRAY);
     }
 
     @Test
-    public void testUnsafeCopy() {
+    void testUnsafeCopy() {
         test(Mode.UNSAFE_COPY);
     }
 
     @Test
-    public void testCopy() {
+    void testCopy() {
         test(Mode.COPY);
     }
 
     @Test
-    public void testCharAt() {
+    void testCharAt() {
         final RingBuffer buffer = RingBuffer.fromString("0123456789");
 
         // Test charAt.
         buffer.append("0123456789012345678901234567890123");
-        Assert.assertEquals("4567890123", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("4567890123");
         try {
             buffer.charAt(-1);
-            Assert.fail("Should have thrown exception.");
+            fail("Should have thrown exception.");
         } catch (final IndexOutOfBoundsException e) {
             // Ignore
         }
         try {
             buffer.charAt(buffer.length());
-            Assert.fail("Should have thrown exception.");
+            fail("Should have thrown exception.");
         } catch (final IndexOutOfBoundsException e) {
             // Ignore
         }
 
-        Assert.assertEquals('4', buffer.charAt(0));
-        Assert.assertEquals('5', buffer.charAt(1));
-        Assert.assertEquals('6', buffer.charAt(2));
-        Assert.assertEquals('7', buffer.charAt(3));
-        Assert.assertEquals('8', buffer.charAt(4));
-        Assert.assertEquals('9', buffer.charAt(5));
-        Assert.assertEquals('0', buffer.charAt(6));
-        Assert.assertEquals('1', buffer.charAt(7));
-        Assert.assertEquals('2', buffer.charAt(8));
-        Assert.assertEquals('3', buffer.charAt(9));
+        assertThat(buffer.charAt(0)).isEqualTo('4');
+        assertThat(buffer.charAt(1)).isEqualTo('5');
+        assertThat(buffer.charAt(2)).isEqualTo('6');
+        assertThat(buffer.charAt(3)).isEqualTo('7');
+        assertThat(buffer.charAt(4)).isEqualTo('8');
+        assertThat(buffer.charAt(5)).isEqualTo('9');
+        assertThat(buffer.charAt(6)).isEqualTo('0');
+        assertThat(buffer.charAt(7)).isEqualTo('1');
+        assertThat(buffer.charAt(8)).isEqualTo('2');
+        assertThat(buffer.charAt(9)).isEqualTo('3');
     }
 
     @Test
-    public void testLength() {
+    void testLength() {
         final RingBuffer buffer = RingBuffer.fromString("0123456789");
-        Assert.assertEquals(10, buffer.length());
+        assertThat(buffer.length()).isEqualTo(10);
         buffer.setLength(5);
-        Assert.assertEquals(5, buffer.length());
-        Assert.assertEquals("01234", buffer.toString());
+        assertThat(buffer.length()).isEqualTo(5);
+        assertThat(buffer.toString()).isEqualTo("01234");
         buffer.append("999");
-        Assert.assertEquals(8, buffer.length());
-        Assert.assertEquals("01234999", buffer.toString());
+        assertThat(buffer.length()).isEqualTo(8);
+        assertThat(buffer.toString()).isEqualTo("01234999");
         buffer.append("6667");
-        Assert.assertEquals(10, buffer.length());
-        Assert.assertEquals("2349996667", buffer.toString());
+        assertThat(buffer.length()).isEqualTo(10);
+        assertThat(buffer.toString()).isEqualTo("2349996667");
         buffer.setLength(5);
-        Assert.assertEquals(5, buffer.length());
-        Assert.assertEquals("23499", buffer.toString());
+        assertThat(buffer.length()).isEqualTo(5);
+        assertThat(buffer.toString()).isEqualTo("23499");
         buffer.setLength(10);
-        Assert.assertEquals(10, buffer.length());
-        Assert.assertEquals("2349996667", buffer.toString());
+        assertThat(buffer.length()).isEqualTo(10);
+        assertThat(buffer.toString()).isEqualTo("2349996667");
 
         try {
             buffer.setLength(-1);
-            Assert.fail("You cannot set the length of a buffer less than 0");
+            fail("You cannot set the length of a buffer less than 0");
         } catch (final IndexOutOfBoundsException e) {
             // Ignore.
         }
 
         try {
             buffer.setLength(11);
-            Assert.fail("You cannot set the length of a buffer greater than the buffer size");
+            fail("You cannot set the length of a buffer greater than the buffer size");
         } catch (final IndexOutOfBoundsException e) {
             // Ignore.
         }
     }
 
     @Test
-    public void testBlank() {
+    void testBlank() {
         final RingBuffer buffer = RingBuffer.fromString("0123456789");
-        Assert.assertFalse(buffer.isBlank());
+        assertThat(buffer.isBlank()).isFalse();
         buffer.clear();
-        Assert.assertTrue(buffer.isBlank());
+        assertThat(buffer.isBlank()).isTrue();
         buffer.append("          ");
-        Assert.assertEquals("          ", buffer.toString());
-        Assert.assertTrue(buffer.isBlank());
+        assertThat(buffer.toString()).isEqualTo("          ");
+        assertThat(buffer.isBlank()).isTrue();
         buffer.append("     ");
-        Assert.assertEquals("          ", buffer.toString());
-        Assert.assertTrue(buffer.isBlank());
+        assertThat(buffer.toString()).isEqualTo("          ");
+        assertThat(buffer.isBlank()).isTrue();
         buffer.setLength(0);
-        Assert.assertTrue(buffer.isBlank());
+        assertThat(buffer.isBlank()).isTrue();
     }
 
     @Test
-    public void testEmpty() {
+    void testEmpty() {
         final RingBuffer buffer = RingBuffer.fromString("0123456789");
-        Assert.assertFalse(buffer.isEmpty());
+        assertThat(buffer.isEmpty()).isFalse();
         buffer.clear();
-        Assert.assertTrue(buffer.isEmpty());
+        assertThat(buffer.isEmpty()).isTrue();
         buffer.append("          ");
-        Assert.assertEquals("          ", buffer.toString());
-        Assert.assertFalse(buffer.isEmpty());
+        assertThat(buffer.toString()).isEqualTo("          ");
+        assertThat(buffer.isEmpty()).isFalse();
         buffer.append("     ");
-        Assert.assertEquals("          ", buffer.toString());
-        Assert.assertFalse(buffer.isEmpty());
+        assertThat(buffer.toString()).isEqualTo("          ");
+        assertThat(buffer.isEmpty()).isFalse();
         buffer.setLength(0);
-        Assert.assertTrue(buffer.isEmpty());
+        assertThat(buffer.isEmpty()).isTrue();
     }
 
     @Test
-    public void testTrim() {
+    void testTrim() {
         // Test trim end.
         final RingBuffer buffer = RingBuffer.fromString("0123456789");
         buffer.removeEnd(3);
-        Assert.assertEquals("0123456", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0123456");
         buffer.removeEnd(3);
-        Assert.assertEquals("0123", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0123");
         buffer.removeEnd(3);
-        Assert.assertEquals("0", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0");
         try {
             buffer.removeEnd(3);
-            Assert.fail("You can't remove more content than exists");
+            fail("You can't remove more content than exists");
         } catch (final IndexOutOfBoundsException e) {
             // Ignore.
         }
-        Assert.assertEquals("0", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0");
         buffer.removeEnd(1);
-        Assert.assertEquals("", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("");
 
         try {
             buffer.removeEnd(-1);
-            Assert.fail("You can't remove a negative number of characters");
+            fail("You can't remove a negative number of characters");
         } catch (final IllegalArgumentException e) {
             // Ignore.
         }
@@ -173,24 +174,24 @@ public class TestRingBuffer extends StroomUnitTest {
         // Test trim start.
         buffer.append("0123456789");
         buffer.removeStart(3);
-        Assert.assertEquals("3456789", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("3456789");
         buffer.removeStart(3);
-        Assert.assertEquals("6789", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("6789");
         buffer.removeStart(3);
-        Assert.assertEquals("9", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("9");
         try {
             buffer.removeStart(3);
-            Assert.fail("You can't remove more content than exists");
+            fail("You can't remove more content than exists");
         } catch (final IndexOutOfBoundsException e) {
             // Ignore.
         }
-        Assert.assertEquals("9", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("9");
         buffer.removeStart(1);
-        Assert.assertEquals("", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("");
 
         try {
             buffer.removeStart(-1);
-            Assert.fail("You can't remove a negative number of characters");
+            fail("You can't remove a negative number of characters");
         } catch (final IllegalArgumentException e) {
             // Ignore.
         }
@@ -198,99 +199,79 @@ public class TestRingBuffer extends StroomUnitTest {
         // Test space trimming.
         buffer.append("0123456789");
         buffer.trim();
-        Assert.assertEquals("0123456789", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0123456789");
         buffer.append("   ");
-        Assert.assertEquals("3456789   ", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("3456789   ");
         buffer.trim();
-        Assert.assertEquals("3456789", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("3456789");
         buffer.append("   ");
-        Assert.assertEquals("3456789   ", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("3456789   ");
         buffer.append(" 0123   ");
-        Assert.assertEquals("   0123   ", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("   0123   ");
         buffer.trim();
-        Assert.assertEquals("0123", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0123");
         buffer.append("   0123   ");
-        Assert.assertEquals("   0123   ", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("   0123   ");
         buffer.trimStart();
-        Assert.assertEquals("0123   ", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("0123   ");
         buffer.append("   0123   ");
-        Assert.assertEquals("   0123   ", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("   0123   ");
         buffer.trimEnd();
-        Assert.assertEquals("   0123", buffer.toString());
+        assertThat(buffer.toString()).isEqualTo("   0123");
     }
 
     @Test
-    public void testSubSequence() {
+    void testSubSequence() {
         final RingBuffer buffer = RingBuffer.fromString("0123456789");
-        Assert.assertEquals("567", buffer.subSequence(5, 3).toString());
-        Assert.assertEquals("89", buffer.subSequence(8, 2).toString());
+        assertThat(buffer.subSequence(5, 3).toString()).isEqualTo("567");
+        assertThat(buffer.subSequence(8, 2).toString()).isEqualTo("89");
         buffer.append("01234");
-        Assert.assertEquals("5678901234", buffer.toString());
-        Assert.assertEquals("012", buffer.subSequence(5, 3).toString());
-        Assert.assertEquals("34", buffer.subSequence(8, 2).toString());
-        Assert.assertEquals("34567", buffer.subSequence(8, 5).toString());
+        assertThat(buffer.toString()).isEqualTo("5678901234");
+        assertThat(buffer.subSequence(5, 3).toString()).isEqualTo("012");
+        assertThat(buffer.subSequence(8, 2).toString()).isEqualTo("34");
+        assertThat(buffer.subSequence(8, 5).toString()).isEqualTo("34567");
 
-        try {
-            Assert.assertEquals("34", buffer.subSequence(10, 2).toString());
-            Assert.fail();
-        } catch (final IndexOutOfBoundsException e) {
-            // Ignore.
-        }
-        try {
-            Assert.assertEquals("34", buffer.subSequence(-1, 2).toString());
-            Assert.fail();
-        } catch (final IndexOutOfBoundsException e) {
-            // Ignore.
-        }
-        try {
-            Assert.assertEquals("34", buffer.subSequence(8, 11).toString());
-            Assert.fail();
-        } catch (final IndexOutOfBoundsException e) {
-            // Ignore.
-        }
-        try {
-            Assert.assertEquals("34", buffer.subSequence(8, -1).toString());
-            Assert.fail();
-        } catch (final IndexOutOfBoundsException e) {
-            // Ignore.
-        }
+        assertThatThrownBy(() -> buffer.subSequence(10, 2)).isInstanceOf(IndexOutOfBoundsException.class);
+        assertThatThrownBy(() -> buffer.subSequence(-1, 2)).isInstanceOf(IndexOutOfBoundsException.class);
+        assertThatThrownBy(() -> buffer.subSequence(8, 11)).isInstanceOf(IndexOutOfBoundsException.class);
+        assertThatThrownBy(() -> buffer.subSequence(8, -1)).isInstanceOf(IndexOutOfBoundsException.class);
     }
 
     @Test
-    public void testEqualsAndHash() {
+    void testEqualsAndHash() {
         final RingBuffer buffer1 = RingBuffer.fromString("0123456789");
-        Assert.assertEquals("0123456789", buffer1.toString());
+        assertThat(buffer1.toString()).isEqualTo("0123456789");
         final RingBuffer buffer2 = RingBuffer.fromString("0123456789");
-        Assert.assertEquals("0123456789", buffer1.toString());
+        assertThat(buffer1.toString()).isEqualTo("0123456789");
 
         testEquals(buffer1, buffer2, true);
 
         buffer1.append("01234");
-        Assert.assertEquals("5678901234", buffer1.toString());
+        assertThat(buffer1.toString()).isEqualTo("5678901234");
         testEquals(buffer1, buffer2, false);
         buffer2.append("01234");
-        Assert.assertEquals("5678901234", buffer2.toString());
+        assertThat(buffer2.toString()).isEqualTo("5678901234");
 
         testEquals(buffer1, buffer2, true);
 
         buffer1.append("9988998899");
-        Assert.assertEquals("9988998899", buffer1.toString());
+        assertThat(buffer1.toString()).isEqualTo("9988998899");
         testEquals(buffer1, buffer2, false);
         buffer2.append("9988998899");
-        Assert.assertEquals("9988998899", buffer2.toString());
+        assertThat(buffer2.toString()).isEqualTo("9988998899");
 
         testEquals(buffer1, buffer2, true);
 
         buffer1.append("8899");
-        Assert.assertEquals("9988998899", buffer1.toString());
+        assertThat(buffer1.toString()).isEqualTo("9988998899");
 
         testEquals(buffer1, buffer2, true);
     }
 
     private void testEquals(final RingBuffer buffer1, final RingBuffer buffer2, final boolean expected) {
-        Assert.assertEquals(expected, buffer1.equals(buffer2));
-        Assert.assertEquals(expected, buffer2.equals(buffer1));
-        Assert.assertEquals(expected, buffer1.hashCode() == buffer2.hashCode());
+        assertThat(buffer1.equals(buffer2)).isEqualTo(expected);
+        assertThat(buffer2.equals(buffer1)).isEqualTo(expected);
+        assertThat(buffer1.hashCode() == buffer2.hashCode()).isEqualTo(expected);
     }
 
     private void test(final Mode mode) {
@@ -344,42 +325,42 @@ public class TestRingBuffer extends StroomUnitTest {
         // Test wrapping characters.
         testMove(-5, "56789", buffer, mode);
         buffer.append('9');
-        Assert.assertEquals("567899", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("567899");
         buffer.append('9');
-        Assert.assertEquals("5678999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("5678999");
         buffer.append('9');
-        Assert.assertEquals("56789999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("56789999");
         buffer.append('9');
-        Assert.assertEquals("567899999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("567899999");
         buffer.append('9');
-        Assert.assertEquals("5678999999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("5678999999");
         buffer.append('9');
-        Assert.assertEquals("6789999999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("6789999999");
         buffer.append('9');
-        Assert.assertEquals("7899999999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("7899999999");
         buffer.append('9');
-        Assert.assertEquals("8999999999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("8999999999");
         buffer.append('9');
-        Assert.assertEquals("9999999999", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("9999999999");
 
         // Test string appends.
         buffer.append("0123456789");
-        Assert.assertEquals("0123456789", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("0123456789");
         buffer.append("01234");
-        Assert.assertEquals("5678901234", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("5678901234");
         buffer.append("012345678901234567890123456789");
-        Assert.assertEquals("0123456789", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("0123456789");
         buffer.append("0123456789012345678901234567890123");
-        Assert.assertEquals("4567890123", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("4567890123");
 
         // Test clear.
         buffer.clear();
-        Assert.assertEquals("", getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo("");
     }
 
     private void testMove(final int increment, final String expected, final RingBuffer buffer, final Mode mode) {
         buffer.move(increment);
-        Assert.assertEquals(expected, getString(buffer, mode));
+        assertThat(getString(buffer, mode)).isEqualTo(expected);
     }
 
     private String getString(final RingBuffer buffer, final Mode mode) {

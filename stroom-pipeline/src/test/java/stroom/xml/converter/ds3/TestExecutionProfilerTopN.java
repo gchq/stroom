@@ -16,19 +16,18 @@
 
 package stroom.xml.converter.ds3;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestExecutionProfilerTopN extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestExecutionProfilerTopN extends StroomUnitTest {
     @Test
-    public void test() {
+    void test() {
         final List<ExecutionProfiler> list = new ArrayList<>();
         list.add(new SimpleExecutionProfiler(10));
         list.add(new SimpleExecutionProfiler(1));
@@ -36,12 +35,12 @@ public class TestExecutionProfilerTopN extends StroomUnitTest {
 
         final ExecutionProfilerTopN topN = new ExecutionProfilerTopN(list, 2);
 
-        Assert.assertEquals(10, topN.getTopN().get(0).getTotalExecutionCount());
-        Assert.assertEquals(5, topN.getTopN().get(1).getTotalExecutionCount());
-        Assert.assertEquals(2, topN.getTopN().size());
+        assertThat(topN.getTopN().get(0).getTotalExecutionCount()).isEqualTo(10);
+        assertThat(topN.getTopN().get(1).getTotalExecutionCount()).isEqualTo(5);
+        assertThat(topN.getTopN().size()).isEqualTo(2);
     }
 
-    public class SimpleExecutionProfiler implements ExecutionProfiler {
+    class SimpleExecutionProfiler implements ExecutionProfiler {
         int id;
 
         public SimpleExecutionProfiler(final int id) {

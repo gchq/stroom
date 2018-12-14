@@ -16,17 +16,19 @@
 
 package stroom.servlet;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.test.StroomUnitTest;
 
-public class TestRejectPostFilter extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRejectPostFilter extends StroomUnitTest {
     @Test
-    public void testRootPattern() {
+    void testRootPattern() {
         final RejectPostFilter filter = new RejectPostFilter();
         filter.initRejectPattern("/");
 
-        Assert.assertTrue(filter.rejectUri("/"));
-        Assert.assertFalse(filter.rejectUri("/a"));
+        assertThat(filter.rejectUri("/")).isTrue();
+        assertThat(filter.rejectUri("/a")).isFalse();
     }
 }

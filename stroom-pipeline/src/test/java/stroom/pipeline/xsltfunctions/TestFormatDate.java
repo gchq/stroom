@@ -16,14 +16,12 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.pipeline.state.StreamHolder;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
+import stroom.pipeline.state.StreamHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomExpectedException;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.time.Instant;
@@ -31,78 +29,78 @@ import java.time.Month;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestFormatDate extends StroomUnitTest {
+class TestFormatDate extends StroomUnitTest {
     @Test
-    public void testDayOfWeekAndWeekAndWeakYear() {
+    void testDayOfWeekAndWeekAndWeakYear() {
         final FormatDate formatDate = createFormatDate("2010-03-01T12:45:22.643Z");
-        Assert.assertEquals("2018-01-01T00:00:00.000Z", test(formatDate, "ccc/w/YYYY", "Mon/1/2018"));
-        Assert.assertEquals("2018-01-01T00:00:00.000Z", test(formatDate, "E/w/YYYY", "Mon/1/2018"));
+        assertThat(test(formatDate, "ccc/w/YYYY", "Mon/1/2018")).isEqualTo("2018-01-01T00:00:00.000Z");
+        assertThat(test(formatDate, "E/w/YYYY", "Mon/1/2018")).isEqualTo("2018-01-01T00:00:00.000Z");
     }
 
     @Test
-    public void testDayOfWeekAndWeek() {
+    void testDayOfWeekAndWeek() {
         final FormatDate formatDate = createFormatDate("2010-03-04T12:45:22.643Z");
-        Assert.assertEquals("2010-01-08T00:00:00.000Z", test(formatDate, "ccc/w", "Fri/2"));
-        Assert.assertEquals("2010-01-08T00:00:00.000Z", test(formatDate, "E/w", "Fri/2"));
-        Assert.assertEquals("2009-10-02T00:00:00.000Z", test(formatDate, "ccc/w", "Fri/40"));
-        Assert.assertEquals("2009-10-02T00:00:00.000Z", test(formatDate, "E/w", "Fri/40"));
+        assertThat(test(formatDate, "ccc/w", "Fri/2")).isEqualTo("2010-01-08T00:00:00.000Z");
+        assertThat(test(formatDate, "E/w", "Fri/2")).isEqualTo("2010-01-08T00:00:00.000Z");
+        assertThat(test(formatDate, "ccc/w", "Fri/40")).isEqualTo("2009-10-02T00:00:00.000Z");
+        assertThat(test(formatDate, "E/w", "Fri/40")).isEqualTo("2009-10-02T00:00:00.000Z");
     }
 
     @Test
-    public void testDayOfWeek() {
+    void testDayOfWeek() {
         final FormatDate formatDate = createFormatDate("2010-03-04T12:45:22.643Z");
-        Assert.assertEquals("2010-03-01T00:00:00.000Z", test(formatDate, "ccc", "Mon"));
-        Assert.assertEquals("2010-03-01T00:00:00.000Z", test(formatDate, "E", "Mon"));
-        Assert.assertEquals("2010-02-26T00:00:00.000Z", test(formatDate, "ccc", "Fri"));
-        Assert.assertEquals("2010-02-26T00:00:00.000Z", test(formatDate, "E", "Fri"));
+        assertThat(test(formatDate, "ccc", "Mon")).isEqualTo("2010-03-01T00:00:00.000Z");
+        assertThat(test(formatDate, "E", "Mon")).isEqualTo("2010-03-01T00:00:00.000Z");
+        assertThat(test(formatDate, "ccc", "Fri")).isEqualTo("2010-02-26T00:00:00.000Z");
+        assertThat(test(formatDate, "E", "Fri")).isEqualTo("2010-02-26T00:00:00.000Z");
     }
 
     @Test
-    public void testParseManualTimeZones() {
+    void testParseManualTimeZones() {
         long date;
 
         final FormatDate formatDate = new FormatDate(null);
 
         date = formatDate.parseDate(null, "2001/08/01", "yyyy/MM/dd", "-07:00");
-        Assert.assertEquals("2001-08-01T07:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-08-01T07:00:00.000Z");
 
         date = formatDate.parseDate(null, "2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "-08:00");
-        Assert.assertEquals("2001-08-01T09:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-08-01T09:00:00.000Z");
 
         date = formatDate.parseDate(null, "2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "+01:00");
-        Assert.assertEquals("2001-08-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-08-01T00:00:00.000Z");
     }
 
     @Test
-    public void testParse() {
+    void testParse() {
         long date;
 
         final FormatDate formatDate = new FormatDate(null);
 
         date = formatDate.parseDate(null, "2001/01/01", "yyyy/MM/dd", null);
-        Assert.assertEquals("2001-01-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-01-01T00:00:00.000Z");
 
         date = formatDate.parseDate(null, "2001/08/01", "yyyy/MM/dd", "GMT");
-        Assert.assertEquals("2001-08-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-08-01T00:00:00.000Z");
 
         date = formatDate.parseDate(null, "2001/08/01 00:00:00.000", "yyyy/MM/dd HH:mm:ss.SSS", "GMT");
-        Assert.assertEquals("2001-08-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-08-01T00:00:00.000Z");
 
         date = formatDate.parseDate(null, "2001/08/01 00:00:00", "yyyy/MM/dd HH:mm:ss", "Europe/London");
-        Assert.assertEquals("2001-07-31T23:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-07-31T23:00:00.000Z");
 
         date = formatDate.parseDate(null, "2001/01/01", "yyyy/MM/dd", "GMT");
-        Assert.assertEquals("2001-01-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2001-01-01T00:00:00.000Z");
 
         date = formatDate.parseDate(null, "2008/08/08:00:00:00", "yyyy/MM/dd:HH:mm:ss", "Europe/London");
-        Assert.assertEquals("2008-08-07T23:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2008-08-07T23:00:00.000Z");
 
         date = formatDate.parseDate(null, "2008/08/08", "yyyy/MM/dd", "Europe/London");
-        Assert.assertEquals("2008-08-07T23:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo("2008-08-07T23:00:00.000Z");
     }
 
     @Test
@@ -115,7 +113,7 @@ public class TestFormatDate extends StroomUnitTest {
         } catch (final RuntimeException e) {
             thrownException = true;
         }
-        Assert.assertTrue(thrownException);
+        assertThat(thrownException).isTrue();
 
         // Winter
         doGMTBSTGuessTest("2011-01-01T00:00:00.999Z", "2011/01/01 00:00:00.999");
@@ -141,63 +139,63 @@ public class TestFormatDate extends StroomUnitTest {
     private void doGMTBSTGuessTest(final String expected, final String value) {
         final FormatDate formatDate = new FormatDate(null);
         final long date = formatDate.parseDate(null, value, "yyyy/MM/dd HH:mm:ss.SSS", "GMT/BST");
-        Assert.assertEquals(expected, DateUtil.createNormalDateTimeString(date));
+        assertThat(DateUtil.createNormalDateTimeString(date)).isEqualTo(expected);
     }
 
     @Test
-    public void testDateWithNoYear() {
+    void testDateWithNoYear() {
         final FormatDate formatDate = createFormatDate("2010-03-01T12:45:22.643Z");
 
-        Assert.assertEquals("2010-01-01T00:00:00.000Z", test(formatDate, "dd/MM", "01/01"));
-        Assert.assertEquals("2009-04-01T00:00:00.000Z", test(formatDate, "dd/MM", "01/04"));
-        Assert.assertEquals("2010-01-01T00:00:00.000Z", test(formatDate, "MM", "01"));
-        Assert.assertEquals("2009-04-01T00:00:00.000Z", test(formatDate, "MM", "04"));
-        Assert.assertEquals("2010-03-01T00:00:00.000Z", test(formatDate, "dd", "01"));
-        Assert.assertEquals("2010-02-04T00:00:00.000Z", test(formatDate, "dd", "04"));
-        Assert.assertEquals("2010-03-01T12:00:00.000Z", test(formatDate, "HH", "12"));
-        Assert.assertEquals("2010-03-01T12:30:00.000Z", test(formatDate, "HH:mm", "12:30"));
+        assertThat(test(formatDate, "dd/MM", "01/01")).isEqualTo("2010-01-01T00:00:00.000Z");
+        assertThat(test(formatDate, "dd/MM", "01/04")).isEqualTo("2009-04-01T00:00:00.000Z");
+        assertThat(test(formatDate, "MM", "01")).isEqualTo("2010-01-01T00:00:00.000Z");
+        assertThat(test(formatDate, "MM", "04")).isEqualTo("2009-04-01T00:00:00.000Z");
+        assertThat(test(formatDate, "dd", "01")).isEqualTo("2010-03-01T00:00:00.000Z");
+        assertThat(test(formatDate, "dd", "04")).isEqualTo("2010-02-04T00:00:00.000Z");
+        assertThat(test(formatDate, "HH", "12")).isEqualTo("2010-03-01T12:00:00.000Z");
+        assertThat(test(formatDate, "HH:mm", "12:30")).isEqualTo("2010-03-01T12:30:00.000Z");
     }
 
     @Test
-    public void testCaseSensitivity_upperCaseMonth() {
+    void testCaseSensitivity_upperCaseMonth() {
         ZonedDateTime time = parseUtcDate("dd-MMM-yy", "18-APR-18");
-        Assert.assertEquals(Month.APRIL, time.getMonth());
+        assertThat(time.getMonth()).isEqualTo(Month.APRIL);
     }
 
     @Test
-    public void testCaseSensitivity_sentenceCaseMonth() {
+    void testCaseSensitivity_sentenceCaseMonth() {
         ZonedDateTime time = parseUtcDate("dd-MMM-yy", "18-Apr-18");
-        Assert.assertEquals(Month.APRIL, time.getMonth());
+        assertThat(time.getMonth()).isEqualTo(Month.APRIL);
     }
 
     @Test
-    public void testCaseSensitivity_lowerCaseMonth() {
+    void testCaseSensitivity_lowerCaseMonth() {
         ZonedDateTime time = parseUtcDate("dd-MMM-yy", "18-apr-18");
-        Assert.assertEquals(Month.APRIL, time.getMonth());
+        assertThat(time.getMonth()).isEqualTo(Month.APRIL);
     }
 
     @Test
-    public void testWithTimeZoneInStr1() {
+    void testWithTimeZoneInStr1() {
         ZonedDateTime time = parseUtcDate("dd-MM-yy HH:mm:ss xxx", "18-04-18 01:01:01 +00:00");
     }
 
     @Test
-    public void testWithTimeZoneInStr2() {
+    void testWithTimeZoneInStr2() {
         parseUtcDate("dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 +0000");
     }
 
     @Test
-    public void testWithTimeZoneInStr3() {
+    void testWithTimeZoneInStr3() {
         parseUtcDate("dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 -0000");
     }
 
     @Test
-    public void testWithTimeZoneInStr4() {
+    void testWithTimeZoneInStr4() {
         parseUtcDate("dd-MM-yy HH:mm:ss xxx", "18-04-18 01:01:01 -00:00");
     }
 
     @Test
-    public void testWithTimeZoneInStr5() {
+    void testWithTimeZoneInStr5() {
         parseUtcDate("dd-MM-yy HH:mm:ss VV", "18-04-18 01:01:01 Europe/London");
     }
 

@@ -16,8 +16,8 @@
 
 package stroom.xml.converter.datasplitter;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -29,7 +29,9 @@ import javax.inject.Provider;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestDataSplitter2 extends AbstractProcessIntegrationTest {
     @Inject
     private Provider<F2XTestUtil> f2XTestUtilProvider;
     @Inject
@@ -41,7 +43,7 @@ public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
      * Tests a multi line regex file.
      */
     @Test
-    public void testMultiLineRegex() {
+    void testMultiLineRegex() {
         final String xml = runF2XTest(TextConverterType.DATA_SPLITTER, "TestDataSplitter/MultiLineRegex.ds",
                 new ByteArrayInputStream("0123456789abcdeignore".getBytes()));
 
@@ -51,7 +53,7 @@ public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
                 + "<data value=\"0123456789\"/>" + "<data value=\"abcde\"/>"
                 + "</record></records>";
 
-        Assert.assertEquals(example, xml);
+        assertThat(xml).isEqualTo(example);
     }
 
     private String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
@@ -71,7 +73,7 @@ public class TestDataSplitter2 extends AbstractProcessIntegrationTest {
             // Start by validating the resource.
             if (textConverterType == TextConverterType.DATA_SPLITTER) {
                 final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                Assert.assertTrue(message, message.length() == 0);
+                assertThat(message.length() == 0).as(message).isTrue();
             }
         });
     }

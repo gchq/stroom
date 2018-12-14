@@ -1,16 +1,17 @@
 package stroom.refdata.store.offheapstore.serdes;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.offheapstore.ValueStoreKey;
 
 import java.nio.ByteBuffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStoreKeySerde> {
+class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStoreKeySerde> {
 
     @Test
-    public void testSerializeDeserialize() {
+    void testSerializeDeserialize() {
         final ValueStoreKey valueStoreKey = new ValueStoreKey(
                 123456789,
                 (short) 1);
@@ -19,7 +20,7 @@ public class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, Val
     }
 
     @Test
-    public void testNextId() {
+    void testNextId() {
 
         ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
 
@@ -34,7 +35,7 @@ public class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, Val
     }
 
     @Test
-    public void testIncrementId() {
+    void testIncrementId() {
         ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
 
         ByteBuffer byteBuffer = serialize(originalValueStoreKey);
@@ -48,7 +49,7 @@ public class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, Val
     }
 
     @Test
-    public void testUpdateId() {
+    void testUpdateId() {
         ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
 
         ValueStoreKeySerde serde = new ValueStoreKeySerde();
@@ -64,7 +65,7 @@ public class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, Val
     }
 
     @Test
-    public void testExtractId() {
+    void testExtractId() {
         short id = 123;
         ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, id);
 

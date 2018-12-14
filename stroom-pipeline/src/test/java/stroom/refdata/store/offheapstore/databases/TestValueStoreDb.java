@@ -1,21 +1,23 @@
 package stroom.refdata.store.offheapstore.databases;
 
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.store.offheapstore.lmdb.EntryConsumer;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.refdata.util.ByteBufferPool;
-import stroom.refdata.util.PooledByteBuffer;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.StringValue;
 import stroom.refdata.store.offheapstore.ValueStoreKey;
+import stroom.refdata.store.offheapstore.lmdb.EntryConsumer;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.refdata.util.PooledByteBuffer;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,22 +29,18 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-public class TestValueStoreDb extends AbstractLmdbDbTest {
+class TestValueStoreDb extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStoreDb.class);
-
-    private ValueStoreDb valueStoreDb = null;
-
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
+    private ValueStoreDb valueStoreDb = null;
 
     //TODO should really spin up guice rather than use this factory class
 //    private final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
 
-
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         valueStoreDb = new ValueStoreDb(
@@ -67,9 +65,8 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
     }
 
 
-
     @Test
-    public void testGetOrCreateSparseIds() {
+    void testGetOrCreateSparseIds() {
         final List<String> stringsWithSameHash = generateHashClashes(10);
 
         final List<RefDataValue> refDataValues = stringsWithSameHash.stream()
@@ -112,16 +109,16 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         valueStoreDb.logDatabaseContents();
 
         // check the ID value for each of our original values in insertion order
-        assertThat(valueStoreKeysMap.get(0).getUniqueId()).isEqualTo((short)0);
-        assertThat(valueStoreKeysMap.get(1).getUniqueId()).isEqualTo((short)1); //since deleted
-        assertThat(valueStoreKeysMap.get(2).getUniqueId()).isEqualTo((short)2); //since deleted
-        assertThat(valueStoreKeysMap.get(3).getUniqueId()).isEqualTo((short)3); //since deleted
-        assertThat(valueStoreKeysMap.get(4).getUniqueId()).isEqualTo((short)4);
-        assertThat(valueStoreKeysMap.get(5).getUniqueId()).isEqualTo((short)1); //used empty space after delete
-        assertThat(valueStoreKeysMap.get(6).getUniqueId()).isEqualTo((short)2); //used empty space after delete
-        assertThat(valueStoreKeysMap.get(7).getUniqueId()).isEqualTo((short)3); //used empty space after delete
-        assertThat(valueStoreKeysMap.get(8).getUniqueId()).isEqualTo((short)5);
-        assertThat(valueStoreKeysMap.get(9).getUniqueId()).isEqualTo((short)6);
+        assertThat(valueStoreKeysMap.get(0).getUniqueId()).isEqualTo((short) 0);
+        assertThat(valueStoreKeysMap.get(1).getUniqueId()).isEqualTo((short) 1); //since deleted
+        assertThat(valueStoreKeysMap.get(2).getUniqueId()).isEqualTo((short) 2); //since deleted
+        assertThat(valueStoreKeysMap.get(3).getUniqueId()).isEqualTo((short) 3); //since deleted
+        assertThat(valueStoreKeysMap.get(4).getUniqueId()).isEqualTo((short) 4);
+        assertThat(valueStoreKeysMap.get(5).getUniqueId()).isEqualTo((short) 1); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(6).getUniqueId()).isEqualTo((short) 2); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(7).getUniqueId()).isEqualTo((short) 3); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(8).getUniqueId()).isEqualTo((short) 5);
+        assertThat(valueStoreKeysMap.get(9).getUniqueId()).isEqualTo((short) 6);
     }
 
     /**
@@ -162,7 +159,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
 
     @Test
-    public void testGet_simple() {
+    void testGet_simple() {
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
 
         final String val1str = "value one";
@@ -202,7 +199,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testGet_sameHashCodes() {
+    void testGet_sameHashCodes() {
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
 
         String val1str = "AaAa";
@@ -248,17 +245,17 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testAreValueEqual_twoEqualValues() {
+    void testAreValueEqual_twoEqualValues() {
         doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value1"), true);
     }
 
     @Test
-    public void testAreValueEqual_twoDifferentValues() {
+    void testAreValueEqual_twoDifferentValues() {
         doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value2"), false);
     }
 
     @Test
-    public void testAreValueEqual_notFound() {
+    void testAreValueEqual_notFound() {
         StringValue value2 = StringValue.of("value2");
         ValueStoreKey unknownValueStoreKey = new ValueStoreKey(123, (short) 0);
         ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();

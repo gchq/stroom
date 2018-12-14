@@ -17,8 +17,8 @@
 
 package stroom.importexport;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerNodeService;
@@ -38,7 +38,9 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
     @Inject
@@ -53,16 +55,16 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     private ExplorerNodeService explorerNodeService;
 
     @Test
-    public void testExport() {
+    void testExport() {
         final DocRef system = explorerNodeService.getRoot().map(ExplorerNode::getDocRef).orElse(null);
-        Assert.assertEquals(1, explorerNodeService.getDescendants(system).size());
+        assertThat(explorerNodeService.getDescendants(system).size()).isEqualTo(1);
 
         final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", system, null);
         DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_" + FileSystemTestUtil.getUniqueTestString(), system, null);
         DocRef folder2child1 = explorerService.create(ExplorerConstants.FOLDER, "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
         DocRef folder2child2 = explorerService.create(ExplorerConstants.FOLDER, "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(), folder2, null);
 
-        Assert.assertEquals(5, explorerNodeService.getDescendants(system).size());
+        assertThat(explorerNodeService.getDescendants(system).size()).isEqualTo(5);
 
         final DocRef tran1Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
         final PipelineDoc tran1 = pipelineStore.readDocument(tran1Ref);
@@ -112,10 +114,10 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         // Delete it and check
         pipelineStore.deleteDocument(tran2.getUuid());
-        Assert.assertEquals(startTranslationSize - 1, pipelineStore.list().size());
+        assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize - 1);
 
         feedStore.deleteDocument(eventFeedRef.getUuid());
-        Assert.assertEquals(startFeedSize - 1, feedStore.list().size());
+        assertThat(feedStore.list().size()).isEqualTo(startFeedSize - 1);
 
         // Import
         final List<ImportState> confirmations = importExportService
@@ -127,8 +129,8 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-        Assert.assertEquals(startFeedSize, feedStore.list().size());
-        Assert.assertEquals(startTranslationSize, pipelineStore.list().size());
+        assertThat(feedStore.list().size()).isEqualTo(startFeedSize);
+        assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize);
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
         final DocRefs criteriaChild = new DocRefs();

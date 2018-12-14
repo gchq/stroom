@@ -16,14 +16,14 @@
 
 package stroom.data.store.upload;
 
-import org.junit.Assert;
-import org.junit.Test;
-import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.FindDataCriteria;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.StreamDownloadSettings;
 import stroom.data.store.StreamDownloadTask;
 import stroom.data.store.StreamUploadTask;
@@ -48,7 +48,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -59,7 +61,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     private TaskManager taskManager;
 
     @Test
-    public void testDownload() throws IOException {
+    void testDownload() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
@@ -69,27 +71,27 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        Assert.assertEquals(2, streamMetaService.find(findStreamCriteria).size());
+        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(2);
 
         taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
-        Assert.assertEquals(2, streamMetaService.find(findStreamCriteria).size());
+        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(2);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
-        Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Manifest));
-        Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Data));
-        Assert.assertFalse(stroomZipFile.containsEntry("001", StroomZipFileType.Context));
-        Assert.assertFalse(stroomZipFile.containsEntry("001", StroomZipFileType.Meta));
+        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Manifest)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Data)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Context)).isFalse();
+        assertThat(stroomZipFile.containsEntry("001", StroomZipFileType.Meta)).isFalse();
         stroomZipFile.close();
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null));
 
-        Assert.assertEquals(4, streamMetaService.find(findStreamCriteria).size());
+        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(4);
     }
 
     @Test
-    public void testUploadFlatFile() throws IOException {
+    void testUploadFlatFile() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final FindDataCriteria findStreamCriteria = new FindDataCriteria();
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
@@ -100,11 +102,11 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n"));
 
-        Assert.assertEquals(1, streamMetaService.find(findStreamCriteria).size());
+        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1);
     }
 
     @Test
-    public void testDownloadNestedComplex() throws IOException {
+    void testDownloadNestedComplex() throws IOException {
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
@@ -146,18 +148,18 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        Assert.assertEquals(1, streamMetaService.find(findStreamCriteria).size());
+        assertThat(streamMetaService.find(findStreamCriteria).size()).isEqualTo(1);
 
         taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
-        Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest));
-        Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Meta));
-        Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Context));
-        Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Data));
-        Assert.assertTrue(stroomZipFile.containsEntry("001_2", StroomZipFileType.Meta));
-        Assert.assertTrue(stroomZipFile.containsEntry("001_2", StroomZipFileType.Context));
-        Assert.assertTrue(stroomZipFile.containsEntry("001_2", StroomZipFileType.Data));
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Meta)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Context)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Data)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Meta)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Context)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Data)).isTrue();
         stroomZipFile.close();
 
         final String extraMeta = "Z:ALL\n";
@@ -167,17 +169,16 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final List<Data> streamList = streamMetaService.find(findStreamCriteria);
 
-        Assert.assertEquals(2, streamList.size());
+        assertThat(streamList.size()).isEqualTo(2);
 
         final Data originalStream = streamTarget.getStream();
 
         for (final Data stream : streamList) {
-            Assert.assertEquals(DataStatus.UNLOCKED, stream.getStatus());
+            assertThat(stream.getStatus()).isEqualTo(DataStatus.UNLOCKED);
             final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
 
-            Assert.assertEquals("DATA1DATA2", StreamUtil.streamToString(streamSource.getInputStream(), false));
-            Assert.assertEquals("CONTEXT1CONTEXT2",
-                    StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream(), false));
+            assertThat(StreamUtil.streamToString(streamSource.getInputStream(), false)).isEqualTo("DATA1DATA2");
+            assertThat(StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream(), false)).isEqualTo("CONTEXT1CONTEXT2");
 
             if (originalStream.equals(stream)) {
                 assertContains(
@@ -196,7 +197,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
     private void assertContains(final String str, final String... testList) {
         for (final String test : testList) {
-            Assert.assertTrue("Expecting " + str + " to contain " + test, str.contains(test));
+            assertThat(str.contains(test)).as("Expecting " + str + " to contain " + test).isTrue();
         }
     }
 }

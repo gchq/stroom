@@ -16,11 +16,13 @@
 
 package stroom.node;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.node.NodeStatusServiceUtil.CPUStats;
 
-public class TestNodeStatusServiceUtil {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestNodeStatusServiceUtil {
     // example output from 'cat /proc/stat'
     private String output = "cpu  4723476392 160361 77496194 8438714515 57132415 3363 1832867 0 0\n"
             + "cpu0 213427959 8748 3829293 188887931 9302819 0 86473 0 0\n"
@@ -60,16 +62,16 @@ public class TestNodeStatusServiceUtil {
             + "softirq 106809686366 0 2504890812 833689 3046572383 77525372 0 77493370 3224493680 9272453 3379324095\n";
 
     @Test
-    public void testCreateLinuxStats() {
+    void testCreateLinuxStats() {
         final NodeStatusServiceUtil nodeStatusServiceUtil = new NodeStatusServiceUtil(null, null);
         final CPUStats cpuStats = nodeStatusServiceUtil.createLinuxStats(output);
 
-        Assert.assertEquals(4723476392L, cpuStats.user.longValue());
-        Assert.assertEquals(160361L, cpuStats.nice.longValue());
-        Assert.assertEquals(77496194L, cpuStats.system.longValue());
-        Assert.assertEquals(8438714515L, cpuStats.idle.longValue());
-        Assert.assertEquals(57132415L, cpuStats.ioWait.longValue());
-        Assert.assertEquals(3363L, cpuStats.irq.longValue());
-        Assert.assertEquals(1832867L, cpuStats.softirq.longValue());
+        assertThat(cpuStats.user.longValue()).isEqualTo(4723476392L);
+        assertThat(cpuStats.nice.longValue()).isEqualTo(160361L);
+        assertThat(cpuStats.system.longValue()).isEqualTo(77496194L);
+        assertThat(cpuStats.idle.longValue()).isEqualTo(8438714515L);
+        assertThat(cpuStats.ioWait.longValue()).isEqualTo(57132415L);
+        assertThat(cpuStats.irq.longValue()).isEqualTo(3363L);
+        assertThat(cpuStats.softirq.longValue()).isEqualTo(1832867L);
     }
 }

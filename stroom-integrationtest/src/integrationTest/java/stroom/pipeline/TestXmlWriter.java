@@ -1,7 +1,7 @@
 package stroom.pipeline;
 
 import net.sf.saxon.serialize.charcode.UTF16CharacterSet;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
@@ -15,9 +15,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 
-public class TestXmlWriter {
+class TestXmlWriter {
     @Test
-    public void testUnicodeHandling() throws Exception {
+    void testUnicodeHandling() throws Exception {
         final StringBuilder sb = new StringBuilder();
         for (int i = '\u0001'; i <= '\uffff'; i++) {
             char c = (char) i;

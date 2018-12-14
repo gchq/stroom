@@ -16,7 +16,8 @@
 
 package stroom.pipeline.error;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.util.shared.Severity;
 import stroom.util.test.StroomUnitTest;
 
@@ -24,9 +25,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TestSortSeverity extends StroomUnitTest {
+class TestSortSeverity extends StroomUnitTest {
     @Test
-    public void test() {
+    void test() {
         final List<Severity> list = new ArrayList<>();
         list.add(Severity.INFO);
         list.add(Severity.FATAL_ERROR);

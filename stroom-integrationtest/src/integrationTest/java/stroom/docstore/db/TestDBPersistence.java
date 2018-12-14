@@ -1,9 +1,9 @@
 package stroom.docstore.db;
 
-import org.junit.Assert;
-import org.junit.Test;
-import stroom.docstore.Persistence;
+
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
+import stroom.docstore.Persistence;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -14,15 +14,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestDBPersistence extends AbstractCoreIntegrationTest {
+class TestDBPersistence extends AbstractCoreIntegrationTest {
     private static final Charset CHARSET = Charset.forName("UTF-8");
 
     @Inject
     private Persistence persistence;
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         final String uuid1 = UUID.randomUUID().toString();
         final String uuid2 = UUID.randomUUID().toString();
         final DocRef docRef = new DocRef("test-type", "test-uuid", "test-name");
@@ -38,11 +39,11 @@ public class TestDBPersistence extends AbstractCoreIntegrationTest {
         persistence.write(docRef, false, data);
 
         // Exists
-        Assert.assertTrue(persistence.exists(docRef));
+        assertThat(persistence.exists(docRef)).isTrue();
 
         // Read
         data = persistence.read(docRef);
-        Assert.assertEquals(uuid1, new String(data.get("meta"), CHARSET));
+        assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid1);
 
         // Update
         data = new HashMap<>();
@@ -51,12 +52,12 @@ public class TestDBPersistence extends AbstractCoreIntegrationTest {
 
         // Read
         data = persistence.read(docRef);
-        Assert.assertEquals(uuid2, new String(data.get("meta"), CHARSET));
+        assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid2);
 
         // List
         final List<DocRef> refs = persistence.list(docRef.getType());
-        Assert.assertEquals(1, refs.size());
-        Assert.assertEquals(docRef, refs.get(0));
+        assertThat(refs.size()).isEqualTo(1);
+        assertThat(refs.get(0)).isEqualTo(docRef);
 
         // Delete
         persistence.delete(docRef);

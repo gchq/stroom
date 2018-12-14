@@ -17,35 +17,35 @@
 package stroom.ruleset;
 
 import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.store.ExpressionMatcher;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.store.ExpressionMatcher;
-import stroom.data.meta.api.MetaDataSource;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestExpressionMatcher {
+class TestExpressionMatcher {
     @Test
-    public void testSimpleMatch() {
+    void testSimpleMatch() {
         test(createAttributeMap(), createExpression(Op.AND, "TEST_FEED"), true);
     }
 
     @Test
-    public void testLeadingWildcardMatch() {
+    void testLeadingWildcardMatch() {
         test(createAttributeMap(), createExpression(Op.AND, "*FEED"), true);
     }
 
     @Test
-    public void testTrailingWildcardMatch() {
+    void testTrailingWildcardMatch() {
         test(createAttributeMap(), createExpression(Op.AND, "TEST*"), true);
     }
 
     @Test
-    public void testNotMatch() {
+    void testNotMatch() {
         test(createAttributeMap(), createExpression(Op.NOT, "TEST_FEED"), false);
     }
 

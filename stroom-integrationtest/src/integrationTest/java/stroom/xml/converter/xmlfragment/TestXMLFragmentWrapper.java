@@ -16,8 +16,8 @@
 
 package stroom.xml.converter.xmlfragment;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -28,7 +28,9 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.ByteArrayInputStream;
 
-public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
     @Inject
     private Provider<F2XTestUtil> f2XTestUtilProvider;
     @Inject
@@ -40,7 +42,7 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
      * Tests a basic XML fragment.
      */
     @Test
-    public void testBasicFragment() {
+    void testBasicFragment() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final TextConverterType textConverterType = TextConverterType.XML_FRAGMENT;
             final String textConverterLocation = "TestXMLFragmentWrapper/XMLFragmentWrapper.xml";
@@ -49,7 +51,7 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
             if (textConverterType == TextConverterType.DATA_SPLITTER) {
                 final XMLValidator xmlValidator = xmlValidatorProvider.get();
                 final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);
-                Assert.assertTrue(message, message.length() == 0);
+                assertThat(message.length() == 0).as(message).isTrue();
             }
 
             final F2XTestUtil f2xTestUtil = f2XTestUtilProvider.get();
@@ -62,7 +64,7 @@ public class TestXMLFragmentWrapper extends AbstractProcessIntegrationTest {
                     + "xsi:schemaLocation=\"records:2 file://records-v2.0.xsd\" " + "version=\"2.0\">"
                     + "<record><data name=\"Test Name\" value=\"Test value\"/></record>" + "</records>";
 
-            Assert.assertEquals(example, xml);
+            assertThat(xml).isEqualTo(example);
         });
     }
 }

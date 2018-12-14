@@ -17,12 +17,12 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Test;
-import stroom.entity.shared.Period;
-import stroom.node.shared.Node;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
+import stroom.entity.shared.Period;
+import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
@@ -37,7 +37,9 @@ import javax.inject.Inject;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
-public class TestStreamTaskService extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -48,7 +50,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     private StreamTaskCreator streamTaskCreator;
 
     @Test
-    public void testSaveAndGetAll() {
+    void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final Data file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         final Data file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
@@ -56,13 +58,13 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        Assert.assertEquals("checking we can delete stand alone files", 1, streamMetaService.delete(file3.getId()));
+        assertThat(streamMetaService.delete(file3.getId())).as("checking we can delete stand alone files").isEqualTo(1);
 
         // Create all required tasks.
         createTasks();
 
         final ProcessorFilterTask ps1 = streamTaskService.find(FindStreamTaskCriteria.createWithStream(file1)).getFirst();
-        Assert.assertNotNull(ps1);
+        assertThat(ps1).isNotNull();
         ps1.setStatus(TaskStatus.COMPLETE);
 
         streamTaskService.save(ps1);
@@ -71,26 +73,26 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 //        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
-        Assert.assertEquals(1, streamTaskService.find(criteria).size());
+        assertThat(streamTaskService.find(criteria).size()).isEqualTo(1);
 
         // Check the date filter works
         criteria.setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
-        Assert.assertEquals(1, streamTaskService.find(criteria).size());
+        assertThat(streamTaskService.find(criteria).size()).isEqualTo(1);
 
         criteria.setCreatePeriod(
                 new Period(Instant.ofEpochMilli(criteria.getCreatePeriod().getFrom()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli(),
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
-        Assert.assertEquals(0, streamTaskService.find(criteria).size());
+        assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
 
-        Assert.assertNotNull(streamMetaService.getData(file1.getId()));
-        Assert.assertNotNull(streamMetaService.getData(file2.getId()));
+        assertThat(streamMetaService.getData(file1.getId())).isNotNull();
+        assertThat(streamMetaService.getData(file2.getId())).isNotNull();
 
         criteria = new FindStreamTaskCriteria();
-        Assert.assertNotNull(streamTaskService.findSummary(criteria));
+        assertThat(streamTaskService.findSummary(criteria)).isNotNull();
     }
 
     @Test
-    public void testApplyAllCriteria() {
+    void testApplyAllCriteria() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Node testNode = new Node();
@@ -115,11 +117,11 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 //        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Processor.ENTITY_TYPE);
 
-        Assert.assertEquals(0, streamTaskService.find(criteria).size());
+        assertThat(streamTaskService.find(criteria).size()).isEqualTo(0);
     }
 
     @Test
-    public void testApplyAllCriteriaSummary() {
+    void testApplyAllCriteriaSummary() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Node testNode = new Node();

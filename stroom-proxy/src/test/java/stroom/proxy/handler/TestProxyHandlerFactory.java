@@ -1,7 +1,7 @@
 package stroom.proxy.handler;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
@@ -13,51 +13,49 @@ import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestProxyHandlerFactory extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestProxyHandlerFactory extends StroomUnitTest {
     @SuppressWarnings("unchecked")
     @Test
-    public void testStoreAndForward() throws Exception {
+    void testStoreAndForward() throws Exception {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, true);
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
 
-        Assert.assertTrue("Expecting 1 handler that saves to the repository",
-                incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler);
+        assertThat(incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler).as("Expecting 1 handler that saves to the repository").isTrue();
 
         final List<StreamHandler> outgoingHandlers = proxyHandlerFactory.addSendHandlers(new ArrayList<>());
-        Assert.assertTrue("Expecting 2 handler that forward to other URLS",
-                outgoingHandlers.size() == 2 && outgoingHandlers.get(0) instanceof ForwardStreamHandler
-                        && outgoingHandlers.get(1) instanceof ForwardStreamHandler);
+        assertThat(outgoingHandlers.size() == 2 && outgoingHandlers.get(0) instanceof ForwardStreamHandler
+                && outgoingHandlers.get(1) instanceof ForwardStreamHandler).as("Expecting 2 handler that forward to other URLS").isTrue();
     }
 
     @Test
-    public void testForward() throws Exception {
+    void testForward() throws Exception {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(false, true);
 
         for (int i = 0; i < 2; i++) {
             final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
-            Assert.assertTrue("Expecting 2 handler that forward to other URLS",
-                    incomingHandlers.size() == 2 && incomingHandlers.get(0) instanceof ForwardStreamHandler
-                            && incomingHandlers.get(1) instanceof ForwardStreamHandler);
+            assertThat(incomingHandlers.size() == 2 && incomingHandlers.get(0) instanceof ForwardStreamHandler
+                    && incomingHandlers.get(1) instanceof ForwardStreamHandler).as("Expecting 2 handler that forward to other URLS").isTrue();
 
-            Assert.assertEquals("https://url1", ((ForwardStreamHandler) incomingHandlers.get(0)).getForwardUrl());
-            Assert.assertEquals("https://url2", ((ForwardStreamHandler) incomingHandlers.get(1)).getForwardUrl());
+            assertThat(((ForwardStreamHandler) incomingHandlers.get(0)).getForwardUrl()).isEqualTo("https://url1");
+            assertThat(((ForwardStreamHandler) incomingHandlers.get(1)).getForwardUrl()).isEqualTo("https://url2");
 
             final List<StreamHandler> outgoingHandlers = proxyHandlerFactory.addSendHandlers(new ArrayList<>());
-            Assert.assertTrue("Expecting 0 handler that forward to other URLS", outgoingHandlers.size() == 0);
+            assertThat(outgoingHandlers.size() == 0).as("Expecting 0 handler that forward to other URLS").isTrue();
         }
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testStore() throws Exception {
+    void testStore() throws Exception {
         final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, false);
 
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
-        Assert.assertTrue("Expecting 1 handler that stores incoming data",
-                incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler);
+        assertThat(incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler).as("Expecting 1 handler that stores incoming data").isTrue();
 
         final List<StreamHandler> outgoingHandlers = proxyHandlerFactory.addSendHandlers(new ArrayList<>());
-        Assert.assertTrue("Expecting 1 handlers that forward to other URLS", outgoingHandlers.size() == 0);
+        assertThat(outgoingHandlers.size() == 0).as("Expecting 1 handlers that forward to other URLS").isTrue();
     }
 
     private MasterStreamHandlerFactory getProxyHandlerFactory(final boolean isStoringEnabled,

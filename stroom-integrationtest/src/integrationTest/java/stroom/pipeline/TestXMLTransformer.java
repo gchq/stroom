@@ -16,10 +16,9 @@
 
 package stroom.pipeline;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
-import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -27,6 +26,7 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -48,7 +48,10 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
-public class TestXMLTransformer extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
+class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestXMLTransformer/";
 
     private static final int NUMBER_OF_RECORDS = 10;
@@ -89,42 +92,42 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Test
-    public void testDefault() {
+    void testDefault() {
         testXMLTransformer(INPUT_DEFAULT, null);
     }
 
     @Test
-    public void testUTF8() {
+    void testUTF8() {
         testXMLTransformer(INPUT_UTF_8, "UTF-8");
     }
 
     @Test
-    public void testUTF8BOM() {
+    void testUTF8BOM() {
         testXMLTransformer(INPUT_UTF_8_BOM, "UTF-8");
     }
 
     @Test
-    public void testUTF16LE() {
+    void testUTF16LE() {
         testXMLTransformer(INPUT_UTF_16_LE, "UTF-16LE");
     }
 
     @Test
-    public void testUTF16LEBOM() {
+    void testUTF16LEBOM() {
         testXMLTransformer(INPUT_UTF_16_LE_BOM, "UTF-16LE");
     }
 
     @Test
-    public void testUTF16BE() {
+    void testUTF16BE() {
         testXMLTransformer(INPUT_UTF_16_BE, "UTF-16BE");
     }
 
     @Test
-    public void testUTF16BEBOM() {
+    void testUTF16BEBOM() {
         testXMLTransformer(INPUT_UTF_16_BE_BOM, "UTF-16BE");
     }
 
     @Test
-    public void testFragment() {
+    void testFragment() {
         final DocRef pipelineRef = createFragmentPipeline();
         test(pipelineRef, INPUT_FRAGMENT, null);
     }
@@ -204,17 +207,17 @@ public class TestXMLTransformer extends AbstractProcessIntegrationTest {
                 // Close all streams that have been written.,
                 streamCloserProvider.get().close();
 
-                Assert.assertTrue(recordCountProvider.get().getRead() > 0);
-                Assert.assertTrue(recordCountProvider.get().getWritten() > 0);
-                Assert.assertEquals(recordCountProvider.get().getRead(), recordCountProvider.get().getWritten());
-                Assert.assertEquals(NUMBER_OF_RECORDS, recordCountProvider.get().getRead());
-                Assert.assertEquals(NUMBER_OF_RECORDS, recordCountProvider.get().getWritten());
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.WARNING));
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.ERROR));
-                Assert.assertEquals(0, loggingErrorReceiver.getRecords(Severity.FATAL_ERROR));
+                assertThat(recordCountProvider.get().getRead() > 0).isTrue();
+                assertThat(recordCountProvider.get().getWritten() > 0).isTrue();
+                assertThat(recordCountProvider.get().getWritten()).isEqualTo(recordCountProvider.get().getRead());
+                assertThat(recordCountProvider.get().getRead()).isEqualTo(NUMBER_OF_RECORDS);
+                assertThat(recordCountProvider.get().getWritten()).isEqualTo(NUMBER_OF_RECORDS);
+                assertThat(loggingErrorReceiver.getRecords(Severity.WARNING)).isEqualTo(0);
+                assertThat(loggingErrorReceiver.getRecords(Severity.ERROR)).isEqualTo(0);
+                assertThat(loggingErrorReceiver.getRecords(Severity.FATAL_ERROR)).isEqualTo(0);
 
                 if (!loggingErrorReceiver.isAllOk()) {
-                    Assert.fail(loggingErrorReceiver.toString());
+                    fail(loggingErrorReceiver.toString());
                 }
 
                 final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(REFERENCE);

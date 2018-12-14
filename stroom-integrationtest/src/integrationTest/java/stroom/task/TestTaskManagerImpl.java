@@ -1,11 +1,11 @@
 package stroom.task;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.task.shared.ThreadPool;
+import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 import java.util.Queue;
@@ -16,7 +16,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskManagerImpl.class);
 
@@ -24,7 +26,7 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
     ExecutorProvider executorProvider;
 
     @Test
-    public void testMoreItemsThanThreads_boundedPool() throws ExecutionException, InterruptedException {
+    void testMoreItemsThanThreads_boundedPool() throws ExecutionException, InterruptedException {
         LOGGER.info("Starting");
         int poolSize = 4;
         ThreadPool threadPool = new ThreadPoolImpl(getClass().getName(),
@@ -63,7 +65,7 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         CompletableFuture.allOf(futures).get();
 
-        Assert.assertEquals(taskCount, counter.get());
+        assertThat(counter.get()).isEqualTo(taskCount);
 
         long distinctThreads = threadsUsed.stream()
                 .distinct()
@@ -71,13 +73,13 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         LOGGER.info("Threads used: %s", distinctThreads);
 
-        Assert.assertTrue(distinctThreads <= poolSize);
+        assertThat(distinctThreads <= poolSize).isTrue();
 
         LOGGER.info("Finished");
     }
 
     @Test
-    public void testMoreItemsThanThreads_unBoundedPool() throws ExecutionException, InterruptedException {
+    void testMoreItemsThanThreads_unBoundedPool() throws ExecutionException, InterruptedException {
 
         LOGGER.info("Starting");
         int poolSize = Integer.MAX_VALUE; //unbounded
@@ -112,7 +114,7 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         CompletableFuture.allOf(futures).get();
 
-        Assert.assertEquals(taskCount, counter.get());
+        assertThat(counter.get()).isEqualTo(taskCount);
 
         long distinctThreads = threadsUsed.stream()
                 .distinct()
@@ -120,7 +122,7 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         LOGGER.info("Threads used: %s", distinctThreads);
 
-        Assert.assertTrue(distinctThreads <= poolSize);
+        assertThat(distinctThreads <= poolSize).isTrue();
         LOGGER.info("Finished");
     }
 

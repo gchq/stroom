@@ -17,8 +17,9 @@
 
 package stroom.index;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort.Direction;
@@ -32,14 +33,15 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
 import java.util.Collections;
 
-public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
     @Inject
@@ -60,7 +62,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    public void test() {
+    void test() {
         final VolumeEntity volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
         final DocRef indexRef1 = indexStore.createDocument("Test Index 1");
@@ -80,32 +82,32 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         final IndexShard call3 = indexShardService.createIndexShard(indexShardKey1, node);
         final IndexShard call4 = indexShardService.createIndexShard(indexShardKey2, node);
 
-        Assert.assertNotNull(call1);
-        Assert.assertNotNull(call2);
-        Assert.assertNotNull(call3);
-        Assert.assertNotNull(call4);
+        assertThat(call1).isNotNull();
+        assertThat(call2).isNotNull();
+        assertThat(call3).isNotNull();
+        assertThat(call4).isNotNull();
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         // Find all index shards.
-        Assert.assertEquals(4, indexShardService.find(criteria).size());
+        assertThat(indexShardService.find(criteria).size()).isEqualTo(4);
 
         // Find shards for index 1
         criteria.getIndexSet().clear();
         criteria.getIndexSet().add(indexRef1);
-        Assert.assertEquals(3, indexShardService.find(criteria).size());
+        assertThat(indexShardService.find(criteria).size()).isEqualTo(3);
 
         // Find shards for index 2
         criteria.getIndexSet().clear();
         criteria.getIndexSet().add(indexRef2);
-        Assert.assertEquals(1, indexShardService.find(criteria).size());
+        assertThat(indexShardService.find(criteria).size()).isEqualTo(1);
 
         // Set all the filters
         criteria.setDocumentCountRange(new Range<>(Integer.MAX_VALUE, null));
-        Assert.assertEquals(0, indexShardService.find(criteria).size());
+        assertThat(indexShardService.find(criteria).size()).isEqualTo(0);
     }
 
     @Test
-    public void testOrderBy() {
+    void testOrderBy() {
         final VolumeEntity volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
         final DocRef indexRef = indexStore.createDocument("Test Index 1");
@@ -136,16 +138,16 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         // Find data.
         final BaseResultList<IndexShard> list = indexShardService.find(findIndexShardCriteria);
 
-        Assert.assertEquals(10, list.size());
+        assertThat(list.size()).isEqualTo(10);
 
         IndexShard lastShard = null;
         for (final IndexShard indexShard : list) {
             if (lastShard != null) {
                 if (lastShard.getPartition().equals(indexShard.getPartition())) {
                     // Compare ids
-                    Assert.assertTrue(indexShard.getId() < lastShard.getId());
+                    assertThat(indexShard.getId() < lastShard.getId()).isTrue();
                 } else {
-                    Assert.assertTrue(indexShard.getPartition().compareTo(lastShard.getPartition()) < 0);
+                    assertThat(indexShard.getPartition().compareTo(lastShard.getPartition()) < 0).isTrue();
                 }
             }
 

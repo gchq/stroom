@@ -17,20 +17,17 @@
 
 package stroom.refdata.util;
 
-import org.junit.Test;
-import stroom.refdata.util.ByteBufferPool;
-import stroom.refdata.util.PooledByteBuffer;
-import stroom.refdata.util.PooledByteBufferOutputStream;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-public class TestPooledByteBufferOutputStream {
+class TestPooledByteBufferOutputStream {
 
     @Test
-    public void testWrite_noWrites() {
+    void testWrite_noWrites() {
 
         ByteBufferPool byteBufferPool = new ByteBufferPool();
         PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
@@ -43,7 +40,7 @@ public class TestPooledByteBufferOutputStream {
     }
 
     @Test
-    public void testWrite_expansion() throws IOException {
+    void testWrite_expansion() throws IOException {
 
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 
@@ -104,7 +101,7 @@ public class TestPooledByteBufferOutputStream {
 
 
     @Test
-    public void testRelease() throws IOException {
+    void testRelease() throws IOException {
 
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 
@@ -128,7 +125,7 @@ public class TestPooledByteBufferOutputStream {
     }
 
     @Test
-    public void testRelease2() throws IOException {
+    void testRelease2() throws IOException {
 
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 

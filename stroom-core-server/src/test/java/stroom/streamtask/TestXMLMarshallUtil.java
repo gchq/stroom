@@ -16,39 +16,38 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.ProcessorFilter;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestXMLMarshallUtil extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestXMLMarshallUtil extends StroomUnitTest {
     private static final StreamProcessorFilterMarshaller MARSHALLER = new StreamProcessorFilterMarshaller();
 
     @Test
-    public void testSimple() {
+    void testSimple() {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
         final QueryData queryData1 = new QueryData.Builder()
                 .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
-                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
-                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
+                                .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
+                                .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                                .build())
+                        .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
+                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
+                                .build())
+                        .addTerm(MetaDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
                         .build())
-                    .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
-                        .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
-                        .build())
-                    .addTerm(MetaDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
-                    .build())
                 .build();
 
         // Test Writing
@@ -61,18 +60,18 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
         streamProcessorFilter = MARSHALLER.marshal(streamProcessorFilter);
         final String xml2 = streamProcessorFilter.getData();
 
-        Assert.assertTrue(xml1.contains("999"));
-        Assert.assertEquals(xml1, xml2);
+        assertThat(xml1.contains("999")).isTrue();
+        assertThat(xml2).isEqualTo(xml1);
     }
 
     @Test
-    public void testShort() {
+    void testShort() {
         ProcessorFilter streamProcessorFilter = new ProcessorFilter();
         streamProcessorFilter.setData(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>");
         streamProcessorFilter = MARSHALLER.unmarshal(streamProcessorFilter);
 
         final QueryData queryData = streamProcessorFilter.getQueryData();
-        Assert.assertNotNull(queryData);
+        assertThat(queryData).isNotNull();
     }
 }

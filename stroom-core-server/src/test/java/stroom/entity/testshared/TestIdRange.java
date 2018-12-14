@@ -16,17 +16,16 @@
 
 package stroom.entity.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.IdRange;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestIdRange extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIdRange extends StroomUnitTest {
     @Test
-    public void testSimple() {
-        Assert.assertEquals(new IdRange(0L, 10L), IdRange.createIdRangeSpanning(1L, 10L));
+    void testSimple() {
+        assertThat(IdRange.createIdRangeSpanning(1L, 10L)).isEqualTo(new IdRange(0L, 10L));
     }
 }

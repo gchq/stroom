@@ -21,22 +21,23 @@ import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.util.ByteBufferUtils;
 import stroom.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.refdata.store.offheapstore.UID;
+import stroom.refdata.util.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 
-public class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyValueStoreKeySerde> {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyValueStoreKeySerde> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKeyValueStoreKeySerde.class);
 
     @Test
-    public void serializeDeserialize() {
+    void serializeDeserialize() {
         final UID uid = UID.of(0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
                 uid,
@@ -46,7 +47,7 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKe
     }
 
     @Test
-    public void serializeDeserialize_emptyString() {
+    void serializeDeserialize_emptyString() {
         final UID uid = UID.of(0, 1, 2, 3);
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
                 uid,
@@ -57,7 +58,7 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKe
 
 
     @Test
-    public void testOutput() {
+    void testOutput() {
 
         // verify that we can directly use Output and Input classes to manage our own (de)ser
         ByteBuffer byteBuffer = ByteBuffer.allocate(20);
@@ -67,7 +68,7 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKe
         output.writeString("MyTestString");
         output.flush();
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
-        output.writeInt(1,true);
+        output.writeInt(1, true);
         output.flush();
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
         byteBuffer.flip();
@@ -76,8 +77,8 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKe
         Input input = new Input(new ByteBufferInputStream(byteBuffer));
         String str = input.readString();
         int i = input.readInt(true);
-        Assertions.assertThat(str).isEqualTo("MyTestString");
-        Assertions.assertThat(i).isEqualTo(1);
+        assertThat(str).isEqualTo("MyTestString");
+        assertThat(i).isEqualTo(1);
     }
 
     @Override

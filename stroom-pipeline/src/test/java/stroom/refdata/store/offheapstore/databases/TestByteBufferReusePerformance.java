@@ -17,20 +17,22 @@
 
 package stroom.refdata.store.offheapstore.databases;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.store.offheapstore.lmdb.BasicLmdbDb;
 import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.store.offheapstore.serdes.StringSerde;
+import stroom.refdata.util.ByteBufferPool;
 import stroom.util.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,22 +40,23 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@Ignore // tests are performance comparison only so are intended for manual runs only
-public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
+// tests are performance comparison only so are intended for manual runs only
+
+@Disabled
+class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferReusePerformance.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
 
     private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(100);
     private static final int VALUE_BUFFER_SIZE = 1_000;
-
+    private final int recCount = 1_000_000;
     private Serde<String> stringSerde = new StringSerde();
     private BasicLmdbDb<String, String> basicLmdbDb;
-    private final int recCount = 1_000_000;
 
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         basicLmdbDb = new BasicLmdbDb<>(lmdbEnv, new ByteBufferPool(), stringSerde, stringSerde, "basicDb");
@@ -69,7 +72,7 @@ public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
 
     @Test
-    public void testNoReuse() {
+    void testNoReuse() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
@@ -101,7 +104,7 @@ public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testReuse() {
+    void testReuse() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
@@ -144,7 +147,7 @@ public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testPooled() {
+    void testPooled() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
@@ -219,7 +222,7 @@ public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testPooledOneTxn() {
+    void testPooledOneTxn() {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
@@ -294,7 +297,7 @@ public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testHashMap() {
+    void testHashMap() {
 
         Map<String, String> map = new HashMap<>();
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {

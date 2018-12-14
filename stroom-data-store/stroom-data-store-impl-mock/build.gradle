@@ -11,6 +11,6 @@ dependencies {
     compile libs.guice4
     compile libs.javax_inject
 
-    testCompile libs.junit_jupiter
     testCompile libs.assertj_core
+    testCompile libs.junit_jupiter
 }

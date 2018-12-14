@@ -16,26 +16,25 @@
 
 package stroom.util.concurrent;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.util.test.StroomJUnit4ClassRunner;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestSimpleConcurrentMap {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSimpleConcurrentMap {
     @Test
-    public void testSimple() {
+    void testSimple() {
         ExampleSimpleConcurrentMap test = new ExampleSimpleConcurrentMap();
 
-        Assert.assertEquals(0, test.get("TEST").get());
-        Assert.assertEquals(1, test.get("TEST").incrementAndGet());
-        Assert.assertEquals(2, test.get("TEST").incrementAndGet());
+        assertThat(test.get("TEST").get()).isEqualTo(0);
+        assertThat(test.get("TEST").incrementAndGet()).isEqualTo(1);
+        assertThat(test.get("TEST").incrementAndGet()).isEqualTo(2);
 
-        Assert.assertEquals(1, test.keySet().size());
-        Assert.assertEquals(1, test.get("TEST1").incrementAndGet());
-        Assert.assertEquals(2, test.keySet().size());
+        assertThat(test.keySet().size()).isEqualTo(1);
+        assertThat(test.get("TEST1").incrementAndGet()).isEqualTo(1);
+        assertThat(test.keySet().size()).isEqualTo(2);
     }
 
     private static class ExampleSimpleConcurrentMap extends SimpleConcurrentMap<String, AtomicInteger> {

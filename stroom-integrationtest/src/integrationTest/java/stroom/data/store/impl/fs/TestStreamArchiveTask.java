@@ -17,9 +17,9 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.store.StreamRetentionExecutor;
 import stroom.data.store.api.StreamStore;
@@ -45,14 +45,17 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test the archiving stuff.
  * <p>
  * Create some old files and make sure they get archived.
  */
 // TODO : @66 Decide what needs to be done with deletion of old data rows
-@Ignore
-public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
+
+@Disabled
+class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private static final int HIGHER_REPLICATION_COUNT = 2;
     private static final int SIXTY = 60;
     private static final int FIFTY_FIVE = 55;
@@ -93,7 +96,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testCheckArchive() throws IOException {
+    void testCheckArchive() throws IOException {
         nodeCache.getDefaultNode();
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
@@ -139,26 +142,26 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
         List<DataVolume> oldVolumeList = streamVolumeService
                 .find(FindDataVolumeCriteria.create(oldFileTarget.getStream()));
-        Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, oldVolumeList.size());
+        assertThat(oldVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         List<DataVolume> newVolumeList = streamVolumeService
                 .find(FindDataVolumeCriteria.create(newFileTarget.getStream()));
-        Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, newVolumeList.size());
+        assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         streamRetentionExecutor.exec();
         streamDeleteExecutor.delete(System.currentTimeMillis());
 
         // Test Again
         oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getStream()));
-        Assert.assertEquals("Expecting 0 stream volumes", 0, oldVolumeList.size());
+        assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
 
         newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getStream()));
-        Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, newVolumeList.size());
+        assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
 
         // Test they are
         oldVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(oldFileTarget.getStream()));
-        Assert.assertEquals("Expecting 0 stream volumes", 0, oldVolumeList.size());
+        assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
         newVolumeList = streamVolumeService.find(FindDataVolumeCriteria.create(newFileTarget.getStream()));
-        Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, newVolumeList.size());
+        assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
     }
 }

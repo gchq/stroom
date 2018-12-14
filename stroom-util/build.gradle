@@ -16,9 +16,9 @@ dependencies {
     compile libs.jaxb_api
     compile libs.slf4j_api
 
-    testCompile libs.commons_lang
-    testCompile libs.junit
     testCompile libs.assertj_core
+    testCompile libs.commons_lang
+    testCompile libs.junit_jupiter
 
     // the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

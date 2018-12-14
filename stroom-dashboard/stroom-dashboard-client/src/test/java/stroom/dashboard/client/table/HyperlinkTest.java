@@ -1,17 +1,23 @@
 package stroom.dashboard.client.table;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.cell.clickable.client.Hyperlink;
 import stroom.cell.clickable.client.HyperlinkTarget;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class HyperlinkTest {
+class HyperlinkTest {
     @Test
-    public void testValidUrl() {
+    void testValidUrl() {
         // Given
         final Map<String, String> namedUrls = new HashMap<>();
         namedUrls.put("orange-ui", "http://colors/orange");
@@ -45,11 +51,11 @@ public class HyperlinkTest {
                 testLinks.keySet().stream().collect(Collectors.toMap(r -> r, r -> Hyperlink.detect(r, namedUrls)));
 
         // Then
-        assertEquals(testLinks, mappedLinks);
+        assertThat(mappedLinks).isEqualTo(testLinks);
     }
 
     @Test
-    public void testInvalidUrls() {
+    void testInvalidUrls() {
         // Given
         final List<String> testLinks = new ArrayList<>();
         testLinks.add("[Blue](http://colors/get?id=blue){STROOM_TABULATION}");
@@ -65,6 +71,6 @@ public class HyperlinkTest {
                 .filter(Objects::nonNull)
                 .peek(System.out::println)
                 .count();
-        assertEquals(0, countNonNull);
+        assertThat(countNonNull).isEqualTo(0);
     }
 }

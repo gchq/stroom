@@ -16,44 +16,46 @@
 
 package stroom.entity.testshared;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.util.test.StroomUnitTest;
 
-public class TestStringCriteria extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStringCriteria extends StroomUnitTest {
     @Test
-    public void testSimple() {
+    void testSimple() {
         final StringCriteria criteria = new StringCriteria();
-        Assert.assertFalse(criteria.isConstrained());
+        assertThat(criteria.isConstrained()).isFalse();
         criteria.setString("");
-        Assert.assertTrue(criteria.isConstrained());
+        assertThat(criteria.isConstrained()).isTrue();
         criteria.setMatchStyle(MatchStyle.WildEnd);
-        Assert.assertFalse(criteria.isConstrained());
+        assertThat(criteria.isConstrained()).isFalse();
         criteria.setString("X");
-        Assert.assertTrue(criteria.isConstrained());
+        assertThat(criteria.isConstrained()).isTrue();
 
     }
 
     @Test
-    public void testIsMatch() {
+    void testIsMatch() {
         final StringCriteria criteria = new StringCriteria();
         criteria.setString("XYZ");
 
-        Assert.assertFalse(criteria.isMatch("XY"));
-        Assert.assertTrue(criteria.isMatch("XYZ"));
+        assertThat(criteria.isMatch("XY")).isFalse();
+        assertThat(criteria.isMatch("XYZ")).isTrue();
 
         criteria.setMatchStyle(MatchStyle.WildEnd);
 
-        Assert.assertTrue(criteria.isMatch("XYZ123"));
-        Assert.assertTrue(criteria.isMatch("XYZ"));
-        Assert.assertFalse(criteria.isMatch("123XYZ123"));
+        assertThat(criteria.isMatch("XYZ123")).isTrue();
+        assertThat(criteria.isMatch("XYZ")).isTrue();
+        assertThat(criteria.isMatch("123XYZ123")).isFalse();
 
         criteria.setMatchStyle(MatchStyle.WildStandAndEnd);
 
-        Assert.assertTrue(criteria.isMatch("XYZ123"));
-        Assert.assertTrue(criteria.isMatch("123XYZ123"));
+        assertThat(criteria.isMatch("XYZ123")).isTrue();
+        assertThat(criteria.isMatch("123XYZ123")).isTrue();
 
     }
 

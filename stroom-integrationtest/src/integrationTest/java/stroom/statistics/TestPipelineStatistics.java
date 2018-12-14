@@ -16,20 +16,18 @@
 
 package stroom.statistics;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.StoreCreationTool;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.task.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTest;
+import stroom.test.StoreCreationTool;
 
 import javax.inject.Inject;
 
-@Ignore("TODO: uncomment and update tests or delete")
-public class TestPipelineStatistics {
+class TestPipelineStatistics {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPipelineStatistics.class);
 
     @Inject
@@ -45,6 +43,6 @@ public class TestPipelineStatistics {
 
     // FIXME : Sort out pipeline statistics.
     @Test
-    public void test() {
+    void test() {
     }
 }

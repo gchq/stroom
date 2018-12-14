@@ -18,10 +18,7 @@ package stroom.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexDoc;
@@ -42,8 +39,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TestIndexShardPoolImpl {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestIndexShardPoolImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
 
     private static AtomicLong indexShardId = new AtomicLong(0);
@@ -57,40 +55,40 @@ public class TestIndexShardPoolImpl {
 //    @Mock
 //    private NodeCache nodeCache;
 //
-//    @Before
+//    @BeforeEach
 //    public void init() {
 //        FileUtil.deleteContents(getCurrentTestDir().resolve("index"));
 //    }
 
     @Test
-    public void testOneIndex() throws InterruptedException {
+    void testOneIndex() throws InterruptedException {
         doTest(1, 10, 1, 1, 10000);
         // Make sure we only created one index shard.
-        Assert.assertEquals(1, indexShardsCreated.get());
+        assertThat(indexShardsCreated.get()).isEqualTo(1);
     }
 
     @Test
-    public void testManyMoreThreadsThanIndex() throws InterruptedException {
+    void testManyMoreThreadsThanIndex() throws InterruptedException {
         doTest(100, 100, 2, 5, 10000);
         // Because we are using many threads we should have created the maximum
         // number of indexes for each index name, e.g. 2 * 5.
-        Assert.assertEquals(10, indexShardsCreated.get());
+        assertThat(indexShardsCreated.get()).isEqualTo(10);
     }
 
     @Test
-    public void testOneThreadWithManyIndex() throws InterruptedException {
+    void testOneThreadWithManyIndex() throws InterruptedException {
         // 10 threads, 1000 jobs, 10 different indexes, max 3 shards per index.
         doTest(1, 1000, 10, 3, 10000);
         final int size = indexShardsCreated.get();
-        Assert.assertEquals("Expected more than 30 but was " + size, 30, size);
+        assertThat(size).as("Expected more than 30 but was " + size).isEqualTo(30);
     }
 
     @Test
-    public void testManyThreadWithManyIndexHittingMax() throws InterruptedException {
+    void testManyThreadWithManyIndexHittingMax() throws InterruptedException {
         doTest(10, 995, 1, 5, 50);
         final int size = indexShardsCreated.get();
 
-        Assert.assertTrue("Expected 20 to 22 but was " + size, size >= 20 && size <= 22);
+        assertThat(size >= 20 && size <= 22).as("Expected 20 to 22 but was " + size).isTrue();
     }
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
@@ -161,7 +159,7 @@ public class TestIndexShardPoolImpl {
         simpleExecutor.stop(false);
 //            indexShardManager.shutdown();
 
-        Assert.assertEquals("Not expecting any errored threads", 0, failedThreads.get());
+        assertThat(failedThreads.get()).as("Not expecting any errored threads").isEqualTo(0);
 //        } catch (final RuntimeException e) {
 //            throw new RuntimeException(e.getMessage(), e);
 //        }

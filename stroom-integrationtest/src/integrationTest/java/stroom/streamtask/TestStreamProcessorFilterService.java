@@ -17,15 +17,15 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -37,7 +37,9 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.inject.Inject;
 import java.util.List;
 
-public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamProcessorFilterService extends AbstractCoreIntegrationTest {
     @Inject
     private StreamProcessorService streamProcessorService;
     @Inject
@@ -69,32 +71,32 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
     }
 
     @Test
-    public void testBasic() {
+    void testBasic() {
         Processor streamProcessor = new Processor();
         streamProcessor = streamProcessorService.save(streamProcessor);
 
-        Assert.assertEquals(1, streamProcessorService.find(new FindStreamProcessorCriteria()).size());
+        assertThat(streamProcessorService.find(new FindStreamProcessorCriteria()).size()).isEqualTo(1);
 
         final FindStreamProcessorFilterCriteria findStreamProcessorFilterCriteria = new FindStreamProcessorFilterCriteria();
 
         streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, new QueryData());
-        Assert.assertEquals(1, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
+        assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size()).isEqualTo(1);
 
         streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, new QueryData());
-        Assert.assertEquals(2, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
+        assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size()).isEqualTo(2);
 
         findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(10, null));
-        Assert.assertEquals(1, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
+        assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size()).isEqualTo(1);
 
         findStreamProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
-        Assert.assertEquals(2, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size());
+        assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).size()).isEqualTo(2);
     }
 
     @Test
-    public void testFeedIncludeExclude() {
+    void testFeedIncludeExclude() {
         Processor streamProcessor = new Processor();
         streamProcessor = streamProcessorService.save(streamProcessor);
-        Assert.assertEquals(1, streamProcessorService.find(new FindStreamProcessorCriteria()).size());
+        assertThat(streamProcessorService.find(new FindStreamProcessorCriteria()).size()).isEqualTo(1);
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
@@ -120,23 +122,23 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
                 .find(findStreamProcessorFilterCriteria);
         ProcessorFilter filter = filters.getFirst();
         String xml = buildXML(new String[]{feedName1, feedName2}, null);
-        Assert.assertEquals(xml, filter.getData());
+        assertThat(filter.getData()).isEqualTo(xml);
 
         // TODO DocRefId - Need to rewrite the build XML to handle expression operators
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().remove(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed2.getId()}, null);
-//        Assert.assertEquals(xml, filter.getData());
+//        assertThat(filter.getData()).isEqualTo(xml);
 //
 //        filter.getFindStreamCriteria().obtainFeeds().obtainExclude().add(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed2.getId()}, new long[]{feed1.getId()});
-//        Assert.assertEquals(xml, filter.getData());
+//        assertThat(filter.getData()).isEqualTo(xml);
 //
 //        filter.getFindStreamCriteria().obtainFeeds().obtainInclude().add(feed1);
 //        filter = streamProcessorFilterService.save(filter);
 //        xml = buildXML(new long[]{feed1.getId(), feed2.getId()}, new long[]{feed1.getId()});
-//        Assert.assertEquals(xml, filter.getData());
+//        assertThat(filter.getData()).isEqualTo(xml);
     }
 
     private String buildXML(final String[] include, final String[] exclude) {
@@ -197,10 +199,10 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
     }
 
     @Test
-    public void testApplyAllCriteria() {
+    void testApplyAllCriteria() {
         final FindStreamProcessorFilterCriteria findStreamProcessorFilterCriteria = new FindStreamProcessorFilterCriteria();
         findStreamProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
         findStreamProcessorFilterCriteria.setStreamProcessorFilterEnabled(true);
-        Assert.assertEquals(0, streamProcessorFilterService.find(findStreamProcessorFilterCriteria).getSize());
+        assertThat(streamProcessorFilterService.find(findStreamProcessorFilterCriteria).getSize()).isEqualTo(0);
     }
 }

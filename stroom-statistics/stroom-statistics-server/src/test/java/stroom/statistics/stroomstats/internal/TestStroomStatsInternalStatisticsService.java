@@ -1,12 +1,11 @@
 package stroom.statistics.stroomstats.internal;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -26,8 +25,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TestStroomStatsInternalStatisticsService {
+class TestStroomStatsInternalStatisticsService {
     private static final String DOC_REF_TYPE_1 = "myDocRefType1";
     private static final String DOC_REF_TYPE_2 = "myDocRefType2";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
@@ -40,7 +38,7 @@ public class TestStroomStatsInternalStatisticsService {
     private KafkaProducerFactory mockStroomKafkaProducerFactory;
 
     @Test
-    public void putEvents_multipleEvents() {
+    void putEvents_multipleEvents() {
         final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig();
         hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
@@ -73,7 +71,7 @@ public class TestStroomStatsInternalStatisticsService {
     }
 
     @Test
-    public void putEvents_largeBatch() {
+    void putEvents_largeBatch() {
         final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig();
         hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
@@ -110,7 +108,7 @@ public class TestStroomStatsInternalStatisticsService {
     }
 
     @Test
-    public void putEvents_exception() {
+    void putEvents_exception() {
         final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig();
         hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");

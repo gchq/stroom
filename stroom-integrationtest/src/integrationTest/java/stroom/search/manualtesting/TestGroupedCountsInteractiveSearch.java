@@ -18,10 +18,10 @@
 
 package stroom.search.manualtesting;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
@@ -45,7 +45,6 @@ import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,9 +55,12 @@ import java.util.OptionalInt;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 // This spring/junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
-public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
+
+class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);
 
     private static final String DATA_FILE_NAME_PREFIX = "NetworkMonitoringBulkData_";
@@ -68,7 +70,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     private static final int STREAM_ROW_COUNT = 100_000;
     private static final int STREAM_COUNT = 100;
     private static final int MAX_DOCS_PER_SHARD = 10_000;
-
+    Path testDir = FileUtil.getTempDir();
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject
@@ -86,10 +88,8 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     @Inject
     private ExtractionConfig extractionConfig;
 
-    Path testDir = FileUtil.getTempDir();
-
-    @Before
-    public void beforeTest() throws IOException {
+    @BeforeEach
+    void beforeTest() {
 
         LOGGER.info("Setting temp dir to {}", testDir.toAbsolutePath().toString());
 
@@ -116,9 +116,9 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
 //            LOGGER.info("Using existing file");
 //        }
 
-//        Assert.assertTrue(Files.isRegularFile(dataFile));
+//        assertThat(Files.isRegularFile(dataFile)).isTrue();
 //        try {
-//            Assert.assertTrue(Files.size(dataFile) > 0);
+//            assertThat(Files.size(dataFile) > 0).isTrue();
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }
@@ -138,8 +138,8 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
      * Run a query that gets counts grouped by userid and assert the total count
      */
     @Test
-    @Ignore
-    public void testGroupedCounts() {
+    @Disabled
+    void testGroupedCounts() {
         //we want all data here
         final ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder();
         expressionBuilder.addTerm("UserId", ExpressionTerm.Condition.CONTAINS, "*");
@@ -151,16 +151,16 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
         boolean extractValues = true;
 
         Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
-            Assert.assertEquals(1, resultMap.size());
+            assertThat(resultMap.size()).isEqualTo(1);
             List<Row> rows = resultMap.values().iterator().next();
-            Assert.assertEquals(expectedResultCount, rows.size());
+            assertThat(rows.size()).isEqualTo(expectedResultCount);
 
             long totalCount = rows.stream()
                     .map(row -> row.getValues().get(1)) // get the 'count' field
                     .mapToLong(Long::parseLong)
                     .sum();
 
-            Assert.assertEquals(STREAM_ROW_COUNT * STREAM_COUNT, totalCount);
+            assertThat(totalCount).isEqualTo(STREAM_ROW_COUNT * STREAM_COUNT);
         };
 
         setProperties();
@@ -214,14 +214,12 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
 
 
     @Test
-    @Ignore
-    public void tearDownAndSetupOnly() {
+    @Disabled
+    void tearDownAndSetupOnly() {
         LOGGER.info("before() - commonTestControl.setup()");
         commonTestControl.teardown();
         commonTestControl.setup();
 
         doSingleSetup();
     }
-
-
 }

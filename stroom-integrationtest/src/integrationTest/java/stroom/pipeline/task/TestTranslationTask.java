@@ -16,8 +16,8 @@
 
 package stroom.pipeline.task;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
@@ -36,7 +36,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map.Entry;
 
-public class TestTranslationTask extends AbstractProcessIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestTranslationTask extends AbstractProcessIntegrationTest {
     private static final int N3 = 3;
     private static final int N4 = 4;
 
@@ -55,16 +57,16 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
      * @throws IOException Could be thrown.
      */
     @Test
-    public void testBothValid() throws IOException {
+    void testBothValid() throws IOException {
         commonPipelineTest.setup();
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
-        Assert.assertEquals(N4, results.size());
+        assertThat(results.size()).isEqualTo(N4);
         for (final StreamProcessorTaskExecutor result : results) {
             final PipelineStreamProcessor processor = (PipelineStreamProcessor) result;
-            Assert.assertTrue(result.toString(), processor.getWritten() > 0);
-            Assert.assertTrue(result.toString(), processor.getRead() <= processor.getWritten());
-            Assert.assertEquals(result.toString(), 0, processor.getMarkerCount(Severity.SEVERITIES));
+            assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
+            assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
+            assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
         }
 
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
@@ -88,7 +90,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
         }
 
         // Make sure 26 records were written.
-        Assert.assertEquals(26, ((PipelineStreamProcessor) results.get(N3)).getWritten());
+        assertThat(((PipelineStreamProcessor) results.get(N3)).getWritten()).isEqualTo(26);
     }
 
     /**
@@ -97,13 +99,13 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
      * @throws IOException Could be thrown.
      */
     @Test
-    public void testInvalidResource() {
+    void testInvalidResource() {
         commonPipelineTest.setup(CommonTranslationTest.FEED_NAME, CommonTranslationTest.INVALID_RESOURCE_NAME);
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();
-        Assert.assertEquals(N4, results.size());
+        assertThat(results.size()).isEqualTo(N4);
 
         // Make sure no records were written.
-        Assert.assertEquals(0, ((PipelineStreamProcessor) results.get(N3)).getWritten());
+        assertThat(((PipelineStreamProcessor) results.get(N3)).getWritten()).isEqualTo(0);
     }
 }

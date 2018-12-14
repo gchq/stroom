@@ -16,7 +16,7 @@
 
 package stroom.xml.converter.ds3;
 
-import org.junit.Assert;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -47,6 +47,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DS3PerformanceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DS3PerformanceTest.class);
@@ -148,7 +150,7 @@ public class DS3PerformanceTest {
         ds3ParserFactory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
-        Assert.assertTrue("Configuration of parser failed: " + errorReceiver.getMessage(), errorReceiver.isAllOk());
+        assertThat(errorReceiver.isAllOk()).as("Configuration of parser failed: " + errorReceiver.getMessage()).isTrue();
 
         final XMLReader reader = ds3ParserFactory.getParser();
         reader.setErrorHandler(new ErrorHandlerAdaptor("XMLReader", locationFactory, errorReceiver));
@@ -157,9 +159,9 @@ public class DS3PerformanceTest {
 
     private void compareFiles(final Path input, final Path actualFile, final Path expectedFile) throws IOException {
         // Make sure the file exists.
-        Assert.assertTrue("Cannot find actual output file " + FileUtil.getCanonicalPath(actualFile), Files.isRegularFile(actualFile));
+        assertThat(Files.isRegularFile(actualFile)).as("Cannot find actual output file " + FileUtil.getCanonicalPath(actualFile)).isTrue();
         // Make sure the file exists.
-        Assert.assertTrue("Cannot find expected output file " + FileUtil.getCanonicalPath(expectedFile), Files.isRegularFile(expectedFile));
+        assertThat(Files.isRegularFile(expectedFile)).as("Cannot find expected output file " + FileUtil.getCanonicalPath(expectedFile)).isTrue();
 
         // Normalise both files.
         normalise(actualFile);
@@ -174,11 +176,11 @@ public class DS3PerformanceTest {
             int a = 0;
             int b = 0;
             while (a != -1 && b != -1) {
-                Assert.assertEquals("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile), a, b);
+                assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(a);
                 a = actualIS.read();
                 b = expectedIS.read();
             }
-            Assert.assertEquals("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile), a, b);
+            assertThat(b).as("Expected and actual files do not match for: " + FileUtil.getCanonicalPath(actualFile)).isEqualTo(a);
 
             success = true;
         } finally {

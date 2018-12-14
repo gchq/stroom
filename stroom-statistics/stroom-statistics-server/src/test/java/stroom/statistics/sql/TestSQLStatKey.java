@@ -16,9 +16,9 @@
 
 package stroom.statistics.sql;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.sql.rollup.RollUpBitMaskUtil;
 import stroom.util.test.StroomUnitTest;
@@ -26,14 +26,16 @@ import stroom.util.test.StroomUnitTest;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestSQLStatKey extends StroomUnitTest {
-    long time = 1234L;
-    String statName = "MyStatName";
+import static org.assertj.core.api.Assertions.assertThat;
 
-    List<StatisticTag> tags = new ArrayList<>();
+class TestSQLStatKey extends StroomUnitTest {
+    private long time = 1234L;
+    private String statName = "MyStatName";
 
-    @Before
-    public void setup() {
+    private List<StatisticTag> tags = new ArrayList<>();
+
+    @BeforeEach
+    void setup() {
         // default tag list
         tags.clear();
         tags.add(new StatisticTag("T1", "T1V"));
@@ -41,27 +43,27 @@ public class TestSQLStatKey extends StroomUnitTest {
     }
 
     @Test
-    public void testConstructorTwoTags() {
+    void testConstructorTwoTags() {
         final SQLStatKey sqlStatKey = new SQLStatKey(time, statName, tags);
 
         final RollUpBitMask rollUpBitMask = RollUpBitMaskUtil.fromSortedTagList(tags);
 
-        Assert.assertEquals(statName + rollUpBitMask.asHexString() + buildTagsPart(tags), sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(statName + rollUpBitMask.asHexString() + buildTagsPart(tags));
     }
 
     @Test
-    public void testConstructorNoTags() {
+    void testConstructorNoTags() {
         tags.clear();
 
         final SQLStatKey sqlStatKey = new SQLStatKey(time, statName, tags);
 
         final RollUpBitMask rollUpBitMask = RollUpBitMaskUtil.fromSortedTagList(tags);
 
-        Assert.assertEquals(statName + rollUpBitMask.asHexString(), sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(statName + rollUpBitMask.asHexString());
     }
 
     @Test
-    public void testConstructorStarInTagName() {
+    void testConstructorStarInTagName() {
         tags.clear();
 
         tags.add(new StatisticTag("x*x", "T1V"));
@@ -71,11 +73,11 @@ public class TestSQLStatKey extends StroomUnitTest {
 
         final RollUpBitMask rollUpBitMask = RollUpBitMaskUtil.fromSortedTagList(tags);
 
-        Assert.assertEquals(statName + rollUpBitMask.asHexString() + buildTagsPart(tags), sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(statName + rollUpBitMask.asHexString() + buildTagsPart(tags));
     }
 
     @Test
-    public void testConstructorDelimiterInStatName() {
+    void testConstructorDelimiterInStatName() {
         tags.clear();
 
         final String newStatName = "My" + SQLStatisticConstants.NAME_SEPARATOR + "Stat"
@@ -87,14 +89,12 @@ public class TestSQLStatKey extends StroomUnitTest {
 
         System.out.println(sqlStatKey.getName());
 
-        Assert.assertEquals(
-                newStatName.replaceAll(SQLStatisticConstants.NAME_SEPARATOR,
-                        SQLStatisticConstants.DIRTY_CHARACTER_REPLACEMENT) + rollUpBitMask.asHexString(),
-                sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(newStatName.replaceAll(SQLStatisticConstants.NAME_SEPARATOR,
+                SQLStatisticConstants.DIRTY_CHARACTER_REPLACEMENT) + rollUpBitMask.asHexString());
     }
 
     @Test
-    public void testConstructorRolledUpTag() {
+    void testConstructorRolledUpTag() {
         tags.clear();
 
         tags.add(new StatisticTag("T1", "T1V"));
@@ -106,11 +106,11 @@ public class TestSQLStatKey extends StroomUnitTest {
 
         System.out.println(sqlStatKey.getName());
 
-        Assert.assertEquals(statName + rollUpBitMask.asHexString() + buildTagsPart(tags), sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(statName + rollUpBitMask.asHexString() + buildTagsPart(tags));
     }
 
     @Test
-    public void testConstructorNullTagValue() {
+    void testConstructorNullTagValue() {
 
         tags.clear();
 
@@ -123,12 +123,12 @@ public class TestSQLStatKey extends StroomUnitTest {
 
         System.out.println(sqlStatKey.getName());
 
-        Assert.assertEquals(statName + rollUpBitMask.asHexString() + buildTagsPart(tags), sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(statName + rollUpBitMask.asHexString() + buildTagsPart(tags));
 
     }
 
     @Test
-    public void testConstructorEmptyTagValue() {
+    void testConstructorEmptyTagValue() {
 
         tags.clear();
 
@@ -141,11 +141,11 @@ public class TestSQLStatKey extends StroomUnitTest {
 
         System.out.println(sqlStatKey.getName());
 
-        Assert.assertEquals(statName + rollUpBitMask.asHexString() + buildTagsPart(tags), sqlStatKey.getName());
+        assertThat(sqlStatKey.getName()).isEqualTo(statName + rollUpBitMask.asHexString() + buildTagsPart(tags));
     }
 
     @Test
-    public void testEqualsHashCode() {
+    void testEqualsHashCode() {
         tags.clear();
 
         tags.add(new StatisticTag("T1", "T1V"));
@@ -154,13 +154,13 @@ public class TestSQLStatKey extends StroomUnitTest {
         final SQLStatKey sqlStatKey1 = new SQLStatKey(time, statName, tags);
         final SQLStatKey sqlStatKey2 = new SQLStatKey(time, statName, new ArrayList<>(tags));
 
-        Assert.assertTrue(sqlStatKey1.equals(sqlStatKey2));
-        Assert.assertEquals(sqlStatKey1.hashCode(), sqlStatKey2.hashCode());
+        assertThat(sqlStatKey1.equals(sqlStatKey2)).isTrue();
+        assertThat(sqlStatKey2.hashCode()).isEqualTo(sqlStatKey1.hashCode());
 
     }
 
     @Test
-    public void testEqualsHashCodeFail() {
+    void testEqualsHashCodeFail() {
         tags.clear();
 
         tags.add(new StatisticTag("T1", "T1V"));
@@ -174,20 +174,23 @@ public class TestSQLStatKey extends StroomUnitTest {
         final SQLStatKey sqlStatKey1 = new SQLStatKey(time, statName, tags);
         final SQLStatKey sqlStatKey2 = new SQLStatKey(time, statName, tags2);
 
-        Assert.assertFalse(sqlStatKey1.equals(sqlStatKey2));
-        Assert.assertNotEquals(sqlStatKey1.hashCode(), sqlStatKey2.hashCode());
+        assertThat(sqlStatKey1.equals(sqlStatKey2)).isFalse();
+        assertThat(sqlStatKey2.hashCode()).isNotEqualTo(sqlStatKey1.hashCode());
     }
 
     private String buildTagsPart(final List<StatisticTag> tags) {
         final StringBuilder sb = new StringBuilder();
 
         for (final StatisticTag tag : tags) {
-            sb.append(SQLStatisticConstants.NAME_SEPARATOR + tag.getTag());
+            sb.append(SQLStatisticConstants.NAME_SEPARATOR);
+            sb.append(tag.getTag());
             final String value = tag.getValue();
             if (value == null || value.isEmpty()) {
-                sb.append(SQLStatisticConstants.NAME_SEPARATOR + SQLStatisticConstants.NULL_VALUE_STRING);
+                sb.append(SQLStatisticConstants.NAME_SEPARATOR);
+                sb.append(SQLStatisticConstants.NULL_VALUE_STRING);
             } else {
-                sb.append(SQLStatisticConstants.NAME_SEPARATOR + tag.getValue());
+                sb.append(SQLStatisticConstants.NAME_SEPARATOR);
+                sb.append(tag.getValue());
             }
         }
 

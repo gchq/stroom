@@ -16,25 +16,24 @@
 
 package stroom.streamtask;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.store.StreamFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStreamFactory extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestStreamFactory extends StroomUnitTest {
     @Test
-    public void testSimple() {
+    void testSimple() {
         final String testDate = "2000-01-01T00:00:00.000Z";
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("effectivetime", testDate);
 
         final Long time = StreamFactory.getReferenceEffectiveTime(attributeMap, true);
 
-        Assert.assertEquals(testDate, DateUtil.createNormalDateTimeString(time));
+        assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo(testDate);
     }
 }

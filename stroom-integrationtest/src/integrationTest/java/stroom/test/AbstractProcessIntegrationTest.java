@@ -18,7 +18,9 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+
 
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
     private static final Injector injector;
@@ -27,10 +29,10 @@ public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTe
         injector = Guice.createInjector(new MockServiceModule());
     }
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before(final TestInfo testInfo) {
         injector.injectMembers(this);
-        super.before();
+        super.before(testInfo);
         super.importSchemas(true);
     }
 }

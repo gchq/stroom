@@ -17,19 +17,20 @@
 
 package stroom.refdata.store.offheapstore;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import stroom.refdata.store.ProcessingState;
 
-public class TestRefDataProcessingInfo {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRefDataProcessingInfo {
 
     @Test
-    public void testProcessingStateFromBytes() {
+    void testProcessingStateFromBytes() {
 
         for (ProcessingState state : ProcessingState.values()) {
             byte id = state.getId();
             ProcessingState outputState = ProcessingState.fromByte(id);
-            Assertions.assertThat(outputState).isEqualTo(state);
+            assertThat(outputState).isEqualTo(state);
         }
     }
 }

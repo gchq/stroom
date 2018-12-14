@@ -17,32 +17,33 @@
 
 package stroom.refdata.store.offheapstore.databases;
 
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
-import stroom.refdata.util.ByteBufferPool;
-import stroom.refdata.util.ByteBufferUtils;
 import stroom.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.refdata.store.offheapstore.UID;
 import stroom.refdata.store.offheapstore.ValueStoreKey;
+import stroom.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.refdata.util.ByteBufferPool;
+import stroom.refdata.util.ByteBufferUtils;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestKeyValueStoreDb extends AbstractLmdbDbTest {
-
+class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKeyValueStoreDb.class);
 
     private KeyValueStoreDb keyValueStoreDb = null;
 
-    @Before
+    @BeforeEach
     @Override
-    public void setup() {
+    public void setup() throws IOException {
         super.setup();
 
         keyValueStoreDb = new KeyValueStoreDb(
@@ -53,11 +54,11 @@ public class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void forEachEntry() {
+    void forEachEntry() {
 
-        final UID uid1 = UID.of(1,0,0,1);
-        final UID uid2 = UID.of(2,0,0,2);
-        final UID uid3 = UID.of(3,0,0,3);
+        final UID uid1 = UID.of(1, 0, 0, 1);
+        final UID uid2 = UID.of(2, 0, 0, 2);
+        final UID uid3 = UID.of(3, 0, 0, 3);
 
         final KeyValueStoreKey keyValueStoreKey11 = new KeyValueStoreKey(uid1, "key11");
         final KeyValueStoreKey keyValueStoreKey21 = new KeyValueStoreKey(uid2, "key21");

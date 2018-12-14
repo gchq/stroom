@@ -17,8 +17,8 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Data;
@@ -46,7 +46,9 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 
-public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 
@@ -68,7 +70,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private NodeService nodeService;
 
     @Test
-    public void testCheckCleaning() throws IOException {
+    void testCheckCleaning() throws IOException {
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
@@ -145,18 +147,18 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         waitForTaskManagerToComplete();
 
-        Assert.assertTrue("Locked files should still exist", FileSystemUtil.isAllFile(lockedFiles));
-        Assert.assertTrue("Unlocked files should still exist", FileSystemUtil.isAllFile(unlockedFiles));
+        assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
+        assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
 
-        Assert.assertFalse("expected deleted " + oldfile, Files.isRegularFile(oldfile));
-        Assert.assertFalse("deleted deleted " + olddir, Files.isDirectory(olddir));
-        Assert.assertTrue("not deleted new dir", Files.isDirectory(newdir));
-        Assert.assertFalse("deleted old file in new dir", Files.isRegularFile(oldfileinnewdir));
+        assertThat(Files.isRegularFile(oldfile)).as("expected deleted " + oldfile).isFalse();
+        assertThat(Files.isDirectory(olddir)).as("deleted deleted " + olddir).isFalse();
+        assertThat(Files.isDirectory(newdir)).as("not deleted new dir").isTrue();
+        assertThat(Files.isRegularFile(oldfileinnewdir)).as("deleted old file in new dir").isFalse();
 
     }
 
     @Test
-    public void testArchiveRemovedFile() {
+    void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Data stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
@@ -164,14 +166,13 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(stream);
 
         for (final Path file : files) {
-            Assert.assertTrue(FileUtil.delete(file));
+            assertThat(FileUtil.delete(file)).isTrue();
         }
 
         final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
         streamVolumeCriteria.obtainStreamIdSet().add(stream.getId());
 
-        Assert.assertTrue("Must be saved to at least one volume",
-                streamVolumeService.find(streamVolumeCriteria).size() >= 1);
+        assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
@@ -180,10 +181,9 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         files = streamMaintenanceService.findAllStreamFile(stream);
 
-        Assert.assertEquals("Files have been deleted above", 0, files.size());
+        assertThat(files.size()).as("Files have been deleted above").isEqualTo(0);
 
-        Assert.assertTrue("Volumes should still exist as they are new",
-                streamVolumeService.find(streamVolumeCriteria).size() >= 1);
+        assertThat(streamVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
 
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
@@ -193,7 +193,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    public void testCheckCleaningLotsOfFiles() throws IOException {
+    void testCheckCleaningLotsOfFiles() throws IOException {
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
