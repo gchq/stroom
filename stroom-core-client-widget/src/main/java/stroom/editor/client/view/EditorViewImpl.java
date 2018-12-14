@@ -17,6 +17,7 @@
 package stroom.editor.client.view;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -90,6 +91,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     Image filterActive;
     private Indicators indicators;
     private AceEditorMode mode = AceEditorMode.XML;
+
     @Inject
     public EditorViewImpl() {
         if (binder == null) {
@@ -266,26 +268,28 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
      */
     @Override
     public void format() {
-        final int scrollTop = editor.getScrollTop();
-        final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
+        Scheduler.get().scheduleDeferred(() -> {
+            final int scrollTop = editor.getScrollTop();
+            final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
 
-        if (AceEditorMode.XML.equals(mode)) {
-            final String formatted = new XmlFormatter().format(getText());
-            setText(formatted);
-        } else {
-            editor.beautify();
-        }
+            if (AceEditorMode.XML.equals(mode)) {
+                final String formatted = new XmlFormatter().format(getText());
+                setText(formatted);
+            } else {
+                editor.beautify();
+            }
 
-        if (cursorPosition != null) {
-            editor.moveTo(cursorPosition.getRow(), cursorPosition.getColumn());
-        }
-        if (scrollTop > 0) {
-            editor.setScrollTop(scrollTop);
-        }
+            if (cursorPosition != null) {
+                editor.moveTo(cursorPosition.getRow(), cursorPosition.getColumn());
+            }
+            if (scrollTop > 0) {
+                editor.setScrollTop(scrollTop);
+            }
 
-        editor.focus();
+            editor.focus();
 
-        FormatEvent.fire(this);
+            FormatEvent.fire(this);
+        });
     }
 
     @Override

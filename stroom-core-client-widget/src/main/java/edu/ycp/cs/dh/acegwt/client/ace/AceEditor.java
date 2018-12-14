@@ -147,23 +147,6 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		// Try to force the editor to resize and display itself fully.  See:
 		//    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
 		editor.resize();
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay();
-	}-*/;
-
-    /**
-     * Call this to force the editor contents to be redisplayed.
-     * There seems to be a problem when an AceEditor is embedded in a LayoutPanel:
-     * the editor contents don't appear, and it refuses to accept focus
-     * and mouse events, until the browser window is resized.
-     * Calling this method works around the problem by forcing
-     * the underlying editor to redisplay itself fully. (?)
-     */
-    public native void redisplay() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		editor.renderer.onResize(true);
-		editor.renderer.updateFull();
-		editor.resize();
-		editor.focus();
 	}-*/;
 
     /**
@@ -298,6 +281,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void setText(String text) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.getSession().setValue(text);
+
+		// If you don't set the scroll position then the scroll bar sizes don't get reevaluated.
+		editor.renderer.scrollToX(0);
 	}-*/;
 
     /**
@@ -690,9 +676,10 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      * @see com.google.gwt.user.client.ui.ResizeComposite#onResize()
      */
     @Override
-    public void onResize() {
-        redisplay();
-    }
+    public native void onResize() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.resize();
+	}-*/;
 
     @Override
     public String getValue() {

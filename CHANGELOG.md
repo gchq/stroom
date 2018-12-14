@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1018** : Added Health Checks for the external connectors that are registered via plugins
 
+* Issue **#1025** : Fixed ACE editor resize issue where horizontal scroll bar was not always correctly shown.
+
+* Issue **#1025** : Updated ACE editor to v1.4.2.
+
 ## [v6.0-beta.21] - 2018-12-13
 
 * Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
