@@ -1,5 +1,6 @@
 package stroom.connectors.elastic;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
     private String clusterName;
     private final Map<String, Integer> transportHosts = new HashMap<>();
     private static final ObjectMapper jsonMapper = new ObjectMapper();
+    private String lastError;
 
     public StroomElasticProducerImpl(final ConnectorProperties properties) {
         this.properties = properties;
@@ -38,12 +40,14 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.ELASTIC_HTTP_URL);
+                lastError = msg;
                 throw new RuntimeException(msg);
             }
             if (Strings.isNullOrEmpty(clusterName)) {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.CLUSTER_NAME);
+                lastError = msg;
                 throw new RuntimeException(msg);
             }
             final String transportHostsStr = properties.getProperty(StroomElasticProducer.TRANSPORT_HOSTS);
@@ -51,6 +55,7 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Elastic: %s is required.",
                         StroomElasticProducer.TRANSPORT_HOSTS);
+                lastError = msg;
                 throw new RuntimeException(msg);
             }
             final String[] transportHostsList = transportHostsStr.split(",");
@@ -60,12 +65,15 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                     transportHosts.put(transportHostParts[0], Integer.parseInt(transportHostParts[1]));
                 } else {
                     final String msg = String.format("Unexpected Transport Host, should be a colon delimited pair host:port %s", transportHost);
+                    lastError = msg;
                     throw new RuntimeException(msg);
                 }
             }
             LOGGER.info("Elastic Producer successfully created for {} {} {}", clusterName, elasticHttpUrl, transportHostsStr);
         } else {
-            throw new RuntimeException("Stroom is not properly configured to connect to Elastic: no connector properties have been supplied");
+            final String msg = "Stroom is not properly configured to connect to Elastic: no connector properties have been supplied";
+            lastError = msg;
+            throw new RuntimeException(msg);
         }
     }
 
@@ -131,17 +139,26 @@ public class StroomElasticProducerImpl implements StroomElasticProducer {
                     exceptionHandler.accept(new Exception(msg));
                     break;
             }
+            lastError = null;
         } catch (Exception e) {
             final String msg = String.format("Error initialising elastic producer to %s, (%s)",
                     this.transportHosts,
                     e.getMessage());
             LOGGER.error(msg);
+            lastError = msg;
             exceptionHandler.accept(e);
         } finally {
             if (null != con) {
                 con.disconnect();
             }
         }
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        return (lastError != null) ?
+                HealthCheck.Result.unhealthy(lastError) :
+                HealthCheck.Result.healthy("Last message sent OK");
     }
 
     @Override

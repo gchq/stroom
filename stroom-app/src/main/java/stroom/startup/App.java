@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.cluster.server.ClusterCallServiceRPC;
+import stroom.connectors.elastic.StroomElasticProducerFactoryService;
+import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
 import stroom.dashboard.spring.DashboardConfiguration;
@@ -162,6 +164,8 @@ public class App extends Application<Config> {
 
         HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         // Add health checks
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomKafkaProducerFactoryService.class);
+        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomElasticProducerFactoryService.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
@@ -248,6 +252,8 @@ public class App extends Application<Config> {
             SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscoveryRegistrar.class);
             SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, ServiceDiscovererImpl.class);
         }
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomKafkaProducerFactoryService.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomElasticProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
