@@ -170,7 +170,7 @@ public class TableCell extends AbstractCell<Row> {
             final char c = value.charAt(i);
             if (c == endChar) {
                 return sb.toString();
-            } else if (c == '[' || c == ']' || c == '(' || c == ')' || c == '{' || c == '}') {
+            } else if (c == '[' || c == ']' || c == '(' || c == ')') {
                 // Unexpected token
                 return null;
             } else {

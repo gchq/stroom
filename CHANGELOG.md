@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1021** : Dashboard links now allow `{}` characters to be used without URL encoding.
+
 * Issue **#1018** : Added Health Checks for the external connectors that are registered via plugins
 
 * Issue **#1025** : Fixed ACE editor resize issue where horizontal scroll bar was not always correctly shown.
