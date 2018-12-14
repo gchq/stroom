@@ -71,9 +71,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private boolean isHtml;
 
     @Inject
-    public TextPresenter(final EventBus eventBus, final TextView view,
+    public TextPresenter(final EventBus eventBus,
+                         final TextView view,
                          final Provider<TextSettingsPresenter> settingsPresenterProvider,
-                         final Provider<EditorPresenter> rawPresenterProvider, final Provider<HtmlPresenter> htmlPresenterProvider, final ClientDispatchAsync dispatcher,
+                         final Provider<EditorPresenter> rawPresenterProvider,
+                         final Provider<HtmlPresenter> htmlPresenterProvider,
+                         final ClientDispatchAsync dispatcher,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view, settingsPresenterProvider);
         this.rawPresenterProvider = rawPresenterProvider;
@@ -115,8 +118,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
                 getView().setContent(rawPresenter.getView());
 
-                rawPresenter.setText(data);
-                rawPresenter.format();
+                rawPresenter.setText(data, true);
                 rawPresenter.setHighlights(highlights);
                 rawPresenter.setControlsVisible(playButtonVisible);
             }
@@ -360,7 +362,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private TextComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof TextComponentSettings)) {
+        if (!(settings instanceof TextComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }

@@ -66,6 +66,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
+
     @Inject
     public ElementPresenter(final EventBus eventBus, final ElementView view,
                             final Provider<EditorPresenter> editorProvider, final ClientDispatchAsync dispatcher) {
@@ -232,10 +233,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             inputPresenter.getStylesOption().setOn(formatInput);
 
             if (!inputPresenter.getText().equals(input)) {
-                inputPresenter.setText(input);
-                if (formatInput) {
-                    inputPresenter.format();
-                }
+                inputPresenter.setText(input, formatInput);
             }
 
             inputPresenter.setFirstLineNumber(inputStartLineNo);
@@ -249,10 +247,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             outputPresenter.getStylesOption().setOn(formatOutput);
 
             if (!outputPresenter.getText().equals(output)) {
-                outputPresenter.setText(output);
-                if (formatOutput) {
-                    outputPresenter.format();
-                }
+                outputPresenter.setText(output, formatOutput);
             }
 
             outputPresenter.setFirstLineNumber(outputStartLineNo);
