@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1018** : Added Health Checks for the external connectors that are registered via plugins
+
 ## [v6.0-beta.21] - 2018-12-13
 
 * Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.

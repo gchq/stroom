@@ -3,6 +3,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 dependencies {
     compile project(':stroom-connectors')
 
+    compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
     compile libs.slf4j_api
     compile libs.jackson_databind
