@@ -1,5 +1,6 @@
 package stroom.connectors.kafka;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -33,6 +34,7 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
     private final String bootstrapServers;
     //instance of a kafka producer that will be shared by all threads
     private final Producer<String, byte[]> producer;
+    private String lastError;
 
     public StroomKafkaProducerImpl(final ConnectorProperties properties) {
         this.properties = properties;
@@ -45,12 +47,14 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 final String msg = String.format(
                         "Stroom is not properly configured to connect to Kafka: %s is required.",
                         StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);
+                lastError = msg;
                 throw new RuntimeException(msg);
             }
         } else {
             final String msg = String.format(
                     "Stroom is not properly configured to connect to Kafka: properties containing at least %s are required.",
                     StroomKafkaProducer.BOOTSTRAP_SERVERS_CONFIG);
+            lastError = msg;
             throw new RuntimeException(msg);
         }
 
@@ -76,8 +80,10 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
             //block until it comes up or throw an exception on timeout
             this.producer = new KafkaProducer<>(props);
         } catch (Exception e) {
-            throw new RuntimeException(String.format("Error initialising kafka producer for %s, due to %s",
-                    bootstrapServers, e.getMessage()), e);
+            final String msg = String.format("Error initialising kafka producer for %s, due to %s",
+                    bootstrapServers, e.getMessage());
+            lastError = msg;
+            throw new RuntimeException(msg, e);
         } finally {
             Thread.currentThread().setContextClassLoader(classLoader);
         }
@@ -108,8 +114,9 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
                 //this is sync so throw rather than using the callback
-                throw new RuntimeException(
-                        String.format("Error sending %s records to kafka", futures.size()), e);
+                final String msg = String.format("Error sending %s records to kafka", futures.size());
+                lastError = msg;
+                throw new RuntimeException(msg, e);
             }
         });
         return metaDataList;
@@ -125,11 +132,13 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                     CompletableFuture<StroomKafkaRecordMetaData> future = new CompletableFuture<>();
                     producer.send(producerRecord, (recordMetadata, exception) -> {
                         if (exception != null) {
+                            lastError = exception.getMessage();
                             future.completeExceptionally(exception);
                             if (exceptionHandler != null) {
                                 exceptionHandler.accept(exception);
                             }
                         } else {
+                            lastError = null;
                             future.complete(WrappedRecordMetaData.wrap(recordMetadata));
                         }
                         LOGGER.trace("Record sent to Kafka");
@@ -172,6 +181,13 @@ class StroomKafkaProducerImpl implements StroomKafkaProducer {
                 org.apache.kafka.common.serialization.ByteArraySerializer.class.getName());
 
         return props;
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        return (lastError != null) ?
+                HealthCheck.Result.unhealthy(lastError) :
+                HealthCheck.Result.healthy("Last message sent OK");
     }
 
     @Override

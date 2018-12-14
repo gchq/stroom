@@ -1,6 +1,8 @@
 package stroom.connectors;
 
+import com.codahale.metrics.health.HealthCheck;
 import stroom.node.server.StroomPropertyService;
+import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -10,6 +12,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The generic form of a Connector Factory Service.
@@ -23,7 +26,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class StroomAbstractConnectorFactoryService<
         C extends StroomConnector,
-        F extends StroomConnectorFactory<C>> {
+        F extends StroomConnectorFactory<C>> implements HasHealthCheck {
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomAbstractConnectorFactoryService.class);
 
@@ -44,8 +47,6 @@ public abstract class StroomAbstractConnectorFactoryService<
     private volatile Instant timeOfLastFailedInitAttempt = Instant.EPOCH;
 
     // Used to keep track of the instances created, a single instance per name will be created and shared.
-    //TODO If we want to have multiple versions of a connector, e.g. kafka 0.10.1 and 0.10.2 then we will
-    //need to key on name+version
     private final ConcurrentMap<String, C> connectorsByName;
 
     protected StroomAbstractConnectorFactoryService(final StroomPropertyService propertyService,
@@ -59,6 +60,22 @@ public abstract class StroomAbstractConnectorFactoryService<
         this.connectorClass = connectorClass;
         this.factoryClass = factoryClass;
         this.connectorsByName = new ConcurrentHashMap<>();
+    }
+
+    public HealthCheck.Result getHealth() {
+        final AtomicBoolean isHealthy = new AtomicBoolean(true);
+        final StringBuilder msg = new StringBuilder(String.format("Connectors of %s: ", connectorClass.getName()));
+        connectorsByName.forEach((key, value) -> {
+            final HealthCheck.Result cResult = value.getHealth();
+            msg.append(String.format(", %s: %b - %s", key, cResult.isHealthy(), cResult.getMessage()));
+            if (!cResult.isHealthy()) {
+                isHealthy.set(false);
+            }
+        });
+
+        return isHealthy.get() ?
+                HealthCheck.Result.healthy(msg.toString()) :
+                HealthCheck.Result.unhealthy(msg.toString());
     }
 
     /**
