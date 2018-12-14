@@ -25,6 +25,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
+import stroom.document.client.DocumentPlugin;
 import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.shared.Dashboard;
@@ -35,6 +36,7 @@ import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.v2.DocRef;
 import stroom.svg.client.Icon;
+import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 
 import java.util.HashMap;
@@ -52,11 +54,12 @@ public class DashboardPlugin extends EntityPlugin<Dashboard> {
         super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
 
-        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(), event -> openParameterisedDashboard(event.getTitle(), event.getHref())));
+        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(), event -> openParameterisedDashboard(event.getHref())));
     }
 
-    private void openParameterisedDashboard(final String title, final String href) {
+    private void openParameterisedDashboard(final String href) {
         final Map<String, String> map = buildListParamMap(href);
+        final String title = map.get("title");
         final String uuid = map.get("uuid");
         final String params = map.get("params");
 
@@ -72,36 +75,15 @@ public class DashboardPlugin extends EntityPlugin<Dashboard> {
             // create a new presenter and register it as open.
             final DashboardPresenter presenter = (DashboardPresenter) createEditor();
             presenter.setParams(params);
+            presenter.setCustomTitle(title);
 
             //        // Register the tab as being open.
             //        documentToTabDataMap.put(docRef, tabData);
             //        tabDataToDocumentMap.put(tabData, docRef);
 
-            final DocumentTabData tabData = new DocumentTabData() {
-                @Override
-                public String getType() {
-                    return presenter.getType();
-                }
-
-                @Override
-                public Icon getIcon() {
-                    return presenter.getIcon();
-                }
-
-                @Override
-                public String getLabel() {
-                    return title;
-                }
-
-                @Override
-                public boolean isCloseable() {
-                    return presenter.isCloseable();
-                }
-            };
-
             // Load the document and show the tab.
             final CloseHandler closeHandler = callback -> callback.closeTab(true);
-            showTab(docRef, presenter, closeHandler, tabData);
+            showTab(docRef, presenter, closeHandler, presenter);
         }
     }
 

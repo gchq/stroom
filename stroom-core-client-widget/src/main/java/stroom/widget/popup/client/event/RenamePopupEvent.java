@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.hyperlink.client;
+package stroom.widget.popup.client.event;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.gwtplatform.mvp.client.PresenterWidget;
 
-public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
+public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
     private static Type<Handler> TYPE;
+    private final PresenterWidget<?> presenterWidget;
+    private final String caption;
 
-    private final String href;
-
-    private ShowDashboardEvent(final String href) {
-        this.href = href;
+    private RenamePopupEvent(final PresenterWidget<?> presenterWidget, final String caption) {
+        this.presenterWidget = presenterWidget;
+        this.caption = caption;
     }
 
-    public static void fire(final HasHandlers handlers, final String href) {
-        handlers.fireEvent(new ShowDashboardEvent(href));
+    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget, final String caption) {
+        handlers.fireEvent(new RenamePopupEvent(presenterWidget, caption));
     }
 
     public static Type<Handler> getType() {
@@ -47,14 +49,18 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onChange(this);
+        handler.onRename(this);
     }
 
-    public String getHref() {
-        return href;
+    public PresenterWidget<?> getPresenterWidget() {
+        return presenterWidget;
+    }
+
+    public String getCaption() {
+        return caption;
     }
 
     public interface Handler extends EventHandler {
-        void onChange(ShowDashboardEvent event);
+        void onRename(RenamePopupEvent event);
     }
 }

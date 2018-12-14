@@ -253,8 +253,7 @@ public class SearchExpressionQueryBuilder {
                     final Long num1 = getNumber(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
                 case CONTAINS:
-                    final Long num2 = getNumber(fieldName, value);
-                    return NumericRangeQuery.newLongRange(fieldName, num2, num2, true, true);
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
                 case GREATER_THAN:
                     return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
                             true);
@@ -290,8 +289,7 @@ public class SearchExpressionQueryBuilder {
                     final Long date1 = getDate(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
                 case CONTAINS:
-                    final Long date2 = getDate(fieldName, value);
-                    return NumericRangeQuery.newLongRange(fieldName, date2, date2, true, true);
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
                 case GREATER_THAN:
                     return NumericRangeQuery.newLongRange(fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, false,
                             true);

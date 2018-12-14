@@ -166,7 +166,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             @Override
             public void write(final JSONObject settings) {
                 final String selected = ctrl.getSelected();
-                if (selected != null && selected.length() > 0) {
+                if (selected != null) {
                     settings.put(id, new JSONString(selected));
                 }
             }
@@ -192,7 +192,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             @Override
             public void write(final JSONObject settings) {
                 final String val = ctrl.getText();
-                if (val != null && val.trim().length() > 0) {
+                if (val != null) {
                     settings.put(id, new JSONString(val.trim()));
                 }
             }
@@ -215,7 +215,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             @Override
             public void write(final JSONObject settings) {
                 final String val = ctrl.getValue();
-                if (val != null && val.trim().length() > 0) {
+                if (val != null) {
                     settings.put(id, new JSONString(val.trim()));
                 }
             }

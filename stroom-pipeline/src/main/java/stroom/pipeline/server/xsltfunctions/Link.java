@@ -15,37 +15,45 @@ import stroom.util.spring.StroomScope;
 public class Link extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(Link.class);
 
-    private static final String DEFAULT_TARGET = "BROWSER_TAB";
-
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException {
         String link = "";
 
         if (arguments.length == 1) {
             final String url = getSafeString(functionName, context, arguments, 0);
-            link = makeLink(url, url, "", DEFAULT_TARGET);
+            link = makeLink(url, url, null);
         } else if (arguments.length == 2) {
-            final String title = getSafeString(functionName, context, arguments, 0);
+            final String text = getSafeString(functionName, context, arguments, 0);
             final String url = getSafeString(functionName, context, arguments, 1);
-            link = makeLink(title, url, "", DEFAULT_TARGET);
+            link = makeLink(text, url, null);
         } else if (arguments.length == 3) {
-            final String title = getSafeString(functionName, context, arguments, 0);
-            final String host = getSafeString(functionName, context, arguments, 1);
-            final String path = getSafeString(functionName, context, arguments, 2);
-            link = makeLink(title, host, path, DEFAULT_TARGET);
-        } else if (arguments.length == 4) {
-            final String title = getSafeString(functionName, context, arguments, 0);
-            final String host = getSafeString(functionName, context, arguments, 1);
-            final String path = getSafeString(functionName, context, arguments, 2);
-            final String target = getSafeString(functionName, context, arguments, 3);
-            link = makeLink(title, host, path, target);
+            final String text = getSafeString(functionName, context, arguments, 0);
+            final String url = getSafeString(functionName, context, arguments, 1);
+            final String type = getSafeString(functionName, context, arguments, 2);
+            link = makeLink(text, url, type);
         }
 
         LOGGER.trace(String.format("Generating link %s", link));
         return StringValue.makeStringValue(link);
     }
 
-    private String makeLink(final String title, final String host, final String path, final String target) {
-        return "[" + title + "](" + host + path + "){" + target + "}";
+    private String makeLink(final String text, final String href, final String type) {
+        final StringBuilder sb = new StringBuilder();
+        if (text != null) {
+            sb.append("[");
+            sb.append(text);
+            sb.append("]");
+        }
+        if (href != null) {
+            sb.append("(");
+            sb.append(href);
+            sb.append(")");
+        }
+        if (type != null) {
+            sb.append("{");
+            sb.append(type);
+            sb.append("}");
+        }
+        return sb.toString();
     }
 }

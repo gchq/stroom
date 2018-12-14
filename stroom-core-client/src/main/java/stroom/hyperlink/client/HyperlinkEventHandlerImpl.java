@@ -8,16 +8,20 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
+import stroom.iframe.client.presenter.IFrameContentPresenter;
+import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.Map;
@@ -53,8 +57,6 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     public void onLink(final HyperlinkEvent event) {
         final Hyperlink hyperlink = event.getHyperlink();
 
-        final String title = hyperlink.getTitle();
-
         String href = hyperlink.getHref();
         if (namedUrls != null) {
             for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrls.entrySet()) {
@@ -62,29 +64,39 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             }
         }
 
+        String type = hyperlink.getType();
+        String customTitle = null;
+        if (type != null) {
+            int index = type.indexOf("|");
+            if (index != -1) {
+                customTitle = type.substring(index + 1);
+                type = type.substring(0, index);
+            }
+        }
+
         HyperlinkType hyperlinkType = null;
-        if (hyperlink.getType() != null) {
+        if (type != null) {
             try {
-                hyperlinkType = HyperlinkType.valueOf(hyperlink.getType().toUpperCase());
+                hyperlinkType = HyperlinkType.valueOf(type.toUpperCase());
             } catch (final RuntimeException e) {
-                GWT.log("Could not parse open type value of " + hyperlink.getType());
+                GWT.log("Could not parse open type value of " + type);
             }
         }
 
         if (hyperlinkType != null) {
             switch (hyperlinkType) {
                 case DASHBOARD: {
-                    ShowDashboardEvent.fire(this, title, href);
+                    ShowDashboardEvent.fire(this, href);
                     break;
                 }
                 case TAB: {
                     final IFrameContentPresenter presenter = iFrameContentPresenterProvider.get();
                     presenter.setUrl(hyperlink.getHref());
-                    presenter.setTitle(hyperlink.getTitle());
+                    presenter.setCustomTitle(customTitle);
                     presenter.setIcon(hyperlink.getIcon());
                     contentManager.open(callback ->
                                     ConfirmEvent.fire(this,
-                                            "Are you sure you want to close " + hyperlink.getTitle() + "?",
+                                            "Are you sure you want to close?",
                                             res -> {
                                                 if (res) {
                                                     presenter.close();
@@ -97,14 +109,30 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 case DIALOG: {
                     final PopupSize popupSize = new PopupSize(800, 600, true);
                     final IFramePresenter presenter = iFramePresenterProvider.get();
+                    final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 -> RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
                     presenter.setUrl(hyperlink.getHref());
+                    presenter.setCustomTitle(customTitle);
+
+                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                        @Override
+                        public void onHideRequest(final boolean autoClose, final boolean ok) {
+                            HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
+                        }
+
+                        @Override
+                        public void onHide(final boolean autoClose, final boolean ok) {
+                            handlerRegistration.removeHandler();
+                            presenter.close();
+                        }
+                    };
+
                     ShowPopupEvent.fire(this,
                             presenter,
                             PopupType.CLOSE_DIALOG,
                             null,
                             popupSize,
-                            title,
-                            null,
+                            presenter.getLabel(),
+                            popupUiHandlers,
                             null);
                     break;
                 }

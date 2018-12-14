@@ -44,7 +44,7 @@ public class ChangePasswordPlugin extends Plugin {
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
                             final Hyperlink hyperlink = new Builder()
-                                    .title("Change password")
+                                    .text("Change password")
                                     .href(changePasswordUiUrl)
                                     .type(HyperlinkType.TAB)
                                     .icon(icon)

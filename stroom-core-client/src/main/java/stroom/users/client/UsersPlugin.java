@@ -40,7 +40,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                         if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
                             usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
                                 final Hyperlink hyperlink = new Builder()
-                                        .title("Users")
+                                        .text("Users")
                                         .href(usersUiUrl)
                                         .type(HyperlinkType.TAB)
                                         .icon(icon)

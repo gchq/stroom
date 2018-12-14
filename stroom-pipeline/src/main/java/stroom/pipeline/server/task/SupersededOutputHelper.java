@@ -48,7 +48,8 @@ public class SupersededOutputHelper {
     public boolean isSuperseded() {
         try {
             if (!initialised) {
-                throw new RuntimeException("SupersededOutputHelper has not been initialised");
+                LOGGER.debug("SupersededOutputHelper has not been initialised");
+                return false;
             }
 
             Objects.requireNonNull(sourceStream, "Source stream must not be null");
