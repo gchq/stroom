@@ -63,19 +63,19 @@ public abstract class StroomAbstractConnectorFactoryService<
     }
 
     public HealthCheck.Result getHealth() {
-        final AtomicBoolean isHealthy = new AtomicBoolean(true);
-        final StringBuilder msg = new StringBuilder(String.format("Connectors of %s: ", connectorClass.getName()));
+        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+
+        resultBuilder.withMessage(String.format("Connectors of %s: ", connectorClass.getName()));
+
         connectorsByName.forEach((key, value) -> {
             final HealthCheck.Result cResult = value.getHealth();
-            msg.append(String.format(", %s: %b - %s", key, cResult.isHealthy(), cResult.getMessage()));
             if (!cResult.isHealthy()) {
-                isHealthy.set(false);
+                resultBuilder.unhealthy();
             }
+            resultBuilder.withDetail(key, cResult.getMessage());
         });
 
-        return isHealthy.get() ?
-                HealthCheck.Result.healthy(msg.toString()) :
-                HealthCheck.Result.unhealthy(msg.toString());
+        return resultBuilder.build();
     }
 
     /**
