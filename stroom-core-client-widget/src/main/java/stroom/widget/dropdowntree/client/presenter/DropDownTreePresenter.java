@@ -63,7 +63,5 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
 
     public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
         void setCellTree(Widget widget);
-
-        void setSize(int width, int height);
     }
 }

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1036** : Fix for scrollbar position on explorer popup windows.
+
 * Issue **#1037** : Updated `moment.js` for parsing/formatting dates and times.
 
 * Issue **#1021** : Dashboard links now allow `{}` characters to be used without URL encoding.
