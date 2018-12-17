@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <createTime>1545040555146</createTime>
+   <createUser>admin</createUser>
+   <name>BROADBAND_SPEED_TESTS-INDEX</name>
+   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+&lt;doc&gt;
+   &lt;type&gt;Pipeline&lt;/type&gt;
+   &lt;uuid&gt;fcef1b20-083e-436c-ab95-47a6ce453435&lt;/uuid&gt;
+   &lt;name&gt;Indexing&lt;/name&gt;
+&lt;/doc&gt;
+</parentPipelineXML>
+   <updateTime>1545040555146</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>2a3d088b-a513-4a42-b190-9dceea7e82fb</uuid>
+</pipeline>

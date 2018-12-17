@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <createTime>1545040553580</createTime>
+   <createUser>admin</createUser>
+   <name>LAX_CARGO_VOLUME</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <updateTime>1545040553580</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>1537dd55-bd39-41af-83c3-da347b78164f</uuid>
+</feed>

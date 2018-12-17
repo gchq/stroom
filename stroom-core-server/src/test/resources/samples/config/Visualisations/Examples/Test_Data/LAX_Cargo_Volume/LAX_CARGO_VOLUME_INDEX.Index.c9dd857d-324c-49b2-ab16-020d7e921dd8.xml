@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<index>
+   <createTime>1545040553423</createTime>
+   <createUser>admin</createUser>
+   <description/>
+   <maxDocsPerShard>1000000000</maxDocsPerShard>
+   <name>LAX_CARGO_VOLUME-INDEX</name>
+   <partitionBy>MONTH</partitionBy>
+   <partitionSize>1</partitionSize>
+   <shardsPerPartition>1</shardsPerPartition>
+   <updateTime>1545046500424</updateTime>
+   <updateUser>admin</updateUser>
+   <uuid>c9dd857d-324c-49b2-ab16-020d7e921dd8</uuid>
+   <volumes>Volume (id=1, version=0, node=node1a, volumeType=Private, path=/home/dev/git_work/v6stroom/stroom-core-server/build/libs/volumes/defaultIndexVolume (Used: 52G, Free: 17G, Total: 73G, Use%: 71%))</volumes>
+</index>
