@@ -16,16 +16,58 @@
 
 import * as React from "react";
 
+export interface Props {
+  north?: boolean;
+  west?: boolean;
+  south?: boolean;
+  east?: boolean;
+}
+
+const defaultProps: Props = {
+  north: false,
+  west: false,
+  south: false,
+  east: false
+};
+
+interface QuarterProps {
+  vertical?: boolean;
+  horizontal?: boolean;
+}
+
+const ElbowQuarter: React.StatelessComponent<QuarterProps> = ({
+  vertical,
+  horizontal
+}) => (
+  <div
+    className={`ElbowLine__quarter ${vertical ? "vertical" : ""} ${
+      horizontal ? "horizontal" : ""
+    }`}
+  />
+);
+
+ElbowQuarter.defaultProps = {
+  vertical: false,
+  horizontal: false
+};
+
 /**
  * This element can be used to place an elbowed line things like pipelines and expressions
  */
-const ElbowLine = () => (
+const ElbowLine: React.StatelessComponent<Props> = ({
+  north,
+  south,
+  east,
+  west
+}) => (
   <div className="ElbowLine">
-    <div className="ElbowLine__quarter" />
-    <div className="ElbowLine__quarter" />
-    <div className="ElbowLine__quarter" />
-    <div className="ElbowLine__quarter" />
+    <ElbowQuarter vertical={north!} horizontal={west!} />
+    <ElbowQuarter horizontal={east!} />
+    <ElbowQuarter vertical={south!} />
+    <ElbowQuarter />
   </div>
 );
+
+ElbowLine.defaultProps = defaultProps;
 
 export default ElbowLine;

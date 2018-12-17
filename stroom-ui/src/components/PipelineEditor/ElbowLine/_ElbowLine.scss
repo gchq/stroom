@@ -5,9 +5,9 @@
   grid-template-columns: 50% 50%;
   grid-template-rows: 50% 50%;
 }
-.ElbowLine__quarter:nth-child(1) {
+.ElbowLine__quarter.vertical {
   border-right: solid thick black;
 }
-.ElbowLine__quarter:nth-child(2) {
+.ElbowLine__quarter.horizontal {
   border-bottom: solid thick black;
 }

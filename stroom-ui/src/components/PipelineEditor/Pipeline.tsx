@@ -127,7 +127,7 @@ const Pipeline = ({
                     elementId={e.id}
                   />
                 ))}
-            {column.cellType == CellType.ELBOW && <ElbowLine />}
+            {column.cellType == CellType.ELBOW && <ElbowLine north east />}
           </div>
         ))}
       </div>

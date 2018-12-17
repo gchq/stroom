@@ -20,8 +20,49 @@ import ElbowLine from "./ElbowLine";
 
 import "../../../styles/main.css";
 
-storiesOf("Pipeline/Elbow Line", module).add("Elbow Line", () => (
-  <div className={`Pipeline-editor__elements_cell ELBOW`}>
-    <ElbowLine />
-  </div>
-));
+storiesOf("Pipeline/Elbow Line", module)
+  .add("Pipeline Cell", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine />
+    </div>
+  ))
+  .add("North", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine north />
+    </div>
+  ))
+  .add("East", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine east />
+    </div>
+  ))
+  .add("South", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine south />
+    </div>
+  ))
+  .add("West", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine west />
+    </div>
+  ))
+  .add("North & East", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine north east />
+    </div>
+  ))
+  .add("North, East, South, West", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine north east south west />
+    </div>
+  ))
+  .add("North, East, South", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine north east south />
+    </div>
+  ))
+  .add("West, East, South", () => (
+    <div className={`Pipeline-editor__elements_cell ELBOW`}>
+      <ElbowLine west east south />
+    </div>
+  ));

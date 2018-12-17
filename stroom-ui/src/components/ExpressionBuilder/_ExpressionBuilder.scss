@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 .operator__children {
-  padding-left: 2rem;
+}
+.operator__child {
+  display: flex;
+}
+.operator__child .ElbowLine {
+  width: 2rem;
 }
 
 .expression-item__root {

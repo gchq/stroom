@@ -47,6 +47,7 @@ import {
   ExpressionTermWithUuid
 } from "../../types";
 import { GlobalStoreState } from "../../startup/reducers";
+import ElbowLine from "../PipelineEditor/ElbowLine/ElbowLine";
 
 const {
   expressionTermAdded,
@@ -276,8 +277,8 @@ const ExpressionOperator = ({
               i === 0
                 ? "left"
                 : OperatorTypeValues.length - 1 === i
-                  ? "right"
-                  : "middle"
+                ? "right"
+                : "middle"
             }
             onClick={() => onOpChange(l)}
             text={l}
@@ -317,44 +318,47 @@ const ExpressionOperator = ({
     )}
 
     <div className="operator__children">
-      {isOver &&
-        dropTarget.canDrop && <div className="operator__placeholder" />}
+      {isOver && dropTarget.canDrop && (
+        <div className="operator__placeholder" />
+      )}
       {operator.children &&
-        operator.children
-          .map((c: ExpressionItemWithUuid) => {
-            let itemElement;
-            switch (c.type) {
-              case "term":
-                itemElement = (
-                  <div key={c.uuid}>
-                    <ExpressionTerm
-                      dataSource={dataSource}
-                      expressionId={expressionId}
-                      isEnabled={isEnabled && c.enabled}
-                      term={c as ExpressionTermWithUuid}
-                    />
-                  </div>
-                );
-                break;
-              case "operator":
-                itemElement = (
-                  <EnhancedExpressionOperator
+        operator.children.map((c: ExpressionItemWithUuid) => {
+          let itemElement;
+          switch (c.type) {
+            case "term":
+              itemElement = (
+                <div key={c.uuid}>
+                  <ExpressionTerm
                     dataSource={dataSource}
                     expressionId={expressionId}
                     isEnabled={isEnabled && c.enabled}
-                    operator={c as ExpressionOperatorWithUuid}
+                    term={c as ExpressionTermWithUuid}
                   />
-                );
-                break;
-              default:
-                throw new Error(`Invalid operator type: ${c.type}`);
-            }
+                </div>
+              );
+              break;
+            case "operator":
+              itemElement = (
+                <EnhancedExpressionOperator
+                  dataSource={dataSource}
+                  expressionId={expressionId}
+                  isEnabled={isEnabled && c.enabled}
+                  operator={c as ExpressionOperatorWithUuid}
+                />
+              );
+              break;
+            default:
+              throw new Error(`Invalid operator type: ${c.type}`);
+          }
 
-            // Wrap it with a line to
-            return <div key={c.uuid}>{itemElement}</div>;
-          })
-          .filter(c => !!c) // null filter
-      }
+          // Wrap it with a line to
+          return (
+            <div key={c.uuid} className="operator__child">
+              <ElbowLine />
+              {itemElement}
+            </div>
+          );
+        })}
     </div>
   </div>
 );
