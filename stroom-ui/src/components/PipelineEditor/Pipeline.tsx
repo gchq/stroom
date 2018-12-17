@@ -108,37 +108,28 @@ const Pipeline = ({
   <div className="Pipeline-editor__elements">
     {layoutGrid.rows.map((row, r) => (
       <div key={r} className="Pipeline-editor__elements-row">
-        {row.columns.map((column, c) => {
-          let cellClassNames = ["Pipeline-editor__elements_cell"];
-          switch (column.cellType) {
-            case CellType.ELBOW:
-              cellClassNames.push("ELBOW");
-              break;
-            case CellType.ELEMENT:
-              cellClassNames.push("ELEMENT");
-              break;
-            case CellType.EMPTY:
-              cellClassNames.push("EMPTY");
-              break;
-          }
-          return (
-            <div key={c} className={cellClassNames.join(" ")}>
-              {column.cellType == CellType.ELEMENT &&
-                pipeline &&
-                pipeline.merged.elements.add &&
-                pipeline.merged.elements.add
-                  .filter((e: PipelineElementType) => e.id === column.uuid)
-                  .map(e => (
-                    <PipelineElement
-                      key={e.id}
-                      pipelineId={pipelineId}
-                      elementId={e.id}
-                    />
-                  ))}
-              {column.cellType == CellType.ELBOW && <ElbowLine />}
-            </div>
-          );
-        })}
+        {row.columns.map((column, c) => (
+          <div
+            key={c}
+            className={`Pipeline-editor__elements_cell ${
+              CellType[column.cellType]
+            }`}
+          >
+            {column.cellType == CellType.ELEMENT &&
+              pipeline &&
+              pipeline.merged.elements.add &&
+              pipeline.merged.elements.add
+                .filter((e: PipelineElementType) => e.id === column.uuid)
+                .map(e => (
+                  <PipelineElement
+                    key={e.id}
+                    pipelineId={pipelineId}
+                    elementId={e.id}
+                  />
+                ))}
+            {column.cellType == CellType.ELBOW && <ElbowLine />}
+          </div>
+        ))}
       </div>
     ))}
   </div>

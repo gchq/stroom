@@ -251,6 +251,7 @@ const enhance = compose<EnhancedProps, Props>(
       draggingItemType
     }) => {
       const classNames = ["Pipeline-element"];
+      classNames.push("raised-low");
       let isIconDisabled = false;
 
       if (!!draggingItemType) {
@@ -272,7 +273,6 @@ const enhance = compose<EnhancedProps, Props>(
           classNames.push("selected");
         }
       } else {
-        classNames.push("raised-low");
         classNames.push("borderless");
       }
 
@@ -328,11 +328,6 @@ const PipelineElement = ({
             icon={elementDefinition.icon}
           />
         )}
-        <p>{`Class: ${className}`}</p>
-        <p>{`IsOver: ${isOver}`}</p>
-        <p>{`CanDrop: ${canDrop}`}</p>
-        <p>{`isDragging: ${isDragging}`}</p>
-        <p>{`dragItemType: ${String(draggingItemType)}`}</p>
         <Button className="Pipeline-element__type" text={elementId} />
       </div>
     )
