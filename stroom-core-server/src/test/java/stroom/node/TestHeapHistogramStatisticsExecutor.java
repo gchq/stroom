@@ -19,10 +19,8 @@ import stroom.node.shared.Rack;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.logging.LambdaLogger;
-import stroom.util.test.StroomExpectedException;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +28,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestHeapHistogramStatisticsExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeapHistogramStatisticsExecutor.class);
@@ -132,20 +131,13 @@ class TestHeapHistogramStatisticsExecutor {
     }
 
     @Test
-    @StroomExpectedException(exception = {RuntimeException.class, IOException.class})
-    public void testExecBadExecutable() {
-        //Given
-        heapHistogramConfig.setjMapExecutable("badNameForJmapExecutable");
-
-        //When
-        boolean thrownException = false;
-        try {
+    void testExecBadExecutable() {
+        assertThatThrownBy(() -> {
+            //Given
+            heapHistogramConfig.setjMapExecutable("badNameForJmapExecutable");
             executor.exec();
-        } catch (final RuntimeException e) {
-            thrownException = true;
-        }
 
-        assertThat(thrownException).isTrue();
+        }).isInstanceOf(RuntimeException.class);
     }
 
     @Test
