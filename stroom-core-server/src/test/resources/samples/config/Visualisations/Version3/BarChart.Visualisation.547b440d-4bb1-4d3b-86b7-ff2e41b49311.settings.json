@@ -29,6 +29,25 @@
             "name": "Bar",
             "controls": [
                 {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "500",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
+                    "id": "sortXAxis",
+                    "type": "selection",
+                    "label": "Sort X Axis",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
                     "id": "sortSeries",
                     "type": "selection",
                     "label": "Sort Series",
@@ -68,8 +87,8 @@
                     "id": "maxGridSeries",
                     "type": "number",
                     "label": "Max Grid Series",
-                    "defaultValue": "20",
-                    "max": "36",
+                    "defaultValue": "36",
+                    "max": "144",
                     "min": "1"
                 },
                 {
@@ -152,7 +171,8 @@
                     "id": "${gridSeries}",
                     "sort": {
                         "direction": "${sortGridSeries}",
-                        "enabled": "true"
+                        "enabled": "true",
+                        "priority": 0
                     }
                 },
                 "nest": {
@@ -160,7 +180,8 @@
                         "id": "${series}",
                         "sort": {
                             "direction": "${sortSeries}",
-                            "enabled": "true"
+                            "enabled": "true",
+                            "priority": 1
                         }
                     },
                     "values": {
@@ -168,14 +189,19 @@
                             {
                                 "id": "${x}",
                                 "sort": {
-                                    "direction": "Ascending",
-                                    "enabled": "true"
+                                    "direction": "${sortXAxis}",
+                                    "enabled": "true",
+                                    "priority": 2
                                 }
                             },
                             {
                                 "id": "${y}"
                             }
-                        ]
+                        ],
+                        "limit": {
+                            "enabled": "true",
+                            "size": "${maxValues}"
+                        }
                     },
                     "limit": {
                         "enabled": "true",

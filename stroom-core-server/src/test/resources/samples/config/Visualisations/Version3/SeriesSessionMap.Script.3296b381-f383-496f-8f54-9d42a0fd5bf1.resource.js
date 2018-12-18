@@ -123,7 +123,6 @@ visualisations.SeriesSessionMap = function(containerNode) {
 
     var defaultOpenSessionText = "IN";
     var defaultCloseSessionText = "OUT";
-    var openSessionText = null;
     var closeSessionText = null;
 
     //Sessionise the data to reduce the point events into a number of sessions,
@@ -140,11 +139,40 @@ visualisations.SeriesSessionMap = function(containerNode) {
 
         if (settings && settings.stateChange)
         {
-            openSessionText = settings.openSessionText || defaultOpenSessionText;
             closeSessionText = settings.closeSessionText || defaultCloseSessionText;
+            openSessionText = settings.openSessionText || defaultOpenSessionText;
         }
 
         var seriesCount = data.values.length;
+
+        //Determine if the event represents a new session or not
+        var isNewSession = function(lastEventTime, eventTime, lastSessionText, sessionText) {
+            if (lastEventTime != null) {
+                var timeDiff = (eventTime - lastEventTime)
+            }
+
+            if (sessionText && !lastSessionText) {
+                //No previos session text so assume a new session
+                return true;
+            } else if (sessionText && sessionText === openSessionText && lastSessionText && lastSessionText === closeSessionText) {
+                //OPEN after a CLOSE
+                return true;
+            } else if (sessionText && sessionText === closeSessionText && lastSessionText && lastSessionText === closeSessionText) {
+                //CLOSE after a CLOSE
+                return true;
+            } else if (!lastSessionText && sessionText) {
+                //explicit session start/ends but no previous value so assume new session
+                return true;
+            } else if (!sessionText && !lastEventTime) {
+                //time based sessionisation and no last event time so assume new session
+                return true;
+            } else if (!sessionText && timeDiff && timeDiff >= sessionThresholdMillis) {
+                //time based sessionisation and event is outside the threshold
+                return true;
+            } else {
+                return false;
+            }
+        };
 
         //console.log("Series count: " + seriesCount);
 
@@ -154,69 +182,64 @@ visualisations.SeriesSessionMap = function(containerNode) {
             //console.log("########Series: " + data.values[j].key);
 
             var arrLen = data.values[j].values.length;
-            var sessionId = 0;
+            var sessionId = -1;
             var lastEventTime = null;
+            var lastSessionText = "";
             var sessionisedData = [];
 
             //loop through all the values for the series
             for (var i = 0; i < arrLen; i++){
 
                 var eventTime = data.values[j].values[i][0];
+                var sessionText = data.values[j].values[i][1];
 
-                if (lastEventTime == null){
-                    //first event of the series so create the first session, starting and ending on the same time
+                if (isNewSession(lastEventTime, eventTime, lastSessionText, sessionText)) {
+                    sessionId++;
                     sessionisedData[sessionId] = [];
                     sessionisedData[sessionId][0] = eventTime;
-                    sessionisedData[sessionId][1] = eventTime;
-                    sessionisedData[sessionId][2] = 1;
-                } else {
-                    if ((eventTime - lastEventTime) < sessionThresholdMillis)
-                    {
-                        //within threshold so extend the current session
+                    //Add on the session threshold time until we know otherwise, unless it is an explicit close
+                    if (sessionText && sessionText === closeSessionText) {
                         sessionisedData[sessionId][1] = eventTime;
-                        sessionisedData[sessionId][2]++;
-
                     } else {
-                        //outside threshold so make a new session
-                        sessionId++;
-                        sessionisedData[sessionId] = [];
-                        sessionisedData[sessionId][0] = eventTime;
-                        sessionisedData[sessionId][1] = eventTime;
-                        sessionisedData[sessionId][2] = 1;
+                        sessionisedData[sessionId][1] = eventTime + sessionThresholdMillis;
+                    }
+                    sessionisedData[sessionId][2] = 0;
+                    sessionisedData[sessionId][3] = sessionId;
+                    sessionisedData[sessionId][4] = "";
+                } else if (sessionText && sessionText === closeSessionText) {
+                    //explicit close of an existing session so set the end time to the close event
+                    sessionisedData[sessionId][1] = eventTime;
+                } else {
+                    //continuation of a session so update the end time with the event time plus the timeout period
+                    sessionisedData[sessionId][1] = eventTime + sessionThresholdMillis;
+                }
+
+                if (sessionId > 0 && sessionisedData[sessionId - 1][1] > eventTime) {
+                    //the end of the timeout period of the last session has overlapped this this one
+                    //so truncate the previous one to butt up against this one
+                    sessionisedData[sessionId - 1][1] = eventTime - 1;
+                } 
+
+                //increment the event count
+                sessionisedData[sessionId][2]++;
+
+                //Build a string of the first n state values up to a max char length
+                if (!sessionisedData[sessionId][4].endsWith("...")) {
+                    if (sessionText && sessionisedData[sessionId][4].length < 40){
+                        sessionisedData[sessionId][4] = sessionisedData[sessionId][4] + sessionText + " ";
+                    } else {
+                        sessionisedData[sessionId][4] = sessionisedData[sessionId][4] + "...";
                     }
                 }
-                if (closeSessionText && (data.values[j].values[i][1] == closeSessionText))
-                {
-                    sessionId++;
-                    lastEventTime = null;
-                }
-                else
-                {
-                    lastEventTime = eventTime;
-                }
+
+                lastEventTime = eventTime;
+                lastSessionText = sessionText;
             }
 
             //overwrite the existing data with the new sessionised data
             data.values[j].values = sessionisedData;
 
             arrLen = data.values[j].values.length;
-
-            //now loop through the sessions and augment the data
-            for (var i = 0; i < arrLen; i++){
-
-                var hourOfDay = commonFunctions.getTwoDigitHourOfDay(data.values[j].values[i][0]);
-                var dayMs = commonFunctions.truncateToStartOfDay(data.values[j].values[i][0]);
-
-                //console.log("time: " + eventDate + " val: " + cellValue + " hour: " + hourOfDay + " day: " + new Date(dayMs));
-
-                //values[i][0] = session start event time ms
-                //values[i][1] = session end event time ms
-                //values[i][2] = event count
-                //values[i][3] = session ID
-
-                data.values[j].values[i][3] = i; //the sessionId
-                //console.log("Session: " + i + " start: " + new Date(data.values[j].values[i][0]) + " end: " + new Date(data.values[j].values[i][1]));
-            }
         }
     };
 
@@ -234,14 +257,19 @@ visualisations.SeriesSessionMap = function(containerNode) {
             inverseHighlight = commonFunctions.inverseHighlight();
             tip = inverseHighlight.tip()
                 .html(function(tipData) { 
-                    var html= inverseHighlight.htmlBuilder()
+                    var htmlBuilder = inverseHighlight.htmlBuilder()
                         .addTipEntry("Series", commonFunctions.autoFormat(tipData.key, visSettings.seriesDateFormat))
                         .addTipEntry("Start", new Date(tipData.values[0]))
                         .addTipEntry("End", new Date(tipData.values[1]))
                         .addTipEntry("Count",commonFunctions.autoFormat(tipData.values[2]))
-                        .build();
-                    return html;
-                });
+                        .addTipEntry("Session No.",commonFunctions.autoFormat(tipData.values[3]));
+
+                        if (tipData.values[4].length > 0){
+                            htmlBuilder.addTipEntry("States",commonFunctions.autoFormat(tipData.values[4]));
+                        }
+                    return htmlBuilder.build();
+                })
+                .direction(commonFunctions.d3TipNorthSouthDirectionFunc);
         }
 
         // Add the series data.
@@ -299,9 +327,6 @@ visualisations.SeriesSessionMap = function(containerNode) {
                 var synchedFields = [];
                 if (settings.synchXAxis && settings.synchXAxis.toLowerCase() == "true"){
                     synchedFields.push(0);
-                }
-                if (settings.synchYAxis && settings.synchYAxis.toLowerCase() == "true"){
-                    synchedFields.push(1);
                 }
 
                 if (settings.synchSeries && settings.synchSeries.toLowerCase() == "true") {
@@ -382,7 +407,7 @@ visualisations.SeriesSessionMap = function(containerNode) {
             blockHeight = height / seriesCount;
 
             //padding between the outer most point and a swimlane
-            var yPadding = Math.max(Math.round(blockHeight * 0.1),2);
+            var yPadding = Math.max(Math.round(blockHeight * 0.1),1);
 
             canvas
                 .attr("width", fullWidth)
@@ -394,7 +419,13 @@ visualisations.SeriesSessionMap = function(containerNode) {
 
             xSettingsTime = commonFunctions.createAxis(visData.types[0], 0, width);
             xScaleTime = xSettingsTime.scale;
-            xSettingsTime.setRangeDomain(visData.types[0], visData, 0);
+            //custom data object as min[0] is the lowest of all the session start times and max[1] is the highest of all the session end times
+
+            var xScaleData = {
+                min: [visData.min[0]],
+                max: [visData.max[1]]
+            };
+            xSettingsTime.setRangeDomain(visData.types[0], xScaleData, 0);
             commonFunctions.buildAxis(xAxisContainer, xSettingsTime, "bottom", null, null, visSettings.displayXAxis);
 
             //if a custom date format has been provided then create a format function for the axis to use for its ticks

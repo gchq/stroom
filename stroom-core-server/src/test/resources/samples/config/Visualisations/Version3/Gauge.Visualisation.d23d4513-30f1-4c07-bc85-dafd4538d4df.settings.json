@@ -6,7 +6,7 @@
                 {
                     "id" : "field",
                     "type" : "field",
-                    "label" : "Value"
+                    "label" : "Field"
                 },
                 {
                     "id" : "gridSeries",
@@ -14,17 +14,17 @@
                     "label" : "Grid Series"
                 }
             ]
-        }, 
+        },
         {
-            "name" : "Traffic Lights",
+            "name" : "Gauge",
             "controls" : [
                 {
                     "id": "maxGridSeries",
                     "type": "number",
                     "label": "Max Grid Series",
-                    "defaultValue": "64",
-                    "min": "1",
-                    "max": "128"
+                    "defaultValue": "36",
+                    "max": "144",
+                    "min": "1"
                 },
                 {
                     "id": "sortGridSeries",
@@ -44,11 +44,11 @@
                     "defaultValue" : ""
                 },
                 {
-                    "id" : "ShowValue",
+                    "id" : "showLabels",
                     "type" : "boolean",
                     "label" : "Show Value",
                     "defaultValue" : "true"
-                } ,
+                },
                 {
                     "id" : "RedHi",
                     "type" : "number",
@@ -56,7 +56,7 @@
                     "defaultValue" : "10000",
                     "min" : "-10000000",
                     "max" : "10000000"
-                } ,
+                },
                 {
                     "id" : "RedLo",
                     "type" : "number",
@@ -64,7 +64,7 @@
                     "defaultValue" : "5000",
                     "min" : "-10000000",
                     "max" : "10000000"
-                } ,
+                },
                 {
                     "id" : "AmberHi",
                     "type" : "number",
@@ -72,7 +72,7 @@
                     "defaultValue" : "4999",
                     "min" : "-10000000",
                     "max" : "10000000"
-                } , 
+                },
                 {
                     "id" : "AmberLo",
                     "type" : "number",
@@ -80,7 +80,7 @@
                     "defaultValue" : "2000",
                     "min" : "-10000000",
                     "max" : "10000000"
-                } ,
+                },
                 {
                     "id" : "GreenHi",
                     "type" : "number",
@@ -88,7 +88,7 @@
                     "defaultValue" : "1999",
                     "min" : "-10000000",
                     "max" : "10000000"
-                } ,
+                },
                 {
                     "id" : "GreenLo",
                     "type" : "number",

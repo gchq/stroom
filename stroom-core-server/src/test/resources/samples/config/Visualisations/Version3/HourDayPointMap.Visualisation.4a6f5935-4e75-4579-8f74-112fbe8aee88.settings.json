@@ -29,6 +29,14 @@
             "name": "Points",
             "controls": [
                 {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "5000",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
                     "id": "sortPointSeries",
                     "type": "selection",
                     "label": "Sort Point Series",
@@ -68,8 +76,8 @@
                     "id": "maxGridSeries",
                     "type": "number",
                     "label": "Max Grid Series",
-                    "defaultValue": "20",
-                    "max": "36",
+                    "defaultValue": "36",
+                    "max": "144",
                     "min": "1"
                 },
                 {
@@ -127,16 +135,18 @@
                 "key": {
                     "id": "${gridSeries}",
                     "sort": {
+                        "direction": "${sortGridSeries}",
                         "enabled": "true",
-                        "direction": "${sortGridSeries}"
+                        "priority": 0
                     }
                 },
                 "nest" : {
                     "key" : {
                         "id" : "${pointSeries}",
                         "sort" : {
-                            "enabled" : "true",
-                            "direction" : "${sortPointSeries}"
+                            "direction" : "${sortPointSeries}",
+                            "enabled": "true",
+                            "priority": 1
                         }
                     },
                     "limit" : {
@@ -148,14 +158,19 @@
                             {
                                 "id" : "${eventTime}",
                                 "sort" : {
-                                    "enabled" : "true",
-                                    "direction" : "Ascending"
+                                    "direction" : "Ascending",
+                                    "enabled": "true",
+                                    "priority": 2
                                 }
                             }, 
                             {
                                 "id" : "${value}"
                             } 
-                        ]
+                        ],
+                        "limit": {
+                            "enabled": "true",
+                            "size": "${maxValues}"
+                        }
                     }      
                 },
                 "limit": {

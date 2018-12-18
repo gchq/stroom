@@ -117,7 +117,7 @@ visualisations.Doughnut= function(containerNode) {
         center_group = svg.append("svg:g").attr("class", "center_group");
 
 
-        // PLACEHOLDER GRAY CIRCLE
+        // PLStroomHOLDER GRAY CIRCLE
         paths = arc_group.append("svg:circle").attr("fill", "#EFEFEF");
 
         // =========================================================
@@ -302,7 +302,7 @@ visualisations.Doughnut= function(containerNode) {
         //};
 
         if (filteredPieData.length > 0) {
-            // REMOVE PLACEHOLDER CIRCLE
+            // REMOVE PLStroomHOLDER CIRCLE
             arc_group.selectAll("circle").remove();
 
             totalValue.transition()
