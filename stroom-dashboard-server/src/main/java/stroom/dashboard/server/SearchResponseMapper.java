@@ -127,13 +127,11 @@ public class SearchResponseMapper {
                             typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
 
                             if (field.getGroup() != null) {
-                                maxDepth = Math.max(maxDepth, field.getGroup());
+                                maxDepth = Math.max(maxDepth, field.getGroup() + 1);
                                 valueOffset++;
                             }
                         }
                     }
-
-                    maxDepth++;
 
                     // Create an array of types.
                     String[][] types = new String[maxDepth + 1][];
@@ -157,8 +155,11 @@ public class SearchResponseMapper {
 
                     store = getStore(null, map, types, valueCount, maxDepth, 0);
                 }
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 error = e.getMessage();
+                if (error == null || error.trim().length() == 0) {
+                    error = e.getClass().getSimpleName();
+                }
             }
         }
 
