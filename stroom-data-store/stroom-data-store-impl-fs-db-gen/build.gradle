@@ -41,7 +41,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         // Add anything you want included in generation below
                         includes = 'file_feed_path|file_type_path|data_volume|VOL|VOL_STATE|RK|ND'
                         // We don't want to include flyway versioning
-                        excludes = 'schema_version'
+                        excludes = 'data_store_schema_history'
                     }
                     target {
                         packageName = 'stroom.data.store.impl.fs.db'

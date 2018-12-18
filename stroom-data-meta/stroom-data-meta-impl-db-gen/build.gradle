@@ -41,7 +41,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         // Add anything you want included in generation below
                         includes = 'data_feed|data_type|data_processor|data|meta_key|meta_val'
                         // We don't want to include flyway versioning
-                        excludes = 'schema_version'
+                        excludes = 'data_meta_schema_history'
                     }
                     target {
                         packageName = 'stroom.data.meta.impl.db'
