@@ -21,6 +21,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -47,13 +48,11 @@ public class ApiTokenCache {
         final CacheLoader<String, Optional<TokenAndExpiry>> cacheLoader = CacheLoader.from(userId -> {
             final String token = authenticationServiceClients.getUsersApiToken(userId);
             if (token != null) {
-                final Optional<JwtClaims> claims = jwtService.verifyToken(token);
                 try {
-                    if (claims.isPresent()) {
-                        return Optional.of(new TokenAndExpiry(token, claims.get().getExpirationTime().getValueInMillis()));
-                    }
-                } catch (final MalformedClaimException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    final JwtClaims claims = jwtService.verifyToken(token);
+                        return Optional.of(new TokenAndExpiry(token, claims.getExpirationTime().getValueInMillis()));
+                } catch (final MalformedClaimException | InvalidJwtException e) {
+                    LOGGER.warn(e.getMessage());
                 }
             }
 

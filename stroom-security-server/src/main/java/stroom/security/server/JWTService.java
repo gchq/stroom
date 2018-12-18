@@ -8,6 +8,8 @@ import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -24,6 +26,9 @@ import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @Component
@@ -34,16 +39,25 @@ public class JWTService implements HasHealthCheck {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private PublicJsonWebKey jwk;
+    private Integer warnXMinsBeforeExpiry = null;
+    private final String apiKey;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
+    private Clock clock;
 
     @Inject
     public JWTService(
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken.warnXMinsBeforeExpiry')}") final String warnXMinsBeforeExpiry,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String apiKey,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
             final AuthenticationServiceClients authenticationServiceClients) {
+        if (warnXMinsBeforeExpiry != null) {
+            this.warnXMinsBeforeExpiry = Integer.parseInt(warnXMinsBeforeExpiry);
+        }
+        this.apiKey = apiKey;
         this.authJwtIssuer = authJwtIssuer;
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = enableTokenRevocationCheck;
@@ -53,6 +67,12 @@ public class JWTService implements HasHealthCheck {
         if (authenticationServiceUrl == null) {
             throw new SecurityException("No authentication service URL is defined");
         }
+
+        this.clock = Clock.systemDefaultZone();
+    }
+
+    public void setClock(Clock clock) {
+        this.clock = clock;
     }
 
     private void updatePublicJsonWebKey() {
@@ -103,9 +123,8 @@ public class JWTService implements HasHealthCheck {
                 return authenticationToken.getUserId() != null;
             } else {
                 LOGGER.debug("Verifying token...");
-                Optional<JwtClaims> jwtClaimsOptional = verifyToken(jws);
-                // If we have claims then we successfully verified the token.
-                return jwtClaimsOptional.isPresent();
+                JwtClaims jwtClaims = verifyToken(jws);
+                return jwtClaims != null;
             }
 
         } catch (Exception e) {
@@ -144,18 +163,13 @@ public class JWTService implements HasHealthCheck {
         }
     }
 
-    public Optional<JwtClaims> verifyToken(String token) {
+    public JwtClaims verifyToken(String token) throws InvalidJwtException {
         try {
-            return Optional.of(toClaims(token));
+            return toClaims(token);
         } catch (InvalidJwtException e) {
             LOGGER.warn("Unable to verify token! I'm going to refresh the verification key and try again.");
             updatePublicJsonWebKey();
-            try {
-                return Optional.of(toClaims(token));
-            } catch (InvalidJwtException e1) {
-                LOGGER.warn("I refreshed the verification key but was still unable to verify this token.");
-                return Optional.empty();
-            }
+            return toClaims(token);
         }
     }
 
@@ -196,27 +210,58 @@ public class JWTService implements HasHealthCheck {
 
     @Override
     public HealthCheck.Result getHealth() {
-        // determine the health based on being able to retrieve a public key from the auth service
+        // Defaults to healthy
+        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder().healthy();
+        this.checkHealthForJwkRetrieval(resultBuilder);
+        this.checkHealthForApiKey(resultBuilder);
+        return resultBuilder.build();
+    }
+
+    private void checkHealthForJwkRetrieval(HealthCheck.ResultBuilder resultBuilder) {
+        final String KEY = "public_key_retrieval";
         try {
             String publicJsonWebKey = fetchNewPublicKey();
-
-            if (StringUtils.isNotBlank(publicJsonWebKey)) {
-                return HealthCheck.Result.healthy();
-            } else {
-                return HealthCheck.Result.builder()
-                        .unhealthy()
-                        .withMessage("Returned public key is blank")
-                        .build();
+            boolean canGetJwk = StringUtils.isNotBlank(publicJsonWebKey);
+            if (!canGetJwk) {
+                resultBuilder.withDetail(KEY, "Cannot get stroom-auth-service's public key!\n");
+                resultBuilder.unhealthy();
             }
-
         } catch (ApiException | RuntimeException e) {
-            return HealthCheck.Result.builder()
-                    .unhealthy()
-                    .withMessage("Error fetching our identity provider's public key! " +
-                            "This means we cannot verify clients' authentication tokens ourselves. " +
-                            "This might mean the authentication service is down or unavailable. " +
-                            "The error was: [" + e.getMessage() + "]")
-                    .build();
+            resultBuilder.withDetail(KEY, "Error fetching our identity provider's public key! " +
+                    "This means we cannot verify clients' authentication tokens ourselves. " +
+                    "This might mean the authentication service is down or unavailable. " +
+                    "The error was: [" + e.getMessage() + "]");
+            resultBuilder.unhealthy();
+        }
+
+    }
+
+    private void checkHealthForApiKey(HealthCheck.ResultBuilder resultBuilder) {
+        final String KEY = "expiry_warning";
+
+        try {
+            JwtClaims claims = verifyToken(this.apiKey);
+            if (this.warnXMinsBeforeExpiry == null) {
+                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.warnXMinsBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to //expire!");
+                resultBuilder.unhealthy();
+            } else {
+                NumericDate expiration = claims.getExpirationTime();
+                if (expiration == null) {
+                    // This isn't about health, it's just a warning.
+                    resultBuilder.withDetail(KEY, "Warning: Stroom's API key has no expiration. It would be more secure to use a key which does expire.");
+                } else {
+                    Instant expiresOn = Instant.ofEpochMilli(expiration.getValueInMillis());
+                    Instant now = Instant.now(clock);
+                    long minutesUntilExpiry = ChronoUnit.MINUTES.between(now, expiresOn);
+                    if (minutesUntilExpiry < this.warnXMinsBeforeExpiry) {
+                        resultBuilder.withDetail(KEY, String.format("Stroom's API key expires soon! It expires on %s", expiresOn.toString()));
+                        resultBuilder.unhealthy();
+                    }
+                }
+            }
+        } catch (MalformedClaimException | InvalidJwtException e) {
+            resultBuilder.withDetail(KEY, e.getMessage());
+            resultBuilder.unhealthy();
         }
     }
 }
