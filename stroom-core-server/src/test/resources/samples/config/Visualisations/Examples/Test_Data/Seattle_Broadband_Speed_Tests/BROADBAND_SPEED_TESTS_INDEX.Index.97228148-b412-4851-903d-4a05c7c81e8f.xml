@@ -6,10 +6,4 @@
    <partitionSize>1</partitionSize>
    <shardsPerPartition>1</shardsPerPartition>
    <uuid>97228148-b412-4851-903d-4a05c7c81e8f</uuid>
-   <volumes>Volume (id=1, version=0, node=node1a, volumeType=Private, path=/home/dev/git_work/v6stroom/stroom-core-server/build/libs/volumes/defaultIndexVolume (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
-   <volumes>Volume (id=2, version=0, node=node1a, volumeType=Public, path=/home/dev/git_work/v6stroom/stroom-core-server/build/libs/volumes/defaultStreamVolume (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
-   <volumes>Volume (id=3, version=0, node=node1a, volumeType=Public, path=/tmp/stroom/dev/rack1/node1a/v1 (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
-   <volumes>Volume (id=4, version=0, node=node1a, volumeType=Public, path=/tmp/stroom/dev/rack1/node1a/v2 (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
-   <volumes>Volume (id=5, version=0, node=node2a, volumeType=Public, path=/tmp/stroom/dev/rack2/node2a/v1 ())</volumes>
-   <volumes>Volume (id=6, version=0, node=node2a, volumeType=Public, path=/tmp/stroom/dev/rack2/node2a/v2 ())</volumes>
 </index>
