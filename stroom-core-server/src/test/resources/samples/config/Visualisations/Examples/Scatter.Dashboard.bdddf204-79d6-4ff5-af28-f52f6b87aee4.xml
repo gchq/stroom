@@ -1,9 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <dashboard>
-   <createTime>1545040555492</createTime>
-   <createUser>admin</createUser>
    <name>Scatter</name>
-   <updateTime>1545040555492</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>bdddf204-79d6-4ff5-af28-f52f6b87aee4</uuid>
 </dashboard>

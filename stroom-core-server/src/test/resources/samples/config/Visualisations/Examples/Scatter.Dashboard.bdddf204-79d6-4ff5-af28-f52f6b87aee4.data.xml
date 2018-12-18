@@ -9,43 +9,39 @@
             <queryId>query-JT8D7</queryId>
             <fields>
                <field>
-                  <name>ReportPeriod</name>
-                  <expression>${ReportPeriod}</expression>
-                  <sort>
-                     <order>0</order>
-                     <direction>ASCENDING</direction>
-                  </sort>
+                  <name>timestamp</name>
+                  <expression>${timestamp}</expression>
                   <format>
                      <type>DATE_TIME</type>
                   </format>
-                  <width>200</width>
+                  <width>168</width>
                   <visible>true</visible>
                </field>
                <field>
-                  <name>CargoType</name>
-                  <expression>${CargoType}</expression>
+                  <name>connection_type</name>
+                  <expression>${connection_type}</expression>
                   <format>
                      <type>GENERAL</type>
                   </format>
-                  <width>88</width>
+                  <width>115</width>
                   <visible>true</visible>
                </field>
                <field>
-                  <name>Domestic_International</name>
-                  <expression>concat(${Domestic_International}, ' - ', ${Arrival_Departure})</expression>
+                  <name>isp_user</name>
+                  <expression>${isp_user}</expression>
                   <format>
                      <type>GENERAL</type>
                   </format>
-                  <width>160</width>
+                  <width>69</width>
                   <visible>true</visible>
                </field>
                <field>
-                  <name>AirCargoTons</name>
-                  <expression>${AirCargoTons}</expression>
+                  <name>actual_download</name>
+                  <expression>${actual_download}</expression>
                   <format>
                      <type>NUMBER</type>
                   </format>
-                  <width>107</width>
+                  <width>200</width>
                   <visible>true</visible>
                </field>
                <field>
@@ -63,8 +59,8 @@
             </fields>
             <extractionPipeline>
                <type>Pipeline</type>
-               <uuid>a7fed513-fb9c-4530-802f-54ef65e80589</uuid>
-               <name>LAX_CARGO_VOLUME-EXTRACTION</name>
+               <uuid>03064900-4fe9-4c57-bcaf-5a755c5c75d7</uuid>
+               <name>BROADBAND_SPEED_TESTS-EXTRACTION</name>
             </extractionPipeline>
             <maxResults>
                <level>1000000</level>
@@ -78,17 +74,22 @@
          <query>
             <dataSource>
                <type>Index</type>
-               <uuid>c9dd857d-324c-49b2-ab16-020d7e921dd8</uuid>
-               <name>LAX_CARGO_VOLUME</name>
+               <uuid>97228148-b412-4851-903d-4a05c7c81e8f</uuid>
+               <name>BROADBAND_SPEED_TESTS-INDEX</name>
             </dataSource>
             <expression>
                <enabled>true</enabled>
                <op>AND</op>
                <children>
                   <term>
-                     <field>DataExtractDate</field>
+                     <field>timestamp</field>
                      <condition>BETWEEN</condition>
-                     <value>2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z</value>
+                     <value>2017-01-01T00:00:00.000Z,2018-01-01T00:00:00.000Z</value>
+                  </term>
+                  <term>
+                     <field>isp_user</field>
+                     <condition>EQUALS</condition>
+                     <value>*</value>
                   </term>
                </children>
             </expression>
@@ -110,7 +111,7 @@
                <uuid>8b5e5f4f-c1a8-474f-9ff2-88bdb0f9a0a5</uuid>
                <name>Scatter</name>
             </visualisation>
-            <json>{"x":"ReportPeriod", "y":"AirCargoTons", "pointSeries":"Domestic_International", "gridSeries":"CargoType", "maxValues":"1000", "sortXAxis":"Ascending", "sortPointSeries":"Ascending", "maxPointSeries":"100", "sortGridSeries":"Ascending", "maxGridSeries":"36", "synchXAxis":"True", "displayXAxis":"True", "synchYAxis":"False", "displayYAxis":"True", "synchSeries":"True"}</json>
+            <json>{"x":"timestamp", "y":"actual_download", "pointSeries":"isp_user", "gridSeries":"connection_type", "sortPointSeries":"Ascending", "maxPointSeries":"100", "seriesDateFormat":"", "sortGridSeries":"Ascending", "maxGridSeries":"36", "gridSeriesDateFormat":"", "synchXAxis":"True", "displayXAxis":"True", "synchYAxis":"True", "displayYAxis":"True", "synchSeries":"True"}</json>
          </vis>
       </component>
    </components>
@@ -124,13 +125,13 @@
          <splitLayout>
             <preferredSize>
                <width>200</width>
-               <height>122</height>
+               <height>132</height>
             </preferredSize>
             <dimension>0</dimension>
             <children>
                <tabLayout>
                   <preferredSize>
-                     <width>713</width>
+                     <width>662</width>
                      <height>76</height>
                   </preferredSize>
                   <tabs>
@@ -142,7 +143,7 @@
                </tabLayout>
                <tabLayout>
                   <preferredSize>
-                     <width>713</width>
+                     <width>764</width>
                      <height>200</height>
                   </preferredSize>
                   <tabs>
@@ -157,7 +158,7 @@
          <tabLayout>
             <preferredSize>
                <width>200</width>
-               <height>895</height>
+               <height>912</height>
             </preferredSize>
             <tabs>
                <tab>

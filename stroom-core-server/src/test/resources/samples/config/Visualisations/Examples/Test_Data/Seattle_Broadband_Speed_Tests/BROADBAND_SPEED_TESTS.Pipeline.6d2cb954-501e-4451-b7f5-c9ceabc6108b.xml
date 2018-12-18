@@ -1,9 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1545040554859</createTime>
-   <createUser>admin</createUser>
    <name>BROADBAND_SPEED_TESTS</name>
-   <updateTime>1545046613629</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>6d2cb954-501e-4451-b7f5-c9ceabc6108b</uuid>
 </pipeline>

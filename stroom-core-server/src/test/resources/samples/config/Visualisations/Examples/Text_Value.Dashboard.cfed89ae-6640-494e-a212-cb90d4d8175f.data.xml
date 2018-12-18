@@ -9,8 +9,8 @@
             <queryId>query-JT8D7</queryId>
             <fields>
                <field>
-                  <name>connection_type</name>
-                  <expression>${connection_type}</expression>
+                  <name>timestamp</name>
+                  <expression>formatDate(${timestamp},'MM dd', '+0000')</expression>
                   <sort>
                      <order>0</order>
                      <direction>ASCENDING</direction>
@@ -19,35 +19,28 @@
                      <type>GENERAL</type>
                   </format>
                   <group>0</group>
-                  <width>151</width>
+                  <width>200</width>
                   <visible>true</visible>
                </field>
                <field>
-                  <name>timestamp</name>
-                  <expression>floorHour(${timestamp})</expression>
-                  <sort>
-                     <order>1</order>
-                     <direction>ASCENDING</direction>
-                  </sort>
-                  <format>
-                     <type>DATE_TIME</type>
-                     <dateTimeFormatSettings>
-                        <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXX</pattern>
-                        <timeZone>
-                           <use>UTC</use>
-                           <id>Europe/London</id>
-                        </timeZone>
-                     </dateTimeFormatSettings>
-                  </format>
-                  <group>0</group>
-                  <width>177</width>
-                  <visible>true</visible>
-               </field>
-               <field>
-                  <name>actual_download</name>
-                  <expression>average(${actual_download})</expression>
+                  <name>isp_user</name>
+                  <expression>${isp_user}</expression>
                   <format>
                      <type>GENERAL</type>
+                  </format>
+                  <group>0</group>
+                  <width>200</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Count</name>
+                  <expression>count()</expression>
+                  <sort>
+                     <order>1</order>
+                     <direction>DESCENDING</direction>
+                  </sort>
+                  <format>
+                     <type>NUMBER</type>
                   </format>
                   <width>200</width>
                   <visible>true</visible>
@@ -71,7 +64,8 @@
                <name>BROADBAND_SPEED_TESTS-EXTRACTION</name>
             </extractionPipeline>
             <maxResults>
-               <level>100000</level>
+               <level>1000000</level>
+               <level>1</level>
             </maxResults>
          </table>
       </component>
@@ -83,7 +77,7 @@
             <dataSource>
                <type>Index</type>
                <uuid>97228148-b412-4851-903d-4a05c7c81e8f</uuid>
-               <name>BROADBAND_SPEED_TESTS</name>
+               <name>BROADBAND_SPEED_TESTS-INDEX</name>
             </dataSource>
             <expression>
                <enabled>true</enabled>
@@ -92,8 +86,40 @@
                   <term>
                      <field>timestamp</field>
                      <condition>BETWEEN</condition>
-                     <value>2016-04-01T00:00:00.000Z,2016-04-20T00:00:00.000Z</value>
+                     <value>2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z</value>
                   </term>
+                  <term>
+                     <field>isp_user</field>
+                     <condition>EQUALS</condition>
+                     <value>*</value>
+                  </term>
+                  <operator>
+                     <enabled>true</enabled>
+                     <op>NOT</op>
+                     <children>
+                        <operator>
+                           <enabled>true</enabled>
+                           <op>OR</op>
+                           <children>
+                              <term>
+                                 <field>isp_user</field>
+                                 <condition>EQUALS</condition>
+                                 <value>comcast</value>
+                              </term>
+                              <term>
+                                 <field>isp_user</field>
+                                 <condition>EQUALS</condition>
+                                 <value>centurylink</value>
+                              </term>
+                              <term>
+                                 <field>isp_user</field>
+                                 <condition>EQUALS</condition>
+                                 <value>unknown</value>
+                              </term>
+                           </children>
+                        </operator>
+                     </children>
+                  </operator>
                </children>
             </expression>
             <automate>
@@ -105,16 +131,16 @@
       </component>
       <component>
          <type>vis</type>
-         <id>vis-G5GO9</id>
+         <id>vis-BX59A</id>
          <name>Visualisation</name>
          <vis>
             <tableId>table-IIO1T</tableId>
             <visualisation>
                <type>Visualisation</type>
-               <uuid>aad53ec0-c33d-4430-b2b2-5a83eccb13e7</uuid>
-               <name>HourDayMultiHeatMap</name>
+               <uuid>7e484d5d-29af-4776-b1c2-4cdad2d9ea1b</uuid>
+               <name>TextValue</name>
             </visualisation>
-            <json>{"series":"connection_type", "hours":"timestamp", "values":"actual_download", "maxValues":"240", "sortSeries":"Ascending", "maxSeries":"20", "gridSeriesDateFormat":""}</json>
+            <json>{"field":"isp_user", "gridSeries":"timestamp", "maxGridSeries":"50"}</json>
          </vis>
       </component>
    </components>
@@ -128,14 +154,14 @@
          <splitLayout>
             <preferredSize>
                <width>200</width>
-               <height>164</height>
+               <height>173</height>
             </preferredSize>
             <dimension>0</dimension>
             <children>
                <tabLayout>
                   <preferredSize>
-                     <width>782</width>
-                     <height>200</height>
+                     <width>617</width>
+                     <height>99</height>
                   </preferredSize>
                   <tabs>
                      <tab>
@@ -146,7 +172,7 @@
                </tabLayout>
                <tabLayout>
                   <preferredSize>
-                     <width>555</width>
+                     <width>809</width>
                      <height>200</height>
                   </preferredSize>
                   <tabs>
@@ -161,11 +187,11 @@
          <tabLayout>
             <preferredSize>
                <width>200</width>
-               <height>880</height>
+               <height>871</height>
             </preferredSize>
             <tabs>
                <tab>
-                  <id>vis-G5GO9</id>
+                  <id>vis-BX59A</id>
                </tab>
             </tabs>
             <selected>0</selected>

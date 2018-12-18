@@ -111,10 +111,10 @@
             <tableId>table-IIO1T</tableId>
             <visualisation>
                <type>Visualisation</type>
-               <uuid>aad53ec0-c33d-4430-b2b2-5a83eccb13e7</uuid>
-               <name>HourDayMultiHeatMap</name>
+               <uuid>63a3a18a-3651-4833-ba82-6a2d6794f5f4</uuid>
+               <name>HourDaySessionMap</name>
             </visualisation>
-            <json>{"series":"connection_type", "hours":"timestamp", "values":"actual_download", "maxValues":"240", "sortSeries":"Ascending", "maxSeries":"20", "gridSeriesDateFormat":""}</json>
+            <json>{"eventTime":"timestamp", "series":"connection_type", "gridSeries":"", "thresholdMs":"12000000", "maxValues":"240", "sortSeries":"Ascending", "maxSeries":"20", "sortGridSeries":"Ascending", "maxGridSeries":"36", "gridSeriesDateFormat":"", "synchXAxis":"True", "displayXAxis":"True", "synchYAxis":"True", "displayYAxis":"True", "synchSeries":"True"}</json>
          </vis>
       </component>
    </components>
@@ -128,7 +128,7 @@
          <splitLayout>
             <preferredSize>
                <width>200</width>
-               <height>164</height>
+               <height>112</height>
             </preferredSize>
             <dimension>0</dimension>
             <children>
@@ -161,7 +161,7 @@
          <tabLayout>
             <preferredSize>
                <width>200</width>
-               <height>880</height>
+               <height>932</height>
             </preferredSize>
             <tabs>
                <tab>

@@ -1,9 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <dashboard>
-   <createTime>1545040552690</createTime>
-   <createUser>admin</createUser>
    <name>Bar Chart (no series)</name>
-   <updateTime>1545040552690</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>39c1f5b1-15bc-4f36-b18f-7227f9a55286</uuid>
 </dashboard>

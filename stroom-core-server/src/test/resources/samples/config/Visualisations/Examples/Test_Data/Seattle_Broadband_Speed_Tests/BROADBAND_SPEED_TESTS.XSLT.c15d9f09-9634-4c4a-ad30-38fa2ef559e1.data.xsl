@@ -23,11 +23,24 @@
   <xsl:template match="data[@name='timestamp']">
     <data>
       <xsl:attribute name="name" select="./@name" />
+
       <!-- timestamp in epoch seconds, but we need millis -->
       <xsl:attribute name="value" select="stroom:format-date((concat(./@value,'000')))" />
     </data>
   </xsl:template>
-  
+
+  <!-- re-format the date-->
+  <xsl:template match="data[@name='actual_download' or @name='actual_upload' or @name='advertised_download' or @name='advertised_upload']">
+    <data>
+      <xsl:attribute name="name" select="./@name" />
+
+      <!-- timestamp in epoch seconds, but we need millis -->
+      <xsl:if test="./@value">
+        <xsl:attribute name="value" select="xs:integer(xs:decimal(./@value) * 1000000)" />
+      </xsl:if>
+    </data>
+  </xsl:template>
+
   <!-- drop certain data elements-->
   <xsl:template match="data[@name='date_pretty']">
   </xsl:template>

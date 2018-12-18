@@ -64,7 +64,7 @@
       <termPositions>false</termPositions>
    </field>
    <field>
-      <analyzerType>STANDARD</analyzerType>
+      <analyzerType>NUMERIC</analyzerType>
       <caseSensitive>false</caseSensitive>
       <fieldName>advertised_download</fieldName>
       <fieldType>NUMERIC_FIELD</fieldType>
@@ -73,7 +73,7 @@
       <termPositions>false</termPositions>
    </field>
    <field>
-      <analyzerType>STANDARD</analyzerType>
+      <analyzerType>NUMERIC</analyzerType>
       <caseSensitive>false</caseSensitive>
       <fieldName>advertised_upload</fieldName>
       <fieldType>NUMERIC_FIELD</fieldType>

@@ -1,7 +1,5 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <createTime>1545040554097</createTime>
-   <createUser>admin</createUser>
    <name>LAX_CARGO_VOLUME-INDEX</name>
    <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
 &lt;doc&gt;
@@ -10,7 +8,5 @@
    &lt;name&gt;Indexing&lt;/name&gt;
 &lt;/doc&gt;
 </parentPipelineXML>
-   <updateTime>1545040554097</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>bb59926a-00ce-44ef-8219-50c8743e4f35</uuid>
 </pipeline>

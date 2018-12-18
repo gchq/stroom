@@ -1,15 +1,15 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <index>
-   <createTime>1545040553423</createTime>
-   <createUser>admin</createUser>
-   <description/>
    <maxDocsPerShard>1000000000</maxDocsPerShard>
    <name>LAX_CARGO_VOLUME-INDEX</name>
    <partitionBy>MONTH</partitionBy>
    <partitionSize>1</partitionSize>
    <shardsPerPartition>1</shardsPerPartition>
-   <updateTime>1545046500424</updateTime>
-   <updateUser>admin</updateUser>
    <uuid>c9dd857d-324c-49b2-ab16-020d7e921dd8</uuid>
-   <volumes>Volume (id=1, version=0, node=node1a, volumeType=Private, path=/home/dev/git_work/v6stroom/stroom-core-server/build/libs/volumes/defaultIndexVolume (Used: 52G, Free: 17G, Total: 73G, Use%: 71%))</volumes>
+   <volumes>Volume (id=1, version=0, node=node1a, volumeType=Private, path=/home/dev/git_work/v6stroom/stroom-core-server/build/libs/volumes/defaultIndexVolume (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
+   <volumes>Volume (id=2, version=0, node=node1a, volumeType=Public, path=/home/dev/git_work/v6stroom/stroom-core-server/build/libs/volumes/defaultStreamVolume (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
+   <volumes>Volume (id=3, version=0, node=node1a, volumeType=Public, path=/tmp/stroom/dev/rack1/node1a/v1 (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
+   <volumes>Volume (id=4, version=0, node=node1a, volumeType=Public, path=/tmp/stroom/dev/rack1/node1a/v2 (Used: 52G, Free: 16G, Total: 73G, Use%: 72%))</volumes>
+   <volumes>Volume (id=5, version=0, node=node2a, volumeType=Public, path=/tmp/stroom/dev/rack2/node2a/v1 ())</volumes>
+   <volumes>Volume (id=6, version=0, node=node2a, volumeType=Public, path=/tmp/stroom/dev/rack2/node2a/v2 ())</volumes>
 </index>

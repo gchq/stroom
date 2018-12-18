@@ -23,6 +23,16 @@
                   <visible>true</visible>
                </field>
                <field>
+                  <name>isp_user</name>
+                  <expression>${isp_user}</expression>
+                  <format>
+                     <type>GENERAL</type>
+                  </format>
+                  <group>0</group>
+                  <width>200</width>
+                  <visible>true</visible>
+               </field>
+               <field>
                   <name>timestamp</name>
                   <expression>floorHour(${timestamp})</expression>
                   <sort>
@@ -111,10 +121,10 @@
             <tableId>table-IIO1T</tableId>
             <visualisation>
                <type>Visualisation</type>
-               <uuid>aad53ec0-c33d-4430-b2b2-5a83eccb13e7</uuid>
-               <name>HourDayMultiHeatMap</name>
+               <uuid>4a6f5935-4e75-4579-8f74-112fbe8aee88</uuid>
+               <name>HourDayPointMap</name>
             </visualisation>
-            <json>{"series":"connection_type", "hours":"timestamp", "values":"actual_download", "maxValues":"240", "sortSeries":"Ascending", "maxSeries":"20", "gridSeriesDateFormat":""}</json>
+            <json>{"pointSeries":"isp_user", "gridSeries":"connection_type", "eventTime":"timestamp", "value":"actual_download", "maxValues":"240", "sortPointSeries":"Ascending", "maxPointSeries":"100", "seriesDateFormat":"", "sortGridSeries":"Ascending", "maxGridSeries":"36", "gridSeriesDateFormat":"", "synchXAxis":"True", "displayXAxis":"True", "displayYAxis":"True", "synchSeries":"True"}</json>
          </vis>
       </component>
    </components>
@@ -128,7 +138,7 @@
          <splitLayout>
             <preferredSize>
                <width>200</width>
-               <height>164</height>
+               <height>112</height>
             </preferredSize>
             <dimension>0</dimension>
             <children>
@@ -161,7 +171,7 @@
          <tabLayout>
             <preferredSize>
                <width>200</width>
-               <height>880</height>
+               <height>932</height>
             </preferredSize>
             <tabs>
                <tab>
