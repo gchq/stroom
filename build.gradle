@@ -36,6 +36,7 @@ if(JavaVersion.current() != JavaVersion.VERSION_1_8){
 }
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
+ext.stroomContentImportDir = System.getProperty("user.home") + "/.stroom/contentPackImport"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -552,7 +553,6 @@ task clearContentPackDownloadDir(type: Delete) {
 task downloadStroomContent() {
 
     dependsOn clearContentPackDownloadDir
-    dependsOn clearContentPackImportDir
 
     doLast {
         //download each content pack to the contentPackImportDir ready for stroom to import on startup
@@ -575,9 +575,19 @@ task downloadStroomContent() {
     }
 }
 
-task setupSampleData() {
+task copyContentPacksToImportDir(type: Copy) {
+    dependsOn clearContentPackImportDir
     dependsOn downloadStroomContent
-    dependsOn ':stroom-integrationtest:setupSampleData'
+
+    println "Configuring copy from ${contentPackDownloadDir} to ${contentPackImportDir}"
+
+    from "${contentPackDownloadDir}"
+    into stroomContentImportDir
+}
+
+task setupSampleData() {
+    dependsOn copyContentPacksToImportDir
+    dependsOn ':stroom-integrationtest:setupSampleDataApplication'
 }
 
 urlDependencies {
