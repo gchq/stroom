@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.pipeline.state.StreamHolder;
 import stroom.util.date.DateUtil;
-import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomUnitTest;
 
 import java.time.Instant;
@@ -30,6 +29,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -104,36 +104,32 @@ class TestFormatDate extends StroomUnitTest {
     }
 
     @Test
-    @StroomExpectedException(exception = IllegalArgumentException.class)
-    public void testParseGMTBSTGuess() {
-        // Null
-        boolean thrownException = false;
-        try {
+    void testParseGMTBSTGuess() {
+        assertThatThrownBy(() -> {
             doGMTBSTGuessTest(null, "");
-        } catch (final RuntimeException e) {
-            thrownException = true;
-        }
-        assertThat(thrownException).isTrue();
+        }).isInstanceOf(RuntimeException.class);
 
-        // Winter
-        doGMTBSTGuessTest("2011-01-01T00:00:00.999Z", "2011/01/01 00:00:00.999");
+        assertThatThrownBy(() -> {
+            // Winter
+            doGMTBSTGuessTest("2011-01-01T00:00:00.999Z", "2011/01/01 00:00:00.999");
 
-        // MID Point Summer Time 1 Aug
-        doGMTBSTGuessTest("2001-08-01T03:00:00.000Z", "2001/08/01 04:00:00.000");
-        doGMTBSTGuessTest("2011-08-01T03:00:00.000Z", "2011/08/01 04:00:00.000");
+            // MID Point Summer Time 1 Aug
+            doGMTBSTGuessTest("2001-08-01T03:00:00.000Z", "2001/08/01 04:00:00.000");
+            doGMTBSTGuessTest("2011-08-01T03:00:00.000Z", "2011/08/01 04:00:00.000");
 
-        // Boundary WINTER TO SUMMER
-        doGMTBSTGuessTest("2011-03-26T22:59:59.999Z", "2011/03/26 22:59:59.999");
-        doGMTBSTGuessTest("2011-03-26T23:59:59.999Z", "2011/03/26 23:59:59.999");
-        doGMTBSTGuessTest("2011-03-27T00:00:00.000Z", "2011/03/27 00:00:00.000");
-        doGMTBSTGuessTest("2011-03-27T00:59:59.000Z", "2011/03/27 00:59:59.000");
-        // Lost an hour!
-        doGMTBSTGuessTest("2011-03-27T00:00:00.000Z", "2011/03/27 00:00:00.000");
-        doGMTBSTGuessTest("2011-03-27T01:59:00.999Z", "2011/03/27 01:59:00.999");
-        doGMTBSTGuessTest("2011-03-27T02:00:00.999Z", "2011/03/27 03:00:00.999");
+            // Boundary WINTER TO SUMMER
+            doGMTBSTGuessTest("2011-03-26T22:59:59.999Z", "2011/03/26 22:59:59.999");
+            doGMTBSTGuessTest("2011-03-26T23:59:59.999Z", "2011/03/26 23:59:59.999");
+            doGMTBSTGuessTest("2011-03-27T00:00:00.000Z", "2011/03/27 00:00:00.000");
+            doGMTBSTGuessTest("2011-03-27T00:59:59.000Z", "2011/03/27 00:59:59.000");
+            // Lost an hour!
+            doGMTBSTGuessTest("2011-03-27T00:00:00.000Z", "2011/03/27 00:00:00.000");
+            doGMTBSTGuessTest("2011-03-27T01:59:00.999Z", "2011/03/27 01:59:00.999");
+            doGMTBSTGuessTest("2011-03-27T02:00:00.999Z", "2011/03/27 03:00:00.999");
 
-        // Boundary SUMMER TO WINTER
-        doGMTBSTGuessTest("2011-10-29T23:59:59.999Z", "2011/10/30 00:59:59.999");
+            // Boundary SUMMER TO WINTER
+            doGMTBSTGuessTest("2011-10-29T23:59:59.999Z", "2011/10/30 00:59:59.999");
+        }).isInstanceOf(IllegalArgumentException.class);
     }
 
     private void doGMTBSTGuessTest(final String expected, final String value) {

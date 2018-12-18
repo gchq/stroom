@@ -24,10 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomExpectedException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -36,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestContentPackImport {
     private static Path CONTENT_PACK_DIR;
@@ -46,7 +44,7 @@ class TestContentPackImport {
 
     //This is needed as you can't have to RunWith annotations
     //so this is the same as     @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+//    public MockitoRule mockitoRule = MockitoJUnit.rule();
     @Mock
     private ImportExportService importExportService;
     @Mock
@@ -134,21 +132,22 @@ class TestContentPackImport {
     }
 
     @Test
-    @StroomExpectedException(exception = RuntimeException.class)
-    public void testStartup_failedImport() throws IOException {
-        Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
+    void testStartup_failedImport() {
+        assertThatThrownBy(() -> {
+            Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
+            ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
 
-        Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
-                .when(importExportService)
-                .performImportWithoutConfirmation(ArgumentMatchers.any());
+            Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
+                    .when(importExportService)
+                    .performImportWithoutConfirmation(ArgumentMatchers.any());
 
-        FileUtil.touch(testPack1);
+            FileUtil.touch(testPack1);
 
-        contentPackImport.startup();
+            contentPackImport.startup();
 
-        //File should have moved into the failed dir
-        assertThat(Files.exists(testPack1)).isFalse();
-        assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName()))).isTrue();
+            //File should have moved into the failed dir
+            assertThat(Files.exists(testPack1)).isFalse();
+            assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName()))).isTrue();
+        }).isInstanceOf(RuntimeException.class);
     }
 }

@@ -32,7 +32,6 @@ import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.impl.db.MetaValueConfig;
 import stroom.data.store.StreamMaintenanceService;
-import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -49,7 +48,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.util.test.StroomExpectedException;
 import stroom.volume.VolumeConfig;
 
 import javax.inject.Inject;
@@ -300,61 +298,62 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    @StroomExpectedException(exception = LazyInitializationException.class)
-    public void testBasicImportExportList() {
-        final String testString = FileSystemTestUtil.getUniqueTestString();
+    void testBasicImportExportList() {
+        assertThatThrownBy(() -> {
+            final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final DataProperties streamProperties = new DataProperties.Builder()
-                .feedName(FEED1)
-                .typeName(StreamTypeNames.RAW_EVENTS)
-                .build();
+            final DataProperties streamProperties = new DataProperties.Builder()
+                    .feedName(FEED1)
+                    .typeName(StreamTypeNames.RAW_EVENTS)
+                    .build();
 
-        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getStream().getFeedName();
-        Data exactMetaData = streamTarget.getStream();
-        StreamTargetUtil.write(streamTarget, testString);
-        streamStore.closeStreamTarget(streamTarget);
+            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+            streamTarget.getStream().getFeedName();
+            Data exactMetaData = streamTarget.getStream();
+            StreamTargetUtil.write(streamTarget, testString);
+            streamStore.closeStreamTarget(streamTarget);
 
-        // Refresh
-        final StreamSource streamSource = streamStore.openStreamSource(exactMetaData.getId());
-        exactMetaData = streamSource.getStream();
+            // Refresh
+            final StreamSource streamSource = streamStore.openStreamSource(exactMetaData.getId());
+            exactMetaData = streamSource.getStream();
 
-        assertThat(exactMetaData.getStatus()).isSameAs(DataStatus.UNLOCKED);
+            assertThat(exactMetaData.getStatus()).isSameAs(DataStatus.UNLOCKED);
 
-        // Check we can read it back in
+            // Check we can read it back in
 
-        assertThat(streamSource).isNotNull();
-        // Must be a proxy
-        assertThat(streamSource.getStream().getFeedName()).isNotNull();
+            assertThat(streamSource).isNotNull();
+            // Must be a proxy
+            assertThat(streamSource.getStream().getFeedName()).isNotNull();
 
-        // Finished
-        streamStore.closeStreamSource(streamSource);
+            // Finished
+            streamStore.closeStreamSource(streamSource);
 
-        final List<Data> list = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+            final List<Data> list = streamMetaService.find(FindDataCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
 
-        boolean foundOne = false;
-        for (final Data result : list) {
-            assertThat(fileSystemStreamPathHelper.getDirectory(result, StreamTypeNames.RAW_EVENTS)).isNotNull();
-            assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
-            if (fileSystemStreamPathHelper.getBaseName(result)
-                    .equals(fileSystemStreamPathHelper.getBaseName(exactMetaData))) {
-                foundOne = true;
+            boolean foundOne = false;
+            for (final Data result : list) {
+                assertThat(fileSystemStreamPathHelper.getDirectory(result, StreamTypeNames.RAW_EVENTS)).isNotNull();
+                assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
+                if (fileSystemStreamPathHelper.getBaseName(result)
+                        .equals(fileSystemStreamPathHelper.getBaseName(exactMetaData))) {
+                    foundOne = true;
+                }
             }
-        }
 
-        assertThat(foundOne).as("Expecting to find at least that one file " + streamTarget.getStream()).isTrue();
+            assertThat(foundOne).as("Expecting to find at least that one file " + streamTarget.getStream()).isTrue();
 
-        assertThat(streamMetaService.find(new FindDataCriteria()).size() >= 1).as("Expecting to find at least 1 with no criteria").isTrue();
+            assertThat(streamMetaService.find(new FindDataCriteria()).size() >= 1).as("Expecting to find at least 1 with no criteria").isTrue();
 
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
-                .build();
-        assertThat(streamMetaService.find(new FindDataCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
+            final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
+                    .build();
+            assertThat(streamMetaService.find(new FindDataCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
 
-        final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
+            final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
 //        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
-        volumeCriteria.obtainStreamIdSet().add(exactMetaData.getId());
-        assertThat(streamVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
+            volumeCriteria.obtainStreamIdSet().add(exactMetaData.getId());
+            assertThat(streamVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
+        }).isInstanceOf(LazyInitializationException.class);
     }
 
     private void doTestDeleteSource(final DeleteTestStyle style) throws IOException {
@@ -727,8 +726,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * Test.
      */
     @Test
-    @StroomExpectedException(exception = {StreamException.class, IOException.class,
-            RuntimeException.class})
     void testIOErrors() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
