@@ -14,21 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.widget.iframe.client.view;
+package stroom.iframe.client.view;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
+import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class IFrameContentViewImpl extends ViewImpl implements IFrameContentView {
+import java.util.Objects;
+
+public class IFrameContentViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> implements IFrameContentView {
+    private static final String DEFAULT_TITLE = "Loading...";
+
     private final ResizeSimplePanel widget;
-    private Frame frame;
+    private final Frame frame;
+    private boolean updateTitle = true;
+    private String lastTitle = DEFAULT_TITLE;
+    private String customTitle;
 
     @Inject
     public IFrameContentViewImpl() {
@@ -66,6 +77,23 @@ public class IFrameContentViewImpl extends ViewImpl implements IFrameContentView
         widget.getElement().getStyle().setWidth(100, Unit.PCT);
         widget.getElement().getStyle().setHeight(100, Unit.PCT);
         widget.getElement().getStyle().setBorderWidth(0, Unit.PX);
+
+        final RepeatingCommand updateTitleCommand = () -> {
+            final IFrameElement iFrameElement = frame.getElement().cast();
+            try {
+                final String title = iFrameElement.getContentDocument().getTitle();
+                if (title != null && title.trim().length() > 0) {
+                    if (!Objects.equals(lastTitle, title)) {
+                        lastTitle = title;
+                        getUiHandlers().onTitleChange(title);
+                    }
+                }
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+            return updateTitle && customTitle == null;
+        };
+        Scheduler.get().scheduleFixedDelay(updateTitleCommand, 1000);
     }
 
     @Override
@@ -75,12 +103,26 @@ public class IFrameContentViewImpl extends ViewImpl implements IFrameContentView
 
     @Override
     public void setUrl(final String url) {
+        lastTitle = url;
         frame.setUrl(url);
+    }
+
+    public void setCustomTitle(final String customTitle) {
+        this.customTitle = customTitle;
+    }
+
+    @Override
+    public String getTitle() {
+        if (customTitle != null) {
+            return customTitle;
+        }
+        return lastTitle;
     }
 
     @Override
     public void cleanup() {
         RootPanel.get().remove(frame);
+        updateTitle = false;
     }
 
     private void resize() {

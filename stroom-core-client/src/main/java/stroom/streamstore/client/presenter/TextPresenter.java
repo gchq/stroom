@@ -48,12 +48,8 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         getView().setUiHandlers(uiHandlers);
     }
 
-    public void setText(final String text) {
-        textPresenter.setText(text);
-    }
-
-    public void format() {
-        textPresenter.format();
+    public void setText(final String text, final boolean format) {
+        textPresenter.setText(text, format);
     }
 
     public void setFirstLineNumber(final int firstLineNumber) {

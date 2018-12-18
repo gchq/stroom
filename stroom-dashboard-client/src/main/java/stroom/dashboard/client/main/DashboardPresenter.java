@@ -83,6 +83,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private ButtonPanel rightButtons;
     private String lastLabel;
     private boolean loaded;
+    private String customTitle;
 
     private String currentParams;
     private String lastUsedQueryInfo;
@@ -379,11 +380,22 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public String getLabel() {
+        String label = getTitle();
         if (isDirty()) {
-            return "* " + getEntity().getName();
+            label = "* " + label;
         }
+        return label;
+    }
 
-        return getEntity().getName();
+    public String getTitle() {
+        String title = "";
+        if (getEntity() != null) {
+            title = getEntity().getName();
+        }
+        if (customTitle != null && customTitle.length() > 0) {
+            title = customTitle.replaceAll("\\$\\{name\\}", title);
+        }
+        return title;
     }
 
     @Override
@@ -407,6 +419,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             saveButton.setEnabled(dirty);
         }
+    }
+
+    public void setCustomTitle(final String customTitle) {
+        this.customTitle = customTitle;
     }
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {

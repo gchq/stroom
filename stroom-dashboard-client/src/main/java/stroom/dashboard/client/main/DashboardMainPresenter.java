@@ -53,7 +53,9 @@ public class DashboardMainPresenter
     private final DashboardPresenter dashboardPresenter;
     private final ClientDispatchAsync dispatcher;
 
-    private Dashboard dashboard;
+    private String type;
+    private String uuid;
+    private String title;
     private String params;
 
     @Inject
@@ -64,24 +66,22 @@ public class DashboardMainPresenter
         this.dashboardPresenter = dashboardPresenter;
         this.dispatcher = dispatcher;
 
-        dashboardPresenter.addDirtyHandler(event -> {
-            if (dashboard != null) {
-                if (event.isDirty()) {
-                    Window.setTitle("* " + dashboard.getName());
-                } else {
-                    Window.setTitle(dashboard.getName());
-                }
-            }
-        });
+        type = Window.Location.getParameter("type");
+        uuid = Window.Location.getParameter("uuid");
+        title = Window.Location.getParameter("title");
+        params = Window.Location.getParameter("params");
 
+        dashboardPresenter.setCustomTitle(title);
+        dashboardPresenter.setParams(params);
+
+        if (title != null && title.trim().length() > 0) {
+            Window.setTitle(title);
+        }
+
+        dashboardPresenter.addDirtyHandler(event -> Window.setTitle(dashboardPresenter.getLabel()));
         Window.addWindowClosingHandler(event -> {
             if (dashboardPresenter.isDirty()) {
-                String name = "";
-                if (dashboard != null) {
-                    name = "'" + dashboard.getName() + "'";
-                }
-
-                event.setMessage("Dashboard " + name + " has unsaved changes. Are you sure you want to close it?");
+                event.setMessage("Dashboard '" + dashboardPresenter.getTitle() + "' has unsaved changes. Are you sure you want to close it?");
             }
         });
     }
@@ -89,10 +89,6 @@ public class DashboardMainPresenter
     @ProxyEvent
     @Override
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
-        final String type = Window.Location.getParameter("type");
-        final String uuid = Window.Location.getParameter("uuid");
-        params = Window.Location.getParameter("params");
-
         if (type == null || uuid == null) {
             AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
 
@@ -109,14 +105,11 @@ public class DashboardMainPresenter
             AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
 
         } else {
-            this.dashboard = dashboard;
-
             setInSlot(CONTENT, dashboardPresenter);
             forceReveal();
 
-            dashboardPresenter.setParams(params);
             dashboardPresenter.read(DocRefUtil.create(dashboard), dashboard);
-            Window.setTitle(dashboard.getName());
+            Window.setTitle(dashboardPresenter.getLabel());
         }
     }
 

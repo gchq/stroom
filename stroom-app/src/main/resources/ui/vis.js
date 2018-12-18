@@ -16,21 +16,23 @@
 
 var stroomParent;
 var stroomFrameId;
+var stroomOrigin;
 
 // Send a message to Stroom to open a link
-// e.g. `stroomLink('hello from vis', 'type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&params=userId%3Duser2', 'DASHBOARD')`
-var stroomLink = function(title, href, target) {
-    if (stroomParent && stroomFrameId) {
+// e.g. `stroomLink('type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&title=title&params=userId%3Duser2', 'DASHBOARD')`
+var stroomLink = function(href, target) {
+    target = (typeof target === 'undefined') ? 'browser' : target;
+
+    if (stroomParent && stroomFrameId && stroomOrigin) {
         var obj = {
           frameId : stroomFrameId,
           functionName : 'link',
-          title : title,
-          href : href,
-          target : target,
+          href : String(href),
+          target : String(target),
         };
 
         var message = JSON.stringify(obj);
-        stroomParent.postMessage(message, event.origin);
+        stroomParent.postMessage(message, stroomOrigin);
     }
 }
 
@@ -40,6 +42,7 @@ var stroomLink = function(title, href, target) {
 function Callback(event, frameId, callbackId) {
   stroomParent = event.source;
   stroomFrameId = frameId;
+  stroomOrigin = event.origin;
 
   var event = event;
   var frameId = frameId;

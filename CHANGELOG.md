@@ -6,15 +6,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Uplift stroom-query to v2.1-beta.20
-
 * Issue **#1015**: Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
 
 * Issue **#1019**: Fix visualisations settings dialog so you can un-set text and list controls.
 
-* Issue **#986**: Fix direct dasbhoard links
+* Issue **#1040** : Fix for visualisations that do not require nested data.
 
-* Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN
+* Issue **#1036** : Fix for scrollbar position on explorer popup windows.
+
+* Issue **#1037** : Updated `moment.js` for parsing/formatting dates and times.
+
+* Issue **#1021** : Dashboard links now allow `{}` characters to be used without URL encoding.
+
+* Issue **#1018** : Added Health Checks for the external connectors that are registered via plugins
+
+* Issue **#1025** : Fixed ACE editor resize issue where horizontal scroll bar was not always correctly shown.
+
+* Issue **#1025** : Updated ACE editor to v1.4.2.
+
+## [v6.0-beta.21] - 2018-12-13
+
+* Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
+
+* Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
+
+## [v6.0-beta.20] - 2018-12-13
+
+* Issue **#1021** : Multiple changes to improve vis, dashboard and external linking in Stroom.
+
+* Issue **#1019** : Fix visualisations settings dialog so you can un-set text and list controls.
+
+* Issue **#986** : Fix direct dashboard links.
+
+* Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN.
 
 ## [v6.0-beta.19] - 2018-12-11
 
@@ -1373,7 +1397,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.19...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.21...6.0
+[v6.0-beta.21]: https://github.com/gchq/stroom/compare/v6.0-beta.20...v6.0-beta.21
+[v6.0-beta.20]: https://github.com/gchq/stroom/compare/v6.0-beta.19...v6.0-beta.20
 [v6.0-beta.19]: https://github.com/gchq/stroom/compare/v6.0-beta.18...v6.0-beta.19
 [v6.0-beta.18]: https://github.com/gchq/stroom/compare/v6.0-beta.17...v6.0-beta.18
 [v6.0-beta.17]: https://github.com/gchq/stroom/compare/v6.0-beta.16...v6.0-beta.17

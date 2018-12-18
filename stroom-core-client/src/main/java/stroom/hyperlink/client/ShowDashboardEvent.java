@@ -23,16 +23,14 @@ import com.google.gwt.event.shared.HasHandlers;
 public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
     private static Type<Handler> TYPE;
 
-    private final String title;
     private final String href;
 
-    private ShowDashboardEvent(final String title, final String href) {
-        this.title = title;
+    private ShowDashboardEvent(final String href) {
         this.href = href;
     }
 
-    public static void fire(final HasHandlers handlers, final String title, final String href) {
-        handlers.fireEvent(new ShowDashboardEvent(title, href));
+    public static void fire(final HasHandlers handlers, final String href) {
+        handlers.fireEvent(new ShowDashboardEvent(href));
     }
 
     public static Type<Handler> getType() {
@@ -50,10 +48,6 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onChange(this);
-    }
-
-    public String getTitle() {
-        return title;
     }
 
     public String getHref() {

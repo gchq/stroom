@@ -14,36 +14,43 @@
  * limitations under the License.
  */
 
-package stroom.widget.iframe.client.presenter;
+package stroom.iframe.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.widget.tab.client.presenter.TabData;
 
-public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentView> implements TabData {
-    private String title;
-    private Icon icon = SvgPresets.EXPLORER;
+public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView> implements TabData, IFrameLoadUiHandlers {
+    private Icon icon = SvgPresets.LINK;
 
     @Inject
     public IFrameContentPresenter(final EventBus eventBus, final IFrameContentView view) {
         super(eventBus, view);
+        view.setUiHandlers(this);
     }
 
     public void close() {
         getView().cleanup();
     }
 
-    public void setTitle(final String title) {
-        this.title = title;
-    }
-
     public void setUrl(final String url) {
         getView().setUrl(url);
+    }
+
+    public void setCustomTitle(final String customTitle) {
+        getView().setCustomTitle(customTitle);
+    }
+
+    public void setIcon(final Icon icon) {
+        if (icon != null) {
+            this.icon = icon;
+        }
     }
 
     @Override
@@ -53,7 +60,7 @@ public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentView>
 
     @Override
     public String getLabel() {
-        return title;
+        return getView().getTitle();
     }
 
     @Override
@@ -61,15 +68,18 @@ public class IFrameContentPresenter extends MyPresenterWidget<IFrameContentView>
         return true;
     }
 
-    public interface IFrameContentView extends View {
-        void setUrl(String url);
-
-        void cleanup();
+    @Override
+    public void onTitleChange(final String title) {
+        RefreshContentTabEvent.fire(this, this);
     }
 
-    public void setIcon(final Icon icon) {
-        if (icon != null) {
-            this.icon = icon;
-        }
+    public interface IFrameContentView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
+        void setUrl(String url);
+
+        void setCustomTitle(String customTitle);
+
+        String getTitle();
+
+        void cleanup();
     }
 }

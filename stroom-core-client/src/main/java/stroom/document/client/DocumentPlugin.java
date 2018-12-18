@@ -35,7 +35,6 @@ import stroom.query.api.v2.DocRef;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.SharedObject;
-import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
 
 import java.util.HashMap;

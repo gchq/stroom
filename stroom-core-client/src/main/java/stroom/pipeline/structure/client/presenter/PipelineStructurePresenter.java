@@ -494,8 +494,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 if (result != null) {
                     text = result.toString();
                 }
-                xmlEditor.setText(text);
-                xmlEditor.format();
+                xmlEditor.setText(text, true);
                 ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
                         popupSize, "Pipeline Source", popupUiHandlers);
             });

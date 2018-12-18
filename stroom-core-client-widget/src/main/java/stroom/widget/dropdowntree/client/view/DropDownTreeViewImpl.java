@@ -47,11 +47,6 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     }
 
     @Override
-    public void setSize(final int width, final int height) {
-        widget.setSize(width + "px", height + "px");
-    }
-
-    @Override
     public void setCellTree(final Widget widget) {
         treeContainer.setWidget(widget);
     }

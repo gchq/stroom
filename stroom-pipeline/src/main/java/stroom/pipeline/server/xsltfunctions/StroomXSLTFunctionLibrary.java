@@ -218,10 +218,9 @@ public class StroomXSLTFunctionLibrary {
                 .functionName("link")
                 .library(this)
                 .minArgs(1)
-                .maxArgs(4)
+                .maxArgs(3)
                 .argTypes(new SequenceType[]{
                         SequenceType.SINGLE_STRING,
-                        SequenceType.OPTIONAL_STRING,
                         SequenceType.OPTIONAL_STRING,
                         SequenceType.OPTIONAL_STRING
                 })

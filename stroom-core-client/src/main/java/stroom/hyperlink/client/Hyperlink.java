@@ -7,10 +7,10 @@ import java.util.Objects;
 /**
  * This class is used to detect table cell values that contain URL's to be turned into hyperlinks.
  * <p>
- * [:title](http://some-url/:id){:hyperlinkTarget}
+ * [:text](http://some-url/:id){:hyperlinkTarget}
  */
 public class Hyperlink {
-    private String title;
+    private String text;
     private String href;
     private String type;
     private SvgPreset icon;
@@ -18,8 +18,8 @@ public class Hyperlink {
     private Hyperlink() {
     }
 
-    public String getTitle() {
-        return title;
+    public String getText() {
+        return text;
     }
 
     public String getHref() {
@@ -39,22 +39,22 @@ public class Hyperlink {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Hyperlink hyperlink = (Hyperlink) o;
-        return Objects.equals(title, hyperlink.title) &&
+        return Objects.equals(text, hyperlink.text) &&
                 Objects.equals(href, hyperlink.href) &&
                 Objects.equals(type, hyperlink.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, href, type);
+        return Objects.hash(text, href, type);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        if (title != null) {
+        if (text != null) {
             sb.append("[");
-            sb.append(title);
+            sb.append(text);
             sb.append("]");
         }
         if (href != null) {
@@ -77,8 +77,8 @@ public class Hyperlink {
             this.instance = new Hyperlink();
         }
 
-        public Builder title(final String title) {
-            this.instance.title = title;
+        public Builder text(final String text) {
+            this.instance.text = text;
             return this;
         }
 

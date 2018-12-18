@@ -101,7 +101,7 @@ public class TableCell extends AbstractCell<Row> {
             if (p instanceof Hyperlink) {
                 final Hyperlink hyperlink = (Hyperlink) p;
                 sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
-                sb.appendEscaped(hyperlink.getTitle());
+                sb.appendEscaped(hyperlink.getText());
                 sb.appendHtmlConstant("</u>");
             } else {
                 sb.appendEscaped(p.toString());
@@ -146,14 +146,14 @@ public class TableCell extends AbstractCell<Row> {
         Hyperlink hyperlink = null;
 
         int index = pos;
-        final String title = nextToken(value, index, '[', ']');
-        if (title != null) {
-            index = index + title.length() + 2;
+        final String text = nextToken(value, index, '[', ']');
+        if (text != null) {
+            index = index + text.length() + 2;
             final String href = nextToken(value, index, '(', ')');
             if (href != null) {
                 index = index + href.length() + 2;
                 final String type = nextToken(value, index, '{', '}');
-                hyperlink = new Builder().title(title).href(href).type(type).build();
+                hyperlink = new Builder().text(text).href(href).type(type).build();
             }
         }
 
@@ -170,7 +170,7 @@ public class TableCell extends AbstractCell<Row> {
             final char c = value.charAt(i);
             if (c == endChar) {
                 return sb.toString();
-            } else if (c == '[' || c == ']' || c == '(' || c == ')' || c == '{' || c == '}') {
+            } else if (c == '[' || c == ']' || c == '(' || c == ')') {
                 // Unexpected token
                 return null;
             } else {
