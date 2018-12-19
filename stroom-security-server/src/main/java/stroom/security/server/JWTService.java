@@ -161,7 +161,10 @@ public class JWTService implements HasHealthCheck {
             String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
             return new AuthenticationToken(usersEmail, token);
         } catch (ApiException e) {
-            throw new RuntimeException("Unable to verify token remotely!", e);
+            String message = String.format(
+                    "Unable to verify token remotely! Message was: %s. HTTP response code was: %s. Response body was: %s",
+                    e.getMessage(), e.getCode(), e.getResponseBody());
+            throw new RuntimeException(message, e);
         }
     }
 
