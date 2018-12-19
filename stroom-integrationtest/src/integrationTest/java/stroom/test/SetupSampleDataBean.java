@@ -65,6 +65,7 @@ import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.server.StreamProcessorService;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -79,6 +80,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -188,42 +190,14 @@ public final class SetupSampleDataBean {
         for (final Index index : indexList) {
             index.setVolumes(volumeSet);
             indexService.save(index);
-
-            // Find the pipeline for this index.
-            final BaseResultList<PipelineEntity> pipelines = pipelineService
-                    .find(new FindPipelineEntityCriteria(index.getName()));
-
-            if (pipelines == null || pipelines.size() == 0) {
-                LOGGER.warn("No pipeline found for index [{}]", index.getName());
-            } else if (pipelines.size() > 1) {
-                LOGGER.warn("More than 1 pipeline found for index [{}]", index.getName());
-            } else {
-                final PipelineEntity pipeline = pipelines.getFirst();
-
-                // Create a processor for this index.
-                final QueryData criteria = new QueryData.Builder()
-                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
-                        .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
-                                .build())
-                        .build();
-
-                streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
-                // final StreamProcessorFilter filter =
-                // streamProcessorFilterService.createNewFilter(pipeline,
-                // criteria, true, 10);
-                //
-                // // Enable the filter.
-                // filter.setEnabled(true);
-                // streamProcessorFilterService.save(filter);
-                //
-                // // Enable the processor.
-                // final StreamProcessor streamProcessor =
-                // filter.getStreamProcessor();
-                // streamProcessor.setEnabled(true);
-                // streamProcessorService.save(streamProcessor);
-            }
         }
+
+        // Create index pipeline processor filters
+        createIndexingProcessorFilter("Example index", StreamType.EVENTS, Optional.empty());
+        createIndexingProcessorFilter(
+                "LAX_CARGO_VOLUME-INDEX", StreamType.RECORDS, Optional.of("LAX_CARGO_VOLUME"));
+        createIndexingProcessorFilter(
+                "BROADBAND_SPEED_TESTS-INDEX", StreamType.RECORDS, Optional.of("BROADBAND_SPEED_TESTS"));
 
         final List<Feed> feeds = feedService.find(new FindFeedCriteria());
         logEntities(feeds, "feeds");
@@ -265,19 +239,6 @@ public final class SetupSampleDataBean {
                                 .build())
                         .build();
                 streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
-                // final StreamProcessorFilter filter =
-                // streamProcessorFilterService.createNewFilter(pipeline,
-                // criteria, true, 10);
-                //
-                // // Enable the filter.
-                // filter.setEnabled(true);
-                // streamProcessorFilterService.save(filter);
-                //
-                // // Enable the processor.
-                // final StreamProcessor streamProcessor =
-                // filter.getStreamProcessor();
-                // streamProcessor.setEnabled(true);
-                // streamProcessorService.save(streamProcessor);
             }
         }
 
@@ -289,6 +250,42 @@ public final class SetupSampleDataBean {
 
         if (shutdown) {
             commonTestControl.shutdown();
+        }
+    }
+
+    private void createIndexingProcessorFilter(
+            final String pipelineName,
+            final StreamType sourceStreamType,
+            final Optional<String> optFeedName) {
+
+        final BaseResultList<PipelineEntity> pipelines = pipelineService
+                .find(new FindPipelineEntityCriteria(pipelineName));
+
+        if (pipelines == null || pipelines.size() != 1) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Expecting to find one pipeline with name [{}]", pipelineName));
+        } else {
+            final PipelineEntity pipeline = pipelines.getFirst();
+
+            ExpressionOperator.Builder expressionBuilder = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                    .addTerm(
+                            StreamDataSource.STREAM_TYPE_NAME,
+                            ExpressionTerm.Condition.EQUALS,
+                            sourceStreamType.getName());
+
+            optFeedName.ifPresent(feedName ->
+                    expressionBuilder.addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedName));
+
+            // Create a processor for this feed.
+            final QueryData criteria = new QueryData.Builder()
+                    .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                    .expression(expressionBuilder.build())
+                    .build();
+
+            LOGGER.info("Creating processor filter on {} with criteria\n{}",
+                    pipeline.getName(), criteria.getExpression().toMultiLineString());
+
+            streamProcessorFilterService.createNewFilter(pipeline, criteria, true, 10);
         }
     }
 
@@ -309,6 +306,7 @@ public final class SetupSampleDataBean {
 
         final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
+        final Path exampleDataDir = importRootDir.resolve("example_data");
 
         createStreamAttributes();
 
@@ -351,6 +349,7 @@ public final class SetupSampleDataBean {
             // test.
             final Feed fd = dataLoader.getFeed("DATA_SPLITTER-EVENTS");
             for (int i = 0; i < LOAD_CYCLES; i++) {
+                LOGGER.info("Loading data from {}, iteration {}", dataDir.toAbsolutePath().toString(), i);
                 // Load reference data first.
                 dataLoader.read(dataDir, true, startTime);
                 startTime += tenMinMs;
@@ -368,13 +367,25 @@ public final class SetupSampleDataBean {
             LOGGER.info("Directory {} doesn't exist so skipping", dataDir);
         }
 
+        // Load the example data that we don't want to duplicate as is done above
+        if (Files.exists(exampleDataDir)) {
+            LOGGER.info("Loading example data from {}", exampleDataDir.toAbsolutePath().toString());
+            // Load data.
+            final DataLoader dataLoader = new DataLoader(feedService, streamStore);
+            long startTime = System.currentTimeMillis();
+
+                // Then load event data.
+                dataLoader.read(exampleDataDir, false, startTime);
+        } else {
+            LOGGER.info("Directory {} doesn't exist so skipping", exampleDataDir);
+        }
+
         // streamTaskCreator.doCreateTasks();
 
         // // Add an index.
         // final Index index = addIndex();
         // addUserSearch(index);
         // addDictionarySearch(index);
-
     }
 
     private void loadStatsData(final DataLoader dataLoader,

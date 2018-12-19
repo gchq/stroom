@@ -278,13 +278,13 @@ var cssStr = "" +
 "	content: \"\\25C0\";" +
 "	margin: -4px 0 0 0; " +
 "	top: 50%; " +
-"	left: -8px; " +
+"	left: -7px; " +
 "} " +
 "" +
 "/* Westward tooltips */ " +
 ".d3-tip.w:after { " +
 "	content: \"\\25B6\";" +
-"	margin: -4px 0 0 0px; " +
+"	margin: -4px 0 0 -1px; " +
 "	top: 50%; " +
 "	left: 100%; " +
 "} " +
@@ -292,8 +292,17 @@ var cssStr = "" +
 "/* Northward tooltips */" +
 ".d3-tip.n:after {" +
 "  content: \"\\25BC\";" +
-"  margin: -3px 0 0 0;" +
-"  top: 100%;" +
+"  margin: -1px 0 0 0;" +
+"  top: 98%;" +
+"  left: 0;" +
+"  text-align: center;" +
+"}" +
+"" +
+"/* Southward tooltips */" +
+".d3-tip.s:after {" +
+"  content: \"\\25B2\";" +
+"  margin: 0 0 1px 0;" +
+"  top: -8px;" +
 "  left: 0;" +
 "  text-align: center;" +
 "}" +

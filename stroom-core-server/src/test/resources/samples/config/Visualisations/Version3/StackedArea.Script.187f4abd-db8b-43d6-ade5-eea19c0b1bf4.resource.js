@@ -17,6 +17,7 @@ if (!visualisations) {
     var visualisations = {};
 }
 
+//TODO need to refactor this to be an IIFE with shared state as is done in BarChart
 visualisations.StackedArea = function(containerNode) {
 
     var commonFunctions = visualisations.commonFunctions;
@@ -42,7 +43,8 @@ visualisations.StackedArea = function(containerNode) {
     var width;
     var height;
 
-    var interpolationMode = "step";
+    //default interpolation mode
+    var interpolationMode = "basis";
 
     var canvas;
     var svg;
@@ -56,22 +58,6 @@ visualisations.StackedArea = function(containerNode) {
 
     var xAxis;
     var yAxis;
-
-    var interpolateArr = [ 
-        "linear",
-        "linear-closed",
-        "step",
-        "step-before",
-        "step-after",
-        "basis",
-        "basis-open",
-        "basis-closed",
-        "bundle",
-        "cardinal",
-        "cardinal-open",
-        "cardinal-closed",
-        "monotone" 
-    ];
 
     var interLoop = 0;
 
@@ -328,7 +314,6 @@ visualisations.StackedArea = function(containerNode) {
             visSettings = settings;
             if (settings.interpolationMode) {
                 interpolationMode = settings.interpolationMode;
-                area.interpolate(interpolationMode);
             }
         }
 
@@ -424,17 +409,12 @@ visualisations.StackedArea = function(containerNode) {
                     .key(function(d) {return d.key;});
 
                 stackedArea = d3.svg.area()
-                    .interpolate("basis")
+                    .interpolate(interpolationMode)
                     .x(function(d) { 
                         return xScale(d.key); 
                     })
                     .y0(function(d) { return yScale(d.y0); })
                     .y1(function(d) { return yScale(d.y0+d.y); });
-
-                flatArea = d3.svg.area()
-                    .x(function(d) { return xScale(d.key); })
-                    .y0(function(d) { return yScale(0); })
-                    .y1(function(d) { return yScale(d.value); });
 
                 seriesContainer.call(markerTip);
 

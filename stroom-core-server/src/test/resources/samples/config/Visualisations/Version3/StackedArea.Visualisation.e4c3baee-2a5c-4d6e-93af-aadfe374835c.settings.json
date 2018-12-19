@@ -29,7 +29,7 @@
             "name": "Area",
             "controls": [
                 {
-                    "id": "interpolate",
+                    "id": "interpolationMode",
                     "type": "selection",
                     "label": "Interpolation Mode",
                     "values": [
@@ -48,6 +48,25 @@
                         "monotone"
                     ],
                     "defaultValue": "basis-open"
+                },
+                {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "500",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
+                    "id": "sortXAxis",
+                    "type": "selection",
+                    "label": "Sort X Axis",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
                 },
                 {
                     "id": "sortLineSeries",
@@ -89,8 +108,8 @@
                     "id": "maxGridSeries",
                     "type": "number",
                     "label": "Max Grid Series",
-                    "defaultValue": "20",
-                    "max": "36",
+                    "defaultValue": "36",
+                    "max": "144",
                     "min": "1"
                 },
                 {
@@ -159,15 +178,17 @@
                     "id": "${gridSeries}",
                     "sort": {
                         "direction": "${sortGridSeries}",
-                        "enabled": "true"
+                        "enabled": "true",
+                        "priority": 0
                     }
                 },
                 "nest": {
                     "key": {
                         "id": "${lineSeries}",
                         "sort": {
+                            "direction": "${sortlineSeries}",
                             "enabled": "true",
-                            "direction": "${sortlineSeries}"
+                            "priority": 1
                         }
                     },
                     "values": {
@@ -175,14 +196,19 @@
                             {
                                 "id": "${x}",
                                 "sort": {
+                                    "direction": "${sortXAxis}",
                                     "enabled": "true",
-                                    "direction": "Ascending"
+                                    "priority": 2
                                 }
                             },
                             {
                                 "id": "${y}"
                             }
-                        ]
+                        ],
+                        "limit": {
+                            "enabled": "true",
+                            "size": "${maxValues}"
+                        }
                     },
                     "limit": {
                         "enabled": "true",

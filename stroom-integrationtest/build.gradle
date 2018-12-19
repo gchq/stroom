@@ -45,7 +45,7 @@ dependencies {
     integrationTestCompile libs.dropwizard_client
 }
 
-task setupSampleData(type: JavaExec) {
+task setupSampleDataApplication(type: JavaExec) {
     dependsOn this:compileJava
     dependsOn this:compileTestJava
     // We need to set the working directory as the stroom root otherwise
