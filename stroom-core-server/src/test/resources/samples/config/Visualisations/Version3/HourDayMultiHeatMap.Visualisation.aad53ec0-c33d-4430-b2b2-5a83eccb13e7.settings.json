@@ -24,6 +24,14 @@
             "name" : "Series",
             "controls" : [ 
                 {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "940",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
                     "id" : "sortSeries",
                     "type" :  "selection",
                     "label" : "Sort Series",
@@ -38,7 +46,9 @@
                     "id" : "maxSeries",
                     "type" :  "number",
                     "label" : "Max Series",
-                    "defaultValue" : "20"
+                    "defaultValue" : "20",
+                    "max": "144",
+                    "min": "1"
                 } ,
                 {
                     "id" : "gridSeriesDateFormat",
@@ -71,7 +81,11 @@
                         {
                             "id" : "${values}"
                         } 
-                    ]
+                    ],
+                    "limit": {
+                        "enabled": "true",
+                        "size": "${maxValues}"
+                    }
                 }      
             }
         }

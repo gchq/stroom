@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1015**: Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
+* Issue **#1015** : Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
 
-* Issue **#1019**: Fix visualisations settings dialog so you can un-set text and list controls.
+* Issue **#1019** : Fix visualisations settings dialog so you can un-set text and list controls.
+
+* Issue **#1041** : Add a healthcheck to Stroom to alert for API key expiry
 
 * Issue **#1040** : Fix for visualisations that do not require nested data.
 

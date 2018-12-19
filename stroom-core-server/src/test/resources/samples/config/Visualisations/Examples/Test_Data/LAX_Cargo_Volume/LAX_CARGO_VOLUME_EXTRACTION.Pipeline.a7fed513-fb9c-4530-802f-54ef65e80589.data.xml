@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>xsltFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>e2d36115-d7dd-415e-a9c2-8a896efc6bfb</uuid>
+                  <name>LAX_CARGO_VOLUME-INDEX</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

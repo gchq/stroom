@@ -30,6 +30,14 @@
                     "defaultValue" : "600000"
                 },
                 {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "100000",
+                    "max": "100000",
+                    "min": "1"
+                },
+                {
                     "id" : "sortSeries",
                     "type" :  "selection",
                     "label" : "Sort Series",
@@ -63,8 +71,8 @@
                     "id": "maxGridSeries",
                     "type": "number",
                     "label": "Max Grid Series",
-                    "defaultValue": "20",
-                    "max": "36",
+                    "defaultValue": "36",
+                    "max": "144",
                     "min": "1"
                 },
                 {
@@ -132,16 +140,18 @@
                 "key" : {
                     "id" : "${gridSeries}",
                     "sort" : {
-                        "enabled" : "true",
-                        "direction" : "${sortGridSeries}"
+                        "direction" : "${sortGridSeries}",
+                        "enabled": "true",
+                        "priority": 0
                     }
                 },
                 "nest" : {
                     "key" : {
                         "id" : "${series}",
                         "sort" : {
-                            "enabled" : "true",
-                            "direction" : "${sortSeries}"
+                            "direction" : "${sortSeries}",
+                            "enabled": "true",
+                            "priority": 1
                         }
                     },
                     "values" : {
@@ -149,11 +159,16 @@
                             {
                                 "id" : "${eventTime}",
                                 "sort" : {
-                                    "enabled" : "true",
-                                    "direction" : "Ascending"
+                                    "direction" : "Ascending",
+                                    "enabled": "true",
+                                    "priority": 2
                                 }
                             } 
-                        ]
+                        ],
+                        "limit": {
+                            "enabled": "true",
+                            "size": "${maxValues}"
+                        }
                     },
                     "limit" : {
                         "enabled" : "true",

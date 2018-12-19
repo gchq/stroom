@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <visualisation>
-   <description>Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4
-Git commit time: 2016-09-21 17:03:32 +0100</description>
+   <description>Git commit: aeb7a3a495f3110d45b710aa1fba4e9eb16d50c9
+Git commit time: 2018-12-18 16:35:23 +0000</description>
    <functionName>visualisations.TextValue</functionName>
    <name>TextValue</name>
    <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;

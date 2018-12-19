@@ -280,9 +280,18 @@ if (!visualisations) {
                 xAxisContainer.attr("transform", "translate(0," + height + ")");
                 //console.log(visData.values[0].values);
 
+
                 xSettings = commonFunctions.createAxis(visData.types[0], 0, width);
                 xScale = xSettings.scale;
-                xSettings.setDomain(visData, visibleValues[0].values, 0);
+                
+                if (visData.types[0] == "DATE_TIME" && bucketSizeMs) {
+                    //bucketised charts are a special case and we need to add the size of the bucket on to the 
+                    //end of the x scale to account for the last bucket's width
+                    xSettings.setExplicitRangeDomain(visibleValues[0].min[0], visibleValues[0].max[0] + bucketSizeMs);
+                } else {
+                    xSettings.setDomain(visData, visibleValues[0].values, 0);
+                }
+
                 commonFunctions.buildAxis(xAxisContainer, xSettings, "bottom", null, null, visSettings.displayXAxis);
 
                 ySettings = commonFunctions.createAxis(visData.types[1], height, 0);

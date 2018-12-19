@@ -1058,8 +1058,15 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.security.apitoken")
-                .value("eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc")
+                .name("stroom.security.apiToken")
+                .value("eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDUxMzc5NzEsInN1YiI6InN0YXRzU2VydmljZVVzZXIiLCJpc3MiOiJzdHJvb20iLCJzaWQiOm51bGx9.O2w_ewq1In3-C1DBLNPPVybpjDxffSxEf8E-34N6kXzxOwiwpog45VcHVrWUp6jFo-bs2ccyYw99jE6tqFpXn2HUaBs5DZ48yN5Ctqie4QTt99cuIW1tGKMW54c7qtdOZpKfMnByR9f_I73FCpgMiBP_i-oAoFryjS69zplBM6DrjWPFy8VcOeSon2kGUgN7LLhhoZZHG1d5NwdomJpzhG4lm4POkZVGB5znvM3NwiNDkePqkQNpfcm9O6FsunUgBuis7kqQzFr7Qjjhmb3oE2Y3fRlcSWX1uX8qJZhn8VA5DR2J4J2E3XFF9NkZNYmnvEcEEQ6i0USjR_LHPpGJdw")
+                .description("The API token Stroom will use to authenticate itself when accessing other services")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.apitoken.durationToWarnBeforeExpiry")
+                .value("30d")
                 .description("The API token Stroom will use to authenticate itself when accessing other services")
                 .editable(true)
                 .requireUiRestart(true)
