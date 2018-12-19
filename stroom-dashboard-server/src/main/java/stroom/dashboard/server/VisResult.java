@@ -55,7 +55,9 @@ public class VisResult implements ComponentResult {
         Double[] max;
         Double[] sum;
         String[] types;
+        String[] sortDirections;
         String keyType;
+        String keySortDirection;
 
         @JsonProperty("key")
         public Object getKey() {
@@ -67,6 +69,11 @@ public class VisResult implements ComponentResult {
             return keyType;
         }
 
+        @JsonProperty("keySortDirection")
+        public String getKeySortDirection() {
+            return keySortDirection;
+        }
+
         @JsonProperty("values")
         public Object[] getValues() {
             return values;
@@ -75,6 +82,11 @@ public class VisResult implements ComponentResult {
         @JsonProperty("types")
         public String[] getTypes() {
             return types;
+        }
+
+        @JsonProperty("sortDirections")
+        public String[] getSortDirections() {
+            return sortDirections;
         }
 
         @JsonProperty("min")
