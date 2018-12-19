@@ -1,28 +1,28 @@
 ext.moduleName = 'stroom.ruleset.server'
 
 dependencies {
-    compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-ruleset:stroom-ruleset-shared')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-ruleset:stroom-ruleset-shared')
 
-    compile project(':stroom-util-shared')
-    compile project(':stroom-core-server')
-//    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-core-server')
+//    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
 
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
-    compile libs.slf4j_api
-    compile libs.javax_inject
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+    implementation libs.slf4j_api
+    implementation libs.javax_inject
 
-    compile libs.guice4
+    implementation libs.guice4
 
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.dropwizard_metrics_annotation
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter
 }

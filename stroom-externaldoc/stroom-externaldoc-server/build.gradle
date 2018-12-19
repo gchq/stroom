@@ -1,24 +1,24 @@
 ext.moduleName = 'stroom.externaldoc.server'
 
 dependencies {
-    //compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-docstore:stroom-docstore-shared')
-    //compile project(':stroom-entity-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-util-shared')
+    //implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    //implementation project(':stroom-entity-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util-shared')
 
-    compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.jetty_http
-    compile libs.slf4j_api
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryAudit
-    compile libs.stroomQueryAuthorisation
-    compile libs.ws_rs_api
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jetty_http
+    implementation libs.slf4j_api
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+    implementation libs.stroomQueryAudit
+    implementation libs.stroomQueryAuthorisation
+    implementation libs.ws_rs_api
 }

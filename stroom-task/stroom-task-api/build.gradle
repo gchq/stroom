@@ -1,13 +1,13 @@
 ext.moduleName = 'stroom.task.api'
 
 dependencies {
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    implementation libs.stroomDocRef
 
-    compile libs.slf4j_api
+    implementation libs.slf4j_api
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter
 }

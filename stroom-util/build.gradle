@@ -4,30 +4,30 @@ import java.time.format.DateTimeFormatter
 ext.moduleName = 'stroom.util'
 
 dependencies {
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-util-shared')
 
-    compile libs.commons_codec
-    compile libs.guava
-    compile libs.jackson_annotations
-    compile libs.jackson_core
-    compile libs.jackson_databind
-    compile libs.javax_servlet_api
-    compile libs.javax_inject
-    compile libs.jaxb_api
-    compile libs.slf4j_api
+    implementation libs.commons_codec
+    implementation libs.guava
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
+    implementation libs.javax_servlet_api
+    implementation libs.javax_inject
+    implementation libs.jaxb_api
+    implementation libs.slf4j_api
 
-    testCompile libs.assertj_core
-    testCompile libs.commons_lang
-    testCompile libs.junit_jupiter
+    testImplementation libs.assertj_core
+    testImplementation libs.commons_lang
+    testImplementation libs.junit_jupiter
 
     // the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.jcl_over_slf4j
-    testRuntime libs.jul_to_slf4j
-    testRuntime libs.log4j_over_slf4j
-    testRuntime libs.logback_classic
-    testRuntime libs.logback_core
-    testRuntime libs.jaxb_runtime
-    testRuntime libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
 }
 
 task writeBuildProperties {

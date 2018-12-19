@@ -3,27 +3,27 @@ apply plugin: "com.github.johnrengelman.shadow"
 ext.moduleName = 'stroom.kafka.client.impl'
 
 dependencies {
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-kafka:stroom-kafka-pipeline')
-    compile project(':stroom-kafka:stroom-kafka-shared')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-kafka:stroom-kafka-pipeline')
+    implementation project(':stroom-kafka:stroom-kafka-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
 
-    compile group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
+    implementation group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
 
-    compile libs.guice4
-    //compile libs.jackson_annotations
-    compile libs.javax_inject;
-    compile libs.slf4j_api
+    implementation libs.guice4
+    //implementation libs.jackson_annotations
+    implementation libs.javax_inject;
+    implementation libs.slf4j_api
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
-    testCompile libs.mockito_core
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter
+    testImplementation libs.mockito_core
 }
 //
 //def fatJarName = "stroom-kafka-client-impl_0_10_0_1-all.jar"

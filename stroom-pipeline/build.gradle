@@ -1,68 +1,68 @@
 ext.moduleName = 'stroom.pipeline'
 
 dependencies {
-    compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-docstore:stroom-docstore-shared')
-    //compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-statistics:stroom-statistics-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    //implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-task:stroom-task-api')
 
-    compile libs.commons_io
-    compile libs.commons_lang
-    compile libs.commons_text
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.fast_infoset
-    compile libs.google_findbugs
-    compile libs.guava
-    compile libs.guice4
-    compile libs.guice_assistedinject
-    compile libs.hadoopCommonShaded
-    compile libs.hadoopHdfsShaded
+    implementation libs.commons_io
+    implementation libs.commons_lang
+    implementation libs.commons_text
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.fast_infoset
+    implementation libs.google_findbugs
+    implementation libs.guava
+    implementation libs.guice4
+    implementation libs.guice_assistedinject
+    implementation libs.hadoopCommonShaded
+    implementation libs.hadoopHdfsShaded
     compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
-    compile libs.jackson_annotations
-    compile libs.jackson_core
-    compile libs.javax_inject
-    compile libs.javax_validation
-    compile libs.jaxb_api
-    compile libs.jersey_client
-    //compile libs.jetty_http
-    compile libs.jsr173_api
-    compile libs.kryo
-    compile libs.lmdbjava
-    compile libs.saxon_he
-    compile libs.slf4j_api
-    //compile libs.stax_api
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
-    compile libs.swagger_annotations
-    compile libs.vavr
-    compile libs.ws_rs_api
-    compile libs.xml_apis
+    implementation libs.jackson_annotations
+    implementation libs.jackson_core
+    implementation libs.javax_inject
+    implementation libs.javax_validation
+    implementation libs.jaxb_api
+    implementation libs.jersey_client
+    //implementation libs.jetty_http
+    implementation libs.jsr173_api
+    implementation libs.kryo
+    implementation libs.lmdbjava
+    implementation libs.saxon_he
+    implementation libs.slf4j_api
+    //implementation libs.stax_api
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+    implementation libs.swagger_annotations
+    implementation libs.vavr
+    implementation libs.ws_rs_api
+    implementation libs.xml_apis
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
     testCompile project(':stroom-test-common')
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testCompile project(':stroom-test-common')
+//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 
-    testCompile libs.assertj_core
-    testCompile libs.commons_io
-    testCompile libs.junit_jupiter
-    testCompile libs.mockito_core
+    testImplementation libs.assertj_core
+    testImplementation libs.commons_io
+    testImplementation libs.junit_jupiter
+    testImplementation libs.mockito_core
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.jcl_over_slf4j
-    testRuntime libs.jul_to_slf4j
-    testRuntime libs.log4j_over_slf4j
-    testRuntime libs.logback_classic
-    testRuntime libs.logback_core
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

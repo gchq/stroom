@@ -1,52 +1,52 @@
 ext.moduleName = 'stroom.integrationtest'
 
 dependencies {
-    integrationTestCompile project(':stroom-app')
+    integrationTestImplementation project(':stroom-app')
     // Use default DB config.
-    integrationTestCompile project(':stroom-config:stroom-config-app')
-    integrationTestCompile project(':stroom-core-server')
-    integrationTestCompile project(':stroom-dashboard:stroom-dashboard-server')
-    integrationTestCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    integrationTestCompile project(':stroom-data-store:stroom-data-store-impl-mock')
-    integrationTestCompile project(':stroom-elastic:stroom-elastic-impl')
-    integrationTestCompile project(':stroom-externaldoc:stroom-externaldoc-server')
-    integrationTestCompile project(':stroom-headless')
-    integrationTestCompile project(':stroom-index:stroom-index-server')
-    integrationTestCompile project(':stroom-security:stroom-security-impl-mock')
-    integrationTestCompile project(':stroom-security:stroom-security-server')
-    integrationTestCompile project(':stroom-statistics:stroom-statistics-server')
-    integrationTestCompile project(':stroom-test-common')
-    integrationTestCompile project(':stroom-util')
+    integrationTestImplementation project(':stroom-config:stroom-config-app')
+    integrationTestImplementation project(':stroom-core-server')
+    integrationTestImplementation project(':stroom-dashboard:stroom-dashboard-server')
+    integrationTestImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    integrationTestImplementation project(':stroom-data-store:stroom-data-store-impl-mock')
+    integrationTestImplementation project(':stroom-elastic:stroom-elastic-impl')
+    integrationTestImplementation project(':stroom-externaldoc:stroom-externaldoc-server')
+    integrationTestImplementation project(':stroom-headless')
+    integrationTestImplementation project(':stroom-index:stroom-index-server')
+    integrationTestImplementation project(':stroom-security:stroom-security-impl-mock')
+    integrationTestImplementation project(':stroom-security:stroom-security-server')
+    integrationTestImplementation project(':stroom-statistics:stroom-statistics-server')
+    integrationTestImplementation project(':stroom-test-common')
+    integrationTestImplementation project(':stroom-util')
 
-    integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-pipeline', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+//    integrationTestImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+//    integrationTestImplementation project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
+//    integrationTestImplementation project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
+//    integrationTestImplementation project(path: ':stroom-pipeline', configuration: 'testArtifacts')
+//    integrationTestImplementation project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
+    integrationTestImplementation project(':stroom-test-common')
 
-    integrationTestCompile libs.stroomQueryApi
-    integrationTestCompile libs.stroomQueryCommon
+    integrationTestImplementation libs.stroomQueryApi
+    integrationTestImplementation libs.stroomQueryCommon
 
-    integrationTestCompile libs.slf4j_api
-    integrationTestCompile libs.junit_jupiter
-    integrationTestCompile libs.fast_classpath_scanner
+    integrationTestImplementation libs.slf4j_api
+    integrationTestImplementation libs.junit_jupiter
+    integrationTestImplementation libs.fast_classpath_scanner
 
-    integrationTestCompile libs.commons_io
-    integrationTestRuntime libs.javax_el
+    integrationTestImplementation libs.commons_io
+    integrationTestRuntimeOnly libs.javax_el
     //the following logging libs are needed when running junits outside dropwizard
-    integrationTestRuntime libs.jcl_over_slf4j
-    integrationTestRuntime libs.jul_to_slf4j
-    integrationTestRuntime libs.log4j_over_slf4j
-    integrationTestRuntime libs.logback_classic
-    integrationTestRuntime libs.logback_core
-    integrationTestRuntime libs.jaxb_runtime
-    integrationTestRuntime libs.javax_activation
+    integrationTestRuntimeOnly libs.jcl_over_slf4j
+    integrationTestRuntimeOnly libs.jul_to_slf4j
+    integrationTestRuntimeOnly libs.log4j_over_slf4j
+    integrationTestRuntimeOnly libs.logback_classic
+    integrationTestRuntimeOnly libs.logback_core
+    integrationTestRuntimeOnly libs.jaxb_runtime
+    integrationTestRuntimeOnly libs.javax_activation
 
-    integrationTestCompile libs.mockito_core
-    integrationTestCompile libs.assertj_core
-    integrationTestCompile libs.dropwizard_testing
-    integrationTestCompile libs.dropwizard_client
+    integrationTestImplementation libs.mockito_core
+    integrationTestImplementation libs.assertj_core
+    integrationTestImplementation libs.dropwizard_testing
+    integrationTestImplementation libs.dropwizard_client
 }
 
 task setupSampleData(type: JavaExec) {

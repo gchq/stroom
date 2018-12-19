@@ -12,36 +12,36 @@ def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
 dependencies {
-    compile project(':stroom-core-client')
-    compile project(':stroom-core-client-widget')
-    compile project(':stroom-dashboard:stroom-dashboard-client')
-    compile project(':stroom-externaldoc:stroom-externaldoc-client')
-    compile project(':stroom-index:stroom-index-client')
-    compile project(':stroom-security:stroom-security-client')
-    compile project(':stroom-statistics:stroom-statistics-client')
+    implementation project(':stroom-core-client')
+    implementation project(':stroom-core-client-widget')
+    implementation project(':stroom-dashboard:stroom-dashboard-client')
+    implementation project(':stroom-externaldoc:stroom-externaldoc-client')
+    implementation project(':stroom-index:stroom-index-client')
+    implementation project(':stroom-security:stroom-security-client')
+    implementation project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
-    compile "${libs.stroomDocRef}:sources"
+    implementation "${libs.stroomDocRef}:sources"
     permitUnusedDeclared libs.stroomDocRef
     permitUnusedDeclared "${libs.stroomDocRef}:sources"
-    compile "${libs.stroomQueryApi}:sources"
+    implementation "${libs.stroomQueryApi}:sources"
     permitUnusedDeclared libs.stroomQueryApi
     permitUnusedDeclared "${libs.stroomQueryApi}:sources"
-    compile "${libs.stroomQueryCommon}:sources"
+    implementation "${libs.stroomQueryCommon}:sources"
     permitUnusedDeclared libs.stroomQueryCommon
     permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
 
-    compile libs.gin
-    compile libs.guice3
-    compile libs.gwt_dev
+    implementation libs.gin
+    implementation libs.guice3
+    implementation libs.gwt_dev
     permitUnusedDeclared libs.gwt_dev
-    compile libs.gwt_user
-    compile libs.gwtp_mvp_client
+    implementation libs.gwt_user
+    implementation libs.gwtp_mvp_client
 
-    // needed so gwt can compile the stroom-query code that contains swagger annotations
-    compile libs.swagger_annotations
+    // needed so gwt can implementation the stroom-query code that contains swagger annotations
+    implementation libs.swagger_annotations
     permitUnusedDeclared libs.swagger_annotations
-    compile "${libs.swagger_annotations}:sources"
+    implementation "${libs.swagger_annotations}:sources"
     permitUnusedDeclared "${libs.swagger_annotations}:sources"
 }
 
@@ -137,7 +137,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         [
             '-logLevel', 'INFO',
             '-workDir', workDir,
-            '-draftCompile',                        // Speeds up compile with 25%
+            '-draftCompile',                        // Speeds up implementation with 25%
             '-XfragmentCount', '0',
             '-optimize', '0',
             '-failOnError',
