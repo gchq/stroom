@@ -21,12 +21,14 @@ import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -39,7 +41,7 @@ public class JWTService implements HasHealthCheck {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private PublicJsonWebKey jwk;
-    private Integer warnXMinsBeforeExpiry = null;
+    private Duration durationToWarnBeforeExpiry = null;
     private final String apiKey;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
@@ -50,12 +52,12 @@ public class JWTService implements HasHealthCheck {
     public JWTService(
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken.warnXMinsBeforeExpiry')}") final String warnXMinsBeforeExpiry,
+            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken.durationToWarnBeforeExpiry')}") final String durationToWarnBeforeExpiry,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String apiKey,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
             final AuthenticationServiceClients authenticationServiceClients) {
-        if (warnXMinsBeforeExpiry != null) {
-            this.warnXMinsBeforeExpiry = Integer.parseInt(warnXMinsBeforeExpiry);
+        if (durationToWarnBeforeExpiry != null) {
+            this.durationToWarnBeforeExpiry = Duration.ofMillis(ModelStringUtil.parseDurationString(durationToWarnBeforeExpiry));
         }
         this.apiKey = apiKey;
         this.authJwtIssuer = authJwtIssuer;
@@ -241,8 +243,8 @@ public class JWTService implements HasHealthCheck {
 
         try {
             JwtClaims claims = verifyToken(this.apiKey);
-            if (this.warnXMinsBeforeExpiry == null) {
-                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.warnXMinsBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to //expire!");
+            if (this.durationToWarnBeforeExpiry == null) {
+                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.durationToWarnBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to //expire!");
                 resultBuilder.unhealthy();
             } else {
                 NumericDate expiration = claims.getExpirationTime();
@@ -253,7 +255,7 @@ public class JWTService implements HasHealthCheck {
                     Instant expiresOn = Instant.ofEpochMilli(expiration.getValueInMillis());
                     Instant now = Instant.now(clock);
                     long minutesUntilExpiry = ChronoUnit.MINUTES.between(now, expiresOn);
-                    if (minutesUntilExpiry < this.warnXMinsBeforeExpiry) {
+                    if (minutesUntilExpiry < this.durationToWarnBeforeExpiry.toMinutes()) {
                         resultBuilder.withDetail(KEY, String.format("Stroom's API key expires soon! It expires on %s", expiresOn.toString()));
                         resultBuilder.unhealthy();
                     }

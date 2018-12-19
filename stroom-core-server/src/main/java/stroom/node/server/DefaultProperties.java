@@ -1065,8 +1065,8 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.security.apitoken.warnXMinsBeforeExpiry")
-                .value("20160")
+                .name("stroom.security.apitoken.durationToWarnBeforeExpiry")
+                .value("30d")
                 .description("The API token Stroom will use to authenticate itself when accessing other services")
                 .editable(true)
                 .requireUiRestart(true)
