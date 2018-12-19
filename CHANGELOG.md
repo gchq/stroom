@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1041** : Add a healthcheck to Stroom to alert for API key expiry
+
 * Issue **#1040** : Fix for visualisations that do not require nested data.
 
 * Issue **#1036** : Fix for scrollbar position on explorer popup windows.
