@@ -1,4 +1,4 @@
-apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'com.github.johnrengelman.shadow'
 
 ext.moduleName = 'stroom.elastic.impl.http'
 
@@ -7,7 +7,6 @@ dependencies {
     compile project(':stroom-elastic:stroom-elastic-impl')
     compile project(':stroom-pipeline')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-server')
 
     compile libs.stroomDocRef
 
@@ -19,8 +18,8 @@ dependencies {
     testCompile libs.junit_jupiter
 }
 
-def fatJarName = "stroom-elastic-impl-http.jar"
-
+//def fatJarName = "stroom-elastic-impl-http.jar"
+//
 //shadowJar {
 //    // Allows us to build fat jars with lots of files
 //    zip64 true

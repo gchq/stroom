@@ -17,6 +17,18 @@ rootProject.name = 'stroom'
  *
  */
 
+// Util
+include 'stroom-util-shared'
+include 'stroom-util'
+
+// Security
+include 'stroom-security:stroom-security-api'
+include 'stroom-security:stroom-security-shared'
+include 'stroom-security:stroom-security-server'
+include 'stroom-security:stroom-security-impl-mock'
+include 'stroom-security:stroom-security-client-api'
+include 'stroom-security:stroom-security-client'
+
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
@@ -106,14 +118,6 @@ include 'stroom-proxy'
 include 'stroom-ruleset:stroom-ruleset-shared'
 include 'stroom-ruleset:stroom-ruleset-server'
 
-// Security
-include 'stroom-security:stroom-security-api'
-include 'stroom-security:stroom-security-shared'
-include 'stroom-security:stroom-security-server'
-include 'stroom-security:stroom-security-impl-mock'
-include 'stroom-security:stroom-security-client-api'
-include 'stroom-security:stroom-security-client'
-
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
 include 'stroom-statistics:stroom-statistics-shared'
@@ -126,7 +130,3 @@ include 'stroom-task:stroom-task-impl'
 
 // Test project
 include 'stroom-test-common'
-
-// Util
-include 'stroom-util'
-include 'stroom-util-shared'
