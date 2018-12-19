@@ -28,8 +28,6 @@ logging:
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
     org.hibernate: ERROR
-    # OFF has to be in quotes else it is treated as a boolean
-    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: "OFF"
     "event-logger":
       level: INFO
       additive: false
