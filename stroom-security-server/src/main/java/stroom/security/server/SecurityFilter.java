@@ -327,7 +327,7 @@ public class SecurityFilter implements Filter {
             if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                 // If we can't exchange the accessCode for an idToken then this probably means the
                 // accessCode doesn't exist any more, or has already been used. so we can't proceed.
-                LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
+                LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?");
             } else {
                 LOGGER.error("Unable to retrieve idToken!", e);
             }
