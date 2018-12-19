@@ -2,4 +2,4 @@ name=Stream Task Queue Size
 path=Internal Statistics/SQL
 tags=DataSource
 type=StatisticStore
-uuid=603f0695-26ae-11e7-b9dc-0242ac110002
+uuid=946a7f0f-a59a-11e6-bdc4-0242ac110002
