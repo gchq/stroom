@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>xsltFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>70d71b93-c466-4a59-b8ec-034d85f2e2b1</uuid>
+                  <name>BROADBAND_SPEED_TESTS-EXTRACTION</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

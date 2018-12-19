@@ -241,16 +241,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         confirmMap.remove(docRef);
                     }
                 } catch (final RuntimeException e) {
+                    LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath().toString(), e);
                     importExportEventLog.importDocument(docRef.getType(), docRef.getUuid(), docRef.getName(), e);
                     throw e;
                 }
 
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath().toString(), e);
                 importState.addMessage(Severity.ERROR, e.getMessage());
             }
         } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath().toString(), e);
         }
     }
 

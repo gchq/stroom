@@ -14,7 +14,20 @@
                     "label" : "Values"
                 } 
             ]
-        } 
+        },
+        {
+            "name": "Heat Map",
+            "controls": [
+                {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "490",
+                    "max": "10000",
+                    "min": "1"
+                }
+            ]
+        }
     ],
     "data" : {
         "structure" : {
@@ -30,7 +43,11 @@
                     {
                         "id" : "${values}"
                     } 
-                ]
+                ],
+                "limit": {
+                    "enabled": "true",
+                    "size": "${maxValues}"
+                }
             }
         }
     }

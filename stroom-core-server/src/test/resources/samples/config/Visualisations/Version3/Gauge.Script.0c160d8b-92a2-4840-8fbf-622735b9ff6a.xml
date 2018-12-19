@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<script>
+   <dependenciesXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;docs&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;49a5f46c-f627-49ed-afb9-0066b99e235a&lt;/uuid&gt;
+&lt;name&gt;Common&lt;/name&gt;
+&lt;/doc&gt;
+        &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;5d4252d6-6f13-4f24-9481-9e98e038747c&lt;/uuid&gt;
+&lt;name&gt;GenericGrid&lt;/name&gt;
+&lt;/doc&gt;
+	&lt;/docs&gt;
+    </dependenciesXML>
+   <description>Git commit: 07d28e99cac0392827e7a096e8316858e77a5dd2
+Git commit time: 2017-01-09 15:43:31 +0000</description>
+   <name>Gauge</name>
+   <uuid>0c160d8b-92a2-4840-8fbf-622735b9ff6a</uuid>
+</script>

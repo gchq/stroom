@@ -1,0 +1,8 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<feed>
+   <name>LAX_CARGO_VOLUME</name>
+   <reference>false</reference>
+   <status>RECEIVE</status>
+   <streamType>Raw Events</streamType>
+   <uuid>1537dd55-bd39-41af-83c3-da347b78164f</uuid>
+</feed>

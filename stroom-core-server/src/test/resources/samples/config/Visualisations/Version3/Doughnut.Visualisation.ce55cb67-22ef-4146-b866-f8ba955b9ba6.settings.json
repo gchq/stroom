@@ -68,8 +68,8 @@
                     "id" : "maxGridSeries",
                     "type" : "number",
                     "label" : "Max Grid Series",
-                    "defaultValue": "20",
-                    "max": "36",
+                    "defaultValue": "36",
+                    "max": "144",
                     "min": "1"
                 },
                 {

@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<visualisation>
+   <description>Git commit: 42cd516461f3c8366e95a64d069a379fcb316669
+Git commit time: 2018-12-14 20:04:46 +0000</description>
+   <functionName>visualisations.Gauge</functionName>
+   <name>Gauge</name>
+   <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+           &lt;doc&gt;
+&lt;type&gt;Script&lt;/type&gt;
+&lt;uuid&gt;0c160d8b-92a2-4840-8fbf-622735b9ff6a&lt;/uuid&gt;
+&lt;name&gt;Gauge&lt;/name&gt;
+&lt;/doc&gt;
+    </scriptRefXML>
+   <uuid>d23d4513-30f1-4c07-bc85-dafd4538d4df</uuid>
+</visualisation>
