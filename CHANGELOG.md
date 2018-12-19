@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1050** : Prevent creation of permission entries if key already exists.
+
 * Issue **#1015** : Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
 
 * Issue **#1019** : Fix visualisations settings dialog so you can un-set text and list controls.

@@ -30,7 +30,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
-import javax.persistence.PersistenceException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +49,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private static final String SQL_DELETE_USER_PERMISSIONS;
 
     static {
+        // We are expecting duplicate keys at times so have to protect against it
+        // by only inserting if the compound key doesn't exist already
         final StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
         sql.append(DocumentPermission.TABLE_NAME);
@@ -64,7 +65,23 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         sql.append(" ,");
         sql.append(DocumentPermission.PERMISSION);
         sql.append(")");
-        sql.append(" VALUES (?,?,?,?,?)");
+        sql.append(" SELECT ?, ?, ?, ?, ?");
+        sql.append(" FROM DUAL");
+        sql.append(" WHERE NOT EXISTS (");
+        sql.append(" SELECT NULL");
+        sql.append(" FROM ");
+        sql.append(DocumentPermission.TABLE_NAME);
+        sql.append(" WHERE ");
+        sql.append("  ");
+        sql.append(DocumentPermission.USER_UUID);
+        sql.append(" = ? AND ");
+        sql.append(DocumentPermission.DOC_TYPE);
+        sql.append(" = ? AND ");
+        sql.append(DocumentPermission.DOC_UUID);
+        sql.append(" = ? AND ");
+        sql.append(DocumentPermission.PERMISSION);
+        sql.append(" = ?");
+        sql.append(")");
         SQL_INSERT_PERMISSION = sql.toString();
     }
 
@@ -204,7 +221,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 final String permission = (String) arr[4];
 
                 final UserRef userRef = new UserRef(User.ENTITY_TYPE, uuid, name, group,
-                    UserStatus.ENABLED.getPrimitiveValue() == status);
+                        UserStatus.ENABLED.getPrimitiveValue() == status);
 
                 userPermissions.computeIfAbsent(userRef, k -> new HashSet<>()).add(permission);
             });
@@ -221,12 +238,24 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void addPermission(final UserRef userRef, final DocRef document, final String permission) {
         try {
-            final SqlBuilder sqlBuilder = new SqlBuilder(SQL_INSERT_PERMISSION, 1, userRef.getUuid(), document.getType(), document.getUuid(), permission);
-            entityManager.executeNativeUpdate(sqlBuilder);
-        } catch (final PersistenceException e) {
-            // Expected exception.
-            LOGGER.debug("addPermission()", e);
-//            throw e;
+            // bit grim having to repeat the key fields but they are used twice in the sql
+            final SqlBuilder sqlBuilder = new SqlBuilder(
+                    SQL_INSERT_PERMISSION,
+                    1,
+                    userRef.getUuid(), document.getType(), document.getUuid(), permission,
+                    userRef.getUuid(), document.getType(), document.getUuid(), permission);
+
+            final long insertCount = entityManager.executeNativeUpdate(sqlBuilder);
+
+            if (insertCount == 0) {
+                LOGGER.debug("Key already exists for userRef [{}], document type [{}], document ref [{}], " +
+                                "permission [{}], nothing inserted",
+                        userRef.getUuid(), document.getType(), document.getUuid(), permission);
+            } else {
+               LOGGER.debug("Inserted {} row with userRef [{}], document type [{}], document ref [{}], " +
+                                "permission [{}]",
+                        insertCount, userRef.getUuid(), document.getType(), document.getUuid(), permission);
+            }
         } catch (final RuntimeException e) {
             LOGGER.error("addPermission()", e);
             throw e;
