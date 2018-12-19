@@ -28,6 +28,9 @@ logging:
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
     org.hibernate: ERROR
+    # This is set to OFF to hide errors for expected key violations
+    # TODO Changes the permissions sql to only insert if the key doesn't exist
+    # so we can stop hiding sql exception detail
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: "OFF"
     "event-logger":
       level: INFO
