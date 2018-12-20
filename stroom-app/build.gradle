@@ -332,3 +332,11 @@ tasks.build.dependsOn buildDistribution
         ////}
     ////}
 //}
+
+// The gradle application plugin enables the distribution plugin
+// which creats .zip/tar archives by default, as does the shadow plugin
+// We have our own buildDistribution task so disable the standard ones to avoid confusion
+distZip.enabled = false
+distTar.enabled = false
+shadowDistZip.enabled = false
+shadowDistTar.enabled = false
