@@ -52,8 +52,10 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 Reference data uses a memory mapped disk based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
 
 ## Modularisation
+Separation of Stroom components into discreet modules that have clear APIs and separate persistence where requried to reduce coupling.
 
-## Modenisation of libraries
+## Modernisation of libraries
+Changing Stroom libraries to replace Spring with Guice and Hibernate with JOOQ.
 
 ## Annotations
 Search results in dashboards can be annotated to provide status and notes relating to the result item, e.g. an event. These annotations can later be searched to see which events have annotations associated with them.
@@ -61,12 +63,14 @@ Search results in dashboards can be annotated to provide status and notes relati
 # v8.0
 
 ## HDFS Storage Support
+Add support for HDFS as a data storage option.
 
 # v9.0
 
 ## New UI
+Replace the GWT UI with a more modern React.
 
-# v10
+# v10+
 
 ## Elastic search integration
 Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
