@@ -164,6 +164,7 @@ public class JWTService implements HasHealthCheck {
             String message = String.format(
                     "Unable to verify token remotely! Message was: %s. HTTP response code was: %s. Response body was: %s",
                     e.getMessage(), e.getCode(), e.getResponseBody());
+            LOGGER.debug(message);
             throw new RuntimeException(message, e);
         }
     }
