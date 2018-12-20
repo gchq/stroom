@@ -42,7 +42,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                                 final Hyperlink hyperlink = new Builder()
                                         .text("API Keys")
                                         .href(apiKeysUi)
-                                        .type(HyperlinkType.TAB)
+                                        .type(HyperlinkType.TAB + "|API Keys")
                                         .icon(icon)
                                         .build();
                                 HyperlinkEvent.fire(this, hyperlink);
