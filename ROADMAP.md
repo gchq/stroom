@@ -68,7 +68,7 @@ Add support for HDFS as a data storage option.
 # v9.0
 
 ## New UI
-Replace the GWT UI with a more modern React.
+Replace the GWT UI with a React based implementation.
 
 # v10+
 
