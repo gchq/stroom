@@ -2,21 +2,23 @@
 #
 # Tells the user if stroom is running or not.
 
+# shellcheck disable=SC1091
 source bin/utils.sh
+# shellcheck disable=SC1091
 source config/scripts.env
 
 readonly NOT_RUNNING_MESSAGE="Stroom is not running"
 readonly RUNNING_MESSAGE="Stroom is running under pid"
 
-if [ ! -f ${PID_FILE} ]; then # If there is no pid file
+if [ ! -f "${PID_FILE}" ]; then # If there is no pid file
   info "$NOT_RUNNING_MESSAGE"
 else # If there is a pid file we need to deal with it
-  PID=$(cat $PID_FILE);
+  PID=$(cat "${PID_FILE}");
 
   if [ "$PID" = '' ]; then # If the pid file is empty for some reason
     info "$NOT_RUNNING_MESSAGE"
   else 
-    if ps -p $PID > /dev/null
+    if ps -p "${PID}" > /dev/null
       then
       info "$RUNNING_MESSAGE $PID"
     else
@@ -24,3 +26,5 @@ else # If there is a pid file we need to deal with it
     fi
   fi
 fi
+
+# vim:sw=2:ts=2:et:

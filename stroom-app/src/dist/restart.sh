@@ -2,8 +2,10 @@
 #
 # Restarts Stroom
 
-source bin/utils.sh
-source config/scripts.env
+#source bin/utils.sh
+#source config/scripts.env
 
-source stop.sh
-source start.sh
+  # shellcheck disable=SC1091
+source stop.sh "$@"
+  # shellcheck disable=SC1091
+source start.sh "$@"

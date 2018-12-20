@@ -2,34 +2,46 @@
 #
 # Starts Stroom
 
-# shellcheck disable=SC1091
-source bin/utils.sh
-source config/scripts.env
 
 start() {
-  # We pipe the output of nohup to /dev/null because everything we might need for debugging
-  # should be caputured somewhere in 'logs'. If there's a problem starting and the logs aren't
-  # helping then try removing ' > /dev/null 2>&1' from the end and re-running.
+
   # We need word splitting so we need to disable SC2086
   # shellcheck disable=SC2086
-  nohup java ${JAVA_OPTS} -jar "${PATH_TO_JAR}" server "${PATH_TO_CONFIG}" &> logs/start.sh.log&
+  nohup \
+    java ${JAVA_OPTS} -jar "${PATH_TO_JAR}" server "${PATH_TO_CONFIG}" \
+    &> logs/start.sh.log &
 
   echo $! > "${PID_FILE}"
 
-  echo
-  info "Waiting for stroom to complete its start up."
-  info "Stroom has to build its database tables when started for the first time, so this may take a minute or so. Subsequent starts will be quicker."
-
-  wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/admin"
-
-  # Stroom is now up or we have given up waiting so check the health
-  ./health.sh
-
   # Display the banner, URLs and login details
   ./info.sh
+
+  echo
+  info "Stroom is starting up."
+  echo
+  info "This may take some time if the database has to be migrated."
+  info "You can tail the startup logs using" \
+    "'${BLUE}tail -F ./logs/start.sh.log${NC}'"
+  info "You can tail the application logs using" \
+    "'${BLUE}tail -F ./logs/app/app.log${NC}'"
 }
 
 main(){
+
+  while getopts m arg; do
+    # shellcheck disable=SC2034
+    case $arg in
+      m )  MONOCHROME=true ;;
+      \? ) exit 2 ;;  # getopts already reported the illegal option
+    esac
+  done
+  shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+  # shellcheck disable=SC1091
+  source bin/utils.sh
+  # shellcheck disable=SC1091
+  source config/scripts.env
+
   check_is_configured
 
   if [ ! -f "${PID_FILE}" ]; then # If there is no pid file
@@ -45,9 +57,11 @@ main(){
         warn "Stroom is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
         # echo -e "${RED}Warning:${NC} ${GREEN}Stroom${NC} is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
       else 
-        warn "There was an instance of Stroom running but it looks like it wasn't stopped gracefully. You might want to check the logs."
+        warn "There was an instance of Stroom running but it looks like"\
+          "it wasn't stopped gracefully. You might want to check the logs."
 
-        read -n1 -r -p " - Would you like to start a new instance? (y/n)" start_new_instance
+        read -n1 -r -p \
+          " - Would you like to start a new instance? (y/n)" start_new_instance
         echo -e ''
         if [ "$start_new_instance" = 'y' ]; then
           rm "$PID_FILE"
@@ -61,3 +75,4 @@ main(){
 }
 
 main "$@"
+# vim:sw=2:ts=2:et:

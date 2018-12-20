@@ -6,10 +6,6 @@
 # give the directory relative to the lib script, not this script.
 readonly DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# shellcheck disable=SC1090
-source "$DIR"/bin/utils.sh
-# shellcheck disable=SC1091
-source config/scripts.env
 
 echo_healthy() {
   info "  Status:   ${GREEN}HEALTHY${NC}"
@@ -101,6 +97,20 @@ check_health() {
 }
 
 main() {
+  while getopts m arg; do
+    # shellcheck disable=SC2034
+    case $arg in
+      m )  MONOCHROME=true ;;
+      \? ) exit 2 ;;  # getopts already reported the illegal option
+    esac
+  done
+  shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+  # shellcheck disable=SC1090
+  source "$DIR"/bin/utils.sh
+  # shellcheck disable=SC1091
+  source config/scripts.env
+
   #check_is_configured
   check_start_is_not_erroring
 
@@ -111,7 +121,8 @@ main() {
   return ${total_unhealthy_count}
 }
 
-main 
+main "$@"
 
 # Return the unhealthy count so this script can be used in an automated way
 exit $?
+# vim:sw=2:ts=2:et:

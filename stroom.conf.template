@@ -81,6 +81,10 @@ stroom.url.elastic-service=http://IP_ADDRESS:8299
 stroom.url.kibana-ui=http://IP_ADDRESS:5601
 stroom.url.dashboard=http://IP_ADDRESS/stroom/dashboard.jsp
 
+# Content Packs
+#~~~~~~~~~~~~~~
+stroom.contentPackImportEnabled=false
+
 # Internal statistic definitions
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #By default stroom will configure each internal stat key to point to two docRefs, one for sqlstats and one of stroom-stats

@@ -2,21 +2,18 @@
 #
 # Stops Stroom
 
-source bin/utils.sh
-source config/scripts.env
-
 readonly NOT_RUNNING_MESSAGE="This deployment of Stroom is not running!"
 
 stop() {
-  if [ ! -f ${PID_FILE} ]; then # If there is no pid file
-    warn "$NOT_RUNNING_MESSAGE"
+  if [ ! -f "${PID_FILE}" ]; then # If there is no pid file
+    warn "${NOT_RUNNING_MESSAGE}"
   else # If there is a pid file we need to deal with it
-    PID=$(cat $PID_FILE);
+    PID=$(cat "${PID_FILE}");
 
-    if [ "$PID" = '' ]; then # If the pid file is empty for some reason
-      warn "$NOT_RUNNING_MESSAGE"
+    if [ "${PID}" = '' ]; then # If the pid file is empty for some reason
+      warn "${NOT_RUNNING_MESSAGE}"
     else 
-      if ps -p $PID > /dev/null
+      if ps -p "${PID}" > /dev/null
       then
         PID=$(cat "${PID_FILE}");
         kill "${PID}";
@@ -30,6 +27,24 @@ stop() {
   fi
 }
 
-  
+main() {
+  while getopts m arg; do
+    # shellcheck disable=SC2034
+    case $arg in
+      m )  MONOCHROME=true ;;
+      \? ) exit 2 ;;  # getopts already reported the illegal option
+    esac
+  done
+  shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
-stop
+  # shellcheck disable=SC1091
+  source bin/utils.sh
+  # shellcheck disable=SC1091
+  source config/scripts.env
+
+  stop
+}
+
+main "$@"
+
+# vim:sw=2:ts=2:et:

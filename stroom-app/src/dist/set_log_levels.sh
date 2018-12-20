@@ -20,52 +20,53 @@ readonly CURL="curl"
 readonly HTTPIE="http"
 
 send_request() {
-    packageOrClass=$1
-    newLogLevel=$2
+  packageOrClass=$1
+  newLogLevel=$2
 
-    echo -e "Setting ${GREEN}${packageOrClass}${NC} to ${GREEN}${newLogLevel}${NC}"
-    echo
+  echo -e "Setting ${GREEN}${packageOrClass}${NC} to ${GREEN}${newLogLevel}${NC}"
+  echo
 
-    if [ "${binary}" = "${HTTPIE}" ]; then
-        ${HTTPIE} --headers -f POST ${URL} logger="${packageOrClass}" level="${newLogLevel}"
-    else
-        ${CURL} -X POST -d "logger=${packageOrClass}&level=${newLogLevel}" ${URL}
-    fi
+  if [ "${binary}" = "${HTTPIE}" ]; then
+    ${HTTPIE} --headers -f POST ${URL} logger="${packageOrClass}" level="${newLogLevel}"
+  else
+    ${CURL} -X POST -d "logger=${packageOrClass}&level=${newLogLevel}" ${URL}
+  fi
 }
 
 main() {
 
-    if command -v jq 1>/dev/null; then 
-        binary="${HTTPIE}"
-    else
-        echo -e "${YELLOW}WARN${NC} - ${BLUE}httpie${NC} is not installed (see ${BLUE}https://httpie.org${NC}), falling back to ${BLUE}curl${NC}." >&2
-        echo
-        binary="${CURL}"
-    fi
-
-    # should have an arg count that is a multiple of two
-    if [ $# -eq 0 ] || [ $(( $# % 2 )) -ne 0 ]; then
-        echo -e "${RED}ERROR${NC} - Invalid arguments" >&2
-        echo -e "Usage: ${BLUE}$0${GREEN} packageOrClass1 newLogLevel packageOrClassN newLogLevel ...${NC}" >&2
-        echo -e "e.g:   ${BLUE}$0${GREEN} stroom.startup.App DEBUG stroom.startup.Config TRACE${NC}" >&2
-        exit 1
-    fi
-
-    echo -e "Using URL ${BLUE}${URL}${NC}"
+  if command -v jq 1>/dev/null; then 
+    binary="${HTTPIE}"
+  else
+    echo -e "${YELLOW}WARN${NC} - ${BLUE}httpie${NC} is not installed (see ${BLUE}https://httpie.org${NC}), falling back to ${BLUE}curl${NC}." >&2
     echo
+    binary="${CURL}"
+  fi
 
-    #loop through the pairs of args
-    while [ $# -gt 0 ]; do
-        packageOrClass="$1"
-        newLogLevel="$2"
+  # should have an arg count that is a multiple of two
+  if [ $# -eq 0 ] || [ $(( $# % 2 )) -ne 0 ]; then
+    echo -e "${RED}ERROR${NC} - Invalid arguments" >&2
+    echo -e "Usage: ${BLUE}$0${GREEN} packageOrClass1 newLogLevel packageOrClassN newLogLevel ...${NC}" >&2
+    echo -e "e.g:   ${BLUE}$0${GREEN} stroom.startup.App DEBUG stroom.startup.Config TRACE${NC}" >&2
+    exit 1
+  fi
 
-        send_request "${packageOrClass}" "${newLogLevel}"
+  echo -e "Using URL ${BLUE}${URL}${NC}"
+  echo
 
-        #bin the two args we have just used
-        shift 2
-    done
+  #loop through the pairs of args
+  while [ $# -gt 0 ]; do
+    packageOrClass="$1"
+    newLogLevel="$2"
 
-    echo "${GREEN}Done${NC}"
+    send_request "${packageOrClass}" "${newLogLevel}"
+
+    #bin the two args we have just used
+    shift 2
+  done
+
+  echo "${GREEN}Done${NC}"
 }
 
 main "$@"
+# vim:sw=2:ts=2:et:
