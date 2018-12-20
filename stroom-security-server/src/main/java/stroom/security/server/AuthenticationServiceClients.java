@@ -29,6 +29,7 @@ import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
 import stroom.auth.service.api.model.Token;
+import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -143,17 +144,19 @@ public class AuthenticationServiceClients {
 
             if(!usersApiToken.isPresent()){
                 // User doesn't have an API token and cannot make this request.
-                LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
-                        userId);
+                LOGGER.warn("Tried to get a user's API key but they don't have one! User: [{}]", userId);
             }
-
         } catch (ApiException e) {
-            String message =
-                    "Unable to get the user's token from the Token service! User was: " + userId;
+            final String message = LambdaLogger.buildMessage(
+                    "Unable to get the user's token from the Token service! User: [{}], " +
+                            "response message: [{}], response code: [{}], response body:\n{}",
+                    userId, e.getMessage(), e.getCode(), e.getResponseBody());
+
+            // debug with full stack trace
+            LOGGER.debug(message, e);
             LOGGER.error(message);
             throw new RuntimeException(message, e);
         }
-
         return usersApiToken;
     }
 }

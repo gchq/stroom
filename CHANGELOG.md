@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1042** : Improve error message for an ApiException when requesting a user's token.
+
 * Issue **#1050** : Prevent creation of permission entries if key already exists.
 
 * Issue **#1015** : Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
