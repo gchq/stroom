@@ -2,69 +2,138 @@
 #
 # Starts Stroom
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
 
-start() {
+function ctrl_c() {
+  # User hit ctrl-c so tidy up first
+  kill_log_tailing
+}
 
+echo_usage() {
+  echo -e "${GREEN}This script starts Stroom${NC}"
+  echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
+  echo -e " -h:   ${GREEN}Print Help (this message) and exit${NC}"
+  echo -e " -m:   ${GREEN}Monochrome. Don't use colours in terminal output.${NC}"
+}
+
+invalid_arguments() {
+  echo -e "${RED}ERROR${NC} - Invalid arguments" >&2
+  echo_usage
+  exit 1
+}
+
+kill_log_tailing() {
+  local cmd="tail -F ${path_to_start_log} ${PATH_TO_APP_LOG}"
+  local pid
+  pid="$(pgrep -fx "${cmd}")"
+  # kill the log tailing
+  # The bit in quotes must match the command + args used to start the
+  # tailing in the first place
+  info "Terminating log tailing"
+  pkill -fx "${cmd}"
+
+  # We have a pid for the tail process so wait for it to die
+  if [ -n "${pid}" ]; then
+    set +e
+    while kill -0 "${pid}" >/dev/null 2>&1; do 
+      sleep 1
+    done
+    set -e
+    sleep 1
+    info "Log tailing terminated"
+  fi
+}
+
+wait_for_200_response() {
+    if [[ $# -ne 1 ]]; then
+        echo -e "${RED}Invalid arguments to wait_for_200_response(), expecting a URL to wait for${NC}"
+        exit 1
+    fi
+
+    local -r url=$1
+    local -r maxWaitSecs=120
+    echo
+
+    n=0
+    # Keep retrying for maxWaitSecs
+    until [ "$n" -ge "${maxWaitSecs}" ]
+    do
+        # OR with true to prevent the non-zero exit code from curl from stopping our script
+        responseCode=$(curl -sL -w "%{http_code}\\n" "${url}" -o /dev/null || true)
+        #echo "Response code: ${responseCode}"
+        if [[ "${responseCode}" = "200" ]]; then
+            break
+        fi
+
+        n=$(( n + 1 ))
+        sleep 1
+    done
+    #printf "\n"
+
+    if [[ $n -ge ${maxWaitSecs} ]]; then
+        warn "Gave up wating for stroom to start up, this may be due to the database migration taking a long time."
+    fi
+}
+
+
+start_stroom() {
+
+  info "Starting ${GREEN}Stroom${NC}"
+  ensure_file_exists "${path_to_start_log}" 
+  ensure_file_exists "${PATH_TO_APP_LOG}" 
   # We need word splitting so we need to disable SC2086
   # shellcheck disable=SC2086
   nohup \
     java ${JAVA_OPTS} -jar "${PATH_TO_JAR}" server "${PATH_TO_CONFIG}" \
-    &> logs/start.sh.log &
+    &> "${PATH_TO_APP_LOG}" &
 
-  echo $! > "${PID_FILE}"
+  local stroom_pid="$!"
+  info "Started ${GREEN}Stroom${NC} with PID ${BLUE}${stroom_pid}${NC}"
+  # Write the PID to a file to prevent stroom being started multiple times
+  echo "${stroom_pid}" > "${STROOM_PID_FILE}"
 
+  # tail the log in the background
+  info "Tailing log files ${BLUE}${path_to_start_log}${NC} and ${BLUE}${PATH_TO_APP_LOG}${NC}"
+  tail -F "${path_to_start_log}" "${PATH_TO_APP_LOG}" 2>/dev/null &
+  local tailing_pid="$!"
+
+  wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/admin/healthcheck"
+
+  kill_log_tailing "${tailing_pid}"
+
+  # display the result of the health check
+  info "Checking the health of ${GREEN}Stroom${NC}"
+  echo
+  ./health.sh "${script_args[@]}"
+
+  echo
   # Display the banner, URLs and login details
-  ./info.sh
-
-  echo
-  info "Stroom is starting up."
-  echo
-  info "This may take some time if the database has to be migrated."
-  info "You can tail the startup logs using" \
-    "'${BLUE}tail -F ./logs/start.sh.log${NC}'"
-  info "You can tail the application logs using" \
-    "'${BLUE}tail -F ./logs/app/app.log${NC}'"
+  ./info.sh "${script_args[@]}"
 }
 
-main(){
-
-  while getopts m arg; do
-    # shellcheck disable=SC2034
-    case $arg in
-      m )  MONOCHROME=true ;;
-      \? ) exit 2 ;;  # getopts already reported the illegal option
-    esac
-  done
-  shift $((OPTIND-1)) # remove parsed options and args from $@ list
-
-  # shellcheck disable=SC1091
-  source bin/utils.sh
-  # shellcheck disable=SC1091
-  source config/scripts.env
-
-  check_is_configured
-
-  if [ ! -f "${PID_FILE}" ]; then # If there is no pid file
-    start
+check_or_create_pid_file() {
+  if [ ! -f "${STROOM_PID_FILE}" ]; then # If there is no pid file
+    start_stroom
   else # If there is a pid file we need to deal with it
-    local -r PID=$(cat "$PID_FILE");
+    local -r PID=$(cat "$STROOM_PID_FILE");
 
-    if [ "$PID" = '' ]; then # If the pid file is empty for some reason
-      start
+    if [ "${PID}" = '' ]; then # If the pid file is empty for some reason
+      start_stroom
     else 
-      if ps -p "$PID" > /dev/null # Check if the PID is a running process
+      if ps -p "${PID}" > /dev/null # Check if the PID is a running process
       then
         warn "Stroom is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
         # echo -e "${RED}Warning:${NC} ${GREEN}Stroom${NC} is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
       else 
         warn "There was an instance of Stroom running but it looks like"\
-          "it wasn't stopped gracefully. You might want to check the logs."
+          "it wasn't stopped gracefully. You might want to check the logs. If you are certain it is not running delete the file ${BLUE}${STROOM_PID_FILE}${NC}"
 
         read -n1 -r -p \
           " - Would you like to start a new instance? (y/n)" start_new_instance
         echo -e ''
-        if [ "$start_new_instance" = 'y' ]; then
-          rm "$PID_FILE"
+        if [ "${start_new_instance}" = 'y' ]; then
+          rm "${STROOM_PID_FILE}"
           start
         else 
           info "Ok. I won't start anything."
@@ -72,6 +141,40 @@ main(){
       fi
     fi
   fi
+}
+
+main(){
+
+  local script_args=( $@ )
+  local -r path_to_start_log="./logs/start.sh.log"
+
+  # shellcheck disable=SC1091
+  source bin/utils.sh
+  # shellcheck disable=SC1091
+  source config/scripts.env
+
+  while getopts ":mh" arg; do
+    # shellcheck disable=SC2034
+    case $arg in
+      h ) 
+        echo_usage
+        exit 0
+        ;;
+      m )  
+        MONOCHROME=true 
+        ;;
+      * ) 
+        invalid_arguments
+        ;;  # getopts already reported the illegal option
+    esac
+  done
+  shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+  setup_colours
+
+  check_is_configured
+
+  check_or_create_pid_file
 }
 
 main "$@"

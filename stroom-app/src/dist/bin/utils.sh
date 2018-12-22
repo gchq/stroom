@@ -5,39 +5,30 @@
 # Exit script on any error
 set -e
 
-# Shell Colour constants for use in 'echo -e'
-# e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
-# shellcheck disable=SC2034
-if [ "${MONOCHROME}" = true ]; then
-  RED=''
-  GREEN=''
-  YELLOW=''
-  BLUE=''
-  BLUE2=''
-  NC='' # No Colour
-else 
-  RED='\033[1;31m'
-  GREEN='\033[1;32m'
-  YELLOW='\033[1;33m'
-  BLUE='\033[1;34m'
-  BLUE2='\033[1;34m'
-  NC='\033[0m' # No Colour
-fi
+setup_colours() {
+  # Shell Colour constants for use in 'echo -e'
+  # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
+  # shellcheck disable=SC2034
+  if [ "${MONOCHROME}" = true ]; then
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    BLUE2=''
+    NC='' # No Colour
+  else 
+    RED='\033[1;31m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[1;34m'
+    BLUE2='\033[1;34m'
+    NC='\033[0m' # No Colour
+  fi
+}
+
+setup_colours
 
 mkdir -p logs
-
-greeting() {
-  echo -e "${GREEN}                    ╔╬═${NC}"
-  echo -e "${GREEN}                    ╬╣═${NC}"
-  echo -e "${GREEN}                    ╬╣╕${NC}"
-  echo -e "${GREEN}   ┌╦╬╣╣╣╣╣╣╣╣╩╬╗╬╣╣╣╣╣╣╣╣╣╬╬╗╬╣╣╣╩╗╬╬╣╣╣╬╗┐  ╔╬╬╣╣╣╬╗┐    ╔╬╣╣╣╣╦╖ ╔╬╣╣╣╬╦╖${NC}"
-  echo -e "${GREEN}   ╣╣╛              ╬╣╛    ╬╣╩╙  ╔╣╣╝    ╙╩╣╬╣╣╝    ╙╩╣╬ ┌╬╣╝    ╙╣╣╣╝    ╩╣╬${NC}"
-  echo -e "${GREEN}   ╬╣╬╗╗╗╗╗╗╗╖      ╬╣═   ╬╣╬   ╔╣╣        ╠╣╣        ╠╣╬╠╣╡      ╟╣╡      ╬╣╕${NC}"
-  echo -e "${GREEN}     ╙╙╙╙╙╙╙╙╬╣╗    ╬╣═   ╬╣╡   ╙╣╣        ╠╣╣        ╠╣╬╠╣╡      ╠╣╡      ╬╣╛${NC}"
-  echo -e "${GREEN}             ╓╣╣    ╬╣═   ╬╣╡    ╙╣╬╗    ╓╬╣╬╣╬╗    ╓╬╣╬ ╠╣╡      ╠╣╡      ╬╣╛${NC}"
-  echo -e "${GREEN}   ┌╦╬╣╣╣╣╣╣╣╣╩     ╬╣═   ╬╣╡      ╙╩╣╣╣╣╬╝   ╙╩╣╣╣╣╬╝   ╠╣╡      ╠╣╡      ╬╣╛${NC}"
-  echo -e ''
-}
 
 ask_about_logs() {
   read -n1 -r -p $'  - Press \e[94mspace\e[0m or \e[94menter\e[0m to see the logs, \e[94manything\e[0m else to return to the command line.' key
@@ -53,6 +44,18 @@ ask_about_logs() {
   fi
 }
 
+ensure_file_exists() {
+  local log_file="$1"
+  if [ ! -f "${log_file}" ]; then
+    # File doesn't exists so ensure the dir and file both exist
+    local dir
+    # get dir part by removing everything before last slash
+    dir="${log_file%/*}"
+    mkdir -p "${dir}"
+    touch "${log_file}" 
+  fi
+}
+
 error() {
   echo -e "${RED}Error:${NC}" "$@"
 }
@@ -65,43 +68,43 @@ info() {
   echo -e "${GREEN}Info:${NC}" "$@"
 }
 
-wait_for_200_response() {
-  if [[ $# -ne 1 ]]; then
-    error "Invalid arguments to wait_for_200_response(), expecting a URL to wait for."
-    exit 1
-  fi
+#wait_for_200_response() {
+  #if [[ $# -ne 1 ]]; then
+    #error "Invalid arguments to wait_for_200_response(), expecting a URL to wait for."
+    #exit 1
+  #fi
 
-  local -r url=$1
-  local -r maxWaitSecs=120
-  echo
+  #local -r url=$1
+  #local -r maxWaitSecs=120
+  #echo
 
-  n=0
-  # Keep retrying for maxWaitSecs
-  until [ $n -ge ${maxWaitSecs} ]
-  do
-    check_start_is_not_erroring
-    # OR with true to prevent the non-zero exit code from curl from stopping our script
-    responseCode=$(curl -sL -w "%{http_code}\\n" "${url}" -o /dev/null || true)
-    #echo "Response code: ${responseCode}"
-    if [[ "${responseCode}" = "200" ]]; then
-      break
-    fi
-    # print a simple unbounded progress bar, increasing every 2s
-    mod=$((n%2))
-    if [[ ${mod} -eq 0 ]]; then
-      printf '.'
-    fi
+  #n=0
+  ## Keep retrying for maxWaitSecs
+  #until [ $n -ge ${maxWaitSecs} ]
+  #do
+    #check_start_is_not_erroring
+    ## OR with true to prevent the non-zero exit code from curl from stopping our script
+    #responseCode=$(curl -sL -w "%{http_code}\\n" "${url}" -o /dev/null || true)
+    ##echo "Response code: ${responseCode}"
+    #if [[ "${responseCode}" = "200" ]]; then
+      #break
+    #fi
+    ## print a simple unbounded progress bar, increasing every 2s
+    #mod=$((n%2))
+    #if [[ ${mod} -eq 0 ]]; then
+      #printf '.'
+    #fi
 
-    n=$((n+1))
-    # sleep for two secs
-    sleep 1
-  done
-  printf "\n"
+    #n=$((n+1))
+    ## sleep for two secs
+    #sleep 1
+  #done
+  #printf "\n"
 
-  if [[ $n -ge ${maxWaitSecs} ]]; then
-    echo -e "${RED}Gave up wating for stroom to start up, check the logs: (${BLUE}./logs${NC}, or ${BLUE}logs/start.sh.log${NC}${RED})${NC}"
-  fi
-}
+  #if [[ $n -ge ${maxWaitSecs} ]]; then
+    #echo -e "${RED}Gave up wating for stroom to start up, check the logs: (${BLUE}./logs${NC}, or ${BLUE}logs/start.sh.log${NC}${RED})${NC}"
+  #fi
+#}
 
 check_is_configured() {
   local IP_ADDRESS_TAG="IP_ADDRESS"
@@ -118,10 +121,12 @@ check_start_is_not_erroring() {
   local LOG_ERROR_PATTERN="io.dropwizard.configuration.ConfigurationParsingException"
   local SCRIPT_LOG_LOCATION="logs/start.sh.log"
 
-  if grep -q "${LOG_ERROR_PATTERN}" "${SCRIPT_LOG_LOCATION}"; then
-    echo -e
-    error "It looks like you have a problem with something in ${BLUE}config/config.yml${NC}. Look in ${BLUE}logs/start.sh.log${NC} for the details.${NC}"
-    exit 1
+  if [ -f "${SCRIPT_LOG_LOCATION}" ]; then
+    if grep -q "${LOG_ERROR_PATTERN}" "${SCRIPT_LOG_LOCATION}"; then
+      echo -e
+      error "It looks like you have a problem with something in ${BLUE}config/config.yml${NC}. Look in ${BLUE}logs/start.sh.log${NC} for the details.${NC}"
+      exit 1
+    fi
   fi
 }
 

@@ -6,41 +6,72 @@
 # give the directory relative to the lib script, not this script.
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-main() {
-  while getopts m arg; do
-    # shellcheck disable=SC2034
-    case $arg in
-      m )  MONOCHROME=true ;;
-      \? ) exit 2 ;;  # getopts already reported the illegal option
-    esac
-  done
-  shift $((OPTIND-1)) # remove parsed options and args from $@ list
+echo_usage() {
+  echo -e "${GREEN}This script starts Stroom${NC}"
+  echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
+  echo -e " -h:   ${GREEN}Print Help (this message) and exit${NC}"
+  echo -e " -m:   ${GREEN}Monochrome. Don't use colours in terminal output.${NC}"
+}
 
-  # shellcheck disable=SC1090
-  source "$DIR"/bin/utils.sh
-  # shellcheck disable=SC1090
-  source "${DIR}"/config/scripts.env
-  readonly HOST_IP=$(determine_host_address)
+invalid_arguments() {
+  echo -e "${RED}ERROR${NC} - Invalid arguments" >&2
+  echo_usage
+  exit 1
+}
 
-  # see if the terminal supports colors...
-  no_of_colours=$(tput colors)
-
+show_banner() {
   # shellcheck disable=SC2086
   local banner_colour
   if [ "${MONOCHROME}" = true ]; then
     banner_colour=""
-  elif test -n "${no_of_colours}" && test "${no_of_colours}" -eq 256; then
-    # 256 colours so print the stroom banner in dirty orange
-    #echo -en "\e[38;5;202m"
-    banner_colour="\e[38;5;202m"
   else
-    # No 256 colour support so fall back to blue
-    #echo -en "${BLUE}"
-    banner_colour="${BLUE}"
+    # see if the terminal supports colors...
+    no_of_colours=$(tput colors)
+
+    if test -n "${no_of_colours}" && test "${no_of_colours}" -eq 256; then
+      # 256 colours so print the stroom banner in dirty orange
+      #echo -en "\e[38;5;202m"
+      banner_colour="\e[38;5;202m"
+    else
+      # No 256 colour support so fall back to blue
+      #echo -en "${BLUE}"
+      banner_colour="${BLUE}"
+    fi
   fi
+
   echo -en "${banner_colour}"
   cat "${DIR}"/bin/banner.txt
   echo -en "${NC}"
+}
+
+main() {
+  # shellcheck disable=SC1090
+  source "$DIR"/bin/utils.sh
+  # shellcheck disable=SC1090
+  source "${DIR}"/config/scripts.env
+
+  while getopts ":mh" arg; do
+    # shellcheck disable=SC2034
+    case $arg in
+      h ) 
+        echo_usage
+        exit 0
+        ;;
+      m )  
+        MONOCHROME=true 
+        ;;
+      * ) 
+        invalid_arguments
+        ;;  # getopts already reported the illegal option
+    esac
+  done
+  shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+  setup_colours
+
+  readonly HOST_IP=$(determine_host_address)
+
+  show_banner
 
   echo
   info "The local stroom is running at the following location:" 
@@ -56,7 +87,6 @@ main() {
   info "Data can be POSTed to Stroom using the following URL (see README for details)"
   info "${BLUE}https://localhost:<app port>/stroom/datafeed${NC}"
 }
-
 
 main "$@"
 # vim:sw=2:ts=2:et:
