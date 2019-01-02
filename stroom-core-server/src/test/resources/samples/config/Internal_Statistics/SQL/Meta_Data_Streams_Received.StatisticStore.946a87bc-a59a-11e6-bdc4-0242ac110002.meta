@@ -1,0 +1,17 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "946a87bc-a59a-11e6-bdc4-0242ac110002",
+  "name" : "Meta Data-Streams Received",
+  "version" : "d8d6354c-2079-4240-a507-b8304891222a",
+  "description" : "Counts the number of streams received into Stroom by Feed",
+  "statisticType" : "COUNT",
+  "rollUpType" : "ALL",
+  "precision" : 3600000,
+  "enabled" : true,
+  "config" : {
+    "fields" : [ {
+      "fieldName" : "Feed"
+    } ],
+    "customRollUpMasks" : [ { } ]
+  }
+}

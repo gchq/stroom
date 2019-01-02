@@ -121,6 +121,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private ProcessorFilterTask streamTask;
     private StreamSource streamSource;
 
+    private long startTime;
+
     @Inject
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                             final StreamStore streamStore,
@@ -178,13 +180,21 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.streamTask = streamTask;
         this.streamSource = streamSource;
 
+        // Record when processing began so we know how long it took
+        // afterwards.
+        startTime = System.currentTimeMillis();
+
         // Setup the error handler and receiver.
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
+
+        // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
+        final Data stream = streamSource.getStream();
+        supersededOutputHelper.init(stream, streamProcessor, streamTask, startTime);
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider = new ProcessInfoOutputStreamProvider(streamStore,
                 metaData,
-                streamSource.getStream(),
+                stream,
                 streamProcessor,
                 streamTask,
                 recordCount,
@@ -207,17 +217,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     }
 
     private void process() {
-        // Record when processing began so we know how long it took
-        // afterwards.
-        final long startTime = System.currentTimeMillis();
         String feedName = null;
         PipelineDoc pipelineDoc = null;
 
         try {
             final Data stream = streamSource.getStream();
-
-            // Initialise the helper class that will ensure we only keep the latest output for this stream source and processor.
-            supersededOutputHelper.init(stream, streamProcessor, streamTask, startTime);
 
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(stream.getId()));

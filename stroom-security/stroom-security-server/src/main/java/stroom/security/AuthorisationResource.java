@@ -80,11 +80,15 @@ public class AuthorisationResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@QueryParam("id") String userId) {
-        try {
-            userService.createUser(userId);
+        try{
+            UserRef existingUser = userService.getUserByName(userId);
+            if(existingUser == null){
+                userService.createUser(userId);
+            }
             return Response.ok().build();
-        } catch (Exception e) {
-            LOGGER.error("Unable to create user: {}", e);
+        }
+        catch(Exception e){
+            LOGGER.error("Unable to create user: {}", e.getMessage());
             return Response.serverError().build();
         }
     }

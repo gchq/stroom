@@ -93,7 +93,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         this.scriptCache = new ScriptCache(eventBus);
         this.dispatcher = dispatcher;
 
-        visFrame = new VisFrame();
+        visFrame = new VisFrame(eventBus);
         visPane = visFrame;
         view.setVisPane(visPane);
 

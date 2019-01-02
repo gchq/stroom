@@ -167,12 +167,13 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
             throw new RuntimeException(msg);
         }
 
-        String serializationPolicyFilePath = String.format(gwtRpcPath.get(), strongName);
-
+        final String serializationPolicyFilePath = String.format(gwtRpcPath.get(), strongName);
         try (InputStream is = getClass().getResourceAsStream(serializationPolicyFilePath)) {
             return SerializationPolicyLoader.loadFromStream(is, null);
-        } catch (ParseException | IOException e) {
-            throw new RuntimeException(e);
+        } catch (ParseException | IOException | RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
+
+        return null;
     }
 }

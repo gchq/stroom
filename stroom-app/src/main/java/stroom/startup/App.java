@@ -218,7 +218,9 @@ public class App extends Application<Config> {
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
 
         // Sync content.
-        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getContentSyncConfig() != null) {
+        if (configuration.getProxyConfig() != null &&
+                configuration.getProxyConfig().getContentSyncConfig() != null &&
+                configuration.getProxyConfig().getContentSyncConfig().isContentSyncEnabled()) {
             // Create a map of import handlers.
             final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
             importExportActionHandlers.put(RuleSet.DOCUMENT_TYPE, injector.getInstance(RuleSetService.class));
@@ -289,6 +291,7 @@ public class App extends Application<Config> {
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
@@ -302,6 +305,9 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DataResource.class);
+
+        // Map exceptions to helpful HTTP responses
+        environment.jersey().register(PermissionExceptionMapper.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);

@@ -72,10 +72,6 @@ include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
 include 'stroom-explorer:stroom-explorer-impl-db-gen'
 
-// External Doc
-include 'stroom-externaldoc:stroom-externaldoc-server'
-include 'stroom-externaldoc:stroom-externaldoc-client'
-
 // Headless
 include 'stroom-headless'
 

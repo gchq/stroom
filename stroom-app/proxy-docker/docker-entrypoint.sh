@@ -5,6 +5,8 @@ set -e
 # This avoids permission denied if the data volume is mounted by root
 #if [ "$1" = 'proxy' -a "$(id -u)" = '0' ]; then
 if [ "$(id -u)" = '0' ]; then
+    . /stroom-proxy/add_container_identity_headers.sh /stroom-proxy/logs/extra_headers.txt
+
     # Done individually to avoid chown-ing ./certs which is a readonly volume
     chown -R proxy:proxy ./config
     chown -R proxy:proxy ./content

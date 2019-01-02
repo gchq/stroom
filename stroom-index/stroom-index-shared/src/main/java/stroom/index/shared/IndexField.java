@@ -259,21 +259,20 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
             switch (fieldType) {
                 case ID:
                     conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
                 case FIELD:
-                    if (analyzerType != null && !AnalyzerType.KEYWORD.equals(analyzerType)) {
-                        conditions.add(Condition.CONTAINS);
-                    } else {
-                        conditions.add(Condition.EQUALS);
-                    }
+                    conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
 
                 case NUMERIC_FIELD:
                     conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.GREATER_THAN);
                     conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
                     conditions.add(Condition.LESS_THAN);
@@ -285,6 +284,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
                 case DATE_FIELD:
                     conditions.add(Condition.EQUALS);
+                    conditions.add(Condition.CONTAINS);
                     conditions.add(Condition.GREATER_THAN);
                     conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
                     conditions.add(Condition.LESS_THAN);

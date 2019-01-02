@@ -26,25 +26,24 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap;
 import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.query.common.v2.Sizes;
 import stroom.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.util.UserTokenUtil;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,8 +117,8 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
         // Create a handler for search results.
         final Sizes storeSize = Sizes.create(getStoreSizes());
+        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final CompletionState completionState = new CompletionState();
-        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final SearchResultHandler resultHandler = new SearchResultHandler(
                 completionState,
                 coprocessorSettingsMap,
@@ -145,28 +144,28 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         return searchResultCollector;
     }
 
-    private List<Integer> getDefaultMaxResultsSizes() {
+    private Sizes getDefaultMaxResultsSizes() {
         final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
-    private List<Integer> getStoreSizes() {
+    private Sizes getStoreSizes() {
         final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
 
-    private List<Integer> extractValues(String value) {
+    private Sizes extractValues(String value) {
         if (value != null) {
             try {
-                return Arrays.stream(value.split(","))
+                return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Integer::valueOf)
-                        .collect(Collectors.toList());
-            } catch (final RuntimeException e) {
+                        .collect(Collectors.toList()));
+            } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Collections.emptyList();
+        return Sizes.create(Integer.MAX_VALUE);
     }
 
     /**

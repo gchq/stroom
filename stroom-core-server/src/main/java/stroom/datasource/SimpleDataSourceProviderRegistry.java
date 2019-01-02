@@ -38,12 +38,6 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
                                      final DataSourceUrlConfig dataSourceUrlConfig) {
         this.securityContext = securityContext;
 
-//        final String basePath = serviceDiscoveryConfig.getSimpleLookupBasePath();
-//        final String annotationsPath = propertyService
-//                .getProperty(UiConfig.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ANNOTATIONS_INDEX);
-//        final String elasticPath = propertyService
-//                .getProperty(UiConfig.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX);
-//
 //        if (basePath != null && !basePath.isEmpty()) {
         //TODO the path strings are defined in ResourcePaths but this is not accessible from here
         //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all

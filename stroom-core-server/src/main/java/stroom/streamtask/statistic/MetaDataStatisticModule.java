@@ -23,6 +23,7 @@ import stroom.statistics.internal.InternalStatisticsReceiver;
 
 import javax.inject.Provider;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class MetaDataStatisticModule extends AbstractModule {
     @Override
@@ -37,12 +38,12 @@ public class MetaDataStatisticModule extends AbstractModule {
                 new MetaDataStatisticTemplate(
                         InternalStatisticKey.METADATA_STREAMS_RECEIVED,
                         "receivedTime",
-                        Arrays.asList("Feed")),
+                        Collections.singletonList("Feed")),
                 new MetaDataStatisticTemplate(
                         InternalStatisticKey.METADATA_STREAM_SIZE,
                         "receivedTime",
                         "StreamSize",
-                        Arrays.asList("Feed"))));
+                        Collections.singletonList("Feed"))));
         return metaDataStatistic;
     }
 }

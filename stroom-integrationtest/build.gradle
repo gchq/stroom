@@ -9,7 +9,6 @@ dependencies {
     integrationTestCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
     integrationTestCompile project(':stroom-data-store:stroom-data-store-impl-mock')
     integrationTestCompile project(':stroom-elastic:stroom-elastic-impl')
-    integrationTestCompile project(':stroom-externaldoc:stroom-externaldoc-server')
     integrationTestCompile project(':stroom-headless')
     integrationTestCompile project(':stroom-index:stroom-index-server')
     integrationTestCompile project(':stroom-security:stroom-security-impl-mock')
@@ -49,7 +48,7 @@ dependencies {
     integrationTestCompile libs.dropwizard_client
 }
 
-task setupSampleData(type: JavaExec) {
+task setupSampleDataApplication(type: JavaExec) {
     dependsOn this:compileJava
     dependsOn this:compileTestJava
     // We need to set the working directory as the stroom root otherwise

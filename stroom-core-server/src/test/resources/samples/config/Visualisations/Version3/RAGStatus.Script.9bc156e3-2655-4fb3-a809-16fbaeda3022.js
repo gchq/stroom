@@ -65,24 +65,46 @@ if (!visualisations) {
         //builds a colour scale based on the thresholds passed in 
         //the vis settings
         var createColourScale = function(settings) {
-            var scale = d3.scale.threshold()
-                .domain([
-                    settings.GreenLo,
-                    settings.GreenHi,
-                    settings.AmberLo,
-                    settings.AmberHi,
-                    settings.RedLo,
-                    settings.RedHi
-                ])
-                .range([
-                    COLOUR_OUTLIER,
-                    COLOUR_GREEN,
-                    COLOUR_OUTLIER,
-                    COLOUR_AMBER,
-                    COLOUR_OUTLIER,
-                    COLOUR_RED,
-                    COLOUR_OUTLIER
-                ]);
+            var greenRedDomain = [
+                parseFloat(settings.GreenLo),
+                parseFloat(settings.GreenHi),
+                parseFloat(settings.AmberLo),
+                parseFloat(settings.AmberHi),
+                parseFloat(settings.RedLo),
+                parseFloat(settings.RedHi)
+            ];
+
+            var redGreenDomain = [
+                parseFloat(settings.RedLo),
+                parseFloat(settings.RedHi),
+                parseFloat(settings.AmberLo),
+                parseFloat(settings.AmberHi),
+                parseFloat(settings.GreenLo),
+                parseFloat(settings.GreenHi)
+            ];
+            var greenRedRange = [
+                COLOUR_OUTLIER,
+                COLOUR_GREEN,
+                COLOUR_OUTLIER,
+                COLOUR_AMBER,
+                COLOUR_OUTLIER,
+                COLOUR_RED,
+                COLOUR_OUTLIER
+            ];
+            //clone and reverse the array
+            var redGreenRange = greenRedRange.slice(0).reverse();
+
+            if (parseFloat(settings.RedHi) > parseFloat(settings.GreenLo)) {
+                //Green-Amber-Red scale
+                var scale = d3.scale.threshold()
+                    .domain(greenRedDomain)
+                    .range(greenRedRange);
+            } else {
+                //Red-Amber-Green scale
+                var scale = d3.scale.threshold()
+                    .domain(redGreenDomain)
+                    .range(redGreenRange);
+            }
             return scale;
         };
 
@@ -282,7 +304,7 @@ if (!visualisations) {
                     .duration(commonConstants.transitionDuration)
                     .style("opacity",0)
                     .remove();
-            }
+            };
         };
 
         this.teardown = function() {

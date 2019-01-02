@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -29,13 +28,12 @@ import stroom.query.common.v2.Sizes;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -88,8 +86,8 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
             // Create a collector to store search results.
             final Sizes storeSize = Sizes.create(getStoreSizes());
+            final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
             final CompletionState completionState = new CompletionState();
-            final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
             final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                     asyncSearchTask,
@@ -133,27 +131,27 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         });
     }
 
-    private List<Integer> getDefaultMaxResultsSizes() {
+    private Sizes getDefaultMaxResultsSizes() {
         final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
-    private List<Integer> getStoreSizes() {
+    private Sizes getStoreSizes() {
         final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
 
-    private List<Integer> extractValues(String value) {
+    private Sizes extractValues(String value) {
         if (value != null) {
             try {
-                return Arrays.stream(value.split(","))
+                return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Integer::valueOf)
-                        .collect(Collectors.toList());
-            } catch (final RuntimeException e) {
+                        .collect(Collectors.toList()));
+            } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Collections.emptyList();
+        return Sizes.create(Integer.MAX_VALUE);
     }
 }

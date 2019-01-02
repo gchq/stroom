@@ -17,6 +17,8 @@
 
 package stroom.script;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
@@ -36,13 +38,18 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScriptStoreImpl.class);
+
     private final Store<ScriptDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
@@ -134,7 +141,22 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
+        final Set<DocRef> docs = listDocuments();
+        return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));
+    }
+
+    private Set<DocRef> getDependencies(final DocRef docRef) {
+        try {
+            final ScriptDoc script = readDocument(docRef);
+            if (script != null && script.getDependencies() != null) {
+                return new HashSet<>(script.getDependencies());
+            }
+            return Collections.emptySet();
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return Collections.emptySet();
     }
 
     @Override

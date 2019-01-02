@@ -7,7 +7,6 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataStatus;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.data.store.api.StreamStore;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -17,26 +16,25 @@ import stroom.streamtask.shared.ProcessorFilterTask;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 
 @PipelineScoped
 public class SupersededOutputHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupersededOutputHelper.class);
 
     private final DataMetaService dataMetaService;
-    private final StreamStore streamStore;
 
     private Data sourceStream;
     private Processor streamProcessor;
     private ProcessorFilterTask streamTask;
     private long processStartTime;
 
+    private boolean initialised;
     private boolean superseded;
 
     @Inject
-    public SupersededOutputHelper(final DataMetaService dataMetaService,
-                                  final StreamStore streamStore) {
+    public SupersededOutputHelper(final DataMetaService dataMetaService) {
         this.dataMetaService = dataMetaService;
-        this.streamStore = streamStore;
     }
 
     /**
@@ -49,6 +47,14 @@ public class SupersededOutputHelper {
      */
     public boolean isSuperseded() {
         try {
+            if (!initialised) {
+                LOGGER.debug("SupersededOutputHelper has not been initialised");
+                return false;
+            }
+
+            Objects.requireNonNull(sourceStream, "Source stream must not be null");
+            Objects.requireNonNull(streamProcessor, "Stream processor must not be null");
+
             if (!superseded) {
                 final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(sourceStream.getId()))
@@ -111,5 +117,7 @@ public class SupersededOutputHelper {
         this.streamProcessor = streamProcessor;
         this.streamTask = streamTask;
         this.processStartTime = processStartTime;
+
+        initialised = true;
     }
 }
