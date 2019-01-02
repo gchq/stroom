@@ -15,14 +15,15 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-   //implementation libs.jackson_core
-   implementation libs.commons_text
-   implementation libs.guice4
-   implementation libs.jackson_annotations
-   implementation libs.jackson_databind
-   implementation libs.jackson_dataformat_yaml
-   implementation libs.javax_inject
-    
-   testImplementation libs.assertj_core
-   testImplementation libs.junit_jupiter
+    implementation libs.stroomDocRef
+
+    implementation libs.commons_text
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.jackson_databind
+    implementation libs.jackson_dataformat_yaml
+    implementation libs.javax_inject
+
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter
 }

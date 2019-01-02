@@ -4,4 +4,5 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
 
     implementation libs.jackson_annotations
+    implementation libs.stroomDocRef
 }

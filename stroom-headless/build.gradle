@@ -8,9 +8,10 @@ dependencies {
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
-    //implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
-    //implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-impl-mock')
@@ -22,7 +23,7 @@ dependencies {
     implementation libs.stroomDocRef
 
     implementation libs.guice4
-    //implementation libs.hibernate_core
+    implementation libs.hibernate_jpa_api
     implementation libs.javax_inject
     implementation libs.slf4j_api
     implementation libs.xml_apis
@@ -32,7 +33,6 @@ dependencies {
     implementation libs.javax_el_api
     permitUnusedDeclared libs.javax_el_api
     runtimeOnly libs.logback_classic
-    //permitUnusedDeclared libs.logback_classic
 }
 
 def fatJarName = "stroom-headless-all.jar"

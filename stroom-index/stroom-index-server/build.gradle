@@ -22,6 +22,8 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice4
+    implementation libs.hessian
+    implementation libs.hibernate_core
     implementation libs.hibernate_jpa_api
     implementation libs.jackson_annotations
     implementation libs.javax_inject
@@ -38,8 +40,8 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
-//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    testCompile project(':stroom-test-common')
+//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter

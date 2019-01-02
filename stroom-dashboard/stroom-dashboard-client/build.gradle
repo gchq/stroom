@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-client-api')
+    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util-shared')
 
     runtimeOnly project(':stroom-security:stroom-security-client')
@@ -22,6 +23,7 @@ dependencies {
     implementation libs.guice3
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
+    implementation libs.hibernate_jpa_api
     implementation libs.javax_inject
     implementation libs.jsinterop_annotations
 

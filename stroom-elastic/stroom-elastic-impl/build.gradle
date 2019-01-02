@@ -1,9 +1,9 @@
 ext.moduleName = 'stroom.elastic.impl'
 
 dependencies {
+    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-elastic:stroom-elastic-api')
     implementation project(':stroom-entity-shared')
-    //implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-pipeline')
@@ -16,7 +16,6 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.jetty_http
-    //implementation libs.slf4j_api
     implementation libs.stroomDocRef
     implementation libs.stroomQueryAudit
     implementation libs.stroomQueryAuthorisation

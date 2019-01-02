@@ -3,6 +3,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 ext.moduleName = 'stroom.kafka.client.impl'
 
 dependencies {
+    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -17,7 +18,6 @@ dependencies {
     implementation group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
 
     implementation libs.guice4
-    //implementation libs.jackson_annotations
     implementation libs.javax_inject;
     implementation libs.slf4j_api
 

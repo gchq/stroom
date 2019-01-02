@@ -1,16 +1,16 @@
 buildscript {
     repositories {
         mavenLocal()
-        jcenter { url "https://jcenter.bintray.com/"}
+        jcenter()
     }
     dependencies {
         classpath libs.mysql_connector_java
     }
 }
 
-plugins {
-    id "com.benjaminsproule.swagger" version "0.1.9"
-}
+//plugins {
+//    id "com.benjaminsproule.swagger" version "1.0.6"
+//}
 
 ext.moduleName = 'stroom.app'
 
@@ -26,8 +26,7 @@ mainClassName = 'stroom.startup.App'
 
 jar {
     //we need to first generate the swagger spec files so they can be added in to the jar
-    mustRunAfter generateSwaggerDocumentation
-
+//    mustRunAfter generateSwaggerDocumentation
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -36,7 +35,6 @@ jar {
         )
     }
     archiveName jarName
-
     exclude '**/gwt-unitCache'
 }
 
@@ -48,12 +46,10 @@ shadowJar {
     mergeServiceFiles()
 
     archiveName fatJarName
-
     exclude '**/gwt-unitCache'
 }
 
 dependencies {
-    //implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-core-server')
@@ -64,6 +60,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-elastic:stroom-elastic-impl')
     implementation project(':stroom-elastic:stroom-elastic-impl-http')
+    implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-externaldoc:stroom-externaldoc-server')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -71,23 +68,6 @@ dependencies {
     implementation project(':stroom-kafka:stroom-kafka-impl')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
     implementation project(':stroom-pipeline')
-//<<<<<<< HEAD
-//=======
-    //implementation project(':stroom-proxy')
-    //implementation project(':stroom-explorer-api')
-    //implementation project(':stroom-explorer-server')
-    //implementation project(':stroom-security-server')
-    //implementation project(':stroom-util')
-    //permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
-    //implementation project(':stroom-index-server')
-    //implementation project(':stroom-statistics-api')
-    //permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
-    //implementation project(':stroom-entity-shared')
-    //permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
-    //implementation project(':stroom-index-shared')
-    //permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
-////    implementation project(':stroom-util')
-//>>>>>>> 6.0
     implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy')
     implementation project(':stroom-ruleset:stroom-ruleset-server')
@@ -111,10 +91,10 @@ dependencies {
     implementation libs.jcommander
     implementation libs.jetty_servlet
 
-    compile(libs.dropwizard_assets) {
+    implementation(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    compile(libs.dropwizard_core) {
+    implementation(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
     implementation libs.dropwizard_jersey
@@ -225,35 +205,34 @@ task copyFilesForProxyDockerBuild() {
     }
 }
 
-swagger {
-    apiSource {
-        outputFormats = 'json,yaml'
-        locations = [
-                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
-                'stroom.index.StroomIndexQueryResource',
-                'stroom.security.AuthorisationResource']
-        schemes = [
-                'http',
-                'https']
-        host = 'localhost:8080'
-        basePath = '/api'
-        info {
-            title = 'stroom API'
-            version = 'v1'
-            description = 'Various APIs for interacting with stroom and its data'
-            contact {
-                name = 'GCHQ'
-                url = 'https://github.com/gchq/stroom'
-            }
-            license {
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                name = 'Apache 2.0'
-            }
-        }
-        outputPath = "${swaggerDir}/document.html"
-        swaggerDirectory = "${swaggerDir}"
-    }
-}
+// TODO : @66 Reinstate Swagger doc generation
+//swagger {
+//    apiSource {
+//        outputFormats = ['json', 'yaml']
+//        locations = [
+//                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
+//                'stroom.index.StroomIndexQueryResource',
+//                'stroom.security.AuthorisationResource']
+//        schemes = ['http', 'https']
+//        host = 'localhost:8080'
+//        basePath = '/api'
+//        info {
+//            title = 'stroom API'
+//            version = 'v1'
+//            description = 'Various APIs for interacting with stroom and its data'
+//            contact {
+//                name = 'GCHQ'
+//                url = 'https://github.com/gchq/stroom'
+//            }
+//            license {
+//                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+//                name = 'Apache 2.0'
+//            }
+//        }
+//        outputPath = "${swaggerDir}/document.html"
+//        swaggerDirectory = "${swaggerDir}"
+//    }
+//}
 
 
 def releaseBuildDir= 'build/release'
@@ -310,7 +289,7 @@ task buildDistribution(type: Zip) {
 
 
 
-tasks.build.dependsOn generateSwaggerDocumentation
+//tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar

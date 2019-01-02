@@ -4,14 +4,14 @@ dependencies {
     implementation project(':stroom-core-client')
     implementation project(':stroom-core-client-widget')
     implementation project(':stroom-core-shared')
-    //implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-security:stroom-security-client-api')
-
+    implementation project(':stroom-util-shared')
+    
     implementation libs.gin
     implementation libs.guice3
-    //implementation libs.gwt_servlet
     implementation libs.gwt_user
+    implementation libs.gwtp_mvp_client
     implementation libs.javax_inject
     implementation libs.stroomDocRef
 }

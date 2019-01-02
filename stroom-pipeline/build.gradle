@@ -6,7 +6,7 @@ dependencies {
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-shared')
-    //implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
@@ -27,20 +27,20 @@ dependencies {
     implementation libs.guice_assistedinject
     implementation libs.hadoopCommonShaded
     implementation libs.hadoopHdfsShaded
-    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    implementation(libs.hbase) { transitive = false } // hbase-common is currently only used for its Bytes class, so exclude all its deps
+    implementation libs.hibernate_jpa_api
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.javax_inject
     implementation libs.javax_validation
     implementation libs.jaxb_api
     implementation libs.jersey_client
-    //implementation libs.jetty_http
+    implementation libs.jetty_http
     implementation libs.jsr173_api
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.saxon_he
     implementation libs.slf4j_api
-    //implementation libs.stax_api
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
     implementation libs.swagger_annotations
@@ -48,11 +48,9 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
-    testCompile project(':stroom-security:stroom-security-impl-mock')
-    testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    testCompile project(':stroom-test-common')
-    testCompile project(':stroom-test-common')
-//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testImplementation project(':stroom-security:stroom-security-impl-mock')
+    testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.commons_io

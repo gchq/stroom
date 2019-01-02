@@ -21,7 +21,7 @@ dependencies {
     implementation libs.javax_servlet_api
     implementation libs.slf4j_api
 
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter
 }

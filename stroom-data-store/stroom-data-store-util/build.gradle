@@ -1,14 +1,16 @@
 ext.moduleName = 'stroom.data.store.util'
 
 dependencies {
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-data-store:stroom-data-store-impl-fs')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-meta:stroom-data-meta-impl-db')
+    implementation project(':stroom-entity-shared')
     implementation project(':stroom-security:stroom-security-impl-mock')
     implementation project(':stroom-util')
-    implementation project(':stroom-core-server')
-    implementation project(':stroom-core-shared')
+    implementation project(':stroom-util-shared')
 
     implementation libs.stroomQueryApi
 
@@ -18,7 +20,7 @@ dependencies {
     
     testImplementation libs.junit_jupiter
     
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-test-common')
 
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j

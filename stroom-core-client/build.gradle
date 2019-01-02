@@ -21,13 +21,14 @@ dependencies {
     implementation libs.guice3
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
+    implementation libs.hibernate_jpa_api
     implementation libs.javax_inject
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev
 
-    testCompile project(':stroom-util')
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-util')
+    testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter
 

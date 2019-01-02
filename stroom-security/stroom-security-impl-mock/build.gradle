@@ -26,8 +26,8 @@ dependencies {
 //    implementation libs.ws_rs_api
     implementation libs.guice4
 //
-//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//    testCompile project(':stroom-test-common')
+//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+//    testImplementation project(':stroom-test-common')
 //
 //    testImplementation libs.junit_jupiter
 //

@@ -20,6 +20,7 @@ dependencies {
     implementation libs.flyway_core
     implementation libs.guava
     implementation libs.guice4
+    implementation libs.hibernate_jpa_api
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.javax_inject
@@ -29,5 +30,5 @@ dependencies {
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter
     testImplementation libs.mockito_core
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-test-common')
 }

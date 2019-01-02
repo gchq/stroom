@@ -7,7 +7,7 @@ dependencies {
     implementation libs.gin
     implementation libs.guice3
     implementation libs.gwt_user
-    compile(libs.gwtp_mvp_client) {
+    implementation(libs.gwtp_mvp_client) {
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }

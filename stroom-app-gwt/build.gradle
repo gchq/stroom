@@ -31,6 +31,8 @@ dependencies {
     permitUnusedDeclared libs.stroomQueryCommon
     permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
 
+    implementation libs.hibernate_jpa_api
+    implementation "${libs.hibernate_jpa_api}:sources"
     implementation libs.gin
     implementation libs.guice3
     implementation libs.gwt_dev
@@ -80,10 +82,10 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
 
-        //println "Dumping gwtSourceDirs"
-        //gwtSourceDirs.each {
-            //println "${it.toString()}"
-        //}
+        println "Dumping gwtSourceDirs"
+        gwtSourceDirs.each {
+            println "${it.toString()}"
+        }
     }
 
     main = gwtCompilerProps.mainClass
@@ -94,7 +96,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
     args =
         [
-            '-logLevel', 'INFO',
+            '-logLevel', 'TRACE',
             '-workDir', workDir,
             '-XfragmentCount', '5',
             '-optimize', '9',

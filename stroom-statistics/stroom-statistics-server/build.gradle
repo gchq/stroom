@@ -34,7 +34,6 @@ dependencies {
     implementation libs.flyway_core
     implementation libs.guava
     implementation libs.guice4
-    implementation libs.guice4
     implementation libs.hibernate_jpa_api
     implementation libs.hikari
     implementation libs.jackson_annotations
@@ -47,10 +46,10 @@ dependencies {
     implementation libs.vavr
     implementation libs.ws_rs_api
     implementation libs.xml_apis
-    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
 
-    testCompile project(':stroom-security:stroom-security-impl-mock')
-    testCompile project(':stroom-test-common')
+    testImplementation project(':stroom-security:stroom-security-impl-mock')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter

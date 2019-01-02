@@ -1,8 +1,7 @@
 buildscript {
     repositories {
         mavenLocal()
-        jcenter { url "https://jcenter.bintray.com/"}
-        mavenCentral()
+        jcenter()
         // used for
         maven { url "https://dl.bintray.com/stroom/stroom" }
     }
@@ -268,21 +267,6 @@ def projectsToBePublished = subprojects.findAll { project ->
     ]
 }
 
-//defines a list of gradle project paths that need to expose their test jars for other
-//projects to use
-def projectsWithSharedTestJars = subprojects.findAll { project ->
-    project.path in [
-            ':stroom-core-server',
-            ':stroom-dashboard:stroom-dashboard-server',
-            ':stroom-entity-shared',
-            ':stroom-index:stroom-index-server',
-            ':stroom-pipeline',
-            ':stroom-security:stroom-security-server',
-            ':stroom-util',
-            'zzDUMMYzz to ease sorting'
-    ]
-}
-
 //list to hold details of any failed test classes
 def failedTestReportFiles = []
 
@@ -360,7 +344,7 @@ subprojects {
 
     repositories {
         mavenLocal()
-        jcenter { url "https://jcenter.bintray.com/"}
+        jcenter()
         maven { url "https://dl.bintray.com/stroom/event-logging" }
         maven { url "https://dl.bintray.com/stroom/stroom" }
     }
@@ -431,7 +415,7 @@ subprojects {
 
 //    afterEvaluate {
 //        repositories {
-//            jcenter { url "https://jcenter.bintray.com/"}
+//            jcenter()
 //        }
 //
 //        compileJava {
@@ -690,6 +674,32 @@ gradle.buildFinished {
                 println "File ${reportFile.toString()}"
             }
         }
+    }
+}
+
+task dependenciesPng() {
+    def reportsDir = new File("build/reports")
+    def compileDepsDot = file("$reportsDir/compileDeps.dot")
+    inputs.files subprojects.configurations.compile
+    outputs.files compileDepsDot
+    doFirst {
+        if(!reportsDir.exists()) reportsDir.mkdirs()
+    }
+    doLast {
+        def dotGraph = "digraph compile{" + System.getProperty("line.separator")
+        Set deps = [] as Set
+        subprojects.each {subproject ->
+            subproject.configurations.compile.dependencies.each {dependency ->
+                if(dependency instanceof ProjectDependency) {
+                    String dep = "\"$subproject.name\" -> \"$dependency.name\";"
+                    if (deps.add(dep)){ // if was not there before - avoid duplicates
+                        dotGraph += dep + System.getProperty("line.separator")
+                    }
+                }
+            }
+        }
+        dotGraph += "}"
+        compileDepsDot.write(dotGraph)
     }
 }
 

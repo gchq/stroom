@@ -1,13 +1,17 @@
 ext.moduleName = 'stroom.data.store.impl.mock'
 
 dependencies {
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-data-store:stroom-data-store-impl-fs')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
     implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
     implementation project(':stroom-entity-shared')
 
+    implementation libs.stroomDocRef
+    
     implementation libs.guice4
     implementation libs.javax_inject
 
