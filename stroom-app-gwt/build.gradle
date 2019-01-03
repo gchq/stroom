@@ -82,10 +82,10 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
 
-        println "Dumping gwtSourceDirs"
-        gwtSourceDirs.each {
-            println "${it.toString()}"
-        }
+//        println "Dumping gwtSourceDirs"
+//        gwtSourceDirs.each {
+//            println "${it.toString()}"
+//        }
     }
 
     main = gwtCompilerProps.mainClass
@@ -96,7 +96,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
     args =
         [
-            '-logLevel', 'TRACE',
+            '-logLevel', 'INFO',
             '-workDir', workDir,
             '-XfragmentCount', '5',
             '-optimize', '9',

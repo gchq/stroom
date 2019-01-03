@@ -16,15 +16,13 @@
 
 package stroom.index.shared;
 
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
+import stroom.docref.HasDisplayValue;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
-import stroom.docref.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.Column;
@@ -144,7 +142,6 @@ public class IndexShard extends AuditedEntity {
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = VolumeEntity.FOREIGN_KEY)
-    @Fetch(FetchMode.SELECT)
     public VolumeEntity getVolume() {
         return volume;
     }
