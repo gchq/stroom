@@ -51,7 +51,6 @@ import stroom.dispatch.shared.DispatchService;
 import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
-import stroom.entity.shared.PermissionException;
 import stroom.explorer.server.ExplorerConfiguration;
 import stroom.feed.server.RemoteFeedServiceRPC;
 import stroom.healthchecks.LogLevelInspector;
@@ -83,7 +82,20 @@ import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
 import stroom.servicediscovery.ServiceDiscoveryManager;
 import stroom.servicediscovery.ServiceDiscoveryRegistrar;
-import stroom.servlet.*;
+import stroom.servlet.CacheControlFilter;
+import stroom.servlet.DashboardServlet;
+import stroom.servlet.DebugServlet;
+import stroom.servlet.DynamicCSSServlet;
+import stroom.servlet.EchoServlet;
+import stroom.servlet.ExportConfigResource;
+import stroom.servlet.HttpServletRequestFilter;
+import stroom.servlet.ImportFileServlet;
+import stroom.servlet.RejectPostFilter;
+import stroom.servlet.SessionListListener;
+import stroom.servlet.SessionListServlet;
+import stroom.servlet.SessionResourceStoreImpl;
+import stroom.servlet.StatusServlet;
+import stroom.servlet.StroomServlet;
 import stroom.spring.MetaDataStatisticConfiguration;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
@@ -99,8 +111,6 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -164,8 +174,6 @@ public class App extends Application<Config> {
 
         HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         // Add health checks
-        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomKafkaProducerFactoryService.class);
-        GuiceUtil.addHealthCheck(healthCheckRegistry, injector, StroomElasticProducerFactoryService.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(healthCheckRegistry, injector, ForwardStreamHandlerFactory.class);
