@@ -10,21 +10,16 @@ import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-
-import java.util.Map;
 
 @Singleton
 public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {
@@ -33,22 +28,21 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
 
-    private Map<String, String> namedUrls;
+//    private Map<String, String> namedUrls;
 
     @Inject
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
                                      final Provider<IFramePresenter> iFramePresenterProvider,
                                      final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
-                                     final ContentManager contentManager,
-                                     final ClientPropertyCache clientPropertyCache) {
+                                     final ContentManager contentManager) {
         this.eventBus = eventBus;
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.contentManager = contentManager;
 
-        clientPropertyCache.get()
-                .onSuccess(result -> namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
-                .onFailure(caught -> AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
+//        clientPropertyCache.get()
+//                .onSuccess(result -> namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
+//                .onFailure(caught -> AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
 
         registerHandler(eventBus.addHandler(HyperlinkEvent.getType(), this));
     }
@@ -58,11 +52,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final Hyperlink hyperlink = event.getHyperlink();
 
         String href = hyperlink.getHref();
-        if (namedUrls != null) {
-            for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrls.entrySet()) {
-                href = href.replaceAll("__" + namedUrlLookupEntry.getKey() + "__", namedUrlLookupEntry.getValue());
-            }
-        }
+//        if (namedUrls != null) {
+//            for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrls.entrySet()) {
+//                href = href.replaceAll("__" + namedUrlLookupEntry.getKey() + "__", namedUrlLookupEntry.getValue());
+//            }
+//        }
 
         String type = hyperlink.getType();
         String customTitle = null;

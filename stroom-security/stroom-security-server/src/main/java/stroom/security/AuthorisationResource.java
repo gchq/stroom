@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -80,14 +81,13 @@ public class AuthorisationResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@QueryParam("id") String userId) {
-        try{
+        try {
             UserRef existingUser = userService.getUserByName(userId);
-            if(existingUser == null){
+            if (existingUser == null) {
                 userService.createUser(userId);
             }
             return Response.ok().build();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             LOGGER.error("Unable to create user: {}", e.getMessage());
             return Response.serverError().build();
         }

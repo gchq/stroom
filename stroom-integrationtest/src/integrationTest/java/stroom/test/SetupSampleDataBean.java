@@ -351,7 +351,7 @@ public final class SetupSampleDataBean {
         if (Files.exists(exampleDataDir)) {
             LOGGER.info("Loading example data from {}", exampleDataDir.toAbsolutePath().toString());
             // Load data.
-            final DataLoader dataLoader = new DataLoader(feedService, streamStore);
+            final DataLoader dataLoader = new DataLoader(feedDocCache, streamStore);
             long startTime = System.currentTimeMillis();
 
             // Then load event data.

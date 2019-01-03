@@ -30,8 +30,8 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.task.client.TaskStartEvent;
@@ -39,7 +39,7 @@ import stroom.task.client.TaskStartEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DashboardPlugin extends EntityPlugin<DashboardDoc> {
+public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private final Provider<DashboardPresenter> editorProvider;
 
     @Inject

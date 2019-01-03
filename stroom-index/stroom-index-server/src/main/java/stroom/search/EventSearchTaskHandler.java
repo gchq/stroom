@@ -85,7 +85,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
                     query, node, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
             // Create a collector to store search results.
-            final Sizes storeSize = Sizes.create(getStoreSizes());
+            final Sizes storeSize = getStoreSizes();
             final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
             final CompletionState completionState = new CompletionState();
             final EventSearchResultHandler resultHandler = new EventSearchResultHandler();

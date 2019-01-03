@@ -116,7 +116,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 nowEpochMilli);
 
         // Create a handler for search results.
-        final Sizes storeSize = Sizes.create(getStoreSizes());
+        final Sizes storeSize = getStoreSizes();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final CompletionState completionState = new CompletionState();
         final SearchResultHandler resultHandler = new SearchResultHandler(
