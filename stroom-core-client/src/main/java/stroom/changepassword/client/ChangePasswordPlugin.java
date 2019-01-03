@@ -46,7 +46,7 @@ public class ChangePasswordPlugin extends Plugin {
                             final Hyperlink hyperlink = new Builder()
                                     .text("Change password")
                                     .href(changePasswordUiUrl)
-                                    .type(HyperlinkType.TAB)
+                                    .type(HyperlinkType.TAB + "|Change password")
                                     .icon(icon)
                                     .build();
                             HyperlinkEvent.fire(this, hyperlink);

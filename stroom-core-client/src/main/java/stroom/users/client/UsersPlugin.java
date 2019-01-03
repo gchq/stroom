@@ -42,7 +42,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                                 final Hyperlink hyperlink = new Builder()
                                         .text("Users")
                                         .href(usersUiUrl)
-                                        .type(HyperlinkType.TAB)
+                                        .type(HyperlinkType.TAB + "|Users")
                                         .icon(icon)
                                         .build();
                                 HyperlinkEvent.fire(this, hyperlink);

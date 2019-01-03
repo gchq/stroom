@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.22] - 2019-01-02
+
+* Issue **#1053** : Add API to disabled authorisation users
+
+* Issue **#1042** : Improve error message for an ApiException when requesting a user's token.
+
+* Issue **#1050** : Prevent creation of permission entries if key already exists.
+
 * Issue **#1015** : Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
 
 * Issue **#1019** : Fix visualisations settings dialog so you can un-set text and list controls.
@@ -1399,7 +1407,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.21...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.22...6.0
+[v6.0-beta.22]: https://github.com/gchq/stroom/compare/v6.0-beta.21...v6.0-beta.22
 [v6.0-beta.21]: https://github.com/gchq/stroom/compare/v6.0-beta.20...v6.0-beta.21
 [v6.0-beta.20]: https://github.com/gchq/stroom/compare/v6.0-beta.19...v6.0-beta.20
 [v6.0-beta.19]: https://github.com/gchq/stroom/compare/v6.0-beta.18...v6.0-beta.19

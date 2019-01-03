@@ -18,6 +18,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
 
 @Api(
         value = "authorisation - /v1",
@@ -30,6 +32,16 @@ public class AuthorisationResource {
 
     private final SecurityContext securityContext;
     private final UserService userService;
+
+    private static final Map<String, UserStatus> STATUS_MAPPINGS = new HashMap<String, UserStatus>() {
+        {
+            put("locked", UserStatus.LOCKED);
+            put("inactive", UserStatus.EXPIRED);
+            put("active", UserStatus.ENABLED);
+            put("disabled", UserStatus.DISABLED);
+        }
+
+    };
 
     @Inject
     public AuthorisationResource(final SecurityContext securityContext, UserService userService) {
@@ -92,6 +104,33 @@ public class AuthorisationResource {
         }
         catch(Exception e){
             LOGGER.error("Unable to create user: {}", e.getMessage());
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Updates the user's status
+     */
+    @POST
+    @Path("setUserStatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response setUserStatus(@QueryParam("id") String userId, @QueryParam("status") String status) {
+        try{
+            UserStatus newUserStatus = STATUS_MAPPINGS.get(status);
+            UserRef existingUser = userService.getUserByName(userId);
+            if(existingUser != null){
+                User user = userService.loadByUuid(existingUser.getUuid());
+                user.updateStatus(newUserStatus);
+                userService.save(user);
+                return Response.ok().build();
+            }
+            else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        }
+        catch(Exception e){
+            LOGGER.error("Unable to change user's status: {}", e.getMessage());
             return Response.serverError().build();
         }
     }
