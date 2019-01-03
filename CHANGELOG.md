@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1010** : Improve distribution start/stop/etc scripts by adding monochrome switch and background log tailing.
+
 ## [v6.0-beta.22] - 2019-01-02
 
 * Issue **#1053** : Add API to disabled authorisation users
