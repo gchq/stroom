@@ -471,7 +471,10 @@ visualisations.GenericGrid = function(element) {
 
                 //get the unique values for the designated key field over all grid cells
                 commonFunctions.computeUniqueValues(visData, function(type, index) {
-                    return (index === legendKeyField || visData.types[index] === "TEXT" || visData.types[index] === "GENERAL");
+                    return (
+                        index === legendKeyField || 
+                        visData.types[index] === commonConstants.dataTypeText || 
+                        visData.types[index] === commonConstants.dataTypeGeneral);
                 });
 
                 //find all the unique series keys

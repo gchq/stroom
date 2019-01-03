@@ -149,6 +149,17 @@
                     "defaultValue" : "600000"
                 },
                 {
+                    "id" : "seriesFilter",
+                    "type" : "selection",
+                    "label" : "Series Filter",
+                    "values" : [
+                        "Unfiltered",
+                        "Non-contiguous Only",
+                        "Contiguous Only"
+                    ],
+                    "defaultValue" : "Unfiltered"
+                },
+                {
                     "id" : "openSessionText",
                     "type" : "text",
                     "label" : "Session Start Text",

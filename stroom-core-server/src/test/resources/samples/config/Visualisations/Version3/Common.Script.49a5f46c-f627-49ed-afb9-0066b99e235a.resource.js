@@ -220,6 +220,11 @@ if(!visualisations) {
   commonConstants.sortAscending = "Ascending";
   commonConstants.sortDescending = "Descending";
 
+  commonConstants.dataTypeText = "TEXT";
+  commonConstants.dataTypeGeneral = "GENERAL";
+  commonConstants.dataTypeDateTime = "DATE_TIME";
+  commonConstants.dataTypeNumber = "NUMBER";
+
   // Font Awesome
   commonConstants.fontAwesomeMove = "\uf047";
   commonConstants.fontAwesomeClose = "\uf00d";
@@ -500,10 +505,10 @@ if(!visualisations) {
 
   commonFunctions.getScale = function(type, min, max) {
     var scale = {};
-    if(type == "DATE_TIME") {
+    if(type == commonConstants.dataTypeDateTime) {
       scale.scale = d3.time.scale.utc().range([min, max]);
       scale.type = commonConstants.d3ScaleUtc;
-    } else if(type == "NUMBER") {
+    } else if(type ==commonConstants.dataTypeNumber) {
       scale.scale = d3.scale.linear().range([min, max]);
       scale.type = commonConstants.d3ScaleLinear;
     } else {
@@ -527,7 +532,7 @@ if(!visualisations) {
       .tickSize(3);
 
     result.getValue = function(value) {
-      if(value && !isNaN(value) && type == "DATE_TIME") {
+      if(value && !isNaN(value) && type == commonConstants.dataTypeDateTime) {
         // value is a date time so return a date object for others to format as they wish
         var dateObj = new Date(value);
         return dateObj;
@@ -556,7 +561,7 @@ if(!visualisations) {
     }
 
     result.setRangeDomain = function(dataType, data, i) {
-      if(dataType == "DATE_TIME") {
+      if(dataType == commonConstants.dataTypeDateTime) {
         result.scale.domain([data.min[i], data.max[i]]);
       } else {
         //console.log([data.min[i], data.max[i]]);
@@ -568,7 +573,7 @@ if(!visualisations) {
     }
 
     result.setDomain = function(data, valuesArr, i) {
-      if(data.types[i] == "GENERAL") {
+      if(data.types[i] ==  commonConstants.dataTypeGeneral || data.types[i] == commonConstants.dataTypeText) {
         // some vis' may have computed unique values of ordinal data so try that first
         // otherwise fall back on the passed valuesArr
         if(data.visibleUnique && data.visibleUnique[i] && data.visibleUnique[i].length > 0) {
@@ -582,7 +587,7 @@ if(!visualisations) {
         //return d[i];
         //});
         result.scale.domain(domain);
-      } else if(data.types[i] == "DATE_TIME") {
+      } else if(data.types[i] == commonConstants.dataTypeDateTime) {
         //console.log([ data.min[i], data.max[i] ]);
         result.scale.domain([data.min[i], data.max[i]]);
       } else {
@@ -593,7 +598,7 @@ if(!visualisations) {
     if(d3TickFormat) {
       result.tickFormat = d3TickFormat;
       result.axis.tickFormat(d3TickFormat);
-    } else if(type == "DATE_TIME") {
+    } else if(type == commonConstants.dataTypeDateTime) {
       var format = d3.time.format.multi([
         [".%L", function(d) {
           return d.getUTCMilliseconds();

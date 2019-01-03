@@ -308,7 +308,7 @@ visualisations.LineChart = function(containerNode) {
                 }
 
                 if (stateCounting) {
-                    data.types[1] = "NUMBER";
+                    data.types[1] = commonConstants.dataTypeNumber;
                     data.values.forEach(function(cellData) {
                         sessioniseData (cellData, settings);
                     });
