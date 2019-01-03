@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1059** : Fix guice errors on stroom-proxy startup.
+
 ## [v6.0-beta.23] - 2019-01-03
 
 * Issue **#1010** : Improve distribution start/stop/etc scripts by adding monochrome switch and background log tailing.
