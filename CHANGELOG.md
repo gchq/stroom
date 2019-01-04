@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift distribution visualisation content pack to v3.1.0
+
 * Add transform_user_extract.py, for pre-6.0 to 6.0 user migration
 
 ## [v6.0-beta.24] - 2019-01-03
