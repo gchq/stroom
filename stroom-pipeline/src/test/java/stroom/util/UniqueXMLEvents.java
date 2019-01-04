@@ -49,7 +49,6 @@ public class UniqueXMLEvents {
 
 	static {
 		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
 	}
 
     public static void main(final String[] args) {

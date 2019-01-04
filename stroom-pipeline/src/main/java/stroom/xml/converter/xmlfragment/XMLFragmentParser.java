@@ -24,6 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager.Limit;
 import stroom.util.logging.StroomLogger;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -45,7 +46,6 @@ public class XMLFragmentParser extends AbstractParser {
 
 	static {
 		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
 	}
 
     public XMLFragmentParser(final String xml) {
@@ -54,7 +54,7 @@ public class XMLFragmentParser extends AbstractParser {
 
 	@Override
 	public void parse(final InputSource input) throws IOException, SAXException {
-		SAXParser parser = null;
+		SAXParser parser;
 		try {
 			parser = PARSER_FACTORY.newSAXParser();
 		} catch (final ParserConfigurationException e) {
@@ -71,7 +71,7 @@ public class XMLFragmentParser extends AbstractParser {
 			// Limit.TOTAL_ENTITY_SIZE_LIMIT. Turning off FEATURE_SECURE_PROCESSING prevents this limit check.
 
 			// TODO It may be preferable to change the way fragment wrapper works so that it doesn't use
-			// entity resolution to acheive its goal, as the scanning for entities must add a fair
+			// entity resolution to achieve its goal, as the scanning for entities must add a fair
 			// amount of overhead. A simpler and more crude approach may be better.
 			xmlReader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
 		} catch (SAXNotRecognizedException | SAXNotSupportedException e) {

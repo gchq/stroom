@@ -16,19 +16,16 @@
 
 package stroom.streamstore.server.fs.serializable;
 
+import stroom.util.io.StreamUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import javax.xml.parsers.SAXParserFactory;
-
-import stroom.util.io.StreamUtil;
-import stroom.util.xml.SAXParserFactoryFactory;
 
 /**
  * This class takes an input stream for raw data and ensures it is written to
  * the stream store with segment boundaries added. This allows all raw data to
  * be paged.
- *
+ * <p>
  * XML and text must be treated differently as we want segment boundaries to
  * appear between first level elements in XML and after every new line in text.
  * In order to achieve this, this class attempts to determine if the input is
@@ -38,22 +35,14 @@ import stroom.util.xml.SAXParserFactoryFactory;
 public class RawInputSegmentWriter {
     // private static final int BYTES_PER_SEGMENT = 10000;
     // private static final int TYPE_BUFFER_SIZE = 2000;
-    private static final SAXParserFactory PARSER_FACTORY;
-
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
-	}
 
     /**
      * Writes an input stream to a segment output stream and inserts segment
      * boundaries at appropriate positions depending on the input type. The
      * input type (XML and text) is determined within this method.
      *
-     * @param inputStream
-     *            The input stream to read.
-     * @param segmentOutputStream
-     *            The segment output stream to write to.
+     * @param inputStream         The input stream to read.
+     * @param segmentOutputStream The segment output stream to write to.
      */
     public void write(final InputStream inputStream, final RASegmentOutputStream segmentOutputStream) {
         write(inputStream, segmentOutputStream, true);
@@ -64,15 +53,12 @@ public class RawInputSegmentWriter {
      * boundaries at appropriate positions depending on the input type. The
      * input type (XML and text) is determined within this method.
      *
-     * @param inputStream
-     *            The input stream to read.
-     * @param segmentOutputStream
-     *            The segment output stream to write to.
-     * @param close
-     *            both streams at end?
+     * @param inputStream         The input stream to read.
+     * @param segmentOutputStream The segment output stream to write to.
+     * @param close               both streams at end?
      */
     public long write(final InputStream inputStream, final RASegmentOutputStream segmentOutputStream,
-            final boolean close) {
+                      final boolean close) {
         long bytesWritten = 0;
         try {
             try {

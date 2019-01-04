@@ -60,7 +60,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.annotation.Resource;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,12 +72,6 @@ import java.util.Set;
 @Secured(PipelineEntity.STEPPING_PERMISSION)
 public class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(SteppingTaskHandler.class);
-    private static final SAXParserFactory PARSER_FACTORY;
-
-    static {
-        PARSER_FACTORY = SAXParserFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-    }
 
     @Resource
     private StreamStore streamStore;

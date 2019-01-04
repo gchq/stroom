@@ -53,7 +53,6 @@ public final class XMLUtil {
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     private XMLUtil() {

@@ -45,8 +45,6 @@ import stroom.util.spring.StroomScope;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
 
 @Component
 @Scope(value = StroomScope.TASK)
@@ -55,13 +53,6 @@ import java.io.IOException;
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XML)
 public class XMLFragmentParser extends AbstractParser implements SupportsCodeInjection {
-    private static final SAXParserFactory PARSER_FACTORY;
-
-    static {
-        PARSER_FACTORY = SAXParserFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
-    }
-
     private final ParserFactoryPool parserFactoryPool;
     private final TextConverterService textConverterService;
 
@@ -127,7 +118,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     }
 
     @Override
-    protected InputSource getInputSource(final InputSource inputSource) throws IOException {
+    protected InputSource getInputSource(final InputSource inputSource) {
         return inputSource;
     }
 

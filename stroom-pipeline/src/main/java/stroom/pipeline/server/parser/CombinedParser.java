@@ -69,7 +69,6 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     static {
         PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-        PARSER_FACTORY.setNamespaceAware(true);
     }
 
     private final ParserFactoryPool parserFactoryPool;

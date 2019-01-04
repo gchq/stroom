@@ -48,7 +48,6 @@ public class TestXPathFilter extends StroomUnitTest {
 
 	static {
 		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-		PARSER_FACTORY.setNamespaceAware(true);
 	}
 
     @Test
