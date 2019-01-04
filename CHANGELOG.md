@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.7] - 2019-01-04
+
 * Issue **#1058** : Added property `stroom.pipeline.parser.secureProcessing` to enable/disable the XML secure processing feature.
 
 ## [v5.5.6] - 2018-10-12
@@ -978,7 +980,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.7...HEAD
+[v5.5.7]: https://github.com/gchq/stroom/compare/v5.5.6...v5.5.7
 [v5.5.6]: https://github.com/gchq/stroom/compare/v5.5.5...v5.5.6
 [v5.5.5]: https://github.com/gchq/stroom/compare/v5.5.4...v5.5.5
 [v5.5.4]: https://github.com/gchq/stroom/compare/v5.5.3...v5.5.4
