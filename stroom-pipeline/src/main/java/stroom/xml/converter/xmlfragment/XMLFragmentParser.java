@@ -16,67 +16,64 @@
 
 package stroom.xml.converter.xmlfragment;
 
-import java.io.IOException;
-import java.io.StringReader;
-
-import javax.xml.XMLConstants;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager.Limit;
-import stroom.util.logging.StroomLogger;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
-
 import stroom.pipeline.server.errorhandler.ProcessException;
-import stroom.xml.converter.AbstractParser;
+import stroom.util.logging.StroomLogger;
 import stroom.util.xml.SAXParserFactoryFactory;
+import stroom.xml.converter.AbstractParser;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
+import java.io.StringReader;
 
 public class XMLFragmentParser extends AbstractParser {
-	private static final StroomLogger LOGGER = StroomLogger.getLogger(XMLFragmentParser.class);
+    private static final StroomLogger LOGGER = StroomLogger.getLogger(XMLFragmentParser.class);
 
-	private static final SAXParserFactory PARSER_FACTORY;
+    private static final SAXParserFactory PARSER_FACTORY;
 
     private final String xml;
 
-	static {
-		PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
-	}
+    static {
+        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+    }
 
     public XMLFragmentParser(final String xml) {
         this.xml = xml;
     }
 
-	@Override
-	public void parse(final InputSource input) throws IOException, SAXException {
-		SAXParser parser;
-		try {
-			parser = PARSER_FACTORY.newSAXParser();
-		} catch (final ParserConfigurationException e) {
-			throw ProcessException.wrap(e);
-		}
-		final XMLReader xmlReader = parser.getXMLReader();
-		xmlReader.setEntityResolver(new FragmentEntity(input));
-		xmlReader.setContentHandler(getContentHandler());
-		xmlReader.setErrorHandler(getErrorHandler());
-		try {
-			// This fragment parser wraps fragments by means of entity resolution in the
-			// outer xml. As a result it then also scans the inner xml for entities.
-			// If the inner xml is large and contains large amounts of text then it can blow
-			// Limit.TOTAL_ENTITY_SIZE_LIMIT. Turning off FEATURE_SECURE_PROCESSING prevents this limit check.
+    @Override
+    public void parse(final InputSource input) throws IOException, SAXException {
+        SAXParser parser;
+        try {
+            parser = PARSER_FACTORY.newSAXParser();
+        } catch (final ParserConfigurationException e) {
+            throw ProcessException.wrap(e);
+        }
+        final XMLReader xmlReader = parser.getXMLReader();
+        xmlReader.setEntityResolver(new FragmentEntity(input));
+        xmlReader.setContentHandler(getContentHandler());
+        xmlReader.setErrorHandler(getErrorHandler());
+        try {
+            // This fragment parser wraps fragments by means of entity resolution in the
+            // outer xml. As a result it then also scans the inner xml for entities.
+            // If the inner xml is large and contains large amounts of text then it can blow
+            // Limit.TOTAL_ENTITY_SIZE_LIMIT. Turning off FEATURE_SECURE_PROCESSING prevents this limit check.
 
-			// TODO It may be preferable to change the way fragment wrapper works so that it doesn't use
-			// entity resolution to achieve its goal, as the scanning for entities must add a fair
-			// amount of overhead. A simpler and more crude approach may be better.
-			xmlReader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
-		} catch (SAXNotRecognizedException | SAXNotSupportedException e) {
-			LOGGER.error("Unable to disable FEATURE_SECURE_PROCESSING on the SAX PARSER", e);
-		}
+            // TODO It may be preferable to change the way fragment wrapper works so that it doesn't use
+            // entity resolution to achieve its goal, as the scanning for entities must add a fair
+            // amount of overhead. A simpler and more crude approach may be better.
+            xmlReader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
+        } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+            LOGGER.error("Unable to disable FEATURE_SECURE_PROCESSING on the SAX PARSER", e);
+        }
 
         final InputSource inputSource = new InputSource(new StringReader(xml));
         inputSource.setEncoding("UTF-8");
