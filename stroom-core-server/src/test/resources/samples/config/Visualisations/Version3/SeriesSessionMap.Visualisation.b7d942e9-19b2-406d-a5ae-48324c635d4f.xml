@@ -1,7 +1,7 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <visualisation>
-   <description>Git commit: 42cd516461f3c8366e95a64d069a379fcb316669
-Git commit time: 2018-12-14 20:04:46 +0000</description>
+   <description>Git commit: e564b3b8a53e902aec871ad897c29363c94f7118
+Git commit time: 2019-01-03 13:46:06 +0000</description>
    <functionName>visualisations.SeriesSessionMap</functionName>
    <name>SeriesSessionMap</name>
    <scriptRefXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;

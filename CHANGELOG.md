@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift distribution visualisation content pack to v3.1.0
+
+* Add transform_user_extract.py, for pre-6.0 to 6.0 user migration
+
+## [v6.0-beta.24] - 2019-01-03
+
+* Issue **#1059** : Fix guice errors on stroom-proxy startup.
+
+## [v6.0-beta.23] - 2019-01-03
+
+* Issue **#1010** : Improve distribution start/stop/etc scripts by adding monochrome switch and background log tailing.
+
 ## [v6.0-beta.22] - 2019-01-02
 
 * Issue **#1053** : Add API to disabled authorisation users
@@ -1407,7 +1419,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.22...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.24...6.0
+[v6.0-beta.24]: https://github.com/gchq/stroom/compare/v6.0-beta.23...v6.0-beta.24
+[v6.0-beta.23]: https://github.com/gchq/stroom/compare/v6.0-beta.22...v6.0-beta.23
 [v6.0-beta.22]: https://github.com/gchq/stroom/compare/v6.0-beta.21...v6.0-beta.22
 [v6.0-beta.21]: https://github.com/gchq/stroom/compare/v6.0-beta.20...v6.0-beta.21
 [v6.0-beta.20]: https://github.com/gchq/stroom/compare/v6.0-beta.19...v6.0-beta.20
