@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1062** : Add env var for UI path
+
 * Uplift distribution visualisation content pack to v3.1.0
 
 * Add transform_user_extract.py, for pre-6.0 to 6.0 user migration
