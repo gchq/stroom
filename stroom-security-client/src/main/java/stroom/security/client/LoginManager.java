@@ -79,7 +79,9 @@ public class LoginManager implements HasHandlers {
                                 // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
                                 // bypassing certificate checks. We need this to enable username/password
                                 // logins in an environment where the user's browser always presents a certificate.
-                                String redirectUrl = URL.encode(result.get(ClientProperties.ADVERTISED_HOST_URL) + "/stroom/ui?prompt=login");
+                                String redirectUrl = URL.encode(
+                                        result.get(ClientProperties.ADVERTISED_HOST_URL) +
+                                                result.get(ClientProperties.UI_PATH));
                                 Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
                             });
                 })

@@ -1030,6 +1030,13 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.uiUrl")
+                .value("/stroom/ui?prompt=login")
+                .description("The path of the Stroom UI.")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.auth.services.url")
                 .value("http://auth-service:8099")
                 .description("The URL of the auth service")

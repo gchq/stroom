@@ -57,6 +57,7 @@ public class ClientProperties implements SharedObject {
     public static final String API_KEYS_UI_URL = "stroom.apikeys.ui.url";
     public static final String CHANGE_PASSWORD_UI_URL = "stroom.changepassword.url";
     public static final String ADVERTISED_HOST_URL = "stroom.advertisedUrl";
+    public static final String UI_PATH = "stroom.uiPath";
 
     public static final String URL_KIBANA_UI = "stroom.url.kibana-ui";
     public static final String AUTH_SERVICE_URL = "stroom.auth.service.url";

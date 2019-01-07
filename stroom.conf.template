@@ -38,6 +38,8 @@ stroom.security.apiToken.durationToWarnBeforeExpiry=10m
 
 # Change this to HTTP and visit directly if you want to run GWT Super Dev Mode
 stroom.advertisedUrl=https://IP_ADDRESS
+# This is appended to stroom.advertisedUrl to get the full address of Stroom's UI
+stroom.uiPath=/stroom/ui?prompt=login
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
