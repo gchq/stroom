@@ -12,7 +12,6 @@ dependencies {
     integrationTestCompile project(':stroom-headless')
     integrationTestCompile project(':stroom-index:stroom-index-server')
     integrationTestCompile project(':stroom-security:stroom-security-impl-mock')
-    integrationTestCompile project(':stroom-security:stroom-security-server')
     integrationTestCompile project(':stroom-statistics:stroom-statistics-server')
     integrationTestCompile project(':stroom-test-common')
     integrationTestCompile project(':stroom-util')
@@ -21,7 +20,6 @@ dependencies {
     integrationTestCompile project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-pipeline', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     integrationTestCompile libs.stroomQueryApi

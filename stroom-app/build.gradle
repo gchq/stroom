@@ -9,13 +9,7 @@ buildscript {
 }
 
 plugins {
-    //id 'com.github.johnrengelman.shadow' version '2.0.0'
-    id "com.benjaminsproule.swagger" version "0.1.9"
-
-    //plugin to generate a list of licennces for all deps and to check for incompatibilities
-    //usage: honkerCheck honkerGenNotice honkerGenDependencies
-    //search for NOTICE.txt and DEPENDENCIES.txt
-    //id "org.nosphere.honker" version "0.3.0"
+    id "com.benjaminsproule.swagger" version "1.0.6"
 }
 
 ext.moduleName = 'stroom.app'
@@ -33,7 +27,6 @@ mainClassName = 'stroom.startup.App'
 jar {
     //we need to first generate the swagger spec files so they can be added in to the jar
     mustRunAfter generateSwaggerDocumentation
-
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -42,7 +35,6 @@ jar {
         )
     }
     archiveName jarName
-
     exclude '**/gwt-unitCache'
 }
 
@@ -54,12 +46,10 @@ shadowJar {
     mergeServiceFiles()
 
     archiveName fatJarName
-
     exclude '**/gwt-unitCache'
 }
 
 dependencies {
-    //compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-config:stroom-config-app')
     compile project(':stroom-config:stroom-config-global-impl-db')
     compile project(':stroom-core-server')
@@ -216,14 +206,12 @@ task copyFilesForProxyDockerBuild() {
 
 swagger {
     apiSource {
-        outputFormats = 'json,yaml'
+        outputFormats = ['json', 'yaml']
         locations = [
                 'stroom.statistics.sql.search.SqlStatisticsQueryResource',
                 'stroom.index.StroomIndexQueryResource',
                 'stroom.security.AuthorisationResource']
-        schemes = [
-                'http',
-                'https']
+        schemes = ['http', 'https']
         host = 'localhost:8080'
         basePath = '/api'
         info {
