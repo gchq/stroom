@@ -45,15 +45,15 @@ CREATE TABLE IF NOT EXISTS processor_filter (
 -- Copy data into the table, use ID predicate to make it re-runnable
 --
 INSERT
-INTO processor (id, version, create_time, create_user, update_time, update_user, data, priority, fk_processor_id, fk_processor_filter_tracker_id, enabled)
+INTO processor_filter (id, version, create_time, create_user, update_time, update_user, data, priority, fk_processor_id, fk_processor_filter_tracker_id, enabled)
 SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, DAT, PRIOR, FK_STRM_PROC_ID, FK_STRM_PROC_FILT_TRAC_ID, ENBL
-FROM STRM_PROC
-WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_processor)
+FROM STRM_PROC_FILT
+WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
 ORDER BY ID;
 
 -- Work out what to set our auto_increment start value to
 SELECT COALESCE(MAX(id) + 1, 1)
 INTO @next_id
-FROM data_processor
+FROM processor
 
-ALTER TABLE data_processor AUTO_INCREMENT=@next_id;
+ALTER TABLE processor AUTO_INCREMENT=@next_id;

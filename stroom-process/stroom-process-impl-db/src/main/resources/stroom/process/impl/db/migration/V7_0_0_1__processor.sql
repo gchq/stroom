@@ -36,14 +36,14 @@ INTO processor (id, version, create_user, update_user, task_type, pipeline_uuid,
 SELECT SP.ID, SP.VER, SP.CRT_USER, SP.UPD_USER, SP.TASK_TP, P.UUID, SP.ENBL, SP.CRT_MS, SP.UPD_MS
 FROM STRM_PROC SP
 INNER JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)
-WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM data_processor)
+WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
 ORDER BY SP.ID;
 
 -- Work out what to set our auto_increment start value to
 SELECT COALESCE(MAX(id) + 1, 1)
 INTO @next_id
-FROM data_processor
+FROM processor
 
-ALTER TABLE data_processor AUTO_INCREMENT=@next_id;
+ALTER TABLE processor AUTO_INCREMENT=@next_id;
 
 

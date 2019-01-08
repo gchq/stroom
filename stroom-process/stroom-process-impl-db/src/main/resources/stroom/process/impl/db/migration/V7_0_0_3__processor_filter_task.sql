@@ -25,55 +25,36 @@
 
 CREATE TABLE processor_filter_task (
   id bigint(20) NOT NULL AUTO_INCREMENT,
-  ver tinyint(4) NOT NULL,
-  crt_ms bigint(20) DEFAULT NULL,
+  version tinyint(4) NOT NULL,
+  create_time_ms bigint(20) DEFAULT NULL,
   end_time_ms bigint(20) DEFAULT NULL,
-  stat tinyint(4) NOT NULL,
-  stat_ms bigint(20) DEFAULT NULL,
+  status tinyint(4) NOT NULL,
+  status_time_ms bigint(20) DEFAULT NULL,
   start_time_ms bigint(20) DEFAULT NULL,
-  fk_nd_id int(11) DEFAULT NULL,
-  fk_strm_id bigint(20) NOT NULL,
-  dat longtext,
+  node_name varchar(255) DEFAULT NULL,
+  fk_strm_id bigint(20) NOT NULL,   --TODO ?????????????????????????????
+  data longtext,
   fk_processor_filter_id int(11) NOT NULL,
   PRIMARY KEY (id),
-  KEY strm_task_stat_idx (stat),
-  KEY strm_task_fk_strm_id (fk_strm_id),
+  KEY processor_filter_task_status_idx (stat),
+  KEY processor_filter_task_fk_strm_id (fk_strm_id), -- TODO ?????????????
   KEY processor_filter_task_fk_processor_filter_id (fk_processor_filter_id),
-  KEY processor_filter_task_fk_nd_id (fk_nd_id),
-  CONSTRAINT processor_filter_task_fk_nd_id FOREIGN KEY (fk_nd_id) REFERENCES ND (id),
+  KEY processor_filter_task_node_name_idx (node_name),
   CONSTRAINT processor_filter_task_fk_processor_filter_id FOREIGN KEY (fk_processor_filter_id) REFERENCES processor_filter (id)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Copy data into the table
---
-DROP PROCEDURE IF EXISTS copy;
-DELIMITER //
-CREATE PROCEDURE copy ()
-BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'GLOB_PROP' > 0) THEN
-        INSERT INTO config (name, val)
-        SELECT NAME, VAL
-        FROM GLOB_PROP
-        ORDER BY NAME;
+-- Copy data into the table, use ID predicate to make it re-runnable
+INSERT
+INTO processor_filter_task (id, version, create_time_ms, end_time_ms, status, status_time_ms, start_time_ms, node_name, fk_strm_id, data, fk_processor_filter_id)
+SELECT ID, VER, CRT_MS, END_TIME_MS, STAT, STAT_MS, START_TIME_MS, FK_ND_ID, FK_STRM_ID, DAT, FK_STRM_PROC_FILT_ID
+FROM STRM_TASK
+WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_task)
+ORDER BY ID;
 
-        INSERT INTO config_history (update_time, update_user, name, val)
-        SELECT UPD_MS, UPD_USER, NAME, VAL
-        FROM GLOB_PROP
-        ORDER BY NAME;
-    END IF;
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_GLOB_PROP' > 0) THEN
-      INSERT INTO config (name, val)
-      SELECT NAME, VAL
-      FROM OLD_GLOB_PROP
-      ORDER BY NAME;
+-- Work out what to set our auto_increment start value to
+SELECT COALESCE(MAX(id) + 1, 1)
+INTO @next_id
+FROM processor_filter_task
 
-      INSERT INTO config_history (update_time, update_user, name, val)
-      SELECT UPD_MS, UPD_USER, NAME, VAL
-      FROM OLD_GLOB_PROP
-      ORDER BY NAME;
-    END IF;
-END//
-DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+ALTER TABLE processor_filter_task AUTO_INCREMENT=@next_id;
+
