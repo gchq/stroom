@@ -382,6 +382,12 @@ public class DefaultProperties {
                 .description("The maximum number active destinations that Stroom will allow rolling appenders to be writing to at any one time.")
                 .editable(true)
                 .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.pipeline.parser.secureProcessing")
+                .value("true")
+                .description("Instructs the implementation to process XML securely. This may set limits on XML constructs to avoid conditions such as denial of service attacks.")
+                .editable(true)
+                .build());
 
         // MAIN DATA SOURCE 
         list.add(new GlobalProperty.Builder()

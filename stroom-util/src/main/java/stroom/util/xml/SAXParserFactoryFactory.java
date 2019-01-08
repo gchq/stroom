@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
+import stroom.util.config.StroomProperties;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
@@ -34,6 +35,7 @@ import javax.xml.parsers.SAXParserFactory;
 public final class SAXParserFactoryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 
+    static final String SECURE_PROCESSING_PROPERTY = "stroom.pipeline.parser.secureProcessing";
     private static final String DEFAULT_SAX_PARSER_FACTORY = "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
     private static final String IMP_USED = "The SAX Parser factory implementation being used is: ";
     private static final String END = "\".";
@@ -73,7 +75,65 @@ public final class SAXParserFactoryFactory {
 
     private static void secureProcessing(final SAXParserFactory factory) {
         try {
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            final boolean secureProcessing = StroomProperties.getBooleanProperty(SECURE_PROCESSING_PROPERTY, true);
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, secureProcessing);
+
+
+//            System.setProperty(XalanConstants.SP_TOTAL_ENTITY_SIZE_LIMIT, "50000010");
+//
+//            //
+//            // Implementation limits: corresponding System Properties of the above
+//            // API properties
+//            //
+//            /**
+//             * JDK entity expansion limit; Note that the existing system property
+//             * "entityExpansionLimit" with no prefix is still observed
+//             */
+//            public static final String SP_ENTITY_EXPANSION_LIMIT = "jdk.xml.entityExpansionLimit";
+//
+//            /**
+//             * JDK element attribute limit; Note that the existing system property
+//             * "elementAttributeLimit" with no prefix is still observed
+//             */
+//            public static final String SP_ELEMENT_ATTRIBUTE_LIMIT =  "jdk.xml.elementAttributeLimit";
+//
+//            /**
+//             * JDK maxOccur limit; Note that the existing system property
+//             * "maxOccurLimit" with no prefix is still observed
+//             */
+//            public static final String SP_MAX_OCCUR_LIMIT = "jdk.xml.maxOccurLimit";
+//
+//            /**
+//             * JDK total entity size limit
+//             */
+//            public static final String SP_TOTAL_ENTITY_SIZE_LIMIT = "jdk.xml.totalEntitySizeLimit";
+//
+//            /**
+//             * JDK maximum general entity size limit
+//             */
+//            public static final String SP_GENERAL_ENTITY_SIZE_LIMIT = "jdk.xml.maxGeneralEntitySizeLimit";
+//
+//            /**
+//             * JDK node count limit in entities that limits the total number of nodes
+//             * in all of entity references.
+//             */
+//            public static final String SP_ENTITY_REPLACEMENT_LIMIT = "jdk.xml.entityReplacementLimit";
+//
+//            /**
+//             * JDK maximum parameter entity size limit
+//             */
+//            public static final String SP_PARAMETER_ENTITY_SIZE_LIMIT = "jdk.xml.maxParameterEntitySizeLimit";
+//            /**
+//             * JDK maximum XML name limit
+//             */
+//            public static final String SP_XML_NAME_LIMIT = "jdk.xml.maxXMLNameLimit";
+//
+//            /**
+//             * JDK maxElementDepth limit
+//             */
+//            public static final String SP_MAX_ELEMENT_DEPTH = "jdk.xml.maxElementDepth";
+
+
         } catch (final ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
             LOGGER.error(e.getMessage(), e);
         }
