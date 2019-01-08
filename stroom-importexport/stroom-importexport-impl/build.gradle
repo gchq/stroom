@@ -15,9 +15,10 @@ dependencies {
 
     //compile libs.slf4j_api
 
-    integrationTestCompile libs.junit_jupiter
+    integrationTestCompileOnly libs.junit_jupiter_api
 
     integrationTestRuntime libs.mysql_connector_java
     integrationTestRuntime libs.jaxb_runtime
     integrationTestRuntime libs.javax_activation
+    integrationTestRuntimeOnly libs.junit_jupiter_engine
 }

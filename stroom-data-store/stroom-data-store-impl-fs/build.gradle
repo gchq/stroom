@@ -27,7 +27,9 @@ dependencies {
     compile libs.slf4j_api
 
     testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testCompileOnly libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+
+    testRuntimeOnly libs.junit_jupiter_engine
 }

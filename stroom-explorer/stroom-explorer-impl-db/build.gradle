@@ -22,7 +22,9 @@ dependencies {
     runtime libs.mysql_connector_java
 
     //testCompile libs.assertj_core
-    //testCompile libs.junit_jupiter
+    //testCompileOnly libs.junit_jupiter_api
 
     //testCompile project(':stroom-security:stroom-security-impl-mock')
+
+    //testRuntimeOnly libs.junit_jupiter_engine
 }

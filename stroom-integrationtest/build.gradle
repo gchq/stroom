@@ -28,7 +28,7 @@ dependencies {
     integrationTestCompile libs.stroomQueryCommon
 
     integrationTestCompile libs.slf4j_api
-    integrationTestCompile libs.junit_jupiter
+    integrationTestCompileOnly libs.junit_jupiter_api
     integrationTestCompile libs.fast_classpath_scanner
 
     integrationTestCompile libs.commons_io
@@ -36,6 +36,7 @@ dependencies {
     //the following logging libs are needed when running junits outside dropwizard
     integrationTestRuntime libs.jcl_over_slf4j
     integrationTestRuntime libs.jul_to_slf4j
+    integrationTestRuntimeOnly libs.junit_jupiter_engine
     integrationTestRuntime libs.log4j_over_slf4j
     integrationTestRuntime libs.logback_classic
     integrationTestRuntime libs.logback_core

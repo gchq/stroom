@@ -263,7 +263,7 @@ public class RingBuffer implements CharSequence, Serializable {
 
     @Override
     public CharSequence subSequence(final int off, final int len) {
-        if (len > buffer.length || off < 0 || off >= buffer.length) {
+        if (len < 0 || len > buffer.length || off < 0 || off >= buffer.length) {
             throw new IndexOutOfBoundsException();
         }
 

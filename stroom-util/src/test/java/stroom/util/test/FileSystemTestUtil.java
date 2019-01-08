@@ -29,6 +29,7 @@ public abstract class FileSystemTestUtil {
     private static final Path configXSDDir = configDir.resolve("xsd");
     private static final long TEST_PREFIX = System.currentTimeMillis();
     private static long testSuffix = 0;
+
     private FileSystemTestUtil() {
         // Utility
     }

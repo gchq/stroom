@@ -22,8 +22,10 @@ dependencies {
     compile libs.slf4j_api
 
     testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testCompileOnly libs.junit_jupiter_api
     testCompile libs.mockito_core
+
+    testRuntimeOnly libs.junit_jupiter_engine
 }
 //
 //def fatJarName = "stroom-kafka-client-impl_0_10_0_1-all.jar"

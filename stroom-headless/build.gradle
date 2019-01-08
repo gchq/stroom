@@ -22,17 +22,18 @@ dependencies {
     compile libs.stroomDocRef
 
     compile libs.guice4
+    // permitUnusedDeclared libs.guice4
     //compile libs.hibernate_core
     compile libs.javax_inject
     compile libs.slf4j_api
     compile libs.xml_apis
 
     compile libs.javax_el
-    permitUnusedDeclared libs.javax_el
+    // permitUnusedDeclared libs.javax_el
     compile libs.javax_el_api
-    permitUnusedDeclared libs.javax_el_api
+    // permitUnusedDeclared libs.javax_el_api
     runtime libs.logback_classic
-    //permitUnusedDeclared libs.logback_classic
+    //// permitUnusedDeclared libs.logback_classic
 }
 
 def fatJarName = "stroom-headless-all.jar"

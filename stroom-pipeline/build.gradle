@@ -24,6 +24,7 @@ dependencies {
     compile libs.google_findbugs
     compile libs.guava
     compile libs.guice4
+    // permitUnusedDeclared libs.guice4
     compile libs.guice_assistedinject
     compile libs.hadoopCommonShaded
     compile libs.hadoopHdfsShaded
@@ -56,12 +57,13 @@ dependencies {
 
     testCompile libs.assertj_core
     testCompile libs.commons_io
-    testCompile libs.junit_jupiter
+    testCompileOnly libs.junit_jupiter_api
     testCompile libs.mockito_core
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
