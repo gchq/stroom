@@ -1,17 +1,3 @@
---Create Table: CREATE TABLE `STRM_PROC` (
---  `ID` int(11) NOT NULL AUTO_INCREMENT,
---  `VER` tinyint(4) NOT NULL,
---  `CRT_USER` varchar(255) DEFAULT NULL,
---  `UPD_USER` varchar(255) DEFAULT NULL,
---  `TASK_TP` varchar(255) DEFAULT NULL,
---  `FK_PIPE_ID` int(11) DEFAULT NULL,
---  `ENBL` bit(1) NOT NULL,
---  `CRT_MS` bigint(20) DEFAULT NULL,
---  `UPD_MS` bigint(20) DEFAULT NULL,
---  PRIMARY KEY (`ID`),
---  KEY `STRM_PROC_FK_PIPE_ID` (`FK_PIPE_ID`),
---  CONSTRAINT `STRM_PROC_FK_PIPE_ID` FOREIGN KEY (`FK_PIPE_ID`) REFERENCES `PIPE` (`ID`)
---) ENGINE=InnoDB DEFAULT CHARSET=latin1
 
 --Create Table: CREATE TABLE `STRM_PROC_FILT` (
 --  `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -36,18 +22,18 @@
 -- Create the table
 --
 
-CREATE TABLE processor_filter (
+CREATE TABLE IF NOT EXISTS processor_filter (
   id int(11) NOT NULL AUTO_INCREMENT,
-  ver tinyint(4) NOT NULL,
-  crt_ms bigint(20) DEFAULT NULL,
-  crt_user varchar(255) DEFAULT NULL,
-  upd_ms bigint(20) DEFAULT NULL,
-  upd_user varchar(255) DEFAULT NULL,
-  dat longtext NOT NULL,
-  prior int(11) NOT NULL,
+  version tinyint(4) NOT NULL,
+  create_time bigint(20) DEFAULT NULL,
+  create_user varchar(255) DEFAULT NULL,
+  update_time bigint(20) DEFAULT NULL,
+  update_user varchar(255) DEFAULT NULL,
+  data longtext NOT NULL,
+  priority int(11) NOT NULL,
   fk_processor_id int(11) NOT NULL,
   fk_processor_filter_tracker_id int(11) NOT NULL,
-  enbl bit(1) NOT NULL,
+  enabled bit(1) NOT NULL,
   PRIMARY KEY (id),
   KEY processor_filter_fk_processor_id (fk_processor_id),
   KEY processor_filter_fk_processor_filter_tracker_id (fk_processor_filter_tracker_id),
@@ -55,37 +41,19 @@ CREATE TABLE processor_filter (
   CONSTRAINT processor_filter_fk_processor_id FOREIGN KEY (fk_processor_id) REFERENCES processor (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
 --
--- Copy data into the table
+-- Copy data into the table, use ID predicate to make it re-runnable
 --
-DROP PROCEDURE IF EXISTS copy;
-DELIMITER //
-CREATE PROCEDURE copy ()
-BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_PROC_FILT' > 0) THEN
-        INSERT INTO config (name, val)
-        SELECT NAME, VAL
-        FROM GLOB_PROP
-        ORDER BY NAME;
+INSERT
+INTO processor (id, version, create_time, create_user, update_time, update_user, data, priority, fk_processor_id, fk_processor_filter_tracker_id, enabled)
+SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, DAT, PRIOR, FK_STRM_PROC_ID, FK_STRM_PROC_FILT_TRAC_ID, ENBL
+FROM STRM_PROC
+WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_processor)
+ORDER BY ID;
 
-        INSERT INTO config_history (update_time, update_user, name, val)
-        SELECT UPD_MS, UPD_USER, NAME, VAL
-        FROM GLOB_PROP
-        ORDER BY NAME;
-    END IF;
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_GLOB_PROP' > 0) THEN
-      INSERT INTO config (name, val)
-      SELECT NAME, VAL
-      FROM OLD_GLOB_PROP
-      ORDER BY NAME;
+-- Work out what to set our auto_increment start value to
+SELECT COALESCE(MAX(id) + 1, 1)
+INTO @next_id
+FROM data_processor
 
-      INSERT INTO config_history (update_time, update_user, name, val)
-      SELECT UPD_MS, UPD_USER, NAME, VAL
-      FROM OLD_GLOB_PROP
-      ORDER BY NAME;
-    END IF;
-END//
-DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+ALTER TABLE data_processor AUTO_INCREMENT=@next_id;

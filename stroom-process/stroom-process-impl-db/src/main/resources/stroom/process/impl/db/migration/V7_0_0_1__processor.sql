@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS processor (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 --
--- Copy data into the data_processor table, use ID predicate to make it re-runnable
+-- Copy data into the table, use ID predicate to make it re-runnable
 --
 INSERT
 INTO processor (id, version, create_user, update_user, task_type, pipeline_uuid, enabled, create_time, update_time)
