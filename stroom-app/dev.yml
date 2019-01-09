@@ -158,6 +158,15 @@ appConfig:
   policy:
     deleteBatchSize: 1000
   process:
+    connection:
+      jdbcDriverClassName: com.mysql.jdbc.Driver
+      jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+      jdbcDriverUsername: stroomuser
+      jdbcDriverPassword: stroompassword1
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
     assignTasks: true
     createTasks: true
     deleteAge: "1d"
