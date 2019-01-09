@@ -20,14 +20,13 @@ import io.swagger.annotations.Api;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.security.SecurityContext;
 import stroom.importexport.ImportExportService;
 import stroom.resource.ResourceStore;
+import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
@@ -44,8 +43,6 @@ import java.util.ArrayList;
         description = "Export API")
 @Path("/export/v1")
 public class ExportConfigResource {
-    private static final String PROPERTY = "stroom.export.enabled";
-
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
     private final transient ExportConfig exportConfig;
@@ -53,9 +50,9 @@ public class ExportConfigResource {
 
     @Inject
     public ExportConfigResource(final ImportExportService importExportService,
-                               @Named("resourceStore") final ResourceStore resourceStore,
-                               final ExportConfig exportConfig,
-                               final SecurityContext securityContext) {
+                                final ResourceStore resourceStore,
+                                final ExportConfig exportConfig,
+                                final SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
         this.exportConfig = exportConfig;

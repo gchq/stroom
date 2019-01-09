@@ -1,31 +1,40 @@
 ext.moduleName = 'stroom.proxy'
 
 dependencies {
-    compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-core-server')
-    compile project(':stroom-ruleset:stroom-ruleset-server')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-ruleset:stroom-ruleset-server')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-task:stroom-task-api')
 
-    compile libs.stroomDocRef
+    implementation libs.stroomDocRef
 
-    compile libs.dropwizard_lifecycle
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.guava
-    compile libs.guice4
-    compile libs.jackson_annotations
-    compile libs.javax_inject
-    compile libs.javax_servlet_api
-    compile libs.slf4j_api
+    implementation libs.dropwizard_lifecycle
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.guava
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.javax_servlet_api
+    implementation libs.slf4j_api
 
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    testCompile libs.assertj_core
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.assertj_core
+    
     testCompileOnly libs.junit_jupiter_api
 
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }
 //
 //war {

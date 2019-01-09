@@ -19,12 +19,14 @@ package stroom.test;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.HqlBuilder;
+import stroom.entity.util.SqlBuilder;
 import stroom.persist.ConnectionProvider;
 
 import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,6 +90,15 @@ public class DatabaseCommonTestControlTransactionHelper {
 //
 //        executeStatementsWithNoConstraints(truncateStatements);
 //    }
+
+    void clearAllTables() {
+        final SqlBuilder sqlBuilder = new SqlBuilder();
+        sqlBuilder.append("SELECT table_name FROM information_schema.tables where table_schema='stroom';");
+        final List<String> results = entityManager.executeNativeQueryResultList(sqlBuilder);
+
+        List<String> filtered = results.stream().filter(name -> !name.contains("schema")).collect(Collectors.toList());
+        clearTables(filtered);
+    }
 
     void clearTables(final List<String> tableNames) {
         List<String> deleteStatements = tableNames.stream()

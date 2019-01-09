@@ -65,40 +65,40 @@ import java.util.Set;
 public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
-    private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
-            Activity.TABLE_NAME,
-            AppPermission.TABLE_NAME,
-            ClusterLock.TABLE_NAME,
-            "doc",
-            DocumentPermission.TABLE_NAME,
-            "explorer_node",
-            "explorer_path",
-            "IDX_VOL", //link table between IDX and VOL so no entity of its own
-            IndexShard.TABLE_NAME,
-            Job.TABLE_NAME,
-            JobNode.TABLE_NAME,
-            Node.TABLE_NAME,
-            Permission.TABLE_NAME,
-            Policy.TABLE_NAME,
-            QueryEntity.TABLE_NAME,
-            Rack.TABLE_NAME,
-
-//            "stream",
-//            "stream_feed",
-//            "stream_type",
-//            "stream_processor",
-//            "meta_key",
-//            "meta_numeric_value",
-
-            Processor.TABLE_NAME,
-            ProcessorFilter.TABLE_NAME,
-            ProcessorFilterTracker.TABLE_NAME,
-            ProcessorFilterTask.TABLE_NAME,
-//            "STRM_VOL",
-            User.TABLE_NAME,
-            UserGroupUser.TABLE_NAME,
-            VolumeEntity.TABLE_NAME,
-            VolumeState.TABLE_NAME);
+//    private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
+//            Activity.TABLE_NAME,
+//            AppPermission.TABLE_NAME,
+//            ClusterLock.TABLE_NAME,
+//            "doc",
+//            DocumentPermission.TABLE_NAME,
+//            "explorer_node",
+//            "explorer_path",
+//            "IDX_VOL", //link table between IDX and VOL so no entity of its own
+//            IndexShard.TABLE_NAME,
+//            Job.TABLE_NAME,
+//            JobNode.TABLE_NAME,
+//            Node.TABLE_NAME,
+//            Permission.TABLE_NAME,
+//            Policy.TABLE_NAME,
+//            QueryEntity.TABLE_NAME,
+//            Rack.TABLE_NAME,
+//
+////            "stream",
+////            "stream_feed",
+////            "stream_type",
+////            "stream_processor",
+////            "meta_key",
+////            "meta_numeric_value",
+//
+//            Processor.TABLE_NAME,
+//            ProcessorFilter.TABLE_NAME,
+//            ProcessorFilterTracker.TABLE_NAME,
+//            ProcessorFilterTask.TABLE_NAME,
+////            "STRM_VOL",
+//            User.TABLE_NAME,
+//            UserGroupUser.TABLE_NAME,
+//            VolumeEntity.TABLE_NAME,
+//            VolumeState.TABLE_NAME);
 
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;
@@ -171,7 +171,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         //clear all the tables using direct sql on a different connection
         //in theory trncating the tables should be quicker but it was takeing 1.5s to trancate all the tables
         //so used delete with no constraint checks instead
-        databaseCommonTestControlTransactionHelper.clearTables(TABLES_TO_CLEAR);
+        databaseCommonTestControlTransactionHelper.clearAllTables();
+//        databaseCommonTestControlTransactionHelper.clearTables(TABLES_TO_CLEAR);
 
         //ensure all the caches are empty
         stroomCacheManager.clear();

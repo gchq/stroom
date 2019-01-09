@@ -2,10 +2,12 @@ package stroom.statistics.stroomstats.internal;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -25,6 +27,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@ExtendWith(MockitoExtension.class)
 class TestStroomStatsInternalStatisticsService {
     private static final String DOC_REF_TYPE_1 = "myDocRefType1";
     private static final String DOC_REF_TYPE_2 = "myDocRefType2";

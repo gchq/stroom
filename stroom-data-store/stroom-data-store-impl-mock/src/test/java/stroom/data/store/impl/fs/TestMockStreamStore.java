@@ -77,7 +77,7 @@ class TestMockStreamStore {
 
         assertThat(testMe).isEqualTo("PARENT");
 
-        testMe = StreamUtil.streamToString(streamSource.getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream());
+        testMe = StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream());
 
         assertThat(testMe).isEqualTo("CHILD");
     }

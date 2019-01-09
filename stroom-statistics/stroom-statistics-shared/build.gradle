@@ -1,26 +1,26 @@
 ext.moduleName = 'stroom.statistics.shared'
 
 dependencies {
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-docstore:stroom-docstore-shared')
-    compile project(':stroom-statistics:stroom-statistics-api')
-    compile project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-task:stroom-task-api')
 
-    compile libs.stroomDocRef
-    compile libs.jackson_annotations
+    implementation libs.stroomDocRef
+    implementation libs.jackson_annotations
 
-    compile libs.jaxb_api
+    implementation libs.jaxb_api
 
-    testCompile libs.assertj_core
+    testImplementation libs.assertj_core
     testCompileOnly libs.junit_jupiter_api
 
-    //the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.jcl_over_slf4j
-    testRuntime libs.jul_to_slf4j
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine
-    testRuntime libs.log4j_over_slf4j
-    testRuntime libs.logback_classic
-    testRuntime libs.logback_core
-    testRuntime libs.jaxb_runtime
-    testRuntime libs.javax_activation
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

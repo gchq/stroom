@@ -8,9 +8,9 @@ buildscript {
     }
 }
 
-plugins {
-    id "com.benjaminsproule.swagger" version "1.0.6"
-}
+//plugins {
+//    id "com.benjaminsproule.swagger" version "1.0.6"
+//}
 
 ext.moduleName = 'stroom.app'
 
@@ -26,7 +26,7 @@ mainClassName = 'stroom.startup.App'
 
 jar {
     //we need to first generate the swagger spec files so they can be added in to the jar
-    mustRunAfter generateSwaggerDocumentation
+//    mustRunAfter generateSwaggerDocumentation
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -38,7 +38,7 @@ jar {
     exclude '**/gwt-unitCache'
 }
 
-shadowJar {
+shadowJar {    
     // Allows us to build fat jars with lots of files
     zip64 true
 
@@ -50,71 +50,72 @@ shadowJar {
 }
 
 dependencies {
-    compile project(':stroom-config:stroom-config-app')
-    compile project(':stroom-config:stroom-config-global-impl-db')
-    compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-dashboard:stroom-dashboard-server')
-    compile project(':stroom-data-meta:stroom-data-meta-impl-db')
-    compile project(':stroom-data-store:stroom-data-store-impl-fs')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    compile project(':stroom-elastic:stroom-elastic-impl')
-    compile project(':stroom-elastic:stroom-elastic-impl-http')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-explorer:stroom-explorer-impl')
-    compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-index:stroom-index-server')
-    compile project(':stroom-kafka:stroom-kafka-impl')
-    compile project(':stroom-kafka:stroom-kafka-pipeline')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-proxy')
-    compile project(':stroom-ruleset:stroom-ruleset-server')
-    compile project(':stroom-ruleset:stroom-ruleset-shared')
-    compile project(':stroom-security:stroom-security-server')
-    compile project(':stroom-statistics:stroom-statistics-server')
-    compile project(':stroom-util')
+    implementation project(':stroom-config:stroom-config-app')
+    implementation project(':stroom-config:stroom-config-global-impl-db')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-server')
+    implementation project(':stroom-data-meta:stroom-data-meta-impl-db')
+    implementation project(':stroom-data-store:stroom-data-store-impl-fs')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-elastic:stroom-elastic-impl')
+    implementation project(':stroom-elastic:stroom-elastic-impl-http')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-explorer-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-index:stroom-index-server')
+    implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-kafka:stroom-kafka-pipeline')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-proxy')
+    implementation project(':stroom-ruleset:stroom-ruleset-server')
+    implementation project(':stroom-ruleset:stroom-ruleset-shared')
+    implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-statistics:stroom-statistics-server')
+    implementation project(':stroom-util')
 
-    compile libs.stroomDocRef
+    implementation libs.stroomDocRef
 
-    compile libs.dropwizard_lifecycle
-    compile libs.guava
-    compile libs.guice4
-    // permitUnusedDeclared libs.guice4
-    //compile libs.jackson_annotations
-    compile libs.javax_inject
-    //compile libs.javax_activation
-    //compile libs.javax_activation_impl
-    //compile libs.jaxb_api
-    //compile libs.jaxb_core
-    //compile libs.jaxb_impl
-    compile libs.jcommander
-    compile libs.jetty_servlet
+    implementation libs.dropwizard_lifecycle
+    implementation libs.guava
+    implementation libs.guice4
+    //implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    //implementation libs.javax_activation
+    //implementation libs.javax_activation_impl
+    //implementation libs.jaxb_api
+    //implementation libs.jaxb_core
+    //implementation libs.jaxb_impl
+    implementation libs.jcommander
+    implementation libs.jetty_servlet
 
-    compile(libs.dropwizard_assets) {
+    implementation(libs.dropwizard_assets) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    compile(libs.dropwizard_core) {
+    implementation(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    compile libs.dropwizard_jersey
-    compile libs.dropwizard_jetty
-    compile libs.dropwizard_metrics_healthchecks
-    compile libs.dropwizard_servlets
-    compile libs.dropwizard_metrics_core
-    compile libs.dropwizard_metrics_annotation
-    compile libs.dropwizard_configuration
-    compile libs.flyway_core
-    compile libs.guava
-    compile libs.javax_inject
-    compile libs.javax_servlet_api
-    compile libs.jetty_server
-    compile libs.jetty_servlets
-    compile libs.logback_classic
-    compile libs.slf4j_api
-    compile libs.ws_rs_api
+    implementation libs.dropwizard_jersey
+    implementation libs.dropwizard_jetty
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_servlets
+    implementation libs.dropwizard_metrics_core
+    implementation libs.dropwizard_metrics_annotation
+    implementation libs.dropwizard_configuration
+    implementation libs.flyway_core
+    implementation libs.guava
+    implementation libs.javax_inject
+    implementation libs.javax_servlet_api
+    implementation libs.jetty_server
+    implementation libs.jetty_servlets
+    implementation libs.logback_classic
+    implementation libs.slf4j_api
+    implementation libs.ws_rs_api
 
-    runtime libs.javax_el
-    runtime libs.javax_el_api
+    runtimeOnly libs.javax_el
+    runtimeOnly libs.javax_el_api
 }
 
 run {
@@ -204,33 +205,34 @@ task copyFilesForProxyDockerBuild() {
     }
 }
 
-swagger {
-    apiSource {
-        outputFormats = ['json', 'yaml']
-        locations = [
-                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
-                'stroom.index.StroomIndexQueryResource',
-                'stroom.security.AuthorisationResource']
-        schemes = ['http', 'https']
-        host = 'localhost:8080'
-        basePath = '/api'
-        info {
-            title = 'stroom API'
-            version = 'v1'
-            description = 'Various APIs for interacting with stroom and its data'
-            contact {
-                name = 'GCHQ'
-                url = 'https://github.com/gchq/stroom'
-            }
-            license {
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                name = 'Apache 2.0'
-            }
-        }
-        outputPath = "${swaggerDir}/document.html"
-        swaggerDirectory = "${swaggerDir}"
-    }
-}
+// TODO : @66 Reinstate Swagger doc generation
+//swagger {
+//    apiSource {
+//        outputFormats = ['json', 'yaml']
+//        locations = [
+//                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
+//                'stroom.index.StroomIndexQueryResource',
+//                'stroom.security.AuthorisationResource']
+//        schemes = ['http', 'https']
+//        host = 'localhost:8080'
+//        basePath = '/api'
+//        info {
+//            title = 'stroom API'
+//            version = 'v1'
+//            description = 'Various APIs for interacting with stroom and its data'
+//            contact {
+//                name = 'GCHQ'
+//                url = 'https://github.com/gchq/stroom'
+//            }
+//            license {
+//                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+//                name = 'Apache 2.0'
+//            }
+//        }
+//        outputPath = "${swaggerDir}/document.html"
+//        swaggerDirectory = "${swaggerDir}"
+//    }
+//}
 
 
 def releaseBuildDir= 'build/release'
@@ -287,7 +289,7 @@ task buildDistribution(type: Zip) {
 
 
 
-tasks.build.dependsOn generateSwaggerDocumentation
+//tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar

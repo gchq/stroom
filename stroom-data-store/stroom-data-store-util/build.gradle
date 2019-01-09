@@ -1,30 +1,34 @@
 ext.moduleName = 'stroom.data.store.util'
 
 dependencies {
-    compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-data-store:stroom-data-store-impl-fs')
-    compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-data-meta:stroom-data-meta-impl-db')
-    compile project(':stroom-security:stroom-security-impl-mock')
-    compile project(':stroom-util')
-    compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-data-store:stroom-data-store-impl-fs')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-data-meta:stroom-data-meta-impl-db')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-security:stroom-security-impl-mock')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.stroomQueryApi
+    implementation libs.stroomQueryApi
 
-    compile libs.guice4
+    implementation libs.guice4
 
-    compile libs.slf4j_api
+    implementation libs.slf4j_api
     
     testCompileOnly libs.junit_jupiter_api
     
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    testImplementation project(':stroom-test-common')
 
-    // the following logging libs are needed when running junits outside dropwizard
-    testRuntime libs.jcl_over_slf4j
-    testRuntime libs.jul_to_slf4j
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.junit_jupiter_engine
-    testRuntime libs.log4j_over_slf4j
-    testRuntime libs.logback_classic
-    testRuntime libs.logback_core
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

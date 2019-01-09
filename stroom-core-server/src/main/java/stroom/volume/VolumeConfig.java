@@ -8,11 +8,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class VolumeConfig implements IsConfig {
-
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
-    private boolean createDefaultOnStart;
+    private boolean createDefaultOnStart = true;
 
     @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
     public int getResilientReplicationCount() {

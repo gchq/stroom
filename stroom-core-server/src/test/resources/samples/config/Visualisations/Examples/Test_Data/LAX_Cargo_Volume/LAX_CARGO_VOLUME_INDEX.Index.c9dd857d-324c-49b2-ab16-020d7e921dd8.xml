@@ -1,9 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<index>
-   <maxDocsPerShard>1000000000</maxDocsPerShard>
-   <name>LAX_CARGO_VOLUME-INDEX</name>
-   <partitionBy>MONTH</partitionBy>
-   <partitionSize>1</partitionSize>
-   <shardsPerPartition>1</shardsPerPartition>
-   <uuid>c9dd857d-324c-49b2-ab16-020d7e921dd8</uuid>
-</index>

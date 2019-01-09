@@ -17,25 +17,23 @@
 
 package stroom.explorer;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionException;
-import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.feed.shared.FeedDoc;
-import stroom.docref.DocRef;
+import stroom.explorer.shared.HasNodeState;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.explorer.shared.HasNodeState;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

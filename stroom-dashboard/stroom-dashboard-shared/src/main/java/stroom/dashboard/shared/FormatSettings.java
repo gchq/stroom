@@ -16,8 +16,24 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.docref.SharedObject;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlSeeAlso;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlSeeAlso({NumberFormatSettings.class, DateTimeFormatSettings.class})
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = NumberFormatSettings.class, name = "number"),
+        @JsonSubTypes.Type(value = DateTimeFormatSettings.class, name = "date")
+})
 public interface FormatSettings extends SharedObject {
     boolean isDefault();
 }

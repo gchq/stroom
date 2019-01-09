@@ -19,11 +19,13 @@ package stroom.statistics.sql;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
@@ -37,6 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong createCount = new AtomicLong();
     private final AtomicLong destroyCount = new AtomicLong();

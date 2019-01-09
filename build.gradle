@@ -33,6 +33,8 @@ plugins {
     id 'nu.studer.jooq' version '3.0.2' apply false
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
+
+    id 'java-library'
 }
 
 apply plugin: 'com.jfrog.bintray'
@@ -95,7 +97,7 @@ ext.versions = [
         jackson           : '2.9.5', //in line with dropwizard 1.3.3
         jersey            : '2.25.1',
         jetty             : '9.4.10.v20180503', //in line with dropwizard 1.3.3
-        jooq              : '3.11.4',
+        jooq              : '3.11.9',
         junit_jupiter     : '5.2.0',
         logback           : '1.2.3', //in line with dropwizard 1.3.3
         lucene            : '5.5.3',
@@ -269,20 +271,6 @@ def projectsToBePublished = subprojects.findAll { project ->
     ]
 }
 
-//defines a list of gradle project paths that need to expose their test jars for other
-//projects to use
-def projectsWithSharedTestJars = subprojects.findAll { project ->
-    project.path in [
-            ':stroom-core-server',
-            ':stroom-dashboard:stroom-dashboard-server',
-            ':stroom-entity-shared',
-            ':stroom-index:stroom-index-server',
-            ':stroom-pipeline',
-            ':stroom-util',
-            'zzDUMMYzz to ease sorting'
-    ]
-}
-
 //list to hold details of any failed test classes
 def failedTestReportFiles = []
 
@@ -301,7 +289,8 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
-//    apply plugin: 'ca.cutterslade.analyze'
+    //apply plugin: 'ca.cutterslade.analyze'
+    apply plugin: 'java-library'
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
@@ -353,13 +342,12 @@ subprojects {
         }
 
         // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
-        integrationTestCompile.extendsFrom testCompile
-        integrationTestRuntime.extendsFrom testRuntime
+        integrationTestImplementation.extendsFrom testImplementation
+        integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
     }
 
     repositories {
         mavenLocal()
-        mavenCentral()
         jcenter()
         maven { url "https://dl.bintray.com/stroom/event-logging" }
         maven { url "https://dl.bintray.com/stroom/stroom" }
@@ -395,6 +383,8 @@ subprojects {
 
     // This task lets us run the actual integration tests.
     task integrationTest(type: Test) {
+        useJUnitPlatform()
+        
         testClassesDirs = sourceSets.integrationTest.output.classesDirs
         classpath = sourceSets.integrationTest.runtimeClasspath
 
@@ -586,31 +576,31 @@ configure(projectsToBePublished) {
     }
 }
 
-//configuration specific to projects that expose their test jars for other projects to use
-configure(projectsWithSharedTestJars) {
-
-    println "Configuring ${project.path} to expose its test jars"
-
-    configurations {
-        testArtifacts
-    }
-
-    task testJar(type: Jar) {
-        baseName = "${project.name}-test"
-        from sourceSets.test.output
-    }
-
-    artifacts {
-        testArtifacts testJar
-    }
-
-    task packageTests(type: Jar) {
-        from sourceSets.test.output
-        classifier = 'tests'
-    }
-
-    artifacts.archives packageTests
-}
+////configuration specific to projects that expose their test jars for other projects to use
+//configure(projectsWithSharedTestJars) {
+//
+//    println "Configuring ${project.path} to expose its test jars"
+//
+//    configurations {
+//        testArtifacts
+//    }
+//
+//    task testJar(type: Jar) {
+//        baseName = "${project.name}-test"
+//        from sourceSets.test.output
+//    }
+//
+//    artifacts {
+//        testArtifacts testJar
+//    }
+//
+//    task packageTests(type: Jar) {
+//        from sourceSets.test.output
+//        classifier = 'tests'
+//    }
+//
+//    artifacts.archives packageTests
+//}
 
 // NOT SURE IF WE NEED THIS NOW
 //configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {

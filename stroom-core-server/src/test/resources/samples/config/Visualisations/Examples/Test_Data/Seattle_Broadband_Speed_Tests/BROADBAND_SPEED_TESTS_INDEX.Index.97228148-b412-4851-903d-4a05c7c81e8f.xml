@@ -1,9 +1,0 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<index>
-   <maxDocsPerShard>1000000000</maxDocsPerShard>
-   <name>BROADBAND_SPEED_TESTS-INDEX</name>
-   <partitionBy>MONTH</partitionBy>
-   <partitionSize>1</partitionSize>
-   <shardsPerPartition>1</shardsPerPartition>
-   <uuid>97228148-b412-4851-903d-4a05c7c81e8f</uuid>
-</index>
