@@ -245,7 +245,7 @@ ext.contentPackDownloadDir = contentPackDownloadDir
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
 ext.contentPackImportDir = contentPackImportDir
 def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
-def visualisationsContentPackVer = "v3.0.7"
+def visualisationsContentPackVer = "v3.1.0"
 def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
 
 //A set of content packs to download in the task downloadStroomContent

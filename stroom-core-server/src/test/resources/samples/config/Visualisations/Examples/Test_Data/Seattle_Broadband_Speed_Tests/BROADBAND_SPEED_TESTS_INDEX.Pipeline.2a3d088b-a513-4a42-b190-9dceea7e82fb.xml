@@ -1,29 +1,12 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <properties>
-      <add>
-         <property>
-            <element>xsltFilter</element>
-            <name>xslt</name>
-            <value>
-               <entity>
-                  <type>XSLT</type>
-                  <uuid>70d71b93-c466-4a59-b8ec-034d85f2e2b1</uuid>
-                  <name>BROADBAND_SPEED_TESTS-EXTRACTION</name>
-               </entity>
-            </value>
-         </property>
-         <property>
-            <element>indexingFilter</element>
-            <name>index</name>
-            <value>
-               <entity>
-                  <type>Index</type>
-                  <uuid>97228148-b412-4851-903d-4a05c7c81e8f</uuid>
-                  <name>BROADBAND_SPEED_TESTS</name>
-               </entity>
-            </value>
-         </property>
-      </add>
-   </properties>
+   <name>BROADBAND_SPEED_TESTS-INDEX</name>
+   <parentPipelineXML>&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+&lt;doc&gt;
+   &lt;type&gt;Pipeline&lt;/type&gt;
+   &lt;uuid&gt;fcef1b20-083e-436c-ab95-47a6ce453435&lt;/uuid&gt;
+   &lt;name&gt;Indexing&lt;/name&gt;
+&lt;/doc&gt;
+</parentPipelineXML>
+   <uuid>2a3d088b-a513-4a42-b190-9dceea7e82fb</uuid>
 </pipeline>

@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1058** : Added property `stroom.pipeline.parser.secureProcessing` to enable/disable the XML secure processing feature.
+
+* Issue **#1062** : Add env var for UI path
+
+* Uplift distribution visualisation content pack to v3.1.0
+
+* Add transform_user_extract.py, for pre-6.0 to 6.0 user migration
+
+* Issue **#1059** : Fix guice errors on stroom-proxy startup.
+
+* Issue **#1010** : Improve distribution start/stop/etc scripts by adding monochrome switch and background log tailing.
+
+* Issue **#1053** : Add API to disabled authorisation users
+
 * Issue **#1042** : Improve error message for an ApiException when requesting a user's token.
 
 * Issue **#1050** : Prevent creation of permission entries if key already exists.
@@ -30,13 +44,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1025** : Updated ACE editor to v1.4.2.
 
-## [v6.0-beta.21] - 2018-12-13
-
 * Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
 
 * Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
-
-## [v6.0-beta.20] - 2018-12-13
 
 * Issue **#1021** : Multiple changes to improve vis, dashboard and external linking in Stroom.
 
@@ -45,8 +55,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#986** : Fix direct dashboard links.
 
 * Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN.
-
-## [v6.0-beta.19] - 2018-12-11
 
 * Issue **#1012** : Fix for NPE caused when checking if an output is superseded.
 
@@ -68,8 +76,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#996** : Updated functions in dashboard function picker.
 
-## [v6.0-beta.18] - 2018-12-07
-
 * Issue **#981** : Fixed dashboard deletion
 
 * Issue **#989** : Upgraded stroom-expression to v1.4.13 to add new dashboard `link` function.
@@ -90,17 +96,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#973** : Export servlet changed to a Resource API, added permission check, improved error responses.
 
-## [v6.0-beta.17] - 2018-12-04
-
 * Issue **#969** : The code now suppresses errors for index shards being locked for writing as it is expected. We now lock shards using maps rather than the file system as it is more reliable between restarts.
 
 * Issue **#941** : Internal Meta Stats are now being written
 
-## [v6.0-beta.16] - 2018-12-04
-
 * Issue **#970** : Add stream type of `Records` for translated stroom app events.
-
-## [v6.0-beta.15] - 2018-12-03
 
 * Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
 
@@ -117,8 +117,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
 
 * Issue **#945** : More changes to fix some visualisations only showing 10 data points.
-
-## [v6.0-beta.14] - 2018-11-28
 
 * Issue **#945** : Visualisations now show an unlimited number of data points unless constrained by their parent table or their own maximum value setting.
 

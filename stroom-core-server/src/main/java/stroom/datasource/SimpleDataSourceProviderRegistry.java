@@ -44,14 +44,8 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
         urlMap = new HashMap<>();
         urlMap.put("Index", dataSourceUrlConfig::getIndex);
         urlMap.put("StatisticStore", dataSourceUrlConfig::getStatisticStore);
-        urlMap.put("AnnotationsIndex", dataSourceUrlConfig::getAnnotations);
-        urlMap.put("ElasticIndex", dataSourceUrlConfig::getElasticIndex);
         //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
         //you can run service discovery
-
-        //No idea why these two are here, neither are data source providers
-//            urlMap.put("authentication", basePath + "/api/authentication/v1");
-//            urlMap.put("authorisation", basePath + "/api/authorisation/v1");
 
         LOGGER.info("Using the following local URLs for services:\n" +
                 urlMap.entrySet().stream()

@@ -50,7 +50,7 @@ public class XMLFragmentParserFactory implements ParserFactory {
     }
 
     @Override
-    public XMLReader getParser() throws SAXException {
+    public XMLReader getParser() {
         return new XMLFragmentParser(xml);
     }
 }

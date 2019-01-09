@@ -307,6 +307,9 @@ public class App extends Application<Config> {
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);
 
+        // Map exceptions to helpful HTTP responses
+        environment.jersey().register(PermissionExceptionMapper.class);
+
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);
     }

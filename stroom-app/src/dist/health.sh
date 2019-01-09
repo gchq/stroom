@@ -6,10 +6,18 @@
 # give the directory relative to the lib script, not this script.
 readonly DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# shellcheck disable=SC1090
-source "$DIR"/bin/utils.sh
-# shellcheck disable=SC1091
-source config/scripts.env
+echo_usage() {
+  echo -e "${GREEN}This script checks the health of Stroom${NC}"
+  echo -e "Usage: ${BLUE}$0${GREEN} [-h] [-m]${NC}" >&2
+  echo -e " -h:   ${GREEN}Print Help (this message) and exit${NC}"
+  echo -e " -m:   ${GREEN}Monochrome. Don't use colours in terminal output.${NC}"
+}
+
+invalid_arguments() {
+  echo -e "${RED}ERROR${NC} - Invalid arguments" >&2
+  echo_usage
+  exit 1
+}
 
 echo_healthy() {
   info "  Status:   ${GREEN}HEALTHY${NC}"
@@ -94,13 +102,40 @@ check_health() {
   else
     echo_unhealthy
     local err_msg
-    err_msg=$(curl -s --show-error "${health_check_url}" 2>&1)
-    error "${RED}${err_msg}${NC}"
+    # Run a clightly different curl command to extract the curl error message
+    # from stderr
+    # OR it with true to stop it halting the script as we have '-e' set
+    err_msg="$(curl -s --show-error "${health_check_url}" 2>&1 || true)"
+    echo -e "${RED}${err_msg}${NC}"
     total_unhealthy_count=$((total_unhealthy_count + 1))
   fi
 }
 
 main() {
+  # shellcheck disable=SC1090
+  source "$DIR"/bin/utils.sh
+  # shellcheck disable=SC1091
+  source config/scripts.env
+
+  while getopts ":mh" arg; do
+    # shellcheck disable=SC2034
+    case $arg in
+      h ) 
+        echo_usage
+        exit 0
+        ;;
+      m )  
+        MONOCHROME=true 
+        ;;
+      * ) 
+        invalid_arguments
+        ;;  # getopts already reported the illegal option
+    esac
+  done
+  shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+  setup_colours
+
   #check_is_configured
   check_start_is_not_erroring
 
@@ -111,7 +146,8 @@ main() {
   return ${total_unhealthy_count}
 }
 
-main 
+main "$@"
 
 # Return the unhealthy count so this script can be used in an automated way
 exit $?
+# vim:sw=2:ts=2:et:

@@ -123,9 +123,9 @@ visualisations.DayWeekHeatMap = function() {
             "vis-min-max");
 
     var getScale = function(type, min, max) {
-        if (type == "DATE_TIME") {
+        if (type == commonConstants.dataTypeDateTime) {
             return d3.time.scale.utc().range([ min, max ]);
-        } else if (type == "NUMBER") {
+        } else if (type == commonConstants.dataTypeNumber) {
             return d3.scale.linear().range([ min, max ]);
         } else {
             return d3.scale.ordinal().rangeRoundBands([ min, max ], 0);

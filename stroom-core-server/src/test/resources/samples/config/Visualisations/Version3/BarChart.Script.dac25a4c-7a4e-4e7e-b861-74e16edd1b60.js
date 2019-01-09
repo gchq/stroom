@@ -198,7 +198,7 @@ if (!visualisations) {
                             return gridCellData.values.length;
                         });
                         if (maxSeriesPerGridCell === 1 && 
-                            (data.types[0] == "GENERAL" || data.types[0] == "TEXT") && 
+                            (data.types[0] == commonConstants.dataTypeGeneral || data.types[0] == commonConstants.dataTypeText) &&
                             !commonFunctions.isTrue(settings.synchSeries)
                         ) {
                             legendKeyField = 0;
@@ -211,7 +211,7 @@ if (!visualisations) {
                         }
                     }
 
-                    //Get grid to construct the grid cells and for each one call back into a 
+                    //Get grid to construct the grid cells and for each one call back into a
                     //new instance of this to build the visualisation in the cell
                     //The last array arg allows you to synchronise the scales of fields
                     grid.buildGrid(context, settings, data, this, commonConstants.transitionDuration, synchedFields);
@@ -219,7 +219,7 @@ if (!visualisations) {
             }
         };
 
-        //Public entry point for the Grid to call back in to set the cell level data on the cell level 
+        //Public entry point for the Grid to call back in to set the cell level data on the cell level
         //visualisation instance.
         //data will only contain the branch of the tree for this cell
         this.setDataInsideGrid = function(context, settings, data) {
@@ -246,8 +246,13 @@ if (!visualisations) {
             }
 
             //colour scale and fill function depend on whether the series are synched, whether the values
-            //are ordinal or not and how many series we have 
-            if ((maxSeriesPerGridCell == 1 && (data.types[0] == "GENERAL" || data.types[0] == "TEXT")) && !commonFunctions.isTrue(settings.synchSeries) ){
+            //are ordinal or not and how many series we have
+            if (
+              (
+                maxSeriesPerGridCell == 1 &&
+                (data.types[0] == commonConstants.dataTypeGeneral || data.types[0] == commonConstants.dataTypeText)
+              ) &&
+              !commonFunctions.isTrue(settings.synchSeries) ){
                 if (typeof(context) === "undefined" || typeof(context.color) === "undefined") {
                     commonFunctions.setColourDomain(colour, data, 0, "VALUE");
                 }
@@ -283,9 +288,9 @@ if (!visualisations) {
 
                 xSettings = commonFunctions.createAxis(visData.types[0], 0, width);
                 xScale = xSettings.scale;
-                
-                if (visData.types[0] == "DATE_TIME" && bucketSizeMs) {
-                    //bucketised charts are a special case and we need to add the size of the bucket on to the 
+
+                if (visData.types[0] == commonConstants.dataTypeDateTime && bucketSizeMs) {
+                    //bucketised charts are a special case and we need to add the size of the bucket on to the
                     //end of the x scale to account for the last bucket's width
                     xSettings.setExplicitRangeDomain(visibleValues[0].min[0], visibleValues[0].max[0] + bucketSizeMs);
                 } else {
@@ -320,7 +325,7 @@ if (!visualisations) {
 
                     var xOffset = 0;
 
-                    if (visData.types[0] == "TEXT" || visData.types[0] == "GENERAL") {
+                    if (visData.types[0] == commonConstants.dataTypeText || visData.types[0] == commonConstants.dataTypeGeneral) {
                         if (visibleValues.length > 1) {
                             barWidth = xScale.rangeBand() / visibleValues.length;
                             xOffset = -barWidth;

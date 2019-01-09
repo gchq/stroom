@@ -245,6 +245,14 @@ task copyJar(type: Copy) {
 task copySupportingFiles(type: Copy) {
     from 'src/dist'
     into releaseBuildDir 
+
+    doLast {
+        // stroom.conf is a sym-link so it seems to go into the zip with +x perms
+        // which we don't want
+        exec {
+            commandLine 'chmod', '644', "${releaseBuildDir}/config/stroom.conf"
+        }
+    }
 }
 
 import de.undercouch.gradle.tasks.download.Download
@@ -262,11 +270,9 @@ task downloadSendArgs(type: Download) {
 task makeSendExecutable {
     dependsOn copySupportingFiles
     doLast{
+        // The args script is sourced so doesn't need execute perms
         exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
-        }
-        exec {
-            commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom_args.sh"
         }
     }
 }
@@ -295,6 +301,14 @@ tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
 
+// The gradle application plugin enables the distribution plugin
+// which creats .zip/tar archives by default, as does the shadow plugin
+// We have our own buildDistribution task so disable the standard ones to avoid confusion
+distZip.enabled = false
+distTar.enabled = false
+shadowDistZip.enabled = false
+shadowDistTar.enabled = false
+
 //commented out in case we decide to use this plugin
 //honker {
 //// Your project license
@@ -313,3 +327,4 @@ tasks.build.dependsOn buildDistribution
 ////}
 ////}
 //}
+
