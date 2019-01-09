@@ -22,6 +22,8 @@ def propNameJooqGeneration = 'jooqGeneration'
 
 // to run the jooq code generation add the following to the gradle command arguments
 // -PjooqGeneration=true
+// jooq generation is triggered by the compileJava task so to run it for just this module do
+// ./gradlew clean :stroom-processor:stroom-processor-impl-db-gen:compileJava -PjooqGeneration=true
 if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
     configure(project) {
         //configure jooq plugin to generate code
@@ -39,13 +41,21 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     name = 'org.jooq.codegen.JavaGenerator'
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
-                        // Add anything you want included in generation below
-                        includes = 'processor|processor_filter|processor_filter_tracker|processor_filter_task'
+                        inputSchema = 'stroom'
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
+                        includes = "" +
+                            "processor |" +
+                            "processor_filter |" +
+                            "processor_filter_tracker |" +
+                            "processor_filter_task"
+
                         // We don't want to include flyway versioning
                         excludes = 'processor_schema_history'
 
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
+                        //recordTimestampFields = 'update_time_ms'
                     }
                     target {
                         packageName = 'stroom.processor.impl.db'
