@@ -90,9 +90,5 @@ public class V6_2_0_11__SqlStatistics implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE STAT_DAT_SRC TO OLD_STAT_DAT_SRC")) {
-            preparedStatement.execute();
-        }
     }
 }

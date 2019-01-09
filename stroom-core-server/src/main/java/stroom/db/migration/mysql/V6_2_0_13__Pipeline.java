@@ -76,9 +76,5 @@ public class V6_2_0_13__Pipeline implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE PIPE TO OLD_PIPE")) {
-            preparedStatement.execute();
-        }
     }
 }

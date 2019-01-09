@@ -82,9 +82,5 @@ public class V6_2_0_4__XmlSchema implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE XML_SCHEMA TO OLD_XML_SCHEMA")) {
-            preparedStatement.execute();
-        }
     }
 }

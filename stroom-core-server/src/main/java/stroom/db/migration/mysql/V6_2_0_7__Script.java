@@ -86,9 +86,5 @@ public class V6_2_0_7__Script implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE SCRIPT TO OLD_SCRIPT")) {
-            preparedStatement.execute();
-        }
     }
 }

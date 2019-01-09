@@ -16,16 +16,16 @@
 
 package stroom.streamtask.shared;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.docref.DocRef;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-@Entity
+@Deprecated // for removal
+//@Entity
 @Table(name = "PROCESSOR")
 public class Processor extends AuditedEntity {
     public static final String TABLE_NAME = "PROCESSOR";

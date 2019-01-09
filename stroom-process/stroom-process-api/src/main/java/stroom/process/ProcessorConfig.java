@@ -9,7 +9,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ProcessConfig implements BatchDeleteConfig, IsConfig {
+public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
 
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
@@ -105,7 +105,7 @@ public class ProcessConfig implements BatchDeleteConfig, IsConfig {
 
     @Override
     public String toString() {
-        return "ProcessConfig{" +
+        return "ProcessorConfig{" +
                 "assignTasks=" + assignTasks +
                 ", createTasks=" + createTasks +
                 ", deleteAge='" + deleteAge + '\'' +

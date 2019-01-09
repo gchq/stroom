@@ -28,22 +28,34 @@ CREATE TABLE IF NOT EXISTS processor (
   KEY strm_proc_fk_pipe_id (fk_pipe_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
---
--- Copy data into the table, use ID predicate to make it re-runnable
---
-INSERT
-INTO processor (id, version, create_user, update_user, task_type, pipeline_uuid, enabled, create_time, update_time)
-SELECT SP.ID, SP.VER, SP.CRT_USER, SP.UPD_USER, SP.TASK_TP, P.UUID, SP.ENBL, SP.CRT_MS, SP.UPD_MS
-FROM STRM_PROC SP
-INNER JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)
-WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
-ORDER BY SP.ID;
+DROP PROCEDURE IF EXISTS copy;
+DELIMITER //
+CREATE PROCEDURE copy ()
+BEGIN
+    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
+    -- if it doesn't exist then it won't ever have data to migrate
+    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_PROC' > 0) THEN
+        --
+        -- Copy data into the table, use ID predicate to make it re-runnable
+        --
+        INSERT
+        INTO processor (id, version, create_user, update_user, task_type, pipeline_uuid, enabled, create_time, update_time)
+        SELECT SP.ID, SP.VER, SP.CRT_USER, SP.UPD_USER, SP.TASK_TP, P.UUID, SP.ENBL, SP.CRT_MS, SP.UPD_MS
+        FROM STRM_PROC SP
+        INNER JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)
+        WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
+        ORDER BY SP.ID;
 
--- Work out what to set our auto_increment start value to
-SELECT COALESCE(MAX(id) + 1, 1)
-INTO @next_id
-FROM processor
+        -- Work out what to set our auto_increment start value to
+        SELECT CONCAT('ALTER TABLE processor AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        INTO @alter_table_sql
+        FROM processor;
 
-ALTER TABLE processor AUTO_INCREMENT=@next_id;
-
+        PREPARE alter_table_stmt FROM @alter_table_sql;
+        EXECUTE alter_table_stmt;
+    END IF;
+END//
+DELIMITER ;
+CALL copy();
+DROP PROCEDURE copy;
 

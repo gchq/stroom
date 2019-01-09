@@ -90,9 +90,5 @@ public class V6_2_0_10__HBaseStatistics implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE STROOM_STATS_STORE TO OLD_STROOM_STATS_STORE")) {
-            preparedStatement.execute();
-        }
     }
 }

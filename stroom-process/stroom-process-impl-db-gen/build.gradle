@@ -43,6 +43,9 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         includes = 'processor|processor_filter|processor_filter_tracker|processor_filter_task'
                         // We don't want to include flyway versioning
                         excludes = 'process_schema_history'
+
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
                     }
                     target {
                         packageName = 'stroom.process.impl.db'

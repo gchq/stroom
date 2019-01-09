@@ -43,18 +43,31 @@ CREATE TABLE processor_filter_task (
   CONSTRAINT processor_filter_task_fk_processor_filter_id FOREIGN KEY (fk_processor_filter_id) REFERENCES processor_filter (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Copy data into the table, use ID predicate to make it re-runnable
-INSERT
-INTO processor_filter_task (id, version, create_time_ms, end_time_ms, status, status_time_ms, start_time_ms, node_name, stream_id, data, fk_processor_filter_id)
-SELECT ID, VER, CRT_MS, END_TIME_MS, STAT, STAT_MS, START_TIME_MS, FK_ND_ID, FK_STRM_ID, DAT, FK_STRM_PROC_FILT_ID
-FROM STRM_TASK
-WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_task)
-ORDER BY ID;
+DROP PROCEDURE IF EXISTS copy;
+DELIMITER //
+CREATE PROCEDURE copy ()
+BEGIN
+    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
+    -- if it doesn't exist then it won't ever have data to migrate
+    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_TASK' > 0) THEN
+        -- Copy data into the table, use ID predicate to make it re-runnable
+        INSERT
+        INTO processor_filter_task (id, version, create_time_ms, end_time_ms, status, status_time_ms, start_time_ms, node_name, stream_id, data, fk_processor_filter_id)
+        SELECT ID, VER, CRT_MS, END_TIME_MS, STAT, STAT_MS, START_TIME_MS, FK_ND_ID, FK_STRM_ID, DAT, FK_STRM_PROC_FILT_ID
+        FROM STRM_TASK
+        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_task)
+        ORDER BY ID;
 
--- Work out what to set our auto_increment start value to
-SELECT COALESCE(MAX(id) + 1, 1)
-INTO @next_id
-FROM processor_filter_task
+        -- Work out what to set our auto_increment start value to
+        SELECT CONCAT('ALTER TABLE processor_filter_task AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        INTO @alter_table_sql
+        FROM processor_filter_task;
 
-ALTER TABLE processor_filter_task AUTO_INCREMENT=@next_id;
+        PREPARE alter_table_stmt FROM @alter_table_sql;
+        EXECUTE alter_table_stmt;
+    END IF;
+END//
+DELIMITER ;
+CALL copy();
+DROP PROCEDURE copy;
 

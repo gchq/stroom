@@ -16,18 +16,20 @@ DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'FD' > 0) THEN
+
     INSERT INTO data_feed (id, name)
     SELECT ID, NAME
     FROM FD
     WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_feed)
     ORDER BY ID;
-  END IF;
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_FD' > 0) THEN
-    INSERT INTO data_feed (id, name)
-    SELECT ID, NAME
-    FROM OLD_FD
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_feed)
-    ORDER BY ID;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE data_feed AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM data_feed;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;

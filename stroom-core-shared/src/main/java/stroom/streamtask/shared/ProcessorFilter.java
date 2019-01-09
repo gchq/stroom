@@ -22,7 +22,6 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.QueryData;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
@@ -32,7 +31,8 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 
-@Entity(name = "PROCESSOR_FILTER")
+@Deprecated // for removal
+//@Entity(name = "PROCESSOR_FILTER")
 public class ProcessorFilter extends AuditedEntity {
     public static final String TABLE_NAME = "PROCESSOR_FILTER";
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

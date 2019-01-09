@@ -83,9 +83,5 @@ public class V6_2_0_3__TextConverter implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE TXT_CONV TO OLD_TXT_CONV")) {
-            preparedStatement.execute();
-        }
     }
 }

@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.process.ProcessConfig;
+import stroom.process.ProcessorConfig;
 import stroom.util.db.DbUtil;
 
 import javax.inject.Provider;
@@ -32,7 +32,7 @@ public class ProcessDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<ProcessConfig> configProvider) {
+    ConnectionProvider getConnectionProvider(final Provider<ProcessorConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
 
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app

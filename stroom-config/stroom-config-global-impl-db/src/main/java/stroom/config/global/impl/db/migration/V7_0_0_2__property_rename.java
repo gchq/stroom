@@ -231,18 +231,18 @@ public class V7_0_0_2__property_rename implements JdbcMigration {
         // TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
         // ? stroom.stream.deleteBatchSize ? stroom.data.store.deleteBatchSize
         // ? stroom.stream.deletePurgeAge ? stroom.data.store.deletePurgeAge
-        // ? stroom.streamAttribute.deleteAge ? stroom.process.deleteAge
+        // ? stroom.streamAttribute.deleteAge ? stroom.processor.deleteAge
         // ? stroom.streamAttribute.deleteBatchSize ?
 
-        FROM_TO_MAP.put("stroom.streamTask.assignTasks", "stroom.process.assignTasks");
-        FROM_TO_MAP.put("stroom.streamTask.createTasks", "stroom.process.createTasks");
+        FROM_TO_MAP.put("stroom.streamTask.assignTasks", "stroom.processor.assignTasks");
+        FROM_TO_MAP.put("stroom.streamTask.createTasks", "stroom.processor.createTasks");
 
         // TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
-        // ? stroom.streamTask.deleteAge ? stroom.process.deleteAge
+        // ? stroom.streamTask.deleteAge ? stroom.processor.deleteAge
         // ? stroom.streamTask.deleteBatchSize ?
 
-        FROM_TO_MAP.put("stroom.streamTask.fillTaskQueue", "stroom.process.fillTaskQueue");
-        FROM_TO_MAP.put("stroom.streamTask.queueSize", "stroom.process.queueSize");
+        FROM_TO_MAP.put("stroom.streamTask.fillTaskQueue", "stroom.processor.fillTaskQueue");
+        FROM_TO_MAP.put("stroom.streamTask.queueSize", "stroom.processor.queueSize");
         FROM_TO_MAP.put("stroom.streamstore.preferLocalVolumes", "stroom.volumes.preferLocalVolumes");
         FROM_TO_MAP.put("stroom.streamstore.resilientReplicationCount", "stroom.volumes.resilientReplicationCount");
         FROM_TO_MAP.put("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");

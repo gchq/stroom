@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.process.ProcessorConfig;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -39,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
     @Inject
-    private ProcessConfig processConfig;
+    private ProcessorConfig processorConfig;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -126,9 +127,9 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
             commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
         }
 
-        final int initialQueueSize = processConfig.getQueueSize();
-        processConfig.setQueueSize(1000);
-        processConfig.setFillTaskQueue(false);
+        final int initialQueueSize = processorConfig.getQueueSize();
+        processorConfig.setQueueSize(1000);
+        processorConfig.setFillTaskQueue(false);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
@@ -147,8 +148,8 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         tasks = streamTaskCreator.assignStreamTasks(node, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
-        processConfig.setQueueSize(initialQueueSize);
-        processConfig.setFillTaskQueue(true);
+        processorConfig.setQueueSize(initialQueueSize);
+        processorConfig.setFillTaskQueue(true);
     }
 
     @Test

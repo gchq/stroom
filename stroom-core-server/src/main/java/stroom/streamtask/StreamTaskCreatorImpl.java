@@ -28,6 +28,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.process.ProcessorConfig;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -98,7 +99,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final NodeCache nodeCache;
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
-    private final ProcessConfig processConfig;
+    private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final DataMetaService streamMetaService;
     private final Security security;
@@ -149,7 +150,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final NodeCache nodeCache,
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
-                          final ProcessConfig processConfig,
+                          final ProcessorConfig processorConfig,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                           final DataMetaService streamMetaService,
                           final Security security) {
@@ -160,7 +161,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.nodeCache = nodeCache;
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
-        this.processConfig = processConfig;
+        this.processorConfig = processorConfig;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
         this.streamMetaService = streamMetaService;
         this.security = security;
@@ -207,7 +208,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         List<ProcessorFilterTask> assignedStreamTasks = Collections.emptyList();
 
         try {
-            if (processConfig.isAssignTasks() && count > 0) {
+            if (processorConfig.isAssignTasks() && count > 0) {
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFiltersRef.get();
                 if (filters != null && filters.size() > 0) {
@@ -395,7 +396,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         // tests will call this directly while scheduled execution could also be
         // running.
         LOGGER.debug("doCreateTasks()");
-        totalQueueSize = processConfig.getQueueSize();
+        totalQueueSize = processorConfig.getQueueSize();
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("doCreateTasks() - Starting");
@@ -505,13 +506,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         // previously created but are unprocessed, not owned by any
                         // node and their associated stream is unlocked then add
                         // them here.
-                        if (processConfig.isFillTaskQueue()) {
+                        if (processorConfig.isFillTaskQueue()) {
                             count = addUnownedTasks(taskContext, node, loadedFilter, queue, tasksToCreate);
                         }
 
                         // If we allowing tasks to be created then go ahead and
                         // create some.
-                        if (processConfig.isCreateTasks()) {
+                        if (processorConfig.isCreateTasks()) {
                             tasksToCreate -= count;
 //                            final String logPrefix = "Creating tasks with filter " + loadedFilter.getId();
 

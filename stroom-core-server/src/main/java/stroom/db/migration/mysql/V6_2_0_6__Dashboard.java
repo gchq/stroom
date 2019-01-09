@@ -72,9 +72,5 @@ public class V6_2_0_6__Dashboard implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE DASH TO OLD_DASH")) {
-            preparedStatement.execute();
-        }
     }
 }

@@ -83,9 +83,5 @@ public class V6_2_0_8__Visualisation implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE VIS TO OLD_VIS")) {
-            preparedStatement.execute();
-        }
     }
 }

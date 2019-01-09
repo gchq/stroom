@@ -18,34 +18,39 @@ CREATE TABLE IF NOT EXISTS config_history (
   PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Copy data into the config table
---
 DROP PROCEDURE IF EXISTS copy;
 DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
+    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
+    -- if it doesn't exist then it won't ever have data to migrate
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'GLOB_PROP' > 0) THEN
+
         INSERT INTO config (name, val)
         SELECT NAME, VAL
         FROM GLOB_PROP
         ORDER BY NAME;
 
+        -- Work out what to set our auto_increment start value to
+        SELECT CONCAT('ALTER TABLE config AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        INTO @alter_table_sql
+        FROM config_history;
+
+        PREPARE alter_table_stmt FROM @alter_table_sql;
+        EXECUTE alter_table_stmt;
+
         INSERT INTO config_history (update_time, update_user, name, val)
         SELECT UPD_MS, UPD_USER, NAME, VAL
         FROM GLOB_PROP
         ORDER BY NAME;
-    END IF;
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_GLOB_PROP' > 0) THEN
-      INSERT INTO config (name, val)
-      SELECT NAME, VAL
-      FROM OLD_GLOB_PROP
-      ORDER BY NAME;
 
-      INSERT INTO config_history (update_time, update_user, name, val)
-      SELECT UPD_MS, UPD_USER, NAME, VAL
-      FROM OLD_GLOB_PROP
-      ORDER BY NAME;
+        -- Work out what to set our auto_increment start value to
+        SELECT CONCAT('ALTER TABLE config_history AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        INTO @alter_table_sql
+        FROM config_history;
+
+        PREPARE alter_table_stmt FROM @alter_table_sql;
+        EXECUTE alter_table_stmt;
     END IF;
 END//
 DELIMITER ;

@@ -15,13 +15,13 @@ import stroom.node.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;
+import stroom.process.ProcessorConfig;
 import stroom.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 import stroom.servlet.ExportConfig;
 import stroom.statistics.StatisticsConfig;
-import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.IsConfig;
@@ -47,7 +47,7 @@ public class AppConfig implements IsConfig {
     private NodeConfig nodeConfig;
     private PipelineConfig pipelineConfig;
     private PolicyConfig policyConfig;
-    private ProcessConfig processConfig;
+    private ProcessorConfig processorConfig;
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
     private QueryHistoryConfig queryHistoryConfig;
@@ -74,7 +74,7 @@ public class AppConfig implements IsConfig {
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
         this.policyConfig = new PolicyConfig();
-        this.processConfig = new ProcessConfig();
+        this.processorConfig = new ProcessorConfig();
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
         this.queryHistoryConfig = new QueryHistoryConfig();
@@ -102,7 +102,7 @@ public class AppConfig implements IsConfig {
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
               final PolicyConfig policyConfig,
-              final ProcessConfig processConfig,
+              final ProcessorConfig processorConfig,
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
               final QueryHistoryConfig queryHistoryConfig,
@@ -127,7 +127,7 @@ public class AppConfig implements IsConfig {
         this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
         this.policyConfig = policyConfig;
-        this.processConfig = processConfig;
+        this.processorConfig = processorConfig;
         this.propertyServiceConfig = propertyServiceConfig;
         this.proxyAggregationConfig = proxyAggregationConfig;
         this.queryHistoryConfig = queryHistoryConfig;
@@ -269,12 +269,12 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("process")
-    public ProcessConfig getProcessConfig() {
-        return processConfig;
+    public ProcessorConfig getProcessorConfig() {
+        return processorConfig;
     }
 
-    public void setProcessConfig(final ProcessConfig processConfig) {
-        this.processConfig = processConfig;
+    public void setProcessorConfig(final ProcessorConfig processorConfig) {
+        this.processorConfig = processorConfig;
     }
 
     @JsonProperty("properties")

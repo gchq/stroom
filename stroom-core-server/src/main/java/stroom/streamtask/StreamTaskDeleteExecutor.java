@@ -23,6 +23,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Period;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
+import stroom.process.ProcessorConfig;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -51,13 +52,13 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Inject
     StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                              final ClusterLockService clusterLockService,
-                             final ProcessConfig processConfig,
+                             final ProcessorConfig processorConfig,
                              final TaskContext taskContext,
                              final StreamTaskCreatorImpl streamTaskCreator,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StroomEntityManager stroomEntityManager) {
         super(batchIdTransactionHelper, clusterLockService, taskContext, TASK_NAME, LOCK_NAME,
-                processConfig, TEMP_STRM_TASK_ID_TABLE);
+                processorConfig, TEMP_STRM_TASK_ID_TABLE);
         this.streamTaskCreator = streamTaskCreator;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.stroomEntityManager = stroomEntityManager;

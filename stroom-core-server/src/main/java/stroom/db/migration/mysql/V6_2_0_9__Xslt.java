@@ -74,9 +74,5 @@ public class V6_2_0_9__Xslt implements JdbcMigration {
                 }
             }
         }
-
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE XSLT TO OLD_XSLT")) {
-            preparedStatement.execute();
-        }
     }
 }

@@ -21,10 +21,10 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.Transient;
 
-@Entity(name = "PROCESSOR_FILTER_TRACKER")
+@Deprecated // for removal
+//@Entity(name = "PROCESSOR_FILTER_TRACKER")
 public class ProcessorFilterTracker extends BaseEntitySmall {
     public static final String TABLE_NAME = "PROCESSOR_FILTER_TRACKER";
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
