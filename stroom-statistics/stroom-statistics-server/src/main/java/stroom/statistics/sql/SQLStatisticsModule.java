@@ -28,6 +28,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.task.api.TaskHandler;
 import stroom.util.db.DbUtil;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -45,6 +46,9 @@ public class SQLStatisticsModule extends AbstractModule {
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(SQLStatisticFlushTaskHandler.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(SQLStatisticsJobs.class);
     }
 
     @Provides
