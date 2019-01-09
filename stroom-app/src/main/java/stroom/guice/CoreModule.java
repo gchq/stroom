@@ -59,6 +59,7 @@ public class CoreModule extends AbstractModule {
 //        install(new stroom.properties.impl.PropertyModule());
         install(new GlobalConfigModule());
         install(new GlobalConfigDbModule());
+        install(new stroom.process.impl.db.ProcessDbModule());
         install(new stroom.query.QueryModule());
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.ruleset.RulesetModule());

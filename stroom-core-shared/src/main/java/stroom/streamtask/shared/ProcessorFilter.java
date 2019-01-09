@@ -31,7 +31,7 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 
-@Deprecated // for removal
+@Deprecated // Use JOOQ
 //@Entity(name = "PROCESSOR_FILTER")
 public class ProcessorFilter extends AuditedEntity {
     public static final String TABLE_NAME = "PROCESSOR_FILTER";

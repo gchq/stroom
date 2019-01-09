@@ -25,9 +25,9 @@
 CREATE TABLE IF NOT EXISTS processor_filter (
   id int(11) NOT NULL AUTO_INCREMENT,
   version tinyint(4) NOT NULL,
-  create_time bigint(20) DEFAULT NULL,
+  create_time_ms bigint(20) DEFAULT NULL,
   create_user varchar(255) DEFAULT NULL,
-  update_time bigint(20) DEFAULT NULL,
+  update_time_ms bigint(20) DEFAULT NULL,
   update_user varchar(255) DEFAULT NULL,
   data longtext NOT NULL,
   priority int(11) NOT NULL,
@@ -52,7 +52,7 @@ BEGIN
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
         INSERT
-        INTO processor_filter (id, version, create_time, create_user, update_time, update_user, data, priority, fk_processor_id, fk_processor_filter_tracker_id, enabled)
+        INTO processor_filter (id, version, create_time_ms, create_user, update_time_ms, update_user, data, priority, fk_processor_id, fk_processor_filter_tracker_id, enabled)
         SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, DAT, PRIOR, FK_STRM_PROC_ID, FK_STRM_PROC_FILT_TRAC_ID, ENBL
         FROM STRM_PROC_FILT
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor)

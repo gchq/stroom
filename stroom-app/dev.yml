@@ -157,7 +157,7 @@ appConfig:
       maxActiveDestinations: 100
   policy:
     deleteBatchSize: 1000
-  process:
+  processor:
     connection:
       jdbcDriverClassName: com.mysql.jdbc.Driver
       jdbcDriverUrl: jdbc:mysql://${STROOM_HOST:-localhost}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8

@@ -22,11 +22,11 @@ CREATE TABLE IF NOT EXISTS processor (
   task_type varchar(255) DEFAULT NULL,
   pipeline_uuid varchar(255) NOT NULL,
   enabled bit(1) NOT NULL,
-  create_time bigint(20) DEFAULT NULL,
-  update_time bigint(20) DEFAULT NULL,
+  create_time_ms bigint(20) DEFAULT NULL,
+  update_time_ms bigint(20) DEFAULT NULL,
   PRIMARY KEY (id),
-  KEY strm_proc_fk_pipe_id (fk_pipe_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+  KEY strm_proc_fk_pipe_id (pipeline_uuid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy;
 DELIMITER //
@@ -39,7 +39,7 @@ BEGIN
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
         INSERT
-        INTO processor (id, version, create_user, update_user, task_type, pipeline_uuid, enabled, create_time, update_time)
+        INTO processor (id, version, create_user, update_user, task_type, pipeline_uuid, enabled, create_time_ms, update_time_ms)
         SELECT SP.ID, SP.VER, SP.CRT_USER, SP.UPD_USER, SP.TASK_TP, P.UUID, SP.ENBL, SP.CRT_MS, SP.UPD_MS
         FROM STRM_PROC SP
         INNER JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)

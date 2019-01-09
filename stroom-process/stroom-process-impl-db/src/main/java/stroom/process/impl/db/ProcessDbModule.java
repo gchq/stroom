@@ -23,13 +23,17 @@ public class ProcessDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(ProcessorServiceImpl.class).asEagerSingleton();
+
 //        bind(FeedService.class).to(FeedServiceImpl.class);
 
         // TODO do we need any clean up in process?
 //        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
 //        clearableBinder.addBinding().to(Cleanup.class);
+
     }
 
+    @SuppressWarnings("unused")
     @Provides
     @Singleton
     ConnectionProvider getConnectionProvider(final Provider<ProcessorConfig> configProvider) {

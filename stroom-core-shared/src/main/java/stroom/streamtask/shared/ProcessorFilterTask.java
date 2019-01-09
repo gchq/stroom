@@ -29,7 +29,7 @@ import javax.persistence.Transient;
 /**
  * Class used to represent processing a stream.
  */
-@Deprecated // for removal
+@Deprecated // Use JOOQ
 //@Entity
 @Table(name = "PROCESSOR_FILTER_TASK")
 public class ProcessorFilterTask extends TaskBasedEntity {

@@ -23,7 +23,7 @@ import stroom.util.shared.ModelStringUtil;
 import javax.persistence.Column;
 import javax.persistence.Transient;
 
-@Deprecated // for removal
+@Deprecated // use JOOQ
 //@Entity(name = "PROCESSOR_FILTER_TRACKER")
 public class ProcessorFilterTracker extends BaseEntitySmall {
     public static final String TABLE_NAME = "PROCESSOR_FILTER_TRACKER";

@@ -15,7 +15,7 @@
 --) ENGINE=InnoDB DEFAULT CHARSET=latin1
 
 -- Create the table
-CREATE TABLE processor_filter_tracker (
+CREATE TABLE IF NOT EXISTS processor_filter_tracker (
   id int(11) NOT NULL AUTO_INCREMENT,
   version tinyint(4) NOT NULL,
   min_stream_id bigint(20) NOT NULL,

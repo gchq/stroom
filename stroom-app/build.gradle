@@ -78,6 +78,7 @@ dependencies {
     compile project(':stroom-index:stroom-index-server')
     compile project(':stroom-kafka:stroom-kafka-impl')
     compile project(':stroom-kafka:stroom-kafka-pipeline')
+    compile project(':stroom-process:stroom-process-impl-db')
     compile project(':stroom-pipeline')
 //<<<<<<< HEAD
 //=======

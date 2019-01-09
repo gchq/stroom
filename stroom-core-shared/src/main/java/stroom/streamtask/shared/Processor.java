@@ -24,7 +24,7 @@ import javax.persistence.Column;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-@Deprecated // for removal
+@Deprecated // Use JOOQ
 //@Entity
 @Table(name = "PROCESSOR")
 public class Processor extends AuditedEntity {

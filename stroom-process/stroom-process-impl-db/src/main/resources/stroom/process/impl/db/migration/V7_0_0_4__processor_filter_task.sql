@@ -23,7 +23,7 @@
 -- Create the table
 --
 
-CREATE TABLE processor_filter_task (
+CREATE TABLE IF NOT EXISTS processor_filter_task (
   id bigint(20) NOT NULL AUTO_INCREMENT,
   version tinyint(4) NOT NULL,
   create_time_ms bigint(20) DEFAULT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE processor_filter_task (
   data longtext,
   fk_processor_filter_id int(11) NOT NULL,
   PRIMARY KEY (id),
-  KEY processor_filter_task_status_idx (stat),
+  KEY processor_filter_task_status_idx (status),
   KEY processor_filter_task_stream_id_idx (stream_id),
   KEY processor_filter_task_fk_processor_filter_id (fk_processor_filter_id),
   KEY processor_filter_task_node_name_idx (node_name),

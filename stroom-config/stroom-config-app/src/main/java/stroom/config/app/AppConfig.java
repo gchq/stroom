@@ -268,7 +268,7 @@ public class AppConfig implements IsConfig {
         this.policyConfig = policyConfig;
     }
 
-    @JsonProperty("process")
+    @JsonProperty("processor")
     public ProcessorConfig getProcessorConfig() {
         return processorConfig;
     }
