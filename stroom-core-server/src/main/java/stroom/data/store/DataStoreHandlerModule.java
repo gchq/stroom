@@ -19,6 +19,7 @@ package stroom.data.store;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.task.api.TaskHandler;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
@@ -30,5 +31,8 @@ public class DataStoreHandlerModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(StreamDownloadTaskHandler.class);
         taskHandlerBinder.addBinding().to(StreamUploadTaskHandler.class);
         taskHandlerBinder.addBinding().to(UploadDataHandler.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(DataStoreJobs.class);
     }
 }

@@ -66,8 +66,6 @@ public class StreamRetentionExecutor {
         this.clusterLockService = clusterLockService;
     }
 
-    @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Stream Retention", description = "Delete data that exceeds the retention period specified by feed")
     public void exec() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("Stream Retention Executor - start");
