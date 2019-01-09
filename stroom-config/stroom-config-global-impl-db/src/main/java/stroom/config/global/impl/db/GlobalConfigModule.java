@@ -3,6 +3,7 @@ package stroom.config.global.impl.db;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.task.api.TaskHandler;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class GlobalConfigModule extends AbstractModule {
     @Override
@@ -14,6 +15,9 @@ public class GlobalConfigModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(FetchGlobalConfigHandler.class);
         taskHandlerBinder.addBinding().to(LoadGlobalConfigHandler.class);
         taskHandlerBinder.addBinding().to(SaveGlobalConfigHandler.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(GlobalConfigJobs.class);
     }
 
     @Override
