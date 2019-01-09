@@ -86,8 +86,6 @@ class ProxyAggregationExecutor {
         repositoryProcessor.setMaxFileScan(maxFileScan);
     }
 
-    @StroomSimpleCronSchedule(cron = "0,10,20,30,40,50 * *")
-    @JobTrackedSchedule(jobName = "Proxy Aggregation", advanced = false, description = "Job to pick up the data written by the proxy and store it in Stroom")
     public void exec() {
         try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
