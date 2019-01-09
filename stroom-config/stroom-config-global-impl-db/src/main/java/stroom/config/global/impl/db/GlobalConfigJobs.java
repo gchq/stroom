@@ -11,7 +11,7 @@ import java.util.List;
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-public class GlobalConfigJobs implements ScheduledJobs {
+class GlobalConfigJobs implements ScheduledJobs {
 
     private GlobalConfigService globalConfigService;
 
