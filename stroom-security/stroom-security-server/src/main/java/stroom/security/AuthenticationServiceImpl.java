@@ -116,19 +116,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
             UserRef userRef = userService.getUserByName(name);
             if (userRef == null) {
-                User user = new User();
-                user.setName(name);
-                user = userService.save(user);
+                userRef = userService.createUser(name);
 
                 final UserRef userGroup = createOrRefreshAdminUserGroup();
                 try {
-                    userService.addUserToGroup(UserRefFactory.create(user), userGroup);
+                    userService.addUserToGroup(userRef, userGroup);
                 } catch (final RuntimeException e) {
                     // Expected.
                     LOGGER.debug(e.getMessage());
                 }
-
-                userRef = UserRefFactory.create(user);
             }
 
             return userRef;
@@ -146,15 +142,12 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private UserRef createOrRefreshAdminUserGroup(final String userGroupName) {
         return security.asProcessingUserResult(() -> {
-            final FindUserCriteria findUserGroupCriteria = new FindUserCriteria(userGroupName, true);
-            findUserGroupCriteria.getFetchSet().add(Permission.ENTITY_TYPE);
-
-            final User userGroup = userService.find(findUserGroupCriteria).getFirst();
-            if (userGroup != null) {
-                return UserRefFactory.create(userGroup);
+            final UserRef existing = userService.getUserByName(userGroupName);
+            if (existing != null) {
+                return existing;
             }
 
-            UserRef newUserGroup = userService.createUserGroup(userGroupName);
+            final UserRef newUserGroup = userService.createUserGroup(userGroupName);
             try {
                 userAppPermissionService.addPermission(newUserGroup, PermissionNames.ADMINISTRATOR);
             } catch (final RuntimeException e) {

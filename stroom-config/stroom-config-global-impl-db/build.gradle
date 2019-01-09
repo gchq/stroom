@@ -27,5 +27,5 @@ dependencies {
     testCompile libs.dropwizard_core
     testCompile libs.dropwizard_jersey
     testCompile libs.dropwizard_jackson
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
 }

@@ -96,7 +96,7 @@ ext.versions = [
         jersey            : '2.25.1',
         jetty             : '9.4.10.v20180503', //in line with dropwizard 1.3.3
         jooq              : '3.11.4',
-        junit_jupiter     : '5.2.0',
+        junit_jupiter     : '5.3.2',
         logback           : '1.2.3', //in line with dropwizard 1.3.3
         lucene            : '5.5.3',
         rxjava            : '2.1.10',
@@ -207,7 +207,8 @@ ext.libs = [
         jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
         jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j:$versions.slf4j",
-        junit_jupiter                  : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
+        junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:${versions.junit_jupiter}",
+        junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:${versions.junit_jupiter}",
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.1",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j:$versions.slf4j",
@@ -217,7 +218,7 @@ ext.libs = [
         lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
-        mockito_core                   : "org.mockito:mockito-core:2.21.0",
+        mockito_core                   : "org.mockito:mockito-core:2.23.4",
         mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
         objenesis                      : "org.objenesis:objenesis:2.2",
         poi                            : "org.apache.poi:poi:3.17",
@@ -228,6 +229,8 @@ ext.libs = [
         slf4j_api                      : "org.slf4j:slf4j-api:$versions.slf4j",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
+        test_containers                : "org.testcontainers:testcontainers:1.8.0",
+        test_containers_mysql          : "org.testcontainers:mysql:1.8.0",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         validation_api                 : "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
         vavr                           : "io.vavr:vavr:0.9.0",

@@ -23,7 +23,7 @@ dependencies {
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
 }
 //
 //war {

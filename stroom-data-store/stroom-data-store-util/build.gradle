@@ -16,7 +16,7 @@ dependencies {
 
     compile libs.slf4j_api
     
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
     
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 

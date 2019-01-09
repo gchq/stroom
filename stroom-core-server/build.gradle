@@ -80,7 +80,7 @@ dependencies {
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
 
     // The following logging libs are needed when running junits outside dropwizard

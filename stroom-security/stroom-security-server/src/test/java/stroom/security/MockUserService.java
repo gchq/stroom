@@ -34,11 +34,6 @@ import java.util.UUID;
 public class MockUserService extends MockEntityService<User, FindUserCriteria> implements UserService {
     @Override
     public User loadByUuid(final String uuid) {
-        return loadByUuid(uuid, null);
-    }
-
-    @Override
-    public User loadByUuid(final String uuid, final Set<String> fetchSet) {
         final List<User> list = find(null);
         for (final User e : list) {
             if (e.getUuid() != null && e.getUuid().equals(uuid)) {

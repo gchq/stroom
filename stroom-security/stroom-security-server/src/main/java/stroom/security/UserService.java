@@ -17,20 +17,19 @@
 
 package stroom.security;
 
-import stroom.entity.EntityService;
-import stroom.entity.FindService;
-import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
 
 import java.util.List;
 
-public interface UserService extends EntityService<User>, FindService<User, FindUserCriteria>, HasLoadByUuid<User>, ProvidesNamePattern {
+public interface UserService extends ProvidesNamePattern {
     String ADMIN_USER_NAME = "admin";
     String STROOM_SERVICE_USER_NAME = "stroomServiceUser";
 
     UserRef getUserByName(String name);
+
+    List<User> find(FindUserCriteria criteria);
 
     List<UserRef> findUsersInGroup(UserRef userGroup);
 
@@ -39,6 +38,10 @@ public interface UserService extends EntityService<User>, FindService<User, Find
     UserRef createUser(String name);
 
     UserRef createUserGroup(String name);
+
+    User loadByUuid(String uuid);
+
+    Boolean delete(User user);
 
     void addUserToGroup(final UserRef user, final UserRef userGroup);
 

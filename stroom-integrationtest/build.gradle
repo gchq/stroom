@@ -29,7 +29,7 @@ dependencies {
     integrationTestCompile libs.stroomQueryCommon
 
     integrationTestCompile libs.slf4j_api
-    integrationTestCompile libs.junit_jupiter
+    integrationTestCompile libs.junit_jupiter_api
     integrationTestCompile libs.fast_classpath_scanner
 
     integrationTestCompile libs.commons_io

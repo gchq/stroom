@@ -56,7 +56,7 @@ dependencies {
 
     testCompile libs.assertj_core
     testCompile libs.commons_io
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
 
     // The following logging libs are needed when running junits outside dropwizard

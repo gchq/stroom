@@ -16,7 +16,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.slf4j_api
 
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
 }
 
 def fatJarName = "stroom-elastic-impl-http.jar"

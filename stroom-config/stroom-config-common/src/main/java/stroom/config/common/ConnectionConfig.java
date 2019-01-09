@@ -108,4 +108,37 @@ public class ConnectionConfig implements IsConfig {
                 ", jdbcDriverPassword='" + jdbcDriverPassword + '\'' +
                 '}';
     }
+
+    public static class Builder {
+        private final ConnectionConfig instance;
+
+        public Builder() {
+            this(new ConnectionConfig());
+        }
+
+        public Builder(ConnectionConfig instance) {
+            this.instance = instance;
+        }
+
+        public Builder withJdbcDriverClassName(final String value) {
+            this.instance.setJdbcDriverClassName(value);
+            return this;
+        }
+        public Builder withJdbcDriverUrl(final String value) {
+            this.instance.setJdbcDriverUrl(value);
+            return this;
+        }
+        public Builder withJdbcDriverUsername(final String value) {
+            this.instance.setJdbcDriverUsername(value);
+            return this;
+        }
+        public Builder withJdbcDriverPassword(final String value) {
+            this.instance.setJdbcDriverPassword(value);
+            return this;
+        }
+
+        public ConnectionConfig build() {
+            return instance;
+        }
+    }
 }

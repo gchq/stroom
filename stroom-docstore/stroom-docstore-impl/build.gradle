@@ -17,5 +17,5 @@ dependencies {
     compile libs.stroomQueryApi
 
     testCompile libs.assertj_core
-    testCompile libs.junit_jupiter
+    testCompile libs.junit_jupiter_api
 }
