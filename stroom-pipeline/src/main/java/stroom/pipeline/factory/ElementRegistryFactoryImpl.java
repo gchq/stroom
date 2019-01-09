@@ -70,7 +70,9 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
 
             if (LOGGER.isDebugEnabled()) {
                 final ConfigurableElement pipelineElement = clazz.getAnnotation(ConfigurableElement.class);
-                LOGGER.debug("Registering pipeline element " + pipelineElement.type());
+                if (pipelineElement != null) {
+                    LOGGER.debug("Registering pipeline element " + pipelineElement.type());
+                }
             }
         }
 
