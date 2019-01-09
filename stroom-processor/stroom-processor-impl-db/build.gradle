@@ -1,9 +1,9 @@
-ext.moduleName = 'stroom.process.impl.db'
+ext.moduleName = 'stroom.processor.impl.db'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-process:stroom-process-api')
-    compile project(':stroom-process:stroom-process-impl-db-gen')
+    compile project(':stroom-processor:stroom-processor-api')
+    compile project(':stroom-processor:stroom-processor-impl-db-gen')
     compile project(':stroom-util-shared')
 
     compile libs.flyway_core

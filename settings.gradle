@@ -99,12 +99,12 @@ include 'stroom-kafka:stroom-kafka-pipeline'
 // Pipeline
 include 'stroom-pipeline'
 
-// Process
-include 'stroom-process:stroom-process-api'
-include 'stroom-process:stroom-process-impl'
-include 'stroom-process:stroom-process-impl-db'
-include 'stroom-process:stroom-process-impl-db-gen'
-include 'stroom-process:stroom-process-shared'
+// Processor
+include 'stroom-processor:stroom-processor-api'
+include 'stroom-processor:stroom-processor-impl'
+include 'stroom-processor:stroom-processor-impl-db'
+include 'stroom-processor:stroom-processor-impl-db-gen'
+include 'stroom-processor:stroom-processor-shared'
 
 // Proxy project.
 include 'stroom-proxy'

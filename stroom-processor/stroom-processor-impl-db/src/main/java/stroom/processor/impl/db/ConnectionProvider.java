@@ -1,4 +1,4 @@
-package stroom.process.impl.db;
+package stroom.processor.impl.db;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

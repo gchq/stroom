@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.process.api'
+ext.moduleName = 'stroom.processor.api'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')

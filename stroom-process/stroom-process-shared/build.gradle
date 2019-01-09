@@ -1,5 +1,0 @@
-ext.moduleName = 'stroom.process.shared'
-
-dependencies {
-
-}

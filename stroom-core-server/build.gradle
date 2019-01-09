@@ -15,7 +15,7 @@ dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-process:stroom-process-api')
+    compile project(':stroom-processor:stroom-processor-api')
 
     compile libs.eventLogging
     compile libs.stroomDocRef

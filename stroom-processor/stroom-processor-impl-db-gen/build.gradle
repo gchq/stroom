@@ -1,6 +1,6 @@
 apply plugin: 'nu.studer.jooq'
 
-ext.moduleName = 'stroom.process.impl.db.gen'
+ext.moduleName = 'stroom.processor.impl.db.gen'
 
 dependencies {
     
@@ -42,13 +42,13 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         // Add anything you want included in generation below
                         includes = 'processor|processor_filter|processor_filter_tracker|processor_filter_task'
                         // We don't want to include flyway versioning
-                        excludes = 'process_schema_history'
+                        excludes = 'processor_schema_history'
 
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
                     }
                     target {
-                        packageName = 'stroom.process.impl.db'
+                        packageName = 'stroom.processor.impl.db'
                         directory = 'src/main/java'
                     }
                 }

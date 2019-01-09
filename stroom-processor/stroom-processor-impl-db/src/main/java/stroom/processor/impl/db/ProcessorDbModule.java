@@ -1,4 +1,4 @@
-package stroom.process.impl.db;
+package stroom.processor.impl.db;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -16,10 +16,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-public class ProcessDbModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessDbModule.class);
-    private static final String FLYWAY_LOCATIONS = "stroom/process/impl/db";
-    private static final String FLYWAY_TABLE = "process_schema_history";
+public class ProcessorDbModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDbModule.class);
+    private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db";
+    private static final String FLYWAY_TABLE = "processor_schema_history";
 
     @Override
     protected void configure() {
