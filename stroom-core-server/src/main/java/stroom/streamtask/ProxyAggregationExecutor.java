@@ -88,7 +88,7 @@ class ProxyAggregationExecutor {
 
     @StroomSimpleCronSchedule(cron = "0,10,20,30,40,50 * *")
     @JobTrackedSchedule(jobName = "Proxy Aggregation", advanced = false, description = "Job to pick up the data written by the proxy and store it in Stroom")
-    public void exec(final Task<?> task) {
+    public void exec() {
         try {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             LOGGER.info("exec() - started");

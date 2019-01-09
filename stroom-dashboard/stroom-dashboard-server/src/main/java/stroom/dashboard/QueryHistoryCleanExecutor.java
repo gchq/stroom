@@ -47,11 +47,11 @@ public class QueryHistoryCleanExecutor {
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
     @JobTrackedSchedule(jobName = "Query History Clean", advanced = false, description = "Job to clean up old query history items")
-    public void exec(final Task<?> task) {
-        clean(task, false);
+    public void exec() {
+        clean(false);
     }
 
-    public void clean(final Task<?> task, final boolean favourite) {
+    public void clean(final boolean favourite) {
         info("Starting history clean task");
 
         final int historyItemsRetention = queryHistoryConfig.getItemsRetention();
