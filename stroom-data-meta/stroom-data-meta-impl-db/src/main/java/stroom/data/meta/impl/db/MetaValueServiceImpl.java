@@ -25,8 +25,6 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataRow;
 import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.logging.LogExecutionTime;
 
