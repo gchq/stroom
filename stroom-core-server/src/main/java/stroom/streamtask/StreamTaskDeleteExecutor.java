@@ -63,8 +63,6 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
         this.stroomEntityManager = stroomEntityManager;
     }
 
-    @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Stream Task Retention", description = "Physically delete stream tasks that have been logically deleted or complete based on age (stroom.process.deletePurgeAge)")
     public void exec() {
         final AtomicLong nextDeleteMs = streamTaskCreator.getNextDeleteMs();
 

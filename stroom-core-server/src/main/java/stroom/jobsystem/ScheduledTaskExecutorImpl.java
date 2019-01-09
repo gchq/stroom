@@ -19,6 +19,7 @@ package stroom.jobsystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.lifecycle.StroomBeanFunction;
 import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
@@ -29,6 +30,8 @@ import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
+import stroom.util.lifecycle.jobmanagement.ScheduledJob;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
@@ -44,14 +47,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Singleton
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
+    //TODO: remove and rename below gh-1063
     private final ConcurrentHashMap<MethodReference, AtomicBoolean> runningMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ScheduledJob, AtomicBoolean> runningMapOfScheduledJobs = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<MethodReference, Scheduler> schedulerMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ScheduledJob, Scheduler> schedulerMapOfScheduledJobs = new ConcurrentHashMap<>();
 
     private final StroomBeanStore stroomBeanStore;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final TaskManager taskManager;
 
+    //TODO remove this methods stuff gh-1063
     private volatile Set<MethodReference> scheduledMethods;
+    private volatile Set<ScheduledJob> scheduledJobs;
 
     @Inject
     ScheduledTaskExecutorImpl(final StroomBeanStore stroomBeanStore,
@@ -64,6 +72,30 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
 
     @Override
     public void execute() {
+        if (scheduledJobs == null) {
+            synchronized (this) {
+                if(scheduledJobs == null) {
+                    final Set<ScheduledJob> set = new HashSet<>();
+                    for(final ScheduledJobs scheduledJobs : stroomBeanStore.getInstancesOfType(ScheduledJobs.class)) {
+                        set.addAll(scheduledJobs.getJobs());
+                    }
+                    scheduledJobs = set;
+                }
+            }
+        }
+
+        for (final ScheduledJob scheduledJob : scheduledJobs) {
+            try {
+                final StroomBeanFunction function = create(scheduledJob);
+                if (function != null) {
+                    taskManager.execAsync(new LifecycleTask(function));
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+// TODO: clean up gh-1063
         if (scheduledMethods == null) {
             synchronized (this) {
                 if (scheduledMethods == null) {
@@ -93,6 +125,62 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
+    private StroomBeanFunction create(final ScheduledJob scheduledJob) {
+        StroomBeanFunction function = null;
+
+        final AtomicBoolean running = getRunningState(scheduledJob);
+
+        // Only run one instance of this method at a time.
+        if (running.compareAndSet(false, true)) {
+            try {
+                boolean enabled = true;
+                Scheduler scheduler = null;
+                JobNodeTracker jobNodeTracker = null;
+
+                final Trackers trackers = jobNodeTrackerCache.getTrackers();
+               jobNodeTracker = trackers.getTrackerForJobName(scheduledJob.getName());
+
+               if(scheduledJob.isManaged()) {
+                   enabled = false;
+                   if (jobNodeTracker == null) {
+                       LOGGER.error("No job node tracker found for: " + scheduledJob.getName());
+                   } else {
+                       final JobNode jobNode = jobNodeTracker.getJobNode();
+                       if (jobNode == null) {
+                           LOGGER.error("Job node tracker has null job node for: " + scheduledJob.getName());
+                       } else {
+                           enabled = jobNode.isEnabled() && jobNode.getJob().isEnabled();
+                           scheduler = trackers.getScheduler(jobNode);
+                       }
+                   }
+               } else{
+                   scheduler = getOrCreateScheduler(scheduledJob);
+               }
+
+                if (enabled && scheduler != null && scheduler.execute()) {
+                    //TODO log trace
+//                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
+                    if (jobNodeTracker != null) {
+                        function = new JobNodeTrackedFunction(scheduledJob, stroomBeanStore, "Executing", running,
+                                jobNodeTracker);
+                    } else {
+                        function = new StroomBeanFunction(scheduledJob, stroomBeanStore, "Executing", running);
+                    }
+                } else {
+                    LOGGER.trace("Not returning runnable for method: {} - {} - {}", scheduledJob.getName(), enabled, scheduler);
+                    running.set(false);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage());
+            }
+        } else {
+            LOGGER.trace("Skipping as method still running: {}", scheduledJob.getName());
+        }
+
+        return function;
+    }
+
+// TODO: clean up gh-1063
     private StroomBeanMethodExecutable create(final MethodReference methodReference) {
         StroomBeanMethodExecutable executable = null;
 
@@ -151,6 +239,34 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         return executable;
     }
 
+
+    private Scheduler getOrCreateScheduler(final ScheduledJob scheduledJob) {
+        Scheduler scheduler = schedulerMapOfScheduledJobs.get(scheduledJob);
+        if (scheduler == null) {
+            scheduler = new InvalidScheduler();
+
+            switch(scheduledJob.getSchedule().getScheduleType()) {
+                case CRON:
+                    final SimpleCron simpleCron = SimpleCron.compile(scheduledJob.getSchedule().getSchedule());
+                    scheduler = simpleCron.createScheduler();
+                    break;
+
+                case PERIODIC:
+                    scheduler = new FrequencyScheduler(scheduledJob.getSchedule().getSchedule());
+                    break;
+                default: throw new RuntimeException("Unsupported ScheduleType!");
+            }
+            schedulerMapOfScheduledJobs.put(scheduledJob, scheduler);
+        }
+
+        if (scheduler != null && scheduler instanceof InvalidScheduler) {
+            scheduler = null;
+        }
+
+        return scheduler;
+    }
+
+    // TODO: clean up gh-1063
     private Scheduler getOrCreateScheduler(final MethodReference methodReference) {
         Scheduler scheduler = schedulerMap.get(methodReference);
         if (scheduler == null) {
@@ -182,6 +298,16 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         return scheduler;
     }
 
+    private AtomicBoolean getRunningState(final ScheduledJob scheduledJob) {
+        AtomicBoolean running = runningMapOfScheduledJobs.get(scheduledJob);
+        if (running == null) {
+            runningMapOfScheduledJobs.putIfAbsent(scheduledJob, new AtomicBoolean(false));
+            running = runningMapOfScheduledJobs.get(scheduledJob);
+        }
+        return running;
+    }
+
+    // TODO: clean up gh-1063
     private AtomicBoolean getRunningState(final MethodReference methodReference) {
         AtomicBoolean running = runningMap.get(methodReference);
         if (running == null) {
@@ -191,6 +317,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         return running;
     }
 
+// TODO: clean up gh-1063
     private static class JobNodeTrackedExecutable extends StroomBeanMethodExecutable {
         private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedExecutable.class);
 
@@ -199,6 +326,42 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         public JobNodeTrackedExecutable(final MethodReference methodReference, final StroomBeanStore stroomBeanStore,
                                         final String message, final AtomicBoolean running, final JobNodeTracker jobNodeTracker) {
             super(methodReference, stroomBeanStore, message, running);
+            this.jobNodeTracker = jobNodeTracker;
+        }
+
+        @Override
+        public void exec(final Task<?> task) {
+            try {
+                jobNodeTracker.incrementTaskCount();
+                try {
+                    jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
+                    try {
+                        super.exec(task);
+                    } finally {
+                        jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
+                    }
+                } finally {
+                    jobNodeTracker.decrementTaskCount();
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return jobNodeTracker.getJobNode().getJob().getName();
+        }
+    }
+
+    private static class JobNodeTrackedFunction extends StroomBeanFunction {
+        private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedExecutable.class);
+
+        private final JobNodeTracker jobNodeTracker;
+
+        public JobNodeTrackedFunction(final ScheduledJob scheduledJob, final StroomBeanStore stroomBeanStore,
+                                      final String message, final AtomicBoolean running, final JobNodeTracker jobNodeTracker) {
+            super(scheduledJob, stroomBeanStore, message, running);
             this.jobNodeTracker = jobNodeTracker;
         }
 

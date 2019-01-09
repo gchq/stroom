@@ -111,6 +111,11 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
+    public void writeQueueStatistics() {
+
+    }
+
+    @Override
     public int getStreamTaskQueueSize() {
         return 0;
     }

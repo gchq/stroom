@@ -27,6 +27,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandler;
 import stroom.util.HasHealthCheck;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -68,5 +69,8 @@ public class IndexModule extends AbstractModule {
 
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
         hasHealthCheckBinder.addBinding().to(StroomIndexQueryResource.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(IndexJobs.class);
     }
 }

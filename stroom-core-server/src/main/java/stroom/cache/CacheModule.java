@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandler;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class CacheModule extends AbstractModule {
     @Override
@@ -33,5 +34,8 @@ public class CacheModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.cache.CacheClearHandler.class);
         taskHandlerBinder.addBinding().to(stroom.cache.FetchCacheNodeRowHandler.class);
         taskHandlerBinder.addBinding().to(stroom.cache.FetchCacheRowHandler.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(CacheJobs.class);
     }
 }

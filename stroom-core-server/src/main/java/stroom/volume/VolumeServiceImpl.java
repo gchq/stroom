@@ -305,8 +305,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
         return state;
     }
 
-    @StroomFrequencySchedule("5m")
-    @JobTrackedSchedule(jobName = "Volume Status", advanced = false, description = "Update the usage status of volumes owned by the node")
     @Override
     public void flush() {
         refresh();

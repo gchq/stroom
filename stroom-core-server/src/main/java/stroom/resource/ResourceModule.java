@@ -17,10 +17,15 @@
 package stroom.resource;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class ResourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ResourceStore.class).to(ResourceStoreImpl.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(ResourceJobs.class);
     }
 }

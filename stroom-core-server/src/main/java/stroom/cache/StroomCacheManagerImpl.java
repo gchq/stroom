@@ -27,7 +27,6 @@ import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheManager.CacheHolder;
 import stroom.util.cache.CacheUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -144,7 +143,6 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     }
 
     @Override
-    @StroomFrequencySchedule("1m")
     public void evictExpiredElements() {
         cacheManager.getCaches().forEach((k, v) -> {
             LOGGER.debug("Evicting cache entries for " + k);

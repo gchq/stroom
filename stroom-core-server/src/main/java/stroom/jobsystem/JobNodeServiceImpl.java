@@ -44,6 +44,8 @@ import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.lifecycle.StroomStartup;
+import stroom.util.lifecycle.jobmanagement.ScheduledJob;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
@@ -149,6 +151,61 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
             final Set<String> validJobNames = new HashSet<>();
 
+
+
+
+
+
+            // TODO: The form below isn't very clear. Split into job mapping and creation.
+            for(final ScheduledJobs scheduledJobs : stroomBeanStore.getInstancesOfType(ScheduledJobs.class)){
+               for(ScheduledJob scheduledJob : scheduledJobs.getJobs()){
+
+                   validJobNames.add(scheduledJob.getName());
+
+                   Job job = new Job();
+                   job.setName(scheduledJob.getName());
+                   job.setEnabled(scheduledJob.isEnabled());
+                   job = getOrCreateJob(job);
+
+                   final JobNode newJobNode = new JobNode();
+                   newJobNode.setJob(job);
+                   newJobNode.setNode(node);
+                   newJobNode.setEnabled(scheduledJob.isEnabled());
+
+                   switch(scheduledJob.getSchedule().getScheduleType()){
+                       case CRON:
+                           newJobNode.setJobType(JobType.CRON);
+                            break;
+                       case PERIODIC:
+                           newJobNode.setJobType(JobType.FREQUENCY);
+                           break;
+                       default: throw new RuntimeException("Unknown ScheduleType!");
+                   }
+                   newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+
+                   // Add the job node to the DB if it isn't there already.
+                   JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
+                   if (existingJobNode == null) {
+                       LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                               newJobNode.getNode().getName());
+                       save(newJobNode);
+                       existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+
+                   } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                       // If the job type has changed then update the job node.
+                       existingJobNode.setJobType(newJobNode.getJobType());
+                       existingJobNode.setSchedule(newJobNode.getSchedule());
+                       existingJobNode = save(existingJobNode);
+                       existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                   }
+               }
+            }
+
+
+
+
+
+            // TODO: clean up gh-1063
             for (final MethodReference methodReference : stroomBeanStore.getAnnotatedMethods(JobTrackedSchedule.class)) {
                 final JobTrackedSchedule jobScheduleDescriptor = methodReference.getMethod()
                         .getAnnotation(JobTrackedSchedule.class);
@@ -198,6 +255,10 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                     existingJobMap.put(jobScheduleDescriptor.jobName(), existingJobNode);
                 }
             }
+
+
+
+
 
             // Distributed Jobs done a different way
             distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {

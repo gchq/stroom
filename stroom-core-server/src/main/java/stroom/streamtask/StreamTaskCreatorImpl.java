@@ -54,8 +54,6 @@ import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.logging.LogExecutionTime;
@@ -932,8 +930,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         }
     }
 
-    @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Stream Task Queue Statistics", description = "Write statistics about the size of the task queue")
+    @Override
     public void writeQueueStatistics() {
         try {
             // Avoid writing loads of same value stats So write every min while

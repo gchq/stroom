@@ -25,6 +25,7 @@ import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.task.api.TaskHandler;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 import javax.inject.Named;
 
@@ -48,6 +49,9 @@ public class StreamTaskModule extends AbstractModule {
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(StreamTaskJobs.class);
     }
 
     @Provides

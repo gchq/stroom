@@ -21,7 +21,6 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Security;
@@ -29,8 +28,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskManager;
 import stroom.util.io.FileUtil;
-import stroom.util.lifecycle.StroomFrequencySchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -101,8 +98,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
     /**
      * Delete anything that has been marked to delete
      */
-    @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Index Shard Delete", description = "Job to delete index shards from disk that have been marked as deleted")
     @Override
     public void deleteFromDisk() {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
@@ -256,8 +251,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
         return shardCount.get();
     }
 
-    @StroomFrequencySchedule("10m")
-    @JobTrackedSchedule(jobName = "Index Shard Retention", description = "Job to set index shards to have a status of deleted that have past their retention period")
     @Override
     public void checkRetention() {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {

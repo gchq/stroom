@@ -29,8 +29,6 @@ import stroom.task.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.logging.LambdaLogger;
@@ -225,8 +223,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * This is called by the lifecycle service and will call flush on all open writers.
      */
     @Override
-    @StroomFrequencySchedule("10m")
-    @JobTrackedSchedule(jobName = "Index Writer Flush", description = "Job to flush index shard data to disk")
     public void flushAll() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -257,8 +253,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * This is called by the lifecycle service and remove writers that are past their TTL, TTI or LRU items that exceed the capacity.
      */
     @Override
-    @StroomFrequencySchedule("10m")
-    @JobTrackedSchedule(jobName = "Index Writer Cache Sweep", description = "Job to remove old index shard writers from the cache")
     public void sweep() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
