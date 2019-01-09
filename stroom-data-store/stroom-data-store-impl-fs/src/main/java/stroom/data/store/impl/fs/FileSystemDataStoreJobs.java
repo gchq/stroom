@@ -14,10 +14,13 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 class FileSystemDataStoreJobs implements ScheduledJobs {
 
     private FileSystemCleanExecutor fileSystemCleanExecutor;
+    private StreamDeleteExecutor streamDeleteExecutor;
 
     @Inject
-    public FileSystemDataStoreJobs(FileSystemCleanExecutor fileSystemCleanExecutor) {
+    public FileSystemDataStoreJobs(FileSystemCleanExecutor fileSystemCleanExecutor,
+                                   StreamDeleteExecutor streamDeleteExecutor) {
         this.fileSystemCleanExecutor = fileSystemCleanExecutor;
+        this.streamDeleteExecutor = streamDeleteExecutor;
     }
 
     @Override
@@ -30,6 +33,13 @@ class FileSystemDataStoreJobs implements ScheduledJobs {
                         .schedule(CRON, "0 0 *")
                         .method((task) -> this.fileSystemCleanExecutor.exec(task))
                         .advanced(false)
+                        .build(),
+                jobBuilder()
+                        .name("Stream Delete")
+                        .description("Physically delete streams that have been logically deleted " +
+                                "based on age of delete (stroom.data.store.deletePurgeAge)")
+                        .schedule(CRON, "0 0 *")
+                        .method((task) -> this.streamDeleteExecutor.exec())
                         .build()
         );
     }
