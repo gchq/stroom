@@ -16,22 +16,20 @@
 
 package stroom.util.xml;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
-import stroom.util.config.StroomProperties;
-import stroom.util.config.StroomProperties.Source;
 
 import javax.xml.parsers.SAXParserFactory;
 import java.io.Reader;
 
-@Ignore
+@Disabled
 public class TestSAXParserFactoryFactory {
     @Test
     public void testExceedingTotalEntities() throws Exception {
         // Set this to true to test limits.
-        StroomProperties.setBooleanProperty(SAXParserFactoryFactory.SECURE_PROCESSING_PROPERTY, false, Source.TEST);
+        ParserConfig.secureProcessing = false;
 
         final SAXParserFactory factory = SAXParserFactoryFactory.newInstance();
         final XMLReader xmlReader = factory.newSAXParser().getXMLReader();

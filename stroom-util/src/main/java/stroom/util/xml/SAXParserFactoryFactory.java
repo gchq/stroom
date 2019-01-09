@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
-import stroom.util.config.StroomProperties;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
@@ -75,7 +74,7 @@ public final class SAXParserFactoryFactory {
 
     private static void secureProcessing(final SAXParserFactory factory) {
         try {
-            final boolean secureProcessing = StroomProperties.getBooleanProperty(SECURE_PROCESSING_PROPERTY, true);
+            final boolean secureProcessing = ParserConfig.secureProcessing;
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, secureProcessing);
 
 
