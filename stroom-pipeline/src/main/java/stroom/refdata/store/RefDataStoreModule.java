@@ -40,6 +40,7 @@ import stroom.refdata.store.onheapstore.StringValueConsumer;
 import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.HasHealthCheck;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class RefDataStoreModule extends AbstractModule {
     @Override
@@ -86,5 +87,8 @@ public class RefDataStoreModule extends AbstractModule {
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
         hasHealthCheckBinder.addBinding().to(RefDataOffHeapStore.class);
         hasHealthCheckBinder.addBinding().to(ByteBufferPool.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(RefDataStoreJobs.class);
     }
 }
