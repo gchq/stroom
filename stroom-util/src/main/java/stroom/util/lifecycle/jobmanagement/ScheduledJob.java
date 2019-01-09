@@ -1,5 +1,6 @@
 package stroom.util.lifecycle.jobmanagement;
 
+import stroom.task.shared.Task;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -89,7 +90,7 @@ public class ScheduledJob {
             return this;
         }
 
-        public ScheduledJobBuilder method(Consumer method) {
+        public ScheduledJobBuilder method(Consumer<Task> method) {
             this.method = method;
             return this;
         }

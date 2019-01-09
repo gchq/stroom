@@ -56,8 +56,6 @@ import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
@@ -127,8 +125,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
 
-    @StroomSimpleCronSchedule(cron = "* * *")
-    @JobTrackedSchedule(jobName = "XX Benchmark System XX", description = "Job to generate data in the system in order to benchmark it's performance (do not run in live!!)", enabled = false)
     public void exec(final Task<?> task) {
         this.task = task;
         info("Starting benchmark");

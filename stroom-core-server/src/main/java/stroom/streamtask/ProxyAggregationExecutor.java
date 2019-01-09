@@ -24,11 +24,8 @@ import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskContext;
-import stroom.task.shared.Task;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
