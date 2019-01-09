@@ -16,15 +16,12 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 class IndexJobs implements ScheduledJobs {
 
     private IndexShardManager indexShardManager;
-    private IndexShardSearcherCache indexShardSearcherCache;
     private IndexShardWriterCache indexShardWriterCache;
 
     @Inject
     public IndexJobs(IndexShardManager indexShardManager,
-                     IndexShardSearcherCache indexShardSearcherCache,
                      IndexShardWriterCache indexShardWriterCache) {
         this.indexShardManager = indexShardManager;
-        this.indexShardSearcherCache = indexShardSearcherCache;
         this.indexShardWriterCache = indexShardWriterCache;
     }
 
@@ -40,11 +37,6 @@ class IndexJobs implements ScheduledJobs {
                         .name("Index Shard Retention")
                         .description("Job to set index shards to have a status of deleted that have past their retention period")
                         .method((task) -> this.indexShardManager.checkRetention())
-                        .schedule(PERIODIC, "10m").build(),
-                jobBuilder()
-                        .name("Index Searcher Cache Refresh")
-                        .description("Job to refresh index shard searchers in the cache")
-                        .method((task) -> this.indexShardSearcherCache.refresh())
                         .schedule(PERIODIC, "10m").build(),
                 jobBuilder()
                         .name("Index Writer Cache Sweep")
