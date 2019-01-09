@@ -141,8 +141,6 @@ public class RollingDestinations {
         });
     }
 
-    @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Pipeline Destination Roll", description = "Roll any destinations based on their roll settings")
     public void roll() {
         rollAll(false);
     }
