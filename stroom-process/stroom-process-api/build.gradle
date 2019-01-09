@@ -1,5 +1,9 @@
 ext.moduleName = 'stroom.process.api'
 
 dependencies {
+    compile project(':stroom-config:stroom-config-common')
+    compile project(':stroom-util-shared')
 
+    compile libs.jackson_annotations
+    compile libs.javax_inject
 }

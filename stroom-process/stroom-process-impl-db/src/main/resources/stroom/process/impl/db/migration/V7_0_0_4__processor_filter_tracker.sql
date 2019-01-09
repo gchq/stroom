@@ -18,23 +18,27 @@
 CREATE TABLE processor_filter_tracker (
   id int(11) NOT NULL AUTO_INCREMENT,
   version tinyint(4) NOT NULL,
-  min_stream_id bigint(20) NOT NULL, -- TODO ????
-  min_evt_id bigint(20) NOT NULL, -- TODO ????
-  min_stream_create_ms bigint(20) DEFAULT NULL, -- TODO ????
-  max_stream_create_ms bigint(20) DEFAULT NULL, -- TODO ????
-  stream_create_ms bigint(20) DEFAULT NULL, -- TODO ????
+  min_stream_id bigint(20) NOT NULL,
+  min_event_id bigint(20) NOT NULL,
+  min_stream_create_ms bigint(20) DEFAULT NULL,
+  max_stream_create_ms bigint(20) DEFAULT NULL,
+  stream_create_ms bigint(20) DEFAULT NULL,
   last_poll_ms bigint(20) DEFAULT NULL,
   last_poll_task_count int(11) DEFAULT NULL,
   status varchar(255) DEFAULT NULL,
-  stream_count bigint(20) DEFAULT NULL, -- TODO ????
-  evt_count bigint(20) DEFAULT NULL, -- TODO ????
+  stream_count bigint(20) DEFAULT NULL,
+  event_count bigint(20) DEFAULT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Copy data into the table, use ID predicate to make it re-runnable
 INSERT
-INTO processor_filter_tracker () -- TODO
-SELECT  -- TODO
+INTO processor_filter_tracker (
+    id, version, min_stream_id, min_event_id, min_stream_create_ms, max_stream_create_ms,
+    stream_create_ms, last_poll_ms, last_poll_task_count, status, stream_count, event_count)
+SELECT
+    ID, VER, MIN_STRM_ID, MIN_EVT_ID, MIN_STRM_CRT_MS, MAX_STRM_CRT_MS,
+    STRM_CRT_MS, LAST_POLL_MS, LAST_POLL_TASK_CT, STAT, STRM_CT, EVT_CT
 FROM STRM_PROC_FILT_TRAC
 WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_tracker)
 ORDER BY ID;

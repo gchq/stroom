@@ -1,4 +1,4 @@
-package stroom.streamtask;
+package stroom.process;
 
 public interface BatchDeleteConfig {
     String getDeletePurgeAge();

@@ -1,12 +1,18 @@
-package stroom.streamtask;
+package stroom.process;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class ProcessConfig implements BatchDeleteConfig, IsConfig {
+
+    private ConnectionConfig connectionConfig = new ConnectionConfig();
+    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
 
     private boolean assignTasks = true;
     private boolean createTasks = true;
@@ -15,6 +21,24 @@ public class ProcessConfig implements BatchDeleteConfig, IsConfig {
     private int deleteBatchSize = 1000;
     private boolean fillTaskQueue = true;
     private int queueSize = 1000;
+
+    @JsonProperty("connection")
+    public ConnectionConfig getConnectionConfig() {
+        return connectionConfig;
+    }
+
+    public void setConnectionConfig(final ConnectionConfig connectionConfig) {
+        this.connectionConfig = connectionConfig;
+    }
+
+    @JsonProperty("connectionPool")
+    public ConnectionPoolConfig getConnectionPoolConfig() {
+        return connectionPoolConfig;
+    }
+
+    public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
+        this.connectionPoolConfig = connectionPoolConfig;
+    }
 
     @JsonPropertyDescription("Should the master node assign tasks to workers when tasks are requested?")
     public boolean isAssignTasks() {

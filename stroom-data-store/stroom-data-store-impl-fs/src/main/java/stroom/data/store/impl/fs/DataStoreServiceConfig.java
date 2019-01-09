@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.streamtask.BatchDeleteConfig;
+import stroom.process.BatchDeleteConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;

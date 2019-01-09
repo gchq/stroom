@@ -32,12 +32,12 @@ CREATE TABLE processor_filter_task (
   status_time_ms bigint(20) DEFAULT NULL,
   start_time_ms bigint(20) DEFAULT NULL,
   node_name varchar(255) DEFAULT NULL,
-  fk_strm_id bigint(20) NOT NULL,   --TODO ?????????????????????????????
+  stream_id bigint(20) NOT NULL,
   data longtext,
   fk_processor_filter_id int(11) NOT NULL,
   PRIMARY KEY (id),
   KEY processor_filter_task_status_idx (stat),
-  KEY processor_filter_task_fk_strm_id (fk_strm_id), -- TODO ?????????????
+  KEY processor_filter_task_stream_id_idx (stream_id),
   KEY processor_filter_task_fk_processor_filter_id (fk_processor_filter_id),
   KEY processor_filter_task_node_name_idx (node_name),
   CONSTRAINT processor_filter_task_fk_processor_filter_id FOREIGN KEY (fk_processor_filter_id) REFERENCES processor_filter (id)
@@ -45,7 +45,7 @@ CREATE TABLE processor_filter_task (
 
 -- Copy data into the table, use ID predicate to make it re-runnable
 INSERT
-INTO processor_filter_task (id, version, create_time_ms, end_time_ms, status, status_time_ms, start_time_ms, node_name, fk_strm_id, data, fk_processor_filter_id)
+INTO processor_filter_task (id, version, create_time_ms, end_time_ms, status, status_time_ms, start_time_ms, node_name, stream_id, data, fk_processor_filter_id)
 SELECT ID, VER, CRT_MS, END_TIME_MS, STAT, STAT_MS, START_TIME_MS, FK_ND_ID, FK_STRM_ID, DAT, FK_STRM_PROC_FILT_ID
 FROM STRM_TASK
 WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_task)

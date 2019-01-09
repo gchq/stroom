@@ -30,7 +30,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "2.0.4" apply false
 
-    id 'nu.studer.jooq' version '3.0.0' apply false
+    id 'nu.studer.jooq' version '3.0.2' apply false
 }
 
 task wrapper(type: Wrapper) {
