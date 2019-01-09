@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandler;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -33,5 +34,8 @@ public class SearchModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.search.AsyncSearchTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.ClusterSearchTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.EventSearchTaskHandler.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(SearchJobs.class);
     }
 }
