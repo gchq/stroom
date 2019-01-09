@@ -24,6 +24,7 @@ import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.task.api.TaskHandler;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -54,5 +55,8 @@ public class DashboardModule extends AbstractModule {
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(DashboardJobs.class);
     }
 }

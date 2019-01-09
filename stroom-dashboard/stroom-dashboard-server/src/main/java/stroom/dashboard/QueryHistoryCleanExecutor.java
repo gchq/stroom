@@ -20,9 +20,6 @@ package stroom.dashboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.TaskContext;
-import stroom.task.shared.Task;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
@@ -45,8 +42,6 @@ public class QueryHistoryCleanExecutor {
         this.queryHistoryConfig = queryHistoryConfig;
     }
 
-    @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Query History Clean", advanced = false, description = "Job to clean up old query history items")
     public void exec() {
         clean(false);
     }
