@@ -16,8 +16,9 @@ public class PipelineConfig implements IsConfig {
     private XsltConfig xsltConfig;
 
     public PipelineConfig() {
-        xsltConfig = new XsltConfig();
         appenderConfig = new AppenderConfig();
+        parserConfig = new ParserConfig();
+        xsltConfig = new XsltConfig();
     }
 
     @Inject
