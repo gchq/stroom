@@ -34,6 +34,7 @@ import stroom.node.NodeServiceModule;
 import stroom.task.TaskModule;
 import stroom.task.api.TaskHandler;
 import stroom.util.db.DbUtil;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 import stroom.volume.VolumeModule;
 
 import javax.inject.Provider;
@@ -59,6 +60,9 @@ public class FileSystemDataStoreModule extends AbstractModule {
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(FileSystemCleanSubTaskHandler.class);
+
+        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
+        jobs.addBinding().to(FileSystemDataStoreJobs.class);
     }
 
     @Provides
