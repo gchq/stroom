@@ -107,7 +107,6 @@ dependencies {
     compile libs.stroomDocRef
 
     compile libs.dropwizard_lifecycle
-    compile libs.guava
     compile libs.guice4
     //compile libs.jackson_annotations
     compile libs.javax_inject
