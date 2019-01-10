@@ -301,9 +301,9 @@ public final class SetupSampleDataBean {
 //                feedService.save(feed);
 //            }
 
-            LOGGER.info("Node count = " + commonTestControl.countEntity(Node.class));
-            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.class));
-            LOGGER.info("Feed count = " + commonTestControl.countEntity(FeedDoc.class));
+            LOGGER.info("Node count = " + commonTestControl.countEntity(Node.TABLE_NAME));
+            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.TABLE_NAME));
+            LOGGER.info("Feed count = " + feedStore.list().size());
 //            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());
             LOGGER.info("Pipeline count = " + pipelineStore.list().size());

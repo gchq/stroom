@@ -16,41 +16,24 @@
 
 package stroom.test;
 
-import stroom.entity.StroomEntityManager;
-import stroom.entity.util.ConnectionUtil;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.SqlBuilder;
 import stroom.persist.ConnectionProvider;
+import stroom.util.db.DbUtil;
 
 import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * <p>
  * Class to help with testing.
  * </p>
  */
-public class DatabaseCommonTestControlTransactionHelper {
-    private final StroomEntityManager entityManager;
+class DatabaseCommonTestControlTransactionHelper {
     private final ConnectionProvider connectionProvider;
 
     @Inject
-    DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager,
-                                               final ConnectionProvider connectionProvider) {
-        this.entityManager = entityManager;
+    DatabaseCommonTestControlTransactionHelper(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
-    }
-
-    /**
-     * Clear a HIBERNATE context.
-     */
-    void clearContext() {
-        entityManager.clearContext();
     }
 
     /**
@@ -59,74 +42,19 @@ public class DatabaseCommonTestControlTransactionHelper {
      * @param clazz to count
      * @return the count
      */
-    public int countEntity(final Class<?> clazz) {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT count(*) FROM ");
-        sql.append(clazz.getName());
-        return (int) entityManager.executeQueryLongResult(sql);
-    }
-
-//    int countDocs(final String type) {
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT count(*) FROM doc WHERE type = ");
-//        sql.arg(type);
-//        sql.append(" AND ext = ");
-//        sql.arg("meta");
-//        return (int) entityManager.executeNativeQueryLongResult(sql);
-//    }
-//
-//    public void shutdown() {
-//        entityManager.shutdown();
-//    }
-//
-//    public void truncateTable(final String tableName) {
-//        truncateTables(Collections.singletonList(tableName));
-//    }
-//
-//    public void truncateTables(final List<String> tableNames) {
-//        List<String> truncateStatements = tableNames.stream()
-//                .map(tableName -> "TRUNCATE TABLE " + tableName)
-//                .collect(Collectors.toList());
-//
-//        executeStatementsWithNoConstraints(truncateStatements);
-//    }
-
-    void clearAllTables() {
-        final SqlBuilder sqlBuilder = new SqlBuilder();
-        sqlBuilder.append("SELECT table_name FROM information_schema.tables where table_schema='stroom';");
-        final List<String> results = entityManager.executeNativeQueryResultList(sqlBuilder);
-
-        List<String> filtered = results.stream().filter(name -> !name.contains("schema")).collect(Collectors.toList());
-        clearTables(filtered);
-    }
-
-    void clearTables(final List<String> tableNames) {
-        List<String> deleteStatements = tableNames.stream()
-                .map(tableName -> "DELETE FROM " + tableName)
-                .collect(Collectors.toList());
-
-        executeStatementsWithNoConstraints(deleteStatements);
-    }
-
-    void enableConstraints() {
-        final String sql = "SET FOREIGN_KEY_CHECKS=1";
+    int countEntity(final String tableName) {
         try (final Connection connection = connectionProvider.getConnection()) {
-            ConnectionUtil.executeStatement(connection, sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(String.format("Error executing %s", sql), e);
+            return DbUtil.countEntity(connection, tableName);
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    private void executeStatementsWithNoConstraints(final List<String> statements) {
-        final List<String> allStatements = new ArrayList<>();
-        allStatements.add("SET FOREIGN_KEY_CHECKS=0");
-        allStatements.addAll(statements);
-        allStatements.add("SET FOREIGN_KEY_CHECKS=1");
-
+    void clearAllTables() {
         try (final Connection connection = connectionProvider.getConnection()) {
-            ConnectionUtil.executeStatements(connection, allStatements);
-        } catch (SQLException e) {
-            throw new RuntimeException(String.format("Error executing %s", allStatements), e);
+            DbUtil.clearAllTables(connection);
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 }

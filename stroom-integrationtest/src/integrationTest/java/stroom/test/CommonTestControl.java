@@ -27,18 +27,11 @@ public interface CommonTestControl {
 
     void createRequiredXMLSchemas();
 
-//    /**
-//     * Shutdown database.
-//     */
-//    void shutdown();
-
     /**
      * Return a entity count.
      *
      * @param clazz to count
      * @return the count
      */
-    int countEntity(Class<?> clazz);
-
-//    int countDocs(String type);
+    int countEntity(String tableName);
 }
