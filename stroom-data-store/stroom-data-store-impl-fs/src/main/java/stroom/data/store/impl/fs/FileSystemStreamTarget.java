@@ -25,6 +25,7 @@ import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamTarget;
 import stroom.feed.AttributeMapUtil;
 import stroom.io.SeekableOutputStream;
+import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -158,7 +159,42 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
                             streamType);
                     if (createPath) {
                         final Path rootDir = Paths.get(rootPath);
+
+
+
+
                         if (!FileSystemUtil.mkdirs(rootDir, aFile.getParent())) {
+
+
+
+
+
+                            LOGGER.error("ROOT DIR " + FileUtil.getCanonicalPath(rootDir));
+                            if (Files.exists(rootDir)) {
+                                LOGGER.error("ROOT DIR FOUND");
+                            } else {
+                                LOGGER.error("ROOT DIR NOT FOUND");
+                            }
+
+
+                            Path childDir = aFile.getParent();
+                            LOGGER.error("CHILD DIR " + FileUtil.getCanonicalPath(childDir));
+                            if (Files.exists(childDir)) {
+                                LOGGER.error("CHILD DIR FOUND");
+                            } else {
+                                LOGGER.error("CHILD DIR NOT FOUND");
+                            }
+
+                            try {
+                                // Try again to create.
+                                Files.createDirectories(childDir);
+                            } catch (final IOException e) {
+                                throw new StreamException("Unable to create directory for file " + aFile, e);
+                            }
+
+
+
+
                             // Unable to create path
                             throw new StreamException("Unable to create directory for file " + aFile);
 

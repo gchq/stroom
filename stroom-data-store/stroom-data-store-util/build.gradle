@@ -15,12 +15,13 @@ dependencies {
     implementation libs.stroomQueryApi
 
     implementation libs.guice4
-
     implementation libs.slf4j_api
     
     testCompileOnly libs.junit_jupiter_api
     
     testImplementation project(':stroom-test-common')
+
+    testImplementation libs.hikari
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
