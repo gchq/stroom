@@ -20,13 +20,7 @@ dependencies {
     implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
-
-<<<<<<< HEAD
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-
-    testCompile project(':stroom-security:stroom-security-impl-mock')
-=======
+    
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     
     testImplementation libs.assertj_core
@@ -42,5 +36,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }

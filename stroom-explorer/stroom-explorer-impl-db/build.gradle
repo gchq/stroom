@@ -20,15 +20,10 @@ dependencies {
     implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
-
-<<<<<<< HEAD
-    //testCompile libs.assertj_core
-    //testCompile libs.junit_jupiter_api
-=======
+    
     testImplementation libs.assertj_core
     
     testCompileOnly libs.junit_jupiter_api
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

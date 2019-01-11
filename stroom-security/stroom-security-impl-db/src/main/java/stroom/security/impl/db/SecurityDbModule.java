@@ -24,6 +24,8 @@ public class SecurityDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(UserDao.class).to(UserDaoImpl.class);
+        bind(DocumentPermissionDao.class).to(DocumentPermissionDaoImpl.class);
+        bind(AppPermissionDao.class).to(AppPermissionDaoImpl.class);
     }
 
     @Provides

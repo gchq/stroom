@@ -49,11 +49,6 @@ dependencies {
     integrationTestImplementation libs.stroomQueryApi
     integrationTestImplementation libs.stroomQueryCommon
 
-<<<<<<< HEAD
-    integrationTestCompile libs.slf4j_api
-    integrationTestCompile libs.junit_jupiter_api
-    integrationTestCompile libs.fast_classpath_scanner
-=======
     integrationTestImplementation libs.commons_io
     integrationTestImplementation libs.fast_classpath_scanner
     integrationTestImplementation libs.guice4
@@ -65,7 +60,6 @@ dependencies {
     integrationTestImplementation libs.saxon_he
     integrationTestImplementation libs.slf4j_api
     integrationTestImplementation libs.vavr
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     integrationTestRuntimeOnly libs.javax_el
     //the following logging libs are needed when running junits outside dropwizard

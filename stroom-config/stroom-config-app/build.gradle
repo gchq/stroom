@@ -1,22 +1,7 @@
 ext.moduleName = 'stroom.config.app'
 
 dependencies {
-<<<<<<< HEAD
-    compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-dashboard:stroom-dashboard-server')
-    compile project(':stroom-data-meta:stroom-data-meta-impl-db')
-    compile project(':stroom-data-store:stroom-data-store-impl-fs')
-    compile project(':stroom-explorer:stroom-explorer-impl-db')
-    compile project(':stroom-index:stroom-index-server')
-    compile project(':stroom-security:stroom-security-server')
-    compile project(':stroom-security:stroom-security-impl-db')
-    compile project(':stroom-statistics:stroom-statistics-server')
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-=======
+
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-server')
@@ -30,7 +15,6 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     implementation libs.stroomDocRef
 
@@ -43,11 +27,7 @@ dependencies {
 
     testImplementation libs.assertj_core
     testCompileOnly libs.junit_jupiter_api
-    
-<<<<<<< HEAD
-   testCompile libs.assertj_core
-   testCompile libs.junit_jupiter_api
-=======
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.javax_activation
@@ -57,5 +37,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }

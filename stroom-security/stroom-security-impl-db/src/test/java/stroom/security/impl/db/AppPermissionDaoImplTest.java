@@ -10,17 +10,13 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class UserDaoImplTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
+public class AppPermissionDaoImplTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppPermissionDaoImplTest.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer();
 
     private static Injector injector;
-    private static UserDao userDao;
+    private static AppPermissionDao appPermissionDao;
 
     @BeforeAll
     public static void beforeAll() {
@@ -29,21 +25,12 @@ public class UserDaoImplTest {
 
         injector = Guice.createInjector(new SecurityDbModule(), new ContainerSecurityConfigModule(dbContainer));
 
-        userDao = injector.getInstance(UserDao.class);
+        appPermissionDao = injector.getInstance(AppPermissionDao.class);
     }
 
     @Test
-    public void createSingleUser() {
-        // Given
-        final String userName = UUID.randomUUID().toString();
+    public void aTest() {
 
-        // When
-        final UserJooq userCreated = userDao.createUser(userName);
-
-        // Then
-        final UserJooq userFound = userDao.getUserByName(userName);
-        assertThat(userFound.getName()).isEqualTo(userName);
-        assertThat(userFound.getUuid()).isEqualTo(userCreated.getUuid());
     }
 
     @AfterAll

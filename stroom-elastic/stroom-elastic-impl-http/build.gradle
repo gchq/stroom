@@ -3,22 +3,6 @@
 ext.moduleName = 'stroom.elastic.impl.http'
 
 dependencies {
-<<<<<<< HEAD
-    compile project(':stroom-elastic:stroom-elastic-api')
-    compile project(':stroom-elastic:stroom-elastic-impl')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-server')
-
-    compile libs.stroomDocRef
-
-    compile libs.guice4
-    compile libs.jackson_databind
-    compile libs.javax_inject
-    compile libs.slf4j_api
-
-    testCompile libs.junit_jupiter_api
-=======
     implementation project(':stroom-elastic:stroom-elastic-api')
     implementation project(':stroom-elastic:stroom-elastic-impl')
     implementation project(':stroom-pipeline')
@@ -44,7 +28,6 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }
 
 //def fatJarName = "stroom-elastic-impl-http.jar"

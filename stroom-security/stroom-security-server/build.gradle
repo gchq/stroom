@@ -1,19 +1,6 @@
 ext.moduleName = 'stroom.security.server'
 
 dependencies {
-<<<<<<< HEAD
-    compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    //compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-impl-db')
-    compile project(':stroom-security:stroom-security-shared')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
-=======
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-entity-shared')
@@ -24,7 +11,6 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     implementation libs.stroomAuthApi
     implementation libs.stroomDocRef
@@ -47,14 +33,9 @@ dependencies {
 //    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testImplementation project(':stroom-test-common')
 
-<<<<<<< HEAD
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-=======
     testImplementation libs.assertj_core
     
     testCompileOnly libs.junit_jupiter_api
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

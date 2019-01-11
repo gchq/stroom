@@ -52,19 +52,12 @@ dependencies {
     testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
     testImplementation project(':stroom-test-common')
 
-<<<<<<< HEAD
-    testCompile libs.assertj_core
-    testCompile libs.commons_io
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-=======
     testImplementation libs.assertj_core
     testImplementation libs.commons_io
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
 
     testCompileOnly libs.junit_jupiter_api
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

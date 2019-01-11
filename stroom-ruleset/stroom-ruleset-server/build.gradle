@@ -24,11 +24,7 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
-
-<<<<<<< HEAD
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-=======
+    
     testImplementation libs.assertj_core
     
     testCompileOnly libs.junit_jupiter_api
@@ -42,5 +38,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }

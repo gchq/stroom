@@ -26,13 +26,7 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.jooq
     implementation libs.slf4j_api
-
-<<<<<<< HEAD
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
-    testCompile libs.mockito_core
-    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-=======
+    
     testImplementation libs.assertj_core
     testCompileOnly libs.junit_jupiter_api
     testImplementation libs.mockito_core
@@ -47,5 +41,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }

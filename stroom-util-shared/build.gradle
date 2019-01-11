@@ -2,14 +2,9 @@ ext.moduleName = 'stroom.util.shared'
 
 dependencies {
     implementation libs.stroomDocRef
-
-<<<<<<< HEAD
-    testCompile libs.hamcrest_core
-    testCompile libs.junit_jupiter_api
-=======
+    
     testImplementation libs.hamcrest_core
     testCompileOnly libs.junit_jupiter_api
->>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j
