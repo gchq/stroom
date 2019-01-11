@@ -8,9 +8,9 @@ buildscript {
     }
 }
 
-//plugins {
-//    id "com.benjaminsproule.swagger" version "1.0.6"
-//}
+plugins {
+    id "com.benjaminsproule.swagger" version "1.0.6"
+}
 
 ext.moduleName = 'stroom.app'
 
@@ -81,13 +81,7 @@ dependencies {
     implementation libs.dropwizard_lifecycle
     implementation libs.guava
     implementation libs.guice4
-    //implementation libs.jackson_annotations
     implementation libs.javax_inject
-    //implementation libs.javax_activation
-    //implementation libs.javax_activation_impl
-    //implementation libs.jaxb_api
-    //implementation libs.jaxb_core
-    //implementation libs.jaxb_impl
     implementation libs.jcommander
     implementation libs.jetty_servlet
 
@@ -130,9 +124,9 @@ runShadow {
     args 'server', '../local.yml'
 }
 
-//The gwtCompile tasks create files in stroom-app/src/main/resources/ui
-//so those tasks MUST be run before processResource else this jar and 
-//the fat jar will be missing all the GWT generated files and the UI will fail to start
+// The gwtCompile tasks create files in stroom-app/src/main/resources/ui
+// so those tasks MUST be run before processResource else this jar and 
+// the fat jar will be missing all the GWT generated files and the UI will fail to start
 processResources.mustRunAfter(':stroom-app-gwt:gwtCompile')
 processResources.mustRunAfter(':stroom-dashboard-gwt:gwtCompile')
 
@@ -144,7 +138,7 @@ clean {
     delete proxyDockerBuildDir
 }
 
-//Copy all the files needed by the stroom docker build into stroom-app/docker/build
+// Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
 //    dependsOn tasks.getByPath(':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:shadowJar')
@@ -187,17 +181,17 @@ task copyFilesForStroomDockerBuild() {
     }
 }
 
-//Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
+// Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
 task copyFilesForProxyDockerBuild() {
     dependsOn shadowJar
     doFirst {
-        //Copy the stroom app fat jar
+        // Copy the stroom app fat jar
         copy {
             from "${project.buildDir}/libs/${fatJarName}"
             into proxyDockerBuildDir
         }
 
-        //Copy the dropwizard yml configuration
+        // Copy the dropwizard yml configuration
         copy {
             from "${projectDir}/proxy-prod.yml"
             into proxyDockerBuildDir
@@ -205,34 +199,33 @@ task copyFilesForProxyDockerBuild() {
     }
 }
 
-// TODO : @66 Reinstate Swagger doc generation
-//swagger {
-//    apiSource {
-//        outputFormats = ['json', 'yaml']
-//        locations = [
-//                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
-//                'stroom.index.StroomIndexQueryResource',
-//                'stroom.security.AuthorisationResource']
-//        schemes = ['http', 'https']
-//        host = 'localhost:8080'
-//        basePath = '/api'
-//        info {
-//            title = 'stroom API'
-//            version = 'v1'
-//            description = 'Various APIs for interacting with stroom and its data'
-//            contact {
-//                name = 'GCHQ'
-//                url = 'https://github.com/gchq/stroom'
-//            }
-//            license {
-//                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-//                name = 'Apache 2.0'
-//            }
-//        }
-//        outputPath = "${swaggerDir}/document.html"
-//        swaggerDirectory = "${swaggerDir}"
-//    }
-//}
+swagger {
+    apiSource {
+        outputFormats = ['json', 'yaml']
+        locations = [
+                'stroom.statistics.sql.search.SqlStatisticsQueryResource',
+                'stroom.index.StroomIndexQueryResource',
+                'stroom.security.AuthorisationResource']
+        schemes = ['http', 'https']
+        host = 'localhost:8080'
+        basePath = '/api'
+        info {
+            title = 'stroom API'
+            version = 'v1'
+            description = 'Various APIs for interacting with stroom and its data'
+            contact {
+                name = 'GCHQ'
+                url = 'https://github.com/gchq/stroom'
+            }
+            license {
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                name = 'Apache 2.0'
+            }
+        }
+        outputPath = "${swaggerDir}/document.html"
+        swaggerDirectory = "${swaggerDir}"
+    }
+}
 
 
 def releaseBuildDir= 'build/release'
@@ -294,15 +287,15 @@ task buildDistribution(type: Zip) {
 }
 
 
-
-//tasks.build.dependsOn generateSwaggerDocumentation
+tasks.generateSwaggerDocumentation.dependsOn jar
+tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
 
 // The gradle application plugin enables the distribution plugin
-// which creats .zip/tar archives by default, as does the shadow plugin
+// which creates .zip/tar archives by default, as does the shadow plugin
 // We have our own buildDistribution task so disable the standard ones to avoid confusion
 distZip.enabled = false
 distTar.enabled = false
