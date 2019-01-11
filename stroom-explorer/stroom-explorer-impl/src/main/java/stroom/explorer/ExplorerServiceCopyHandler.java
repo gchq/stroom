@@ -22,11 +22,10 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerServiceCopyAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = ExplorerServiceCopyAction.class)
+
 class ExplorerServiceCopyHandler
         extends AbstractTaskHandler<ExplorerServiceCopyAction, BulkActionResult> {
     private final ExplorerService explorerService;

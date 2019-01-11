@@ -48,7 +48,6 @@ import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
@@ -61,7 +60,7 @@ import java.io.IOException;
  * value maps that can be used later on by the FunctionFilter to perform
  * substitutions when processing events data.
  */
-@TaskHandlerBean(task = ReferenceDataLoadTask.class)
+
 class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 

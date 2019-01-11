@@ -18,14 +18,13 @@ package stroom.ui.config.server;
 
 import stroom.node.NodeCache;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.ui.config.shared.FetchUiConfigAction;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.BuildInfoUtil;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchUiConfigAction.class)
+
 class FetchUiConfigHandler extends AbstractTaskHandler<FetchUiConfigAction, UiConfig> {
     private final UiConfig uiConfig;
 

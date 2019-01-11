@@ -23,7 +23,6 @@ import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -33,7 +32,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-@TaskHandlerBean(task = SessionListAction.class)
+
 class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultList<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final Security security;

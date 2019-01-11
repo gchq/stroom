@@ -17,16 +17,15 @@
 
 package stroom.document;
 
+import stroom.docref.SharedObject;
 import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
-import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = DocumentServiceReadAction.class)
+
 class DocumentServiceReadHandler
         extends AbstractTaskHandler<DocumentServiceReadAction<SharedObject>, SharedObject> {
     private final DocumentService documentService;

@@ -21,14 +21,13 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.Set;
 
-@TaskHandlerBean(task = ClearServiceClusterTask.class)
+
 class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceClusterTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 

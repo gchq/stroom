@@ -20,14 +20,13 @@ import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = CloseIndexShardAction.class)
+
 class CloseIndexShardActionHandler extends AbstractTaskHandler<CloseIndexShardAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final Security security;

@@ -24,12 +24,11 @@ import org.slf4j.LoggerFactory;
 import stroom.activity.shared.AcknowledgeSplashAction;
 import stroom.logging.StroomEventLoggingService;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = AcknowledgeSplashAction.class)
+
 public class AcknowledgeSplashHandler extends AbstractTaskHandler<AcknowledgeSplashAction, SharedBoolean> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcknowledgeSplashHandler.class);
 

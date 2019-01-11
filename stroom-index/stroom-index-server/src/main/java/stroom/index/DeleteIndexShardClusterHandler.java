@@ -19,12 +19,11 @@ package stroom.index;
 
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = DeleteIndexShardClusterTask.class)
+
 class DeleteIndexShardClusterHandler extends AbstractTaskHandler<DeleteIndexShardClusterTask<?>, VoidResult> {
     private final IndexShardManager indexShardManager;
     private final Security security;

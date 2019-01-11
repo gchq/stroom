@@ -16,15 +16,14 @@
 
 package stroom.security;
 
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DeleteUserAction;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = DeleteUserAction.class)
+
 class DeleteUserHandler extends AbstractTaskHandler<DeleteUserAction, VoidResult> {
     private final UserService userService;
     private final Security security;

@@ -1,16 +1,15 @@
 package stroom.explorer;
 
-import stroom.explorer.shared.SharedDocRefInfo;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerServiceInfoAction;
+import stroom.explorer.shared.SharedDocRefInfo;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = ExplorerServiceInfoAction.class)
+
 class ExplorerServiceInfoHandler extends AbstractTaskHandler<ExplorerServiceInfoAction, SharedDocRefInfo> {
 
     private final ExplorerService explorerService;

@@ -21,14 +21,13 @@ import stroom.entity.shared.ResultList;
 import stroom.stats.shared.CustomRollUpMaskFields;
 import stroom.stats.shared.StroomStatsRollUpBitMaskConversionAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = StroomStatsRollUpBitMaskConversionAction.class)
+
 class StroomStatsRollUpBitMaskConversionHandler
         extends AbstractTaskHandler<StroomStatsRollUpBitMaskConversionAction, ResultList<CustomRollUpMaskFields>> {
 

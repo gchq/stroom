@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
 import stroom.task.cluster.NullClusterStateException;
@@ -31,7 +30,7 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 import java.util.Set;
 
-@TaskHandlerBean(task = DispatchEntityEventTask.class)
+
 class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityEventTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DispatchEntityEventTaskHandler.class);
 

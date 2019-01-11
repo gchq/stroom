@@ -21,12 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = CacheClearClusterTask.class)
+
 class CacheClearClusterHandler extends AbstractTaskHandler<CacheClearClusterTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheClearClusterHandler.class);
 

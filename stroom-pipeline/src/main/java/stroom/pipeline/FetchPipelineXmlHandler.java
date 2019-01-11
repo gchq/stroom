@@ -20,12 +20,11 @@ import stroom.pipeline.shared.FetchPipelineXmlAction;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedString;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchPipelineXmlAction.class)
+
 class FetchPipelineXmlHandler extends AbstractTaskHandler<FetchPipelineXmlAction, SharedString> {
     private final PipelineStore pipelineStore;
     private final PipelineSerialiser pipelineSerialiser;

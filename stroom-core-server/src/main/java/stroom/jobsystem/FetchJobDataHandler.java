@@ -30,7 +30,6 @@ import stroom.jobsystem.shared.JobNodeRow;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -42,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@TaskHandlerBean(task = FetchJobDataAction.class)
+
 class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, ResultList<JobNodeRow>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchJobDataHandler.class);
 

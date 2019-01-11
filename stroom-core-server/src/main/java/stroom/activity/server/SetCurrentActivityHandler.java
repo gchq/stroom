@@ -28,11 +28,10 @@ import stroom.logging.CurrentActivity;
 import stroom.logging.PurposeUtil;
 import stroom.logging.StroomEventLoggingService;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = SetCurrentActivityAction.class)
+
 public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentActivityAction, Activity> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetCurrentActivityHandler.class);
 

@@ -17,6 +17,10 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.SharedDocRef;
@@ -24,17 +28,12 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.security.Security;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.ExpressionUtil;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@TaskHandlerBean(task = GetPipelineForStreamAction.class)
+
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final DataMetaService streamMetaService;
     private final PipelineStore pipelineStore;

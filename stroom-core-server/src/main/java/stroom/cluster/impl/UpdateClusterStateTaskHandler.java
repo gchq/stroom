@@ -26,10 +26,9 @@ import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.GenericServerTask;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.TaskManager;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -37,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = UpdateClusterStateTask.class)
+
 class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterStateTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateClusterStateTaskHandler.class);
 

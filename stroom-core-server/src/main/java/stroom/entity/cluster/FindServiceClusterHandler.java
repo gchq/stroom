@@ -17,18 +17,17 @@
 
 package stroom.entity.cluster;
 
+import stroom.docref.SharedObject;
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
 import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
-import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindServiceClusterTask.class)
+
 class FindServiceClusterHandler
         extends AbstractTaskHandler<FindServiceClusterTask<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
     private final StroomBeanStore stroomBeanStore;

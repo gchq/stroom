@@ -27,10 +27,9 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.node.shared.Node;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -40,7 +39,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-@TaskHandlerBean(task = FetchCacheNodeRowAction.class)
+
 class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowAction, ResultList<CacheNodeRow>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchCacheNodeRowHandler.class);
 

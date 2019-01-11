@@ -19,6 +19,7 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
 import stroom.feed.FeedProperties;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
@@ -37,10 +38,8 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
-import stroom.data.meta.api.Data;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
@@ -48,7 +47,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 
-@TaskHandlerBean(task = ContextDataLoadTask.class)
+
 class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
