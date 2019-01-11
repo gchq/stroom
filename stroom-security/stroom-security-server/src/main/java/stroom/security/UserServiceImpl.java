@@ -18,18 +18,8 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.EntityServiceHelper;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.SqlBuilder;
 import stroom.security.impl.db.UserDao;
 import stroom.security.impl.db.UserJooq;
 import stroom.security.shared.FindUserCriteria;
@@ -38,9 +28,7 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.PersistenceException;
 import javax.persistence.Transient;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -124,6 +112,12 @@ class UserServiceImpl implements UserService {
         return Optional.of(userDao.getByUuid(uuid))
                 .map(this::fromJooq)
                 .orElse(null);
+    }
+
+    @Override
+    public User save(User user) {
+        // TODO
+        return null;
     }
 
     private User fromJooq(final UserJooq userJooq) {

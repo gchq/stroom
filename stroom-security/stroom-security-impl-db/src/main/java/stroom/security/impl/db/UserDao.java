@@ -22,7 +22,7 @@ public interface UserDao {
 
     Boolean deleteUser(String uuid);
 
-    void addUserToGroup(String userUuid, String groupUuid);
+    Boolean addUserToGroup(String userUuid, String groupUuid);
 
-    void removeUserFromGroup(String userUuid, String groupUuid);
+    Boolean removeUserFromGroup(String userUuid, String groupUuid);
 }

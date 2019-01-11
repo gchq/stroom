@@ -41,6 +41,8 @@ public interface UserService extends ProvidesNamePattern {
 
     User loadByUuid(String uuid);
 
+    User save(User user);
+
     Boolean delete(User user);
 
     void addUserToGroup(final UserRef user, final UserRef userGroup);
