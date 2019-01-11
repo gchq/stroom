@@ -17,10 +17,8 @@
 package stroom.explorer;
 
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.api.ExplorerActionHandlerProvider;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.lifecycle.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,16 +32,13 @@ import java.util.stream.Collectors;
 
 @Singleton
 class ExplorerActionHandlers {
-    private final StroomBeanStore beanStore;
-    private final ExplorerActionHandlerProvider explorerActionHandlerProvider;
+    private final Set<ExplorerActionHandler> explorerActionHandlers;
 
     private volatile Handlers handlers;
 
     @Inject
-    ExplorerActionHandlers(final StroomBeanStore beanStore,
-                           final ExplorerActionHandlerProvider explorerActionHandlerProvider) {
-        this.beanStore = beanStore;
-        this.explorerActionHandlerProvider = explorerActionHandlerProvider;
+    ExplorerActionHandlers(final Set<ExplorerActionHandler> explorerActionHandlers) {
+        this.explorerActionHandlers = explorerActionHandlers;
     }
 
     List<DocumentType> getNonSystemTypes() {
@@ -65,7 +60,7 @@ class ExplorerActionHandlers {
 
     private Handlers getHandlers() {
         if (handlers == null) {
-            handlers = new Handlers(beanStore, explorerActionHandlerProvider);
+            handlers = new Handlers(explorerActionHandlers);
         }
         return handlers;
     }
@@ -75,17 +70,15 @@ class ExplorerActionHandlers {
         private final Map<String, DocumentType> allTypes = new ConcurrentHashMap<>();
         private final List<DocumentType> documentTypes;
 
-        Handlers(final StroomBeanStore beanStore,
-                 final ExplorerActionHandlerProvider explorerActionHandlerProvider) {
+        Handlers(final Set<ExplorerActionHandler> explorerActionHandlers) {
             // Add external handlers.
-            if (explorerActionHandlerProvider != null) {
-                final Set<ExplorerActionHandler> set = explorerActionHandlerProvider.getExplorerActionHandlers();
-                set.forEach(this::addExplorerActionHandler);
+            if (explorerActionHandlers != null) {
+                explorerActionHandlers.forEach(this::addExplorerActionHandler);
             }
 
-            // Add internal handlers.
-            final Set<ExplorerActionHandler> set = beanStore.getInstancesOfType(ExplorerActionHandler.class);
-            set.forEach(this::addExplorerActionHandler);
+//            // Add internal handlers.
+//            final Set<ExplorerActionHandler> set = beanStore.getInstancesOfType(ExplorerActionHandler.class);
+//            set.forEach(this::addExplorerActionHandler);
 
             final List<DocumentType> list = allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))

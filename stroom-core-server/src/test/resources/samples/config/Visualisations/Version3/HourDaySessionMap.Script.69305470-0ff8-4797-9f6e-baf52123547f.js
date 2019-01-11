@@ -163,9 +163,9 @@ visualisations.HourDaySessionMap = function(containerNode) {
     }
 
     var getScale = function(type, min, max) {
-        if (type == "DATE_TIME") {
+        if (type == commonConstants.dataTypeDateTime) {
             return d3.time.scale.utc().range([ min, max ]);
-        } else if (type == "NUMBER") {
+        } else if (type == commonConstants.dataTypeNumber) {
             return d3.scale.linear().range([ min, max ]);
         } else {
             return d3.scale.ordinal().rangeRoundBands([ min, max ], 0);
@@ -221,10 +221,10 @@ visualisations.HourDaySessionMap = function(containerNode) {
             //find all the unique nesting keys so we can synch series if needs be
             //commonFunctions.computeUniqueKeys(data);
 
-            data.types[EVENT_COUNT_IDX] = "NUMBER";
-            data.types[DATE_STR_IDX] = "TEXT";
-            data.types[START_OF_DAY_MS_IDX] = "NUMBER";
-            data.types[SESSION_START_MS_SINCE_START_OF_DAY_IDX] = "NUMBER";
+            data.types[EVENT_COUNT_IDX] = commonConstants.dataTypeNumber;
+            data.types[DATE_STR_IDX] = commonConstants.dataTypeText;
+            data.types[START_OF_DAY_MS_IDX] = commonConstants.dataTypeNumber;
+            data.types[SESSION_START_MS_SINCE_START_OF_DAY_IDX] = commonConstants.dataTypeNumber;
 
             if (settings && settings.thresholdMs && typeof(parseInt(settings.thresholdMs, 10) == "number")){
                 sessionThresholdMillis = parseInt(settings.thresholdMs);

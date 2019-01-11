@@ -55,7 +55,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         streamTaskCreator.shutdown();
         streamTaskCreator.startup();
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
@@ -63,14 +63,14 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
         commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails()).isNull();
         streamTaskCreator.createTasks(new SimpleTaskContext());
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails()).isNotNull();
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isFalse();
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
         // Double up on some processors
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName1);
@@ -80,15 +80,15 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(4);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(4);
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(6);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(6);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(6);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(6);
     }
 
     @Test
@@ -98,8 +98,8 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         streamTaskCreator.shutdown();
         streamTaskCreator.startup();
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
@@ -138,13 +138,13 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
         // assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(1000);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1000);
         List<ProcessorFilterTask> tasks = streamTaskCreator.assignStreamTasks(node, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(2000);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(2000);
         tasks = streamTaskCreator.assignStreamTasks(node, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
@@ -157,7 +157,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         streamTaskCreator.shutdown();
         streamTaskCreator.startup();
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
@@ -167,12 +167,12 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(1);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1);
         assertThat(streamTaskCreator.getStreamTaskQueueSize()).isEqualTo(1);
 
         streamTaskCreator.shutdown();
 
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(1);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1);
         assertThat(streamTaskCreator.getStreamTaskQueueSize()).isEqualTo(0);
 
         streamTaskCreator.startup();

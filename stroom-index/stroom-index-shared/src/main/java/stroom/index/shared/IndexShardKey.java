@@ -74,4 +74,15 @@ public class IndexShardKey {
     public int hashCode() {
         return Objects.hash(indexUuid, partition, shardNo);
     }
+
+    @Override
+    public String toString() {
+        return "IndexShardKey{" +
+                "indexUuid='" + indexUuid + '\'' +
+                ", partition='" + partition + '\'' +
+                ", shardNo=" + shardNo +
+                ", partitionFromTime=" + partitionFromTime +
+                ", partitionToTime=" + partitionToTime +
+                '}';
+    }
 }

@@ -1,7 +1,8 @@
 ext.moduleName = 'stroom.kafka.shared'
 
 dependencies {
-    compile project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
 
-    compile libs.jackson_annotations
+    implementation libs.jackson_annotations
+    implementation libs.stroomDocRef
 }

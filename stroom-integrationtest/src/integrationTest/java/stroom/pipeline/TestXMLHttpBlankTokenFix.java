@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.persist.CoreConfig;
@@ -50,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 // FIXME : reinstate test
-
+@Disabled("Removed test data")
 class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     private static final int EXPECTED_RESULTS = 4;
     private static final String PIPELINE = "XMLHttpBlankTokenFix/XMLHttpBlankTokenFix.Pipeline.data.xml";

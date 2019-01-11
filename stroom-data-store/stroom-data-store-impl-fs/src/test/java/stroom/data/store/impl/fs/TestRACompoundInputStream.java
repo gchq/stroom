@@ -244,7 +244,7 @@ class TestRACompoundInputStream {
                 try (final SegmentInputStream seg = compoundInputStream.getNextInputStream(1)) {
                     seg.include(2);
                 }
-            }).isInstanceOf(IOException.class);
+            }).isInstanceOf(RuntimeException.class);
         }
     }
 

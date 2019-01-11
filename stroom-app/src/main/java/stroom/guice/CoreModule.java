@@ -31,7 +31,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.entity.cluster.EntityClusterModule());
         install(new EntityClusterTaskModule());
         install(new stroom.explorer.ExplorerModule());
-        install(new stroom.externaldoc.ExternalDocRefModule());
         install(new stroom.feed.FeedModule());
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());

@@ -77,17 +77,17 @@ public class SchemaFilterFactory {
 
     private void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
                                final String systemId, final String fileName) {
-        final Path dir = FileSystemTestUtil.getConfigXSDDir();
-
-        final Path file = dir.resolve(fileName);
-
-        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
-        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
-        xmlSchema.setSchemaGroup(schemaGroup);
-        xmlSchema.setName(schemaName);
-        xmlSchema.setNamespaceURI(namespaceURI);
-        xmlSchema.setSystemId(systemId);
-        xmlSchema.setData(StreamUtil.fileToString(file));
-        xmlSchemaStore.writeDocument(xmlSchema);
+//        final Path dir = FileSystemTestUtil.getConfigXSDDir();
+//
+//        final Path file = dir.resolve(fileName);
+//
+//        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
+//        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
+//        xmlSchema.setSchemaGroup(schemaGroup);
+//        xmlSchema.setName(schemaName);
+//        xmlSchema.setNamespaceURI(namespaceURI);
+//        xmlSchema.setSystemId(systemId);
+//        xmlSchema.setData(StreamUtil.fileToString(file));
+//        xmlSchemaStore.writeDocument(xmlSchema);
     }
 }

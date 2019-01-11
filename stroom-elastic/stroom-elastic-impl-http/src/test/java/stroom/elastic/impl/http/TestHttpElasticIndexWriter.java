@@ -1,5 +1,6 @@
 package stroom.elastic.impl.http;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.elastic.api.ElasticIndexWriter;
 import stroom.elastic.impl.ElasticIndexConfigDoc;
@@ -11,12 +12,13 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 class TestHttpElasticIndexWriter {
-    public static final Consumer<Exception> DEFAULT_CALLBACK = ex -> {
-        throw new RuntimeException(String.format("Exception during write"), ex);
+    private static final Consumer<Exception> DEFAULT_CALLBACK = ex -> {
+        throw new RuntimeException("Exception during write", ex);
     };
 
     @Test
-    public void testManualSend() {
+    @Disabled("You may use this to test the local instance of Elastic.")
+    void testManualSend() {
         // Given
         final String recordId = UUID.randomUUID().toString();
 

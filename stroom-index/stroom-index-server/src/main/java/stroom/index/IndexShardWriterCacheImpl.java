@@ -168,6 +168,15 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return openWriter(indexShardKey, indexShard);
     }
 
+    /**
+     * We expect to get lock exceptions as writers are removed from the open writers cache and closed asynchronously via `removeElementsExceedingTTLandTTI`.
+     * If this happens we expect this exception and will return null from this method so that the calling code will create a new shard instead.
+     * This means more shards are created but stops closing shards from blocking indexing.
+     *
+     * @param indexShardKey
+     * @param indexShard
+     * @return
+     */
     private IndexShardWriter openWriter(final IndexShardKey indexShardKey, final IndexShard indexShard) {
         final long indexShardId = indexShard.getId();
 
@@ -178,7 +187,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final int ramBufferSizeMB = getRamBufferSize();
 
         // Mark the index shard as opening.
-        LOGGER.debug(() -> "Opening " + indexShard);
+        LOGGER.debug(() -> "Opening " + indexShardId);
+        LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey.toString());
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
 
         try {
@@ -188,12 +198,16 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
 
             // Output some debug.
-            LOGGER.debug(() -> "Opened " + indexShard + " in " + (System.currentTimeMillis() - indexShardWriter.getCreationTime()) + "ms");
+            LOGGER.debug(() -> "Opened " + indexShardId + " in " + (System.currentTimeMillis() - indexShardWriter.getCreationTime()) + "ms");
 
             return indexShardWriter;
 
         } catch (final LockObtainFailedException t) {
-            LOGGER.error(t::getMessage, t);
+            // We expect to get lock exceptions as writers are removed from the open writers cache and closed asynchronously via `removeElementsExceedingTTLandTTI`.
+            // If this happens we expect this exception and will return null from this method so that the calling code will create a new shard instead.
+            // This means more shards are created but stops closing shards from blocking indexing.
+            LOGGER.debug(() -> "Error opening " + indexShardId, t);
+            LOGGER.trace(t::getMessage, t);
 
         } catch (final IOException | RuntimeException e) {
             // Something unexpected went wrong.
@@ -361,7 +375,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final long indexShardId = indexShardWriter.getIndexShardId();
 
         // Remove the shard from the map.
-        openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (k, v) -> {
+        openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (indexShardKey, v) -> {
             // If there is no value associated with the key or the value is not the one we expect it to be then just return the current value.
             if (v == null || v != indexShardWriter) {
                 return v;
@@ -376,6 +390,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
                     try {
                         try {
+                            LOGGER.debug(() -> "Closing " + indexShardId);
+                            LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
+
                             taskContext.setName("Closing writer");
                             taskContext.info("Closing writer for index shard " + indexShardId);
 
@@ -440,7 +457,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         try {
             LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
             final Path dir = IndexShardUtil.getIndexPath(indexShard);
-            LockFactoryUtil.clean(dir);
+            LockFactoryFactory.clean(dir);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

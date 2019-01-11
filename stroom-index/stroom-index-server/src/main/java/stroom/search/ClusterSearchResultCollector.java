@@ -70,7 +70,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Node node;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
-    private final List<Integer> defaultMaxResultsSizes;
+    private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
     private final CompletionState completionState;
 
@@ -82,7 +82,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final Set<String> highlights,
                                  final ClusterResultCollectorCache clusterResultCollectorCache,
                                  final ResultHandler resultHandler,
-                                 final List<Integer> defaultMaxResultsSizes,
+                                 final Sizes defaultMaxResultsSizes,
                                  final Sizes storeSize,
                                  final CompletionState completionState) {
         this.taskManager = taskManager;
@@ -295,7 +295,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public List<Integer> getDefaultMaxResultsSizes() {
+    public Sizes getDefaultMaxResultsSizes() {
         return defaultMaxResultsSizes;
     }
 

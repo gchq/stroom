@@ -41,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -305,15 +306,19 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     }
 
     private E move(final E document) {
-        return entityServiceHelper.save(document, queryAppender);
+        // No need to save as the document has not been changed
+        return document;
     }
 
     private E rename(final E document, final String name) {
-        // Validate the entity name.
-        NameValidationUtil.validate(getNamePattern(), name);
-        document.setName(name);
+        if (!Objects.equals(document.getName(), name)) {
+            // Validate the entity name.
+            NameValidationUtil.validate(getNamePattern(), name);
+            document.setName(name);
 
-        return entityServiceHelper.save(document, queryAppender);
+            return entityServiceHelper.save(document, queryAppender);
+        }
+        return document;
     }
 
 

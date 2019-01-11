@@ -3,9 +3,11 @@ package stroom.kafka.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
@@ -24,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // TODO : @66 Fix this test
 
 @Disabled
+@ExtendWith(MockitoExtension.class)
 class TestKafkaExternalLoader {
     private static final String DEV_EXTERNAL_LIB_DIR = System.getenv("HOME") + "/.stroom/plugins";
 

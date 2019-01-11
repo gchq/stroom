@@ -35,6 +35,14 @@
                     "defaultValue" : ""
                 },
                 {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "500",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
                     "id": "flattenSeries",
                     "type": "selection",
                     "label": "Flatten",
@@ -84,9 +92,9 @@
                     "id": "maxGridSeries",
                     "type": "number",
                     "label": "Max Grid Series",
-                    "defaultValue": "20",
+                    "defaultValue": "36",
                     "min": "1",
-                    "max": "36"
+                    "max": "144"
                 },
                 {
                     "id" : "gridSeriesDateFormat",
@@ -124,7 +132,8 @@
                     "id": "${gridSeries}",
                     "sort": {
                         "direction": "${sortGridSeries}",
-                        "enabled": "true"
+                        "enabled": "true",
+                        "priority": 0
                     }
                 },
                 "nest": {
@@ -132,7 +141,8 @@
                         "id": "${series}",
                         "sort": {
                             "direction": "${sortSeries}",
-                            "enabled": "true"
+                            "enabled": "true",
+                            "priority": 1
                         }
                     },
                     "values": {
@@ -141,13 +151,18 @@
                                 "id": "${name}",
                                 "sort": {
                                     "direction": "Ascending",
-                                    "enabled": "true"
+                                    "enabled": "true",
+                                    "priority": 2
                                 }
                             },
                             {
                                 "id": "${value}"
                             }
-                        ]
+                        ],
+                        "limit": {
+                            "enabled": "true",
+                            "size": "${maxValues}"
+                        }
                     },
                     "limit": {
                         "enabled": "true",

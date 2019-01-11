@@ -6,11 +6,101 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0-beta.16] - 2018-12-04
+* Issue **#1058** : Added property `stroom.pipeline.parser.secureProcessing` to enable/disable the XML secure processing feature.
+
+* Issue **#1062** : Add env var for UI path
+
+* Uplift distribution visualisation content pack to v3.1.0
+
+* Add transform_user_extract.py, for pre-6.0 to 6.0 user migration
+
+* Issue **#1059** : Fix guice errors on stroom-proxy startup.
+
+* Issue **#1010** : Improve distribution start/stop/etc scripts by adding monochrome switch and background log tailing.
+
+* Issue **#1053** : Add API to disabled authorisation users
+
+* Issue **#1042** : Improve error message for an ApiException when requesting a user's token.
+
+* Issue **#1050** : Prevent creation of permission entries if key already exists.
+
+* Issue **#1015** : Add sortDirections[] and keySortDirection to visualisation data object to fix sorting in the visualisations.
+
+* Issue **#1019** : Fix visualisations settings dialog so you can un-set text and list controls.
+
+* Issue **#1041** : Add a healthcheck to Stroom to alert for API key expiry
+
+* Issue **#1040** : Fix for visualisations that do not require nested data.
+
+* Issue **#1036** : Fix for scrollbar position on explorer popup windows.
+
+* Issue **#1037** : Updated `moment.js` for parsing/formatting dates and times.
+
+* Issue **#1021** : Dashboard links now allow `{}` characters to be used without URL encoding.
+
+* Issue **#1018** : Added Health Checks for the external connectors that are registered via plugins
+
+* Issue **#1025** : Fixed ACE editor resize issue where horizontal scroll bar was not always correctly shown.
+
+* Issue **#1025** : Updated ACE editor to v1.4.2.
+
+* Issue **#1022** : Added `Contains` condition to all search expression fields so that regex terms can be used.
+
+* Issue **#1024** : Superseded output helper no longer expects initialisation in all cases.
+
+* Issue **#1021** : Multiple changes to improve vis, dashboard and external linking in Stroom.
+
+* Issue **#1019** : Fix visualisations settings dialog so you can un-set text and list controls.
+
+* Issue **#986** : Fix direct dashboard links.
+
+* Issue **#1006** : Added Exception Mapper for PermissionExceptions to return HTTP FORBIDDEN.
+
+* Issue **#1012** : Fix for NPE caused when checking if an output is superseded.
+
+* Issue **#1011** : Old UI versions running in browsers often cause Stroom to throw an NPE as it can't find the appropriate GWT serialisation policy. Stroom will no longer throw an NPE but will report an `IncompatibleRemoteServiceException` instead. This is the default GWT behaviour.
+
+* Issue **#1007** : Max visualisation results are now limited by default to the maximum number of results defined for the first level of the parent table. This can be further limited by settings in the visualisation.
+
+* Issue **#1004** : Table cells now support multiple links.
+
+* Issue **#1001** : Changed link types to `tab`, `dialog`, `dashboard`, `browser`.
+
+* Issue **#1001** : Added dashboard link option to link to a dashboard from within a vis, e.g. `stroomLink(d.name, 'type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&params=userId%3D' + d.name, 'DASHBOARD')`.
+
+* Issue **#1001** : Added dashboard link option to link to a dashboard using the `DASHBOARD` target name, e.g. `link(${UserId}, concat('type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>', ${UserId}), '', 'DASHBOARD')`.
+
+* Issue **#1002** : Popup dialogs shown when clicking dashboard hyperlinks are now resizable.
+
+* Issue **#993** : Moving documents in the explorer no longer affects items that are being edited as they are not updated in the process.
+
+* Issue **#996** : Updated functions in dashboard function picker.
+
+* Issue **#981** : Fixed dashboard deletion
+
+* Issue **#989** : Upgraded stroom-expression to v1.4.13 to add new dashboard `link` function.
+
+* Issue **#988** : Changed `generate-url` XSLT function to `link` so it matches the dashboard expression. Changed the parameters to create 4 variants of the function to make creation of simple links easier.
+
+* Issue **#980** : Fix for NPE when fetching dependencies for scripts.
+
+* Issue **#978** : Re-ordering the fields in stream data source
+
+* Issue **gchq/stroom-content#31** : Uplift stroom-logs content pack to v2.0-alpha.5.
+
+* Issue **#982** : Stop proxy trying to health check the content syncing if it isn't enabled.
+
+* Change error logging in ContentSyncService to log stack trace
+
+* Uplift send_to_stroom.sh in the distribution to v2.0
+
+* Issue **#973** : Export servlet changed to a Resource API, added permission check, improved error responses.
+
+* Issue **#969** : The code now suppresses errors for index shards being locked for writing as it is expected. We now lock shards using maps rather than the file system as it is more reliable between restarts.
+
+* Issue **#941** : Internal Meta Stats are now being written
 
 * Issue **#970** : Add stream type of `Records` for translated stroom app events.
-
-## [v6.0-beta.15] - 2018-12-03
 
 * Issue **#966** : Proxy was always reporting zero bytes for the request content in the receive log.
 
@@ -27,8 +117,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#324** : Changed XML serialisation so that forbidden XML characters U+FFFE and U+FFFF are not written. Note that these characters are not even allowed as character references so they are ignored entirely.
 
 * Issue **#945** : More changes to fix some visualisations only showing 10 data points.
-
-## [v6.0-beta.14] - 2018-11-28
 
 * Issue **#945** : Visualisations now show an unlimited number of data points unless constrained by their parent table or their own maximum value setting.
 

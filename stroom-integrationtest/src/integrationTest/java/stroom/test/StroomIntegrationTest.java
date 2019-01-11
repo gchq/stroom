@@ -17,9 +17,9 @@
 package stroom.test;
 
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
@@ -47,13 +47,13 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private ContentImportService contentImportService;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         final State state = TestState.getState();
         state.reset();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
     }
 

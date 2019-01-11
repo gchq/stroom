@@ -52,20 +52,9 @@ public class MockCommonTestControl implements CommonTestControl {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public int countEntity(final Class clazz) {
+    public int countEntity(final String tableName) {
         return 0;
     }
-
-//    @Override
-//    public int countDocs(final String type) {
-//        return 0;
-//    }
-//
-//    @Override
-//    public void shutdown() {
-//        // NA
-//    }
 
     @Override
     public void createRequiredXMLSchemas() {

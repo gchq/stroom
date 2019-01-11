@@ -75,7 +75,7 @@ class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
-        assertThat(commonTestControl.countEntity(ProcessorFilterTask.class)).isEqualTo(0);
+        assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
         final List<Data> streams = streamMetaService.find(new FindDataCriteria());
         assertThat(streams.size()).isEqualTo(1);
 

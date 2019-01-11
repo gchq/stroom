@@ -18,6 +18,7 @@
 package stroom.pipeline.task;
 
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
@@ -54,7 +55,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // TODO: Create test data or recreate with large test
-
+@Disabled("Create test data or recreate with large test")
 class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     private static final String DIR = "GenericTestTranslationTaskFactory/";
 

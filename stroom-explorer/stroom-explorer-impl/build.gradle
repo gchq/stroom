@@ -1,25 +1,25 @@
 ext.moduleName = 'stroom.explorer.impl'
 
 dependencies {
-    compile project(':stroom-core-server')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-explorer:stroom-explorer-impl-db')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-explorer-impl-db')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.eventLogging
-    //compile libs.flyway_core
-    compile libs.guice4
-    //compile libs.hibernate_jpa_api
-    compile libs.javax_inject
-    compile libs.javax_validation
-    //compile libs.jaxb_api
-    compile libs.slf4j_api
-    compile libs.stroomDocRef
-    compile libs.stroomQueryApi
-    compile libs.swagger_annotations
-    compile libs.ws_rs_api
+    implementation libs.eventLogging
+    //implementation libs.flyway_core
+    implementation libs.guice4
+    //implementation libs.hibernate_jpa_api
+    implementation libs.javax_inject
+    implementation libs.javax_validation
+    //implementation libs.jaxb_api
+    implementation libs.slf4j_api
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
 }

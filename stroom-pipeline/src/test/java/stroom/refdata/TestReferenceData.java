@@ -21,9 +21,11 @@ import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datafeed.DataFeedConfig;
@@ -66,8 +68,8 @@ import java.util.TreeSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
     private static final String USER_1 = "user1";
     private static final String VALUE_1 = "value1";

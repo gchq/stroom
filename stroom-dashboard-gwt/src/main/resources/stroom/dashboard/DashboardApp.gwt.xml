@@ -41,7 +41,6 @@
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.tickbox.TickBox"/>
     <inherits name="stroom.widget.tooltip.Tooltip"/>
-    <inherits name="stroom.widget.iframe.IFrame" />
     <inherits name="stroom.widget.valuespinner.ValueSpinner"/>
     <inherits name="stroom.editor.Editor"/>
     <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
@@ -64,6 +63,8 @@
     <inherits name="stroom.menubar.Menubar"/>
     <inherits name="stroom.node.Node"/>
     <inherits name="stroom.util.Util"/>
+    <inherits name="stroom.hyperlink.Hyperlink" />
+    <inherits name="stroom.iframe.IFrame" />
 
     <!-- Additional -->
     <inherits name="stroom.dashboard.Dashboard"/>

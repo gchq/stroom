@@ -55,7 +55,7 @@ public class SqlStatisticsStore implements Store {
 
     private final ResultHandler resultHandler;
     private final int resultHandlerBatchSize;
-    private final List<Integer> defaultMaxResultsSizes;
+    private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
     private final CompletionState completionState;
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
@@ -66,7 +66,7 @@ public class SqlStatisticsStore implements Store {
     SqlStatisticsStore(final SearchRequest searchRequest,
                        final StatisticStoreDoc statisticStoreDoc,
                        final StatisticsSearchService statisticsSearchService,
-                       final List<Integer> defaultMaxResultsSizes,
+                       final Sizes defaultMaxResultsSizes,
                        final Sizes storeSize,
                        final int resultHandlerBatchSize,
                        final Executor executor,
@@ -146,7 +146,7 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public List<Integer> getDefaultMaxResultsSizes() {
+    public Sizes getDefaultMaxResultsSizes() {
         return defaultMaxResultsSizes;
     }
 

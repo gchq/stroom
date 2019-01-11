@@ -73,7 +73,7 @@ import stroom.servlet.DashboardServlet;
 import stroom.servlet.DebugServlet;
 import stroom.servlet.DynamicCSSServlet;
 import stroom.servlet.EchoServlet;
-import stroom.servlet.ExportConfigServlet;
+import stroom.servlet.ExportConfigResource;
 import stroom.servlet.HttpServletRequestFilter;
 import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
@@ -85,7 +85,6 @@ import stroom.statistics.sql.search.SqlStatisticsQueryResource;
 import stroom.streamstore.StreamAttributeMapResource;
 import stroom.streamtask.resource.StreamTaskResource;
 import stroom.util.HealthCheckUtils;
-import stroom.util.db.DbUtil;
 import stroom.util.logging.LambdaLogger;
 
 import javax.servlet.DispatcherType;
@@ -218,7 +217,9 @@ public class App extends Application<Config> {
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
 
         // Sync content.
-        if (configuration.getProxyConfig() != null && configuration.getProxyConfig().getContentSyncConfig() != null) {
+        if (configuration.getProxyConfig() != null &&
+                configuration.getProxyConfig().getContentSyncConfig() != null &&
+                configuration.getProxyConfig().getContentSyncConfig().isContentSyncEnabled()) {
             // Create a map of import handlers.
             final Map<String, ImportExportActionHandler> importExportActionHandlers = new HashMap<>();
             importExportActionHandlers.put(RuleSet.DOCUMENT_TYPE, injector.getInstance(RuleSetService.class));
@@ -273,7 +274,6 @@ public class App extends Application<Config> {
         GuiceUtil.addServlet(servletContextHandler, injector, ImportFileServlet.class, ResourcePaths.ROOT_PATH + "/importfile.rpc", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, ScriptServlet.class, ResourcePaths.ROOT_PATH + "/script", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, ClusterCallServiceRPC.class, ResourcePaths.ROOT_PATH + "/clustercall.rpc", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, ExportConfigServlet.class, ResourcePaths.ROOT_PATH + "/export", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, StatusServlet.class, ResourcePaths.ROOT_PATH + "/status", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, EchoServlet.class, ResourcePaths.ROOT_PATH + "/echo", healthCheckRegistry);
         GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug", healthCheckRegistry);
@@ -289,6 +289,7 @@ public class App extends Application<Config> {
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ExportConfigResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
@@ -302,6 +303,12 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, DataResource.class);
+
+        // Map exceptions to helpful HTTP responses
+        environment.jersey().register(PermissionExceptionMapper.class);
+
+        // Map exceptions to helpful HTTP responses
+        environment.jersey().register(PermissionExceptionMapper.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);
