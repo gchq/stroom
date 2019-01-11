@@ -28,16 +28,21 @@ public class MetaDataSource {
 //    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
 //    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
+    // Non grouped fields
     public static final String FEED_NAME = "Feed";
     public static final String PIPELINE_UUID = "Pipeline";
+    public static final String STATUS = "Status";
     public static final String STREAM_TYPE_NAME = "Type";
+
+    // Id's
     public static final String STREAM_ID = "Id";
     public static final String PARENT_STREAM_ID = "Parent Id";
-    public static final String STATUS = "Status";
+    public static final String STREAM_PROCESSOR_ID = "Stream Processor Id";
+
+    // Times
     public static final String CREATE_TIME = "Create Time";
     public static final String EFFECTIVE_TIME = "Effective Time";
     public static final String STATUS_TIME = "Status Time";
-    public static final String STREAM_PROCESSOR_ID = "Stream Processor Id";
 
     // Extended fields.
 //    public static final String NODE = "Node";
@@ -63,28 +68,53 @@ public class MetaDataSource {
 //        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
+
+        // Non grouped fields
         FIELDS.add(createDocRefField(FEED_NAME, "Feed"));
         FIELDS.add(createDocRefField(PIPELINE_UUID, "Pipeline"));
+        FIELDS.add(createStringField(STATUS));
         FIELDS.add(createStringField(STREAM_TYPE_NAME));
+
+        // Id's
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));
-        FIELDS.add(createStringField(STATUS));
+        FIELDS.add(createIdField(STREAM_PROCESSOR_ID));
+
+        // Times
         FIELDS.add(createDateField(CREATE_TIME));
         FIELDS.add(createDateField(EFFECTIVE_TIME));
         FIELDS.add(createDateField(STATUS_TIME));
-        FIELDS.add(createIdField(STREAM_PROCESSOR_ID));
+
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
-        EXTENDED_FIELDS.addAll(FIELDS);
 
-//        EXTENDED_FIELDS.add(createStringField(NODE));
+        // Single Items
+        EXTENDED_FIELDS.add(createDocRefField(FEED_NAME, "Feed"));
+        EXTENDED_FIELDS.add(createNumField(DURATION));
+        //        EXTENDED_FIELDS.add(createStringField(NODE));
+        EXTENDED_FIELDS.add(createDocRefField(PIPELINE_UUID, "Pipeline"));
+        EXTENDED_FIELDS.add(createStringField(STATUS));
+        EXTENDED_FIELDS.add(createStringField(STREAM_TYPE_NAME));
+
+        // Id's
+        EXTENDED_FIELDS.add(createIdField(STREAM_ID));
+        EXTENDED_FIELDS.add(createIdField(PARENT_STREAM_ID));
+        EXTENDED_FIELDS.add(createIdField(STREAM_PROCESSOR_ID));
+
+        // Counts
         EXTENDED_FIELDS.add(createNumField(REC_READ));
         EXTENDED_FIELDS.add(createNumField(REC_WRITE));
-        EXTENDED_FIELDS.add(createNumField(REC_INFO));
-        EXTENDED_FIELDS.add(createNumField(REC_WARN));
-        EXTENDED_FIELDS.add(createNumField(REC_ERROR));
         EXTENDED_FIELDS.add(createNumField(REC_FATAL));
-        EXTENDED_FIELDS.add(createNumField(DURATION));
+        EXTENDED_FIELDS.add(createNumField(REC_ERROR));
+        EXTENDED_FIELDS.add(createNumField(REC_WARN));
+        EXTENDED_FIELDS.add(createNumField(REC_INFO));
+
+        // Times
+        EXTENDED_FIELDS.add(createDateField(CREATE_TIME));
+        EXTENDED_FIELDS.add(createDateField(EFFECTIVE_TIME));
+        EXTENDED_FIELDS.add(createDateField(STATUS_TIME));
+
+        // Sizes
         EXTENDED_FIELDS.add(createNumField(FILE_SIZE));
         EXTENDED_FIELDS.add(createNumField(STREAM_SIZE));
         EXTENDED_FIELD_MAP = EXTENDED_FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));

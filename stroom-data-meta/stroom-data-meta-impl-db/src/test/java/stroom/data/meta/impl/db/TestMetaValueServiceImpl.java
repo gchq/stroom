@@ -44,18 +44,14 @@ class TestMetaValueServiceImpl {
     private MetaValueConfig metaValueConfig;
 
     @BeforeEach
-    void setProperties() {
+    void setup() {
+        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
         metaValueConfig.setAddAsync(false);
     }
 
     @AfterEach
     void unsetProperties() {
         metaValueConfig.setAddAsync(true);
-    }
-
-    @BeforeEach
-    void setup() {
-        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test

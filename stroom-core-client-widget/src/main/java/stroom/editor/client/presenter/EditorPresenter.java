@@ -30,6 +30,7 @@ import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.event.HasChangeFilterHandlers;
 import stroom.editor.client.event.HasFormatHandlers;
+import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
@@ -70,7 +71,16 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
      */
     @Override
     public void setText(final String text) {
-        getView().setText(text);
+        setText(text, false);
+    }
+
+    public void setText(final String text, final boolean format) {
+        if (format) {
+            final String formatted = new XmlFormatter().format(text);
+            getView().setText(formatted);
+        } else {
+            getView().setText(text);
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.config.app'
 
 dependencies {
+<<<<<<< HEAD
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-dashboard:stroom-dashboard-server')
@@ -15,15 +16,46 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
+=======
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-server')
+    implementation project(':stroom-data-meta:stroom-data-meta-impl-db')
+    implementation project(':stroom-data-store:stroom-data-store-impl-fs')
+    implementation project(':stroom-explorer:stroom-explorer-impl-db')
+    implementation project(':stroom-index:stroom-index-server')
+    implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-statistics:stroom-statistics-server')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+>>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
-   //compile libs.jackson_core
-   compile libs.commons_text
-   compile libs.guice4
-   compile libs.jackson_annotations
-   compile libs.jackson_databind
-   compile libs.jackson_dataformat_yaml
-   compile libs.javax_inject
+    implementation libs.stroomDocRef
+
+    implementation libs.commons_text
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.jackson_databind
+    implementation libs.jackson_dataformat_yaml
+    implementation libs.javax_inject
+
+    testImplementation libs.assertj_core
+    testCompileOnly libs.junit_jupiter_api
     
+<<<<<<< HEAD
    testCompile libs.assertj_core
    testCompile libs.junit_jupiter_api
+=======
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+>>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }

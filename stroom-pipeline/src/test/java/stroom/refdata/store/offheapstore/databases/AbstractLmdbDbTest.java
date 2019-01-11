@@ -23,6 +23,7 @@ import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.ByteSizeUnit;
+import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
@@ -54,7 +55,9 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
             lmdbEnv.close();
         }
         lmdbEnv = null;
-        Files.deleteIfExists(dbDir);
+        if (Files.isDirectory(dbDir)) {
+            FileUtil.deleteDir(dbDir);
+        }
     }
 
     protected Path getDbDir() {

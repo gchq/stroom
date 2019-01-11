@@ -50,7 +50,7 @@ public class ClusterSearchResultCollectorFactory {
                                                final Node node,
                                                final Set<String> highlights,
                                                final ResultHandler resultHandler,
-                                               final List<Integer> defaultMaxResultsSizes,
+                                               final Sizes defaultMaxResultsSizes,
                                                final Sizes storeSize,
                                                final CompletionState completionState) {
         return new ClusterSearchResultCollector(taskManager,

@@ -32,7 +32,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestFetchMarkerHandler extends StroomUnitTest {
+public class TestFetchMarkerHandler extends StroomUnitTest {
     @Test
     void test() throws IOException {
         doTest(4, 12);

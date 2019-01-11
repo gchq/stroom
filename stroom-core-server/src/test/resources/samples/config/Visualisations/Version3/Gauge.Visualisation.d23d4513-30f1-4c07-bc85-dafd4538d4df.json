@@ -1,0 +1,132 @@
+{
+    "tabs" : [ 
+        {
+            "name" : "Data",
+            "controls" : [ 
+                {
+                    "id" : "field",
+                    "type" : "field",
+                    "label" : "Field"
+                },
+                {
+                    "id" : "gridSeries",
+                    "type" : "field",
+                    "label" : "Grid Series"
+                }
+            ]
+        },
+        {
+            "name" : "Gauge",
+            "controls" : [
+                {
+                    "id": "maxGridSeries",
+                    "type": "number",
+                    "label": "Max Grid Series",
+                    "defaultValue": "36",
+                    "max": "144",
+                    "min": "1"
+                },
+                {
+                    "id": "sortGridSeries",
+                    "type": "selection",
+                    "label": "Sort Grid Series",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
+                    "id" : "gridSeriesDateFormat",
+                    "type" : "text",
+                    "label" : "Grid Series Date Format (optional)",
+                    "defaultValue" : ""
+                },
+                {
+                    "id" : "showLabels",
+                    "type" : "boolean",
+                    "label" : "Show Value",
+                    "defaultValue" : "true"
+                },
+                {
+                    "id" : "RedHi",
+                    "type" : "number",
+                    "label" : "Red Upper Bound",
+                    "defaultValue" : "10000",
+                    "min" : "-10000000",
+                    "max" : "10000000"
+                },
+                {
+                    "id" : "RedLo",
+                    "type" : "number",
+                    "label" : "Red Lower Bound",
+                    "defaultValue" : "5000",
+                    "min" : "-10000000",
+                    "max" : "10000000"
+                },
+                {
+                    "id" : "AmberHi",
+                    "type" : "number",
+                    "label" : "Amber Upper Bound",
+                    "defaultValue" : "4999",
+                    "min" : "-10000000",
+                    "max" : "10000000"
+                },
+                {
+                    "id" : "AmberLo",
+                    "type" : "number",
+                    "label" : "Amber Lower Bound",
+                    "defaultValue" : "2000",
+                    "min" : "-10000000",
+                    "max" : "10000000"
+                },
+                {
+                    "id" : "GreenHi",
+                    "type" : "number",
+                    "label" : "Green Upper Bound",
+                    "defaultValue" : "1999",
+                    "min" : "-10000000",
+                    "max" : "10000000"
+                },
+                {
+                    "id" : "GreenLo",
+                    "type" : "number",
+                    "label" : "Green Lower Bound",
+                    "defaultValue" : "0",
+                    "min" : "-10000000",
+                    "max" : "10000000"
+                }
+            ]
+        } 
+    ],
+    "data" : {
+        "structure" : {
+            "nest": {
+                "key": {
+                    "id": "${gridSeries}",
+                    "sort": {
+                        "direction": "${sortGridSeries}",
+                        "enabled": "true",
+                        "priority": 0
+                    }
+                },
+                "values" : {
+                    "fields" : [ 
+                        {
+                            "id" : "${field}"
+                        } 
+                    ],
+                    "limit": {
+                        "enabled": "true",
+                        "size": "1"
+                    }
+                },
+                "limit": {
+                    "enabled": "true",
+                    "size": "${maxGridSeries}"
+                }
+            }
+        }
+    }
+}

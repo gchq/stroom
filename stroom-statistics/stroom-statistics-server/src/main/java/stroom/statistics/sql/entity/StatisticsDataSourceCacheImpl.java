@@ -22,12 +22,16 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
-import stroom.docref.DocRef;
+import stroom.security.Security;
+import stroom.security.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionException;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
@@ -54,15 +58,21 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     private final StatisticStoreStore statisticStoreStore;
     private final CacheManager cacheManager;
+    private final Security security;
+    private final SecurityContext securityContext;
 
     private volatile LoadingCache<String, Optional<StatisticStoreDoc>> cacheByName;
     private volatile LoadingCache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
 
     @Inject
     StatisticsDataSourceCacheImpl(final StatisticStoreStore statisticStoreStore,
-                                  final CacheManager cacheManager) {
+                                  final CacheManager cacheManager,
+                                  final Security security,
+                                  final SecurityContext securityContext) {
         this.statisticStoreStore = statisticStoreStore;
         this.cacheManager = cacheManager;
+        this.security = security;
+        this.securityContext = securityContext;
     }
 
     private LoadingCache<String, Optional<StatisticStoreDoc>> getCacheByName() {
@@ -75,16 +85,17 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                         }
 
                         // Id and key not found in cache so try pulling it from the DB
-                        final List<DocRef> results = statisticStoreStore.list().stream().filter(docRef -> k.equals(docRef.getName())).collect(Collectors.toList());
-                        if (results.size() > 1) {
-                            throw new RuntimeException(String.format(
-                                    "Found multiple StatisticDataSource entities with name %s. This should not happen",
-                                    k));
-                        } else if (results.size() == 1) {
-                            return Optional.ofNullable(statisticStoreStore.readDocument(results.get(0)));
-                        }
+                        return security.asProcessingUserResult(() -> {
+                            final List<DocRef> results = statisticStoreStore.list().stream().filter(docRef -> k.equals(docRef.getName())).collect(Collectors.toList());
+                            if (results.size() > 1) {
+                                throw new RuntimeException(String.format(
+                                        "Found multiple StatisticDataSource entities with name %s. This should not happen", k));
+                            } else if (results.size() == 1) {
+                                return Optional.ofNullable(statisticStoreStore.readDocument(results.get(0)));
+                            }
 
-                        return Optional.empty();
+                            return Optional.empty();
+                        });
                     });
                     cacheByName = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME, cacheLoader);
                 }
@@ -97,7 +108,9 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
-                    final CacheLoader<DocRef, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k -> Optional.ofNullable(statisticStoreStore.readDocument(k)));
+                    final CacheLoader<DocRef, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k ->
+                            security.asProcessingUserResult(() ->
+                                    Optional.ofNullable(statisticStoreStore.readDocument(k))));
                     cacheByRef = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID, cacheLoader);
                 }
             }
@@ -115,14 +128,27 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cache;
     }
 
+    private boolean permissionFilter(final StatisticStoreDoc entity) {
+        if (!securityContext.hasDocumentPermission(StatisticStoreDoc.DOCUMENT_TYPE, entity.getUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException(securityContext.getUserId(), "Not permitted to read " + entity.getName());
+        }
+        return true;
+    }
+
     @Override
     public StatisticStoreDoc getStatisticsDataSource(final DocRef docRef) {
-        return getCacheByRef().getUnchecked(docRef).orElse(null);
+        return getCacheByRef()
+                .getUnchecked(docRef)
+                .filter(this::permissionFilter)
+                .orElse(null);
     }
 
     @Override
     public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
-        return getCacheByName().getUnchecked(statisticName).orElse(null);
+        return getCacheByName()
+                .getUnchecked(statisticName)
+                .filter(this::permissionFilter)
+                .orElse(null);
     }
 
     @Override

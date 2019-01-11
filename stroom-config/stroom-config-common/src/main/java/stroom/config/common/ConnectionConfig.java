@@ -17,16 +17,16 @@
 package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.ReadOnly;
+import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
 public class ConnectionConfig implements IsConfig {
-    private String jdbcDriverClassName;
-    private String jdbcDriverUrl;
-    private String jdbcDriverUsername;
-    private String jdbcDriverPassword;
+    private String jdbcDriverClassName = "com.mysql.jdbc.Driver";
+    private String jdbcDriverUrl = "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";
+    private String jdbcDriverUsername = "stroomuser";
+    private String jdbcDriverPassword = "stroompassword1";
 
     @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")

@@ -19,6 +19,7 @@ package stroom.security;
 import com.google.common.base.Strings;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
@@ -253,23 +254,37 @@ public class SecurityFilter implements Filter {
         final String authenticationRequestBaseUrl = config.getAuthenticationServiceUrl() + "/authenticate";
 
         // Get the redirect URL for the auth service from the current request.
-        final String url = request.getRequestURL().toString();
+        String url = request.getRequestURL().toString();
+        String query = request.getQueryString();
+        if (!Strings.isNullOrEmpty(query)) {
+            url += "?" + query;
+        }
 
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, url);
 
         // If we're using the request URL we want to trim off any trailing params
         final URI parsedRequestUrl = UriBuilder.fromUri(url).build();
-        String redirectUrl = parsedRequestUrl.getScheme() + "://" + parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
-        if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
-            redirectUrl += parsedRequestUrl.getPath();
-        }
+        String redirectUrl;
 
-        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         if (uiConfig.getUrlConfig() != null && uiConfig.getUrlConfig().getUi() != null && uiConfig.getUrlConfig().getUi().trim().length() > 0) {
             LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
             redirectUrl = uiConfig.getUrlConfig().getUi();
+        } else {
+            redirectUrl = parsedRequestUrl.getScheme() + "://" + parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
         }
+
+        // Putting the path and query back on
+        if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
+            redirectUrl += parsedRequestUrl.getPath();
+            redirectUrl += "?";
+            if (!Strings.isNullOrEmpty(query)) {
+                redirectUrl += query;
+            }
+        }
+
+        // In some cases we might need to use an external URL as the current incoming one might have been proxied.
+
 
         String authenticationRequestParams = "" +
                 "?scope=openid" +
@@ -307,30 +322,28 @@ public class SecurityFilter implements Filter {
         try {
             String sessionId = request.getSession().getId();
             final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(accessCode);
-            final Optional<JwtClaims> jwtClaimsOptional = jwtService.verifyToken(idToken);
-            if (jwtClaimsOptional.isPresent()) {
-                final String nonce = (String) jwtClaimsOptional.get().getClaimsMap().get("nonce");
-                final boolean match = nonce.equals(state.getNonce());
-                if (match) {
-                    LOGGER.info("User is authenticated for sessionId " + sessionId);
-                    token = new AuthenticationToken(jwtClaimsOptional.get().getSubject(), idToken);
+            final JwtClaims jwtClaimsOptional = jwtService.verifyToken(idToken);
+            final String nonce = (String) jwtClaimsOptional.getClaimsMap().get("nonce");
+            final boolean match = nonce.equals(state.getNonce());
+            if (match) {
+                LOGGER.info("User is authenticated for sessionId " + sessionId);
+                token = new AuthenticationToken(jwtClaimsOptional.getSubject(), idToken);
 
-                } else {
-                    // If the nonces don't match we need to redirect to log in again.
-                    // Maybe the request uses an out-of-date stroomSessionId?
-                    LOGGER.info("Received a bad nonce!");
-                }
+            } else {
+                // If the nonces don't match we need to redirect to log in again.
+                // Maybe the request uses an out-of-date stroomSessionId?
+                LOGGER.info("Received a bad nonce!");
             }
         } catch (ApiException e) {
             if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
                 // If we can't exchange the accessCode for an idToken then this probably means the
                 // accessCode doesn't exist any more, or has already been used. so we can't proceed.
-                LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?", e);
+                LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?");
             } else {
                 LOGGER.error("Unable to retrieve idToken!", e);
             }
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(e.getMessage(), e);
+        } catch (final MalformedClaimException | InvalidJwtException e) {
+            LOGGER.warn(e.getMessage());
             throw new RuntimeException(e.getMessage(), e);
         }
 
@@ -365,14 +378,13 @@ public class SecurityFilter implements Filter {
             if (jwtService.containsValidJws(request)) {
                 final Optional<String> optionalJws = jwtService.getJws(request);
                 final String jws = optionalJws.orElseThrow(() -> new AuthenticationException("Unable to get JWS"));
-                final Optional<JwtClaims> jwtClaimsOptional = jwtService.verifyToken(jws);
-                final JwtClaims jwtClaims = jwtClaimsOptional.orElseThrow(() -> new AuthenticationException("Unable to get JWT claims"));
+                final JwtClaims jwtClaims = jwtService.verifyToken(jws);
                 token = new AuthenticationToken(jwtClaims.getSubject(), optionalJws.get());
             } else {
                 LOGGER.error("Cannot get a valid JWS for API request!");
             }
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(e.getMessage(), e);
+        } catch (final MalformedClaimException | InvalidJwtException e) {
+            LOGGER.warn(e.getMessage());
             throw new AuthenticationException(e.getMessage(), e);
         }
 

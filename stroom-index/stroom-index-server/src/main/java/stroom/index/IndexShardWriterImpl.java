@@ -164,7 +164,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         }
 
         // Create lucene directory object.
-        directory = new NIOFSDirectory(dir, LockFactoryUtil.get(dir));
+        directory = new NIOFSDirectory(dir, LockFactoryFactory.get());
 
         // IndexWriter to use for adding data to the index.
         indexWriter = new IndexWriter(directory, indexWriterConfig);

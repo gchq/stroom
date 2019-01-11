@@ -4,22 +4,20 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.query.common.v2.Sizes;
-import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.task.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -79,8 +77,8 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreDoc);
 
-        final Sizes storeSize = Sizes.create(getStoreSizes());
-        final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        final Sizes storeSize = getStoreSizes();
+        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
         //wrap the resultHandler in a new store, initiating the search in the process
@@ -95,12 +93,12 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                 taskContext);
     }
 
-    private List<Integer> getDefaultMaxResultsSizes() {
+    private Sizes getDefaultMaxResultsSizes() {
         final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
-    private List<Integer> getStoreSizes() {
+    private Sizes getStoreSizes() {
         final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
@@ -109,18 +107,17 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         return searchConfig.getResultHandlerBatchSize();
     }
 
-    private List<Integer> extractValues(String value) {
+    private Sizes extractValues(String value) {
         if (value != null) {
             try {
-                return Arrays.stream(value.split(","))
+                return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Integer::valueOf)
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toList()));
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Collections.emptyList();
+        return Sizes.create(Integer.MAX_VALUE);
     }
-
 }

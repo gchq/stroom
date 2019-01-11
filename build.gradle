@@ -9,7 +9,7 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
 
         // A fork of https://github.com/wfhartford/gradle-dependency-analyze that works with Java 10
-        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
+//        classpath 'stroom:gradle-dependency-analyze:v2.2.5'
 
         // The following are required to put JAXB on the Gradle classpath for the purpose of JOOQ code generation in J9+.
         // Later versions of the JOOQ Gradle plugin should make this unnecessary.
@@ -22,30 +22,31 @@ buildscript {
 }
 
 plugins {
-    //plugin for downloading content from the 'net
-    id "de.undercouch.download" version "3.2.0" apply false
+    // Plugin for downloading content from the 'net
+    id "de.undercouch.download" version "3.4.3" apply false
 
-    //plugin for producing a tree of task dependencies, run task 'taskTree'
-    id "com.dorongold.task-tree" version "1.3" apply true
+    // Plugin for producing a tree of task dependencies, run task 'taskTree'
+    id "com.dorongold.task-tree" version "1.3.1" apply true
 
-    id "com.github.johnrengelman.shadow" version "2.0.4" apply false
+    id "com.github.johnrengelman.shadow" version "4.0.3" apply false
 
-    id 'nu.studer.jooq' version '3.0.0' apply false
-}
+    id 'nu.studer.jooq' version '3.0.2' apply false
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.10.2'
+    id 'org.flywaydb.flyway' version '5.2.4' apply false
+
+    id 'java-library'
 }
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'de.undercouch.download'
-apply plugin: 'ca.cutterslade.analyze'
+//apply plugin: 'ca.cutterslade.analyze'
 
 if (!JavaVersion.current().isJava10()) {
     throw new GradleException("This build must be run with Java 10 (current = " + JavaVersion.current() + ")")
 }
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
+ext.stroomContentImportDir = System.getProperty("user.home") + "/.stroom/contentPackImport"
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -79,8 +80,8 @@ ext.versions = [
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v1.0-beta.8',
-        stroomExpression  : 'v2.0.3',
-        stroomQuery       : 'v4.0-beta.23', // same version for both stroom-query-api and stroom-query-common
+        stroomExpression  : 'v2.0.4',
+        stroomQuery       : 'v4.0-beta.24', // same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
@@ -92,11 +93,12 @@ ext.versions = [
         gwt               : '2.8.2',
         hibernate         : '5.2.15.Final', //dropwiz 1.3.3 uses -validator 5.4.2.Final and -core 5.2.15.Final
         hikari            : '3.2.0',
+        mockito           : '2.23.4',
         jackson           : '2.9.5', //in line with dropwizard 1.3.3
         jersey            : '2.25.1',
         jetty             : '9.4.10.v20180503', //in line with dropwizard 1.3.3
-        jooq              : '3.11.4',
         junit_jupiter     : '5.3.2',
+        jooq              : '3.11.9',
         logback           : '1.2.3', //in line with dropwizard 1.3.3
         lucene            : '5.5.3',
         rxjava            : '2.1.10',
@@ -151,7 +153,7 @@ ext.libs = [
         dropwizard_testing             : "io.dropwizard:dropwizard-testing:$versions.dropwizard",
         fast_classpath_scanner         : "io.github.lukehutch:fast-classpath-scanner:2.9.4",
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
-        flyway_core                    : "org.flywaydb:flyway-core:5.1.3",
+        flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
@@ -207,8 +209,8 @@ ext.libs = [
         jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
         jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j:$versions.slf4j",
-        junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:${versions.junit_jupiter}",
-        junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:${versions.junit_jupiter}",
+        junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
+        junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:$versions.junit_jupiter",
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.1",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j:$versions.slf4j",
@@ -218,7 +220,8 @@ ext.libs = [
         lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
-        mockito_core                   : "org.mockito:mockito-core:2.23.4",
+        mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
+        mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
         mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
         objenesis                      : "org.objenesis:objenesis:2.2",
         poi                            : "org.apache.poi:poi:3.17",
@@ -244,7 +247,7 @@ ext.contentPackDownloadDir = contentPackDownloadDir
 def contentPackImportDir = "${System.properties['user.home']}/.stroom/contentPackImport/"
 ext.contentPackImportDir = contentPackImportDir
 def contentReleasesUrl = "http://github.com/gchq/stroom-content/releases/download/"
-def visualisationsContentPackVer = "v3.0.6"
+def visualisationsContentPackVer = "v3.1.0"
 def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations-dev/releases/download/${visualisationsContentPackVer}/visualisations-production-${visualisationsContentPackVer}.zip"
 
 //A set of content packs to download in the task downloadStroomContent
@@ -256,7 +259,7 @@ ext.contentPacks = [
     'internal-statistics-stroom-stats': 'v2.1',
     'standard-pipelines': 'v0.1',
     'stroom-101': 'v1.0',
-    'stroom-logs': 'v2.0-alpha.4',
+    'stroom-logs': 'v2.0-alpha.5',
     'template-pipelines': 'v0.2'
 ]
 
@@ -266,21 +269,6 @@ def projectsToBePublished = subprojects.findAll { project ->
             ':stroom-entity-shared',
             ':stroom-util',
             ':stroom-util-shared',
-            'zzDUMMYzz to ease sorting'
-    ]
-}
-
-//defines a list of gradle project paths that need to expose their test jars for other
-//projects to use
-def projectsWithSharedTestJars = subprojects.findAll { project ->
-    project.path in [
-            ':stroom-core-server',
-            ':stroom-dashboard:stroom-dashboard-server',
-            ':stroom-entity-shared',
-            ':stroom-index:stroom-index-server',
-            ':stroom-pipeline',
-            ':stroom-security:stroom-security-server',
-            ':stroom-util',
             'zzDUMMYzz to ease sorting'
     ]
 }
@@ -303,7 +291,8 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
-    apply plugin: 'ca.cutterslade.analyze'
+    //apply plugin: 'ca.cutterslade.analyze'
+    apply plugin: 'java-library'
 
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
@@ -355,8 +344,8 @@ subprojects {
         }
 
         // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
-        integrationTestCompile.extendsFrom testCompile
-        integrationTestRuntime.extendsFrom testRuntime
+        integrationTestImplementation.extendsFrom testImplementation
+        integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
     }
 
     repositories {
@@ -366,11 +355,14 @@ subprojects {
         maven { url "https://dl.bintray.com/stroom/stroom" }
     }
 
+    test {
+        useJUnitPlatform()
+    }
+
     // This means the reports from our integration tests won't over-write the reports from our unit tests.
     tasks.withType(Test) {
         reports.html.destination = file("${reporting.baseDir}/${name}")
-
-
+        
         afterSuite { desc, result ->
             if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
 
@@ -393,6 +385,8 @@ subprojects {
 
     // This task lets us run the actual integration tests.
     task integrationTest(type: Test) {
+        useJUnitPlatform()
+        
         testClassesDirs = sourceSets.integrationTest.output.classesDirs
         classpath = sourceSets.integrationTest.runtimeClasspath
 
@@ -584,31 +578,31 @@ configure(projectsToBePublished) {
     }
 }
 
-//configuration specific to projects that expose their test jars for other projects to use
-configure(projectsWithSharedTestJars) {
-
-    println "Configuring ${project.path} to expose its test jars"
-
-    configurations {
-        testArtifacts
-    }
-
-    task testJar(type: Jar) {
-        baseName = "${project.name}-test"
-        from sourceSets.test.output
-    }
-
-    artifacts {
-        testArtifacts testJar
-    }
-
-    task packageTests(type: Jar) {
-        from sourceSets.test.output
-        classifier = 'tests'
-    }
-
-    artifacts.archives packageTests
-}
+////configuration specific to projects that expose their test jars for other projects to use
+//configure(projectsWithSharedTestJars) {
+//
+//    println "Configuring ${project.path} to expose its test jars"
+//
+//    configurations {
+//        testArtifacts
+//    }
+//
+//    task testJar(type: Jar) {
+//        baseName = "${project.name}-test"
+//        from sourceSets.test.output
+//    }
+//
+//    artifacts {
+//        testArtifacts testJar
+//    }
+//
+//    task packageTests(type: Jar) {
+//        from sourceSets.test.output
+//        classifier = 'tests'
+//    }
+//
+//    artifacts.archives packageTests
+//}
 
 // NOT SURE IF WE NEED THIS NOW
 //configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
@@ -644,7 +638,6 @@ task clearContentPackDownloadDir(type: Delete) {
 task downloadStroomContent() {
 
     dependsOn clearContentPackDownloadDir
-    dependsOn clearContentPackImportDir
 
     doLast {
         //download each content pack to the contentPackImportDir ready for stroom to import on startup
@@ -667,9 +660,19 @@ task downloadStroomContent() {
     }
 }
 
-task setupSampleData() {
+task copyContentPacksToImportDir(type: Copy) {
+    dependsOn clearContentPackImportDir
     dependsOn downloadStroomContent
-    dependsOn ':stroom-integrationtest:setupSampleData'
+
+    println "Configuring copy from ${contentPackDownloadDir} to ${contentPackImportDir}"
+
+    from "${contentPackDownloadDir}"
+    into stroomContentImportDir
+}
+
+task setupSampleData() {
+    dependsOn copyContentPacksToImportDir
+    dependsOn ':stroom-integrationtest:setupSampleDataApplication'
 }
 
 gradle.buildFinished {
@@ -691,6 +694,32 @@ gradle.buildFinished {
                 println "File ${reportFile.toString()}"
             }
         }
+    }
+}
+
+task dependenciesPng() {
+    def reportsDir = new File("build/reports")
+    def compileDepsDot = file("$reportsDir/compileDeps.dot")
+    inputs.files subprojects.configurations.compile
+    outputs.files compileDepsDot
+    doFirst {
+        if(!reportsDir.exists()) reportsDir.mkdirs()
+    }
+    doLast {
+        def dotGraph = "digraph compile{" + System.getProperty("line.separator")
+        Set deps = [] as Set
+        subprojects.each {subproject ->
+            subproject.configurations.compile.dependencies.each {dependency ->
+                if(dependency instanceof ProjectDependency) {
+                    String dep = "\"$subproject.name\" -> \"$dependency.name\";"
+                    if (deps.add(dep)){ // if was not there before - avoid duplicates
+                        dotGraph += dep + System.getProperty("line.separator")
+                    }
+                }
+            }
+        }
+        dotGraph += "}"
+        compileDepsDot.write(dotGraph)
     }
 }
 

@@ -89,12 +89,12 @@ public class DataSourceProvider implements Provider<DataSource> {
     private Flyway flyway(final DataSource dataSource) {
         final String jpaHbm2DdlAuto = configProvider.get().getHibernateConfig().getJpaHbm2DdlAuto();
         if (!"update".equals(jpaHbm2DdlAuto)) {
-            final Flyway flyway = new Flyway();
-            flyway.setDataSource(dataSource);
-            flyway.setLocations("stroom/db/migration/mysql");
-            flyway.setTable("schema_version");
-            flyway.setBaselineOnMigrate(true);
-
+            final Flyway flyway = Flyway.configure()
+                    .dataSource(dataSource)
+                    .locations("stroom/db/migration/mysql")
+                    .table("schema_version")
+                    .baselineOnMigrate(true)
+                    .load();
             Version version = null;
             boolean usingFlyWay = false;
             LOGGER.info("Testing installed Stroom schema version");

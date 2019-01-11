@@ -17,18 +17,27 @@
 
 package stroom.dashboard.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
+import stroom.core.client.ContentManager.CloseHandler;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.docref.DocRef;
+import stroom.hyperlink.client.ShowDashboardEvent;
+import stroom.task.client.TaskStartEvent;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     private final Provider<DashboardPresenter> editorProvider;
@@ -41,6 +50,66 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                            final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus, dispatcher, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+
+        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(), event -> openParameterisedDashboard(event.getHref())));
+    }
+
+    private void openParameterisedDashboard(final String href) {
+        final Map<String, String> map = buildListParamMap(href);
+        final String title = map.get("title");
+        final String uuid = map.get("uuid");
+        final String params = map.get("params");
+
+        if (uuid == null) {
+            AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
+        } else {
+            final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, uuid);
+
+            // Start spinning.
+            TaskStartEvent.fire(this, "Opening document");
+
+            // If the item isn't already open but we are forcing it open then,
+            // create a new presenter and register it as open.
+            final DashboardPresenter presenter = (DashboardPresenter) createEditor();
+            presenter.setParams(params);
+            presenter.setCustomTitle(title);
+
+            //        // Register the tab as being open.
+            //        documentToTabDataMap.put(docRef, tabData);
+            //        tabDataToDocumentMap.put(tabData, docRef);
+
+            // Load the document and show the tab.
+            final CloseHandler closeHandler = callback -> callback.closeTab(true);
+            showTab(docRef, presenter, closeHandler, presenter);
+        }
+    }
+
+    private Map<String, String> buildListParamMap(String queryString) {
+        final Map<String, String> out = new HashMap<>();
+        if (queryString != null && queryString.length() > 1) {
+            String qs = queryString.substring(1);
+
+            for (String kvPair : qs.split("&")) {
+                String[] kv = kvPair.split("=", 2);
+
+                String key = kv[0];
+                if (key.isEmpty()) {
+                    continue;
+                }
+
+                String val = kv.length > 1 ? kv[1] : "";
+                try {
+                    val = URL.decodeQueryString(val);
+                } catch (final RuntimeException e) {
+                    GWT.log("Cannot decode a URL query string parameter=" + key +
+                            " value=" + val, e);
+                }
+
+                out.putIfAbsent(key, val);
+            }
+        }
+
+        return out;
     }
 
     @Override

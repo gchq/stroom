@@ -21,9 +21,11 @@ package stroom.importexport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -33,8 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ExtendWith(MockitoExtension.class)
 class TestContentPackImport {
     private static Path CONTENT_PACK_DIR;
 
@@ -132,22 +134,20 @@ class TestContentPackImport {
     }
 
     @Test
-    void testStartup_failedImport() {
-        assertThatThrownBy(() -> {
-            Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
-            ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
+    void testStartup_failedImport() throws IOException {
+        Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
 
-            Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
-                    .when(importExportService)
-                    .performImportWithoutConfirmation(ArgumentMatchers.any());
+        Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
+                .when(importExportService)
+                .performImportWithoutConfirmation(ArgumentMatchers.any());
 
-            FileUtil.touch(testPack1);
+        FileUtil.touch(testPack1);
 
-            contentPackImport.startup();
+        contentPackImport.startup();
 
-            //File should have moved into the failed dir
-            assertThat(Files.exists(testPack1)).isFalse();
-            assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName()))).isTrue();
-        }).isInstanceOf(RuntimeException.class);
+        //File should have moved into the failed dir
+        assertThat(Files.exists(testPack1)).isFalse();
+        assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName()))).isTrue();
     }
 }

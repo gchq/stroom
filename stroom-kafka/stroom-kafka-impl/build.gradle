@@ -3,6 +3,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 ext.moduleName = 'stroom.kafka.client.impl'
 
 dependencies {
+<<<<<<< HEAD
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
@@ -24,6 +25,41 @@ dependencies {
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
+=======
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-kafka:stroom-kafka-pipeline')
+    implementation project(':stroom-kafka:stroom-kafka-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+
+    implementation group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
+
+    implementation libs.guice4
+    implementation libs.javax_inject;
+    implementation libs.slf4j_api
+
+    testImplementation libs.assertj_core
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
+
+    testCompileOnly libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+>>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }
 //
 //def fatJarName = "stroom-kafka-client-impl_0_10_0_1-all.jar"

@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
-import org.junit.ClassRule;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -40,12 +42,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
-
+@ExtendWith(DropwizardExtensionsSupport.class)
 class TestStroomIndexQueryResource {
 
     // local.yml is not in source control and is created using local.yml.sh
-    @ClassRule
-    public static final DropwizardAppRule<Config> RULE = new DropwizardAppRule<>(App.class, "../local.yml");
+    public static final DropwizardAppExtension<Config> RULE = new DropwizardAppExtension<>(App.class, "../local.yml");
 
     public static final String SEARCH_TARGET = "http://localhost:8080" +
             ResourcePaths.ROOT_PATH +

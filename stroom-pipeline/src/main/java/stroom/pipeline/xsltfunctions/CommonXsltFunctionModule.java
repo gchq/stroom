@@ -16,7 +16,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(FeedNameFunction.class);
         bindFunction(FetchJsonFunction.class);
         bindFunction(FormatDateFunction.class);
-        bindFunction(GenerateURLFunction.class);
+        bindFunction(LinkFunction.class);
         bindFunction(GetFunction.class);
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
@@ -104,18 +104,6 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class GenerateURLFunction extends StroomExtensionFunctionDefinition<GenerateURL> {
-        @Inject
-        GenerateURLFunction(final Provider<GenerateURL> functionCallProvider) {
-            super("generate-url", 4, 4, new SequenceType[]{
-                    SequenceType.SINGLE_STRING,
-                    SequenceType.SINGLE_STRING,
-                    SequenceType.SINGLE_STRING,
-                    SequenceType.SINGLE_STRING
-            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
-        }
-    }
-
     private static class GetFunction extends StroomExtensionFunctionDefinition<Get> {
         @Inject
         GetFunction(final Provider<Get> functionCallProvider) {
@@ -178,6 +166,17 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
             super("json-to-xml", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.NODE_SEQUENCE, functionCallProvider);
+        }
+    }
+
+    private static class LinkFunction extends StroomExtensionFunctionDefinition<Link> {
+        @Inject
+        LinkFunction(final Provider<Link> functionCallProvider) {
+            super("link", 1, 3, new SequenceType[]{
+                    SequenceType.SINGLE_STRING,
+                    SequenceType.OPTIONAL_STRING,
+                    SequenceType.OPTIONAL_STRING
+            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }
     }
 

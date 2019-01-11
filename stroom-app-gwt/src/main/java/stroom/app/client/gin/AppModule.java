@@ -53,6 +53,7 @@ import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.item.client.presenter.ListPresenter.ListView;
 import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
@@ -63,12 +64,12 @@ import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarProxy;
 import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
 import stroom.menubar.client.view.MenubarViewImpl;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
-import stroom.widget.iframe.client.presenter.IFramePresenter;
-import stroom.widget.iframe.client.presenter.IFramePresenter.IFrameView;
-import stroom.widget.iframe.client.view.IFrameContentViewImpl;
-import stroom.widget.iframe.client.view.IFrameViewImpl;
+import stroom.iframe.client.presenter.IFrameContentPresenter;
+import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
+import stroom.iframe.client.presenter.IFramePresenter;
+import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
+import stroom.iframe.client.view.IFrameContentViewImpl;
+import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -89,6 +90,8 @@ public class AppModule extends AbstractPresenterModule {
         // install(new DefaultModule(AppPlaceManager.class));
 
         bind(KeyboardInterceptor.class).asEagerSingleton();
+
+        bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 
         // bind(CurrentUser.class).in(Singleton.class);
 

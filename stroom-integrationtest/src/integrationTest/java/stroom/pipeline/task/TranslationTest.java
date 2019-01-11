@@ -224,7 +224,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<StreamProcessorTask> tasks = getTasks();
-        assertThat(tasks.size() == 1).as("There should be one task here").isTrue();
+        assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);
 
         for (final StreamProcessorTask task : tasks) {
             final long startStreamId = getLatestStreamId();

@@ -52,11 +52,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
@@ -207,37 +205,35 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testImportLockedFiles() {
-        assertThatThrownBy(() -> {
-            // commonTestControl.deleteAll();
-            final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
+    void testImportLockedFiles() throws IOException {
+        // commonTestControl.deleteAll();
+        final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-            final String feedName1 = FileSystemTestUtil.getUniqueTestString();
-            createFeeds(feedName1);
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
-            FileUtil.mkdirs(proxyDir);
+        FileUtil.mkdirs(proxyDir);
 
-            final Path testFile1 = proxyDir.resolve("sample1.zip");
-            try (OutputStream lockedBadFile = writeLockedTestFile(testFile1, feedName1)) {
-                final Path testFile2 = proxyDir.resolve("sample2.zip");
-                writeTestFile(testFile2, feedName1, "some\ntest\ndataa\n");
+        final Path testFile1 = proxyDir.resolve("sample1.zip");
+        try (OutputStream lockedBadFile = writeLockedTestFile(testFile1, feedName1)) {
+            final Path testFile2 = proxyDir.resolve("sample2.zip");
+            writeTestFile(testFile2, feedName1, "some\ntest\ndataa\n");
 
-                assertThat(Files.isRegularFile(testFile1)).as("Built test zip file").isTrue();
-                assertThat(Files.isRegularFile(testFile2)).as("Built test zip file").isTrue();
+            assertThat(Files.isRegularFile(testFile1)).as("Built test zip file").isTrue();
+            assertThat(Files.isRegularFile(testFile2)).as("Built test zip file").isTrue();
 
-                aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+            aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-                assertThat(Files.isRegularFile(testFile1)).as("Expecting task to rename bad zip file").isFalse();
-                assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as("Expecting task to rename bad zip file").isTrue();
-                assertThat(Files.isRegularFile(testFile2)).as("Expecting good file to go").isFalse();
+            assertThat(Files.isRegularFile(testFile1)).as("Expecting task to rename bad zip file").isFalse();
+            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as("Expecting task to rename bad zip file").isTrue();
+            assertThat(Files.isRegularFile(testFile2)).as("Expecting good file to go").isFalse();
 
-                // run again and it should clear down the one
-                aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
+            // run again and it should clear down the one
+            aggregate(FileUtil.getCanonicalPath(proxyDir), 10);
 
-                assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as("Expecting bad zip file to still be there").isTrue();
-                assertThat(Files.isRegularFile(testFile2)).as("Expecting task to just write the one file and leave the bad one").isFalse();
-            }
-        }).isInstanceOf(ZipException.class);
+            assertThat(Files.isRegularFile(Paths.get(FileUtil.getCanonicalPath(testFile1) + ".bad"))).as("Expecting bad zip file to still be there").isTrue();
+            assertThat(Files.isRegularFile(testFile2)).as("Expecting task to just write the one file and leave the bad one").isFalse();
+        }
     }
 
     @Test

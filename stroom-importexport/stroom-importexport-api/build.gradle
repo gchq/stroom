@@ -1,14 +1,14 @@
 ext.moduleName = 'stroom.importexport.api'
 
 dependencies {
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
-    //compile libs.stroomQueryApi
+    implementation libs.stroomDocRef
+    //implementation libs.stroomQueryApi
 
-    compile libs.jaxb_api
-    compile libs.swagger_annotations
+    implementation libs.jaxb_api
+    implementation libs.swagger_annotations
 
-    testRuntime libs.javax_activation
-    testRuntime libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
 }

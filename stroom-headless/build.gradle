@@ -3,36 +3,36 @@ apply plugin: 'com.github.johnrengelman.shadow'
 ext.moduleName = 'stroom.headless'
 
 dependencies {
-    compile project(':stroom-core-server')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-docstore:stroom-docstore-impl')
-    //compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-explorer:stroom-explorer-impl')
-    //compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-impl-mock')
-    compile project(':stroom-statistics:stroom-statistics-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-explorer-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-impl-mock')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    implementation libs.stroomDocRef
 
-    compile libs.guice4
-    //compile libs.hibernate_core
-    compile libs.javax_inject
-    compile libs.slf4j_api
-    compile libs.xml_apis
+    implementation libs.guice4
+    implementation libs.hibernate_jpa_api
+    implementation libs.javax_inject
+    implementation libs.slf4j_api
+    implementation libs.xml_apis
 
-    compile libs.javax_el
-    permitUnusedDeclared libs.javax_el
-    compile libs.javax_el_api
-    permitUnusedDeclared libs.javax_el_api
-    runtime libs.logback_classic
-    //permitUnusedDeclared libs.logback_classic
+    implementation libs.javax_el
+    
+    implementation libs.javax_el_api
+    
+    runtimeOnly libs.logback_classic
 }
 
 def fatJarName = "stroom-headless-all.jar"
@@ -43,4 +43,4 @@ shadowJar {
     archiveName fatJarName
 }
 
-tasks.build.dependsOn shadowJar
+//tasks.build.dependsOn shadowJar

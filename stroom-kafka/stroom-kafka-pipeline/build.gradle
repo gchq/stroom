@@ -1,19 +1,30 @@
 ext.moduleName = 'stroom.kafka.api'
 
 dependencies {
-    compile project(':stroom-core-shared')
-    compile project(':stroom-kafka:stroom-kafka-shared')
-    permitUnusedDeclared project(':stroom-kafka:stroom-kafka-shared')
-    compile project(':stroom-pipeline')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-kafka:stroom-kafka-shared')
+    
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
-    compile libs.stroomDocRef
+    implementation libs.stroomDocRef
 
-    compile libs.guava
-    compile libs.javax_inject
-    compile libs.javax_inject
-    compile libs.slf4j_api
-    compile libs.xml_apis
+    implementation libs.guava
+    implementation libs.guice4
+    implementation libs.javax_inject
+    implementation libs.javax_inject
+    implementation libs.slf4j_api
+    implementation libs.xml_apis
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

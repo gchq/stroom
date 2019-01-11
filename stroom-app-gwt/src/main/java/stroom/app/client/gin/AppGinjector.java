@@ -27,8 +27,6 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.externaldoc.client.gin.ExternalDocRefGinjector;
-import stroom.externaldoc.client.gin.ExternalDocRefModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
@@ -83,7 +81,6 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
 
 @GinModules({
         AlertModule.class,
-        ExternalDocRefModule.class,
         ActivityModule.class,
         AppModule.class,
         CacheModule.class,
@@ -118,7 +115,6 @@ public interface AppGinjector extends
         DashboardGinjector,
         DictionaryGinjector,
         EntityGinjector,
-        ExternalDocRefGinjector,
         FeedGinjector,
         FolderGinjector,
         Ginjector,

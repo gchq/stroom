@@ -1,23 +1,28 @@
 ext.moduleName = 'stroom.importexport.impl'
 
 dependencies {
-    //compile project(':stroom-importexport:stroom-importexport-api')
+    //implementation project(':stroom-importexport:stroom-importexport-api')
 
-    //compile libs.stroomDocRef
-    //compile libs.stroomQueryApi
-    //compile libs.eventLogging
-//    compile libs.flyway_core
-    //compile libs.guice4
-    //compile libs.hibernate_jpa_api
-    //compile libs.javax_inject
+    //implementation libs.stroomDocRef
+    //implementation libs.stroomQueryApi
+    //implementation libs.eventLogging
+//    implementation libs.flyway_core
+    //implementation libs.guice4
+    //implementation libs.hibernate_jpa_api
+    //implementation libs.javax_inject
 
-    //compile libs.jaxb_api
+    //implementation libs.jaxb_api
 
-    //compile libs.slf4j_api
+    //implementation libs.slf4j_api
 
+<<<<<<< HEAD
     integrationTestCompile libs.junit_jupiter_api
+=======
+    integrationTestCompileOnly libs.junit_jupiter_api
+>>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 
-    integrationTestRuntime libs.mysql_connector_java
-    integrationTestRuntime libs.jaxb_runtime
-    integrationTestRuntime libs.javax_activation
+    integrationTestRuntimeOnly libs.mysql_connector_java
+    integrationTestRuntimeOnly libs.jaxb_runtime
+    integrationTestRuntimeOnly libs.javax_activation
+    integrationTestRuntimeOnly libs.junit_jupiter_engine
 }

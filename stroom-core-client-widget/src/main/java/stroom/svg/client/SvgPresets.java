@@ -44,6 +44,7 @@ public final class SvgPresets {
     public static final SvgPreset HISTORY = new SvgPreset("images/history.svg", "History", false);
     public static final SvgPreset INFO = new SvgPreset("images/info.svg", "Info", true);
     public static final SvgPreset JOBS = new SvgPreset("images/jobs.svg", "Jobs", true);
+    public static final SvgPreset LINK = new SvgPreset("images/dependencies.svg", "Dependencies", true);
     public static final SvgPreset LOGOUT = new SvgPreset("images/logout.svg", "Logout", true);
     public static final SvgPreset MONITORING = new SvgPreset("images/monitoring.svg", "Monitor", true);
     public static final SvgPreset MOVE = new SvgPreset("images/move.svg", "Move", false);

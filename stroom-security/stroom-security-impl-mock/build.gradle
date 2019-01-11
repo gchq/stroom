@@ -1,40 +1,47 @@
 ext.moduleName = 'stroom.security.impl.mock'
 
 dependencies {
-//    compile project(':stroom-entity-shared')
-//    compile project(':stroom-core-shared')
-//    compile project(':stroom-core-server')
-    compile project(':stroom-security:stroom-security-api')
-//    compile project(':stroom-security:stroom-security-shared')
-//    compile project(':stroom-util')
-//    compile project(':stroom-util-shared')
-//    compile project(':stroom-explorer:stroom-explorer-api')
+//    implementation project(':stroom-entity-shared')
+//    implementation project(':stroom-core-shared')
+//    implementation project(':stroom-core-server')
+    implementation project(':stroom-security:stroom-security-api')
+//    implementation project(':stroom-security:stroom-security-shared')
+//    implementation project(':stroom-util')
+//    implementation project(':stroom-util-shared')
+//    implementation project(':stroom-explorer:stroom-explorer-api')
 //
-//    compile libs.stroomAuthApi
-//    compile libs.stroomDocRef
-//    compile libs.eventLogging
-//    compile libs.commons_lang
-//    compile libs.guava
-//    compile libs.hibernate_jpa_api
-//    compile libs.jackson_annotations
-//    compile libs.javax_inject
-//    compile libs.javax_servlet_api
-//    compile libs.slf4j_api
-//    compile libs.jose4j
-//    compile libs.ws_rs_api
-//    compile libs.swagger_annotations
-//    compile libs.ws_rs_api
-    compile libs.guice4
+//    implementation libs.stroomAuthApi
+//    implementation libs.stroomDocRef
+//    implementation libs.eventLogging
+//    implementation libs.commons_lang
+//    implementation libs.guava
+//    implementation libs.hibernate_jpa_api
+//    implementation libs.jackson_annotations
+//    implementation libs.javax_inject
+//    implementation libs.javax_servlet_api
+//    implementation libs.slf4j_api
+//    implementation libs.jose4j
+//    implementation libs.ws_rs_api
+//    implementation libs.swagger_annotations
+//    implementation libs.ws_rs_api
+    implementation libs.guice4
 //
-//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+//    testImplementation project(':stroom-test-common')
 //
+<<<<<<< HEAD
 //    testCompile libs.junit_jupiter_api
+=======
+//    testCompileOnly libs.junit_jupiter_api
+>>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 //
-//    //the following logging libs are needed when running junits outside dropwizard
-//    testRuntime libs.jcl_over_slf4j
-//    testRuntime libs.jul_to_slf4j
-//    testRuntime libs.log4j_over_slf4j
-//    testRuntime libs.logback_classic
-//    testRuntime libs.logback_core
+//    // The following logging libs are needed when running junits outside dropwizard
+//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.jcl_over_slf4j
+//    testRuntimeOnly libs.jul_to_slf4j
+//    testRuntimeOnly libs.junit_jupiter_engine
+//    testRuntimeOnly libs.log4j_over_slf4j
+//    testRuntimeOnly libs.logback_classic
+//    testRuntimeOnly libs.logback_core
 }

@@ -25,6 +25,23 @@
                     "defaultValue": "64",
                     "min": "1",
                     "max": "128"
+                },
+                {
+                    "id": "sortGridSeries",
+                    "type": "selection",
+                    "label": "Sort Grid Series",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
+                    "id" : "gridSeriesDateFormat",
+                    "type" : "text",
+                    "label" : "Grid Series Date Format (optional)",
+                    "defaultValue" : ""
                 }
             ]
         }
@@ -36,19 +53,20 @@
                     "id": "${gridSeries}",
                     "sort": {
                         "direction": "${sortGridSeries}",
-                        "enabled": "true"
+                        "enabled": "true",
+                        "priority": 0
                     }
                 },
                 "values" : {
                     "fields" : [ 
                         {
-                            "id" : "${field}",
-                            "sort": {
-                                "direction": "Ascending",
-                                "enabled": "true"
-                            }
+                            "id" : "${field}"
                         } 
-                    ]
+                    ],
+                    "limit": {
+                        "enabled": "true",
+                        "size": "1"
+                    }
                 },
                 "limit": {
                     "enabled": "true",

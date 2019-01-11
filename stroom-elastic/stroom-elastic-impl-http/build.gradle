@@ -1,8 +1,9 @@
-apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'com.github.johnrengelman.shadow'
 
 ext.moduleName = 'stroom.elastic.impl.http'
 
 dependencies {
+<<<<<<< HEAD
     compile project(':stroom-elastic:stroom-elastic-api')
     compile project(':stroom-elastic:stroom-elastic-impl')
     compile project(':stroom-pipeline')
@@ -17,10 +18,37 @@ dependencies {
     compile libs.slf4j_api
 
     testCompile libs.junit_jupiter_api
+=======
+    implementation project(':stroom-elastic:stroom-elastic-api')
+    implementation project(':stroom-elastic:stroom-elastic-impl')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-server')
+
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryAudit
+
+    implementation libs.guice4
+    implementation libs.jackson_databind
+    implementation libs.javax_inject
+    implementation libs.slf4j_api
+
+    testCompileOnly libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+>>>>>>> 5b0214875b1d88052537b028e33f9855813fd650
 }
 
-def fatJarName = "stroom-elastic-impl-http.jar"
-
+//def fatJarName = "stroom-elastic-impl-http.jar"
+//
 //shadowJar {
 //    // Allows us to build fat jars with lots of files
 //    zip64 true

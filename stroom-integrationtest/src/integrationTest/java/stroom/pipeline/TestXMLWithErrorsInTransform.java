@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -50,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 // TODO : Add test data
-
+@Disabled("Make new test data")
 class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
     private static final int N4 = 4;
     private static final String PIPELINE = "XMLWithErrorsInTransform/XMLWithErrorsInTransform.Pipeline.data.xml";

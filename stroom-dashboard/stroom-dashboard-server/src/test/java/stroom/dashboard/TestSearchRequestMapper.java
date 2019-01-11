@@ -19,8 +19,10 @@ package stroom.dashboard;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Search;
@@ -35,8 +37,8 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestSearchRequestMapper {
-
     @Mock
     private VisualisationStore visualisationStore;
 

@@ -24,7 +24,9 @@ public interface PopupSupport {
 
     void hide();
 
-    void hide(final boolean autoClose, final boolean ok);
+    void hide(boolean autoClose, boolean ok);
 
     void setEnabled(boolean enabled);
+
+    void setCaption(String caption);
 }

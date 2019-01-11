@@ -1,15 +1,21 @@
 ext.moduleName = 'stroom.test.common'
 
 dependencies {
-    compile project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
-    compile libs.assertj_core
-    compile libs.slf4j_api
+    implementation libs.assertj_core
+    implementation libs.commons_lang
+    implementation libs.guava
+    implementation libs.guice4
+    implementation libs.junit_jupiter_api
+    implementation libs.slf4j_api
 
-    //the following logging libs are needed when running junits outside dropwizard
-    runtime libs.jcl_over_slf4j
-    runtime libs.jul_to_slf4j
-    runtime libs.log4j_over_slf4j
-    runtime libs.logback_classic
-    runtime libs.logback_core
+    // The following logging libs are needed when running junits outside dropwizard
+    runtimeOnly libs.jcl_over_slf4j
+    runtimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    runtimeOnly libs.log4j_over_slf4j
+    runtimeOnly libs.logback_classic
+    runtimeOnly libs.logback_core
 }

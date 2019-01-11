@@ -149,24 +149,6 @@ visualisations.HourDayPointMap = function(containerNode) {
         return d[0] + (d[1] * commonConstants.millisInHour);
     }
 
-    //var setColourDomain = function(scale, data, i, mode) {
-        ////console.log("Setting domain - " + data.key + " - " + color.domain());
-        //var domain;
-
-        //if (mode == "VALUE" && data.types[i] == "GENERAL") {
-            //domain = data.unique[i];
-        //} else if (data.uniqueKeys && mode == "SYNCHED_SERIES") {
-            //domain = data.uniqueKeys;
-        //} else {
-            //domain = data.values.map(function(d) {
-                //return d.key;
-            //});
-        //}
-        //scale.domain([]);
-        //scale.domain(domain);
-        ////console.log("Setting domain - " + data.key + " - " + color.domain());
-    //};
-
     //Method to allow the grid to call back in to get new instances for each cell
     this.getInstance = function(containerNode) {
         return new visualisations.HourDayPointMap(containerNode);
@@ -251,9 +233,9 @@ visualisations.HourDayPointMap = function(containerNode) {
 
         //define the types
 
-        data.types[3] = "TEXT";
-        data.types[4] = "DATE_TIME";
-        data.types[5] = "NUMBER";
+        data.types[3] = commonConstants.dataTypeText;
+        data.types[4] = commonConstants.dataTypeDateTime;
+        data.types[5] = commonConstants.dataTypeNumber;
 
         //work out the new min and max values for the top level		
         data.min[4] = commonFunctions.truncateToStartOfDay(data.min[0]);
