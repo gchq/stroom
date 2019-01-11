@@ -79,20 +79,20 @@ public class StroomBeanStore {
         });
     }
 
-    public <T> Set<T> getInstancesOfType(Class<T> type) {
-        return getBindings(type);
-    }
-
-    private <T> Set<T> getBindings(Class<T> type) {
-        final TypeLiteral<Set<T>> lit = setOf(type);
-        final Key<Set<T>> key = Key.get(lit);
-        return this.injector.getInstance(key);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
-        return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
-    }
+//    public <T> Set<T> getInstancesOfType(Class<T> type) {
+//        return getBindings(type);
+//    }
+//
+//    private <T> Set<T> getBindings(Class<T> type) {
+//        final TypeLiteral<Set<T>> lit = setOf(type);
+//        final Key<Set<T>> key = Key.get(lit);
+//        return this.injector.getInstance(key);
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    private static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+//        return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
+//    }
 
     public <T> T getInstance(final Class<T> type) {
         T o = null;

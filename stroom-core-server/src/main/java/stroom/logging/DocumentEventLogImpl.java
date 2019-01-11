@@ -38,54 +38,42 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.util.shared.HasId;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentEventLogImpl implements DocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
-    private final Provider<StroomBeanStore> stroomBeanStoreProvider;
     private final Security security;
 
-    private volatile Map<Class<?>, EventInfoProvider> objectInfoAppenders;
+    private volatile Map<Class<?>, EventInfoProvider> objectInfoAppenderMap;
 
     @Inject
     public DocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                                final Provider<StroomBeanStore> stroomBeanStoreProvider,
+                                final Set<EventInfoProvider> eventInfoProviders,
                                 final Security security) {
         this.eventLoggingService = eventLoggingService;
-        this.stroomBeanStoreProvider = stroomBeanStoreProvider;
         this.security = security;
+
+        objectInfoAppenderMap = eventInfoProviders.stream()
+                .collect(Collectors.toMap(EventInfoProvider::getType, Function.identity()));
     }
 
     private EventInfoProvider getInfoAppender(final Class<?> type) {
-        if (objectInfoAppenders == null) {
-            synchronized (this) {
-                if (objectInfoAppenders == null) {
-                    final StroomBeanStore stroomBeanStore = stroomBeanStoreProvider.get();
-                    final Map<Class<?>, EventInfoProvider> appenders = new HashMap<>();
-                    final Set<EventInfoProvider> eventInfoProviders = stroomBeanStore.getInstancesOfType(EventInfoProvider.class);
-                    eventInfoProviders.forEach(eventInfoProvider -> appenders.put(eventInfoProvider.getType(), eventInfoProvider));
-                    objectInfoAppenders = appenders;
-                }
-            }
-        }
-
-        EventInfoProvider appender = objectInfoAppenders.get(type);
+        EventInfoProvider appender = objectInfoAppenderMap.get(type);
         if (appender == null) {
             // Get basic appender.
-            appender = objectInfoAppenders.get(null);
+            appender = objectInfoAppenderMap.get(null);
         }
 
         if (appender == null) {
@@ -94,11 +82,6 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 
         return appender;
     }
-
-//    @Override
-//    public void create(final String objectType, final String objectName) {
-//        create(objectType, objectName, null);
-//    }
 
     @Override
     public void create(final String objectType, final String objectName, final Throwable ex) {

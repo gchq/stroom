@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.PipelineDoc;
@@ -40,6 +39,7 @@ import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -64,11 +64,11 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private StroomBeanStore beanStore;
-    @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+    @Inject
+    private Provider<ReferenceData> referenceDataProvider;
 
     private RefDataStore refDataStore;
 
@@ -101,7 +101,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference1);
             pipelineReferences.add(pipelineReference2);
 
-            final ReferenceData referenceData = createReferenceData();
+            final ReferenceData referenceData = referenceDataProvider.get();
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(EFFECTIVE_STREAM_1);
@@ -210,7 +210,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 
-            final ReferenceData referenceData = createReferenceData();
+            final ReferenceData referenceData = referenceDataProvider.get();
 
             EffectiveStream effectiveStream = new EffectiveStream(0, 0L);
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
@@ -309,10 +309,4 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             return ((StringValue) refDataValue).getValue();
         }
     }
-
-    private ReferenceData createReferenceData() {
-        return beanStore.getInstance(ReferenceData.class);
-    }
-
-
 }

@@ -3,12 +3,12 @@ package stroom.datasource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Optional;
 
@@ -23,11 +23,11 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     @Inject
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
                                    final ServiceDiscoveryConfig serviceDiscoveryConfig,
-                                   final StroomBeanStore stroomBeanStore,
+                                   final Provider<ServiceDiscoverer> serviceDiscovererProvider,
                                    final DataSourceUrlConfig dataSourceUrlConfig) {
         final boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
         if (isServiceDiscoveryEnabled) {
-            ServiceDiscoverer serviceDiscoverer = stroomBeanStore.getInstance(ServiceDiscoverer.class);
+            ServiceDiscoverer serviceDiscoverer = serviceDiscovererProvider.get();
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,

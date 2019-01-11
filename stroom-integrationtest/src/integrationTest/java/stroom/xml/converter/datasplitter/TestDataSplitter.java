@@ -20,7 +20,6 @@ package stroom.xml.converter.datasplitter;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.feed.shared.FeedDoc;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -37,7 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Disabled("Add test data")
 class TestDataSplitter extends AbstractProcessIntegrationTest {
     @Inject
-    private StroomBeanStore beanStore;
+    private F2XTestUtil f2XTestUtil;
+    @Inject
+    private XMLValidator xmlValidator;
 
     /**
      * Tests a basic CSV file.
@@ -118,9 +119,7 @@ class TestDataSplitter extends AbstractProcessIntegrationTest {
                               final InputStream inputStream) {
         validate(textConverterType, textConverterLocation);
 
-        final F2XTestUtil f2xTestUtil = beanStore.getInstance(F2XTestUtil.class);
-        final String xml = f2xTestUtil.runF2XTest(textConverterType, textConverterLocation, inputStream);
-        return xml;
+        return f2XTestUtil.runF2XTest(textConverterType, textConverterLocation, inputStream);
     }
 
     private String runFullTest(final FeedDoc feed, final TextConverterType textConverterType,
@@ -128,14 +127,11 @@ class TestDataSplitter extends AbstractProcessIntegrationTest {
                                final int expectedWarnings) {
         validate(textConverterType, textConverterLocation);
 
-        final F2XTestUtil f2xTestUtil = beanStore.getInstance(F2XTestUtil.class);
-        final String xml = f2xTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
+        return f2XTestUtil.runFullTest(feed, textConverterType, textConverterLocation, xsltLocation,
                 dataLocation, expectedWarnings);
-        return xml;
     }
 
     private void validate(final TextConverterType textConverterType, final String textConverterLocation) {
-        final XMLValidator xmlValidator = beanStore.getInstance(XMLValidator.class);
         // Start by validating the resource.
         if (textConverterType == TextConverterType.DATA_SPLITTER) {
             final String message = xmlValidator.getInvalidXmlResourceMessage(textConverterLocation, true);

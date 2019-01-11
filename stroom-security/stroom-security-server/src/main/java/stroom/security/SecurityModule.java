@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
-import stroom.logging.EventInfoProvider;
+import stroom.logging.EventInforProviderBinder;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.CheckDocumentPermissionAction;
@@ -43,8 +43,8 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
 
-        final Multibinder<EventInfoProvider> eventInfoProviderBinder = Multibinder.newSetBinder(binder(), EventInfoProvider.class);
-        eventInfoProviderBinder.addBinding().to(UserEventInfoProvider.class);
+        EventInforProviderBinder.create(binder())
+                .bind(UserEventInfoProvider.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(DocumentPermissionsCache.class);
