@@ -1,17 +1,18 @@
 package stroom.security.impl.db;
 
-import org.jooq.*;
+import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.SQLDialect;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
-import org.jooq.types.UInteger;
-import org.jooq.types.ULong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.jooq.impl.DSL.field;
@@ -22,11 +23,11 @@ public class UserDaoImpl implements UserDao {
 
     private final ConnectionProvider connectionProvider;
 
-    private static final UInteger FIRST_VERSION = UInteger.valueOf(1);
+    private static final Integer FIRST_VERSION = 1;
 
     private static final Table<Record> TABLE_STROOM_USER = table("stroom_user");
-    private static final Field<ULong> FIELD_ID = field("id", ULong.class);
-    private static final Field<UInteger> FIELD_VERSION = field("version", UInteger.class);
+    private static final Field<Long> FIELD_ID = field("id", Long.class);
+    private static final Field<Integer> FIELD_VERSION = field("version", Integer.class);
     private static final Field<String> FIELD_NAME = field("name", String.class);
     private static final Field<String> FIELD_UUID = field("uuid", String.class);
     private static final Field<Boolean> FIELD_IS_GROUP = field("is_group", Boolean.class);
@@ -69,16 +70,31 @@ public class UserDaoImpl implements UserDao {
         this.connectionProvider = connectionProvider;
     }
 
+    private static UserJooq mapFromRecord(final Record record) {
+        if (null != record) {
+            return new UserJooq.Builder()
+                    .id(record.get(FIELD_ID))
+                    .uuid(record.get(FIELD_UUID))
+                    .name(record.get(FIELD_NAME))
+                    .version(record.get(FIELD_VERSION))
+                    .isGroup(record.get(FIELD_IS_GROUP))
+                    .build();
+        }
+
+        return null;
+    }
+
     @Override
     public UserJooq getById(final long id) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final Record record = DSL.using(connection, SQLDialect.MYSQL)
                     .select()
                     .from(TABLE_STROOM_USER)
-                    .where(FIELD_ID.equal(ULong.valueOf(id)))
+                    .where(FIELD_ID.equal(id))
                     .fetchOne();
-
-            return record.into(UserJooq.class);
+            return Optional.ofNullable(record)
+                    .map(UserDaoImpl::mapFromRecord)
+                    .orElse(null);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
@@ -93,8 +109,9 @@ public class UserDaoImpl implements UserDao {
                     .from(TABLE_STROOM_USER)
                     .where(FIELD_UUID.equal(uuid))
                     .fetchOne();
-
-            return record.into(UserJooq.class);
+            return Optional.ofNullable(record)
+                    .map(UserDaoImpl::mapFromRecord)
+                    .orElse(null);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
@@ -104,12 +121,14 @@ public class UserDaoImpl implements UserDao {
     @Override
     public UserJooq getUserByName(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
-            return DSL.using(connection, SQLDialect.MYSQL)
+            final Record record = DSL.using(connection, SQLDialect.MYSQL)
                     .select()
                     .from(TABLE_STROOM_USER)
                     .where(FIELD_NAME.equal(name))
-                    .fetchOne()
-                    .into(UserJooq.class);
+                    .fetchOne();
+            return Optional.ofNullable(record)
+                    .map(UserDaoImpl::mapFromRecord)
+                    .orElse(null);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
@@ -118,62 +137,36 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<UserJooq> findUsersInGroup(final String groupUuid) {
-
-
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT");
-//        sql.append(" u.*");
-//        sql.append(" FROM ");
-//        sql.append(User.TABLE_NAME);
-//        sql.append(" u");
-//        sql.append(" JOIN ");
-//        sql.append(UserGroupUser.TABLE_NAME);
-//        sql.append(" ugu");
-//        sql.append(" ON");
-//        sql.append(" (u.");
-//        sql.append(User.UUID);
-//        sql.append(" = ugu.");
-//        sql.append(UserGroupUser.USER_UUID);
-//        sql.append(")");
-//        sql.append(" WHERE");
-//        sql.append(" ugu.");
-//        sql.append(UserGroupUser.GROUP_UUID);
-//        sql.append(" = ");
-//        sql.arg(userGroup.getUuid());
-//        sql.append(" ORDER BY");
-//        sql.append(" u.");
-//        sql.append(User.NAME);
-
-        return null;
+        try (final Connection connection = connectionProvider.getConnection()) {
+            return DSL.using(connection, SQLDialect.MYSQL)
+                    .select()
+                    .from(TABLE_STROOM_USER
+                            .join(TABLE_STROOM_USER_GROUPS)
+                            .on(FIELD_UUID.equal(FIELD_USER_UUID)))
+                    .where(FIELD_GROUP_UUID.equal(groupUuid))
+                    .orderBy(FIELD_NAME)
+                    .fetch(UserDaoImpl::mapFromRecord);
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override
     public List<UserJooq> findGroupsForUser(final String userUuid) {
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT");
-//        sql.append(" u.*");
-//        sql.append(" FROM ");
-//        sql.append(User.TABLE_NAME);
-//        sql.append(" u");
-//        sql.append(" JOIN ");
-//        sql.append(UserGroupUser.TABLE_NAME);
-//        sql.append(" ugu");
-//        sql.append(" ON");
-//        sql.append(" (u.");
-//        sql.append(User.UUID);
-//        sql.append(" = ugu.");
-//        sql.append(UserGroupUser.GROUP_UUID);
-//        sql.append(")");
-//        sql.append(" WHERE");
-//        sql.append(" ugu.");
-//        sql.append(UserGroupUser.USER_UUID);
-//        sql.append(" = ");
-//        sql.arg(user.getUuid());
-//        sql.append(" ORDER BY");
-//        sql.append(" u.");
-//        sql.append(User.NAME);
-
-        return null;
+        try (final Connection connection = connectionProvider.getConnection()) {
+            return DSL.using(connection, SQLDialect.MYSQL)
+                .select()
+                .from(TABLE_STROOM_USER
+                        .join(TABLE_STROOM_USER_GROUPS)
+                        .on(FIELD_UUID.equal(FIELD_GROUP_UUID)))
+                .where(FIELD_USER_UUID.equal(userUuid))
+                .orderBy(FIELD_NAME)
+                .fetch(UserDaoImpl::mapFromRecord);
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override
@@ -192,7 +185,7 @@ public class UserDaoImpl implements UserDao {
                     .from(TABLE_STROOM_USER)
                     .where(FIELD_NAME.equal(name))
                     .fetchOne()
-                    .into(UserJooq.class);
+                    .map(UserDaoImpl::mapFromRecord);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
@@ -206,8 +199,8 @@ public class UserDaoImpl implements UserDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             DSL.using(connection, SQLDialect.MYSQL)
                     .insertInto(TABLE_STROOM_USER)
-                    .columns(FIELD_UUID, FIELD_NAME, FIELD_IS_GROUP)
-                    .values(userUuid, name, Boolean.TRUE)
+                    .columns(FIELD_VERSION, FIELD_UUID, FIELD_NAME, FIELD_IS_GROUP)
+                    .values(FIRST_VERSION, userUuid, name, Boolean.TRUE)
                     .execute();
 
             return DSL.using(connection, SQLDialect.MYSQL)
@@ -215,7 +208,7 @@ public class UserDaoImpl implements UserDao {
                     .from(TABLE_STROOM_USER)
                     .where(FIELD_NAME.equal(name))
                     .fetchOne()
-                    .into(UserJooq.class);
+                    .map(UserDaoImpl::mapFromRecord);
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);

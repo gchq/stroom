@@ -14,15 +14,28 @@ class ContainerSecurityConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(SecurityDbConfig.class).toInstance(new SecurityDbConfig.Builder()
-                .withConnectionConfig(new ConnectionConfig.Builder()
-                        .withJdbcDriverClassName(dbContainer.getDriverClassName())
-                        .withJdbcDriverPassword(dbContainer.getPassword())
-                        .withJdbcDriverUsername(dbContainer.getUsername())
-                        .withJdbcDriverUrl(dbContainer.getJdbcUrl())
-                        .build())
-                .withConnectionPoolConfig(new ConnectionPoolConfig.Builder()
-                        .build())
-                .build());
+        if (null != dbContainer) {
+            bind(SecurityDbConfig.class).toInstance(new SecurityDbConfig.Builder()
+                    .withConnectionConfig(new ConnectionConfig.Builder()
+                            .jdbcDriverClassName(dbContainer.getDriverClassName())
+                            .password(dbContainer.getPassword())
+                            .username(dbContainer.getUsername())
+                            .jdbcUrl(dbContainer.getJdbcUrl())
+                            .build())
+                    .withConnectionPoolConfig(new ConnectionPoolConfig.Builder()
+                            .build())
+                    .build());
+        } else {
+            bind(SecurityDbConfig.class).toInstance(new SecurityDbConfig.Builder()
+                    .withConnectionConfig(new ConnectionConfig.Builder()
+                            .jdbcDriverClassName("com.mysql.jdbc.Driver")
+                            .jdbcUrl("jdbc:mysql://localhost:14450/test?useUnicode=yes&characterEncoding=UTF-8")
+                            .password("test")
+                            .username("test")
+                            .build())
+                    .withConnectionPoolConfig(new ConnectionPoolConfig.Builder()
+                            .build())
+                    .build());
+        }
     }
 }

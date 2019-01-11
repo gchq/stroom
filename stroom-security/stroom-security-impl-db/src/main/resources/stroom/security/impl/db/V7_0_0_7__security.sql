@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS app_permission_name (
 
 CREATE TABLE IF NOT EXISTS app_permission (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               tinyint(4) NOT NULL,
+  version               int,
   user_uuid             varchar(255) NOT NULL,
   fk_app_permission_id  bigint(20) NOT NULL,
   PRIMARY KEY           (id)
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS app_permission (
 
 CREATE TABLE IF NOT EXISTS doc_permission (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               tinyint(4) NOT NULL,
+  version               int,
   user_uuid             varchar(255) NOT NULL,
   doc_type              varchar(255) NOT NULL,
   doc_uuid              varchar(255) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS doc_permission (
 
 CREATE TABLE IF NOT EXISTS stroom_user (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               tinyint(4) NOT NULL,
+  version               int,
   name                  varchar(255) NOT NULL,
   uuid                  varchar(255) NOT NULL,
   is_group              bit(1) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS stroom_user (
 
 CREATE TABLE IF NOT EXISTS stroom_user_groups (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               tinyint(4) NOT NULL,
+  version               int,
   user_uuid             varchar(255) NOT NULL,
   group_uuid            varchar(255) NOT NULL,
   PRIMARY KEY           (id)

@@ -15,12 +15,12 @@ public class UserJooq {
      * business key (e.g. string name) if required. You should not reference
      * this key in the application code or in any screen.
      */
-    long id = UNDEFINED_ID;
+    private long id = UNDEFINED_ID;
 
     /**
-     * Standard EJB3 optimistic locking
+     * Optimistic locking
      */
-    private byte version = -1;
+    private int version = -1;
 
     private String name;
 
@@ -40,11 +40,11 @@ public class UserJooq {
         this.id = id;
     }
 
-    public byte getVersion() {
+    public int getVersion() {
         return version;
     }
 
-    public void setVersion(byte version) {
+    public void setVersion(int version) {
         this.version = version;
     }
 
@@ -99,5 +99,46 @@ public class UserJooq {
         sb.append(", group=").append(group);
         sb.append('}');
         return sb.toString();
+    }
+
+    public static class Builder {
+        private final UserJooq instance;
+
+        public Builder(final UserJooq instance) {
+            this.instance = instance;
+        }
+
+        public Builder() {
+            this(new UserJooq());
+        }
+
+        public Builder id(final long value) {
+            instance.setId(value);
+            return this;
+        }
+
+        public Builder version(final int value) {
+            instance.setVersion(value);
+            return this;
+        }
+
+        public Builder name(final String value) {
+            instance.setName(value);
+            return this;
+        }
+
+        public Builder uuid(final String value) {
+            instance.setUuid(value);
+            return this;
+        }
+
+        public Builder isGroup(final Boolean value) {
+            instance.setGroup(value);
+            return this;
+        }
+
+        public UserJooq build() {
+            return this.instance;
+        }
     }
 }

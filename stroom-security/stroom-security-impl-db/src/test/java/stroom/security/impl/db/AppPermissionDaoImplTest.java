@@ -1,6 +1,5 @@
 package stroom.security.impl.db;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.AfterAll;

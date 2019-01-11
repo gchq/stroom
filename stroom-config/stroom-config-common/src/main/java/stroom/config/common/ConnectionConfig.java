@@ -120,19 +120,19 @@ public class ConnectionConfig implements IsConfig {
             this.instance = instance;
         }
 
-        public Builder withJdbcDriverClassName(final String value) {
+        public Builder jdbcDriverClassName(final String value) {
             this.instance.setJdbcDriverClassName(value);
             return this;
         }
-        public Builder withJdbcDriverUrl(final String value) {
+        public Builder jdbcUrl(final String value) {
             this.instance.setJdbcDriverUrl(value);
             return this;
         }
-        public Builder withJdbcDriverUsername(final String value) {
+        public Builder username(final String value) {
             this.instance.setJdbcDriverUsername(value);
             return this;
         }
-        public Builder withJdbcDriverPassword(final String value) {
+        public Builder password(final String value) {
             this.instance.setJdbcDriverPassword(value);
             return this;
         }
