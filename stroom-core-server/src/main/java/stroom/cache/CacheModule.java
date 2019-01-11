@@ -18,20 +18,24 @@ package stroom.cache;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.cache.shared.CacheClearAction;
+import stroom.cache.shared.FetchCacheNodeRowAction;
+import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.Clearable;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class CacheModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StroomCacheManager.class).to(StroomCacheManagerImpl.class);
 
+        TaskHandlerBinder.create(binder())
+                .bind(CacheClearAction.class, CacheClearHandler.class)
+                .bind(CacheClearClusterTask.class, CacheClearClusterHandler.class)
+                .bind(FetchCacheNodeRowAction.class, FetchCacheNodeRowHandler.class)
+                .bind(FetchCacheRowAction.class, FetchCacheRowHandler.class);
+
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(StroomCacheManagerImpl.class);
-
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.cache.CacheClearHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.cache.FetchCacheNodeRowHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.cache.FetchCacheRowHandler.class);
     }
 }

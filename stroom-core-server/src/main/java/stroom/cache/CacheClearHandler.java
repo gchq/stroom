@@ -18,9 +18,8 @@ package stroom.cache;
 
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.cluster.FindClearServiceClusterTask;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
@@ -47,8 +46,10 @@ class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.getName().setString(action.getCacheName());
 
-            final FindClearServiceClusterTask<FindCacheInfoCriteria> clusterTask = new FindClearServiceClusterTask<>(
-                    action.getUserToken(), action.getTaskName(), StroomCacheManager.class, criteria);
+            final CacheClearClusterTask clusterTask = new CacheClearClusterTask(
+                    action.getUserToken(),
+                    action.getTaskName(),
+                    criteria);
 
             if (action.getNode() != null) {
                 dispatchHelper.execAsync(clusterTask, action.getNode());

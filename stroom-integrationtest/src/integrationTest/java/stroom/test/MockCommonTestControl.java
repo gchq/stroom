@@ -18,20 +18,22 @@ package stroom.test;
 
 import stroom.docstore.memory.MemoryPersistence;
 import stroom.entity.shared.Clearable;
-import stroom.lifecycle.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Set;
 
 /**
  * Version of the test control used with the mocks.
  */
 public class MockCommonTestControl implements CommonTestControl {
-    private final StroomBeanStore beanStore;
+    private final Set<Clearable> clearables;
+    private final Provider<MemoryPersistence> memoryPersistenceProvider;
 
     @Inject
-    MockCommonTestControl(final StroomBeanStore beanStore) {
-        this.beanStore = beanStore;
+    MockCommonTestControl(final Set<Clearable> clearables, final Provider<MemoryPersistence> memoryPersistenceProvider) {
+        this.clearables = clearables;
+        this.memoryPersistenceProvider = memoryPersistenceProvider;
     }
 
     @Override
@@ -40,11 +42,10 @@ public class MockCommonTestControl implements CommonTestControl {
 
     @Override
     public void teardown() {
-        final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
-        set.forEach(Clearable::clear);
+        clearables.forEach(Clearable::clear);
 
         try {
-            final MemoryPersistence memoryPersistence = beanStore.getInstance(MemoryPersistence.class);
+            final MemoryPersistence memoryPersistence = memoryPersistenceProvider.get();
             memoryPersistence.clear();
         } catch (final RuntimeException e) {
             // Ignore.

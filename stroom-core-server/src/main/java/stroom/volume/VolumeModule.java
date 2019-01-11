@@ -24,6 +24,7 @@ import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
+import stroom.entity.shared.Flushable;
 import stroom.node.NodeModule;
 import stroom.node.NodeServiceModule;
 import stroom.node.VolumeService;
@@ -42,6 +43,9 @@ public class VolumeModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(VolumeServiceImpl.class);
+
+        final Multibinder<Flushable> flushableBinder = Multibinder.newSetBinder(binder(), Flushable.class);
+        flushableBinder.addBinding().to(VolumeServiceImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(VolumeServiceImpl.class);

@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.shared.Clearable;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
@@ -32,8 +32,8 @@ public class ClusterTaskModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(ClusterResultCollectorCache.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.cluster.TerminateTaskClusterHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(TerminateTaskClusterTask.class, TerminateTaskClusterHandler.class);
     }
 
     @Override

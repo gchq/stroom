@@ -22,18 +22,20 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class FeedModule extends AbstractModule {
     @Override
     protected void configure() {
+        TaskHandlerBinder.create(binder())
+            .bind(stroom.feed.shared.FetchSupportedEncodingsAction.class, stroom.feed.FetchSupportedEncodingsActionHandler.class);
+
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedDocCache.class).to(FeedDocCacheImpl.class);
         bind(RemoteFeedService.class).annotatedWith(Names.named("remoteFeedService")).to(RemoteFeedServiceImpl.class);
-
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.feed.FetchSupportedEncodingsActionHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(FeedStoreImpl.class);

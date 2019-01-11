@@ -15,10 +15,8 @@
  *
  */
 
-package stroom.entity.cluster;
+package stroom.index;
 
-import stroom.entity.FindCloseService;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
@@ -26,35 +24,26 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindCloseServiceClusterTask.class)
-class FindCloseServiceClusterHandler extends AbstractTaskHandler<FindCloseServiceClusterTask<?>, VoidResult> {
-    private final StroomBeanStore stroomBeanStore;
+@TaskHandlerBean(task = FlushIndexShardClusterTask.class)
+class FlushIndexShardClusterHandler extends AbstractTaskHandler<FlushIndexShardClusterTask<?>, VoidResult> {
+    private final IndexShardManager indexShardManager;
     private final Security security;
 
     @Inject
-    FindCloseServiceClusterHandler(final StroomBeanStore stroomBeanStore,
-                                   final Security security) {
-        this.stroomBeanStore = stroomBeanStore;
+    FlushIndexShardClusterHandler(final IndexShardManager indexShardManager,
+                                  final Security security) {
+        this.indexShardManager = indexShardManager;
         this.security = security;
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public VoidResult exec(final FindCloseServiceClusterTask<?> task) {
+    public VoidResult exec(final FlushIndexShardClusterTask<?> task) {
         return security.secureResult(() -> {
             if (task == null) {
                 throw new RuntimeException("No task supplied");
             }
-            if (task.getBeanClass() == null) {
-                throw new RuntimeException("No task bean class supplied");
-            }
 
-            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-            if (obj == null) {
-                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-            }
-
-            ((FindCloseService) obj).findClose(task.getCriteria());
+            indexShardManager.findFlush(task.getCriteria());
             return new VoidResult();
         });
     }

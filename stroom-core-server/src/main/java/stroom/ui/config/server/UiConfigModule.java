@@ -17,13 +17,13 @@
 package stroom.ui.config.server;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
+import stroom.ui.config.shared.FetchUiConfigAction;
 
 public class UiConfigModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(FetchUiConfigHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FetchUiConfigAction.class, FetchUiConfigHandler.class);
     }
 }

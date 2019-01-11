@@ -16,7 +16,6 @@
 
 package stroom.index;
 
-import stroom.entity.cluster.FindCloseServiceClusterTask;
 import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.security.Security;
@@ -43,10 +42,10 @@ class CloseIndexShardActionHandler extends AbstractTaskHandler<CloseIndexShardAc
     @Override
     public VoidResult exec(final CloseIndexShardAction action) {
         return security.secureResult(() -> {
-            final FindCloseServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindCloseServiceClusterTask<>(
-                    action.getUserToken(), action.getTaskName(), IndexShardManager.class,
+            final CloseIndexShardClusterTask<FindIndexShardCriteria> clusterTask = new CloseIndexShardClusterTask<>(
+                    action.getUserToken(),
+                    action.getTaskName(),
                     action.getCriteria());
-
             dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
             return new VoidResult();
         });

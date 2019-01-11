@@ -22,7 +22,7 @@ import com.google.inject.name.Names;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.event.EntityEvent;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ClusterModule extends AbstractModule {
     @Override
@@ -31,8 +31,8 @@ public class ClusterModule extends AbstractModule {
         bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceRemote")).to(ClusterCallServiceRemote.class);
         bind(ClusterNodeManager.class).to(ClusterNodeManagerImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(UpdateClusterStateTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(UpdateClusterStateTask.class, UpdateClusterStateTaskHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);

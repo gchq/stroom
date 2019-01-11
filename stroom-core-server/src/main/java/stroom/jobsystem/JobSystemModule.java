@@ -21,10 +21,12 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
+import stroom.jobsystem.shared.FetchJobDataAction;
+import stroom.jobsystem.shared.GetScheduledTimesAction;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobManager;
 import stroom.jobsystem.shared.JobNode;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class JobSystemModule extends AbstractModule {
     @Override
@@ -40,13 +42,13 @@ public class JobSystemModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(ClusterLockServiceTransactionHelperImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.jobsystem.ClusterLockClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.jobsystem.ClusterLockHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.jobsystem.DistributedTaskRequestClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.jobsystem.FetchJobDataHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.jobsystem.GetScheduledTimesHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.jobsystem.JobNodeInfoClusterHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ClusterLockClusterTask.class, stroom.jobsystem.ClusterLockClusterHandler.class)
+                .bind(ClusterLockTask.class, stroom.jobsystem.ClusterLockHandler.class)
+                .bind(DistributedTaskRequestClusterTask.class, stroom.jobsystem.DistributedTaskRequestClusterHandler.class)
+                .bind(FetchJobDataAction.class, stroom.jobsystem.FetchJobDataHandler.class)
+                .bind(GetScheduledTimesAction.class, stroom.jobsystem.GetScheduledTimesHandler.class)
+                .bind(JobNodeInfoClusterTask.class, stroom.jobsystem.JobNodeInfoClusterHandler.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(Job.ENTITY_TYPE).to(JobServiceImpl.class);

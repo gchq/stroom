@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.entity.cluster;
+package stroom.index;
 
 import stroom.entity.shared.BaseCriteria;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.VoidResult;
 
-public class FindCloseServiceClusterTask<C extends BaseCriteria> extends ClusterTask<VoidResult> {
+public class DeleteIndexShardClusterTask<C extends BaseCriteria> extends ClusterTask<VoidResult> {
     private static final long serialVersionUID = 3442806159160286110L;
 
-    private Class<?> beanClass;
-    private C criteria;
+    private FindIndexShardCriteria criteria;
 
-    public FindCloseServiceClusterTask(final String userToken, final String taskName,
-                                       final Class<?> beanClass, final C criteria) {
+    public DeleteIndexShardClusterTask(final String userToken,
+                                       final String taskName,
+                                       final FindIndexShardCriteria criteria) {
         super(userToken, taskName);
-        this.beanClass = beanClass;
         this.criteria = criteria;
     }
 
-    public C getCriteria() {
+    public FindIndexShardCriteria getCriteria() {
         return criteria;
-    }
-
-    public Class<?> getBeanClass() {
-        return beanClass;
     }
 }

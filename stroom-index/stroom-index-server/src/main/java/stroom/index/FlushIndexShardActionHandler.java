@@ -16,7 +16,6 @@
 
 package stroom.index;
 
-import stroom.entity.cluster.FindFlushServiceClusterTask;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.FlushIndexShardAction;
 import stroom.security.Security;
@@ -43,8 +42,9 @@ class FlushIndexShardActionHandler extends AbstractTaskHandler<FlushIndexShardAc
     @Override
     public VoidResult exec(final FlushIndexShardAction action) {
         return security.secureResult(() -> {
-            final FindFlushServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindFlushServiceClusterTask<>(
-                    action.getUserToken(), action.getTaskName(), IndexShardManager.class,
+            final FlushIndexShardClusterTask<FindIndexShardCriteria> clusterTask = new FlushIndexShardClusterTask<>(
+                    action.getUserToken(),
+                    action.getTaskName(),
                     action.getCriteria());
 
             dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);

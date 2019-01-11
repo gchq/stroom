@@ -15,10 +15,8 @@
  *
  */
 
-package stroom.entity.cluster;
+package stroom.index;
 
-import stroom.entity.FindDeleteService;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
@@ -26,35 +24,26 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindDeleteServiceClusterTask.class)
-class FindDeleteServiceClusterHandler extends AbstractTaskHandler<FindDeleteServiceClusterTask<?>, VoidResult> {
-    private final StroomBeanStore stroomBeanStore;
+@TaskHandlerBean(task = CloseIndexShardClusterTask.class)
+class CloseIndexShardClusterHandler extends AbstractTaskHandler<CloseIndexShardClusterTask<?>, VoidResult> {
+    private final IndexShardManager indexShardManager;
     private final Security security;
 
     @Inject
-    FindDeleteServiceClusterHandler(final StroomBeanStore stroomBeanStore,
-                                    final Security security) {
-        this.stroomBeanStore = stroomBeanStore;
+    CloseIndexShardClusterHandler(final IndexShardManager indexShardManager,
+                                  final Security security) {
+        this.indexShardManager = indexShardManager;
         this.security = security;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public VoidResult exec(final FindDeleteServiceClusterTask<?> task) {
+    public VoidResult exec(final CloseIndexShardClusterTask<?> task) {
         return security.secureResult(() -> {
             if (task == null) {
                 throw new RuntimeException("No task supplied");
             }
-            if (task.getBeanClass() == null) {
-                throw new RuntimeException("No task bean class supplied");
-            }
-
-            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-            if (obj == null) {
-                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-            }
-
-            ((FindDeleteService) obj).findDelete(task.getCriteria());
+            // TODO : No longer implemented
+//            indexShardManager.findClose(task.getCriteria());
             return new VoidResult();
         });
     }

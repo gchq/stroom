@@ -15,10 +15,8 @@
  *
  */
 
-package stroom.entity.cluster;
+package stroom.index;
 
-import stroom.entity.FindFlushService;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
@@ -26,35 +24,25 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindFlushServiceClusterTask.class)
-class FindFlushServiceClusterHandler extends AbstractTaskHandler<FindFlushServiceClusterTask<?>, VoidResult> {
-    private final StroomBeanStore stroomBeanStore;
+@TaskHandlerBean(task = DeleteIndexShardClusterTask.class)
+class DeleteIndexShardClusterHandler extends AbstractTaskHandler<DeleteIndexShardClusterTask<?>, VoidResult> {
+    private final IndexShardManager indexShardManager;
     private final Security security;
 
     @Inject
-    FindFlushServiceClusterHandler(final StroomBeanStore stroomBeanStore,
+    DeleteIndexShardClusterHandler(final IndexShardManager indexShardManager,
                                    final Security security) {
-        this.stroomBeanStore = stroomBeanStore;
+        this.indexShardManager = indexShardManager;
         this.security = security;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public VoidResult exec(final FindFlushServiceClusterTask<?> task) {
+    public VoidResult exec(final DeleteIndexShardClusterTask<?> task) {
         return security.secureResult(() -> {
             if (task == null) {
                 throw new RuntimeException("No task supplied");
             }
-            if (task.getBeanClass() == null) {
-                throw new RuntimeException("No task bean class supplied");
-            }
-
-            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-            if (obj == null) {
-                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-            }
-
-            ((FindFlushService) obj).findFlush(task.getCriteria());
+            indexShardManager.findDelete(task.getCriteria());
             return new VoidResult();
         });
     }

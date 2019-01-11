@@ -36,10 +36,10 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexShardService.class).to(MockIndexShardService.class);
         bind(Indexer.class).to(MockIndexer.class);
 //
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(CloseIndexShardActionHandler.class);
-//        taskHandlerBinder.addBinding().to(DeleteIndexShardActionHandler.class);
-//        taskHandlerBinder.addBinding().to(FlushIndexShardActionHandler.class);
+//        TaskHandlerBinder.create(binder())
+//        .bind(CloseIndexShardActionHandler.class);
+//        .bind(DeleteIndexShardActionHandler.class);
+//        .bind(FlushIndexShardActionHandler.class);
 //
 //        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
 //        entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);

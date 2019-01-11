@@ -21,16 +21,17 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
+import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ScriptModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ScriptStore.class).to(ScriptStoreImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.script.FetchScriptHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FetchScriptAction.class, FetchScriptHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.script.ScriptStoreImpl.class);

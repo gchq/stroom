@@ -26,11 +26,11 @@ public class MockTaskModule extends AbstractModule {
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
 //
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(FindTaskProgressHandler.class);
-//        taskHandlerBinder.addBinding().to(FindUserTaskProgressHandler.class);
-//        taskHandlerBinder.addBinding().to(GenericServerTaskHandler.class);
-//        taskHandlerBinder.addBinding().to(TerminateTaskProgressHandler.class);
+//        TaskHandlerBinder.create(binder())
+//        .bind(FindTaskProgressHandler.class);
+//        .bind(FindUserTaskProgressHandler.class);
+//        .bind(GenericServerTaskHandler.class);
+//        .bind(TerminateTaskProgressHandler.class);
     }
     //    @Bean
 //    public ExecutorProvider executorProvider(final TaskManager taskManager,

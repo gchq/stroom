@@ -24,8 +24,12 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
+import stroom.index.shared.CloseIndexShardAction;
+import stroom.index.shared.DeleteIndexShardAction;
+import stroom.index.shared.FetchIndexVolumesAction;
+import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.util.HasHealthCheck;
 
 public class IndexModule extends AbstractModule {
@@ -44,11 +48,14 @@ public class IndexModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(IndexStructureCacheImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.index.CloseIndexShardActionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.index.DeleteIndexShardActionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.index.FlushIndexShardActionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.index.FetchIndexVolumesActionHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(CloseIndexShardAction.class, stroom.index.CloseIndexShardActionHandler.class)
+                .bind(DeleteIndexShardAction.class, stroom.index.DeleteIndexShardActionHandler.class)
+                .bind(FlushIndexShardAction.class, stroom.index.FlushIndexShardActionHandler.class)
+                .bind(FetchIndexVolumesAction.class, stroom.index.FetchIndexVolumesActionHandler.class)
+                .bind(CloseIndexShardClusterTask.class, CloseIndexShardClusterHandler.class)
+                .bind(FlushIndexShardClusterTask.class, FlushIndexShardClusterHandler.class)
+                .bind(DeleteIndexShardClusterTask.class, DeleteIndexShardClusterHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);

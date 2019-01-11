@@ -24,8 +24,8 @@ public class MockDictionaryModule extends AbstractModule {
     protected void configure() {
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
 
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(DownloadDictionaryHandler.class);
+//        TaskHandlerBinder.create(binder())
+//        .bind(DownloadDictionaryHandler.class);
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
 //        explorerActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);

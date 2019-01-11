@@ -17,14 +17,13 @@
 package stroom.servlet;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ServletModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.servlet.SessionListHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(SessionListAction.class, SessionListHandler.class);
     }
     //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)

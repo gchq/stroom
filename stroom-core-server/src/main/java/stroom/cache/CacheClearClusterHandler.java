@@ -15,12 +15,10 @@
  *
  */
 
-package stroom.entity.cluster;
+package stroom.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.FindClearService;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
@@ -28,39 +26,29 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindClearServiceClusterTask.class)
-class FindClearServiceClusterHandler extends AbstractTaskHandler<FindClearServiceClusterTask<?>, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FindClearServiceClusterHandler.class);
+@TaskHandlerBean(task = CacheClearClusterTask.class)
+class CacheClearClusterHandler extends AbstractTaskHandler<CacheClearClusterTask, VoidResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CacheClearClusterHandler.class);
 
-    private final StroomBeanStore stroomBeanStore;
+    private final StroomCacheManager stroomCacheManager;
     private final Security security;
 
     @Inject
-    FindClearServiceClusterHandler(final StroomBeanStore stroomBeanStore,
-                                   final Security security) {
-        this.stroomBeanStore = stroomBeanStore;
+    CacheClearClusterHandler(final StroomCacheManager stroomCacheManager,
+                             final Security security) {
+        this.stroomCacheManager = stroomCacheManager;
         this.security = security;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public VoidResult exec(final FindClearServiceClusterTask<?> task) {
+    public VoidResult exec(final CacheClearClusterTask task) {
         return security.secureResult(() -> {
             try {
                 if (task == null) {
                     throw new RuntimeException("No task supplied");
                 }
-
-                if (task.getBeanClass() == null) {
-                    throw new RuntimeException("No task bean class supplied");
-                }
-
-                final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-                if (obj == null) {
-                    throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-                }
-
-                ((FindClearService) obj).findClear(task.getCriteria());
+                stroomCacheManager.findClear(task.getCriteria());
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);

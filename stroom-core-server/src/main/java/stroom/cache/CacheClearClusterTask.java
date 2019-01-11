@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.entity.cluster;
+package stroom.cache;
 
-import stroom.entity.shared.BaseCriteria;
+import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.VoidResult;
 
-public class FindFlushServiceClusterTask<C extends BaseCriteria> extends ClusterTask<VoidResult> {
+public class CacheClearClusterTask extends ClusterTask<VoidResult> {
     private static final long serialVersionUID = 3442806159160286110L;
 
-    private final Class<?> beanClass;
-    private final C criteria;
+    private FindCacheInfoCriteria criteria;
 
-    public FindFlushServiceClusterTask(final String userToken, final String taskName,
-                                       final Class<?> beanClass, final C criteria) {
+    public CacheClearClusterTask(final String userToken,
+                                 final String taskName,
+                                 final FindCacheInfoCriteria criteria) {
         super(userToken, taskName);
-        this.beanClass = beanClass;
         this.criteria = criteria;
     }
 
-    public C getCriteria() {
+    public FindCacheInfoCriteria getCriteria() {
         return criteria;
-    }
-
-    public Class<?> getBeanClass() {
-        return beanClass;
     }
 }

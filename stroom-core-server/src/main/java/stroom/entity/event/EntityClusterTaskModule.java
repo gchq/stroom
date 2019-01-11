@@ -17,15 +17,14 @@
 package stroom.entity.event;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class EntityClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.event.ClusterEntityEventTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.event.DispatchEntityEventTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ClusterEntityEventTask.class, stroom.entity.event.ClusterEntityEventTaskHandler.class)
+                .bind(DispatchEntityEventTask.class, stroom.entity.event.DispatchEntityEventTaskHandler.class);
     }
 
     @Override

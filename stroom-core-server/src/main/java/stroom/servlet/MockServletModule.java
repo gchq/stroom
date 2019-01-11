@@ -26,8 +26,8 @@ public class MockServletModule extends AbstractModule {
 //    protected void configure() {
 //        bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
 //
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(SessionListHandler.class);
+//        TaskHandlerBinder.create(binder())
+//        .bind(SessionListHandler.class);
 //    }
 
     @Provides

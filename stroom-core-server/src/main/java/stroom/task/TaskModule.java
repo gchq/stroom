@@ -17,11 +17,13 @@
 package stroom.task;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.task.cluster.ClusterTaskModule;
+import stroom.task.shared.FindTaskProgressAction;
+import stroom.task.shared.FindUserTaskProgressAction;
+import stroom.task.shared.TerminateTaskProgressAction;
 
 public class TaskModule extends AbstractModule {
     @Override
@@ -33,11 +35,11 @@ public class TaskModule extends AbstractModule {
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.FindTaskProgressHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.FindUserTaskProgressHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.GenericServerTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.TerminateTaskProgressHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FindTaskProgressAction.class, stroom.task.FindTaskProgressHandler.class)
+                .bind(FindUserTaskProgressAction.class, stroom.task.FindUserTaskProgressHandler.class)
+                .bind(GenericServerTask.class, stroom.task.GenericServerTaskHandler.class)
+                .bind(TerminateTaskProgressAction.class, stroom.task.TerminateTaskProgressHandler.class);
     }
     //    @Bean
 //    public ExecutorProvider executorProvider(final TaskManager taskManager,

@@ -29,17 +29,17 @@ public class MockExplorerModule extends AbstractModule {
         bind(ExplorerService.class).to(MockExplorerService.class);
 //        bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
 //
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(ExplorerServiceCopyHandler.class);
-//        taskHandlerBinder.addBinding().to(ExplorerServiceCreateHandler.class);
-//        taskHandlerBinder.addBinding().to(ExplorerServiceDeleteHandler.class);
-//        taskHandlerBinder.addBinding().to(ExplorerServiceInfoHandler.class);
-//        taskHandlerBinder.addBinding().to(ExplorerServiceMoveHandler.class);
-//        taskHandlerBinder.addBinding().to(ExplorerServiceRenameHandler.class);
-//        taskHandlerBinder.addBinding().to(FetchDocRefsHandler.class);
-//        taskHandlerBinder.addBinding().to(FetchDocumentTypesHandler.class);
-//        taskHandlerBinder.addBinding().to(FetchExplorerNodeHandler.class);
-//        taskHandlerBinder.addBinding().to(FetchExplorerPermissionsHandler.class);
+//        TaskHandlerBinder.create(binder())
+//        .bind(ExplorerServiceCopyHandler.class);
+//        .bind(ExplorerServiceCreateHandler.class);
+//        .bind(ExplorerServiceDeleteHandler.class);
+//        .bind(ExplorerServiceInfoHandler.class);
+//        .bind(ExplorerServiceMoveHandler.class);
+//        .bind(ExplorerServiceRenameHandler.class);
+//        .bind(FetchDocRefsHandler.class);
+//        .bind(FetchDocumentTypesHandler.class);
+//        .bind(FetchExplorerNodeHandler.class);
+//        .bind(FetchExplorerPermissionsHandler.class);
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
 //        explorerActionHandlerBinder.addBinding().to(FolderExplorerActionHandler.class);

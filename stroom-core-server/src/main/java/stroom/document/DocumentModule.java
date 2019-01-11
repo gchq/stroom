@@ -17,16 +17,17 @@
 package stroom.document;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.entity.shared.DocumentServiceReadAction;
+import stroom.entity.shared.DocumentServiceWriteAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class DocumentModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DocumentService.class).to(DocumentServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.document.DocumentServiceReadHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.document.DocumentServiceWriteHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(DocumentServiceReadAction.class, stroom.document.DocumentServiceReadHandler.class)
+                .bind(DocumentServiceWriteAction.class, stroom.document.DocumentServiceWriteHandler.class);
     }
 }

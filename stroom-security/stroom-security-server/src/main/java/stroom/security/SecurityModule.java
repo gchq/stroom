@@ -21,7 +21,17 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
-import stroom.task.api.TaskHandler;
+import stroom.security.shared.ChangeDocumentPermissionsAction;
+import stroom.security.shared.ChangeUserAction;
+import stroom.security.shared.CheckDocumentPermissionAction;
+import stroom.security.shared.CopyPermissionsFromParentAction;
+import stroom.security.shared.CreateUserAction;
+import stroom.security.shared.DeleteUserAction;
+import stroom.security.shared.FetchAllDocumentPermissionsAction;
+import stroom.security.shared.FetchUserAndPermissionsAction;
+import stroom.security.shared.FetchUserRefAction;
+import stroom.security.shared.LogoutAction;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.util.HasHealthCheck;
 
 public class SecurityModule extends AbstractModule {
@@ -42,18 +52,17 @@ public class SecurityModule extends AbstractModule {
         clearableBinder.addBinding().to(UserGroupsCache.class);
         clearableBinder.addBinding().to(UserCache.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.ChangeDocumentPermissionsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.ChangeUserHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.CheckDocumentPermissionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.CreateUserHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.DeleteUserHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.FetchAllDocumentPermissionsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.FetchUserAndPermissionsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.FetchUserAppPermissionsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.CopyPermissionsFromParentHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.FetchUserRefHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.security.LogoutHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ChangeDocumentPermissionsAction.class, ChangeDocumentPermissionsHandler.class)
+                .bind(ChangeUserAction.class, ChangeUserHandler.class)
+                .bind(CheckDocumentPermissionAction.class, CheckDocumentPermissionHandler.class)
+                .bind(CreateUserAction.class, CreateUserHandler.class)
+                .bind(DeleteUserAction.class, DeleteUserHandler.class)
+                .bind(FetchAllDocumentPermissionsAction.class, FetchAllDocumentPermissionsHandler.class)
+                .bind(FetchUserAndPermissionsAction.class, FetchUserAndPermissionsHandler.class)
+                .bind(CopyPermissionsFromParentAction.class, CopyPermissionsFromParentHandler.class)
+                .bind(FetchUserRefAction.class, FetchUserRefHandler.class)
+                .bind(LogoutAction.class, LogoutHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(DocumentPermissionsCache.class);

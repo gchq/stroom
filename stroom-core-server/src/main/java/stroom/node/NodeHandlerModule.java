@@ -20,7 +20,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
-import stroom.task.api.TaskHandler;
+import stroom.node.shared.ClusterNodeInfoAction;
+import stroom.node.shared.FetchNodeInfoAction;
+import stroom.node.shared.FindSystemTableStatusAction;
+import stroom.node.shared.FlushVolumeStatusAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class NodeHandlerModule extends AbstractModule {
     @Override
@@ -28,12 +32,12 @@ public class NodeHandlerModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(NodeCache.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(ClusterNodeInfoHandler.class);
-        taskHandlerBinder.addBinding().to(FetchNodeInfoHandler.class);
-        taskHandlerBinder.addBinding().to(FindSystemTableStatusHandler.class);
-        taskHandlerBinder.addBinding().to(FlushVolumeStatusHandler.class);
-        taskHandlerBinder.addBinding().to(NodeInfoClusterHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)
+                .bind(FetchNodeInfoAction.class, FetchNodeInfoHandler.class)
+                .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class)
+                .bind(FlushVolumeStatusAction.class, FlushVolumeStatusHandler.class)
+                .bind(NodeInfoClusterTask.class, NodeInfoClusterHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(NodeCache.class);

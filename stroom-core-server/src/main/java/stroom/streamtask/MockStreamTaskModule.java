@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.shared.Clearable;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class MockStreamTaskModule extends AbstractModule {
     @Override
@@ -38,12 +38,12 @@ public class MockStreamTaskModule extends AbstractModule {
         clearableBinder.addBinding().to(MockStreamProcessorFilterService.class);
         clearableBinder.addBinding().to(MockStreamTaskService.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(CreateProcessorHandler.class);
-//        taskHandlerBinder.addBinding().to(CreateStreamTasksTaskHandler.class);
-//        taskHandlerBinder.addBinding().to(FetchProcessorHandler.class);
-//        taskHandlerBinder.addBinding().to(ReprocessDataHandler.class);
-        taskHandlerBinder.addBinding().to(StreamProcessorTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+//        .bind(CreateProcessorHandler.class);
+//        .bind(CreateStreamTasksTaskHandler.class);
+//        .bind(FetchProcessorHandler.class);
+//        .bind(ReprocessDataHandler.class);
+                .bind(StreamProcessorTask.class, StreamProcessorTaskHandler.class);
 //
 //        final Multibinder<DistributedTaskFactory> distributedTaskFactoryBinder = Multibinder.newSetBinder(binder(), DistributedTaskFactory.class);
 //        distributedTaskFactoryBinder.addBinding().to(StreamProcessorTaskFactory.class);

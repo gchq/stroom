@@ -24,7 +24,10 @@ import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
-import stroom.task.api.TaskHandler;
+import stroom.streamtask.shared.CreateProcessorAction;
+import stroom.streamtask.shared.FetchProcessorAction;
+import stroom.streamtask.shared.ReprocessDataAction;
+import stroom.task.api.TaskHandlerBinder;
 
 import javax.inject.Named;
 
@@ -36,12 +39,12 @@ public class StreamTaskModule extends AbstractModule {
         bind(StreamProcessorService.class).to(StreamProcessorServiceImpl.class);
         bind(StreamTaskService.class).to(StreamTaskServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.streamtask.CreateProcessorHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.streamtask.CreateStreamTasksTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.streamtask.FetchProcessorHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.streamtask.ReprocessDataHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.streamtask.StreamProcessorTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(CreateProcessorAction.class, stroom.streamtask.CreateProcessorHandler.class)
+                .bind(CreateStreamTasksTask.class, stroom.streamtask.CreateStreamTasksTaskHandler.class)
+                .bind(FetchProcessorAction.class, stroom.streamtask.FetchProcessorHandler.class)
+                .bind(ReprocessDataAction.class, stroom.streamtask.ReprocessDataHandler.class)
+                .bind(StreamProcessorTask.class, stroom.streamtask.StreamProcessorTaskHandler.class);
 
         final Multibinder<DistributedTaskFactory> distributedTaskFactoryBinder = Multibinder.newSetBinder(binder(), DistributedTaskFactory.class);
         distributedTaskFactoryBinder.addBinding().to(stroom.streamtask.StreamProcessorTaskFactory.class);

@@ -17,20 +17,15 @@
 package stroom.entity.cluster;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class EntityClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.ClearServiceClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.FindClearServiceClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.FindCloseServiceClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.FindDeleteServiceClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.FindFlushServiceClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.FindServiceClusterHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.cluster.FlushServiceClusterHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class)
+                .bind(FindServiceClusterTask.class, FindServiceClusterHandler.class)
+                .bind(FlushServiceClusterTask.class, FlushServiceClusterHandler.class);
     }
     //    @Bean
 //    @Scope(value = StroomScope.TASK)
