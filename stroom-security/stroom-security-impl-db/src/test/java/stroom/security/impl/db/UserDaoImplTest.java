@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UserDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
 
-    private static MySQLContainer dbContainer = null; //new MySQLContainer();
+    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
 
     private static UserDao userDao;
 

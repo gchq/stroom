@@ -21,7 +21,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
     private final ConnectionProvider connectionProvider;
 
-    private static final Table<Record> TABLE_APP_PERMISSION = table("app_permission");
+    private static final Table<Record> TABLE = table("app_permission");
     private static final Field<String> FIELD_PERMISSION = field("permission", String.class);
     private static final Field<String> FIELD_USER_UUID = field("user_uuid", String.class);
 
@@ -36,12 +36,12 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             return DSL.using(connection, SQLDialect.MYSQL)
                     .select()
-                    .from(TABLE_APP_PERMISSION)
+                    .from(TABLE)
                     .where(FIELD_USER_UUID.equal(userUuid))
                     .fetchSet(FIELD_PERMISSION);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -50,13 +50,13 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
         try (final Connection connection = connectionProvider.getConnection()) {
             DSL.using(connection, SQLDialect.MYSQL)
-                    .insertInto(TABLE_APP_PERMISSION)
+                    .insertInto(TABLE)
                     .columns(FIELD_USER_UUID, FIELD_PERMISSION)
                     .values(userUuid, permission)
                     .execute();
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -64,13 +64,13 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
     public void removePermission(final String userUuid, String permission) {
         try (final Connection connection = connectionProvider.getConnection()) {
             DSL.using(connection, SQLDialect.MYSQL)
-                    .deleteFrom(TABLE_APP_PERMISSION)
+                    .deleteFrom(TABLE)
                     .where(FIELD_USER_UUID.equal(userUuid))
                     .and(FIELD_PERMISSION.equal(permission))
                     .execute();
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 }

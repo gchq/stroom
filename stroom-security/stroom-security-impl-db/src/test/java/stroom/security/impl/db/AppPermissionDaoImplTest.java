@@ -14,11 +14,12 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AppPermissionDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppPermissionDaoImplTest.class);
 
-    private static MySQLContainer dbContainer = null;// = new MySQLContainer();
+    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
 
     private static Injector injector;
     private static UserDao userDao;
@@ -36,6 +37,15 @@ public class AppPermissionDaoImplTest {
 
         userDao = injector.getInstance(UserDao.class);
         appPermissionDao = injector.getInstance(AppPermissionDao.class);
+    }
+
+    @Test
+    public void testPermissionInvalidUser() {
+        // Given
+        final String userUuid = UUID.randomUUID().toString();
+
+        // When
+        assertThrows(SecurityException.class, () -> appPermissionDao.addPermission(userUuid, PERMISSION_NAME_1));
     }
 
     @Test

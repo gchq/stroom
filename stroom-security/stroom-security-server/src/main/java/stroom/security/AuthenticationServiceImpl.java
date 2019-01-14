@@ -110,9 +110,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private UserRef createOrRefreshUser(String name) {
         return security.asProcessingUserResult(() -> {
-            // Ensure all perms have been created
-            userAppPermissionService.init();
-
             UserRef userRef = userService.getUserByName(name);
             if (userRef == null) {
                 userRef = userService.createUser(name);

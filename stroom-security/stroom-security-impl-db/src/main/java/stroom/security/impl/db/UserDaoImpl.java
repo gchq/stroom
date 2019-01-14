@@ -60,9 +60,9 @@ public class UserDaoImpl implements UserDao {
             return Optional.ofNullable(record)
                     .map(UserDaoImpl::mapFromRecord)
                     .orElse(null);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -77,9 +77,9 @@ public class UserDaoImpl implements UserDao {
             return Optional.ofNullable(record)
                     .map(UserDaoImpl::mapFromRecord)
                     .orElse(null);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -94,9 +94,9 @@ public class UserDaoImpl implements UserDao {
             return Optional.ofNullable(record)
                     .map(UserDaoImpl::mapFromRecord)
                     .orElse(null);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -111,9 +111,9 @@ public class UserDaoImpl implements UserDao {
                     .where(FIELD_GROUP_UUID.equal(groupUuid))
                     .orderBy(FIELD_NAME)
                     .fetch(UserDaoImpl::mapFromRecord);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -128,9 +128,9 @@ public class UserDaoImpl implements UserDao {
                 .where(FIELD_USER_UUID.equal(userUuid))
                 .orderBy(FIELD_NAME)
                 .fetch(UserDaoImpl::mapFromRecord);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -151,9 +151,9 @@ public class UserDaoImpl implements UserDao {
                     .where(FIELD_NAME.equal(name))
                     .fetchOne()
                     .map(UserDaoImpl::mapFromRecord);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -174,9 +174,9 @@ public class UserDaoImpl implements UserDao {
                     .where(FIELD_NAME.equal(name))
                     .fetchOne()
                     .map(UserDaoImpl::mapFromRecord);
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -196,9 +196,9 @@ public class UserDaoImpl implements UserDao {
                     .execute();
 
             return rowsAffected == 1;
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -214,9 +214,9 @@ public class UserDaoImpl implements UserDao {
                     .execute();
 
             return rowsAffected == 1;
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 
@@ -232,9 +232,9 @@ public class UserDaoImpl implements UserDao {
                     .execute();
 
             return rowsAffected == 1;
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
         }
     }
 }

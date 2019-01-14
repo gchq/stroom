@@ -3,7 +3,6 @@
 --
 CREATE TABLE IF NOT EXISTS stroom_user (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               int,
   name                  varchar(255) NOT NULL,
   uuid                  varchar(255) NOT NULL,
   is_group              bit(1) NOT NULL,
@@ -31,7 +30,6 @@ CREATE TABLE IF NOT EXISTS app_permission (
 
 CREATE TABLE IF NOT EXISTS doc_permission (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               int,
   user_uuid             varchar(255) NOT NULL,
   doc_type              varchar(255) NOT NULL,
   doc_uuid              varchar(255) NOT NULL,

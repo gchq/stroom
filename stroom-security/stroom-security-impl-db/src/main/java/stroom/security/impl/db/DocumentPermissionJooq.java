@@ -1,39 +1,11 @@
 package stroom.security.impl.db;
 
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class DocumentPermissionJooq {
-    private long id;
-    private byte version;
-    private String userUuid;
     private String docType;
     private String docUuid;
-    private Set<String> permissions;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public byte getVersion() {
-        return version;
-    }
-
-    public void setVersion(byte version) {
-        this.version = version;
-    }
-
-    public String getUserUuid() {
-        return userUuid;
-    }
-
-    public void setUserUuid(String userUuid) {
-        this.userUuid = userUuid;
-    }
+    private Map<String, Set<String>> permissions = new HashMap<>();
 
     public String getDocType() {
         return docType;
@@ -51,12 +23,16 @@ public class DocumentPermissionJooq {
         this.docUuid = docUuid;
     }
 
-    public Set<String> getPermissions() {
+    public Map<String, Set<String>> getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(Set<String> permissions) {
+    public void setPermissions(Map<String, Set<String>> permissions) {
         this.permissions = permissions;
+    }
+
+    public Set<String> getPermissionForUser(final String userUuid) {
+        return permissions.getOrDefault(userUuid, Collections.emptySet());
     }
 
     @Override
@@ -64,29 +40,56 @@ public class DocumentPermissionJooq {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DocumentPermissionJooq that = (DocumentPermissionJooq) o;
-        return id == that.id &&
-                version == that.version &&
-                Objects.equals(userUuid, that.userUuid) &&
-                Objects.equals(docType, that.docType) &&
+        return Objects.equals(docType, that.docType) &&
                 Objects.equals(docUuid, that.docUuid) &&
                 Objects.equals(permissions, that.permissions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, userUuid, docType, docUuid, permissions);
+        return Objects.hash(docType, docUuid, permissions);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("DocumentPermissionJooq{");
-        sb.append("id=").append(id);
-        sb.append(", version=").append(version);
-        sb.append(", userUuid='").append(userUuid).append('\'');
-        sb.append(", docType='").append(docType).append('\'');
+        sb.append("docType='").append(docType).append('\'');
         sb.append(", docUuid='").append(docUuid).append('\'');
         sb.append(", permissions='").append(permissions).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    public static class Builder {
+        private final DocumentPermissionJooq instance;
+        private final Map<String, Set<String>> permissions = new HashMap<>();
+
+        public Builder(final DocumentPermissionJooq instance) {
+            this.instance = instance;
+        }
+
+        public Builder() {
+            this(new DocumentPermissionJooq());
+        }
+
+        public Builder docType(final String value) {
+            instance.setDocType(value);
+            return this;
+        }
+
+        public Builder docUuid(final String value) {
+            instance.setDocUuid(value);
+            return this;
+        }
+
+        public Builder permission(final String userUuid, final String permission) {
+            permissions.computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
+            return this;
+        }
+
+        public DocumentPermissionJooq build() {
+            instance.setPermissions(permissions);
+            return instance;
+        }
     }
 }
