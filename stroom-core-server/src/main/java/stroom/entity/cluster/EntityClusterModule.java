@@ -24,48 +24,6 @@ public class EntityClusterModule extends AbstractModule {
     protected void configure() {
         TaskHandlerBinder.create(binder())
                 .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class)
-                .bind(FindServiceClusterTask.class, FindServiceClusterHandler.class)
                 .bind(FlushServiceClusterTask.class, FlushServiceClusterHandler.class);
     }
-    //    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public ClearServiceClusterHandler clearServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new ClearServiceClusterHandler(stroomBeanStore);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public FindClearServiceClusterHandler findClearServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new FindClearServiceClusterHandler(stroomBeanStore);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public FindCloseServiceClusterHandler findCloseServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new FindCloseServiceClusterHandler(stroomBeanStore);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public FindDeleteServiceClusterHandler findDeleteServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new FindDeleteServiceClusterHandler(stroomBeanStore);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public FindFlushServiceClusterHandler findFlushServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new FindFlushServiceClusterHandler(stroomBeanStore);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public FindServiceClusterHandler findServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new FindServiceClusterHandler(stroomBeanStore);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public FlushServiceClusterHandler flushServiceClusterHandler(final StroomBeanStore stroomBeanStore) {
-//        return new FlushServiceClusterHandler(stroomBeanStore);
-//    }
 }

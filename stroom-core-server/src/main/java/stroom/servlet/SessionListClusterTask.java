@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.cache;
+package stroom.servlet;
 
-import stroom.cache.shared.CacheInfo;
-import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.FindClearService;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
+import stroom.entity.shared.ResultList;
+import stroom.task.cluster.ClusterTask;
 
-/**
- * This class maintains several caches used throughout the application.
- */
-public interface StroomCacheManager
-        extends Clearable, FindClearService<FindCacheInfoCriteria>, FindService<CacheInfo, FindCacheInfoCriteria> {
+public class SessionListClusterTask extends ClusterTask<ResultList<SessionDetails>> {
+    private static final long serialVersionUID = 7441063582135677305L;
+
+    public SessionListClusterTask(final String userToken,
+                                  final String taskName) {
+        super(userToken, taskName);
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Get Session List";
+    }
 }

@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.entity.cluster;
+package stroom.task;
 
-import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
 import stroom.task.cluster.ClusterTask;
-import stroom.docref.SharedObject;
+import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.task.shared.TaskProgress;
 
-public class FindServiceClusterTask<C extends BaseCriteria, E extends SharedObject> extends ClusterTask<ResultList<E>> {
-    private static final long serialVersionUID = 3442806159160286110L;
+public class FindTaskProgressClusterTask extends ClusterTask<ResultList<TaskProgress>> {
+    private static final long serialVersionUID = -5285569438944240375L;
 
-    private final Class<?> beanClass;
-    private final C criteria;
+    private FindTaskProgressCriteria criteria;
 
-    public FindServiceClusterTask(final String userToken, final String taskName,
-                                  final Class<?> beanClass, final C criteria) {
+    public FindTaskProgressClusterTask(final String userToken,
+                                       final String taskName,
+                                       final FindTaskProgressCriteria criteria) {
         super(userToken, taskName);
-        this.beanClass = beanClass;
         this.criteria = criteria;
     }
 
-    public C getCriteria() {
+    public FindTaskProgressCriteria getCriteria() {
         return criteria;
-    }
-
-    public Class<?> getBeanClass() {
-        return beanClass;
     }
 }

@@ -22,7 +22,6 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheNodeRow;
 import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
@@ -60,8 +59,8 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
 
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(action.getCacheName(), null));
-            final FindServiceClusterTask<FindCacheInfoCriteria, CacheInfo> task = new FindServiceClusterTask<>(
-                    action.getUserToken(), "Find cache info", StroomCacheManager.class, criteria);
+            final FetchCacheNodeRowClusterTask task = new FetchCacheNodeRowClusterTask(
+                    action.getUserToken(), "Find cache info", criteria);
             final DefaultClusterResultCollector<ResultList<CacheInfo>> collector = dispatchHelper.execAsync(task,
                     TargetType.ACTIVE);
 

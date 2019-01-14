@@ -23,7 +23,8 @@ public class ServletModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(SessionListAction.class, SessionListHandler.class);
+                .bind(SessionListAction.class, SessionListHandler.class)
+                .bind(SessionListClusterTask.class, SessionListClusterHandler.class);
     }
     //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)

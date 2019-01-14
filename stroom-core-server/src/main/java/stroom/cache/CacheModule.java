@@ -33,6 +33,7 @@ public class CacheModule extends AbstractModule {
                 .bind(CacheClearAction.class, CacheClearHandler.class)
                 .bind(CacheClearClusterTask.class, CacheClearClusterHandler.class)
                 .bind(FetchCacheNodeRowAction.class, FetchCacheNodeRowHandler.class)
+                .bind(FetchCacheNodeRowClusterTask.class, FetchCacheNodeRowClusterHandler.class)
                 .bind(FetchCacheRowAction.class, FetchCacheRowHandler.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);

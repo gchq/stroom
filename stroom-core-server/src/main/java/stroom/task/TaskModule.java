@@ -37,9 +37,10 @@ public class TaskModule extends AbstractModule {
 
         TaskHandlerBinder.create(binder())
                 .bind(FindTaskProgressAction.class, stroom.task.FindTaskProgressHandler.class)
-                .bind(FindUserTaskProgressAction.class, stroom.task.FindUserTaskProgressHandler.class)
-                .bind(GenericServerTask.class, stroom.task.GenericServerTaskHandler.class)
-                .bind(TerminateTaskProgressAction.class, stroom.task.TerminateTaskProgressHandler.class);
+                .bind(FindTaskProgressClusterTask.class, FindTaskProgressClusterHandler.class)
+                .bind(FindUserTaskProgressAction.class, FindUserTaskProgressHandler.class)
+                .bind(GenericServerTask.class, GenericServerTaskHandler.class)
+                .bind(TerminateTaskProgressAction.class, TerminateTaskProgressHandler.class);
     }
     //    @Bean
 //    public ExecutorProvider executorProvider(final TaskManager taskManager,
