@@ -19,11 +19,7 @@ package stroom.security;
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "DOC_PERM", uniqueConstraints = @UniqueConstraint(columnNames = {DocumentPermission.USER_UUID,

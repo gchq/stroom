@@ -23,47 +23,17 @@ public class UserDaoImpl implements UserDao {
 
     private final ConnectionProvider connectionProvider;
 
-    private static final Integer FIRST_VERSION = 1;
-
+    // Stroom User table
     private static final Table<Record> TABLE_STROOM_USER = table("stroom_user");
     private static final Field<Long> FIELD_ID = field("id", Long.class);
-    private static final Field<Integer> FIELD_VERSION = field("version", Integer.class);
     private static final Field<String> FIELD_NAME = field("name", String.class);
     private static final Field<String> FIELD_UUID = field("uuid", String.class);
     private static final Field<Boolean> FIELD_IS_GROUP = field("is_group", Boolean.class);
 
+    // Stroom User Groups table
     private static final Table<Record> TABLE_STROOM_USER_GROUPS = table("stroom_user_groups");
     private static final Field<String> FIELD_USER_UUID = field("user_uuid", String.class);
     private static final Field<String> FIELD_GROUP_UUID = field("group_uuid", String.class);
-
-//    private static final String SQL_ADD_USER_TO_GROUP;
-//    private static final String SQL_REMOVE_USER_FROM_GROUP;
-//
-//    static {
-//        SQL_ADD_USER_TO_GROUP = ""
-//                + "INSERT INTO "
-//                + UserGroupUser.TABLE_NAME
-//                + " ("
-//                + UserGroupUser.VERSION
-//                + ", "
-//                + UserGroupUser.USER_UUID
-//                + ", "
-//                + UserGroupUser.GROUP_UUID
-//                + ")"
-//                + " VALUES (?,?,?)";
-//    }
-//
-//    static {
-//        SQL_REMOVE_USER_FROM_GROUP = ""
-//                + "DELETE FROM "
-//                + UserGroupUser.TABLE_NAME
-//                + " WHERE "
-//                + UserGroupUser.USER_UUID
-//                + " = ?"
-//                + " AND "
-//                + UserGroupUser.GROUP_UUID
-//                + " = ?";
-//    }
 
     @Inject
     public UserDaoImpl(final ConnectionProvider connectionProvider) {
@@ -71,17 +41,12 @@ public class UserDaoImpl implements UserDao {
     }
 
     private static UserJooq mapFromRecord(final Record record) {
-        if (null != record) {
-            return new UserJooq.Builder()
-                    .id(record.get(FIELD_ID))
-                    .uuid(record.get(FIELD_UUID))
-                    .name(record.get(FIELD_NAME))
-                    .version(record.get(FIELD_VERSION))
-                    .isGroup(record.get(FIELD_IS_GROUP))
-                    .build();
-        }
-
-        return null;
+        return new UserJooq.Builder()
+                .id(record.get(FIELD_ID))
+                .uuid(record.get(FIELD_UUID))
+                .name(record.get(FIELD_NAME))
+                .isGroup(record.get(FIELD_IS_GROUP))
+                .build();
     }
 
     @Override
@@ -176,8 +141,8 @@ public class UserDaoImpl implements UserDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             DSL.using(connection, SQLDialect.MYSQL)
                     .insertInto(TABLE_STROOM_USER)
-                    .columns(FIELD_VERSION, FIELD_UUID, FIELD_NAME, FIELD_IS_GROUP)
-                    .values(FIRST_VERSION, userUuid, name, Boolean.FALSE)
+                    .columns(FIELD_UUID, FIELD_NAME, FIELD_IS_GROUP)
+                    .values(userUuid, name, Boolean.FALSE)
                     .execute();
 
             return DSL.using(connection, SQLDialect.MYSQL)
@@ -199,8 +164,8 @@ public class UserDaoImpl implements UserDao {
         try (final Connection connection = connectionProvider.getConnection()) {
             DSL.using(connection, SQLDialect.MYSQL)
                     .insertInto(TABLE_STROOM_USER)
-                    .columns(FIELD_VERSION, FIELD_UUID, FIELD_NAME, FIELD_IS_GROUP)
-                    .values(FIRST_VERSION, userUuid, name, Boolean.TRUE)
+                    .columns(FIELD_UUID, FIELD_NAME, FIELD_IS_GROUP)
+                    .values(userUuid, name, Boolean.TRUE)
                     .execute();
 
             return DSL.using(connection, SQLDialect.MYSQL)

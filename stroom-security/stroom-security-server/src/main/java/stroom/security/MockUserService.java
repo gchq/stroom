@@ -22,7 +22,6 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**

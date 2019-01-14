@@ -19,11 +19,7 @@ package stroom.security;
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 
 /**
  * An entity to group users together and apply the same permissions to multiple

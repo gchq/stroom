@@ -29,7 +29,9 @@ import stroom.security.shared.UserRef;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.Transient;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -38,17 +40,14 @@ class UserServiceImpl implements UserService {
 
     private final Security security;
 
-    private final DocumentPermissionService documentPermissionService;
     private final AuthenticationConfig securityConfig;
     private final UserDao userDao;
 
     @Inject
     UserServiceImpl(final Security security,
-                    final DocumentPermissionService documentPermissionService,
                     final AuthenticationConfig securityConfig,
                     final UserDao userDao) {
         this.security = security;
-        this.documentPermissionService = documentPermissionService;
         this.securityConfig = securityConfig;
         this.userDao = userDao;
     }

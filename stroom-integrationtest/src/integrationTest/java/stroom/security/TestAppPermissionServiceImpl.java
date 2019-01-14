@@ -60,7 +60,6 @@ class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
         appPermissionSet.add(c1);
         appPermissionSet.add(p1);
         appPermissionSet.add(p2);
-        userAppPermissionService.createAll(appPermissionSet);
 
         addPermissions(userGroup1, c1, p1);
         addPermissions(userGroup2, c1, p2);
@@ -86,25 +85,6 @@ class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
 
         removePermissions(userGroup2, p2);
         checkUserPermissions(user, c1, p1);
-    }
-
-    @Test
-    void test_getRequiredPermissionSet() {
-        final UserAppPermissionServiceImpl userAppPermissionServiceImpl = (UserAppPermissionServiceImpl) userAppPermissionService;
-        final Set<String> set = userAppPermissionServiceImpl.getRequiredPermissionSet();
-        assertThat(set).isNotNull();
-        assertThat(set.size()).isEqualTo(21);
-
-        final Permission permission = new Permission();
-        permission.setName(PermissionNames.ADMINISTRATOR);
-        final String search = permission.getName();
-
-        for (final String test : set) {
-            if (test.equals(search)) {
-                return;
-            }
-        }
-        fail("Shouldn't get here");
     }
 
     private void addPermissions(final UserRef user, final String... permissions) {

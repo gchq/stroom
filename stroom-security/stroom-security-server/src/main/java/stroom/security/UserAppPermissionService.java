@@ -19,13 +19,7 @@ package stroom.security;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 
-import java.util.Set;
-
 public interface UserAppPermissionService {
-    void init();
-
-    void createAll(Set<String> permissions);
-
     UserAppPermissions getPermissionsForUser(UserRef userRef);
 
     void addPermission(UserRef userRef, String permission);

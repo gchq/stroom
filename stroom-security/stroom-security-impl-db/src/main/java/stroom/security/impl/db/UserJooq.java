@@ -17,11 +17,6 @@ public class UserJooq {
      */
     private long id = UNDEFINED_ID;
 
-    /**
-     * Optimistic locking
-     */
-    private int version = -1;
-
     private String name;
 
     private String uuid;
@@ -38,14 +33,6 @@ public class UserJooq {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
     }
 
     public String getName() {
@@ -78,7 +65,6 @@ public class UserJooq {
         if (o == null || getClass() != o.getClass()) return false;
         UserJooq user = (UserJooq) o;
         return id == user.id &&
-                version == user.version &&
                 group == user.group &&
                 Objects.equals(name, user.name) &&
                 Objects.equals(uuid, user.uuid);
@@ -86,14 +72,13 @@ public class UserJooq {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, name, uuid, group);
+        return Objects.hash(id, name, uuid, group);
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("User{");
         sb.append("id=").append(id);
-        sb.append(", version=").append(version);
         sb.append(", name='").append(name).append('\'');
         sb.append(", uuid='").append(uuid).append('\'');
         sb.append(", group=").append(group);
@@ -114,11 +99,6 @@ public class UserJooq {
 
         public Builder id(final long value) {
             instance.setId(value);
-            return this;
-        }
-
-        public Builder version(final int value) {
-            instance.setVersion(value);
             return this;
         }
 

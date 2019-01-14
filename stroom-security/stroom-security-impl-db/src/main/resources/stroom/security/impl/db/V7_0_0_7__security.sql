@@ -1,32 +1,6 @@
 --
 -- Create the explorer tables
 --
-CREATE TABLE IF NOT EXISTS app_permission_name (
-  id                    bigint(20) NOT NULL,
-  version               tinyint(4) NOT NULL,
-  name                  varchar(255) NOT NULL,
-  PRIMARY KEY           (id),
-  UNIQUE KEY            (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS app_permission (
-  id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               int,
-  user_uuid             varchar(255) NOT NULL,
-  fk_app_permission_id  bigint(20) NOT NULL,
-  PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS doc_permission (
-  id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               int,
-  user_uuid             varchar(255) NOT NULL,
-  doc_type              varchar(255) NOT NULL,
-  doc_uuid              varchar(255) NOT NULL,
-  permission        varchar(255) NOT NULL,
-  PRIMARY KEY           (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
 CREATE TABLE IF NOT EXISTS stroom_user (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
   version               int,
@@ -40,9 +14,29 @@ CREATE TABLE IF NOT EXISTS stroom_user (
 
 CREATE TABLE IF NOT EXISTS stroom_user_groups (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  version               int,
   user_uuid             varchar(255) NOT NULL,
   group_uuid            varchar(255) NOT NULL,
+  FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
+  FOREIGN KEY (group_uuid) REFERENCES stroom_user (uuid),
+  PRIMARY KEY           (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS app_permission (
+  id                    bigint(20) NOT NULL AUTO_INCREMENT,
+  user_uuid             varchar(255) NOT NULL,
+  permission            varchar(255) NOT NULL,
+  FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
+  PRIMARY KEY           (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS doc_permission (
+  id                    bigint(20) NOT NULL AUTO_INCREMENT,
+  version               int,
+  user_uuid             varchar(255) NOT NULL,
+  doc_type              varchar(255) NOT NULL,
+  doc_uuid              varchar(255) NOT NULL,
+  permission            varchar(255) NOT NULL,
+  FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
   PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
