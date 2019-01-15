@@ -46,14 +46,24 @@ DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'USR' > 0) THEN
-        INSERT INTO stroom_user (id, version, uuid, name, is_group )
-        SELECT id, version, uuid, name, is_group
+        INSERT INTO stroom_user (uuid, name, is_group )
+        SELECT uuid, name, grp
         FROM USR;
     END IF;
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'USR_GRP_USR' > 0) THEN
-        INSERT INTO stroom_user_groups (id, version, user_uuid, group_uuid )
-        SELECT id, version, grp_uuid, usr_uuid
+        INSERT INTO stroom_user_groups (user_uuid, group_uuid)
+        SELECT grp_uuid, usr_uuid
         FROM USR_GRP_USR;
+    END IF;
+    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'DOC_PERM' > 0) THEN
+        INSERT INTO doc_permission (user_uuid, doc_type, doc_uuid, permission)
+        SELECT usr_uuid, doc_tp, doc_uuid, perm
+        FROM DOC_PERM;
+    END IF;
+    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'APP_PERM' > 0) THEN
+        INSERT INTO app_permission (user_uuid, permission)
+        SELECT usr_uuid, name
+        FROM APP_PERM INNER JOIN PERM on APP_PERM.FK_PERM_ID = PERM.ID;
     END IF;
 END//
 DELIMITER ;
