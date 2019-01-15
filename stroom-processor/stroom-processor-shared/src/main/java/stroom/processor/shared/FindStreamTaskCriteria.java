@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared;
 
 import stroom.data.meta.api.MetaDataSource;
 import stroom.docref.DocRef;

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamtask;
+package stroom.processor.impl.db.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

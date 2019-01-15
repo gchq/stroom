@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared.task;
 
 import stroom.task.shared.Action;
 import stroom.data.meta.api.FindDataCriteria;

@@ -15,37 +15,31 @@
  *
  */
 
-package stroom.streamtask;
+package stroom.processor.impl.db.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.migration.doc.dictionary.DictionaryDoc;
+import stroom.db.migration.doc.pipeline.PipelineDoc;
 import stroom.dictionary.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
+import stroom.docref.SharedObject;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.ResultList;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.shared.PermissionNames;
+import stroom.processor.impl.db.tables.ProcessorFilter;
+import stroom.processor.shared.FindStreamProcessorCriteria;
+import stroom.processor.shared.FindStreamProcessorFilterCriteria;
+import stroom.processor.shared.task.FetchProcessorAction;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.FetchProcessorAction;
-import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterRow;
-import stroom.streamtask.shared.ProcessorRow;
+import stroom.security.shared.PermissionNames;
+import stroom.streamtask.StreamProcessorFilterService;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Expander;
-import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package stroom.process;
+package stroom.processor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -8,6 +8,7 @@ import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
+@SuppressWarnings("unused")
 @Singleton
 public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
 

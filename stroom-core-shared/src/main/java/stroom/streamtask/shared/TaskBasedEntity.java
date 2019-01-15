@@ -27,6 +27,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
+@Deprecated
 @MappedSuperclass
 public abstract class TaskBasedEntity extends BaseEntityBig {
     public static final String START_TIME_MS = "START_TIME" + SQLNameConstants.MS_SUFFIX;

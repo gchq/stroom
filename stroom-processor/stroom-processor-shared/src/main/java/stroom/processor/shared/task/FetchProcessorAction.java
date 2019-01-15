@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared.task;
 
 import stroom.dispatch.shared.TreeAction;
 import stroom.task.shared.Action;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
@@ -30,8 +30,11 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     UNPROCESSED("Unprocessed", 1), /**
      * Assigned - some one has locked it
      */
-    ASSIGNED("Assigned", 2), PROCESSING("Processing", 3), COMPLETE("Complete", 10), FAILED("Failed",
-            22), DELETED("Deleted", 99);
+    ASSIGNED("Assigned", 2),
+    PROCESSING("Processing", 3),
+    COMPLETE("Complete", 10),
+    FAILED("Failed", 22),
+    DELETED("Deleted", 99);
 
     public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
             TaskStatus.values());

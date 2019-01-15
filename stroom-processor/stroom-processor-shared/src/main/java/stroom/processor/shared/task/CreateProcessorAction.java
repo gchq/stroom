@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared.task;
 
-import stroom.task.shared.Action;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.task.shared.Action;
 
 public class CreateProcessorAction extends Action<ProcessorFilter> {
     private static final long serialVersionUID = -1773544031158236156L;

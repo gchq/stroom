@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamtask;
+package stroom.processor.impl.db.task;
 
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;

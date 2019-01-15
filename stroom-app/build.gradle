@@ -93,9 +93,7 @@ dependencies {
     implementation libs.dropwizard_servlets
     implementation libs.flyway_core
     implementation libs.guava
-    implementation libs.guava
     implementation libs.guice4
-    implementation libs.javax_inject
     implementation libs.javax_inject
     implementation libs.javax_servlet_api
     implementation libs.jcommander
