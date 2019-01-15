@@ -1,4 +1,4 @@
-package stroom.security.impl.db;
+package stroom.security.dao;
 
 import java.util.Set;
 

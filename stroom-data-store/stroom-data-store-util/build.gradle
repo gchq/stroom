@@ -17,7 +17,7 @@ dependencies {
     implementation libs.guice4
     implementation libs.slf4j_api
 
-    testCompileOnly libs.junit_jupiter_api
+    testImplementationOnly libs.junit_jupiter_api
     testImplementation project(':stroom-test-common')
     testImplementation libs.hikari
 

@@ -1,6 +1,7 @@
-package stroom.security.impl.db;
+package stroom.security.dao;
 
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermissionJooq;
 
 import java.util.Set;
 

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.security.dao.UserDao;
+import stroom.security.shared.UserJooq;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +33,7 @@ public class UserDaoImplTest {
         Optional.ofNullable(dbContainer)
                 .ifPresent(MySQLContainer::start);
 
-        final Injector injector = Guice.createInjector(new SecurityDbModule(), new ContainerSecurityConfigModule(dbContainer));
+        final Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
     }

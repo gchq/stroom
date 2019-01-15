@@ -20,16 +20,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
-import stroom.security.impl.db.UserDao;
-import stroom.security.impl.db.UserJooq;
+import stroom.security.dao.UserDao;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.Transient;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,7 +58,7 @@ class UserServiceImpl implements UserService {
     @Override
     public UserRef getUserByName(final String name) {
         if (name != null && name.trim().length() > 0) {
-            UserJooq user = userDao.getUserByName(name);
+            final UserJooq user = userDao.getUserByName(name);
             if (user != null) {
                 // Make sure this is the user that was requested.
                 if (!user.getName().equals(name)) {
@@ -74,8 +73,10 @@ class UserServiceImpl implements UserService {
 
     @Override
     public List<User> find(final FindUserCriteria criteria) {
-        // TODO I.O.U one implementation of this
-        return Collections.emptyList();
+        return userDao.find(criteria.getGroup(), criteria.getName().getString())
+                .stream()
+                .map(this::fromJooq)
+                .collect(Collectors.toList());
     }
 
     @Override

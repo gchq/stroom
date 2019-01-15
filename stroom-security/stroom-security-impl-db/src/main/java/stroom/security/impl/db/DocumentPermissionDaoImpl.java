@@ -1,14 +1,17 @@
 package stroom.security.impl.db;
 
-import org.jooq.*;
+import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.SQLDialect;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
-import org.jooq.types.ULong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.security.dao.DocumentPermissionDao;
+import stroom.security.shared.DocumentPermissionJooq;
 
 import javax.inject.Inject;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Set;

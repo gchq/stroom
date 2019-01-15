@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.security.dao.AppPermissionDao;
+import stroom.security.dao.UserDao;
+import stroom.security.shared.UserJooq;
 
 import java.util.Optional;
 import java.util.Set;
@@ -33,7 +36,7 @@ public class AppPermissionDaoImplTest {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
-        injector = Guice.createInjector(new SecurityDbModule(), new ContainerSecurityConfigModule(dbContainer));
+        injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
         appPermissionDao = injector.getInstance(AppPermissionDao.class);

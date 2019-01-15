@@ -16,7 +16,7 @@
 
 package stroom.security;
 
-import stroom.security.impl.db.UserJooq;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 
 public final class UserRefFactory {

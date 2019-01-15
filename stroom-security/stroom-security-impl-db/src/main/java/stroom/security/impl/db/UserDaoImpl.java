@@ -7,6 +7,8 @@ import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.dao.UserDao;
+import stroom.security.shared.UserJooq;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -47,6 +49,21 @@ public class UserDaoImpl implements UserDao {
                 .name(record.get(FIELD_NAME))
                 .isGroup(record.get(FIELD_IS_GROUP))
                 .build();
+    }
+
+    @Override
+    public List<UserJooq> find(Boolean isGroup, String name) {
+        try (final Connection connection = connectionProvider.getConnection()) {
+            return DSL.using(connection, SQLDialect.MYSQL)
+                    .select()
+                    .from(TABLE_STROOM_USER)
+                    .where(DSL.condition(isGroup == null).or(FIELD_IS_GROUP.equal(isGroup))
+                    .and(DSL.condition(name == null).or(FIELD_NAME.equal(name))))
+                    .fetch(UserDaoImpl::mapFromRecord);
+        } catch (final SQLException | RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new SecurityException(e.getMessage(), e);
+        }
     }
 
     @Override

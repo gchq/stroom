@@ -9,6 +9,10 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
+import stroom.security.dao.DocumentPermissionDao;
+import stroom.security.dao.UserDao;
+import stroom.security.shared.DocumentPermissionJooq;
+import stroom.security.shared.UserJooq;
 
 import java.util.Optional;
 import java.util.Set;
@@ -46,7 +50,7 @@ public class DocPermissionDaoImplTest {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
-        injector = Guice.createInjector(new SecurityDbModule(), new ContainerSecurityConfigModule(dbContainer));
+        injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
         documentPermissionDao = injector.getInstance(DocumentPermissionDao.class);

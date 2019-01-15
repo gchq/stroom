@@ -2,12 +2,10 @@ ext.moduleName = 'stroom.security.impl.db'
 
 dependencies {
     compile project(':stroom-config:stroom-config-common')
-    //compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    //compile project(':stroom-entity-shared')
 
-    //compile libs.stroomQueryApi
     compile libs.stroomDocRef
 
     compile libs.flyway_core
@@ -20,13 +18,13 @@ dependencies {
 
     runtime libs.mysql_connector_java
 
-    testCompile libs.test_containers
-    testCompile libs.test_containers_mysql
+    testImplementation libs.test_containers
+    testImplementation libs.test_containers_mysql
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
     testRuntimeOnly libs.junit_jupiter_engine
 
-    //testCompile project(':stroom-security:stroom-security-impl-mock')
+    //testImplementation project(':stroom-security:stroom-security-impl-mock')
 }

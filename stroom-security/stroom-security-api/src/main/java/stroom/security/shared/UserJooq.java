@@ -1,4 +1,4 @@
-package stroom.security.impl.db;
+package stroom.security.shared;
 
 import java.util.Objects;
 

@@ -5,6 +5,6 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-impl')
     compile project(':stroom-core-server')
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 }

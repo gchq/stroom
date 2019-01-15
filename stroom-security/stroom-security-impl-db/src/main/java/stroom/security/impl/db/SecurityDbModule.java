@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.security.dao.AppPermissionDao;
+import stroom.security.dao.DocumentPermissionDao;
+import stroom.security.dao.UserDao;
 import stroom.util.db.DbUtil;
 
 import javax.inject.Provider;

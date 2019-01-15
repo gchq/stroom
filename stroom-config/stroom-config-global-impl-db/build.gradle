@@ -29,7 +29,7 @@ dependencies {
     testImplementation libs.dropwizard_core
     testImplementation libs.dropwizard_jersey
     testImplementation libs.dropwizard_jackson
-    testCompileOnly libs.junit_jupiter_api
+    testImplementationOnly libs.junit_jupiter_api
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

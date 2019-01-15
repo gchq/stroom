@@ -1,10 +1,14 @@
-package stroom.security.impl.db;
+package stroom.security.dao;
+
+import stroom.security.shared.UserJooq;
 
 import java.util.List;
 
 public interface UserDao {
     String ADMIN_USER_NAME = "admin";
     String STROOM_SERVICE_USER_NAME = "stroomServiceUser";
+
+    List<UserJooq> find(Boolean isGroup, String name);
 
     UserJooq getById(long id);
 

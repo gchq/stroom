@@ -20,22 +20,20 @@ package stroom.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.util.SqlBuilder;
-import stroom.security.impl.db.DocumentPermissionDao;
-import stroom.security.impl.db.DocumentPermissionJooq;
-import stroom.security.impl.db.UserDao;
-import stroom.security.impl.db.UserJooq;
+import stroom.security.dao.DocumentPermissionDao;
+import stroom.security.dao.UserDao;
+import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissions;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Singleton
-// @Transactional
 class DocumentPermissionServiceImpl implements DocumentPermissionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
@@ -44,9 +42,9 @@ class DocumentPermissionServiceImpl implements DocumentPermissionService {
     private final DocumentTypePermissions documentTypePermissions;
 
     @Inject
-    DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
-                                  final UserDao userDao,
-                                  final DocumentTypePermissions documentTypePermissions) {
+    public DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
+                                         final UserDao userDao,
+                                         final DocumentTypePermissions documentTypePermissions) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
         this.documentTypePermissions = documentTypePermissions;
