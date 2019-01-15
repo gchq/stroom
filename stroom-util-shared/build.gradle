@@ -4,7 +4,7 @@ dependencies {
     implementation libs.stroomDocRef
     
     testImplementation libs.hamcrest_core
-    testImplementationOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j

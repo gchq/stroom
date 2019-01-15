@@ -26,10 +26,12 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.UserRef;
-import stroom.util.test.FileSystemTestUtil;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,15 +57,15 @@ class TestUserServiceImpl {
 
     @Test
     void testSaveAndGetBasic() {
-        createUser(FileSystemTestUtil.getUniqueTestString());
+        createUser("saveAndGet");
     }
 
     @Test
     void testSaveAndGetUserGroups() {
-        final UserRef user1 = createUser(FileSystemTestUtil.getUniqueTestString());
-        final UserRef user2 = createUser(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
+        final UserRef user1 = createUser("saveGetUser1");
+        final UserRef user2 = createUser("saveGetUser2");
+        final UserRef userGroup1 = createUserGroup("saveGetGroup1");
+        final UserRef userGroup2 = createUserGroup("saveGetGroup2");
 
         checkGroupsForUser(user1);
         checkGroupsForUser(user2);
@@ -117,10 +119,10 @@ class TestUserServiceImpl {
 
     @Test
     void testFindUsers() {
-        final UserRef user1 = createUser(FileSystemTestUtil.getUniqueTestString());
-        final UserRef user2 = createUser(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
+        final UserRef user1 = createUser("findUser1");
+        final UserRef user2 = createUser("findUser2");
+        final UserRef userGroup1 = createUserGroup("findGroup1");
+        final UserRef userGroup2 = createUserGroup("findGroup2");
 
         assertThat(userService.find(new FindUserCriteria(user1.getName(), false)).size()).isEqualTo(1);
         assertThat(userService.find(new FindUserCriteria(user2.getName(), false)).size()).isEqualTo(1);
@@ -132,20 +134,33 @@ class TestUserServiceImpl {
         assertThat(userService.find(new FindUserCriteria(userGroup1.getName(), false)).size()).isEqualTo(0);
         assertThat(userService.find(new FindUserCriteria(userGroup2.getName(), false)).size()).isEqualTo(0);
 
-        assertThat(userService.find(new FindUserCriteria(false)).size()).isEqualTo(2);
-        assertThat(userService.find(new FindUserCriteria(true)).size()).isEqualTo(2);
+        final Set<String> findUsers = userService.find(new FindUserCriteria(false))
+                .stream()
+                .map(User::getUuid)
+                .collect(Collectors.toSet());
+        final Set<String> findGroups = userService.find(new FindUserCriteria(true))
+                .stream()
+                .map(User::getUuid)
+                .collect(Collectors.toSet());
+
+        assertThat(findUsers).contains(user1.getUuid(), user2.getUuid());
+        assertThat(findUsers).doesNotContain(userGroup1.getUuid(), userGroup2.getUuid());
+        assertThat(findGroups).contains(userGroup1.getUuid(), userGroup2.getUuid());
+        assertThat(findGroups).doesNotContain(user1.getUuid(), user2.getUuid());
+
+
     }
 
-    private UserRef createUser(final String name) {
-        UserRef userRef = userService.createUser(name);
+    private UserRef createUser(final String baseName) {
+        UserRef userRef = userService.createUser(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
 
-    private UserRef createUserGroup(final String name) {
-        UserRef userRef = userService.createUserGroup(name);
+    private UserRef createUserGroup(final String baseName) {
+        UserRef userRef = userService.createUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();

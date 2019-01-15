@@ -28,7 +28,7 @@ dependencies {
     implementation libs.slf4j_api
     
     testImplementation libs.assertj_core
-    testImplementationOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation project(':stroom-test-common')
 

@@ -36,7 +36,7 @@ dependencies {
 
     testImplementation libs.assertj_core
 
-    testImplementationOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
     testImplementation libs.test_containers
     testImplementation libs.test_containers_mysql
     testImplementation libs.mockito_core
