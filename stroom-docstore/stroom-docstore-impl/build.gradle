@@ -1,7 +1,9 @@
+// TODO should probably be stroom.docstore.impl
 ext.moduleName = 'stroom.docstore.server'
 
 dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-security:stroom-security-api')

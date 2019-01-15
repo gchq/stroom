@@ -1,11 +1,12 @@
-ext.moduleName = 'stroom.data.store.api'
+ext.moduleName = 'stroom.docstore.api'
 
 dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
 //    implementation project(':stroom-entity-shared') // TODO : @66 TRY AND BREAK OUT SHARED CLASSES
 //
     implementation libs.stroomDocRef
 //    implementation libs.stroomQueryApi
 }
+

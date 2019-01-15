@@ -6,7 +6,8 @@ dependencies {
     integrationTestImplementation project(':stroom-config:stroom-config-app')
     integrationTestImplementation project(':stroom-core-server')
     integrationTestImplementation project(':stroom-core-shared')
-    integrationTestImplementation project(':stroom-docstore:stroom-docstore-impl')
+    integrationTestImplementation project(':stroom-docstore:stroom-docstore-api')
+    integrationTestImplementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     integrationTestImplementation project(':stroom-docstore:stroom-docstore-shared')
     integrationTestImplementation project(':stroom-dashboard:stroom-dashboard-server')
     integrationTestImplementation project(':stroom-dashboard:stroom-dashboard-shared')

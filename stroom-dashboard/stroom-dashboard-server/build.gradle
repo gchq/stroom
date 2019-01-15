@@ -5,7 +5,8 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-shared')
     implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
