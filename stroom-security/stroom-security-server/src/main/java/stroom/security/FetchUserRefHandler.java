@@ -18,15 +18,15 @@ package stroom.security;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,9 +48,10 @@ class FetchUserRefHandler
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final FindUserCriteria findUserCriteria = action.getCriteria();
             findUserCriteria.setSort(FindUserCriteria.FIELD_NAME);
+            List<UserRef> list = Collections.emptyList();
+
             if (findUserCriteria.getRelatedUser() != null) {
                 UserRef userRef = findUserCriteria.getRelatedUser();
-                List<UserRef> list;
                 if (userRef.isGroup()) {
                     list = userService.findUsersInGroup(userRef);
                 } else {
@@ -60,15 +61,18 @@ class FetchUserRefHandler
                 if (action.getCriteria().getName() != null) {
                     list = list.stream().filter(user -> action.getCriteria().getName().isMatch(user.getName())).collect(Collectors.toList());
                 }
-
-                // Create a result list limited by the page request.
-                return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
+            } else if (null != findUserCriteria.getName()) {
+                list = List.of(userService.getUserByName(findUserCriteria.getName().getString()));
             }
 
-            final BaseResultList<User> users = userService.find(findUserCriteria);
-            final List<UserRef> userRefs = new ArrayList<>();
-            users.forEach(user -> userRefs.add(UserRefFactory.create(user)));
-            return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
+            // Create a result list limited by the page request.
+            return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
+
+            // TODO Check that removing the support for FindUserCriteria is ok...
+//            final BaseResultList<User> users = userService.find(findUserCriteria);
+//            final List<UserRef> userRefs = new ArrayList<>();
+//            users.forEach(user -> userRefs.add(UserRefFactory.create(user)));
+//            return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
         });
     }
 }

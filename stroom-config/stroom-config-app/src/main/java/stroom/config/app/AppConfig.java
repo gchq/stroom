@@ -18,6 +18,7 @@ import stroom.policy.PolicyConfig;
 import stroom.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
+import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 import stroom.servlet.ExportConfig;
 import stroom.statistics.StatisticsConfig;
@@ -54,6 +55,7 @@ public class AppConfig implements IsConfig {
     private RefDataStoreConfig refDataStoreConfig;
     private SearchConfig searchConfig;
     private SecurityConfig securityConfig;
+    private SecurityDbConfig securityDbConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
     private StatisticsConfig statisticsConfig;
     private UiConfig uiConfig;
@@ -81,6 +83,7 @@ public class AppConfig implements IsConfig {
         this.refDataStoreConfig = new RefDataStoreConfig();
         this.searchConfig = new SearchConfig();
         this.securityConfig = new SecurityConfig();
+        this.securityDbConfig = new SecurityDbConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
         this.uiConfig = new UiConfig();
@@ -109,6 +112,7 @@ public class AppConfig implements IsConfig {
               final RefDataStoreConfig refDataStoreConfig,
               final SearchConfig searchConfig,
               final SecurityConfig securityConfig,
+              final SecurityDbConfig securityDbConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
               final UiConfig uiConfig,
@@ -134,6 +138,7 @@ public class AppConfig implements IsConfig {
         this.refDataStoreConfig = refDataStoreConfig;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
+        this.securityDbConfig = securityDbConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
         this.uiConfig = uiConfig;
@@ -330,6 +335,15 @@ public class AppConfig implements IsConfig {
 
     public void setSecurityConfig(final SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
+    }
+
+    @JsonProperty("securityDb")
+    public SecurityDbConfig getSecurityDbConfig() {
+        return securityDbConfig;
+    }
+
+    public void setSecurityDbConfig(final SecurityDbConfig securityDbConfig) {
+        this.securityDbConfig = securityDbConfig;
     }
 
     @JsonProperty("serviceDiscovery")

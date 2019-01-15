@@ -30,12 +30,7 @@ import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -64,6 +59,7 @@ public class SecurityFilter implements Filter {
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
+    private final Security security;
 
     private Pattern pattern = null;
 
@@ -73,12 +69,14 @@ public class SecurityFilter implements Filter {
             final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService) {
+            final AuthenticationService authenticationService,
+            final Security security) {
         this.config = config;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
+        this.security = security;
     }
 
     @Override
@@ -171,7 +169,7 @@ public class SecurityFilter implements Filter {
 
     private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final boolean useSession) throws IOException, ServletException {
         final AuthenticationToken token = new AuthenticationToken("admin", null);
-        final UserRef userRef = authenticationService.getUserRef(token);
+        final UserRef userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
         if (userRef != null) {
             if (useSession) {
                 // Set the user ref in the session.
@@ -219,7 +217,7 @@ public class SecurityFilter implements Filter {
                 if (accessCode != null) {
                     LOGGER.debug("We have the following access code: {{}}", accessCode);
                     final AuthenticationToken token = createUIToken(request, state, accessCode);
-                    final UserRef userRef = authenticationService.getUserRef(token);
+                    final UserRef userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
 
                     if (userRef != null) {
                         // Set the user ref in the session.
@@ -354,7 +352,7 @@ public class SecurityFilter implements Filter {
         boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
         if (isAuthenticatedApiRequest) {
             final AuthenticationToken token = createAPIToken(request);
-            userRef = authenticationService.getUserRef(token);
+            userRef = security.asProcessingUserResult(() -> authenticationService.getUserRef(token));
         }
 
         if (userRef == null) {

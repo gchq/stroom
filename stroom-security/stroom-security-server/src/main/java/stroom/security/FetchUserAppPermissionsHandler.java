@@ -16,8 +16,8 @@
 
 package stroom.security;
 
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FetchUserAppPermissionsAction;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;

@@ -21,12 +21,15 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
+import stroom.security.impl.db.SecurityDbModule;
 import stroom.task.api.TaskHandler;
 import stroom.util.HasHealthCheck;
 
 public class SecurityModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new SecurityDbModule());
+
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
         bind(AuthorisationService.class).to(AuthorisationServiceImpl.class);

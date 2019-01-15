@@ -24,10 +24,10 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
-
+    
     testImplementation libs.assertj_core
     
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

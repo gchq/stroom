@@ -18,37 +18,51 @@
 package stroom.security;
 
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserRef;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
+class TestDocumentPermissionsServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private UserService userService;
-    @Inject
-    private DocumentPermissionService documentPermissionService;
-    @Inject
-    private UserGroupsCache userGroupsCache;
-    @Inject
-    private DocumentPermissionsCache documentPermissionsCache;
+    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+
+    private static Injector injector;
+
+    private static UserService userService;
+    private static DocumentPermissionService documentPermissionService;
+    private static UserGroupsCache userGroupsCache;
+    private static DocumentPermissionsCache documentPermissionsCache;
+
+    @BeforeAll
+    public static void beforeAll() {
+        LOGGER.info("Before All - Start Database");
+        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
+
+        injector = Guice.createInjector(new TestModule(dbContainer));
+
+        userService = injector.getInstance(UserService.class);
+        documentPermissionService = injector.getInstance(DocumentPermissionService.class);
+        userGroupsCache = injector.getInstance(UserGroupsCache.class);
+        documentPermissionsCache = injector.getInstance(DocumentPermissionsCache.class);
+    }
 
     @Test
     void test() {
@@ -56,7 +70,7 @@ class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
         final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
         final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
 
-        final DocRef docRef = commonTestScenarioCreator.createIndex(FileSystemTestUtil.getUniqueTestString());
+        final DocRef docRef = createTestDocRef();
         final String[] permissions = DocumentPermissionNames.DOCUMENT_PERMISSIONS;
         final String c1 = permissions[0];
         final String p1 = permissions[1];
@@ -175,5 +189,12 @@ class TestDocumentPermissionsServiceImpl extends AbstractCoreIntegrationTest {
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
+    }
+
+    private DocRef createTestDocRef() {
+        return new DocRef.Builder()
+                .type("Index")
+                .uuid(UUID.randomUUID().toString())
+                .build();
     }
 }
