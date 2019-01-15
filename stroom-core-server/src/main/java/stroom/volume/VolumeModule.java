@@ -17,15 +17,14 @@
 package stroom.volume;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.multibindings.OptionalBinder;
+import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
-import stroom.node.NodeModule;
 import stroom.node.NodeServiceModule;
 import stroom.node.VolumeService;
 import stroom.node.shared.VolumeEntity;
@@ -50,8 +49,8 @@ public class VolumeModule extends AbstractModule {
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(VolumeServiceImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(VolumeEntity.ENTITY_TYPE).to(VolumeServiceImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(VolumeEntity.ENTITY_TYPE, VolumeServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(VolumeServiceImpl.class);

@@ -18,6 +18,7 @@
 package stroom.node;
 
 import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.node.shared.ClusterNodeInfo;
@@ -27,7 +28,6 @@ import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 
 class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
@@ -37,7 +37,7 @@ class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, 
     private final Security security;
 
     @Inject
-    ClusterNodeInfoHandler(@Named("clusterCallServiceRemote") final ClusterCallService clusterCallService,
+    ClusterNodeInfoHandler(final ClusterCallServiceRemote clusterCallService,
                            final NodeCache nodeCache,
                            final NodeService nodeService,
                            final Security security) {
@@ -54,7 +54,7 @@ class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, 
             final Node targetNode = nodeService.loadById(action.getNodeId());
 
             try {
-                return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.BEAN_NAME,
+                return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.SERVICE_NAME,
                         ClusterNodeManager.GET_CLUSTER_NODE_INFO_METHOD, new Class[]{}, new Object[]{});
             } catch (final RuntimeException e) {
                 throw EntityServiceExceptionUtil.create(e);

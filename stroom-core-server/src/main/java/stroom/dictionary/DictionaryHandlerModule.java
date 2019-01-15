@@ -17,10 +17,10 @@
 package stroom.dictionary;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
+import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.task.api.TaskHandlerBinder;
@@ -37,7 +37,7 @@ public class DictionaryHandlerModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.dictionary.DictionaryStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(DictionaryDoc.ENTITY_TYPE).to(stroom.dictionary.DictionaryStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
     }
 }

@@ -17,8 +17,8 @@
 package stroom.index;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.EntityTypeBinder;
 import stroom.entity.shared.Clearable;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
@@ -56,8 +56,8 @@ public class MockIndexModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(IndexStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(IndexDoc.DOCUMENT_TYPE).to(IndexStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(IndexStoreImpl.class);

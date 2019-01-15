@@ -22,13 +22,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.ClusterConfig;
 import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceRemote;
+import stroom.cluster.api.ServiceName;
 import stroom.feed.StroomHessianProxyFactory;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,11 +45,11 @@ import java.util.Map;
  * performance and testing.
  */
 @Singleton
-class ClusterCallServiceRemote implements ClusterCallService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceRemote.class);
+class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceRemoteImpl.class);
 
     private final NodeCache nodeCache;
-    private final StroomBeanStore beanStore;
+    private final Map<ServiceName, Provider<Object>> serviceMap;
     private final boolean clusterCallUseLocal;
     private final Long clusterCallReadTimeout;
     private final Map<Node, ClusterCallService> proxyMap = new HashMap<>();
@@ -56,11 +58,11 @@ class ClusterCallServiceRemote implements ClusterCallService {
     private boolean ignoreSSLHostnameVerifier;
 
     @Inject
-    ClusterCallServiceRemote(final NodeCache nodeCache,
-                             final StroomBeanStore beanStore,
-                             final ClusterConfig clusterConfig) {
+    ClusterCallServiceRemoteImpl(final NodeCache nodeCache,
+                                 final Map<ServiceName, Provider<Object>> serviceMap,
+                                 final ClusterConfig clusterConfig) {
         this.nodeCache = nodeCache;
-        this.beanStore = beanStore;
+        this.serviceMap = serviceMap;
         this.clusterCallUseLocal = clusterConfig.isClusterCallUseLocal();
         this.clusterCallReadTimeout = clusterConfig.getClusterCallReadTimeoutMs();
         this.ignoreSSLHostnameVerifier = clusterConfig.isClusterCallIgnoreSSLHostnameVerifier();
@@ -101,7 +103,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName,
+    public Object call(final Node sourceNode, final Node targetNode, final ServiceName serviceName, final String methodName,
                        final java.lang.Class<?>[] parameterTypes, final Object[] args) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Object result;
@@ -121,7 +123,8 @@ class ClusterCallServiceRemote implements ClusterCallService {
 
         if (local) {
             try {
-                final Object service = beanStore.getInstance(beanName);
+                final Provider<Object> serviceProvider = serviceMap.get(serviceName);
+                final Object service = serviceProvider.get();
                 final Method method = service.getClass().getMethod(methodName, parameterTypes);
                 result = method.invoke(service, args);
             } catch (final IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
@@ -140,7 +143,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
             }
 
             try {
-                result = api.call(sourceNode, targetNode, beanName, methodName, parameterTypes, args);
+                result = api.call(sourceNode, targetNode, serviceName, methodName, parameterTypes, args);
             } catch (final HessianRuntimeException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                     LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + e.getCause().getMessage());
@@ -161,7 +164,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
             }
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(ClusterCallUtil.logString("call() - " + api, sourceNode, targetNode, beanName, methodName,
+                LOGGER.debug(ClusterCallUtil.logString("call() - " + api, sourceNode, targetNode, serviceName, methodName,
                         logExecutionTime.getDuration()));
             }
         }

@@ -20,7 +20,6 @@ package stroom.refdata.store.onheapstore;
 import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
-import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
@@ -28,6 +27,7 @@ import stroom.refdata.store.AbstractConsumer;
 import stroom.refdata.store.FastInfosetValue;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.refdata.store.StringValue;
+import stroom.refdata.store.ValueConsumerId;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.refdata.util.ByteBufferUtils;
@@ -47,14 +47,14 @@ public class OnHeapRefDataValueProxyConsumer
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataValueProxyConsumer.class);
 
     private final RefDataValueByteBufferConsumer fastInfosetByteBufferConsumer;
-    private final Map<Integer, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap;
+    private final Map<ValueConsumerId, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap;
 
     @Inject
     public OnHeapRefDataValueProxyConsumer(
             @Assisted final Receiver receiver,
             @Assisted final PipelineConfiguration pipelineConfiguration,
             final FastInfosetByteBufferConsumer.Factory fastInfosetByteBufferConsumerFactory,
-            final Map<Integer, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap) {
+            final Map<ValueConsumerId, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap) {
 
         super(pipelineConfiguration, receiver);
         this.fastInfosetByteBufferConsumer = fastInfosetByteBufferConsumerFactory.create(receiver, pipelineConfiguration);
@@ -62,7 +62,7 @@ public class OnHeapRefDataValueProxyConsumer
     }
 
     @Override
-    public boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+    public boolean consume(final RefDataValueProxy refDataValueProxy) {
 
         return refDataValueProxy.supplyValue()
                 .filter(refDataValue -> {
@@ -72,7 +72,7 @@ public class OnHeapRefDataValueProxyConsumer
                     final int typeId = refDataValue.getTypeId();
 
                     // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-                    final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap.get(typeId);
+                    final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap.get(new ValueConsumerId(typeId));
 
                     Objects.requireNonNull(consumerFactory, () -> LambdaLogger.buildMessage("No factory found for typeId {}", typeId));
                     final RefDataValueConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);

@@ -17,14 +17,12 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
-import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskHandlerBinder;
 
 public class FeedModule extends AbstractModule {
@@ -43,7 +41,7 @@ public class FeedModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(FeedDoc.DOCUMENT_TYPE).to(FeedStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(FeedDoc.DOCUMENT_TYPE, FeedStoreImpl.class);
     }
 }

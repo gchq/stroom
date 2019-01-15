@@ -17,8 +17,6 @@
 package stroom.lifecycle;
 
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,21 +74,6 @@ public class StroomBeanStore {
 
         if (o == null) {
             LOGGER.error("getInstance() - {} returned null !!", type);
-        }
-
-        return o;
-    }
-
-    public Object getInstance(final String name) {
-        Object o = null;
-        try {
-            o = injector.getInstance(Key.get(Object.class, Names.named(name)));
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to get instance!", e);
-        }
-
-        if (o == null) {
-            LOGGER.error("getInstance() - {} returned null !!", name);
         }
 
         return o;

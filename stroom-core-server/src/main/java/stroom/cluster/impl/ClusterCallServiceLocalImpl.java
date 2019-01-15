@@ -18,40 +18,42 @@ package stroom.cluster.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceLocal;
+import stroom.cluster.api.ServiceName;
 import stroom.entity.shared.EntityServiceException;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * Basic implementation of ClusterCallService that calls the local service by
  * bean name.
  */
-class ClusterCallServiceLocal implements ClusterCallService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceLocal.class);
+class ClusterCallServiceLocalImpl implements ClusterCallServiceLocal {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCallServiceLocalImpl.class);
 
-    private final StroomBeanStore beanStore;
+    private final Map<ServiceName, Provider<Object>> serviceMap;
     private final NodeCache nodeCache;
     private final Security security;
 
     @Inject
-    ClusterCallServiceLocal(final StroomBeanStore beanStore,
-                            final NodeCache nodeCache,
-                            final Security security) {
-        this.beanStore = beanStore;
+    ClusterCallServiceLocalImpl(final Map<ServiceName, Provider<Object>> serviceMap,
+                                final NodeCache nodeCache,
+                                final Security security) {
+        this.serviceMap = serviceMap;
         this.nodeCache = nodeCache;
         this.security = security;
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final String beanName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final Node sourceNode, final Node targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         return security.insecureResult(() -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -62,7 +64,8 @@ class ClusterCallServiceLocal implements ClusterCallService {
             }
 
             try {
-                final Object service = beanStore.getInstance(beanName);
+                final Provider<Object> serviceProvider = serviceMap.get(serviceName);
+                final Object service = serviceProvider.get();
                 final Method method = service.getClass().getMethod(methodName, parameterTypes);
 
                 return method.invoke(service, args);
@@ -70,7 +73,7 @@ class ClusterCallServiceLocal implements ClusterCallService {
                 throw new RuntimeException(e.getMessage(), e);
             } finally {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, beanName,
+                    LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, serviceName,
                             methodName, logExecutionTime.getDuration()));
                 }
             }

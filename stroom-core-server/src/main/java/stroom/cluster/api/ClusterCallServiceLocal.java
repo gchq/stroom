@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,5 @@
 
 package stroom.cluster.api;
 
-import stroom.node.shared.Node;
-
-/**
- * Low-level API to generically call any cluster service
- */
-public interface ClusterCallService {
-    Object call(Node sourceNode, Node targetNode, ServiceName serviceName, String methodName, Class<?>[] parameterTypes,
-                Object[] args);
+public interface ClusterCallServiceLocal extends ClusterCallService {
 }

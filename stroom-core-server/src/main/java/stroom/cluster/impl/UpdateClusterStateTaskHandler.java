@@ -42,14 +42,14 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
 
     private final NodeService nodeService;
     private final NodeCache nodeCache;
-    private final ClusterCallServiceRemote clusterCallServiceRemote;
+    private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
     private final TaskManager taskManager;
     private final Security security;
 
     @Inject
     UpdateClusterStateTaskHandler(final NodeService nodeService,
                                   final NodeCache nodeCache,
-                                  final ClusterCallServiceRemote clusterCallServiceRemote,
+                                  final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
                                   final TaskManager taskManager,
                                   final Security security) {
         this.nodeService = nodeService;
@@ -152,7 +152,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
                         // discover call (cyclic dependency).
                         // clusterCallServiceRemote will call getThisNode but
                         // that's OK as we have worked it out above.
-                        clusterCallServiceRemote.call(thisNode, node, ClusterNodeManager.BEAN_NAME,
+                        clusterCallServiceRemote.call(thisNode, node, ClusterNodeManager.SERVICE_NAME,
                                 ClusterNodeManager.PING_METHOD, new Class<?>[]{Node.class},
                                 new Object[]{thisNode});
                         addEnabledActiveNode(clusterState, node);

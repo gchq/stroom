@@ -1,11 +1,12 @@
-package stroom.streamtask;
+package stroom.cluster.api;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class TaskType {
+public class ServiceName implements Serializable {
     private final String name;
 
-    public TaskType(final String name) {
+    public ServiceName(final String name) {
         this.name = name;
     }
 
@@ -13,8 +14,8 @@ public class TaskType {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final TaskType taskType = (TaskType) o;
-        return Objects.equals(name, taskType.name);
+        final ServiceName serviceName = (ServiceName) o;
+        return Objects.equals(name, serviceName.name);
     }
 
     @Override

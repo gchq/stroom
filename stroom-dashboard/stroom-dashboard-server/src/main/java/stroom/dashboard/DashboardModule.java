@@ -17,7 +17,6 @@
 package stroom.dashboard;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DownloadQueryAction;
@@ -27,6 +26,7 @@ import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.ValidateExpressionAction;
+import stroom.entity.EntityTypeBinder;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
@@ -56,10 +56,7 @@ public class DashboardModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(DashboardDoc.DOCUMENT_TYPE).to(stroom.dashboard.DashboardStoreImpl.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
     }
 }
