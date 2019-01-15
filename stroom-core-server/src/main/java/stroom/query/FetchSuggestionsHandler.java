@@ -45,17 +45,14 @@ import java.util.stream.Collectors;
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
     private final DataMetaService streamMetaService;
     private final PipelineStore pipelineStore;
-    private final NodeService nodeService;
     private final Security security;
 
     @Inject
     FetchSuggestionsHandler(final DataMetaService streamMetaService,
                             final PipelineStore pipelineStore,
-                            @Named("cachedNodeService") final NodeService nodeService,
                             final Security security) {
         this.streamMetaService = streamMetaService;
         this.pipelineStore = pipelineStore;
-        this.nodeService = nodeService;
         this.security = security;
     }
 

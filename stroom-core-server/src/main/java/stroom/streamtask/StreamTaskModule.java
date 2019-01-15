@@ -17,19 +17,13 @@
 package stroom.streamtask;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
-import stroom.persist.EntityManagerSupport;
-import stroom.security.Security;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
-
-import javax.inject.Named;
 
 public class StreamTaskModule extends AbstractModule {
     @Override
@@ -38,6 +32,8 @@ public class StreamTaskModule extends AbstractModule {
         bind(StreamProcessorFilterService.class).to(StreamProcessorFilterServiceImpl.class);
         bind(StreamProcessorService.class).to(StreamProcessorServiceImpl.class);
         bind(StreamTaskService.class).to(StreamTaskServiceImpl.class);
+        bind(CachedStreamProcessorFilterService.class).to(CachedStreamProcessorFilterServiceImpl.class);
+        bind(CachedStreamProcessorService.class).to(CachedStreamProcessorServiceImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(CreateProcessorAction.class, stroom.streamtask.CreateProcessorHandler.class)
@@ -51,20 +47,5 @@ public class StreamTaskModule extends AbstractModule {
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
-    }
-
-    @Provides
-    @Named("cachedStreamProcessorFilterService")
-    public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
-                                                                           final Security security,
-                                                                           final EntityManagerSupport entityManagerSupport,
-                                                                           final StreamProcessorService streamProcessorService) {
-        return new StreamProcessorFilterServiceImpl(entityManager, security, entityManagerSupport, streamProcessorService);
-    }
-
-    @Provides
-    @Named("cachedStreamProcessorService")
-    public StreamProcessorService cachedStreamProcessorService(final CachingEntityManager entityManager, final Security security) {
-        return new StreamProcessorServiceImpl(entityManager, security);
     }
 }

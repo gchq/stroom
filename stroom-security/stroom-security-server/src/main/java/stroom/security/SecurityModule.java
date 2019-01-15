@@ -72,44 +72,4 @@ public class SecurityModule extends AbstractModule {
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
         hasHealthCheckBinder.addBinding().to(JWTService.class);
     }
-
-//    @Provides
-//    public JwtConfig jwtConfig(final PropertyService propertyService) {
-//        final JwtConfig jwtConfig = new JwtConfig();
-//        jwtConfig.setJwtIssuer(propertyService.getProperty("stroom.auth.jwt.issuer"));
-//        jwtConfig.setEnableTokenRevocationCheck(propertyService.getBooleanProperty("stroom.auth.jwt.enabletokenrevocationcheck", false));
-//        return jwtConfig;
-//    }
-//
-//    @Provides
-//    public SecurityConfig securityConfig(final PropertyService propertyService, final JwtConfig jwtConfig) {
-//        final SecurityConfig securityConfig = new SecurityConfig();
-//        securityConfig.setAuthenticationServiceUrl(propertyService.getProperty("stroom.auth.authentication.service.url"));
-//        securityConfig.setAdvertisedStroomUrl(propertyService.getProperty("stroom.advertisedUrl"));
-//        securityConfig.setAuthenticationRequired(propertyService.getBooleanProperty("stroom.authentication.required", true));
-//        securityConfig.setApiToken(propertyService.getProperty("stroom.security.apiToken"));
-//        securityConfig.setAuthServicesBaseUrl(propertyService.getProperty("stroom.auth.services.url"));
-//        securityConfig.setJwtConfig(jwtConfig);
-//        return securityConfig;
-//    }
-//
-//
-//    @Bean
-//    public UserSecurityMethodInterceptor userSecurityMethodInterceptor(final SecurityContext securityContext) {
-//        return new UserSecurityMethodInterceptor(securityContext);
-//    }
-//
-//
-//    @Bean(name = "securityFilter")
-//    public SecurityFilter securityFilter(
-//            SecurityConfig securityConfig,
-//            JWTService jwtService,
-//            AuthenticationServiceClients authenticationServiceClients,
-//            AuthenticationService authenticationService) {
-//        return new SecurityFilter(
-//                securityConfig,
-//                jwtService,
-//                authenticationServiceClients,
-//                authenticationService);
-//    }
 }

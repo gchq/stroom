@@ -62,46 +62,4 @@ public class MockIndexModule extends AbstractModule {
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(IndexStoreImpl.class);
     }
-    //    @Bean
-//    @Scope(StroomScope.TASK)
-//    public CloseIndexShardActionHandler closeIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new CloseIndexShardActionHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public DeleteIndexShardActionHandler deleteIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new DeleteIndexShardActionHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FlushIndexShardActionHandler flushIndexShardActionHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new FlushIndexShardActionHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    public IndexConfigCacheEntityEventHandler indexConfigCacheEntityEventHandler(final NodeCache nodeCache,
-//                                                                                 final IndexConfigCacheImpl indexConfigCache,
-//                                                                                 final IndexShardService indexShardService,
-//                                                                                 final IndexShardWriterCache indexShardWriterCache) {
-//        return new IndexConfigCacheEntityEventHandler(nodeCache, indexConfigCache, indexShardService, indexShardWriterCache);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.PROTOTYPE)
-//    public IndexingFilter indexingFilter(final StreamHolder streamHolder,
-//                                         final LocationFactoryProxy locationFactory,
-//                                         final Indexer indexer,
-//                                         final ErrorReceiverProxy errorReceiverProxy,
-//                                         final IndexConfigCache indexConfigCache) {
-//        return new IndexingFilter(streamHolder, locationFactory, indexer, errorReceiverProxy, indexConfigCache);
-//    }
-//
-//    @Bean
-//    public StroomIndexQueryResource stroomIndexQueryResource(final SearchResultCreatorManager searchResultCreatorManager,
-//                                                             final IndexStore indexStore,
-//                                                             final SecurityContext securityContext) {
-//        return new StroomIndexQueryResource(searchResultCreatorManager, indexStore, securityContext);
-//    }
 }

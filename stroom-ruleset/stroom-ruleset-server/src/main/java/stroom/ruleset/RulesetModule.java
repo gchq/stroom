@@ -43,25 +43,5 @@ public class RulesetModule extends AbstractModule {
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
         hasHealthCheckBinder.addBinding().to(RuleSetResource.class);
         hasHealthCheckBinder.addBinding().to(RuleSetResource2.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
     }
-
-//    @Bean
-//    public AttributeMapFilterFactory attributeMapFilterFactory(final RuleSetService ruleSetService,
-//                                                     final DictionaryStore dictionaryStore) {
-//        return new AttributeMapFilterFactoryImpl(ruleSetService, dictionaryStore);
-//    }
-//
-//    @Bean
-//    public RuleSetResource ruleSetResource(final RuleSetService ruleSetService) {
-//        return new RuleSetResource(ruleSetService);
-//    }
-
-//    @Bean
-//    @Singleton
-//    public RuleSetService ruleSetService(final Store<RuleSet> store) {
-//        return new RuleSetServiceImpl(store);
-//    }
 }

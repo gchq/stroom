@@ -26,9 +26,4 @@ public class InternalModule extends AbstractModule {
         final Multibinder<InternalStatisticsService> multibinder = Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
         multibinder.addBinding().to(SQLInternalStatisticsService.class);
     }
-    //    @Bean
-//    public SQLInternalStatisticsService sQLInternalStatisticsService(final PropertyService propertyService,
-//                                                                     final Statistics statisticsService) {
-//        return new SQLInternalStatisticsService(propertyService, statisticsService);
-//    }
 }

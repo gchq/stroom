@@ -18,7 +18,6 @@ package stroom.feed;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
@@ -33,7 +32,7 @@ public class FeedModule extends AbstractModule {
 
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedDocCache.class).to(FeedDocCacheImpl.class);
-        bind(RemoteFeedService.class).annotatedWith(Names.named("remoteFeedService")).to(RemoteFeedServiceImpl.class);
+        bind(RemoteFeedService.class).to(RemoteFeedServiceImpl.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(FeedStoreImpl.class);

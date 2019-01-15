@@ -56,8 +56,8 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
 
     @Inject
     StreamProcessorTaskHandler(final Map<TaskType, Provider<StreamProcessorTaskExecutor>> executorProviders,
-                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                               @Named("cachedStreamProcessorFilterService") final StreamProcessorFilterService streamProcessorFilterService,
+                               final CachedStreamProcessorService streamProcessorService,
+                               final CachedStreamProcessorFilterService streamProcessorFilterService,
                                final StreamTaskHelper streamTaskHelper,
                                final StreamStore streamStore,
                                final NodeCache nodeCache,
