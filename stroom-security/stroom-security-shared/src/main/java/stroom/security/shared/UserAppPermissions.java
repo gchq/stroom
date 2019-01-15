@@ -18,7 +18,9 @@ package stroom.security.shared;
 
 import stroom.docref.SharedObject;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class UserAppPermissions implements SharedObject {
     private static final long serialVersionUID = 2374084842679322202L;
@@ -33,7 +35,7 @@ public class UserAppPermissions implements SharedObject {
     public UserAppPermissions(final UserRef user, final Set<String> allPermissions,
                               final Set<String> userPermissons) {
         this.user = user;
-        this.allPermissions = allPermissions;
+        this.allPermissions = new HashSet<>(allPermissions);
         this.userPermissons = userPermissons;
     }
 
