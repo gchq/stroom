@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.security.impl.SecurityImpl;
 
 import javax.inject.Singleton;
 

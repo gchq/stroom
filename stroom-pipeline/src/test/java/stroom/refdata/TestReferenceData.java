@@ -49,7 +49,7 @@ import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.SecurityContext;
-import stroom.security.SecurityImpl;
+import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.cache.CacheManager;

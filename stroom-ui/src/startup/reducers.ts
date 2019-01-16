@@ -57,6 +57,10 @@ import {
   StoreState as AppChromeStoreState
 } from "../sections/AppChrome/redux";
 import {
+  reducer as users,
+  StoreState as UserStoreState
+} from "../sections/UserPermissions/redux";
+import {
   reducer as docRefTypes,
   StoreState as DocRefTypesStoreState
 } from "../components/DocRefTypes";
@@ -124,6 +128,7 @@ export interface GlobalStoreState {
   processing: ProcessingStoreState;
   dataViewers: DataViewersStoreState;
   routing: RouterState;
+  users: UserStoreState;
 }
 
 export default combineReducers({
@@ -148,5 +153,6 @@ export default combineReducers({
   docRefInfo,
   debuggers,
   processing,
-  dataViewers
+  dataViewers,
+  users
 });

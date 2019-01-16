@@ -2,6 +2,12 @@ export interface ItemWithUuid {
   uuid: string;
 }
 
+export interface User extends ItemWithUuid {
+  name: string;
+  id: Number;
+  group: String;
+}
+
 export interface DocRefType extends ItemWithUuid {
   type: string;
   name?: string;
