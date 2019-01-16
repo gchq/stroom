@@ -48,15 +48,17 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     private final StroomStatsStoreSerialiser serialiser;
 
     @Inject
-    StroomStatsStoreStoreImpl(final Store<StroomStatsStoreDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    StroomStatsStoreStoreImpl(final Store<StroomStatsStoreDoc> store,
+                              final SecurityContext securityContext,
+                              final Persistence persistence,
+                              final StroomStatsStoreSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new StroomStatsStoreSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

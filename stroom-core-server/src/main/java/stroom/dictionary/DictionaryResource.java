@@ -22,7 +22,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.docstore.EncodingUtil;
+import stroom.util.string.EncodingUtil;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.DocRefs;
 import stroom.importexport.OldDocumentData;

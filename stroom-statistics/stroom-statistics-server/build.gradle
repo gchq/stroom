@@ -5,7 +5,6 @@ dependencies {
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
@@ -47,6 +46,7 @@ dependencies {
     implementation libs.xml_apis
     implementation(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
 
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     testImplementation project(':stroom-test-common')
 

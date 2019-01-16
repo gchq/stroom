@@ -48,15 +48,17 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     private final StatisticStoreSerialiser serialiser;
 
     @Inject
-    public StatisticStoreStoreImpl(final Store<StatisticStoreDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    public StatisticStoreStoreImpl(final Store<StatisticStoreDoc> store,
+                                   final SecurityContext securityContext,
+                                   final Persistence persistence,
+                                   final StatisticStoreSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new StatisticStoreSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

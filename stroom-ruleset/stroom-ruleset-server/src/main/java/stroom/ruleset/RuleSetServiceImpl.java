@@ -17,12 +17,12 @@
 
 package stroom.ruleset;
 
-import stroom.docstore.JsonSerialiser2;
+import stroom.docref.DocRef;
+import stroom.docstore.Serialiser2Factory;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.ruleset.shared.RuleSet;
 import stroom.util.shared.Message;
@@ -38,10 +38,11 @@ public class RuleSetServiceImpl implements RuleSetService {
     private final Store<RuleSet> store;
 
     @Inject
-    public RuleSetServiceImpl(final Store<RuleSet> store) {
+    public RuleSetServiceImpl(final Store<RuleSet> store,
+                              final Serialiser2Factory serialiser2Factory) {
         this.store = store;
         store.setType(RuleSet.DOCUMENT_TYPE, RuleSet.class);
-        store.setSerialiser(new JsonSerialiser2<>(RuleSet.class));
+        store.setSerialiser(serialiser2Factory.createSerialiser(RuleSet.class));
     }
 
     ////////////////////////////////////////////////////////////////////////

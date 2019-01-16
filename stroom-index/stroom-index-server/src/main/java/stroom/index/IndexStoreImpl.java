@@ -48,15 +48,17 @@ class IndexStoreImpl implements IndexStore {
     private final IndexSerialiser serialiser;
 
     @Inject
-    IndexStoreImpl(final Store<IndexDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    IndexStoreImpl(final Store<IndexDoc> store,
+                   final SecurityContext securityContext,
+                   final Persistence persistence,
+                   final IndexSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new IndexSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(IndexDoc.DOCUMENT_TYPE, IndexDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -12,7 +12,7 @@ dependencies {
     implementation project(':stroom-core-server')
 //    implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
+    //implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi

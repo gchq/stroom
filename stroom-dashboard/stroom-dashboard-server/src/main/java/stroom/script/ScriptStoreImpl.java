@@ -56,15 +56,17 @@ class ScriptStoreImpl implements ScriptStore {
     private final ScriptSerialiser serialiser;
 
     @Inject
-    ScriptStoreImpl(final Store<ScriptDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    ScriptStoreImpl(final Store<ScriptDoc> store,
+                    final SecurityContext securityContext,
+                    final Persistence persistence,
+                    final ScriptSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new ScriptSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

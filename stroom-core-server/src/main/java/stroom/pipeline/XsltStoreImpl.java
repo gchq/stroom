@@ -20,7 +20,6 @@ package stroom.pipeline;
 import stroom.db.migration.doc.pipeline.OldXslt;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -46,20 +45,20 @@ class XsltStoreImpl implements XsltStore {
     private final Store<XsltDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser2<XsltDoc> serialiser;
+    private final XsltSerialiser serialiser;
 
     @Inject
     XsltStoreImpl(final Store<XsltDoc> store,
                   final SecurityContext securityContext,
-                  final Persistence persistence) {
+                  final Persistence persistence,
+                  final XsltSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new XsltSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(XsltDoc.DOCUMENT_TYPE, XsltDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

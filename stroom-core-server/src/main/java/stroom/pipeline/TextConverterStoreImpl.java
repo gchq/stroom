@@ -20,7 +20,6 @@ package stroom.pipeline;
 import stroom.db.migration.doc.textconverter.OldTextConverter;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -47,18 +46,20 @@ class TextConverterStoreImpl implements TextConverterStore {
     private final Store<TextConverterDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser2<TextConverterDoc> serialiser;
+    private final TextConverterSerialiser serialiser;
 
     @Inject
-    TextConverterStoreImpl(final Store<TextConverterDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    TextConverterStoreImpl(final Store<TextConverterDoc> store,
+                           final SecurityContext securityContext,
+                           final Persistence persistence,
+                           final TextConverterSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new TextConverterSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(TextConverterDoc.DOCUMENT_TYPE, TextConverterDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

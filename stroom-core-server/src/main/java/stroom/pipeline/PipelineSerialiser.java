@@ -2,33 +2,36 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+import stroom.docref.DocRef;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.docref.DocRef;
+import stroom.util.string.EncodingUtil;
 
+import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Map;
 
-public class PipelineSerialiser extends JsonSerialiser2<PipelineDoc> {
+public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineSerialiser.class);
 
     private static final String XML = "xml";
 
-//    private final ObjectMapper mapper;
+    private final Serialiser2<PipelineDoc> delegate;
 
-    public PipelineSerialiser() {
-        super(PipelineDoc.class);
-//        mapper = getMapper(true);
+    @Inject
+    public PipelineSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(PipelineDoc.class);
     }
 
     @Override
     public PipelineDoc read(final Map<String, byte[]> data) throws IOException {
-        final PipelineDoc document = super.read(data);
+        final PipelineDoc document = delegate.read(data);
 
         final String xml = EncodingUtil.asString(data.get(XML));
         final PipelineData pipelineData = getPipelineDataFromXml(xml);
@@ -39,7 +42,7 @@ public class PipelineSerialiser extends JsonSerialiser2<PipelineDoc> {
 
     @Override
     public Map<String, byte[]> write(final PipelineDoc document) throws IOException {
-        final Map<String, byte[]> data = super.write(document);
+        final Map<String, byte[]> data = delegate.write(document);
 
         PipelineData pipelineData = document.getPipelineData();
 

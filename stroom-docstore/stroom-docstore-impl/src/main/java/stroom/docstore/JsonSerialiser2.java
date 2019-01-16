@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import stroom.util.string.EncodingUtil;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,16 +27,26 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
     @Override
     public D read(final Map<String, byte[]> data) throws IOException {
         final byte[] meta = data.get(META);
-        return mapper.readValue(new StringReader(EncodingUtil.asString(meta)), clazz);
+        return read(meta);
+    }
+
+    @Override
+    public D read(final byte[] data) throws IOException {
+        return mapper.readValue(new StringReader(EncodingUtil.asString(data)), clazz);
     }
 
     @Override
     public Map<String, byte[]> write(final D document) throws IOException {
         final StringWriter stringWriter = new StringWriter();
-        mapper.writeValue(stringWriter, document);
+        write(stringWriter, document);
         final Map<String, byte[]> data = new HashMap<>();
         data.put(META, EncodingUtil.asBytes(stringWriter.toString()));
         return data;
+    }
+
+    @Override
+    public void write(final Writer writer, final D document) throws IOException {
+        mapper.writeValue(writer, document);
     }
 
     protected ObjectMapper getMapper(final boolean indent) {

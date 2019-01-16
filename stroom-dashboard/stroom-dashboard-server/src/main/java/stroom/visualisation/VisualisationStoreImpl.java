@@ -47,15 +47,18 @@ class VisualisationStoreImpl implements VisualisationStore {
     private final VisualisationSerialiser serialiser;
 
     @Inject
-    VisualisationStoreImpl(final Store<VisualisationDoc> store, final SecurityContext securityContext, final Persistence persistence) {
+    VisualisationStoreImpl(final Store<VisualisationDoc> store,
+                           final SecurityContext securityContext,
+                           final Persistence persistence,
+                           final VisualisationSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
+        this.serialiser = serialiser;
 
-        serialiser = new VisualisationSerialiser();
 
         store.setType(VisualisationDoc.DOCUMENT_TYPE, VisualisationDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

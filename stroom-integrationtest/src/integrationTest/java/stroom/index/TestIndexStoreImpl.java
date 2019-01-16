@@ -35,6 +35,9 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
 
+    @Inject
+    private IndexSerialiser indexSerialiser;
+
     private DocRef testIndex;
     private DocRef refIndex;
 
@@ -61,7 +64,6 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
 
-        final IndexSerialiser indexSerialiser = new IndexSerialiser();
         final String xml = "" +
                 "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
                 "<fields>\n" +

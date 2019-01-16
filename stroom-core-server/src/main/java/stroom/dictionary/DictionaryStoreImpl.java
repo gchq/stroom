@@ -22,11 +22,10 @@ import org.slf4j.LoggerFactory;
 import stroom.db.migration.doc.dictionary.OldDictionaryDoc;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
+import stroom.util.string.EncodingUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -56,19 +55,22 @@ class DictionaryStoreImpl implements DictionaryStore {
     private final SecurityContext securityContext;
     private final Persistence persistence;
     private final Serialiser2<DictionaryDoc> serialiser;
+    private final Serialiser2<OldDictionaryDoc> oldSerialiser;
 
     @Inject
     DictionaryStoreImpl(final Store<DictionaryDoc> store,
                         final SecurityContext securityContext,
-                        final Persistence persistence) {
+                        final Persistence persistence,
+                        final Serialiser2<DictionaryDoc> serialiser,
+                        final Serialiser2<OldDictionaryDoc> oldSerialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new DictionarySerialiser();
+        this.serialiser = serialiser;
+        this.oldSerialiser = oldSerialiser;
 
         store.setType(DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -218,7 +220,6 @@ class DictionaryStoreImpl implements DictionaryStore {
                 if (dataMap.containsKey("dat")) {
                     // Version 6.0 stored the whole dictionary in a single JSON file ending in 'dat' so convert this.
                     dataMap.put("meta", dataMap.remove("dat"));
-                    final JsonSerialiser2<OldDictionaryDoc> oldSerialiser = new JsonSerialiser2<>(OldDictionaryDoc.class);
                     final OldDictionaryDoc oldDocument = oldSerialiser.read(dataMap);
 
                     final DictionaryDoc document = new DictionaryDoc();

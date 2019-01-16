@@ -21,7 +21,7 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.docstore.EncodingUtil;
+import stroom.util.string.EncodingUtil;
 import stroom.importexport.DocRefs;
 import stroom.importexport.OldDocumentData;
 import stroom.importexport.shared.ImportState;

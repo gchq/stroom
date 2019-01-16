@@ -1,29 +1,34 @@
 package stroom.pipeline;
 
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
 import stroom.pipeline.shared.TextConverterDoc;
+import stroom.util.string.EncodingUtil;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
 
-public class TextConverterSerialiser extends JsonSerialiser2<TextConverterDoc> {
+public class TextConverterSerialiser implements DocumentSerialiser2<TextConverterDoc> {
     private static final String XML = "xml";
 
-    public TextConverterSerialiser() {
-        super(TextConverterDoc.class);
+    private final Serialiser2<TextConverterDoc> delegate;
+
+    @Inject
+    public TextConverterSerialiser(final Serialiser2<TextConverterDoc> delegate) {
+        this.delegate = delegate;
     }
 
     @Override
     public TextConverterDoc read(final Map<String, byte[]> data) throws IOException {
-        final TextConverterDoc document = super.read(data);
+        final TextConverterDoc document = delegate.read(data);
         document.setData(EncodingUtil.asString(data.get(XML)));
         return document;
     }
 
     @Override
     public Map<String, byte[]> write(final TextConverterDoc document) throws IOException {
-        final Map<String, byte[]> data = super.write(document);
+        final Map<String, byte[]> data = delegate.write(document);
         if (document.getData() != null) {
             data.put(XML, EncodingUtil.asBytes(document.getData()));
         }

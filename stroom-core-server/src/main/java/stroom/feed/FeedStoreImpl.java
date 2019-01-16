@@ -52,16 +52,16 @@ public class FeedStoreImpl implements FeedStore {
     public FeedStoreImpl(final Store<FeedDoc> store,
                          final SecurityContext securityContext,
                          final Persistence persistence,
-                         final FeedNameValidator feedNameValidator) {
+                         final FeedNameValidator feedNameValidator,
+                         final FeedSerialiser serialiser) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.feedNameValidator = feedNameValidator;
-
-        serialiser = new FeedSerialiser();
+        this.serialiser = serialiser;
 
         store.setType(FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
-        store.setSerialiser(serialiser);
+        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////
