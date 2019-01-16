@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "1537dd55-bd39-41af-83c3-da347b78164f",
+  "name" : "LAX_CARGO_VOLUME",
+  "version" : "ca663ce0-0090-4710-af07-b44577cc4e2d",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

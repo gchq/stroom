@@ -405,8 +405,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         pageRows.updateRowData(pageOffset, pageLength);
         pageRows.updateRowCount(pageCount, pageCountExact);
 
-        textPresenter.setText(data);
-        textPresenter.format();
+        textPresenter.setText(data, true);
         textPresenter.setFirstLineNumber(startLineNo);
         textPresenter.setControlsVisible(playButtonVisible);
 

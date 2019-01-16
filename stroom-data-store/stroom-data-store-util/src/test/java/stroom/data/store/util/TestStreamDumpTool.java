@@ -22,19 +22,31 @@ import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
+import stroom.persist.ConnectionProvider;
 import stroom.streamstore.shared.StreamTypeNames;
+import stroom.util.db.DbUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 class TestStreamDumpTool {
+    @Inject
+    private ConnectionProvider connectionProvider;
     @Inject
     private StreamStore streamStore;
 
     @BeforeEach
     void setup() {
         new ToolInjector().getInjector().injectMembers(this);
+
+        try (final Connection connection = connectionProvider.getConnection()) {
+            DbUtil.clearAllTables(connection);
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Test

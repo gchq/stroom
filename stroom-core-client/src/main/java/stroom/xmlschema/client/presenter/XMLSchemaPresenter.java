@@ -104,8 +104,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
             } else if (content.equals(codePresenter)) {
                 if (!shownText) {
                     shownText = true;
-                    codePresenter.setText(getEntity().getData());
-                    codePresenter.format();
+                    codePresenter.setText(getEntity().getData(), true);
                 }
             }
         }

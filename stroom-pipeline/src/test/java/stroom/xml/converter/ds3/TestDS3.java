@@ -17,6 +17,7 @@
 package stroom.xml.converter.ds3;
 
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 // TODO : Reinstate tests.
-
+@Disabled("Removed test data")
 class TestDS3 extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
 

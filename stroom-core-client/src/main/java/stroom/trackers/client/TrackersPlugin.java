@@ -19,13 +19,13 @@
 package stroom.trackers.client;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.cell.clickable.client.Hyperlink;
-import stroom.cell.clickable.client.HyperlinkTarget;
-import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.Hyperlink.Builder;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.ClientSecurityContext;
@@ -33,24 +33,16 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class TrackersPlugin extends NodeToolsPlugin {
-
-    private final Provider<IFrameContentPresenter> presenterProvider;
-    private final ContentManager contentManager;
     private final UiConfigCache clientPropertyCache;
 
     @Inject
     public TrackersPlugin(final EventBus eventBus,
                           final ClientSecurityContext securityContext,
-                          final Provider<IFrameContentPresenter> presenterProvider,
-                          final ContentManager contentManager,
                           final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
-        this.presenterProvider = presenterProvider;
-        this.contentManager = contentManager;
         this.clientPropertyCache = clientPropertyCache;
     }
 
@@ -65,20 +57,13 @@ public class TrackersPlugin extends NodeToolsPlugin {
                         final String stroomUi = result.getUrlConfig().getTrackers();
                         if (stroomUi != null && stroomUi.trim().length() > 0) {
                             streamTaskMenuItem = new IconMenuItem(5, icon, null, "Stream Tasks", null, true, () -> {
-                                final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()
-                                        .title("Stream Tasks")
+                                final Hyperlink hyperlink = new Builder()
+                                        .text("Stream Tasks")
                                         .href(stroomUi)
-                                        .target(HyperlinkTarget.STROOM_TAB)
+                                        .type(HyperlinkType.TAB)
+                                        .icon(icon)
                                         .build();
-                                final IFrameContentPresenter presenter = presenterProvider.get();
-                                presenter.setHyperlink(hyperlink);
-                                presenter.setIcon(icon);
-                                contentManager.open(
-                                        callback -> {
-                                            callback.closeTab(true);
-                                            presenter.close();
-                                        },
-                                        presenter, presenter);
+                                HyperlinkEvent.fire(this, hyperlink);
                             });
                         } else {
                             streamTaskMenuItem = new IconMenuItem(5, icon, icon, "Stream Tasks is not configured!", null, false, null);

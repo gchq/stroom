@@ -267,17 +267,18 @@ public class PopupSupportImpl implements PopupSupport {
         }
     }
 
-    /**
-     * Used by some views to focus widgets.
-     */
-    protected void onShow() {
-    }
-
-    private void setCaption(final String caption) {
+    @Override
+    public void setCaption(final String caption) {
         this.caption = caption;
         if (popup != null) {
             popup.setCaption(caption);
         }
+    }
+
+    /**
+     * Used by some views to focus widgets.
+     */
+    protected void onShow() {
     }
 
     private void setModal(final boolean modal) {

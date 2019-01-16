@@ -17,6 +17,7 @@
 package stroom.xml.converter.datasplitter;
 
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.feed.shared.FeedDoc;
 import stroom.lifecycle.StroomBeanStore;
@@ -33,7 +34,7 @@ import java.io.InputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // TODO : Add test data
-
+@Disabled("Add test data")
 class TestDataSplitter extends AbstractProcessIntegrationTest {
     @Inject
     private StroomBeanStore beanStore;

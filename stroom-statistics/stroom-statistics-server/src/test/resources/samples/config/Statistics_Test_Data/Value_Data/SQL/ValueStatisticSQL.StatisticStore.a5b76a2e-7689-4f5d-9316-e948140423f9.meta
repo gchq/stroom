@@ -1,0 +1,21 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "a5b76a2e-7689-4f5d-9316-e948140423f9",
+  "name" : "ValueStatisticSQL",
+  "version" : "d8d6354c-2079-4240-a507-b8304891222a",
+  "description" : "Volumes",
+  "statisticType" : "COUNT",
+  "rollUpType" : "ALL",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "fields" : [ {
+      "fieldName" : "user"
+    }, {
+      "fieldName" : "colour"
+    }, {
+      "fieldName" : "state"
+    } ],
+    "customRollUpMasks" : [ { } ]
+  }
+}

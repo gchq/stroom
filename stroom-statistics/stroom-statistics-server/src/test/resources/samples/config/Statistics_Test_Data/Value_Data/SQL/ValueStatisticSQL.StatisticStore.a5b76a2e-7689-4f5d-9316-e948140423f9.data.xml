@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<data>
+   <field>
+      <fieldName>user</fieldName>
+   </field>
+   <field>
+      <fieldName>colour</fieldName>
+   </field>
+   <field>
+      <fieldName>state</fieldName>
+   </field>
+</data>

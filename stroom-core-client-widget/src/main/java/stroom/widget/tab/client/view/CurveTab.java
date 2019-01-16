@@ -32,6 +32,8 @@ import stroom.svg.client.SvgIcon;
 import stroom.widget.tab.client.presenter.ImageIcon;
 
 public class CurveTab extends AbstractTab {
+    private static final int MAX_TEXT_LENGTH = 50;
+
     private static Resources resources;
     private final Element element;
     private final Element background;
@@ -42,6 +44,7 @@ public class CurveTab extends AbstractTab {
     private final Element label;
     private final Element close;
     private final boolean allowClose;
+
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
@@ -123,7 +126,14 @@ public class CurveTab extends AbstractTab {
 
         label = DOM.createDiv();
         label.setClassName(resources.style().text());
-        label.setInnerText(text);
+
+        if (text.length() > MAX_TEXT_LENGTH) {
+            label.setInnerText(text.substring(0, MAX_TEXT_LENGTH) + "...");
+        } else {
+            label.setInnerText(text);
+        }
+
+        label.setTitle(text);
         element.appendChild(label);
 
         close = DOM.createDiv();

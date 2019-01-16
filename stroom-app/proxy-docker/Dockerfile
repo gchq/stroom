@@ -96,7 +96,7 @@ RUN \
 
 # Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
-COPY --chown=proxy:proxy docker-entrypoint.sh /stroom-proxy/
+COPY --chown=proxy:proxy *.sh /stroom-proxy/
 COPY --chown=proxy:proxy ./build/proxy-prod.yml /stroom-proxy/config/config.yml
 
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
@@ -107,3 +107,6 @@ ARG GIT_TAG=unspecified
 LABEL \
     git_commit="$GIT_COMMIT" \
     git_tag="$GIT_TAG"
+# Pass the GIT_TAG through to the running container
+# This should not be set at container run time
+ENV GIT_TAG=$GIT_TAG

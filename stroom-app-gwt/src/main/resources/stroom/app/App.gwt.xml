@@ -47,7 +47,6 @@
     <inherits name="stroom.widget.popup.Popup" />
     <inherits name="stroom.widget.tickbox.TickBox" />
     <inherits name="stroom.widget.tooltip.Tooltip" />
-    <inherits name="stroom.widget.iframe.IFrame" />
     <inherits name="stroom.widget.valuespinner.ValueSpinner" />
     <inherits name="stroom.editor.Editor" />
     <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
@@ -60,7 +59,6 @@
     <inherits name="stroom.config.global.GlobalConfig" />
     <inherits name="stroom.ui.config.UiConfig" />
     <inherits name="stroom.data.meta.Meta" />
-    <inherits name="stroom.externaldoc.ExternalDocRef" />
     <inherits name="stroom.about.About" />
     <inherits name="stroom.activity.Activity" />
     <inherits name="stroom.elastic.Elastic" />
@@ -77,6 +75,8 @@
     <inherits name="stroom.util.Util" />
     <inherits name="stroom.welcome.Welcome" />
     <inherits name="stroom.trackers.Trackers" />
+    <inherits name="stroom.hyperlink.Hyperlink" />
+    <inherits name="stroom.iframe.IFrame" />
 
     <!-- Additional -->
     <inherits name="stroom.folder.Folder" />

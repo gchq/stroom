@@ -29,6 +29,25 @@
             "name" : "Sessions",
             "controls" : [
                 {
+                    "id": "maxValues",
+                    "type": "number",
+                    "label": "Max Values",
+                    "defaultValue": "500",
+                    "max": "10000",
+                    "min": "1"
+                },
+                {
+                    "id": "sortXAxis",
+                    "type": "selection",
+                    "label": "Sort X Axis",
+                    "values": [
+                        "",
+                        "Ascending",
+                        "Descending"
+                    ],
+                    "defaultValue": "Ascending"
+                },
+                {
                     "id" : "sortSeries",
                     "type" : "selection",
                     "label" : "Sort Series",
@@ -68,8 +87,8 @@
                     "id" : "maxGridSeries",
                     "type" : "number",
                     "label" : "Max Grid Series",
-                    "defaultValue": "20",
-                    "max": "36",
+                    "defaultValue": "36",
+                    "max": "144",
                     "min": "1"
                 },
                 {
@@ -97,16 +116,6 @@
                         "False"
                     ],
                     "defaultValue": "True"
-                },
-                {
-                    "id" : "synchYAxis",
-                    "type" : "selection",
-                    "label" : "Synch Y Axis",
-                    "values" : [
-                        "True",
-                        "False"
-                    ],
-                    "defaultValue" : "True"
                 },
                 {
                     "id": "displayYAxis",
@@ -140,6 +149,17 @@
                     "defaultValue" : "600000"
                 },
                 {
+                    "id" : "seriesFilter",
+                    "type" : "selection",
+                    "label" : "Series Filter",
+                    "values" : [
+                        "Unfiltered",
+                        "Non-contiguous Only",
+                        "Contiguous Only"
+                    ],
+                    "defaultValue" : "Unfiltered"
+                },
+                {
                     "id" : "openSessionText",
                     "type" : "text",
                     "label" : "Session Start Text",
@@ -161,16 +181,18 @@
                 "key" : {
                     "id" : "${gridSeries}",
                     "sort" : {
-                        "enabled" : "true",
-                        "direction" : "${sortGridSeries}"
+                        "direction" : "${sortGridSeries}",
+                        "enabled": "true",
+                        "priority": 0
                     }
                 },
                 "nest" : {
                     "key" : {
                         "id" : "${series}",
                         "sort" : {
-                            "enabled" : "true",
-                            "direction" : "${sortSeries}"
+                            "direction" : "${sortSeries}",
+                            "enabled": "true",
+                            "priority": 1
                         }
                     },
                     "values" : {
@@ -178,14 +200,19 @@
                             {
                                 "id" : "${eventTime}",
                                 "sort" : {
-                                    "enabled" : "true",
-                                    "direction" : "Ascending"
+                                    "direction": "${sortXAxis}",
+                                    "enabled": "true",
+                                    "priority": 2
                                 }
                             },
                             {
                                 "id" : "${stateChange}"
                             }
-                        ]
+                        ],
+                        "limit": {
+                            "enabled": "true",
+                            "size": "${maxValues}"
+                        }
                     },
                     "limit" : {
                         "enabled" : "true",

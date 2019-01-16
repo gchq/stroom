@@ -23,14 +23,12 @@ import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.PersistenceException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +48,8 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAppPermissionServiceImpl.class);
 
     static {
+        // We are expecting duplicate keys at times so have to protect against it
+        // by only inserting if the compound key doesn't exist already
         SQL_INSERT_USER_PERMISSIONS = ""
                 + "INSERT INTO "
                 + AppPermission.TABLE_NAME
@@ -60,7 +60,19 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
                 + " ,"
                 + AppPermission.PERMISSION
                 + ")"
-                + " VALUES (?,?,?)";
+                + " SELECT ?, ?, ?"
+                + " FROM DUAL"
+                + " WHERE NOT EXISTS ("
+                + " SELECT NULL"
+                + " FROM "
+                + AppPermission.TABLE_NAME
+                + " WHERE "
+                + "  "
+                + AppPermission.USER_UUID
+                + " = ? AND "
+                + AppPermission.PERMISSION
+                + " = ?"
+                + ")";
     }
 
     static {
@@ -228,12 +240,22 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
             LOGGER.error("Unknown permission: " + permission);
         } else {
             try {
-                final SqlBuilder sqlBuilder = new SqlBuilder(SQL_INSERT_USER_PERMISSIONS, 1, userRef.getUuid(), permissionId);
-                entityManager.executeNativeUpdate(sqlBuilder);
-            } catch (final PersistenceException e) {
-                // Expected exception.
-                LOGGER.debug("addPermission()", e);
-                throw e;
+                // bit grim having to repeat the key fields but they are used twice in the sql
+                final SqlBuilder sqlBuilder = new SqlBuilder(
+                        SQL_INSERT_USER_PERMISSIONS,
+                        1,
+                        userRef.getUuid(), permissionId,
+                        userRef.getUuid(), permissionId);
+
+                final long insertCount = entityManager.executeNativeUpdate(sqlBuilder);
+
+                if (insertCount == 0) {
+                    LOGGER.debug("Key already exists for userRef [{}], permission [{}], nothing inserted",
+                            userRef.getUuid(), permission);
+                } else {
+                    LOGGER.debug("Inserted {} row with userRef [{}], permission [{}]",
+                            insertCount, userRef.getUuid(), permission);
+                }
             } catch (final RuntimeException e) {
                 LOGGER.error("addPermission()", e);
                 throw e;

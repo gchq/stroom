@@ -12,11 +12,11 @@ public class ContentSyncConfig {
     private String apiKey;
 
     @JsonProperty
-    boolean isContentSyncEnabled() {
+    public boolean isContentSyncEnabled() {
         return isContentSyncEnabled;
     }
 
-    void setContentSyncEnabled(final boolean contentSyncEnabled) {
+    public void setContentSyncEnabled(final boolean contentSyncEnabled) {
         isContentSyncEnabled = contentSyncEnabled;
     }
 

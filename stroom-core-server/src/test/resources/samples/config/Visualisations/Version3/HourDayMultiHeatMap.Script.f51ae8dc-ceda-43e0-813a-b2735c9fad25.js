@@ -515,36 +515,23 @@ visualisations.HourDayMultiHeatMap = function() {
             var xAxisLength = gridSizeX * 24;
             var yAxisLength = gridSizeY * daysOnChart;
 
-            //xSettings = commonFunctions.createAxis("NUMBER", 0, getHeatMapWidth());
-            //ySettings = commonFunctions.createAxis("ORDINAL", getHeatMapHeight() - yAxisLength, getHeatMapHeight());
-
-            //xScale = xSettings.scale;
-            //yScale = ySettings.scale;
-
             //Alter the number of xAxis ticks based on the axis length so they are not too squashed
             var xTicks = commonFunctions.getHourAxisTickMarkCount(xAxisLength);
 
-
-            //xSettings.setDomain([0,24]);
-            //ySettings.setDomain(yAxisData);
-            //yAxis = ySettings.axis.tickValues(xSettings.axis.domain().filter(function(d,i) { return !(i % 2); }));
-            
-            xSettings = commonFunctions.createAxis("NUMBER", 0, getHeatMapWidth());
+            xSettings = commonFunctions.createAxis(commonConstants.dataTypeNumber, 0, getHeatMapWidth());
             xScale = xSettings.scale;
             xSettings.setExplicitDomain([0,24]);
-            //commonFunctions.buildAxis(xAxisContainer, xSettings, "bottom", null, null, visSettings.displayXAxis);
 
+            // TDOO no idea why we pass ORDINAL here.  It is not a recognised type.
             ySettings = commonFunctions.createAxis("ORDINAL", getHeatMapHeight() - yAxisLength, getHeatMapHeight());
             yScale = ySettings.scale;
             ySettings.setExplicitDomain(yAxisData);
-            //commonFunctions.buildAxis(yAxisContainer, ySettings, "left", null, null, visSettings.displayYAxis);
 
             xAxis = xSettings.axis.orient("bottom").ticks(xTicks);
             yAxis = ySettings.axis.orient("left");
 
             buildXAxes(xAxis);
             buildYAxes(yAxis);
-            
 
             var legendElementWidth = legendSpaceWidthFunc() * 0.1;
             var legendElementHeight = height / buckets;
@@ -679,7 +666,7 @@ visualisations.HourDayMultiHeatMap = function() {
         d.types = [];
         d.types[0] = "HOUR";
         d.types[1] = "DAY";
-        d.types[2] = "NUMBER";
+        d.types[2] = commonConstants.dataTypeNumber;
 
         d.min[0] = minX;
         d.min[1] = minY;

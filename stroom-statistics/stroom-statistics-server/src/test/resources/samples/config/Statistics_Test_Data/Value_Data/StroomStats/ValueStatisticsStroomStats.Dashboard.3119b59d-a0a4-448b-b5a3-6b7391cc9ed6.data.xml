@@ -1,0 +1,204 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dashboard>
+   <components>
+      <component>
+         <type>table</type>
+         <id>table-IIO1T</id>
+         <name>Table</name>
+         <table>
+            <queryId>query-JT8D7</queryId>
+            <fields>
+               <field>
+                  <name>Date Time</name>
+                  <expression>${Date Time}</expression>
+                  <format>
+                     <type>DATE_TIME</type>
+                  </format>
+                  <width>172</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Precision</name>
+                  <expression>${Precision}</expression>
+                  <format>
+                     <type>GENERAL</type>
+                  </format>
+                  <width>72</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Precision ms</name>
+                  <expression>${Precision ms}</expression>
+                  <format>
+                     <type>NUMBER</type>
+                  </format>
+                  <width>94</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>colour</name>
+                  <expression>${colour}</expression>
+                  <format>
+                     <type>GENERAL</type>
+                  </format>
+                  <width>47</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>state</name>
+                  <expression>${state}</expression>
+                  <format>
+                     <type>GENERAL</type>
+                  </format>
+                  <width>38</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>user</name>
+                  <expression>${user}</expression>
+                  <format>
+                     <type>GENERAL</type>
+                  </format>
+                  <width>48</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Statistic Count</name>
+                  <expression>${Statistic Count}</expression>
+                  <format>
+                     <type>NUMBER</type>
+                  </format>
+                  <width>102</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Statistic Value</name>
+                  <expression>${Statistic Value}</expression>
+                  <format>
+                     <type>NUMBER</type>
+                  </format>
+                  <width>139</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Max Statistic Value</name>
+                  <expression>${Max Statistic Value}</expression>
+                  <format>
+                     <type>NUMBER</type>
+                  </format>
+                  <width>122</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Min Statistic Value</name>
+                  <expression>${Min Statistic Value}</expression>
+                  <format>
+                     <type>NUMBER</type>
+                  </format>
+                  <width>123</width>
+                  <visible>true</visible>
+               </field>
+               <field>
+                  <name>Statistic Name</name>
+                  <expression>${Statistic Name}</expression>
+                  <format>
+                     <type>GENERAL</type>
+                  </format>
+                  <width>268</width>
+                  <visible>true</visible>
+               </field>
+            </fields>
+            <maxResults>
+               <level>1000000</level>
+            </maxResults>
+         </table>
+      </component>
+      <component>
+         <type>query</type>
+         <id>query-JT8D7</id>
+         <name>Query</name>
+         <query>
+            <dataSource>
+               <type>StroomStatsStore</type>
+               <id>2</id>
+               <uuid>063f820b-8795-478f-a721-de724f9b4dc3</uuid>
+               <name>ValueStatisticsStroomStats</name>
+            </dataSource>
+            <expression>
+               <enabled>true</enabled>
+               <op>AND</op>
+               <children>
+                  <term>
+                     <enabled>false</enabled>
+                     <field>Date Time</field>
+                     <condition>BETWEEN</condition>
+                     <value>now() - 14d,now() +14d</value>
+                  </term>
+                  <term>
+                     <field>Precision</field>
+                     <condition>EQUALS</condition>
+                     <value>DAY</value>
+                  </term>
+                  <term>
+                     <enabled>false</enabled>
+                     <field>colour</field>
+                     <condition>EQUALS</condition>
+                     <value>Green</value>
+                  </term>
+                  <term>
+                     <enabled>false</enabled>
+                     <field>state</field>
+                     <condition>EQUALS</condition>
+                     <value>IN</value>
+                  </term>
+                  <term>
+                     <enabled>false</enabled>
+                     <field>user</field>
+                     <condition>EQUALS</condition>
+                     <value>user2</value>
+                  </term>
+               </children>
+            </expression>
+            <automate>
+               <open>false</open>
+               <refresh>false</refresh>
+               <refreshInterval>10s</refreshInterval>
+            </automate>
+         </query>
+      </component>
+   </components>
+   <splitLayout>
+      <preferredSize>
+         <width>200</width>
+         <height>200</height>
+      </preferredSize>
+      <dimension>1</dimension>
+      <children>
+         <tabLayout>
+            <preferredSize>
+               <width>200</width>
+               <height>200</height>
+            </preferredSize>
+            <tabs>
+               <tab>
+                  <id>query-JT8D7</id>
+               </tab>
+            </tabs>
+            <selected>0</selected>
+         </tabLayout>
+         <tabLayout>
+            <preferredSize>
+               <width>200</width>
+               <height>200</height>
+            </preferredSize>
+            <tabs>
+               <tab>
+                  <id>table-IIO1T</id>
+               </tab>
+            </tabs>
+            <selected>0</selected>
+         </tabLayout>
+      </children>
+   </splitLayout>
+   <tabVisibility>SHOW_ALL</tabVisibility>
+</dashboard>

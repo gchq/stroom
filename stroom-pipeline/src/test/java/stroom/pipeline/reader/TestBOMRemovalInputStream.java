@@ -19,6 +19,7 @@ package stroom.pipeline.reader;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.util.ZipResource;
 import stroom.util.test.StroomUnitTest;
@@ -32,7 +33,7 @@ import java.util.zip.ZipInputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // TODO : Add test data
-
+@Disabled
 class TestBOMRemovalInputStream extends StroomUnitTest {
     private static ZipResource bomBlank = new ZipResource("stroom/resource/server/BOM_BLANK");
     private static ZipResource bomContent = new ZipResource("stroom/resource/server/BOM_CONTENT");

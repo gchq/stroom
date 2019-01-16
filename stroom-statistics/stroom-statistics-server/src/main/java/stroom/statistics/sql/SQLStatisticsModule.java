@@ -82,11 +82,12 @@ public class SQLStatisticsModule extends AbstractModule {
     }
 
     private Flyway flyway(final DataSource dataSource) {
-        final Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
-        flyway.setLocations(FLYWAY_LOCATIONS);
-        flyway.setTable(FLYWAY_TABLE);
-        flyway.setBaselineOnMigrate(true);
+        final Flyway flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .locations(FLYWAY_LOCATIONS)
+                .table(FLYWAY_TABLE)
+                .baselineOnMigrate(true)
+                .load();
         LOGGER.info("Applying Flyway migrations to stroom-statistics in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
