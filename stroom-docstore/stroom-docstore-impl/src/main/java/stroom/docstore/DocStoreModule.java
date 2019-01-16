@@ -10,8 +10,9 @@ public class DocStoreModule extends AbstractModule {
         requireBinding(SecurityContext.class);
         requireBinding(Persistence.class);
 
-//       install(new FactoryModuleBuilder().build(StoreImpl.Factory.class));
-        bind(Store.class).to(StoreImpl.class);
+//       install(new FactoryModuleBuilder().build(Store.Factory.class));
+//        bind(Store.class).to(StoreImpl.class);
+        bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
     }
 }

@@ -21,8 +21,11 @@ class TestDocStoreModule {
     @Mock
     private Doc docMock;
 
+//    @Inject
+//    Store store;
+
     @Inject
-    Store store;
+    StoreFactory storeFactory;
 
     @Test
     void testInjection() {
@@ -42,9 +45,10 @@ class TestDocStoreModule {
 //        final Store<MyDoc> store = injector.getInstance(Store<MyDoc>.class);
         final DocumentSerialiser2<MyDoc> serialiser = serialiser2Factory.createSerialiser(MyDoc.class);
 
-        store.setSerialiser(serialiser);
 
-        Store<MyDoc> store2 = store;
+//        store.setSerialiser(serialiser);
+
+        Store<MyDoc> store2 = storeFactory.createStore(serialiser, "MyDocType", MyDoc.class);
     }
 
     private static class MyDoc extends Doc {

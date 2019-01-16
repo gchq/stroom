@@ -47,4 +47,8 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     List<DocRef> list();
 
     List<DocRef> findByName(String name);
+
+//    interface Factory<D extends Doc> {
+//        Store<D> create(final DocumentSerialiser2<D> serialiser, final Class<D> clazz);
+//    }
 }

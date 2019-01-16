@@ -533,8 +533,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .collect(Collectors.toList());
     }
 
-//    public interface Factory {
-//        <D extends Doc> Store<D> create(final DocumentSerialiser2<D> serialiser, final Class<D> clazz);
-//    }
+
 
 }
