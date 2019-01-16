@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.activity.shared;
+package stroom.activity.api;
 
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;

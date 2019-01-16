@@ -1,7 +1,8 @@
-package stroom.logging;
+package stroom.document;
 
 import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;
+import stroom.event.logging.api.EventInfoProvider;
 
 public class EventInforProviderBinder {
     private final Multibinder<EventInfoProvider> multibinder;

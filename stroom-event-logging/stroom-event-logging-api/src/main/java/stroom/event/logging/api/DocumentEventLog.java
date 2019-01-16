@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.logging;
+package stroom.event.logging.api;
 
 import event.logging.Query;
 import stroom.entity.shared.BaseCriteria;

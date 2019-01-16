@@ -17,7 +17,6 @@
 package stroom.data.store;
 
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.logging.StreamEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;

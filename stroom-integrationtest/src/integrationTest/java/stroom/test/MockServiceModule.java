@@ -16,7 +16,8 @@ public class MockServiceModule extends AbstractModule {
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.index.MockIndexModule());
-        install(new stroom.logging.LoggingModule());
+        install(new stroom.event.logging.impl.EventLoggingModule());
+//        install(new stroom.document.DocumentModule());
         install(new stroom.node.MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
         install(new stroom.pipeline.PipelineModule());

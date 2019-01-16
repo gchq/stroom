@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.logging;
+package stroom.importexport;
 
 import event.logging.BaseAdvancedQueryOperator.Or;
 import event.logging.Criteria;
@@ -33,6 +33,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.Security;
 
 import javax.inject.Inject;

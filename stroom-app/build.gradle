@@ -62,6 +62,7 @@ dependencies {
     implementation project(':stroom-elastic:stroom-elastic-impl')
     implementation project(':stroom-elastic:stroom-elastic-impl-http')
     implementation project(':stroom-entity-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')

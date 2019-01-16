@@ -18,6 +18,7 @@ dependencies {
     integrationTestImplementation project(':stroom-data-store:stroom-data-store-impl-mock')
     integrationTestImplementation project(':stroom-elastic:stroom-elastic-impl')
     integrationTestImplementation project(':stroom-entity-shared')
+    integrationTestImplementation project(':stroom-event-logging:stroom-event-logging-impl')
     integrationTestImplementation project(':stroom-explorer:stroom-explorer-api')
     integrationTestImplementation project(':stroom-explorer:stroom-explorer-impl')
     integrationTestImplementation project(':stroom-explorer:stroom-explorer-impl-db')

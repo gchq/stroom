@@ -26,14 +26,11 @@ import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
-import stroom.logging.LoggingModule;
 import stroom.task.api.TaskHandlerBinder;
 
 public class EntityModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new LoggingModule());
-
         bind(GenericEntityService.class).to(GenericEntityServiceImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);

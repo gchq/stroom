@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.logging;
+package stroom.event.logging.impl;
 
 import event.logging.Device;
 import event.logging.Event;
 import event.logging.Event.EventDetail;
 import event.logging.Event.EventSource;
 import event.logging.Event.EventTime;
-import event.logging.EventLoggingService;
 import event.logging.System;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
@@ -29,8 +28,9 @@ import event.logging.util.DeviceUtil;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.event.logging.api.HttpServletRequestHolder;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.SecurityContext;
-import stroom.servlet.HttpServletRequestHolder;
 import stroom.util.BuildInfoUtil;
 
 import javax.inject.Inject;

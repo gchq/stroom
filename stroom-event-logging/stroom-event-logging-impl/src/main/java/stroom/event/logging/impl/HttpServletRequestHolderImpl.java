@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.event.logging.impl;
+
+import stroom.event.logging.api.HttpServletRequestHolder;
 
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;

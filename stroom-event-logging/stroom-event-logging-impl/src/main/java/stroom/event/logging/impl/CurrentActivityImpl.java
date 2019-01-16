@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.logging;
+package stroom.event.logging.impl;
 
 import com.google.inject.Inject;
-import stroom.activity.shared.Activity;
-import stroom.servlet.HttpServletRequestHolder;
+import stroom.activity.api.Activity;
+import stroom.event.logging.api.HttpServletRequestHolder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;

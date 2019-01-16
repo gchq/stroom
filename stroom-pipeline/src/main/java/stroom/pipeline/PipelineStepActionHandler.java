@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.SteppingResult;

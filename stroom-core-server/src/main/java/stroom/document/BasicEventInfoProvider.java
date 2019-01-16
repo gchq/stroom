@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.logging;
+package stroom.document;
 
 import event.logging.BaseObject;
 import event.logging.Object;
@@ -27,6 +27,7 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
+import stroom.event.logging.api.EventInfoProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.data.meta.api.Data;

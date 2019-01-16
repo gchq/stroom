@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.logging;
+package stroom.data.store;
 
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.docref.DocRef;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;

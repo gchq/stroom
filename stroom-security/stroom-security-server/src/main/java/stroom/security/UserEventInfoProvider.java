@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Entity;
-import stroom.logging.EventInfoProvider;
+import stroom.event.logging.api.EventInfoProvider;
 import stroom.security.shared.FindUserCriteria;
 
 class UserEventInfoProvider implements EventInfoProvider {

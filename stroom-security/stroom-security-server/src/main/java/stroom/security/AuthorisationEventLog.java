@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.logging;
+package stroom.security;
 
 import event.logging.Authorisation;
 import event.logging.Event;
@@ -23,6 +23,7 @@ import event.logging.Outcome;
 import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.event.logging.api.StroomEventLoggingService;
 
 import javax.inject.Inject;
 

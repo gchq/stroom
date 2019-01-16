@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.logging;
+package stroom.event.logging.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.servlet.HttpServletRequestHolderImpl;
+import com.google.inject.multibindings.Multibinder;
+import stroom.activity.shared.SetCurrentActivityAction;
+import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.EventInfoProvider;
+import stroom.event.logging.api.HttpServletRequestHolder;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.task.api.TaskHandlerBinder;
 
-public class LoggingModule extends AbstractModule {
+public class EventLoggingModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CurrentActivity.class).to(CurrentActivityImpl.class);
-        bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
         bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
         bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
+        bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
 
-        EventInforProviderBinder.create(binder())
-                .bind(BasicEventInfoProvider.class);
+        Multibinder.newSetBinder(binder(), EventInfoProvider.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
     }
 
     @Override

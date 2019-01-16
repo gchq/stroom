@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.activity.impl.db;
+package stroom.event.logging.impl;
 
 import event.logging.Event;
 import event.logging.Event.EventDetail.Update;
@@ -22,11 +22,9 @@ import event.logging.MultiObject;
 import event.logging.Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
 import stroom.activity.shared.SetCurrentActivityAction;
-import stroom.logging.CurrentActivity;
-import stroom.logging.PurposeUtil;
-import stroom.logging.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

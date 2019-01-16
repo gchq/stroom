@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.event.logging.api;
 
-import javax.servlet.http.HttpServletRequest;
+import event.logging.Event;
+import event.logging.EventLoggingService;
 
-public interface HttpServletRequestHolder {
-    HttpServletRequest get();
-
-    void set(HttpServletRequest httpServletRequest);
-
-    String getSessionId();
+public interface StroomEventLoggingService extends EventLoggingService {
+    Event createAction(String typeId, String description);
 }

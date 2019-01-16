@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.logging;
+package stroom.event.logging.impl;
 
 import event.logging.BaseObject;
 import event.logging.CopyMove;
@@ -38,6 +38,9 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
+import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.EventInfoProvider;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.Security;
 import stroom.util.shared.HasId;
 
