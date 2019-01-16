@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.event.logging.api'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
-    implementation project(':stroom-activity:stroom-activity-shared')
+//    implementation project(':stroom-activity:stroom-activity-shared')
 //    implementation project(':stroom-config:stroom-config-common')
 ////    implementation project(':stroom-data-meta:stroom-data-meta-impl-db-gen')
 ////    implementation project(':stroom-data-meta:stroom-data-meta-api')

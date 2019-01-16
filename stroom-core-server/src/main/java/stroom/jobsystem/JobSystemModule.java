@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
 import stroom.jobsystem.shared.FetchJobDataAction;
 import stroom.jobsystem.shared.GetScheduledTimesAction;
 import stroom.jobsystem.shared.Job;
@@ -31,20 +30,13 @@ import stroom.task.api.TaskHandlerBinder;
 public class JobSystemModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
-        bind(ClusterLockServiceTransactionHelper.class).to(ClusterLockServiceTransactionHelperImpl.class);
         bind(JobNodeService.class).to(JobNodeServiceImpl.class);
         bind(JobService.class).to(JobServiceImpl.class);
         bind(ScheduleService.class).to(ScheduleServiceImpl.class);
         bind(ScheduledTaskExecutor.class).to(ScheduledTaskExecutorImpl.class);
         bind(JobManager.class).to(JobManagerImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(ClusterLockServiceTransactionHelperImpl.class);
-
         TaskHandlerBinder.create(binder())
-                .bind(ClusterLockClusterTask.class, stroom.jobsystem.ClusterLockClusterHandler.class)
-                .bind(ClusterLockTask.class, stroom.jobsystem.ClusterLockHandler.class)
                 .bind(DistributedTaskRequestClusterTask.class, stroom.jobsystem.DistributedTaskRequestClusterHandler.class)
                 .bind(FetchJobDataAction.class, stroom.jobsystem.FetchJobDataHandler.class)
                 .bind(GetScheduledTimesAction.class, stroom.jobsystem.GetScheduledTimesHandler.class)

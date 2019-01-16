@@ -27,6 +27,11 @@ include 'stroom-activity:stroom-activity-shared'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
+// Cluster lock
+include 'stroom-cluster-lock:stroom-cluster-lock-api'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
+
 // Config
 include 'stroom-config:stroom-config-common'
 include 'stroom-config:stroom-config-app'

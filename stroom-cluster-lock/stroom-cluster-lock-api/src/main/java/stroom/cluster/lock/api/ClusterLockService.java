@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.cluster.lock.api;
 
 /**
  * tryLock and release lock utilises the cluster but the master node must be up

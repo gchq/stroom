@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.cluster.lock.impl.db;
 
 import stroom.util.date.DateUtil;
 import stroom.util.shared.EqualsBuilder;
