@@ -21,14 +21,13 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.shared.SharedMap;
 
 import javax.inject.Inject;
 import java.util.Collection;
 
-@TaskHandlerBean(task = JobNodeInfoClusterTask.class)
+
 class JobNodeInfoClusterHandler
         extends AbstractTaskHandler<JobNodeInfoClusterTask, SharedMap<JobNode, JobNodeInfo>> {
     private final JobNodeTrackerCache jobNodeTrackerCache;

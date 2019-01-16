@@ -20,9 +20,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.entity.shared.Clearable;
-import stroom.security.DocumentPermissionCache;
-import stroom.security.Security;
-import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 

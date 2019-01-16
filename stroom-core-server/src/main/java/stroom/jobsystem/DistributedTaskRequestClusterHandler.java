@@ -23,7 +23,6 @@ import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -31,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-@TaskHandlerBean(task = DistributedTaskRequestClusterTask.class)
+
 class DistributedTaskRequestClusterHandler
         implements TaskHandler<DistributedTaskRequestClusterTask, DistributedTaskRequestResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskRequestClusterHandler.class);

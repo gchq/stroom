@@ -40,11 +40,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EntityServiceBeanRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceBeanRegistry.class);
     private final Map<List<Object>, Method> entityServiceMethodMap = new ConcurrentHashMap<>();
-    private final Map<String, Provider<Object>> entityServiceByType;
+    private final Map<EntityType, Provider<Object>> entityServiceByType;
     private final Map<Class<?>, Provider<FindService>> findServiceMap = new HashMap<>();
 
     @Inject
-    EntityServiceBeanRegistry(final Map<String, Provider<Object>> entityServiceByType,
+    EntityServiceBeanRegistry(final Map<EntityType, Provider<Object>> entityServiceByType,
                               final Collection<Provider<FindService>> findServiceProviders) {
         this.entityServiceByType = entityServiceByType;
 
@@ -56,7 +56,7 @@ public class EntityServiceBeanRegistry {
     }
 
     public Object getEntityServiceByType(final String type) {
-        final Provider<Object> serviceProvider = entityServiceByType.get(type);
+        final Provider<Object> serviceProvider = entityServiceByType.get(new EntityType(type));
         if (serviceProvider == null) {
             final String message = "No Service provider found for '" + type + "'";
             LOGGER.error(message);

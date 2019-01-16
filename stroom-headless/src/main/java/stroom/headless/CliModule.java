@@ -18,19 +18,18 @@ package stroom.headless;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
-import stroom.pipeline.scope.PipelineScopeModule;
-import stroom.pipeline.scope.PipelineScoped;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.LocalNodeProvider;
 import stroom.node.shared.Node;
+import stroom.pipeline.scope.PipelineScopeModule;
+import stroom.pipeline.scope.PipelineScoped;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.task.shared.ThreadPool;
 
 import java.util.concurrent.Executor;
@@ -83,8 +82,8 @@ public class CliModule extends AbstractModule {
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
         bind(TaskContext.class).to(SimpleTaskContext.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.headless.HeadlessTranslationTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(HeadlessTranslationTask.class, HeadlessTranslationTaskHandler.class);
     }
 
     @Provides

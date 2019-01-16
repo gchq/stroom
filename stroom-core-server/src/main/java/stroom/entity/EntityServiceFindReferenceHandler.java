@@ -16,17 +16,16 @@
 
 package stroom.entity;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = EntityServiceFindReferenceAction.class)
+
 class EntityServiceFindReferenceHandler
         extends AbstractTaskHandler<EntityServiceFindReferenceAction<BaseEntity>, ResultList<DocRef>> {
     private final EntityServiceBeanRegistry beanRegistry;

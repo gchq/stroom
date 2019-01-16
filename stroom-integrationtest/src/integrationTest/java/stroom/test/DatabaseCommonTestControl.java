@@ -23,7 +23,6 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.node.NodeCreator;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
@@ -55,7 +54,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final NodeCreator nodeConfig;
     private final StreamTaskCreator streamTaskCreator;
     private final StroomCacheManager stroomCacheManager;
-    private final StroomBeanStore beanStore;
+    private final Set<Clearable> clearables;
 
     @Inject
     DatabaseCommonTestControl(final StroomEntityManager entityManager,
@@ -67,7 +66,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final NodeCreator nodeConfig,
                               final StreamTaskCreator streamTaskCreator,
                               final StroomCacheManager stroomCacheManager,
-                              final StroomBeanStore beanStore) {
+                              final Set<Clearable> clearables) {
         this.entityManager = entityManager;
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
@@ -77,7 +76,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.nodeConfig = nodeConfig;
         this.streamTaskCreator = streamTaskCreator;
         this.stroomCacheManager = stroomCacheManager;
-        this.beanStore = beanStore;
+        this.clearables = clearables;
     }
 
     @Override
@@ -122,8 +121,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         // ensure all the caches are empty
         stroomCacheManager.clear();
 
-        final Set<Clearable> set = beanStore.getInstancesOfType(Clearable.class);
-        set.forEach(Clearable::clear);
+        clearables.forEach(Clearable::clear);
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 

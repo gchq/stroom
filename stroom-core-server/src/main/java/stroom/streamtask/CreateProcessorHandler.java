@@ -22,11 +22,10 @@ import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = CreateProcessorAction.class)
+
 class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, ProcessorFilter> {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final Security security;

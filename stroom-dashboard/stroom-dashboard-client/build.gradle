@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.dashboard.client'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-shared')
     implementation project(':stroom-core-client')
     implementation project(':stroom-core-client-widget')
     implementation project(':stroom-core-shared')
@@ -26,9 +27,9 @@ dependencies {
     implementation libs.hibernate_jpa_api
     implementation libs.javax_inject
     implementation libs.jsinterop_annotations
-
+    
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

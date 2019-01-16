@@ -17,33 +17,20 @@
 package stroom.logging;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.HttpServletRequestHolderImpl;
 
 public class LoggingModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(CurrentActivity.class).to(CurrentActivityImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
         bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
+        bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
 
-        final Multibinder<EventInfoProvider> eventInfoProviderBinder = Multibinder.newSetBinder(binder(), EventInfoProvider.class);
-        eventInfoProviderBinder.addBinding().to(BasicEventInfoProvider.class);
+        EventInforProviderBinder.create(binder())
+                .bind(BasicEventInfoProvider.class);
     }
-
-
-//    @Bean
-//    public StroomEventLoggingService stroomEventLoggingService(final SecurityContext security,
-//                                                               final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
-//        HttpServletRequestHolder httpServletRequestHolder = null;
-//        try {
-//            httpServletRequestHolder = httpServletRequestHolderProvider.get();
-//        } catch (final RuntimeException e) {
-//            // Ignore
-//        }
-//
-//        return new StroomEventLoggingService(security, httpServletRequestHolder);
-//    }
 
     @Override
     public boolean equals(final Object o) {

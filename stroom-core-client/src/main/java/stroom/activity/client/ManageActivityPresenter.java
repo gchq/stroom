@@ -25,11 +25,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.DeleteActivityAction;
+import stroom.activity.shared.FetchActivityAction;
+import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
@@ -81,7 +82,7 @@ public class ManageActivityPresenter extends
         openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
-        listPresenter.setCriteria(criteria);
+        listPresenter.setAction(new FindActivityAction(criteria));
     }
 
     @Override
@@ -176,11 +177,10 @@ public class ManageActivityPresenter extends
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            dispatcher.exec(new EntityServiceLoadAction<Activity>(e)).onSuccess(this::onEdit);
+            dispatcher.exec(new FetchActivityAction(e)).onSuccess(this::onEdit);
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void onEdit(final Activity e) {
         if (e != null) {
             if (editProvider != null) {
@@ -200,10 +200,10 @@ public class ManageActivityPresenter extends
                     result -> {
                         if (result) {
                             // Load the activity.
-                            dispatcher.exec(new EntityServiceLoadAction<Activity>(entity)).onSuccess(e -> {
+                            dispatcher.exec(new FetchActivityAction(entity)).onSuccess(e -> {
                                 if (e != null) {
                                     // Delete the activity
-                                    dispatcher.exec(new EntityServiceDeleteAction(e)).onSuccess(res -> {
+                                    dispatcher.exec(new DeleteActivityAction(e)).onSuccess(res -> {
                                         listPresenter.refresh();
                                         listPresenter.getView().getSelectionModel().clear();
                                     });
@@ -216,11 +216,6 @@ public class ManageActivityPresenter extends
 
     private String getEntityDisplayType() {
         return "activity";
-    }
-
-    public void setCriteria(final FindActivityCriteria criteria) {
-        this.criteria = criteria;
-        listPresenter.setCriteria(criteria);
     }
 
     @Override

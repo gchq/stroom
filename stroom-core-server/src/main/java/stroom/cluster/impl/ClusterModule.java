@@ -18,21 +18,24 @@ package stroom.cluster.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
-import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceLocal;
+import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.event.EntityEvent;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceLocal")).to(ClusterCallServiceLocal.class);
-        bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceRemote")).to(ClusterCallServiceRemote.class);
+        bind(ClusterCallServiceLocal.class).to(ClusterCallServiceLocalImpl.class);
+        bind(ClusterCallServiceRemote.class).to(ClusterCallServiceRemoteImpl.class);
         bind(ClusterNodeManager.class).to(ClusterNodeManagerImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(UpdateClusterStateTaskHandler.class);
+        ClusterServiceBinder.create(binder())
+                .bind(ClusterNodeManager.SERVICE_NAME, ClusterNodeManagerImpl.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(UpdateClusterStateTask.class, UpdateClusterStateTaskHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);

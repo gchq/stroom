@@ -56,7 +56,7 @@ dependencies {
     integrationTestImplementation libs.hibernate_core
     integrationTestImplementation libs.hibernate_jpa_api
     integrationTestImplementation libs.hikari
-    integrationTestCompileOnly libs.junit_jupiter_api
+    integrationTestImplementation libs.junit_jupiter_api
     integrationTestImplementation libs.lucene_core
     integrationTestImplementation libs.saxon_he
     integrationTestImplementation libs.slf4j_api

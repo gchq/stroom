@@ -49,12 +49,12 @@ dependencies {
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     testImplementation project(':stroom-test-common')
-
+    
     testImplementation libs.assertj_core
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
 
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

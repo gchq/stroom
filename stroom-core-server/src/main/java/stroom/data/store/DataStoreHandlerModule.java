@@ -17,18 +17,21 @@
 package stroom.data.store;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.streamstore.shared.DownloadDataAction;
+import stroom.streamstore.shared.FetchFieldsAction;
+import stroom.streamstore.shared.UpdateStatusAction;
+import stroom.streamstore.shared.UploadDataAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(UpdateStatusHandler.class);
-        taskHandlerBinder.addBinding().to(DownloadDataHandler.class);
-        taskHandlerBinder.addBinding().to(FetchFieldsHandler.class);
-        taskHandlerBinder.addBinding().to(StreamDownloadTaskHandler.class);
-        taskHandlerBinder.addBinding().to(StreamUploadTaskHandler.class);
-        taskHandlerBinder.addBinding().to(UploadDataHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(UpdateStatusAction.class, UpdateStatusHandler.class)
+                .bind(DownloadDataAction.class, DownloadDataHandler.class)
+                .bind(FetchFieldsAction.class, FetchFieldsHandler.class)
+                .bind(StreamDownloadTask.class, StreamDownloadTaskHandler.class)
+                .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
+                .bind(UploadDataAction.class, UploadDataHandler.class);
     }
 }

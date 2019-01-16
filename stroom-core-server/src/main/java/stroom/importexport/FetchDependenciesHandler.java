@@ -21,11 +21,10 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.FetchDependenciesAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchDependenciesAction.class)
+
 class FetchDependenciesHandler extends AbstractTaskHandler<FetchDependenciesAction, ResultList<Dependency>> {
     private final DependencyService dependencyService;
     private final Security security;

@@ -5,11 +5,10 @@ import stroom.explorer.shared.FetchExplorerNodeAction;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchExplorerNodeAction.class)
+
 class FetchExplorerNodeHandler
         extends AbstractTaskHandler<FetchExplorerNodeAction, FetchExplorerNodeResult> {
     private final ExplorerService explorerService;

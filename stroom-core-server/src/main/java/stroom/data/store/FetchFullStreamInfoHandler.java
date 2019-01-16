@@ -16,15 +16,14 @@
 
 package stroom.data.store;
 
-import stroom.security.Security;
-import stroom.data.store.api.StreamStore;
 import stroom.data.meta.api.Data;
+import stroom.data.store.api.StreamStore;
+import stroom.security.Security;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
 import stroom.streamstore.shared.FullStreamInfoResult;
 import stroom.streamstore.shared.FullStreamInfoResult.Entry;
 import stroom.streamstore.shared.FullStreamInfoResult.Section;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = FetchFullStreamInfoAction.class)
+
 class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfoAction, FullStreamInfoResult> {
     private final StreamStore streamStore;
     private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;

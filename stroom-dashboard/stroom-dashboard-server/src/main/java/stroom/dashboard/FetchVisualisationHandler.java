@@ -20,13 +20,12 @@ package stroom.dashboard;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.visualisation.VisualisationStore;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchVisualisationAction.class)
+
 class FetchVisualisationHandler extends AbstractTaskHandler<FetchVisualisationAction, VisualisationDoc> {
     private final VisualisationStore visualisationStore;
     private final Security security;

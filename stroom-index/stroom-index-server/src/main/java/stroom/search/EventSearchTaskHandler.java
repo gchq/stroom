@@ -27,7 +27,6 @@ import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 
@@ -37,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = EventSearchTask.class)
+
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
 

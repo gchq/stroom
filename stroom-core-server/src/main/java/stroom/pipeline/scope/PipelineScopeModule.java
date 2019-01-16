@@ -11,7 +11,7 @@ public class PipelineScopeModule extends AbstractModule {
         bindScope(PipelineScoped.class, pipelineScope);
 
         // make our scope instance injectable
-        bind(PipelineScope.class).annotatedWith(Names.named("pipelineScope")).toInstance(pipelineScope);
+        bind(PipelineScope.class).toInstance(pipelineScope);
     }
 
     @Override

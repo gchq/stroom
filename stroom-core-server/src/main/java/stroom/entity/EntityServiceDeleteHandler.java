@@ -3,12 +3,11 @@ package stroom.entity;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = EntityServiceDeleteAction.class)
+
 class EntityServiceDeleteHandler extends AbstractTaskHandler<EntityServiceDeleteAction, VoidResult> {
     private final GenericEntityService entityService;
     private final Security security;

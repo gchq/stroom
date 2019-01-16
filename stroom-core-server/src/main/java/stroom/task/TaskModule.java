@@ -17,11 +17,13 @@
 package stroom.task;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.task.cluster.ClusterTaskModule;
+import stroom.task.shared.FindTaskProgressAction;
+import stroom.task.shared.FindUserTaskProgressAction;
+import stroom.task.shared.TerminateTaskProgressAction;
 
 public class TaskModule extends AbstractModule {
     @Override
@@ -33,73 +35,13 @@ public class TaskModule extends AbstractModule {
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.FindTaskProgressHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.FindUserTaskProgressHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.GenericServerTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.TerminateTaskProgressHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FindTaskProgressAction.class, stroom.task.FindTaskProgressHandler.class)
+                .bind(FindTaskProgressClusterTask.class, FindTaskProgressClusterHandler.class)
+                .bind(FindUserTaskProgressAction.class, FindUserTaskProgressHandler.class)
+                .bind(GenericServerTask.class, GenericServerTaskHandler.class)
+                .bind(TerminateTaskProgressAction.class, TerminateTaskProgressHandler.class);
     }
-    //    @Bean
-//    public ExecutorProvider executorProvider(final TaskManager taskManager,
-//                                             final SecurityContext securityContext) {
-//        return new ExecutorProviderImpl(taskManager, securityContext);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FindTaskProgressHandler findTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new FindTaskProgressHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FindUserTaskProgressHandler findUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-//                                                                   final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
-//        HttpServletRequestHolder httpServletRequestHolder = null;
-//        try {
-//            httpServletRequestHolder = httpServletRequestHolderProvider.get();
-//        } catch (final RuntimeException e) {
-//            // Ignore
-//        }
-//
-//        return new FindUserTaskProgressHandler(dispatchHelper, httpServletRequestHolder);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public GenericServerTaskHandler genericServerTaskHandler(final TaskContext taskContext) {
-//        return new GenericServerTaskHandler(taskContext);
-//    }
-//
-//    @Bean
-//    public TaskContext taskContext() {
-//        return new TaskContextImpl();
-//    }
-//
-//    @Bean
-//    public TaskHandlerBeanRegistry taskHandlerBeanRegistry(final StroomBeanStore beanStore) {
-//        return new TaskHandlerBeanRegistry(beanStore);
-//    }
-//
-//    @Bean("taskManager")
-//    public TaskManager taskManager(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
-//                                   final NodeCache nodeCache,
-//                                   final StroomBeanStore beanStore,
-//                                   final SecurityContext securityContext) {
-//        return new TaskManagerImpl(taskHandlerBeanRegistry, nodeCache, beanStore, securityContext);
-//    }
-//
-//    @Bean("taskContext")
-//    @Scope(value = StroomScope.TASK)
-//    public TaskMonitorImpl taskContext() {
-//        return new SimpleTaskContext();
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public TerminateTaskProgressHandler terminateTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new TerminateTaskProgressHandler(dispatchHelper);
-//    }
 
     @Override
     public boolean equals(final Object o) {

@@ -23,16 +23,4 @@ public class NodeTestConfigModule extends AbstractModule {
     protected void configure() {
         bind(NodeCreator.class).to(NodeCreatorForTesting.class);
     }
-
-//    @Bean
-//    public NodeCache nodeCache(final NodeServiceGetDefaultNode nodeService) {
-//        return new NodeCache(nodeService);
-//    }
-//
-//    @Bean
-//    public NodeConfigForTesting nodeConfigForTesting(final NodeService nodeService,
-//                                                     final VolumeService volumeService,
-//                                                     final StroomEntityManager stroomEntityManager) {
-//        return new NodeConfigForTesting(nodeService, volumeService, stroomEntityManager);
-//    }
 }

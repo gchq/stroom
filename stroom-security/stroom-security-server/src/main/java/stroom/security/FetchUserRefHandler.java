@@ -18,19 +18,19 @@ package stroom.security;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = FetchUserRefAction.class)
+
 class FetchUserRefHandler
         extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {
     private final UserService userService;
@@ -65,10 +65,10 @@ class FetchUserRefHandler
                 return BaseResultList.createPageLimitedList(list, findUserCriteria.getPageRequest());
             }
 
-            final BaseResultList<User> users = userService.find(findUserCriteria);
+            final List<User> users = userService.find(findUserCriteria);
             final List<UserRef> userRefs = new ArrayList<>();
             users.forEach(user -> userRefs.add(UserRefFactory.create(user)));
-            return new BaseResultList<>(userRefs, users.getPageResponse().getOffset(), users.getPageResponse().getTotal(), users.getPageResponse().isExact());
+            return new BaseResultList<>(userRefs, 0L, (long) users.size(), false);
         });
     }
 }

@@ -22,11 +22,10 @@ import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = EntityServiceSaveAction.class)
+
 class EntityServiceSaveHandler extends AbstractTaskHandler<EntityServiceSaveAction<BaseEntity>, BaseEntity> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog entityEventLog;

@@ -16,14 +16,12 @@
 
 package stroom.servlet;
 
-import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -33,7 +31,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-@TaskHandlerBean(task = SessionListAction.class)
+
 class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultList<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final Security security;
@@ -50,7 +48,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
         return security.insecureResult(() -> {
             final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                     .execAsync(
-                            new FindServiceClusterTask<>(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "Get session list", SessionListService.class, null),
+                            new SessionListClusterTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "Get session list"),
                             TargetType.ACTIVE);
 
             final ArrayList<SessionDetails> rtnList = new ArrayList<>();

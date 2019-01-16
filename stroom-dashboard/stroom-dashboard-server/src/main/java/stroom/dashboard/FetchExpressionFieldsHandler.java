@@ -21,11 +21,10 @@ import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.shared.DataSourceFields;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchDataSourceFieldsAction.class)
+
 class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final Security security;

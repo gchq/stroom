@@ -33,7 +33,6 @@ import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
 
@@ -44,7 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@TaskHandlerBean(task = ReprocessDataAction.class)
+
 class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, SharedList<ReprocessDataInfo>> {
     private static final int MAX_STREAM_TO_REPROCESS = 1000;
 

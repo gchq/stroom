@@ -20,7 +20,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.pipeline.factory.PipelineElementModule;
 import stroom.refdata.store.RefDataStoreModule;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ReferenceDataModule extends PipelineElementModule {
     @Override
@@ -33,9 +33,9 @@ public class ReferenceDataModule extends PipelineElementModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(EffectiveStreamCache.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.refdata.ContextDataLoadTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.refdata.ReferenceDataLoadTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ContextDataLoadTask.class, ContextDataLoadTaskHandler.class)
+                .bind(ReferenceDataLoadTask.class, ReferenceDataLoadTaskHandler.class);
 
         install(new RefDataStoreModule());
     }

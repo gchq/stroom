@@ -21,11 +21,10 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchAllDocumentPermissionsAction.class)
+
 class FetchAllDocumentPermissionsHandler
         extends AbstractTaskHandler<FetchAllDocumentPermissionsAction, DocumentPermissions> {
     private final DocumentPermissionsCache documentPermissionsCache;

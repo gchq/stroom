@@ -17,11 +17,11 @@
 
 package stroom.document;
 
+import stroom.docref.DocRef;
 import stroom.docstore.DocumentActionHandler;
 import stroom.entity.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
 import stroom.logging.DocumentEventLog;
-import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 

@@ -36,7 +36,6 @@ import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -49,7 +48,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@TaskHandlerBean(task = StreamDownloadTask.class)
+
 class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, StreamDownloadResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamDownloadTaskHandler.class);
 

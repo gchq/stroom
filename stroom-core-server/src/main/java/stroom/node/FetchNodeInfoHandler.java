@@ -27,7 +27,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -38,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@TaskHandlerBean(task = FetchNodeInfoAction.class)
+
 class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, ResultList<NodeInfoResult>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final ClusterNodeManager clusterNodeManager;

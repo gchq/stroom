@@ -17,11 +17,12 @@
 package stroom.pipeline.task;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
+import stroom.streamtask.StreamProcessorBinder;
 
 public class PipelineStreamTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(Object.class).annotatedWith(Names.named("pipelineStreamProcessor")).to(PipelineStreamProcessor.class);
+        StreamProcessorBinder.create(binder())
+                .bind("pipelineStreamProcessor", PipelineStreamProcessor.class);
     }
 }

@@ -18,6 +18,8 @@ package stroom.util.shared;
 
 import stroom.docref.SharedObject;
 
+import java.util.Objects;
+
 public class OffsetRange<T extends Number> implements SharedObject {
     private static final long serialVersionUID = 5045453517852867315L;
 
@@ -42,30 +44,24 @@ public class OffsetRange<T extends Number> implements SharedObject {
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(offset);
-        builder.append(length);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final OffsetRange<?> that = (OffsetRange<?>) o;
+        return Objects.equals(offset, that.offset) &&
+                Objects.equals(length, that.length);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof OffsetRange<?>)) {
-            return false;
-        }
-        final OffsetRange<?> range = (OffsetRange<?>) obj;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(offset, range.offset);
-        builder.append(length, range.length);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(offset, length);
     }
 
     @Override
     public String toString() {
-        final ToStringBuilder builder = new ToStringBuilder();
-        builder.append("offset", offset);
-        builder.append("length", length);
-        return builder.toString();
+        return "OffsetRange{" +
+                "offset=" + offset +
+                ", length=" + length +
+                '}';
     }
 }

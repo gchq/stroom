@@ -18,7 +18,6 @@ package stroom.statistics.sql;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -26,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
 
 import javax.inject.Provider;
@@ -43,8 +42,8 @@ public class SQLStatisticsModule extends AbstractModule {
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(SQLStatisticFlushTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(SQLStatisticFlushTask.class, SQLStatisticFlushTaskHandler.class);
     }
 
     @Provides
@@ -88,7 +87,7 @@ public class SQLStatisticsModule extends AbstractModule {
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-statistics database",e);
+            LOGGER.error("Error migrating stroom-statistics database", e);
             throw e;
         }
         LOGGER.info("Completed Flyway migrations for stroom-statistics in {}", FLYWAY_TABLE);

@@ -19,26 +19,25 @@ package stroom.entity.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.Set;
 
-@TaskHandlerBean(task = ClearServiceClusterTask.class)
+
 class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceClusterTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 
-    private final StroomBeanStore stroomBeanStore;
+    private final Set<Clearable> clearables;
     private final Security security;
 
     @Inject
-    ClearServiceClusterHandler(final StroomBeanStore stroomBeanStore,
+    ClearServiceClusterHandler(final Set<Clearable> clearables,
                                final Security security) {
-        this.stroomBeanStore = stroomBeanStore;
+        this.clearables = clearables;
         this.security = security;
     }
 
@@ -49,19 +48,21 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
                 throw new RuntimeException("No task supplied");
             }
             if (task.getBeanClass() == null) {
-                final Set<Clearable> set = stroomBeanStore.getInstancesOfType(Clearable.class);
-                set.forEach(clearable -> {
+                clearables.forEach(clearable -> {
                     LOGGER.info("Calling clear on {}", clearable);
                     clearable.clear();
                 });
             } else {
                 LOGGER.info("Calling clear on {}", task.getBeanClass());
-                final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-                if (obj == null) {
+                Optional<Clearable> optional = clearables.stream()
+                        .filter(clearable -> task.getBeanClass().isAssignableFrom(clearable.getClass()))
+                        .findAny();
+
+                if (!optional.isPresent()) {
                     throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
                 }
 
-                ((Clearable) obj).clear();
+                optional.ifPresent(Clearable::clear);
             }
             return new VoidResult();
         });

@@ -77,4 +77,32 @@ public class ConnectionPoolConfig implements IsConfig {
                 ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
                 '}';
     }
+    public static class Builder {
+        private final ConnectionPoolConfig instance;
+
+        public Builder() {
+            this(new ConnectionPoolConfig());
+        }
+
+        public Builder(ConnectionPoolConfig instance) {
+            this.instance = instance;
+        }
+
+        public Builder withCachePrepStmts(final boolean value) {
+            this.instance.setCachePrepStmts(value);
+            return this;
+        }
+        public Builder withPrepStmtCacheSize(final int value) {
+            this.instance.setPrepStmtCacheSize(value);
+            return this;
+        }
+        public Builder withPrepStmtCacheSqlLimit(final int value) {
+            this.instance.setPrepStmtCacheSqlLimit(value);
+            return this;
+        }
+
+        public ConnectionPoolConfig build() {
+            return instance;
+        }
+    }
 }

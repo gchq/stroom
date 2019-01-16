@@ -5,13 +5,12 @@ import stroom.config.global.api.FetchGlobalConfigAction;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = FetchGlobalConfigAction.class)
+
 class FetchGlobalConfigHandler extends AbstractTaskHandler<FetchGlobalConfigAction, ResultList<ConfigProperty>> {
     private final GlobalConfigService globalConfigService;
 

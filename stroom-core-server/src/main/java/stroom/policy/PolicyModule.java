@@ -17,16 +17,17 @@
 package stroom.policy;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
+import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class PolicyModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PolicyService.class).to(PolicyServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.policy.FetchDataRetentionPolicyHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.policy.SaveDataRetentionPolicyHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FetchDataRetentionPolicyAction.class, stroom.policy.FetchDataRetentionPolicyHandler.class)
+                .bind(SaveDataRetentionPolicyAction.class, stroom.policy.SaveDataRetentionPolicyHandler.class);
     }
 }

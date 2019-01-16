@@ -3,11 +3,10 @@ package stroom.config.global.impl.db;
 import stroom.config.global.api.ConfigProperty;
 import stroom.config.global.api.SaveGlobalConfigAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = SaveGlobalConfigAction.class)
+
 class SaveGlobalConfigHandler extends AbstractTaskHandler<SaveGlobalConfigAction, ConfigProperty> {
     private final GlobalConfigService globalConfigService;
 
