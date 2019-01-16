@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.config.app'
 
 dependencies {
+
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-server')
@@ -9,6 +10,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
     implementation project(':stroom-index:stroom-index-server')
     implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-security:stroom-security-impl-db')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-pipeline')
@@ -25,8 +27,8 @@ dependencies {
     implementation libs.javax_inject
 
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
-    
+    testImplementation libs.junit_jupiter_api
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.javax_activation

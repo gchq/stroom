@@ -3,6 +3,7 @@ package stroom.security;
 import stroom.security.shared.PermissionException;
 import stroom.security.util.UserTokenUtil;
 
+import javax.inject.Inject;
 import java.util.function.Supplier;
 
 public class SecurityImpl implements Security {
@@ -10,6 +11,7 @@ public class SecurityImpl implements Security {
 
     private final SecurityContext securityContext;
 
+    @Inject
     public SecurityImpl(final SecurityContext securityContext) {
         this.securityContext = securityContext;
     }

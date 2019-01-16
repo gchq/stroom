@@ -17,40 +17,55 @@
 package stroom.security;
 
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.shared.PermissionNames;
+import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
-import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
-class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
+class TestAppPermissionServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
-    @Inject
-    private UserService userService;
-    @Inject
-    private UserAppPermissionService userAppPermissionService;
-    @Inject
-    private UserGroupsCache userGroupsCache;
-    @Inject
-    private UserAppPermissionsCache userAppPermissionsCache;
+    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+
+    private static Injector injector;
+
+    private static UserService userService;
+    private static UserAppPermissionService userAppPermissionService;
+    private static UserGroupsCache userGroupsCache;
+    private static UserAppPermissionsCache userAppPermissionsCache;
+
+    @BeforeAll
+    public static void beforeAll() {
+        LOGGER.info("Before All - Start Database");
+        Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
+
+        injector = Guice.createInjector(new TestModule(dbContainer));
+
+        userService = injector.getInstance(UserService.class);
+        userAppPermissionService = injector.getInstance(UserAppPermissionService.class);
+        userGroupsCache = injector.getInstance(UserGroupsCache.class);
+        userAppPermissionsCache = injector.getInstance(UserAppPermissionsCache.class);
+    }
 
     @Test
     void test() {
-        final UserRef userGroup1 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup2 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
-        final UserRef userGroup3 = createUserGroup(FileSystemTestUtil.getUniqueTestString());
+        final UserRef userGroup1 = createUserGroup(String.format("Group_1_%s", UUID.randomUUID()));
+        final UserRef userGroup2 = createUserGroup(String.format("Group_2_%s", UUID.randomUUID()));
+        final UserRef userGroup3 = createUserGroup(String.format("Group_3_%s", UUID.randomUUID()));
 
         final String c1 = "C1";
         final String p1 = "P1";
@@ -60,7 +75,6 @@ class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
         appPermissionSet.add(c1);
         appPermissionSet.add(p1);
         appPermissionSet.add(p2);
-        userAppPermissionService.createAll(appPermissionSet);
 
         addPermissions(userGroup1, c1, p1);
         addPermissions(userGroup2, c1, p2);
@@ -86,25 +100,6 @@ class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
 
         removePermissions(userGroup2, p2);
         checkUserPermissions(user, c1, p1);
-    }
-
-    @Test
-    void test_getRequiredPermissionSet() {
-        final UserAppPermissionServiceImpl userAppPermissionServiceImpl = (UserAppPermissionServiceImpl) userAppPermissionService;
-        final Set<String> set = userAppPermissionServiceImpl.getRequiredPermissionSet();
-        assertThat(set).isNotNull();
-        assertThat(set.size()).isEqualTo(21);
-
-        final Permission permission = new Permission();
-        permission.setName(PermissionNames.ADMINISTRATOR);
-        final String search = permission.getName();
-
-        for (final String test : set) {
-            if (test.equals(search)) {
-                return;
-            }
-        }
-        fail("Shouldn't get here");
     }
 
     private void addPermissions(final UserRef user, final String... permissions) {
@@ -177,7 +172,7 @@ class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private UserRef createUser(final String name) {
-        UserRef userRef = userService.createUser(name);
+        final UserRef userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
@@ -185,7 +180,7 @@ class TestAppPermissionServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private UserRef createUserGroup(final String name) {
-        UserRef userRef = userService.createUserGroup(name);
+        final UserRef userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
         final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();

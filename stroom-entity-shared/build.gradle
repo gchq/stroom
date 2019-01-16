@@ -15,9 +15,9 @@ dependencies {
     
     runtimeOnly libs.jackson_annotations
     runtimeOnly libs.jsinterop_annotations
-
+    
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
