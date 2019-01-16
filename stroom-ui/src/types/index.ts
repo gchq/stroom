@@ -4,8 +4,7 @@ export interface ItemWithUuid {
 
 export interface User extends ItemWithUuid {
   name: string;
-  id: Number;
-  group: String;
+  group: boolean;
 }
 
 export interface DocRefType extends ItemWithUuid {

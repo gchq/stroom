@@ -22,6 +22,11 @@ import { testXslt } from "../../components/XsltEditor/test";
 import { testDictionaries } from "../../components/DictionaryEditor/test";
 import { generateGenericTracker } from "../../sections/Processing/tracker.testData";
 import { dataList, dataSource } from "../../sections/DataViewer/test";
+import {
+  generateTestUser,
+  generateTestGroup
+  //generateTestGroup
+} from "../../sections/UserPermissions/test";
 
 const testData: TestData = {
   documentTree: fromSetupSampleData,
@@ -33,7 +38,17 @@ const testData: TestData = {
   dictionaries: testDictionaries,
   dataList,
   dataSource,
-  trackers: Array(10).map(i => generateGenericTracker(i))
+  trackers: Array(10)
+    .fill(null)
+    .map(generateGenericTracker),
+  users: Array(10)
+    .fill(null)
+    .map(generateTestUser)
+    .concat(
+      Array(5)
+        .fill(1)
+        .map(generateTestGroup)
+    )
 };
 import createStore from "../../startup/store";
 

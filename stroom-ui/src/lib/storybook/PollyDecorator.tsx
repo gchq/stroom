@@ -42,7 +42,8 @@ import {
   ElementPropertiesByElementIdType,
   Dictionary,
   DataSourceType,
-  StreamTaskType
+  StreamTaskType,
+  User
 } from "../../types";
 import { StreamAttributeMapResult } from "../../sections/DataViewer/types";
 import { DocRefTypeList } from "../../components/DocRefTypes/redux";
@@ -61,7 +62,7 @@ Polly.register(FetchAdapter);
 const testConfig: Config = {
   authenticationServiceUrl: "/authService/authentication/v1",
   authorisationServiceUrl: "/api/authorisation/v1",
-  stroomBaseServiceUrl: "/api",
+  stroomBaseServiceUrl: "http://localhost:9001/api",
   authUsersUiUrl:
     "auth/users/because/they/are/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests",
   authTokensUiUrl:
@@ -87,6 +88,7 @@ export interface TestData {
   trackers: Array<StreamTaskType>;
   dataList: StreamAttributeMapResult;
   dataSource: DataSourceType;
+  users: Array<User>;
 }
 
 // The server is created as a singular thing for the whole app
@@ -116,6 +118,11 @@ server.get("/config.json").intercept((req: HttpRequest, res: HttpResponse) => {
 });
 
 // Explorer Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/users/v1`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    res.json(testCache.data!.users);
+  });
 // // Get Explorer Tree
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/all`)
@@ -427,7 +434,8 @@ export const setupTestServer = (testData: TestData) =>
           dictionaries: { ...testData.dictionaries },
           trackers: [...testData.trackers],
           dataList: { ...testData.dataList },
-          dataSource: { ...testData.dataSource }
+          dataSource: { ...testData.dataSource },
+          users: [...testData.users]
         };
       }
     }),
