@@ -23,16 +23,18 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.FindAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.docref.SharedObject;
+import stroom.task.shared.Action;
 
 public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
         implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;
     private final DataGridView<E> view;
-    private EntityServiceFindAction<C, E> findAction;
+    private Action<ResultList<E>> action;
     private ActionDataProvider<E> dataProvider;
     private Boolean allowNoConstraint = null;
 
@@ -42,21 +44,10 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
         view.addColumnSortHandler(this);
     }
 
-    public C getCriteria() {
-        if (findAction != null) {
-            return findAction.getCriteria();
-        }
-        return null;
-    }
-
-    public void setCriteria(final C criteria) {
-        if (findAction == null) {
-            findAction = new EntityServiceFindAction<>(criteria);
-        } else {
-            findAction.setCriteria(criteria);
-        }
+    public void setAction(final Action<ResultList<E>> action) {
+        this.action = action;
         if (dataProvider == null) {
-            this.dataProvider = new ActionDataProvider<E>(dispatcher, findAction) {
+            this.dataProvider = new ActionDataProvider<E>(dispatcher, action) {
                 // We override the default set data functionality to allow the
                 // examination and modification of data prior to setting it in
                 // the display.
@@ -100,7 +91,9 @@ public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E exten
     public void onColumnSort(final ColumnSortEvent event) {
         if (event.getColumn() instanceof OrderByColumn<?, ?>) {
             final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            if (findAction != null) {
+            if (action instanceof FindAction) {
+                final FindAction findAction = (FindAction) action;
+
                 if (event.isSortAscending()) {
                     findAction.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
                 } else {

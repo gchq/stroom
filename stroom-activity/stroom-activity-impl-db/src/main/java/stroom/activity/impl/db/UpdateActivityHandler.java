@@ -17,60 +17,42 @@
 package stroom.activity.impl.db;
 
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.SaveActivityAction;
+import stroom.activity.shared.UpdateActivityAction;
 import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-public class SaveActivityHandler extends AbstractTaskHandler<SaveActivityAction, Activity> {
+public class UpdateActivityHandler extends AbstractTaskHandler<UpdateActivityAction, Activity> {
     private final ActivityService activityService;
     private final DocumentEventLog entityEventLog;
     private final Security security;
 
     @Inject
-    SaveActivityHandler(final ActivityService activityService,
-                        final DocumentEventLog entityEventLog,
-                        final Security security) {
+    UpdateActivityHandler(final ActivityService activityService,
+                          final DocumentEventLog entityEventLog,
+                          final Security security) {
         this.activityService = activityService;
         this.entityEventLog = entityEventLog;
         this.security = security;
     }
 
     @Override
-    public Activity exec(final SaveActivityAction action) {
+    public Activity exec(final UpdateActivityAction action) {
         final Activity activity = action.getActivity();
         return security.secureResult(() -> {
             Activity result;
-
-            final boolean persistent = action.getActivity().getId() > 0;
+            Activity before = null;
 
             try {
-                if (persistent) {
-                    // Get the before version.
-                    final Activity before = activityService.fetch(activity.getId());
-
-//                // Validate the entity name.
-//                NameValidationUtil.validate(entityService, before, entity);
-
-                    result = activityService.update(activity);
-                    entityEventLog.update(before, result, null);
-
-                } else {
-//                // Validate the entity name.
-//                NameValidationUtil.validate(entityService, entity);
-
-                    result = activityService.update(activity);
-                    entityEventLog.create(result, null);
-                }
+                // Get the before version.
+                before = activityService.fetch(activity.getId());
+                result = activityService.update(activity);
+                entityEventLog.update(before, result, null);
             } catch (final RuntimeException e) {
-                if (persistent) {
-                    // Get the before version.
-                    entityEventLog.update(null, activity, e);
-                } else {
-                    entityEventLog.create(activity, e);
-                }
+                // Get the before version.
+                entityEventLog.update(before, activity, e);
                 throw e;
             }
 
