@@ -175,6 +175,16 @@ security:
     jwt:
       jwtIssuer: "stroom"
       enableTokenRevocationCheck: true
+securityDb:
+  connection:
+    jdbcDriverClassName: "com.mysql.jdbc.Driver"
+    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+    jdbcDriverUsername: "stroomuser"
+    jdbcDriverPassword: "stroompassword1"
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
 serviceDiscovery:
   enabled: false
   zookeeperUrl: "localhost:2181"

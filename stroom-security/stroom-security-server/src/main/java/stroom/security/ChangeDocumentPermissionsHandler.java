@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);

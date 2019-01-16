@@ -16,9 +16,9 @@
 
 package stroom.security;
 
+import stroom.docref.HasDisplayValue;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.docref.HasDisplayValue;
 
 public enum UserStatus implements HasDisplayValue, HasPrimitiveValue {
     ENABLED("Enabled", 0), // Normal User.

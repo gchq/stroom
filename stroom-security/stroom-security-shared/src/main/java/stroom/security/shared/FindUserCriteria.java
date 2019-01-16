@@ -31,16 +31,6 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
     private static final long serialVersionUID = -6584216681046824635L;
 
     /**
-     * Find by login valid period
-     */
-    private Period loginValidPeriod;
-
-    /**
-     * Find by last Login period
-     */
-    private Period lastLoginPeriod;
-
-    /**
      * Find user groups
      */
     private Boolean group;
@@ -61,22 +51,6 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
 
     public FindUserCriteria(final UserRef relatedUser) {
         this.relatedUser = relatedUser;
-    }
-
-    public Period getLastLoginPeriod() {
-        return lastLoginPeriod;
-    }
-
-    public void setLastLoginPeriod(final Period lastLoginPeriod) {
-        this.lastLoginPeriod = lastLoginPeriod;
-    }
-
-    public Period getLoginValidPeriod() {
-        return loginValidPeriod;
-    }
-
-    public void setLoginValidPeriod(final Period loginValidPeriod) {
-        this.loginValidPeriod = loginValidPeriod;
     }
 
     public Boolean getGroup() {

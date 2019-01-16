@@ -21,11 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.exception.AuthenticationException;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.*;
 
 import javax.inject.Inject;
 import javax.persistence.RollbackException;

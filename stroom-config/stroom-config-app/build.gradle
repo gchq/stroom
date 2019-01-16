@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
     implementation project(':stroom-index:stroom-index-server')
     implementation project(':stroom-security:stroom-security-server')
+    implementation project(':stroom-security:stroom-security-impl-db')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-pipeline')
