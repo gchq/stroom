@@ -18,12 +18,11 @@ package stroom.security;
 
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = CheckDocumentPermissionAction.class)
+
 class CheckDocumentPermissionHandler
         extends AbstractTaskHandler<CheckDocumentPermissionAction, SharedBoolean> {
     private final SecurityContext securityContext;

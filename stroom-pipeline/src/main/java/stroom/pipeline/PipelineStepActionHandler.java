@@ -23,11 +23,10 @@ import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
 import stroom.task.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = PipelineStepAction.class)
+
 class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
     private final StreamEventLog streamEventLog;

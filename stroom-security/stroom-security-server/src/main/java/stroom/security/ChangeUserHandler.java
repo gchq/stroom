@@ -22,12 +22,11 @@ import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = ChangeUserAction.class)
+
 class ChangeUserHandler extends AbstractTaskHandler<ChangeUserAction, VoidResult> {
     private final UserService userService;
     private final UserAppPermissionService userAppPermissionService;

@@ -23,13 +23,12 @@ import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 
-@TaskHandlerBean(task = ImportConfigAction.class)
+
 class ImportConfigHandler extends AbstractTaskHandler<ImportConfigAction, ResourceKey> {
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;

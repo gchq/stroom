@@ -23,14 +23,4 @@ public class MockTestControlModule extends AbstractModule {
     protected void configure() {
         bind(CommonTestControl.class).to(MockCommonTestControl.class);
     }
-//
-//    @Bean
-//    public CommonTestControl commonTestControl(final StroomBeanStore beanStore) {
-//        return new MockCommonTestControl(beanStore);
-//    }
-//
-//    @Bean
-//    public ContentImportService contentImportService(final ImportExportService importExportService) {
-//        return new ContentImportService(importExportService);
-//    }
 }

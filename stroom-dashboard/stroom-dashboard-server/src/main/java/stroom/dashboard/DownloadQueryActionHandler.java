@@ -26,7 +26,6 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -37,7 +36,6 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
-@TaskHandlerBean(task = DownloadQueryAction.class)
 class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction, ResourceGeneration> {
 
     private transient static final Logger LOGGER = LoggerFactory.getLogger(DownloadQueryActionHandler.class);

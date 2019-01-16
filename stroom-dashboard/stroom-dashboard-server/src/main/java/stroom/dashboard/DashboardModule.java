@@ -17,13 +17,20 @@
 package stroom.dashboard;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.DownloadQueryAction;
+import stroom.dashboard.shared.DownloadSearchResultsAction;
+import stroom.dashboard.shared.FetchDataSourceFieldsAction;
+import stroom.dashboard.shared.FetchTimeZonesAction;
+import stroom.dashboard.shared.FetchVisualisationAction;
+import stroom.dashboard.shared.SearchBusPollAction;
+import stroom.dashboard.shared.ValidateExpressionAction;
+import stroom.entity.EntityTypeBinder;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -34,14 +41,14 @@ public class DashboardModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(ActiveQueriesManager.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.DownloadQueryActionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.DownloadSearchResultsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.FetchExpressionFieldsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.FetchTimeZonesHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.FetchVisualisationHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.SearchBusPollActionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.dashboard.ValidateExpressionHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(DownloadQueryAction.class, DownloadQueryActionHandler.class)
+                .bind(DownloadSearchResultsAction.class, DownloadSearchResultsHandler.class)
+                .bind(FetchDataSourceFieldsAction.class, FetchExpressionFieldsHandler.class)
+                .bind(FetchTimeZonesAction.class, FetchTimeZonesHandler.class)
+                .bind(FetchVisualisationAction.class, FetchVisualisationHandler.class)
+                .bind(SearchBusPollAction.class, SearchBusPollActionHandler.class)
+                .bind(ValidateExpressionAction.class, ValidateExpressionHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
@@ -49,10 +56,7 @@ public class DashboardModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(DashboardDoc.DOCUMENT_TYPE).to(stroom.dashboard.DashboardStoreImpl.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
     }
 }

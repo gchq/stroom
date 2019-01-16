@@ -19,14 +19,13 @@ package stroom.dashboard;
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.TimeZoneData;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@TaskHandlerBean(task = FetchTimeZonesAction.class)
+
 class FetchTimeZonesHandler extends AbstractTaskHandler<FetchTimeZonesAction, TimeZoneData> {
     @Override
     public TimeZoneData exec(final FetchTimeZonesAction action) {

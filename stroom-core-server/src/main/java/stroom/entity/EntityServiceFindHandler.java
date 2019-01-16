@@ -29,12 +29,11 @@ import stroom.entity.shared.ResultList;
 import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@TaskHandlerBean(task = EntityServiceFindAction.class)
+
 class EntityServiceFindHandler
         extends AbstractTaskHandler<EntityServiceFindAction<BaseCriteria, SharedObject>, ResultList<SharedObject>> {
     private final EntityServiceBeanRegistry beanRegistry;

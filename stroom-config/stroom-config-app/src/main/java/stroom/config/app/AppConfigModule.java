@@ -55,6 +55,7 @@ public class AppConfigModule extends AbstractModule {
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own
+        bind(stroom.activity.impl.db.ActivityConfig.class).toInstance(appConfig.getActivityConfig());
         bind(ActivityConfig.class).toInstance(appConfig.getUiConfig().getActivityConfig());
         bind(AppenderConfig.class).toInstance(appConfig.getPipelineConfig().getAppenderConfig());
         bind(AuthenticationConfig.class).toInstance(appConfig.getSecurityConfig().getAuthenticationConfig());

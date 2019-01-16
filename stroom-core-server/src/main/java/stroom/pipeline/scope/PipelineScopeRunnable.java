@@ -1,14 +1,13 @@
 package stroom.pipeline.scope;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.function.Supplier;
 
 public class PipelineScopeRunnable {
     private final PipelineScope scope;
 
     @Inject
-    PipelineScopeRunnable(@Named("pipelineScope") final PipelineScope scope) {
+    PipelineScopeRunnable(final PipelineScope scope) {
         this.scope = scope;
     }
 

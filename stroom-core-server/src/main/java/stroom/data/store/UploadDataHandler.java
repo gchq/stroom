@@ -18,18 +18,17 @@ package stroom.data.store;
 
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.resource.ResourceStore;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.UploadDataAction;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.TaskManager;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 
-@TaskHandlerBean(task = UploadDataAction.class)
+
 class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKey> {
     private final ResourceStore resourceStore;
     private final TaskManager taskManager;

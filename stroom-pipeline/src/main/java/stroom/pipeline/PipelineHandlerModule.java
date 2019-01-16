@@ -17,19 +17,25 @@
 package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.pipeline.shared.FetchDataAction;
+import stroom.pipeline.shared.FetchDataWithPipelineAction;
+import stroom.pipeline.shared.FetchPipelineDataAction;
+import stroom.pipeline.shared.FetchPipelineXmlAction;
+import stroom.pipeline.shared.FetchPropertyTypesAction;
+import stroom.pipeline.shared.PipelineStepAction;
+import stroom.pipeline.shared.SavePipelineXmlAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class PipelineHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(FetchDataHandler.class);
-        taskHandlerBinder.addBinding().to(FetchDataWithPipelineHandler.class);
-        taskHandlerBinder.addBinding().to(FetchPipelineDataHandler.class);
-        taskHandlerBinder.addBinding().to(FetchPipelineXmlHandler.class);
-        taskHandlerBinder.addBinding().to(FetchPropertyTypesHandler.class);
-        taskHandlerBinder.addBinding().to(PipelineStepActionHandler.class);
-        taskHandlerBinder.addBinding().to(SavePipelineXmlHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FetchDataAction.class, FetchDataHandler.class)
+                .bind(FetchDataWithPipelineAction.class, FetchDataWithPipelineHandler.class)
+                .bind(FetchPipelineDataAction.class, FetchPipelineDataHandler.class)
+                .bind(FetchPipelineXmlAction.class, FetchPipelineXmlHandler.class)
+                .bind(FetchPropertyTypesAction.class, FetchPropertyTypesHandler.class)
+                .bind(PipelineStepAction.class, PipelineStepActionHandler.class)
+                .bind(SavePipelineXmlAction.class, SavePipelineXmlHandler.class);
     }
 }

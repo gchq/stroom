@@ -58,7 +58,6 @@ import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -69,7 +68,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = SteppingTask.class)
+
 class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
 

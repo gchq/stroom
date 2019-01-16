@@ -33,7 +33,6 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-@TaskHandlerBean(task = SearchBusPollAction.class)
+
 class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction, SearchBusPollResult> {
     private transient static final Logger LOGGER = LoggerFactory.getLogger(SearchBusPollActionHandler.class);
 

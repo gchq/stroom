@@ -27,14 +27,13 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
-@TaskHandlerBean(task = FetchPipelineDataAction.class)
+
 class FetchPipelineDataHandler extends AbstractTaskHandler<FetchPipelineDataAction, SharedList<PipelineData>> {
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;

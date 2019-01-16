@@ -21,12 +21,11 @@ import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.stats.shared.StroomStatsStoreFieldChangeAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@TaskHandlerBean(task = StroomStatsStoreFieldChangeAction.class)
+
 class StroomStatsStoreFieldChangeHandler
         extends AbstractTaskHandler<StroomStatsStoreFieldChangeAction, StroomStatsStoreEntityData> {
     @Override

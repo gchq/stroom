@@ -23,7 +23,7 @@ import stroom.node.shared.Node;
  * Component that remembers the node list and who is the current master node
  */
 public interface ClusterNodeManager {
-    String BEAN_NAME = "clusterNodeManager";
+    ServiceName SERVICE_NAME = new ServiceName("clusterNodeManager");
     String GET_CLUSTER_NODE_INFO_METHOD = "getClusterNodeInfo";
     String PING_METHOD = "ping";
 

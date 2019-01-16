@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -30,7 +29,7 @@ import stroom.util.shared.SharedBoolean;
 import javax.inject.Inject;
 import java.net.MalformedURLException;
 
-@TaskHandlerBean(task = ClusterLockTask.class)
+
 class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, SharedBoolean> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 

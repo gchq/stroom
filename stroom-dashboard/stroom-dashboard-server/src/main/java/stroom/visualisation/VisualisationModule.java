@@ -17,8 +17,8 @@
 package stroom.visualisation;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -34,8 +34,8 @@ public class VisualisationModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.visualisation.VisualisationStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(VisualisationDoc.DOCUMENT_TYPE).to(stroom.visualisation.VisualisationStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(VisualisationDoc.DOCUMENT_TYPE, VisualisationStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.visualisation.VisualisationStoreImpl.class);

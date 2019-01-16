@@ -24,7 +24,6 @@ import stroom.logging.DocumentEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -35,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-@TaskHandlerBean(task = DownloadDictionaryAction.class)
+
 class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAction, ResourceGeneration> {
     private final ResourceStore resourceStore;
     private final DocumentEventLog documentEventLog;

@@ -19,34 +19,33 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.lifecycle.StroomBeanStore;
-import stroom.node.NodeCache;
-import stroom.security.Security;
+import stroom.data.meta.api.Data;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.data.meta.api.Data;
+import stroom.node.NodeCache;
+import stroom.security.Security;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-@TaskHandlerBean(task = StreamProcessorTask.class)
 class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
     private static final Set<String> FETCH_SET = new HashSet<>(
             Arrays.asList(Processor.ENTITY_TYPE, ProcessorFilter.ENTITY_TYPE));
-    private final StroomBeanStore beanStore;
+    private final Map<TaskType, Provider<StreamProcessorTaskExecutor>> executorProviders;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskHelper streamTaskHelper;
@@ -56,15 +55,15 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
     private final Security security;
 
     @Inject
-    StreamProcessorTaskHandler(final StroomBeanStore beanStore,
-                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                               @Named("cachedStreamProcessorFilterService") final StreamProcessorFilterService streamProcessorFilterService,
+    StreamProcessorTaskHandler(final Map<TaskType, Provider<StreamProcessorTaskExecutor>> executorProviders,
+                               final CachedStreamProcessorService streamProcessorService,
+                               final CachedStreamProcessorFilterService streamProcessorFilterService,
                                final StreamTaskHelper streamTaskHelper,
                                final StreamStore streamStore,
                                final NodeCache nodeCache,
                                final TaskContext taskContext,
                                final Security security) {
-        this.beanStore = beanStore;
+        this.executorProviders = executorProviders;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskHelper = streamTaskHelper;
@@ -126,10 +125,8 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                         // Avoid having to do another fetch
                         streamTask.setStreamProcessorFilter(destStreamProcessorFilter);
 
-                        final String taskType = destStreamProcessor.getTaskType();
-
-                        final StreamProcessorTaskExecutor streamProcessorTaskExecutor = (StreamProcessorTaskExecutor) beanStore
-                                .getInstance(taskType);
+                        final Provider<StreamProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(destStreamProcessor.getTaskType()));
+                        final StreamProcessorTaskExecutor streamProcessorTaskExecutor = executorProvider.get();
 
                         // Used as a hook for the test code
                         task.setStreamProcessorTaskExecutor(streamProcessorTaskExecutor);

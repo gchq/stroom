@@ -24,11 +24,10 @@ import stroom.dashboard.expression.v1.ParamFactory;
 import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import java.text.ParseException;
 
-@TaskHandlerBean(task = ValidateExpressionAction.class)
+
 class ValidateExpressionHandler extends AbstractTaskHandler<ValidateExpressionAction, ValidateExpressionResult> {
     @Override
     public ValidateExpressionResult exec(final ValidateExpressionAction action) {

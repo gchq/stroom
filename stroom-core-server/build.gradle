@@ -1,9 +1,11 @@
 ext.moduleName = 'stroom.core.server'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-shared')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-entity-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-docstore:stroom-docstore-impl')

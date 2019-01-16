@@ -20,11 +20,10 @@ import stroom.security.shared.CreateUserAction;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = CreateUserAction.class)
+
 class CreateUserHandler extends AbstractTaskHandler<CreateUserAction, UserRef> {
     private final UserService userService;
     private final Security security;

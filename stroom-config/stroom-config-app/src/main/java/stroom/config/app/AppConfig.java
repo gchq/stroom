@@ -2,6 +2,7 @@ package stroom.config.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
@@ -33,7 +34,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig implements IsConfig {
-
+    private ActivityConfig activityConfig;
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ContentPackImportConfig contentPackImportConfig;
@@ -62,6 +63,7 @@ public class AppConfig implements IsConfig {
     private VolumeConfig volumeConfig;
 
     public AppConfig() {
+        this.activityConfig = new ActivityConfig();
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
         this.contentPackImportConfig = new ContentPackImportConfig();
@@ -91,7 +93,8 @@ public class AppConfig implements IsConfig {
     }
 
     @Inject
-    AppConfig(final BenchmarkClusterConfig benchmarkClusterConfig,
+    AppConfig(final ActivityConfig activityConfig,
+              final BenchmarkClusterConfig benchmarkClusterConfig,
               final ClusterConfig clusterConfig,
               final ContentPackImportConfig contentPackImportConfig,
               final CoreConfig coreConfig,
@@ -117,6 +120,7 @@ public class AppConfig implements IsConfig {
               final StatisticsConfig statisticsConfig,
               final UiConfig uiConfig,
               final VolumeConfig volumeConfig) {
+        this.activityConfig = activityConfig;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
         this.clusterConfig = clusterConfig;
         this.contentPackImportConfig = contentPackImportConfig;
@@ -143,6 +147,15 @@ public class AppConfig implements IsConfig {
         this.statisticsConfig = statisticsConfig;
         this.uiConfig = uiConfig;
         this.volumeConfig = volumeConfig;
+    }
+
+    @JsonProperty("activity")
+    public ActivityConfig getActivityConfig() {
+        return activityConfig;
+    }
+
+    public void setActivityConfig(final ActivityConfig activityConfig) {
+        this.activityConfig = activityConfig;
     }
 
     @JsonProperty("benchmark")

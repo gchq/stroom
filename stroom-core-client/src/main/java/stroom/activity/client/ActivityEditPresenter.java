@@ -32,9 +32,9 @@ import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
+import stroom.activity.shared.SaveActivityAction;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceSaveAction;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -218,7 +218,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         activity.setDetails(details);
 
         // Save the activity.
-        dispatcher.exec(new EntityServiceSaveAction<Activity>(activity)).onSuccess(result -> {
+        dispatcher.exec(new SaveActivityAction(activity)).onSuccess(result -> {
             activity = result;
             consumer.accept(result);
             hide();

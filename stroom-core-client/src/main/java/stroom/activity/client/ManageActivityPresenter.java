@@ -25,11 +25,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FindActivityCriteria;
+import stroom.activity.shared.FetchActivityAction;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceDeleteAction;
-import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
@@ -176,11 +176,10 @@ public class ManageActivityPresenter extends
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            dispatcher.exec(new EntityServiceLoadAction<Activity>(e)).onSuccess(this::onEdit);
+            dispatcher.exec(new FetchActivityAction(e)).onSuccess(this::onEdit);
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void onEdit(final Activity e) {
         if (e != null) {
             if (editProvider != null) {
@@ -200,10 +199,10 @@ public class ManageActivityPresenter extends
                     result -> {
                         if (result) {
                             // Load the activity.
-                            dispatcher.exec(new EntityServiceLoadAction<Activity>(entity)).onSuccess(e -> {
+                            dispatcher.exec(new FetchActivityAction(entity)).onSuccess(e -> {
                                 if (e != null) {
                                     // Delete the activity
-                                    dispatcher.exec(new EntityServiceDeleteAction(e)).onSuccess(res -> {
+                                    dispatcher.exec(new DeleteActivityAction(e)).onSuccess(res -> {
                                         listPresenter.refresh();
                                         listPresenter.getView().getSelectionModel().clear();
                                     });

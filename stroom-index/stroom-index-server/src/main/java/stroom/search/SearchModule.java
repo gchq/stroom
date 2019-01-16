@@ -19,7 +19,7 @@ package stroom.search;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -29,9 +29,9 @@ public class SearchModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(LuceneSearchResponseCreatorManager.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.search.AsyncSearchTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.search.ClusterSearchTaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.search.EventSearchTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)
+                .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class)
+                .bind(EventSearchTask.class, EventSearchTaskHandler.class);
     }
 }

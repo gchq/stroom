@@ -20,13 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = LifecycleTask.class)
+
 class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTaskHandler.class);
 

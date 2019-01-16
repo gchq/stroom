@@ -35,7 +35,7 @@ import javax.inject.Singleton;
 @Singleton
 public class MockStreamProcessorFilterService
         extends MockEntityService<ProcessorFilter, FindStreamProcessorFilterCriteria>
-        implements StreamProcessorFilterService {
+        implements CachedStreamProcessorFilterService {
     @Override
     public void addFindStreamCriteria(final Processor streamProcessor,
                                       final int priority,

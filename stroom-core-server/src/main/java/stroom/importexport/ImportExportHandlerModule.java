@@ -17,18 +17,21 @@
 package stroom.importexport;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.importexport.shared.ExportConfigAction;
+import stroom.importexport.shared.FetchDependenciesAction;
+import stroom.importexport.shared.ImportConfigAction;
+import stroom.importexport.shared.ImportConfigConfirmationAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ImportExportHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DependencyService.class).to(DependencyServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(ExportConfigHandler.class);
-        taskHandlerBinder.addBinding().to(FetchDependenciesHandler.class);
-        taskHandlerBinder.addBinding().to(ImportConfigConfirmationHandler.class);
-        taskHandlerBinder.addBinding().to(ImportConfigHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ExportConfigAction.class, ExportConfigHandler.class)
+                .bind(FetchDependenciesAction.class, FetchDependenciesHandler.class)
+                .bind(ImportConfigConfirmationAction.class, ImportConfigConfirmationHandler.class)
+                .bind(ImportConfigAction.class, ImportConfigHandler.class);
     }
 }

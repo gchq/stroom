@@ -18,7 +18,6 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.lifecycle.StroomBeanStore;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -32,8 +31,7 @@ class DistributedTaskFactoryBeanRegistry {
     private final Map<String, DistributedTaskFactory> factoryMap = new HashMap<>();
 
     @Inject
-    DistributedTaskFactoryBeanRegistry(final StroomBeanStore stroomBeanStore) {
-        Set<DistributedTaskFactory> distributedTaskFactories = stroomBeanStore.getInstancesOfType(DistributedTaskFactory.class);
+    DistributedTaskFactoryBeanRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
             DistributedTaskFactoryBean annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
             final String jobName = annotation.jobName();
@@ -54,7 +52,7 @@ class DistributedTaskFactoryBeanRegistry {
     }
 
     @SuppressWarnings("unchecked")
-    public DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {
+    DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {
         final DistributedTaskFactory distributedTaskFactory = factoryMap.get(jobName);
 
         if (distributedTaskFactory == null) {

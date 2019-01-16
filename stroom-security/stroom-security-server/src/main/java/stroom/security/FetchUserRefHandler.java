@@ -23,7 +23,6 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = FetchUserRefAction.class)
+
 class FetchUserRefHandler
         extends AbstractTaskHandler<FetchUserRefAction, ResultList<UserRef>> {
     private final UserService userService;

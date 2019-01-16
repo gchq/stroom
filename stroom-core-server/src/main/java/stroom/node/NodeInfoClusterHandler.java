@@ -19,11 +19,10 @@ package stroom.node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = NodeInfoClusterTask.class)
+
 class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, NodeInfoResult> {
     private final NodeCache nodeCache;
     private final Security security;
