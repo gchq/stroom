@@ -21,6 +21,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.datasource.DatasourceModule());
         install(new stroom.dictionary.DictionaryModule());
         install(new stroom.dictionary.DictionaryHandlerModule());
+        install(new stroom.docstore.DocStoreModule());
         install(new stroom.docstore.db.DBPersistenceModule());
         install(new stroom.document.DocumentModule());
         install(new stroom.elastic.impl.ElasticModule());

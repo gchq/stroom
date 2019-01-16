@@ -65,7 +65,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 //    private volatile long lastUpdate;
 
     @Inject
-    public StoreImpl(final Persistence persistence, final SecurityContext securityContext) {
+    public StoreImpl(final Persistence persistence,
+                     final SecurityContext securityContext) {
+//                     @Assisted final DocumentSerialiser2<D> serialiser,
+//                     @Assisted final Class<D> clazz) {
         this.persistence = persistence;
         this.securityContext = securityContext;
     }
@@ -529,4 +532,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .sorted()
                 .collect(Collectors.toList());
     }
+
+//    public interface Factory {
+//        <D extends Doc> Store<D> create(final DocumentSerialiser2<D> serialiser, final Class<D> clazz);
+//    }
+
 }

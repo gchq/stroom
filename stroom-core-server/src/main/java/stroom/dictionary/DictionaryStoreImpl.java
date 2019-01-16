@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 import stroom.db.migration.doc.dictionary.OldDictionaryDoc;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
+import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.docstore.Store;
-import stroom.util.string.EncodingUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -34,6 +34,7 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
+import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -54,20 +55,20 @@ class DictionaryStoreImpl implements DictionaryStore {
     private final Store<DictionaryDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser2<DictionaryDoc> serialiser;
-    private final Serialiser2<OldDictionaryDoc> oldSerialiser;
+    private final DocumentSerialiser2<DictionaryDoc> serialiser;
+    private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;
 
     @Inject
     DictionaryStoreImpl(final Store<DictionaryDoc> store,
                         final SecurityContext securityContext,
                         final Persistence persistence,
-                        final Serialiser2<DictionaryDoc> serialiser,
-                        final Serialiser2<OldDictionaryDoc> oldSerialiser) {
+                        final DictionarySerialiser serialiser,
+                        final Serialiser2Factory serialiser2Factory) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.serialiser = serialiser;
-        this.oldSerialiser = oldSerialiser;
+        this.oldSerialiser = serialiser2Factory.createSerialiser(OldDictionaryDoc.class);
 
         store.setType(DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
         store.setSerialiser(this.serialiser);

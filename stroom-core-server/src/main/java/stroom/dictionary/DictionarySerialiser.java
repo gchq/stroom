@@ -3,6 +3,7 @@ package stroom.dictionary;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
@@ -15,8 +16,8 @@ public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> 
     private final Serialiser2<DictionaryDoc> delegate;
 
     @Inject
-    public DictionarySerialiser(final Serialiser2<DictionaryDoc> delegate) {
-        this.delegate = delegate;
+    public DictionarySerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(DictionaryDoc.class);
     }
 
     @Override
