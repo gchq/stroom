@@ -16,6 +16,7 @@ public class MockServiceModule extends AbstractModule {
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.index.MockIndexModule());
+        install(new stroom.logging.LoggingModule());
         install(new stroom.node.MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
         install(new stroom.pipeline.PipelineModule());
@@ -30,7 +31,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.resource.MockResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.security.MockSecurityModule());
-        install(new stroom.servlet.MockServletModule());
+//        install(new stroom.servlet.MockServletModule());
         install(new stroom.streamtask.MockStreamTaskModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
         install(new stroom.data.store.impl.fs.MockStreamStoreModule());
