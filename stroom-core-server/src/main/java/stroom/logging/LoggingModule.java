@@ -23,8 +23,10 @@ import stroom.servlet.HttpServletRequestHolderImpl;
 public class LoggingModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(CurrentActivity.class).to(CurrentActivityImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
         bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
+        bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
 
         EventInforProviderBinder.create(binder())
                 .bind(BasicEventInfoProvider.class);
