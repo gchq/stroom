@@ -19,7 +19,6 @@ package stroom.security;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.CachingEntityManager;
 import stroom.entity.shared.Clearable;
 
 import javax.inject.Singleton;

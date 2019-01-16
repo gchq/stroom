@@ -18,142 +18,53 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.EntityServiceHelper;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
-import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.entity.util.FieldMap;
-import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.SqlBuilder;
+import stroom.security.dao.UserDao;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.PersistenceException;
 import javax.persistence.Transient;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Singleton
 class UserServiceImpl implements UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
-    private static final String SQL_ADD_USER_TO_GROUP;
-    private static final String SQL_REMOVE_USER_FROM_GROUP;
 
-    static {
-        SQL_ADD_USER_TO_GROUP = ""
-                + "INSERT INTO "
-                + UserGroupUser.TABLE_NAME
-                + " ("
-                + UserGroupUser.VERSION
-                + ", "
-                + UserGroupUser.USER_UUID
-                + ", "
-                + UserGroupUser.GROUP_UUID
-                + ")"
-                + " VALUES (?,?,?)";
-    }
-
-    static {
-        SQL_REMOVE_USER_FROM_GROUP = ""
-                + "DELETE FROM "
-                + UserGroupUser.TABLE_NAME
-                + " WHERE "
-                + UserGroupUser.USER_UUID
-                + " = ?"
-                + " AND "
-                + UserGroupUser.GROUP_UUID
-                + " = ?";
-    }
-
-    private final StroomEntityManager entityManager;
     private final Security security;
 
-    private final EntityServiceHelper<User> entityServiceHelper;
-    private final DocumentPermissionService documentPermissionService;
     private final AuthenticationConfig securityConfig;
-
-    private final QueryAppender<User, FindUserCriteria> queryAppender;
-
-    private String entityType;
-    private FieldMap fieldMap;
+    private final UserDao userDao;
 
     @Inject
-    UserServiceImpl(final StroomEntityManager entityManager,
-                    final Security security,
-                    final DocumentPermissionService documentPermissionService,
-                    final AuthenticationConfig securityConfig) {
-        this.entityManager = entityManager;
+    UserServiceImpl(final Security security,
+                    final AuthenticationConfig securityConfig,
+                    final UserDao userDao) {
         this.security = security;
-        this.documentPermissionService = documentPermissionService;
         this.securityConfig = securityConfig;
-
-        this.queryAppender = createQueryAppender(entityManager);
-        this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
+        this.userDao = userDao;
     }
 
     private QueryAppender<User, FindUserCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new QueryAppender<>(entityManager);
     }
 
-    /**
-     * @param criteria for the search
-     * @return list of Users
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public BaseResultList<User> find(final FindUserCriteria criteria) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            // Build up the HQL
-            final HqlBuilder sql = new HqlBuilder();
-            sql.append("SELECT user FROM ");
-            sql.append(User.class.getName());
-            sql.append(" as user");
-
-            sql.append(" WHERE 1=1"); // Avoid conditional AND's
-
-            sql.appendValueQuery("user.name", criteria.getName());
-
-            sql.appendValueQuery("user.group", criteria.getGroup());
-
-            sql.appendRangeQuery("user.lastLoginMs", criteria.getLastLoginPeriod());
-
-            sql.appendRangeQuery("user.loginValidMs", criteria.getLoginValidPeriod());
-
-            sql.appendOrderBy(getFieldMap().getHqlFieldMap(), criteria, "user");
-
-            // Create the query
-            return BaseResultList.createCriterialBasedList(entityManager.executeQueryResultList(sql, criteria),
-                    criteria);
-        });
-    }
-
     @Override
     public UserRef getUserByName(final String name) {
         if (name != null && name.trim().length() > 0) {
-            final FindUserCriteria findUserCriteria = new FindUserCriteria(name, false);
-            final BaseResultList<User> users = find(findUserCriteria);
-            if (users != null) {
-                final User user = users.getFirst();
-                if (user != null) {
-                    // Make sure this is the user that was requested.
-                    if (!user.getName().equals(name)) {
-                        throw new RuntimeException("Unexpected: returned user name does not match requested user name");
-                    }
-
-                    return UserRefFactory.create(user);
+            final UserJooq user = userDao.getUserByName(name);
+            if (user != null) {
+                // Make sure this is the user that was requested.
+                if (!user.getName().equals(name)) {
+                    throw new RuntimeException("Unexpected: returned user name does not match requested user name");
                 }
+                return UserRefFactory.create(user);
             }
         }
 
@@ -161,212 +72,87 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserRef> findUsersInGroup(final UserRef userGroup) {
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT");
-        sql.append(" u.*");
-        sql.append(" FROM ");
-        sql.append(User.TABLE_NAME);
-        sql.append(" u");
-        sql.append(" JOIN ");
-        sql.append(UserGroupUser.TABLE_NAME);
-        sql.append(" ugu");
-        sql.append(" ON");
-        sql.append(" (u.");
-        sql.append(User.UUID);
-        sql.append(" = ugu.");
-        sql.append(UserGroupUser.USER_UUID);
-        sql.append(")");
-        sql.append(" WHERE");
-        sql.append(" ugu.");
-        sql.append(UserGroupUser.GROUP_UUID);
-        sql.append(" = ");
-        sql.arg(userGroup.getUuid());
-        sql.append(" ORDER BY");
-        sql.append(" u.");
-        sql.append(User.NAME);
+    public List<User> find(final FindUserCriteria criteria) {
+        return userDao.find(criteria.getGroup(), criteria.getName().getString())
+                .stream()
+                .map(this::fromJooq)
+                .collect(Collectors.toList());
+    }
 
-        return toRefList(entityManager.executeNativeQueryResultList(sql, User.class));
+    @Override
+    public List<UserRef> findUsersInGroup(final UserRef userGroup) {
+        return userDao.findUsersInGroup(userGroup.getUuid()).stream()
+                .map(UserRefFactory::create)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<UserRef> findGroupsForUser(final UserRef user) {
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT");
-        sql.append(" u.*");
-        sql.append(" FROM ");
-        sql.append(User.TABLE_NAME);
-        sql.append(" u");
-        sql.append(" JOIN ");
-        sql.append(UserGroupUser.TABLE_NAME);
-        sql.append(" ugu");
-        sql.append(" ON");
-        sql.append(" (u.");
-        sql.append(User.UUID);
-        sql.append(" = ugu.");
-        sql.append(UserGroupUser.GROUP_UUID);
-        sql.append(")");
-        sql.append(" WHERE");
-        sql.append(" ugu.");
-        sql.append(UserGroupUser.USER_UUID);
-        sql.append(" = ");
-        sql.arg(user.getUuid());
-        sql.append(" ORDER BY");
-        sql.append(" u.");
-        sql.append(User.NAME);
-
-        return toRefList(entityManager.executeNativeQueryResultList(sql, User.class));
+        return userDao.findGroupsForUser(user.getUuid()).stream()
+                .map(UserRefFactory::create)
+                .collect(Collectors.toList());
     }
 
     @Override
     public UserRef createUser(final String name) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final User user = new User();
-            user.setName(name);
-            user.setGroup(false);
-            return UserRefFactory.create(save(user));
-        });
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
+                () -> Optional.of(userDao.createUser(name)).map(UserRefFactory::create).orElse(null)
+        );
     }
 
     @Override
     public UserRef createUserGroup(final String name) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final User user = new User();
-            user.setName(name);
-            user.setGroup(true);
-            return UserRefFactory.create(save(user));
-        });
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
+                () -> Optional.of(userDao.createUserGroup(name)).map(UserRefFactory::create).orElse(null)
+        );
+    }
+
+    @Override
+    public User loadByUuid(final String uuid) {
+        return Optional.of(userDao.getByUuid(uuid))
+                .map(this::fromJooq)
+                .orElse(null);
+    }
+
+    @Override
+    public User save(User user) {
+        // TODO
+        return null;
+    }
+
+    private User fromJooq(final UserJooq userJooq) {
+        final User user = new User();
+        user.setId(userJooq.getId());
+        user.setUuid(userJooq.getUuid());
+        user.setName(userJooq.getName());
+        user.setGroup(userJooq.isGroup());
+        return user;
+    }
+
+    @Override
+    public Boolean delete(User user) {
+        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
+                () -> userDao.deleteUser(user.getUuid()));
     }
 
     @Override
     public void addUserToGroup(final UserRef user, final UserRef userGroup) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            try {
-                final SqlBuilder sqlBuilder = new SqlBuilder(SQL_ADD_USER_TO_GROUP, 1, user.getUuid(), userGroup.getUuid());
-                entityManager.executeNativeUpdate(sqlBuilder);
-            } catch (final PersistenceException e) {
-                // Expected exception.
-                LOGGER.debug("addUserToGroup()", e);
-                throw e;
-            } catch (final RuntimeException e) {
-                LOGGER.error("addUserToGroup()", e);
-                throw e;
-            }
+            userDao.addUserToGroup(user.getUuid(), userGroup.getUuid());
         });
     }
 
     @Override
     public void removeUserFromGroup(final UserRef user, final UserRef userGroup) {
         security.secure(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            try {
-                final SqlBuilder sqlBuilder = new SqlBuilder(SQL_REMOVE_USER_FROM_GROUP, user.getUuid(), userGroup.getUuid());
-                entityManager.executeNativeUpdate(sqlBuilder);
-            } catch (final RuntimeException e) {
-                LOGGER.error("removeUserFromGroup()", e);
-                throw e;
-            }
+            userDao.removeUserFromGroup(user.getUuid(), userGroup.getUuid());
         });
     }
 
-    @Override
-    public User load(final User entity) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.load(entity, Collections.emptySet(), queryAppender));
-    }
-
-    @Override
-    public User load(final User entity, final Set<String> fetchSet) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.load(entity, fetchSet, queryAppender));
-    }
-
-    @Override
-    public final User loadByUuid(final String uuid) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> entityServiceHelper.loadByUuid(uuid, Collections.emptySet(), queryAppender));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public final User loadByUuid(final String uuid, final Set<String> fetchSet) {
-        return entityServiceHelper.loadByUuid(uuid, fetchSet, queryAppender);
-    }
-
-    @Override
-    public User save(final User user) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            // If this is a new system user then create an initial password.
-            if (!user.isPersistent()) {
-                user.setUuid(UUID.randomUUID().toString());
-
-                return entityServiceHelper.save(user, queryAppender);
-            } else {
-                return entityServiceHelper.save(user, queryAppender);
-            }
-        });
-    }
-
-    @Override
-    public Boolean delete(final User entity) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final Boolean success = entityServiceHelper.delete(entity);
-
-            // Delete any document permissions associated with this user.
-            try {
-                if (documentPermissionService != null && Boolean.TRUE.equals(success)) {
-                    documentPermissionService.clearUserPermissions(UserRefFactory.create(entity));
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-
-            return success;
-        });
-    }
-
-    private List<UserRef> toRefList(final List<User> list) {
-        final List<UserRef> refs = new ArrayList<>(list.size());
-        list.forEach(user -> refs.add(UserRefFactory.create(user)));
-        return refs;
-    }
-
-    @Override
-    public Class<User> getEntityClass() {
-        return User.class;
-    }
-
-    @Override
-    public String getEntityType() {
-        if (entityType == null) {
-            try {
-                entityType = getEntityClass().getDeclaredConstructor(new Class[0]).newInstance().getType();
-            } catch (final IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return entityType;
-    }
 
     @Transient
     @Override
     public String getNamePattern() {
         return securityConfig.getUserNamePattern();
-    }
-
-    @Override
-    public FindUserCriteria createCriteria() {
-        return new FindUserCriteria();
-    }
-
-    private FieldMap createFieldMap() {
-        return new FieldMap()
-                .add(BaseCriteria.FIELD_ID, BaseEntity.ID, "id")
-                .add(FindNamedEntityCriteria.FIELD_NAME, NamedEntity.NAME, "name")
-                .add(FindUserCriteria.FIELD_STATUS, SQLNameConstants.STATUS, "pstatus")
-                .add(FindUserCriteria.FIELD_LAST_LOGIN, User.LAST_LOGIN_MS, "lastLoginMs");
-    }
-
-    private FieldMap getFieldMap() {
-        if (fieldMap == null) {
-            fieldMap = createFieldMap();
-        }
-        return fieldMap;
     }
 }

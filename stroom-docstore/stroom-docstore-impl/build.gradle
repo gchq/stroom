@@ -15,9 +15,9 @@ dependencies {
     implementation libs.slf4j_api
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
-
+    
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

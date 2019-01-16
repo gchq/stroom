@@ -16,8 +16,8 @@
 
 package stroom.security;
 
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DeleteUserAction;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;

@@ -21,12 +21,12 @@ dependencies {
     implementation libs.slf4j_api
 
     runtimeOnly libs.mysql_connector_java
-
+    
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     
     testImplementation libs.assertj_core
     
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
     
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

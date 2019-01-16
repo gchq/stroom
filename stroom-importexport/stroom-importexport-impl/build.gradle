@@ -14,7 +14,6 @@ dependencies {
     //implementation libs.jaxb_api
 
     //implementation libs.slf4j_api
-
     integrationTestCompileOnly libs.junit_jupiter_api
 
     integrationTestRuntimeOnly libs.mysql_connector_java
