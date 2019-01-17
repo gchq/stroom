@@ -5,7 +5,11 @@ import { actionCreators } from "./redux";
 import { wrappedGet } from "../../lib/fetchTracker.redux";
 import { User } from "src/types";
 
-const { usersReceived } = actionCreators;
+const {
+  usersReceived,
+  usersInGroupReceived,
+  groupsForUserReceived
+} = actionCreators;
 
 export const findUsers = (
   pickerId: string,
@@ -30,6 +34,56 @@ export const findUsers = (
       r
         .json()
         .then((users: Array<User>) => dispatch(usersReceived(pickerId, users))),
+    {},
+    true
+  );
+};
+
+export const findUsersInGroup = (pickerId: string, groupUuid: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
+  const state = getState();
+
+  var url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/users/v1/usersInGroup/${groupUuid}`;
+
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    r =>
+      r
+        .json()
+        .then((users: Array<User>) =>
+          dispatch(usersInGroupReceived(pickerId, groupUuid, users))
+        ),
+    {},
+    true
+  );
+};
+
+export const findGroupsForUser = (pickerId: string, userUuid: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
+  const state = getState();
+
+  var url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/users/v1/groupsForUser/${userUuid}`;
+
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    r =>
+      r
+        .json()
+        .then((users: Array<User>) =>
+          dispatch(groupsForUserReceived(pickerId, userUuid, users))
+        ),
     {},
     true
   );
