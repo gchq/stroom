@@ -18,6 +18,8 @@ package stroom.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceFindAction;
@@ -26,6 +28,7 @@ import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.task.api.TaskHandlerBinder;
 
 public class EntityModule extends AbstractModule {
@@ -44,6 +47,11 @@ public class EntityModule extends AbstractModule {
                 .bind(EntityServiceFindSummaryAction.class, stroom.entity.EntityServiceFindSummaryHandler.class)
                 .bind(EntityServiceSaveAction.class, stroom.entity.EntityServiceSaveHandler.class)
                 .bind(EntityServiceLoadAction.class, stroom.entity.EntityServiceLoadHandler.class);
+
+        // Provide object info to the logging service.
+        ObjectInfoProviderBinder.create(binder())
+                .bind(BaseEntity.class, BaseEntityObjectInfoProvider.class)
+                .bind(BaseCriteria.class, BaseCriteriaObjectInfoProvider.class);
     }
 
     @Override

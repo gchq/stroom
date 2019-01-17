@@ -39,44 +39,48 @@ import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageResponse;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.event.logging.api.EventInfoProvider;
+import stroom.event.logging.api.ObjectInfoProvider;
+import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.Security;
 import stroom.util.shared.HasId;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentEventLogImpl implements DocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentEventLogImpl.class);
 
     private final StroomEventLoggingService eventLoggingService;
+    private final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap;
     private final Security security;
-
-    private volatile Map<Class<?>, EventInfoProvider> objectInfoAppenderMap;
 
     @Inject
     public DocumentEventLogImpl(final StroomEventLoggingService eventLoggingService,
-                                final Set<EventInfoProvider> eventInfoProviders,
+                                final Map<ObjectType, Provider<ObjectInfoProvider>> objectInfoProviderMap,
                                 final Security security) {
         this.eventLoggingService = eventLoggingService;
+        this.objectInfoProviderMap = objectInfoProviderMap;
         this.security = security;
-
-        objectInfoAppenderMap = eventInfoProviders.stream()
-                .collect(Collectors.toMap(EventInfoProvider::getType, Function.identity()));
     }
 
-    private EventInfoProvider getInfoAppender(final Class<?> type) {
-        EventInfoProvider appender = objectInfoAppenderMap.get(type);
-        if (appender == null) {
-            // Get basic appender.
-            appender = objectInfoAppenderMap.get(null);
+    private ObjectInfoProvider getInfoAppender(final Class<?> type) {
+        ObjectInfoProvider appender = null;
+
+        // Some providers exist for superclasses and not subclass types so keep looking through the class hierarchy to find a provider.
+        Class<?> currentType = type;
+        Provider<ObjectInfoProvider> provider = null;
+        while (currentType != null && provider == null) {
+            provider = objectInfoProviderMap.get(new ObjectType(currentType));
+            currentType = currentType.getSuperclass();
+        }
+
+        if (provider != null) {
+            appender = provider.get();
         }
 
         if (appender == null) {
@@ -474,7 +478,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private String getObjectType(final java.lang.Object object) {
-        final EventInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
+        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
             return null;
         }
@@ -494,7 +498,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private BaseObject createBaseObject(final java.lang.Object object) {
-        final EventInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
+        final ObjectInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
             return null;
         }

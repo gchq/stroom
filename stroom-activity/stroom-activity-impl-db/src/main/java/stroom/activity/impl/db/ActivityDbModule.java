@@ -7,6 +7,7 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
@@ -30,23 +31,15 @@ public class ActivityDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ActivityService.class).to(ActivityServiceImpl.class);
-//        bind(FeedService.class).to(FeedServiceImpl.class);
-//        bind(DataTypeService.class).to(DataTypeServiceImpl.class);
-//        bind(ProcessorService.class).to(ProcessorServiceImpl.class);
-//        bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
-//        bind(MetaValueService.class).to(MetaValueServiceImpl.class);
-//        bind(DataMetaService.class).to(DataMetaServiceImpl.class);
-//        bind(DataSecurityFilter.class).to(DataSecurityFilterImpl.class);
-//
-//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(Cleanup.class);
+        bind(CurrentActivity.class).to(CurrentActivityImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(CreateActivityAction.class, CreateActivityHandler.class)
                 .bind(UpdateActivityAction.class, UpdateActivityHandler.class)
                 .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
                 .bind(FetchActivityAction.class, FetchActivityHandler.class)
-                .bind(FindActivityAction.class, FindActivityHandler.class);
+                .bind(FindActivityAction.class, FindActivityHandler.class)
+                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
     }
 
     @Provides

@@ -26,9 +26,6 @@ public class DocumentModule extends AbstractModule {
     protected void configure() {
         bind(DocumentService.class).to(DocumentServiceImpl.class);
 
-        EventInforProviderBinder.create(binder())
-                .bind(BasicEventInfoProvider.class);
-
         TaskHandlerBinder.create(binder())
                 .bind(DocumentServiceReadAction.class, stroom.document.DocumentServiceReadHandler.class)
                 .bind(DocumentServiceWriteAction.class, stroom.document.DocumentServiceWriteHandler.class);

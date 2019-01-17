@@ -21,6 +21,7 @@ rootProject.name = 'stroom'
 include 'stroom-activity:stroom-activity-api'
 include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-gen'
+include 'stroom-activity:stroom-activity-impl-mock'
 include 'stroom-activity:stroom-activity-shared'
 
 // App.

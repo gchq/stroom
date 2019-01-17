@@ -22,20 +22,16 @@ import event.logging.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.Entity;
-import stroom.event.logging.api.EventInfoProvider;
+import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.security.shared.FindUserCriteria;
 
-class UserEventInfoProvider implements EventInfoProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserEventInfoProvider.class);
+class UserObjectInfoProvider implements ObjectInfoProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserObjectInfoProvider.class);
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
-        if (obj instanceof BaseEntity) {
-            final Entity entity = (Entity) obj;
-            if (entity instanceof stroom.security.User) {
-                final stroom.security.User user = (stroom.security.User) entity;
+        if (obj instanceof stroom.security.User) {
+            final stroom.security.User user = (stroom.security.User) obj;
                 final User usr = new User();
                 usr.setId(user.getName());
 
@@ -58,7 +54,6 @@ class UserEventInfoProvider implements EventInfoProvider {
 
                 return usr;
             }
-        }
 
         return null;
     }
@@ -78,8 +73,7 @@ class UserEventInfoProvider implements EventInfoProvider {
             String name = criteria.getClass().getSimpleName();
             final StringBuilder sb = new StringBuilder();
             final char[] chars = name.toCharArray();
-            for (int i = 0; i < chars.length; i++) {
-                final char c = chars[i];
+            for (final char c : chars) {
                 if (Character.isUpperCase(c)) {
                     sb.append(" ");
                 }
@@ -96,10 +90,5 @@ class UserEventInfoProvider implements EventInfoProvider {
         }
 
         return object.getClass().getSimpleName();
-    }
-
-    @Override
-    public Class<?> getType() {
-        return User.class;
     }
 }

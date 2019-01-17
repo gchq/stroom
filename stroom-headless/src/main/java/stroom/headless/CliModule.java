@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 public class CliModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new stroom.activity.impl.mock.MockActivityModule());
 //        install(new stroom.cache.CacheModule());
         install(new stroom.cache.PipelineCacheModule());
 //        install(new ClusterModule());

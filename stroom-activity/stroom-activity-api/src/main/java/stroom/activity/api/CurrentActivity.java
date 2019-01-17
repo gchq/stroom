@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.event.logging.api;
+package stroom.activity.api;
 
-import event.logging.BaseObject;
+public interface CurrentActivity {
+    Activity getActivity();
 
-public interface EventInfoProvider {
-    Class<?> getType();
-
-    BaseObject createBaseObject(Object object);
-
-    String getObjectType(Object object);
+    void setActivity(final Activity activity);
 }
+

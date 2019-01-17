@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.event.logging.impl;
+package stroom.event.logging.api;
 
 import event.logging.Data;
 import event.logging.Purpose;

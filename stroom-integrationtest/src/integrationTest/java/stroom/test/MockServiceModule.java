@@ -1,6 +1,7 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
+import stroom.activity.impl.db.CurrentActivityImpl;
 import stroom.pipeline.scope.PipelineScopeModule;
 
 public class MockServiceModule extends AbstractModule {
@@ -12,6 +13,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.dictionary.MockDictionaryModule());
         install(new stroom.docstore.memory.MemoryPersistenceModule());
 //        install(new stroom.entity.MockEntityModule());
+        install(new stroom.activity.impl.mock.MockActivityModule());
         install(new stroom.explorer.MockExplorerModule());
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());

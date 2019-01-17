@@ -3,6 +3,8 @@ ext.moduleName = 'stroom.integrationtest'
 dependencies {
     integrationTestImplementation project(':stroom-app')
     // Use default DB config.
+    integrationTestImplementation project(':stroom-activity:stroom-activity-api')
+    integrationTestImplementation project(':stroom-activity:stroom-activity-impl-mock')
     integrationTestImplementation project(':stroom-config:stroom-config-app')
     integrationTestImplementation project(':stroom-core-server')
     integrationTestImplementation project(':stroom-core-shared')
@@ -18,6 +20,7 @@ dependencies {
     integrationTestImplementation project(':stroom-data-store:stroom-data-store-impl-mock')
     integrationTestImplementation project(':stroom-elastic:stroom-elastic-impl')
     integrationTestImplementation project(':stroom-entity-shared')
+    integrationTestImplementation project(':stroom-event-logging:stroom-event-logging-api')
     integrationTestImplementation project(':stroom-event-logging:stroom-event-logging-impl')
     integrationTestImplementation project(':stroom-explorer:stroom-explorer-api')
     integrationTestImplementation project(':stroom-explorer:stroom-explorer-impl')

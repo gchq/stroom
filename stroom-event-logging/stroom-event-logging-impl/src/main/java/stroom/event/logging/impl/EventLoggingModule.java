@@ -17,26 +17,24 @@
 package stroom.event.logging.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.activity.shared.SetCurrentActivityAction;
+import stroom.activity.api.CurrentActivity;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.event.logging.api.EventInfoProvider;
 import stroom.event.logging.api.HttpServletRequestHolder;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.security.SecurityContext;
 
 public class EventLoggingModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(CurrentActivity.class).to(CurrentActivityImpl.class);
+        requireBinding(CurrentActivity.class);
+        requireBinding(SecurityContext.class);
+
         bind(HttpServletRequestHolder.class).to(HttpServletRequestHolderImpl.class);
         bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
 
-        Multibinder.newSetBinder(binder(), EventInfoProvider.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class);
+        ObjectInfoProviderBinder.create(binder());
     }
 
     @Override
