@@ -26,8 +26,9 @@ import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.DeleteActivityAction;
-import stroom.activity.shared.FindActivityCriteria;
 import stroom.activity.shared.FetchActivityAction;
+import stroom.activity.shared.FindActivityAction;
+import stroom.activity.shared.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.StringCriteria.MatchStyle;
@@ -81,7 +82,7 @@ public class ManageActivityPresenter extends
         openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
-        listPresenter.setCriteria(criteria);
+        listPresenter.setAction(new FindActivityAction(criteria));
     }
 
     @Override
@@ -215,11 +216,6 @@ public class ManageActivityPresenter extends
 
     private String getEntityDisplayType() {
         return "activity";
-    }
-
-    public void setCriteria(final FindActivityCriteria criteria) {
-        this.criteria = criteria;
-        listPresenter.setCriteria(criteria);
     }
 
     @Override

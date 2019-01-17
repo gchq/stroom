@@ -18,16 +18,16 @@ package stroom.activity.shared;
 
 import stroom.task.shared.Action;
 
-public class SaveActivityAction extends Action<Activity> {
+public class UpdateActivityAction extends Action<Activity> {
     private static final long serialVersionUID = 1451964889275627717L;
 
     private Activity activity;
 
-    public SaveActivityAction() {
+    public UpdateActivityAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SaveActivityAction(final Activity activity) {
+    public UpdateActivityAction(final Activity activity) {
         this.activity = activity;
     }
 
@@ -37,6 +37,6 @@ public class SaveActivityAction extends Action<Activity> {
 
     @Override
     public String getTaskName() {
-        return "Save activity";
+        return "Update activity";
     }
 }

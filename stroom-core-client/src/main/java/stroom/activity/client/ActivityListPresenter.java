@@ -25,6 +25,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
+import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -91,7 +92,7 @@ public class ActivityListPresenter
         return getView().getSelectionModel();
     }
 
-    void setCriteria(final FindActivityCriteria criteria) {
-        dataProvider.setCriteria(criteria);
+    void setAction(final FindActivityAction action) {
+        dataProvider.setAction(action);
     }
 }

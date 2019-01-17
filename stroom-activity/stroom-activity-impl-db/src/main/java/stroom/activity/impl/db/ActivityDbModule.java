@@ -7,9 +7,11 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
-import stroom.activity.shared.SaveActivityAction;
+import stroom.activity.shared.FindActivityAction;
+import stroom.activity.shared.UpdateActivityAction;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.task.api.TaskHandlerBinder;
@@ -39,9 +41,11 @@ public class ActivityDbModule extends AbstractModule {
 //        clearableBinder.addBinding().to(Cleanup.class);
 
         TaskHandlerBinder.create(binder())
+                .bind(CreateActivityAction.class, CreateActivityHandler.class)
+                .bind(UpdateActivityAction.class, UpdateActivityHandler.class)
                 .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
                 .bind(FetchActivityAction.class, FetchActivityHandler.class)
-                .bind(SaveActivityAction.class, SaveActivityHandler.class);
+                .bind(FindActivityAction.class, FindActivityHandler.class);
     }
 
     @Provides
