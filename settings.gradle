@@ -95,9 +95,6 @@ include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 
-// Integration tests.
-include 'stroom-integrationtest'
-
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'
 include 'stroom-kafka:stroom-kafka-impl'

@@ -25,7 +25,7 @@ public class CoreTestModule extends AbstractModule {
         final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
 
         Path path = Paths.get(codeSourceLocation);
-        while (path != null && !path.getFileName().toString().equals("stroom-integrationtest")) {
+        while (path != null && !path.getFileName().toString().equals("stroom-app")) {
             path = path.getParent();
         }
 

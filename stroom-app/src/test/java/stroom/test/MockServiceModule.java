@@ -1,7 +1,6 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
-import stroom.activity.impl.db.CurrentActivityImpl;
 import stroom.pipeline.scope.PipelineScopeModule;
 
 public class MockServiceModule extends AbstractModule {

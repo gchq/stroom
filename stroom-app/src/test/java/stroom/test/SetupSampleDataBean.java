@@ -83,7 +83,7 @@ public final class SetupSampleDataBean {
     // 1,000 is just over 1hr at 5000ms intervals
     private static final int STATS_ITERATIONS_SMALL = 1_000;
     private static final String STATS_COUNT_API_FEED_NAME = "COUNT_V3";
-    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-integrationtest/src/integrationTest/resources/SetupSampleDataBean_COUNT_V3.xml";
+    private static final String STATS_COUNT_API_DATA_FILE = "./stroom-app/src/test/resources/SetupSampleDataBean_COUNT_V3.xml";
 
     private static final int LOAD_CYCLES = 10;
 

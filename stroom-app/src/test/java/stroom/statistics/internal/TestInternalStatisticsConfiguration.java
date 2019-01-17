@@ -32,7 +32,6 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
      */
     @Test
     void testGet() {
-
         assertThat(internalStatisticsConfig).isNotNull();
 
         Arrays.stream(InternalStatisticKey.values()).forEach(key -> {
