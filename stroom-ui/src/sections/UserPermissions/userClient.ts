@@ -12,10 +12,9 @@ const {
 } = actionCreators;
 
 export const findUsers = (
-  pickerId: string,
+  listId: string,
   name?: string,
   isGroup?: Boolean,
-  id?: Number,
   uuid?: string
 ) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
@@ -23,7 +22,6 @@ export const findUsers = (
   var url = new URL(`${state.config.values.stroomBaseServiceUrl}/users/v1`);
   if (!!name && name.length > 0) url.searchParams.append("name", name);
   if (!!isGroup) url.searchParams.append("isGroup", isGroup.toString());
-  if (!!id) url.searchParams.append("id", id.toString());
   if (!!uuid && uuid.length > 0) url.searchParams.append("uuid", uuid);
 
   wrappedGet(
@@ -33,13 +31,13 @@ export const findUsers = (
     r =>
       r
         .json()
-        .then((users: Array<User>) => dispatch(usersReceived(pickerId, users))),
+        .then((users: Array<User>) => dispatch(usersReceived(listId, users))),
     {},
     true
   );
 };
 
-export const findUsersInGroup = (pickerId: string, groupUuid: string) => (
+export const findUsersInGroup = (groupUuid: string) => (
   dispatch: Dispatch,
   getState: () => GlobalStoreState
 ) => {
@@ -57,14 +55,14 @@ export const findUsersInGroup = (pickerId: string, groupUuid: string) => (
       r
         .json()
         .then((users: Array<User>) =>
-          dispatch(usersInGroupReceived(pickerId, groupUuid, users))
+          dispatch(usersInGroupReceived(groupUuid, users))
         ),
     {},
     true
   );
 };
 
-export const findGroupsForUser = (pickerId: string, userUuid: string) => (
+export const findGroupsForUser = (userUuid: string) => (
   dispatch: Dispatch,
   getState: () => GlobalStoreState
 ) => {
@@ -82,7 +80,7 @@ export const findGroupsForUser = (pickerId: string, userUuid: string) => (
       r
         .json()
         .then((users: Array<User>) =>
-          dispatch(groupsForUserReceived(pickerId, userUuid, users))
+          dispatch(groupsForUserReceived(userUuid, users))
         ),
     {},
     true

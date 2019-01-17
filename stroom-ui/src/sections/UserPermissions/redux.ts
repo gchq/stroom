@@ -15,77 +15,68 @@
  */
 import { Action } from "redux";
 
-import {
-  prepareReducerById,
-  StateById,
-  ActionId
-} from "../../lib/redux-actions-ts";
-import { User } from "src/types";
+import { prepareReducer } from "../../lib/redux-actions-ts";
+import { User } from "../../types";
+import { mapObject } from "../../lib/treeUtils";
 
 const USERS_RECEIVED = "USERS_RECEIVED";
 const USERS_IN_GROUP_RECEIVED = "USERS_IN_GROUP_RECEIVED";
 const GROUPS_FOR_USER_RECEIEVED = "GROUPS_FOR_USER_RECEIEVED";
 const USER_CREATED = "USER_CREATED";
 
-export interface UsersReceivedAction
-  extends ActionId,
-    Action<"USERS_RECEIVED"> {
+export interface UsersReceivedAction extends Action<"USERS_RECEIVED"> {
+  listId: string;
   users: Array<User>;
 }
 
 export interface UsersInGroupReceivedAction
-  extends ActionId,
-    Action<"USERS_IN_GROUP_RECEIVED"> {
+  extends Action<"USERS_IN_GROUP_RECEIVED"> {
   groupUuid: string;
   users: Array<User>;
 }
 
 export interface GroupsForUserReceivedAction
-  extends ActionId,
-    Action<"GROUPS_FOR_USER_RECEIEVED"> {
+  extends Action<"GROUPS_FOR_USER_RECEIEVED"> {
   userUuid: string;
   groups: Array<User>;
 }
 
-export interface UserCreatedAction extends ActionId, Action<"USER_CREATED"> {
+export interface UserCreatedAction extends Action<"USER_CREATED"> {
   user: User;
 }
 
 export const actionCreators = {
-  usersReceived: (id: string, users: Array<User>): UsersReceivedAction => ({
+  usersReceived: (listId: string, users: Array<User>): UsersReceivedAction => ({
     type: USERS_RECEIVED,
-    id,
+    listId,
     users
   }),
   usersInGroupReceived: (
-    id: string,
     groupUuid: string,
     users: Array<User>
   ): UsersInGroupReceivedAction => ({
     type: USERS_IN_GROUP_RECEIVED,
-    id,
     groupUuid,
     users
   }),
   groupsForUserReceived: (
-    id: string,
     userUuid: string,
     groups: Array<User>
   ): GroupsForUserReceivedAction => ({
     type: GROUPS_FOR_USER_RECEIEVED,
-    id,
     userUuid,
     groups
   }),
-  userCreated: (id: string, user: User): UserCreatedAction => ({
+  userCreated: (user: User): UserCreatedAction => ({
     type: USER_CREATED,
-    id,
     user
   })
 };
 
-export interface StoreStateById {
-  users: Array<User>;
+export interface StoreState {
+  users: {
+    [listId: string]: Array<User>;
+  };
   usersInGroup: {
     [s: string]: Array<User>;
   };
@@ -94,25 +85,26 @@ export interface StoreStateById {
   };
 }
 
-export type StoreState = StateById<StoreStateById>;
-
-export const defaultStatePerId: StoreStateById = {
-  users: [],
+export const defaultState: StoreState = {
+  users: {},
   usersInGroup: {},
   groupsForUser: {}
 };
 
-export const reducer = prepareReducerById(defaultStatePerId)
+export const reducer = prepareReducer(defaultState)
   .handleAction<UsersReceivedAction>(
     USERS_RECEIVED,
-    (state: StoreStateById, { users }) => ({
+    (state: StoreState, { listId, users }) => ({
       ...state,
-      users
+      users: {
+        ...state.users,
+        [listId]: users
+      }
     })
   )
   .handleAction<UsersInGroupReceivedAction>(
     USERS_IN_GROUP_RECEIVED,
-    (state: StoreStateById, { groupUuid, users }) => ({
+    (state: StoreState, { groupUuid, users }) => ({
       ...state,
       usersInGroup: {
         ...state.usersInGroup,
@@ -122,7 +114,7 @@ export const reducer = prepareReducerById(defaultStatePerId)
   )
   .handleAction<GroupsForUserReceivedAction>(
     GROUPS_FOR_USER_RECEIEVED,
-    (state: StoreStateById, { userUuid, groups }) => ({
+    (state: StoreState, { userUuid, groups }) => ({
       ...state,
       groupsForUser: {
         ...state.groupsForUser,
@@ -132,9 +124,9 @@ export const reducer = prepareReducerById(defaultStatePerId)
   )
   .handleAction<UserCreatedAction>(
     USER_CREATED,
-    (state: StoreStateById, { user }) => ({
+    (state: StoreState, { user }) => ({
       ...state,
-      users: [...state.users, user]
+      users: mapObject(state.users, (u: Array<User>) => u.concat(user))
     })
   )
   .getReducer();

@@ -25,4 +25,4 @@ import "../../styles/main.css";
 
 storiesOf("Sections/User Permissions", module)
   .addDecorator(StroomDecorator)
-  .add("basic", () => <UserPermissions pickerId="test" />);
+  .add("basic", () => <UserPermissions />);

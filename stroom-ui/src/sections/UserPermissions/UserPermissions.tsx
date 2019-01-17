@@ -1,42 +1,32 @@
 import * as React from "react";
 
-import { compose, lifecycle, withStateHandlers } from "recompose";
+import { Formik, Field, Form } from "formik";
+import { compose, lifecycle } from "recompose";
 import { connect } from "react-redux";
 
 import { findUsers } from "./userClient";
-import { StoreStateById } from "./redux";
-import { GlobalStoreState } from "src/startup/reducers";
+import { GlobalStoreState } from "../../startup/reducers";
+import { User } from "../..//types";
+import IconHeader from "../../components/IconHeader";
 
-export interface Props {
-  pickerId: string;
-}
+const LISTING_ID = "user_permissions";
+
+export interface Props {}
 
 interface ConnectState {
-  usersState: StoreStateById;
+  users: Array<User>;
 }
 
 interface ConnectDispatch {
   findUsers: typeof findUsers;
 }
 
-interface WithState {
-  nameFilter?: string;
-}
-interface WithStateHandlers {
-  nameFilterChanged: React.ChangeEventHandler<HTMLInputElement>;
-}
-
-export interface EnhancedProps
-  extends Props,
-    ConnectState,
-    ConnectDispatch,
-    WithState,
-    WithStateHandlers {}
+export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
-    ({ users }, { pickerId }) => ({
-      usersState: users[pickerId]
+    ({ userPermissions: { users } }) => ({
+      users: users[LISTING_ID]
     }),
     {
       findUsers
@@ -44,37 +34,64 @@ const enhance = compose<EnhancedProps, Props>(
   ),
   lifecycle<Props & ConnectState & ConnectDispatch, {}>({
     componentDidMount() {
-      const { findUsers, pickerId } = this.props;
+      const { findUsers } = this.props;
 
-      findUsers(pickerId);
-    }
-  }),
-  withStateHandlers(({}) => ({ nameFilter: "" }), {
-    nameFilterChanged: (
-      _,
-      { findUsers, pickerId }: Props & ConnectDispatch
-    ) => ({ target: { value } }) => {
-      findUsers(pickerId, value);
-
-      return {
-        nameFilter: value
-      };
+      findUsers(LISTING_ID);
     }
   })
 );
 
-const UserPermissions = ({
-  usersState,
-  nameFilter,
-  nameFilterChanged
-}: EnhancedProps) => (
+interface Values {
+  name: string;
+  isGroup?: boolean;
+  uuid: string;
+}
+
+const UserPermissions = ({ users, findUsers }: EnhancedProps) => (
   <div>
-    User Permissions
-    <input onChange={nameFilterChanged} value={nameFilter} />
-    <div>
-      {usersState &&
-        usersState.users.map(u => <div key={u.uuid}>{u.name}</div>)}
-    </div>
+    <IconHeader icon="users" text="User Permissions" />
+    <Formik
+      initialValues={{
+        name: "",
+        uuid: ""
+      }}
+      onSubmit={() => {}}
+      validate={({ name, isGroup, uuid }: Values) =>
+        findUsers(LISTING_ID, name, isGroup, uuid)
+      }
+    >
+      <Form>
+        <label htmlFor="name">Name</label>
+        <Field name="name" type="text" />
+        <label htmlFor="uuid">UUID</label>
+        <Field name="uuid" type="text" />
+        <label htmlFor="isGroup">Is Group</label>
+        <Field name="isGroup" component="select" placeholder="Group">
+          <option value="">N/A</option>
+          <option value="true">Group</option>
+          <option value="false">User</option>
+        </Field>
+      </Form>
+    </Formik>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>UUID</th>
+          <th>Is Group</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users &&
+          users.map(u => (
+            <tr key={u.uuid}>
+              <td>{u.name}</td>
+              <td>{u.uuid}</td>
+              <td>{u.group ? "Group" : "User"}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
   </div>
 );
 

@@ -16,7 +16,6 @@ public interface UserResource {
     @GET
     List<UserJooq> get(@QueryParam("name") String name,
                        @QueryParam("isGroup") Boolean isGroup,
-                       @QueryParam("id") Long id,
                        @QueryParam("uuid") String uuid);
 
     @GET

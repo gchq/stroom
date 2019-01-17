@@ -23,12 +23,11 @@ public class UserResourceImpl implements UserResource {
     @Override
     public List<UserJooq> get(final String name,
                               final Boolean isGroup,
-                              final Long id,
                               final String uuid) {
         final List<UserJooq> users = new ArrayList<>();
 
         // If all the identification fields are null, just do a find which should return them all
-        if (null == name && null == id && null == uuid) {
+        if (null == name && null == uuid) {
             users.addAll(userDao.find(isGroup, name));
         } else {
             if (null != name) {
@@ -38,10 +37,6 @@ public class UserResourceImpl implements UserResource {
                     Optional.ofNullable(userDao.getUserByName(name))
                             .ifPresent(users::add);
                 }
-            }
-            if (null != id) {
-                Optional.ofNullable(userDao.getById(id))
-                        .ifPresent(users::add);
             }
             if (null != uuid) {
                 Optional.ofNullable(userDao.getByUuid(uuid))
