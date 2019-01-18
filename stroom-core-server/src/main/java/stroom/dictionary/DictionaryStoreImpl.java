@@ -26,6 +26,7 @@ import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2Factory;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -59,19 +60,16 @@ class DictionaryStoreImpl implements DictionaryStore {
     private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;
 
     @Inject
-    DictionaryStoreImpl(final Store<DictionaryDoc> store,
+    DictionaryStoreImpl(final StoreFactory storeFactory,
                         final SecurityContext securityContext,
                         final Persistence persistence,
                         final DictionarySerialiser serialiser,
                         final Serialiser2Factory serialiser2Factory) {
-        this.store = store;
+        this.store = storeFactory.createStore(serialiser, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.serialiser = serialiser;
         this.oldSerialiser = serialiser2Factory.createSerialiser(OldDictionaryDoc.class);
-
-        store.setType(DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
-        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -53,9 +53,7 @@ import static stroom.entity.shared.Sort.Direction.ASCENDING;
 import static stroom.streamtask.resource.SearchKeywords.SORT_NEXT;
 import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 
-@Api(
-        value = "stream task - /v1",
-        description = "Stroom Stream Task API")
+@Api(value = "stream task - /v1")
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements HasHealthCheck {

@@ -23,7 +23,7 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2FactoryImpl;
-import stroom.docstore.StoreImpl;
+import stroom.docstore.StoreFactoryImpl;
 import stroom.docstore.memory.MemoryPersistence;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -455,7 +455,7 @@ class TestStatisticsFilter implements Statistics {
         final SecurityContext securityContext = new MockSecurityContext();
 
         return new StatisticStoreStoreImpl(
-                new StoreImpl<>(persistence, securityContext),
+                new StoreFactoryImpl(securityContext, persistence),
                 securityContext,
                 persistence,
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));

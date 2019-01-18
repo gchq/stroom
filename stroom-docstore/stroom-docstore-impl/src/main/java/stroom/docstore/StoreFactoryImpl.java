@@ -11,7 +11,8 @@ public class StoreFactoryImpl implements StoreFactory {
     private final Persistence persistence;
 
     @Inject
-    public StoreFactoryImpl(final SecurityContext securityContext, final Persistence persistence) {
+    public StoreFactoryImpl(final SecurityContext securityContext,
+                            final Persistence persistence) {
         this.securityContext = securityContext;
         this.persistence = persistence;
     }
@@ -20,10 +21,6 @@ public class StoreFactoryImpl implements StoreFactory {
     public <D extends Doc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
                                                 final String type,
                                                 final Class<D> clazz) {
-        Store<D> store = new StoreImpl<>(persistence, securityContext);
-
-        store.setSerialiser(serialiser);
-        store.setType(type, clazz);
-        return store;
+        return new StoreImpl<>(persistence, securityContext, serialiser, type, clazz);
     }
 }

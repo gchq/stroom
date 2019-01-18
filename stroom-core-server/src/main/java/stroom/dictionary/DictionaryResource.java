@@ -17,23 +17,26 @@
 package stroom.dictionary;
 
 import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.util.string.EncodingUtil;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.DocRefs;
 import stroom.importexport.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.security.Security;
-import stroom.util.HasHealthCheck;
+import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -43,12 +46,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Api(
-        value = "dictionary - /v1",
-        description = "Dictionary API")
+@Api(value = "dictionary - /v1")
 @Path("/dictionary/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class DictionaryResource implements HasHealthCheck {
+public class DictionaryResource {
     private final DictionaryStore dictionaryStore;
     private final Security security;
 
@@ -198,10 +199,5 @@ public class DictionaryResource implements HasHealthCheck {
         });
 
         return Response.ok().build();
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

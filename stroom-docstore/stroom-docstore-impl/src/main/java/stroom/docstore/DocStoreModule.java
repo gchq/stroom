@@ -12,6 +12,7 @@ public class DocStoreModule extends AbstractModule {
 
 //       install(new FactoryModuleBuilder().build(Store.Factory.class));
 //        bind(Store.class).to(StoreImpl.class);
+
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
     }

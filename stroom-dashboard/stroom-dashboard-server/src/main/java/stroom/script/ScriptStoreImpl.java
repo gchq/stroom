@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -56,17 +57,14 @@ class ScriptStoreImpl implements ScriptStore {
     private final ScriptSerialiser serialiser;
 
     @Inject
-    ScriptStoreImpl(final Store<ScriptDoc> store,
+    ScriptStoreImpl(final StoreFactory storeFactory,
                     final SecurityContext securityContext,
                     final Persistence persistence,
                     final ScriptSerialiser serialiser) {
-        this.store = store;
+        this.store = storeFactory.createStore(serialiser, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.serialiser = serialiser;
-
-        store.setType(ScriptDoc.DOCUMENT_TYPE, ScriptDoc.class);
-        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

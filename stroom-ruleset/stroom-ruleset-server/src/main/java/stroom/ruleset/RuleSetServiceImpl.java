@@ -18,8 +18,10 @@
 package stroom.ruleset;
 
 import stroom.docref.DocRef;
+import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2Factory;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -38,11 +40,10 @@ public class RuleSetServiceImpl implements RuleSetService {
     private final Store<RuleSet> store;
 
     @Inject
-    public RuleSetServiceImpl(final Store<RuleSet> store,
+    public RuleSetServiceImpl(final StoreFactory storeFactory,
                               final Serialiser2Factory serialiser2Factory) {
-        this.store = store;
-        store.setType(RuleSet.DOCUMENT_TYPE, RuleSet.class);
-        store.setSerialiser(serialiser2Factory.createSerialiser(RuleSet.class));
+        DocumentSerialiser2<RuleSet> serialiser = serialiser2Factory.createSerialiser(RuleSet.class);
+        this.store = storeFactory.createStore(serialiser, RuleSet.DOCUMENT_TYPE, RuleSet.class);
     }
 
     ////////////////////////////////////////////////////////////////////////

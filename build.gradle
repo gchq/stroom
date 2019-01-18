@@ -103,7 +103,7 @@ ext.versions = [
         lucene            : '5.5.3',
         rxjava            : '2.1.10',
         slf4j             : '1.7.25', //in line with dropwizard 1.3.3
-        swagger           : '1.5.16',
+        swagger           : '1.5.21',
         unirest           : '1.4.9',
         zzDUMMYzz         : 'makes sorting easier'
 ]

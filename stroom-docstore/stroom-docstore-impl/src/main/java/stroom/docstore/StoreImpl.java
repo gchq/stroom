@@ -66,20 +66,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Inject
     public StoreImpl(final Persistence persistence,
-                     final SecurityContext securityContext) {
-//                     @Assisted final DocumentSerialiser2<D> serialiser,
-//                     @Assisted final Class<D> clazz) {
+                     final SecurityContext securityContext,
+                     final DocumentSerialiser2<D> serialiser,
+                     final String type,
+                     final Class<D> clazz) {
         this.persistence = persistence;
         this.securityContext = securityContext;
-    }
-
-    @Override
-    public void setSerialiser(final DocumentSerialiser2<D> serialiser) {
         this.serialiser = serialiser;
-    }
-
-    @Override
-    public void setType(final String type, final Class<D> clazz) {
         this.type = type;
         this.clazz = clazz;
     }
@@ -532,7 +525,5 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .sorted()
                 .collect(Collectors.toList());
     }
-
-
 
 }

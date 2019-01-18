@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.script.shared.ScriptDoc;
@@ -23,8 +24,8 @@ public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
     private final Serialiser2<ScriptDoc> delegate;
 
     @Inject
-    ScriptSerialiser(final Serialiser2<ScriptDoc> delegate) {
-        this.delegate = delegate;
+    ScriptSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(ScriptDoc.class);
     }
 
     @Override

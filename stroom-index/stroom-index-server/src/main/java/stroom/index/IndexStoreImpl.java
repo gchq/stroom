@@ -20,6 +20,7 @@ package stroom.index;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -48,17 +49,14 @@ class IndexStoreImpl implements IndexStore {
     private final IndexSerialiser serialiser;
 
     @Inject
-    IndexStoreImpl(final Store<IndexDoc> store,
+    IndexStoreImpl(final StoreFactory storeFactory,
                    final SecurityContext securityContext,
                    final Persistence persistence,
                    final IndexSerialiser serialiser) {
-        this.store = store;
+        this.store = storeFactory.createStore(serialiser, IndexDoc.DOCUMENT_TYPE, IndexDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.serialiser = serialiser;
-
-        store.setType(IndexDoc.DOCUMENT_TYPE, IndexDoc.class);
-        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

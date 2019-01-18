@@ -12,10 +12,6 @@ import java.util.Set;
 
 public interface Store<D extends Doc> extends DocumentActionHandler<D> {
 
-    void setSerialiser(DocumentSerialiser2<D> serialiser);
-
-    void setType(String type, Class<D> clazz);
-
     DocRef createDocument(String name);
 
     DocRef copyDocument(String originalUuid,
@@ -48,7 +44,4 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
 
     List<DocRef> findByName(String name);
 
-//    interface Factory<D extends Doc> {
-//        Store<D> create(final DocumentSerialiser2<D> serialiser, final Class<D> clazz);
-//    }
 }

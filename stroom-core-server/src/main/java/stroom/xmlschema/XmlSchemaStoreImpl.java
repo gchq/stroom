@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -55,17 +56,14 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     private final DocumentSerialiser2<XmlSchemaDoc> serialiser;
 
     @Inject
-    public XmlSchemaStoreImpl(final Store<XmlSchemaDoc> store,
+    public XmlSchemaStoreImpl(final StoreFactory storeFactory,
                               final SecurityContext securityContext,
                               final Persistence persistence,
-                              final DocumentSerialiser2<XmlSchemaDoc> serialiser) {
-        this.store = store;
+                              final XmlSchemaSerialiser serialiser) {
+        this.serialiser = serialiser;
+        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
-        this.serialiser = serialiser;
-
-        store.setType(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
-        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

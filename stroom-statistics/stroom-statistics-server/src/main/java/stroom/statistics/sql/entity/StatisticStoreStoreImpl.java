@@ -20,6 +20,7 @@ package stroom.statistics.sql.entity;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -48,17 +49,14 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     private final StatisticStoreSerialiser serialiser;
 
     @Inject
-    public StatisticStoreStoreImpl(final Store<StatisticStoreDoc> store,
+    public StatisticStoreStoreImpl(final StoreFactory storeFactory,
                                    final SecurityContext securityContext,
                                    final Persistence persistence,
                                    final StatisticStoreSerialiser serialiser) {
-        this.store = store;
+        this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.serialiser = serialiser;
-
-        store.setType(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreDoc.class);
-        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

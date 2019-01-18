@@ -71,6 +71,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
+        install(new stroom.docstore.DocStoreModule());
         install(new stroom.docstore.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
 //        install(new stroom.task.TaskModule());

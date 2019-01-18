@@ -205,10 +205,17 @@ task copyFilesForProxyDockerBuild() {
 swagger {
     apiSource {
         outputFormats = ['json', 'yaml']
+        // TODO need to decide if we want all of our resource classes added to swagger and if so,
+        // they need annotating with @Api/@ApiOperation/etc.
         locations = [
                 'stroom.statistics.sql.search.SqlStatisticsQueryResource',
                 'stroom.index.StroomIndexQueryResource',
-                'stroom.security.AuthorisationResource']
+                //'stroom.dictionary.DictionaryResource',
+                //'stroom.dictionary.DictionaryResource2',
+                //'stroom.ruleset.RuleSetResource',
+                //'stroom.ruleset.RuleSetResource2',
+                'stroom.security.AuthorisationResource'
+        ]
         schemes = ['http', 'https']
         host = 'localhost:8080'
         basePath = '/api'
@@ -290,7 +297,9 @@ task buildDistribution(type: Zip) {
 }
 
 
-tasks.generateSwaggerDocumentation.dependsOn jar
+// Ensure all projects have built their jars so swagger can see them
+tasks.generateSwaggerDocumentation.dependsOn rootProject.getTasksByName('jar', true)
+
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn copyFilesForProxyDockerBuild

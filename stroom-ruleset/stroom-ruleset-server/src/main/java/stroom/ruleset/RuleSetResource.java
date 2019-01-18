@@ -17,17 +17,15 @@
 package stroom.ruleset;
 
 import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.util.string.EncodingUtil;
+import stroom.docref.DocRef;
 import stroom.importexport.DocRefs;
 import stroom.importexport.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
-import stroom.util.HasHealthCheck;
+import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -42,12 +40,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Api(
-        value = "ruleset - /v1",
-        description = "Ruleset API")
+@Api(value = "ruleset - /v1")
 @Path("/ruleset/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class RuleSetResource implements HasHealthCheck {
+public class RuleSetResource {
     private final RuleSetService ruleSetService;
 
     @Inject
@@ -98,10 +94,5 @@ public class RuleSetResource implements HasHealthCheck {
         }
         final Map<String, String> data = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asString(e.getValue())));
         return new OldDocumentData(docRef, data);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

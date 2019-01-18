@@ -21,6 +21,7 @@ import stroom.db.migration.doc.pipeline.OldPipelineEntity;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -50,18 +51,14 @@ public class PipelineStoreImpl implements PipelineStore {
     private final PipelineSerialiser serialiser;
 
     @Inject
-    public PipelineStoreImpl(final Store<PipelineDoc> store,
+    public PipelineStoreImpl(final StoreFactory storeFactory,
                              final SecurityContext securityContext,
                              final Persistence persistence,
                              final PipelineSerialiser serialiser) {
-        this.store = store;
+        this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.serialiser = serialiser;
-
-
-        store.setType(PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
-        store.setSerialiser(this.serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

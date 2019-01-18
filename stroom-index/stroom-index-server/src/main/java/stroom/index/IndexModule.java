@@ -30,7 +30,6 @@ import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.HasHealthCheck;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -73,7 +72,5 @@ public class IndexModule extends AbstractModule {
 //        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
         findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
 
-        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
-        hasHealthCheckBinder.addBinding().to(StroomIndexQueryResource.class);
     }
 }

@@ -31,21 +31,18 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datafeed.DataFeedConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.DocStoreModule;
 import stroom.docstore.Persistence;
-import stroom.docstore.StoreImpl;
-import stroom.docstore.memory.MemoryPersistence;
+import stroom.docstore.memory.MemoryPersistenceModule;
 import stroom.entity.shared.Range;
-import stroom.feed.FeedNameValidator;
+import stroom.feed.FeedModule;
 import stroom.feed.FeedSerialiser;
 import stroom.feed.FeedStore;
-import stroom.feed.FeedStoreImpl;
 import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.PipelineModule;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.PipelineStoreImpl;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -62,6 +59,7 @@ import stroom.security.DocumentPermissionCache;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
+import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.ByteSizeUnit;
 import stroom.util.cache.CacheManager;
@@ -97,9 +95,14 @@ class TestReferenceData extends AbstractLmdbDbTest {
     private static final String SID_TO_PF_4 = "SID_TO_PF_4";
     private static final String IP_TO_LOC_MAP_NAME = "IP_TO_LOC_MAP_NAME";
 
-    private final SecurityContext securityContext = new MockSecurityContext();
-    private final Persistence persistence = new MemoryPersistence();
-    private final FeedNameValidator feedNameValidator = new FeedNameValidator(new DataFeedConfig());
+//    private final SecurityContext securityContextMock = new MockSecurityContext();
+//    private final Persistence inMemoryPersistence = new MemoryPersistence();
+//    private final FeedNameValidator feedNameValidator = new FeedNameValidator(new DataFeedConfig());
+
+    @Inject
+    private SecurityContext securityContextMock;
+    @Inject
+    private Persistence inMemoryPersistence;
 
     @Mock
     private DocumentPermissionCache mockDocumentPermissionCache;
@@ -118,7 +121,10 @@ class TestReferenceData extends AbstractLmdbDbTest {
     private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
     private RefDataStore refDataStore;
     private Injector injector;
+
+    @Inject
     private FeedStore feedStore;
+    @Inject
     private PipelineStore pipelineStore;
 
     @BeforeEach
@@ -135,8 +141,15 @@ class TestReferenceData extends AbstractLmdbDbTest {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
+//                        bind(Persistence.class).toInstance(inMemoryPersistence);
+//                        bind(SecurityContext.class).toInstance(securityContextMock);
                         bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
+
+                        install(new FeedModule());
+                        install(new PipelineModule());
                         install(new RefDataStoreModule());
+                        install(new MemoryPersistenceModule());
+                        install(new MockSecurityContextModule());
                         install(new PipelineScopeModule());
                         install(new DocStoreModule());
                     }
@@ -145,10 +158,10 @@ class TestReferenceData extends AbstractLmdbDbTest {
         injector.injectMembers(this);
         refDataStore = refDataStoreFactory.getOffHeapStore();
 
-        feedStore = new FeedStoreImpl(new StoreImpl<>(persistence, securityContext),
-                securityContext, persistence, feedNameValidator, feedSerialiser);
-        pipelineStore = new PipelineStoreImpl(new StoreImpl<>(persistence, securityContext),
-                securityContext, persistence, pipelineSerialiser);
+//        feedStore = new FeedStoreImpl(new StoreImpl<>(inMemoryPersistence, securityContextMock),
+//                securityContextMock, inMemoryPersistence, feedNameValidator, feedSerialiser);
+//        pipelineStore = new PipelineStoreImpl(new StoreImpl<>(inMemoryPersistence, securityContextMock),
+//                securityContextMock, inMemoryPersistence, pipelineSerialiser);
 
         MockitoAnnotations.initMocks(this);
 

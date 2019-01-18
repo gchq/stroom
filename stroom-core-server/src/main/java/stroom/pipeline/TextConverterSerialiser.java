@@ -2,6 +2,7 @@ package stroom.pipeline;
 
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.util.string.EncodingUtil;
 
@@ -15,8 +16,8 @@ public class TextConverterSerialiser implements DocumentSerialiser2<TextConverte
     private final Serialiser2<TextConverterDoc> delegate;
 
     @Inject
-    public TextConverterSerialiser(final Serialiser2<TextConverterDoc> delegate) {
-        this.delegate = delegate;
+    public TextConverterSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(TextConverterDoc.class);
     }
 
     @Override
