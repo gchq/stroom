@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.dispatch.shared;
+package stroom.datasource.shared;
 
-import java.util.Set;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.docref.SharedObject;
 
-public interface TreeAction<R> {
-    void setRowExpanded(R row, boolean expanded);
+import java.util.List;
 
-    boolean isRowExpanded(R row);
+public class DataSourceFields implements SharedObject {
+    private List<DataSourceField> fields;
 
-    Set<R> getExpandedRows();
+    public DataSourceFields() {
+    }
+
+    public DataSourceFields(final List<DataSourceField> fields) {
+        this.fields = fields;
+    }
+
+    public List<DataSourceField> getFields() {
+        return fields;
+    }
 }

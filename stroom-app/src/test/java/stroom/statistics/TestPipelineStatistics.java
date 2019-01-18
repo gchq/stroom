@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTest;
 import stroom.test.StoreCreationTool;

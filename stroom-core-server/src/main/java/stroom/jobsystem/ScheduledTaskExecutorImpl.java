@@ -25,7 +25,7 @@ import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleTask;
 import stroom.lifecycle.StroomBeanMethodExecutable;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomFrequencySchedule;

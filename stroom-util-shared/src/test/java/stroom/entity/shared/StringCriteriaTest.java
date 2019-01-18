@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,25 @@
 
 package stroom.entity.shared;
 
-import stroom.datasource.api.v2.DataSourceField;
-import stroom.docref.SharedObject;
 
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
 import java.util.List;
 
-public class DataSourceFields implements SharedObject {
-    private List<DataSourceField> fields;
+import static org.assertj.core.api.Assertions.assertThat;
 
-    public DataSourceFields() {
-    }
+class StringCriteriaTest {
+    @Test
+    void testConvertStringList() {
+        List<String> strings = new ArrayList<>();
+        strings.add("abcdef");
+        strings.add("ABCDEF");
 
-    public DataSourceFields(final List<DataSourceField> fields) {
-        this.fields = fields;
-    }
+        List<StringCriteria> criteriaList = StringCriteria.convertStringList(strings);
 
-    public List<DataSourceField> getFields() {
-        return fields;
+        for (int i = 0; i < strings.size(); i++) {
+            assertThat(criteriaList.get(i).toString()).isEqualTo(strings.get(i).toString());
+        }
     }
 }

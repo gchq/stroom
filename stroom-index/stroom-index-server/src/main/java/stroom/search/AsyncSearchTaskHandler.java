@@ -31,7 +31,7 @@ import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.task.cluster.ClusterDispatchAsync;

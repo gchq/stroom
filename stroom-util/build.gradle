@@ -4,7 +4,6 @@ import java.time.format.DateTimeFormatter
 ext.moduleName = 'stroom.util'
 
 dependencies {
-
     implementation project(':stroom-util-shared')
     implementation project(':stroom-task:stroom-task-api')
 

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.EntityAction;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;

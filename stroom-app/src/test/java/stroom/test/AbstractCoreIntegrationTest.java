@@ -21,7 +21,7 @@ import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import stroom.persist.PersistService;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
     private static final Injector injector;

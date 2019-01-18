@@ -27,7 +27,7 @@ import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.StoreCreationTool;

@@ -11,7 +11,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-security:stroom-security-shared')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')
 
     implementation libs.gin

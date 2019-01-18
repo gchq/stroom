@@ -165,7 +165,6 @@ ext.libs = [
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
-        hamcrest_core                  : "org.hamcrest:hamcrest-core:1.3",
         hbase                          : "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
         hibernate_core                 : "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.13.Final */,

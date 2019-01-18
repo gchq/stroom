@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dashboard.shared.DataSourceFieldsMap;
-import stroom.dashboard.shared.FetchDataSourceFieldsAction;
+import stroom.datasource.shared.FetchDataSourceFieldsAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;

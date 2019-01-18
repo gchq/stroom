@@ -39,7 +39,7 @@ import stroom.search.CommonIndexingTest;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.shard.IndexShardSearchConfig;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;

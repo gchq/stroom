@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.data.store;
+package stroom.datasource;
 
 import stroom.data.meta.api.MetaDataSource;
-import stroom.entity.shared.DataSourceFields;
+import stroom.datasource.shared.DataSourceFields;
+import stroom.datasource.shared.FetchFieldsAction;
 import stroom.security.Security;
-import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

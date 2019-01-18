@@ -16,10 +16,9 @@
 
 package stroom.task.shared;
 
-import stroom.node.shared.Node;
+import stroom.docref.SharedObject;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.docref.SharedObject;
 import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
@@ -34,7 +33,7 @@ public class TaskProgress implements SharedObject, TreeRow {
     private String userName;
     private String threadName;
 
-    private Node node;
+    private String nodeName;
     private long submitTimeMs;
     private long timeNowMs;
 
@@ -49,12 +48,12 @@ public class TaskProgress implements SharedObject, TreeRow {
         this.expander = expander;
     }
 
-    public Node getNode() {
-        return node;
+    public String getNodeName() {
+        return nodeName;
     }
 
-    public void setNode(final Node node) {
-        this.node = node;
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
     }
 
     public long getTimeNowMs() {

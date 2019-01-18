@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Security;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
