@@ -17,16 +17,11 @@
 package stroom.node;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
-import stroom.entity.CachingEntityManager;
+import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerModule;
-import stroom.security.Security;
-import stroom.ui.config.shared.UiConfig;
 
 public class NodeServiceModule extends AbstractModule {
     @Override
@@ -36,20 +31,11 @@ public class NodeServiceModule extends AbstractModule {
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(LocalNodeProvider.class).to(LocalNodeProviderImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Node.ENTITY_TYPE).to(NodeServiceImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(Node.ENTITY_TYPE, NodeServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(NodeServiceImpl.class);
-    }
-
-    @Provides
-    @Named("cachedNodeService")
-    public NodeService cachedNodeService(final CachingEntityManager entityManager,
-                                         final Security security,
-                                         final UiConfig uiConfig,
-                                         final NodeServiceTransactionHelper nodeServiceTransactionHelper) {
-        return new NodeServiceImpl(entityManager, security, uiConfig, nodeServiceTransactionHelper);
     }
 
     @Override

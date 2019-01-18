@@ -17,8 +17,10 @@
 package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import stroom.docstore.shared.Doc;
+import stroom.entity.EntityTypeBinder;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
@@ -47,12 +49,17 @@ public class PipelineModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XsltStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(PipelineDoc.DOCUMENT_TYPE).to(PipelineStoreImpl.class);
-        entityServiceByTypeBinder.addBinding(TextConverterDoc.DOCUMENT_TYPE).to(stroom.pipeline.TextConverterStoreImpl.class);
-        entityServiceByTypeBinder.addBinding(XsltDoc.DOCUMENT_TYPE).to(stroom.pipeline.XsltStoreImpl.class);
-
         final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
         jobs.addBinding().to(PipelineJobs.class);
+
+        EntityTypeBinder.create(binder())
+                .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class)
+                .bind(TextConverterDoc.DOCUMENT_TYPE, stroom.pipeline.TextConverterStoreImpl.class)
+                .bind(XsltDoc.DOCUMENT_TYPE, stroom.pipeline.XsltStoreImpl.class);
+
+        // Provide object info to the logging service.
+        ObjectInfoProviderBinder.create(binder())
+                .bind(Doc.class, DocObjectInfoProvider.class)
+                .bind(PipelineDoc.class, PipelineDocObjectInfoProvider.class);
     }
 }

@@ -19,7 +19,6 @@ package stroom.jobsystem;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -33,11 +32,12 @@ import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
-import stroom.util.lifecycle.StroomShutdown;
 import stroom.task.shared.Task;
+import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -68,17 +68,17 @@ public class DistributedTaskFetcher {
     private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
     private final Set<Task<?>> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final StroomBeanStore beanStore;
+    private final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider;
     private final TaskManager taskManager;
     private final JobNodeTrackerCache jobNodeTrackerCache;
 
     private long lastFetch;
 
     @Inject
-    DistributedTaskFetcher(final StroomBeanStore beanStore,
+    DistributedTaskFetcher(final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider,
                            final TaskManager taskManager,
                            final JobNodeTrackerCache jobNodeTrackerCache) {
-        this.beanStore = beanStore;
+        this.clusterDispatchAsyncHelperProvider = clusterDispatchAsyncHelperProvider;
         this.taskManager = taskManager;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
     }
@@ -176,7 +176,7 @@ public class DistributedTaskFetcher {
                                     lastFetch = now;
 
                                     // Perform a fetch from the master node.
-                                    final ClusterDispatchAsyncHelper dispatchHelper = beanStore.getInstance(ClusterDispatchAsyncHelper.class);
+                                    final ClusterDispatchAsyncHelper dispatchHelper = clusterDispatchAsyncHelperProvider.get();
                                     if (dispatchHelper.isClusterStateInitialised()) {
                                         final DefaultClusterResultCollector<DistributedTaskRequestResult> collector = dispatchHelper
                                                 .execAsync(request, WAIT_TIME, TimeUnit.MINUTES, TargetType.MASTER);
@@ -210,7 +210,7 @@ public class DistributedTaskFetcher {
                             }
                         });
 
-                        taskManager.execAsync(genericServerTask, new TaskCallbackAdaptor<VoidResult>() {
+                        taskManager.execAsync(genericServerTask, new TaskCallbackAdaptor<>() {
                             @Override
                             public void onSuccess(final VoidResult result) {
                                 afterFetch();

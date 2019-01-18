@@ -39,7 +39,6 @@ import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
@@ -52,7 +51,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 
-@TaskHandlerBean(task = StreamUploadTask.class)
+
 class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamUploadTaskHandler.class);
 

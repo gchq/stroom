@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
 
@@ -29,7 +28,6 @@ import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-@TaskHandlerBean(task = ClusterLockClusterTask.class)
 class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;

@@ -21,11 +21,10 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = SaveDataRetentionPolicyAction.class)
+
 class SaveDataRetentionPolicyHandler extends AbstractTaskHandler<SaveDataRetentionPolicyAction, DataRetentionPolicy> {
     private final DataRetentionService dataRetentionService;
     private final Security security;

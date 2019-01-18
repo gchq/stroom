@@ -18,28 +18,40 @@ package stroom.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.shared.BaseCriteria;
+import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Clearable;
-import stroom.logging.LoggingModule;
-import stroom.task.api.TaskHandler;
+import stroom.entity.shared.EntityServiceDeleteAction;
+import stroom.entity.shared.EntityServiceFindAction;
+import stroom.entity.shared.EntityServiceFindDeleteAction;
+import stroom.entity.shared.EntityServiceFindReferenceAction;
+import stroom.entity.shared.EntityServiceFindSummaryAction;
+import stroom.entity.shared.EntityServiceLoadAction;
+import stroom.entity.shared.EntityServiceSaveAction;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.task.api.TaskHandlerBinder;
 
 public class EntityModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new LoggingModule());
-
         bind(GenericEntityService.class).to(GenericEntityServiceImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(CachingEntityManager.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceDeleteHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindDeleteHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindReferenceHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindSummaryHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceSaveHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceLoadHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(EntityServiceDeleteAction.class, stroom.entity.EntityServiceDeleteHandler.class)
+                .bind(EntityServiceFindDeleteAction.class, stroom.entity.EntityServiceFindDeleteHandler.class)
+                .bind(EntityServiceFindAction.class, stroom.entity.EntityServiceFindHandler.class)
+                .bind(EntityServiceFindReferenceAction.class, stroom.entity.EntityServiceFindReferenceHandler.class)
+                .bind(EntityServiceFindSummaryAction.class, stroom.entity.EntityServiceFindSummaryHandler.class)
+                .bind(EntityServiceSaveAction.class, stroom.entity.EntityServiceSaveHandler.class)
+                .bind(EntityServiceLoadAction.class, stroom.entity.EntityServiceLoadHandler.class);
+
+        // Provide object info to the logging service.
+        ObjectInfoProviderBinder.create(binder())
+                .bind(BaseEntity.class, BaseEntityObjectInfoProvider.class)
+                .bind(BaseCriteria.class, BaseCriteriaObjectInfoProvider.class);
     }
 
     @Override

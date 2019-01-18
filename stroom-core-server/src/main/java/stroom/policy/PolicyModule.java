@@ -18,7 +18,9 @@ package stroom.policy;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
+import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class PolicyModule extends AbstractModule {
@@ -26,11 +28,11 @@ public class PolicyModule extends AbstractModule {
     protected void configure() {
         bind(PolicyService.class).to(PolicyServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.policy.FetchDataRetentionPolicyHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.policy.SaveDataRetentionPolicyHandler.class);
-
         final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
         jobs.addBinding().to(PolicyJobs.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(FetchDataRetentionPolicyAction.class, stroom.policy.FetchDataRetentionPolicyHandler.class)
+                .bind(SaveDataRetentionPolicyAction.class, stroom.policy.SaveDataRetentionPolicyHandler.class);
     }
 }

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
@@ -31,9 +32,9 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -43,9 +44,7 @@ import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterRow;
 import stroom.streamtask.shared.ProcessorRow;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Expander;
-import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = FetchProcessorAction.class)
+
 class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, ResultList<SharedObject>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchProcessorHandler.class);
 

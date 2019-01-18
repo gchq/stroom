@@ -17,16 +17,15 @@
 
 package stroom.explorer;
 
-import stroom.explorer.shared.SharedDocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerServiceRenameAction;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = ExplorerServiceRenameAction.class)
+
 class ExplorerServiceRenameHandler
         extends AbstractTaskHandler<ExplorerServiceRenameAction, SharedDocRef> {
     private final ExplorerService explorerService;

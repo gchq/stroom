@@ -16,16 +16,15 @@
 
 package stroom.data.store;
 
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.DataSourceFields;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchFieldsAction.class)
+
 class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSourceFields> {
     private final Security security;
 

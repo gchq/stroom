@@ -16,24 +16,28 @@
 
 package stroom.entity.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Flushable;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import java.util.Optional;
+import java.util.Set;
 
-@TaskHandlerBean(task = FlushServiceClusterTask.class)
+
 class FlushServiceClusterHandler extends AbstractTaskHandler<FlushServiceClusterTask, VoidResult> {
-    private final StroomBeanStore stroomBeanStore;
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlushServiceClusterHandler.class);
+
+    private final Set<Flushable> flushables;
     private final Security security;
 
     @Inject
-    FlushServiceClusterHandler(final StroomBeanStore stroomBeanStore,
+    FlushServiceClusterHandler(final Set<Flushable> flushables,
                                final Security security) {
-        this.stroomBeanStore = stroomBeanStore;
+        this.flushables = flushables;
         this.security = security;
     }
 
@@ -44,15 +48,22 @@ class FlushServiceClusterHandler extends AbstractTaskHandler<FlushServiceCluster
                 throw new RuntimeException("No task supplied");
             }
             if (task.getBeanClass() == null) {
-                throw new RuntimeException("No task bean class supplied");
-            }
+                flushables.forEach(flushable -> {
+                    LOGGER.info("Calling flush on {}", flushable);
+                    flushable.flush();
+                });
+            } else {
+                LOGGER.info("Calling clear on {}", task.getBeanClass());
+                Optional<Flushable> optional = flushables.stream()
+                        .filter(flushable -> task.getBeanClass().isAssignableFrom(flushable.getClass()))
+                        .findAny();
 
-            final Object obj = stroomBeanStore.getInstance(task.getBeanClass());
-            if (obj == null) {
-                throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
-            }
+                if (!optional.isPresent()) {
+                    throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
+                }
 
-            ((Flushable) obj).flush();
+                optional.ifPresent(Flushable::flush);
+            }
             return new VoidResult();
         });
     }

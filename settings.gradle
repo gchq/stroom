@@ -17,6 +17,13 @@ rootProject.name = 'stroom'
  *
  */
 
+// Activity
+include 'stroom-activity:stroom-activity-api'
+include 'stroom-activity:stroom-activity-impl-db'
+include 'stroom-activity:stroom-activity-impl-db-gen'
+include 'stroom-activity:stroom-activity-impl-mock'
+include 'stroom-activity:stroom-activity-shared'
+
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
@@ -66,6 +73,10 @@ include 'stroom-elastic:stroom-elastic-api'
 // Entity // TODO : @66 Remove
 include 'stroom-entity-shared'
 
+// Event logging
+include 'stroom-event-logging:stroom-event-logging-api'
+include 'stroom-event-logging:stroom-event-logging-impl'
+
 // Explorer
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
@@ -83,9 +94,6 @@ include 'stroom-importexport:stroom-importexport-impl'
 include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
-
-// Integration tests.
-include 'stroom-integrationtest'
 
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'

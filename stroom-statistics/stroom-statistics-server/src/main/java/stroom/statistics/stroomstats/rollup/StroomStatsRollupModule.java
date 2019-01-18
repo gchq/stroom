@@ -17,29 +17,17 @@
 package stroom.statistics.stroomstats.rollup;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.stats.shared.StroomStatsRollUpBitMaskConversionAction;
+import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
+import stroom.stats.shared.StroomStatsStoreFieldChangeAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class StroomStatsRollupModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.statistics.stroomstats.rollup.StroomStatsRollUpBitMaskConversionHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.statistics.stroomstats.rollup.StroomStatsRollUpBitMaskPermGenerationHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.statistics.stroomstats.rollup.StroomStatsStoreFieldChangeHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(StroomStatsRollUpBitMaskConversionAction.class, StroomStatsRollUpBitMaskConversionHandler.class)
+                .bind(StroomStatsRollUpBitMaskPermGenerationAction.class, StroomStatsRollUpBitMaskPermGenerationHandler.class)
+                .bind(StroomStatsStoreFieldChangeAction.class, StroomStatsStoreFieldChangeHandler.class);
     }
-    //    @Bean
-//    public StroomStatsRollUpBitMaskConversionHandler stroomStatsRollUpBitMaskConversionHandler() {
-//        return new StroomStatsRollUpBitMaskConversionHandler();
-//    }
-//
-//    @Bean
-//    public StroomStatsRollUpBitMaskPermGenerationHandler stroomStatsRollUpBitMaskPermGenerationHandler() {
-//        return new StroomStatsRollUpBitMaskPermGenerationHandler();
-//    }
-//
-//    @Bean
-//    public StroomStatsStoreFieldChangeHandler stroomStatsStoreFieldChangeHandler() {
-//        return new StroomStatsStoreFieldChangeHandler();
-//    }
 }

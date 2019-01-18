@@ -10,9 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.db.DbUtil;
 import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
@@ -40,6 +42,9 @@ public class DataMetaDbModule extends AbstractModule {
 
         final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
         jobs.addBinding().to(DataMetaDbJobs.class);
+        // Provide object info to the logging service.
+        ObjectInfoProviderBinder.create(binder())
+                .bind(Data.class, DataObjectInfoProvider.class);
     }
 
     @Provides

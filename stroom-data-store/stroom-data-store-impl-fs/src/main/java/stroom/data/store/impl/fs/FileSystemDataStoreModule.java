@@ -32,7 +32,7 @@ import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.io.StreamCloser;
 import stroom.node.NodeServiceModule;
 import stroom.task.TaskModule;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
 import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 import stroom.volume.VolumeModule;
@@ -58,11 +58,11 @@ public class FileSystemDataStoreModule extends AbstractModule {
         bind(FileSystemTypePaths.class).to(FileSystemTypePathsImpl.class);
         bind(DataVolumeService.class).to(DataVolumeServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(FileSystemCleanSubTaskHandler.class);
-
         final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
         jobs.addBinding().to(FileSystemDataStoreJobs.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(FileSystemCleanSubTask.class, FileSystemCleanSubTaskHandler.class);
     }
 
     @Provides
@@ -107,7 +107,7 @@ public class FileSystemDataStoreModule extends AbstractModule {
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-data-store database",e);
+            LOGGER.error("Error migrating stroom-data-store database", e);
             throw e;
         }
         LOGGER.info("Completed Flyway migrations for stroom-data-store in {}", FLYWAY_TABLE);

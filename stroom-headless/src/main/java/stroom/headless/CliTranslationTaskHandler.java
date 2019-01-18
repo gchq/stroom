@@ -46,7 +46,6 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
@@ -57,7 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-@TaskHandlerBean(task = CliTranslationTask.class)
+
 class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
     private final FeedStore feedStore;

@@ -1,90 +1,94 @@
 ext.moduleName = 'stroom.integrationtest'
 
 dependencies {
-    integrationTestImplementation project(':stroom-app')
+    testImplementation project(':stroom-app')
     // Use default DB config.
-    integrationTestImplementation project(':stroom-config:stroom-config-app')
-    integrationTestImplementation project(':stroom-core-server')
-    integrationTestImplementation project(':stroom-core-shared')
-    integrationTestImplementation project(':stroom-docstore:stroom-docstore-impl')
-    integrationTestImplementation project(':stroom-docstore:stroom-docstore-shared')
-    integrationTestImplementation project(':stroom-dashboard:stroom-dashboard-server')
-    integrationTestImplementation project(':stroom-dashboard:stroom-dashboard-shared')
-    integrationTestImplementation project(':stroom-data-meta:stroom-data-meta-api')
-    integrationTestImplementation project(':stroom-data-meta:stroom-data-meta-impl-db')
-    integrationTestImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    integrationTestImplementation project(':stroom-data-store:stroom-data-store-api')
-    integrationTestImplementation project(':stroom-data-store:stroom-data-store-impl-fs')
-    integrationTestImplementation project(':stroom-data-store:stroom-data-store-impl-mock')
-    integrationTestImplementation project(':stroom-elastic:stroom-elastic-impl')
-    integrationTestImplementation project(':stroom-entity-shared')
-    integrationTestImplementation project(':stroom-explorer:stroom-explorer-api')
-    integrationTestImplementation project(':stroom-explorer:stroom-explorer-impl')
-    integrationTestImplementation project(':stroom-explorer:stroom-explorer-impl-db')
-    integrationTestImplementation project(':stroom-headless')
-    integrationTestImplementation project(':stroom-importexport:stroom-importexport-api')
-    integrationTestImplementation project(':stroom-index:stroom-index-server')
-    integrationTestImplementation project(':stroom-index:stroom-index-shared')
-    integrationTestImplementation project(':stroom-pipeline')
-    integrationTestImplementation project(':stroom-ruleset:stroom-ruleset-server')
-    integrationTestImplementation project(':stroom-security:stroom-security-api')
-    integrationTestImplementation project(':stroom-security:stroom-security-impl-mock')
-    integrationTestImplementation project(':stroom-security:stroom-security-server')
-    integrationTestImplementation project(':stroom-security:stroom-security-shared')
-    integrationTestImplementation project(':stroom-statistics:stroom-statistics-api')
-    integrationTestImplementation project(':stroom-statistics:stroom-statistics-server')
-    integrationTestImplementation project(':stroom-statistics:stroom-statistics-shared')
-    integrationTestImplementation project(':stroom-task:stroom-task-api')
-    integrationTestImplementation project(':stroom-test-common')
-    integrationTestImplementation project(':stroom-util')
-    integrationTestImplementation project(':stroom-util-shared')
+    testImplementation project(':stroom-activity:stroom-activity-api')
+    testImplementation project(':stroom-activity:stroom-activity-impl-mock')
+    testImplementation project(':stroom-config:stroom-config-app')
+    testImplementation project(':stroom-core-server')
+    testImplementation project(':stroom-core-shared')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-shared')
+    testImplementation project(':stroom-dashboard:stroom-dashboard-server')
+    testImplementation project(':stroom-dashboard:stroom-dashboard-shared')
+    testImplementation project(':stroom-data-meta:stroom-data-meta-api')
+    testImplementation project(':stroom-data-meta:stroom-data-meta-impl-db')
+    testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    testImplementation project(':stroom-data-store:stroom-data-store-api')
+    testImplementation project(':stroom-data-store:stroom-data-store-impl-fs')
+    testImplementation project(':stroom-data-store:stroom-data-store-impl-mock')
+    testImplementation project(':stroom-elastic:stroom-elastic-impl')
+    testImplementation project(':stroom-entity-shared')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-api')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-impl')
+    testImplementation project(':stroom-explorer:stroom-explorer-api')
+    testImplementation project(':stroom-explorer:stroom-explorer-impl')
+    testImplementation project(':stroom-explorer:stroom-explorer-impl-db')
+    testImplementation project(':stroom-headless')
+    testImplementation project(':stroom-importexport:stroom-importexport-api')
+    testImplementation project(':stroom-index:stroom-index-server')
+    testImplementation project(':stroom-index:stroom-index-shared')
+    testImplementation project(':stroom-pipeline')
+    testImplementation project(':stroom-ruleset:stroom-ruleset-server')
+    testImplementation project(':stroom-security:stroom-security-api')
+    testImplementation project(':stroom-security:stroom-security-impl-mock')
+    testImplementation project(':stroom-security:stroom-security-server')
+    testImplementation project(':stroom-security:stroom-security-shared')
+    testImplementation project(':stroom-statistics:stroom-statistics-api')
+    testImplementation project(':stroom-statistics:stroom-statistics-server')
+    testImplementation project(':stroom-statistics:stroom-statistics-shared')
+    testImplementation project(':stroom-task:stroom-task-api')
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-util')
+    testImplementation project(':stroom-util-shared')
 
-//    integrationTestImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//    integrationTestImplementation project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
-//    integrationTestImplementation project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
-//    integrationTestImplementation project(path: ':stroom-pipeline', configuration: 'testArtifacts')
-//    integrationTestImplementation project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
-    integrationTestImplementation project(':stroom-test-common')
+//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+//    testImplementation project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
+//    testImplementation project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
+//    testImplementation project(path: ':stroom-pipeline', configuration: 'testArtifacts')
+//    testImplementation project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
+    testImplementation project(':stroom-test-common')
 
-    integrationTestImplementation libs.stroomQueryApi
-    integrationTestImplementation libs.stroomQueryCommon
+    testImplementation libs.stroomQueryApi
+    testImplementation libs.stroomQueryCommon
 
-    integrationTestImplementation libs.commons_io
-    integrationTestImplementation libs.fast_classpath_scanner
-    integrationTestImplementation libs.guice4
-    integrationTestImplementation libs.hibernate_core
-    integrationTestImplementation libs.hibernate_jpa_api
-    integrationTestImplementation libs.hikari
-    integrationTestCompileOnly libs.junit_jupiter_api
-    integrationTestImplementation libs.lucene_core
-    integrationTestImplementation libs.saxon_he
-    integrationTestImplementation libs.slf4j_api
-    integrationTestImplementation libs.vavr
+    testImplementation libs.commons_io
+    testImplementation libs.fast_classpath_scanner
+    testImplementation libs.guice4
+    testImplementation libs.hibernate_core
+    testImplementation libs.hibernate_jpa_api
+    testImplementation libs.hikari
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.lucene_core
+    testImplementation libs.saxon_he
+    testImplementation libs.slf4j_api
+    testImplementation libs.vavr
 
-    integrationTestRuntimeOnly libs.javax_el
+    testRuntimeOnly libs.javax_el
     //the following logging libs are needed when running junits outside dropwizard
-    integrationTestRuntimeOnly libs.jcl_over_slf4j
-    integrationTestRuntimeOnly libs.jul_to_slf4j
-    integrationTestRuntimeOnly libs.log4j_over_slf4j
-    integrationTestRuntimeOnly libs.logback_classic
-    integrationTestRuntimeOnly libs.logback_core
-    integrationTestRuntimeOnly libs.jaxb_runtime
-    integrationTestRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
 
-    integrationTestImplementation libs.mockito_core
-    integrationTestImplementation libs.assertj_core
-    integrationTestImplementation libs.dropwizard_testing
-    integrationTestImplementation libs.dropwizard_client
+    testImplementation libs.mockito_core
+    testImplementation libs.assertj_core
+    testImplementation libs.dropwizard_testing
+    testImplementation libs.dropwizard_client
 
     // The following logging libs are needed when running junits outside dropwizard
-    integrationTestRuntimeOnly libs.javax_activation
-    integrationTestRuntimeOnly libs.jaxb_runtime
-    integrationTestRuntimeOnly libs.jcl_over_slf4j
-    integrationTestRuntimeOnly libs.jul_to_slf4j
-    integrationTestRuntimeOnly libs.junit_jupiter_engine
-    integrationTestRuntimeOnly libs.log4j_over_slf4j
-    integrationTestRuntimeOnly libs.logback_classic
-    integrationTestRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }
 
 task setupSampleDataApplication(type: JavaExec) {
@@ -93,7 +97,7 @@ task setupSampleDataApplication(type: JavaExec) {
     // We need to set the working directory as the stroom root otherwise
     // setupSampleData won't find 'samples' directories in other modules.
     workingDir '../'
-    classpath = sourceSets.integrationTest.runtimeClasspath
+    classpath = sourceSets.test.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
 }
 

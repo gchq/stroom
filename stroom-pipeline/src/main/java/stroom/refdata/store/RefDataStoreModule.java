@@ -19,9 +19,7 @@ package stroom.refdata.store;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.refdata.RefDataValueByteBufferConsumer;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
@@ -35,7 +33,6 @@ import stroom.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
-import stroom.refdata.store.onheapstore.RefDataValueConsumer;
 import stroom.refdata.store.onheapstore.StringValueConsumer;
 import stroom.refdata.util.ByteBufferPool;
 import stroom.refdata.util.PooledByteBufferOutputStream;
@@ -46,29 +43,14 @@ public class RefDataStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
-        final MapBinder<Integer, RefDataValueByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder =
-                MapBinder.newMapBinder(
-                        binder(), Integer.class, RefDataValueByteBufferConsumer.Factory.class);
-
-        refDataValueByteBufferConsumerBinder
-                .addBinding(FastInfosetValue.TYPE_ID)
-                .to(FastInfosetByteBufferConsumer.Factory.class);
-
-        refDataValueByteBufferConsumerBinder
-                .addBinding(StringValue.TYPE_ID)
-                .to(StringByteBufferConsumer.Factory.class);
+        ByteBufferConsumerBinder.create(binder())
+                .bind(FastInfosetValue.TYPE_ID, FastInfosetByteBufferConsumer.Factory.class)
+                .bind(StringValue.TYPE_ID, StringByteBufferConsumer.Factory.class);
 
         // bind the various RefDataValue consumer factories into a map keyed on their ID
-        final MapBinder<Integer, RefDataValueConsumer.Factory> refDataValueConsumerBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, RefDataValueConsumer.Factory.class);
-
-        refDataValueConsumerBinder
-                .addBinding(FastInfosetValue.TYPE_ID)
-                .to(FastInfosetValueConsumer.Factory.class);
-
-        refDataValueConsumerBinder
-                .addBinding(StringValue.TYPE_ID)
-                .to(StringValueConsumer.Factory.class);
+        ValueConsumerBinder.create(binder())
+                .bind(FastInfosetValue.TYPE_ID, FastInfosetValueConsumer.Factory.class)
+                .bind(StringValue.TYPE_ID, StringValueConsumer.Factory.class);
 
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));

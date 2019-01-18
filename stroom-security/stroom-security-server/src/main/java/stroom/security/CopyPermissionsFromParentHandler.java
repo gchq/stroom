@@ -8,12 +8,11 @@ import stroom.security.shared.CopyPermissionsFromParentAction;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
-@TaskHandlerBean(task = CopyPermissionsFromParentAction.class)
+
 public class CopyPermissionsFromParentHandler
         extends AbstractTaskHandler<CopyPermissionsFromParentAction, DocumentPermissions> {
 

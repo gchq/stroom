@@ -20,15 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Security;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.TaskManager;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = TerminateTaskClusterTask.class)
+
 class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 

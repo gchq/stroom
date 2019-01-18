@@ -23,7 +23,6 @@ import stroom.security.Security;
 import stroom.statistics.shared.StatisticType;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
@@ -35,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-@TaskHandlerBean(task = SQLStatisticFlushTask.class)
+
 public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
     /**
      * The number of records to flush to the DB in one go.

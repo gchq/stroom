@@ -31,7 +31,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;

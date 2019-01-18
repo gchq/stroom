@@ -20,11 +20,10 @@ import stroom.jobsystem.shared.GetScheduledTimesAction;
 import stroom.jobsystem.shared.ScheduledTimes;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = GetScheduledTimesAction.class)
+
 class GetScheduledTimesHandler extends AbstractTaskHandler<GetScheduledTimesAction, ScheduledTimes> {
     private final ScheduleService scheduleService;
     private final Security security;

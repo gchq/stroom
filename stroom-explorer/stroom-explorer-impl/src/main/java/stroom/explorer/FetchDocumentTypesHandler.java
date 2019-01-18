@@ -22,12 +22,11 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.FetchDocumentTypesAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@TaskHandlerBean(task = FetchDocumentTypesAction.class)
+
 class FetchDocumentTypesHandler extends AbstractTaskHandler<FetchDocumentTypesAction, DocumentTypes> {
     private final ExplorerService explorerService;
     private final Security security;

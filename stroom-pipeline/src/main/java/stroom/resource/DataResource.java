@@ -21,7 +21,7 @@ package stroom.resource;
 import io.swagger.annotations.Api;
 import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedProperties;
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.DataFetcher;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

@@ -22,11 +22,10 @@ import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.UserRef;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchUserAndPermissionsAction.class)
+
 class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
     private final Security security;
     private final SecurityContext securityContext;

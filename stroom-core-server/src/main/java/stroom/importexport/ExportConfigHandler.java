@@ -17,12 +17,10 @@
 package stroom.importexport;
 
 import stroom.importexport.shared.ExportConfigAction;
-import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
@@ -32,7 +30,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-@TaskHandlerBean(task = ExportConfigAction.class)
+
 class ExportConfigHandler extends AbstractTaskHandler<ExportConfigAction, ResourceGeneration> {
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;

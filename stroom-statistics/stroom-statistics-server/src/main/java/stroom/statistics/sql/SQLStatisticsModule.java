@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
 import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
@@ -44,11 +44,11 @@ public class SQLStatisticsModule extends AbstractModule {
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(SQLStatisticFlushTaskHandler.class);
-
         final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
         jobs.addBinding().to(SQLStatisticsJobs.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(SQLStatisticFlushTask.class, SQLStatisticFlushTaskHandler.class);
     }
 
     @Provides
@@ -92,7 +92,7 @@ public class SQLStatisticsModule extends AbstractModule {
         try {
             flyway.migrate();
         } catch (FlywayException e) {
-            LOGGER.error("Error migrating stroom-statistics database",e);
+            LOGGER.error("Error migrating stroom-statistics database", e);
             throw e;
         }
         LOGGER.info("Completed Flyway migrations for stroom-statistics in {}", FLYWAY_TABLE);

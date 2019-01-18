@@ -16,7 +16,7 @@
 
 package stroom.resource;
 
-import stroom.servlet.HttpServletRequestHolder;
+import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.servlet.ResourceMap;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;

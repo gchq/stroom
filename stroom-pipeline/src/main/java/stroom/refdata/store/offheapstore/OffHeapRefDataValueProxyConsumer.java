@@ -3,11 +3,11 @@ package stroom.refdata.store.offheapstore;
 import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
-import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
 import stroom.refdata.store.AbstractConsumer;
+import stroom.refdata.store.ByteBufferConsumerId;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.util.logging.LambdaLogger;
 
@@ -23,13 +23,13 @@ public class OffHeapRefDataValueProxyConsumer
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataValueProxyConsumer.class);
 
     // injected map of typeId to the appropriate bytebuffer consumer factory
-    private final Map<Integer, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
+    private final Map<ByteBufferConsumerId, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
 
     @Inject
     public OffHeapRefDataValueProxyConsumer(
             @Assisted final Receiver receiver,
             @Assisted final PipelineConfiguration pipelineConfiguration,
-            final Map<Integer, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap) {
+            final Map<ByteBufferConsumerId, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap) {
 
         super(pipelineConfiguration, receiver);
         this.typeToByteBufferConsumerFactoryMap = typeToByteBufferConsumerFactoryMap;
@@ -37,7 +37,7 @@ public class OffHeapRefDataValueProxyConsumer
     }
 
     @Override
-    public boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+    public boolean consume(final RefDataValueProxy refDataValueProxy) {
         LOGGER.trace("consume({})", refDataValueProxy);
 
         //
@@ -47,7 +47,7 @@ public class OffHeapRefDataValueProxyConsumer
             final int typeId = typedByteBuffer.getTypeId();
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(typeId);
+            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(new ByteBufferConsumerId(typeId));
 
             Objects.requireNonNull(consumerFactory, () -> LambdaLogger.buildMessage("No factory found for typeId {}", typeId));
             final RefDataValueByteBufferConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);

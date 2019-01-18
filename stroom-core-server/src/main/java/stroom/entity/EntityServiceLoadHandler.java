@@ -19,14 +19,13 @@ package stroom.entity;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.EntityServiceLoadAction;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = EntityServiceLoadAction.class)
+
 class EntityServiceLoadHandler extends AbstractTaskHandler<EntityServiceLoadAction<BaseEntity>, BaseEntity> {
     private final EntityServiceBeanRegistry beanRegistry;
     private final DocumentEventLog entityEventLog;

@@ -12,7 +12,7 @@ import stroom.statistics.sql.SQLStatisticsModule;
 public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new stroom.activity.server.ActivityModule());
+        install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.cache.CacheModule());
         install(new stroom.cache.PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
@@ -40,7 +40,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.lifecycle.LifecycleModule());
-        install(new stroom.logging.LoggingModule());
+        install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.node.NodeModule());
         install(new stroom.node.NodeHandlerModule());
         install(new stroom.node.NodeServiceModule());

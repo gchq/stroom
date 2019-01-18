@@ -58,8 +58,7 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
             final SummaryDataRow row = streamTaskSummaryPresenter.getSelectionModel().getSelected();
 
             if (row != null) {
-                final FindStreamTaskCriteria findStreamTaskCriteria = streamTaskListPresenter.getDataProvider()
-                        .getCriteria();
+                final FindStreamTaskCriteria findStreamTaskCriteria = streamTaskListPresenter.getCriteria();
 
                 final String pipelineUuid = row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_PIPELINE);
 

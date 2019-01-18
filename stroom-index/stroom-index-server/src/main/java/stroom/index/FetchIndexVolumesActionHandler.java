@@ -20,12 +20,11 @@ import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchIndexVolumesAction.class)
+
 class FetchIndexVolumesActionHandler extends AbstractTaskHandler<FetchIndexVolumesAction, SharedList<VolumeEntity>> {
     private final Security security;
     private final IndexVolumeService indexVolumeService;

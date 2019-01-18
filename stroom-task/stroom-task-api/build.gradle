@@ -4,9 +4,9 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
 
-    implementation libs.stroomDocRef
-
+    implementation libs.guice4
     implementation libs.slf4j_api
+    implementation libs.stroomDocRef
     
     testImplementation libs.assertj_core
     

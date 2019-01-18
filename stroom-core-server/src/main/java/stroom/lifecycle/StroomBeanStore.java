@@ -19,7 +19,6 @@ package stroom.lifecycle;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
 import com.google.inject.util.Types;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import org.slf4j.Logger;
@@ -43,7 +42,6 @@ public class StroomBeanStore {
 
     private static final String PACKAGE = "stroom";
 
-//    private final Map<Class<? extends Annotation>, Set<Class<?>>> classMap = new ConcurrentHashMap<>();
     private final Map<Class<? extends Annotation>, Set<MethodReference>> methodMap = new ConcurrentHashMap<>();
 
     private final Injector injector;
@@ -52,16 +50,6 @@ public class StroomBeanStore {
     public StroomBeanStore(final Injector injector) {
         this.injector = injector;
     }
-
-//    public Set<Class<?>> getAnnotatedClasses(final Class<? extends Annotation> annotation) {
-//        return classMap.computeIfAbsent(annotation, a -> {
-//            final Set<Class<?>> classes = new HashSet<>();
-//            new FastClasspathScanner(PACKAGE)
-//                    .matchClassesWithAnnotation(annotation, classes::add)
-//                    .scan();
-//            return Collections.unmodifiableSet(classes);
-//        });
-//    }
 
     public Set<MethodReference> getAnnotatedMethods(final Class<? extends Annotation> annotation) {
         return methodMap.computeIfAbsent(annotation, a -> {
@@ -78,8 +66,7 @@ public class StroomBeanStore {
             return Collections.unmodifiableSet(set);
         });
     }
-
-    public <T> Set<T> getInstancesOfType(Class<T> type) {
+   public <T> Set<T> getInstancesOfType(Class<T> type) {
         return getBindings(type);
     }
 
@@ -104,21 +91,6 @@ public class StroomBeanStore {
 
         if (o == null) {
             LOGGER.error("getInstance() - {} returned null !!", type);
-        }
-
-        return o;
-    }
-
-    public Object getInstance(final String name) {
-        Object o = null;
-        try {
-            o = injector.getInstance(Key.get(Object.class, Names.named(name)));
-        } catch (final RuntimeException e) {
-            LOGGER.error("Unable to get instance!", e);
-        }
-
-        if (o == null) {
-            LOGGER.error("getInstance() - {} returned null !!", name);
         }
 
         return o;

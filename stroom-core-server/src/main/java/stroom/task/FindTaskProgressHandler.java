@@ -19,14 +19,13 @@ package stroom.task;
 import stroom.entity.shared.ResultList;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.TaskProgress;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindTaskProgressAction.class)
+
 class FindTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindTaskProgressAction, ResultList<TaskProgress>> {
     private final Security security;

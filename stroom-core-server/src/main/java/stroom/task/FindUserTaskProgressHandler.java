@@ -19,8 +19,7 @@ package stroom.task;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.security.Security;
-import stroom.servlet.HttpServletRequestHolder;
-import stroom.task.api.TaskHandlerBean;
+import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
@@ -28,7 +27,7 @@ import stroom.task.shared.TaskProgress;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FindUserTaskProgressAction.class)
+
 class FindUserTaskProgressHandler
         extends FindTaskProgressHandlerBase<FindUserTaskProgressAction, BaseResultList<TaskProgress>> {
     private final transient HttpServletRequestHolder httpServletRequestHolder;

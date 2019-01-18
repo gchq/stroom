@@ -22,7 +22,6 @@ import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 
 import javax.inject.Inject;
@@ -31,7 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = FetchScriptAction.class)
+
 class FetchScriptHandler extends AbstractTaskHandler<FetchScriptAction, SharedList<ScriptDoc>> {
     private final ScriptStore scriptStore;
     private final Security security;
