@@ -30,10 +30,10 @@ import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.ScheduledJobs;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.lifecycle.StroomStartup;
-import stroom.util.lifecycle.jobmanagement.ScheduledJob;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
