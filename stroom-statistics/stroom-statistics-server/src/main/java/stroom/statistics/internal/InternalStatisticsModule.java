@@ -18,12 +18,15 @@ package stroom.statistics.internal;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class InternalStatisticsModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(InternalStatisticsReceiver.class).to(InternalStatisticsReceiverImpl.class);
 
-        final Multibinder<InternalStatisticsService> multibinder = Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
+        Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
+
+        LifecycleAwareBinder.create(binder()).bind(InternalStatisticsReceiverImpl.class);
     }
 }

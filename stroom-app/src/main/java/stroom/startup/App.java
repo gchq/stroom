@@ -239,7 +239,7 @@ public class App extends Application<Config> {
         final Injector injector = Guice.createInjector(appModule);
 
         // Start the persistence service. This needs to be done before anything else as other filters and services rely on it.
-        injector.getInstance(PersistLifecycle.class).startPersistence();
+        injector.getInstance(PersistLifecycle.class).start();
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 

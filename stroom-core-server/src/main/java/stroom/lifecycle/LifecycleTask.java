@@ -16,37 +16,45 @@
 
 package stroom.lifecycle;
 
-import stroom.util.shared.VoidResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.task.api.ServerTask;
+import stroom.task.shared.Task;
+import stroom.util.shared.VoidResult;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class LifecycleTask extends ServerTask<VoidResult> {
-    private StroomBeanMethodExecutable executable;
-    private StroomBeanFunction function;
+    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTask.class);
 
-    public LifecycleTask(final StroomBeanMethodExecutable executable) {
-        this.executable = executable;
+    private final String taskName;
+    private final Consumer<Task> method;
+    private final AtomicBoolean running;
+
+    public LifecycleTask(final String taskName,
+                         final Consumer<Task> method,
+                         final AtomicBoolean running) {
+        this.taskName = taskName;
+        this.method = method;
+        this.running = running;
     }
 
-    public LifecycleTask(final StroomBeanFunction function) {
-        this.function = function;
-    }
+    public void exec(final Task<?> task) {
+        try {
+            //TODO: debug logging
+//            LOGGER.debug(message + " " + methodReference.getClazz().getName() + "." + methodReference.getMethod().getName());
 
-    // TODO: clean up gh-1063
-    public StroomBeanMethodExecutable getExecutable() {
-        return executable;
-    }
-
-    public StroomBeanFunction getFunction() {
-        return function;
+            method.accept(task);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Error calling {}", taskName, e);
+        } finally {
+            running.set(false);
+        }
     }
 
     @Override
     public String getTaskName() {
-        if(executable != null){
-            return executable.toString();
-        }else {
-            return function.toString();
-        }
+        return taskName;
     }
-
 }

@@ -180,7 +180,6 @@ dependencies {
     testImplementation libs.stroomQueryCommon
 
     testImplementation libs.commons_io
-    testImplementation libs.fast_classpath_scanner
     testImplementation libs.guice4
     testImplementation libs.hibernate_core
     testImplementation libs.hibernate_jpa_api

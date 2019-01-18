@@ -3,7 +3,7 @@ package stroom.statistics.internal;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.StroomStartup;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Singleton
 @SuppressWarnings("unused")
-public class InternalStatisticsReceiverImpl implements InternalStatisticsReceiver {
+public class InternalStatisticsReceiverImpl implements LifecycleAware, InternalStatisticsReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsReceiverImpl.class);
 
@@ -31,9 +31,8 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
         this.internalStatisticDocRefCache = internalStatisticDocRefCache;
     }
 
-    @SuppressWarnings("unused")
-    @StroomStartup(priority = 100)
-    public void initStatisticEventStoreBeanNames() {
+    @Override
+    public void start() {
         final Map<String, InternalStatisticsService> docRefTypeToServiceMap = new HashMap<>();
         providers.forEach(provider -> {
             final InternalStatisticsService internalStatisticsService = provider.get();
@@ -46,6 +45,11 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
         });
 
         internalStatisticsReceiver = new MultiServiceInternalStatisticsReceiver(internalStatisticDocRefCache, docRefTypeToServiceMap);
+    }
+
+    @Override
+    public int priority() {
+        return 100;
     }
 
     @Override

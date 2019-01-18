@@ -19,7 +19,10 @@ package stroom.search;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.search.extraction.ExtractionTaskExecutor;
+import stroom.search.shard.IndexShardSearchTaskExecutor;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -33,5 +36,9 @@ public class SearchModule extends AbstractModule {
                 .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)
                 .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class)
                 .bind(EventSearchTask.class, EventSearchTaskHandler.class);
+
+        LifecycleAwareBinder.create(binder())
+                .bind(ExtractionTaskExecutor.class)
+                .bind(IndexShardSearchTaskExecutor.class);
     }
 }

@@ -51,8 +51,8 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
     @Test
     void testBasic() {
-        streamTaskCreator.shutdown();
-        streamTaskCreator.startup();
+        streamTaskCreator.stop();
+        streamTaskCreator.start();
 
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
@@ -94,8 +94,8 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
     void testMultiFeedInitialCreate() {
         final Node node = nodeCache.getDefaultNode();
 
-        streamTaskCreator.shutdown();
-        streamTaskCreator.startup();
+        streamTaskCreator.stop();
+        streamTaskCreator.start();
 
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
@@ -153,8 +153,8 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
     @Test
     void testLifecycle() {
-        streamTaskCreator.shutdown();
-        streamTaskCreator.startup();
+        streamTaskCreator.stop();
+        streamTaskCreator.start();
 
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(0);
 
@@ -169,12 +169,12 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1);
         assertThat(streamTaskCreator.getStreamTaskQueueSize()).isEqualTo(1);
 
-        streamTaskCreator.shutdown();
+        streamTaskCreator.stop();
 
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1);
         assertThat(streamTaskCreator.getStreamTaskQueueSize()).isEqualTo(0);
 
-        streamTaskCreator.startup();
+        streamTaskCreator.start();
         assertThat(streamTaskCreator.getStreamTaskQueueSize()).isEqualTo(0);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());

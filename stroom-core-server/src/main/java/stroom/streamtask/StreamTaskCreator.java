@@ -19,10 +19,11 @@ package stroom.streamtask;
 import stroom.node.shared.Node;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.TaskContext;
+import stroom.util.lifecycle.LifecycleAware;
 
 import java.util.List;
 
-public interface StreamTaskCreator {
+public interface StreamTaskCreator extends LifecycleAware {
     List<ProcessorFilterTask> assignStreamTasks(Node node, int count);
 
     void abandonStreamTasks(Node node, List<ProcessorFilterTask> tasks);
@@ -30,10 +31,6 @@ public interface StreamTaskCreator {
     void createTasks(final TaskContext taskContext);
 
     int getStreamTaskQueueSize();
-
-    void startup();
-
-    void shutdown();
 
     void writeQueueStatistics();
 }

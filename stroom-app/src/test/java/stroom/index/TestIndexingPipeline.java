@@ -83,7 +83,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     @BeforeEach
     @AfterEach
     void clear() {
-        indexShardWriterCache.shutdown();
+        indexShardWriterCache.stop();
     }
 
     @Test

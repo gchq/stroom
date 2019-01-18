@@ -17,6 +17,7 @@
 package stroom.importexport;
 
 import com.google.inject.AbstractModule;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class ImportExportModule extends AbstractModule {
     @Override
@@ -24,5 +25,7 @@ public class ImportExportModule extends AbstractModule {
         bind(ImportExportService.class).to(ImportExportServiceImpl.class);
         bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
         bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
+
+        LifecycleAwareBinder.create(binder()).bind(ContentPackImport.class);
     }
 }

@@ -25,6 +25,7 @@ import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.task.api.job.ScheduledJobsBinder;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class StreamTaskModule extends AbstractModule {
     @Override
@@ -50,5 +51,7 @@ public class StreamTaskModule extends AbstractModule {
         findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
 
         ScheduledJobsBinder.create(binder()).bind(StreamTaskJobs.class);
+
+        LifecycleAwareBinder.create(binder()).bind(StreamTaskCreatorImpl.class);
     }
 }

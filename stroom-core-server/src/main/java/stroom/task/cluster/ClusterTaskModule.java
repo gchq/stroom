@@ -21,6 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.cluster.impl.ClusterServiceBinder;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
@@ -36,6 +37,8 @@ public class ClusterTaskModule extends AbstractModule {
 
         TaskHandlerBinder.create(binder())
                 .bind(TerminateTaskClusterTask.class, TerminateTaskClusterHandler.class);
+
+        LifecycleAwareBinder.create(binder()).bind(ClusterResultCollectorCache.class);
     }
 
     @Override

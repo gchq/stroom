@@ -103,14 +103,6 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
-    public void startup() {
-    }
-
-    @Override
-    public void shutdown() {
-    }
-
-    @Override
     public void writeQueueStatistics() {
 
     }

@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
+import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.shared.VoidResult;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,7 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
-public class SQLStatisticCacheImpl implements SQLStatisticCache {
+public class SQLStatisticCacheImpl implements LifecycleAware, SQLStatisticCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     /**
@@ -145,8 +145,8 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
         }
     }
 
-    @StroomShutdown
-    public void shutdown() {
+    @Override
+    public void stop() {
         // Do a final blocking flush.
         flush(true);
     }

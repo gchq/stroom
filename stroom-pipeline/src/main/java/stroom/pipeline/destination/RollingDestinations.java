@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,7 +30,7 @@ import java.io.UncheckedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class RollingDestinations {
+public class RollingDestinations implements LifecycleAware {
     private static final Logger LOGGER = LoggerFactory.getLogger(RollingDestinations.class);
 
     private static final int MAX_TRY_COUNT = 1000;
@@ -143,7 +143,11 @@ public class RollingDestinations {
         rollAll(false);
     }
 
-    @StroomShutdown
+    @Override
+    public void stop() {
+        forceRoll();
+    }
+
     public void forceRoll() {
         rollAll(true);
     }

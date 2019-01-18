@@ -1,24 +1,19 @@
-package stroom.lifecycle;
+package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.shared.Task;
 import stroom.task.api.job.ScheduledJob;
+import stroom.task.shared.Task;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class StroomBeanFunction {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanMethodExecutable.class);
+class ScheduledJobFunction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledJobFunction.class);
 
     private final AtomicBoolean running;
-    private ScheduledJob scheduledJob;
+    private final ScheduledJob scheduledJob;
 
-    public StroomBeanFunction(final ScheduledJob scheduledJob) {
-        this(scheduledJob, new AtomicBoolean());
-        this.scheduledJob = scheduledJob;
-    }
-
-    public StroomBeanFunction(final ScheduledJob scheduledJob,  final AtomicBoolean running) {
+    ScheduledJobFunction(final ScheduledJob scheduledJob, final AtomicBoolean running) {
         this.scheduledJob = scheduledJob;
         this.running = running;
     }

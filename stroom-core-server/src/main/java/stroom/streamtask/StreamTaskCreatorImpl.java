@@ -51,11 +51,10 @@ import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.api.TaskManager;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.lifecycle.StroomStartup;
+import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 
@@ -164,9 +163,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.security = security;
     }
 
-    @StroomStartup
     @Override
-    public void startup() {
+    public void start() {
         // It shouldn't be possible to create tasks during startup.
         createTasksLock.lock();
         try {
@@ -180,9 +178,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         }
     }
 
-    @StroomShutdown
     @Override
-    public void shutdown() {
+    public void stop() {
         // It shouldn't be possible to create tasks during shutdown.
         createTasksLock.lock();
         try {

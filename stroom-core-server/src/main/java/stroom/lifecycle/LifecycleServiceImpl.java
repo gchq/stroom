@@ -45,7 +45,7 @@ public class LifecycleServiceImpl implements LifecycleService {
     private static final int ONE_SECOND = 1000;
 
     private final TaskManager taskManager;
-    private final StroomBeanLifeCycle stroomBeanLifeCycle;
+    private final LifecycleTasks lifecycleTasks;
     private final ScheduledTaskExecutor scheduledTaskExecutor;
     private final Security security;
     private final AtomicInteger startingBeanCount = new AtomicInteger();
@@ -59,12 +59,12 @@ public class LifecycleServiceImpl implements LifecycleService {
 
     @Inject
     public LifecycleServiceImpl(final TaskManager taskManager,
-                                final StroomBeanLifeCycle stroomBeanLifeCycle,
+                                final LifecycleTasks lifecycleTasks,
                                 final ScheduledTaskExecutor scheduledTaskExecutor,
                                 final Security security,
                                 final LifecycleConfig lifecycleConfig) {
         this.taskManager = taskManager;
-        this.stroomBeanLifeCycle = stroomBeanLifeCycle;
+        this.lifecycleTasks = lifecycleTasks;
         this.scheduledTaskExecutor = scheduledTaskExecutor;
         this.security = security;
         this.enabled.set(lifecycleConfig.isEnabled());
@@ -157,10 +157,10 @@ public class LifecycleServiceImpl implements LifecycleService {
     }
 
     private void startNext() {
-        final StroomBeanMethodExecutable executable = stroomBeanLifeCycle.getStartExecutable();
-        if (executable != null) {
+        final LifecycleTask lifecycleTask = lifecycleTasks.getStart();
+        if (lifecycleTask != null) {
             startingBeanCount.getAndIncrement();
-            taskManager.execAsync(new LifecycleTask(executable), new TaskCallbackAdaptor<>() {
+            taskManager.execAsync(lifecycleTask, new TaskCallbackAdaptor<>() {
                 @Override
                 public void onSuccess(final VoidResult result) {
                     startNext();
@@ -218,10 +218,10 @@ public class LifecycleServiceImpl implements LifecycleService {
     }
 
     private void stopNext() {
-        final StroomBeanMethodExecutable executable = stroomBeanLifeCycle.getStopExecutable();
-        if (executable != null) {
+        final LifecycleTask lifecycleTask = lifecycleTasks.getStop();
+        if (lifecycleTask != null) {
             stoppingBeanCount.getAndIncrement();
-            taskManager.execAsync(new LifecycleTask(executable), new TaskCallbackAdaptor<>() {
+            taskManager.execAsync(lifecycleTask, new TaskCallbackAdaptor<>() {
                 @Override
                 public void onSuccess(final VoidResult result) {
                     stopNext();

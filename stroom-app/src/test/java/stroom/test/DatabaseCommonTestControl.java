@@ -85,7 +85,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         nodeConfig.setup();
 
         // Ensure we can create tasks.
-        streamTaskCreator.startup();
+        streamTaskCreator.start();
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
     }
 
@@ -96,10 +96,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     public void teardown() {
         Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
-        streamTaskCreator.shutdown();
+        streamTaskCreator.stop();
 
         // Make sure we don't delete database entries without clearing the pool.
-        indexShardWriterCache.shutdown();
+        indexShardWriterCache.stop();
         indexShardManager.deleteFromDisk();
 
         // Delete the contents of all volumes.

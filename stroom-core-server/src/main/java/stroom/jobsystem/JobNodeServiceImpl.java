@@ -37,9 +37,9 @@ import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.util.lifecycle.StroomStartup;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.ScheduledJobs;
+import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
+class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements LifecycleAware, JobNodeService {
     private static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
             + JobNode.TABLE_NAME + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND."
             + JobNode.ID + " IS NULL;";
@@ -87,46 +87,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     }
 
     @Override
-    public JobNode save(final JobNode entity) {
-        // We always want to update a job instance even if we have a stale
-        // version.
-        if (entity.isPersistent()) {
-            final JobNode tmp = load(entity);
-            entity.setVersion(tmp.getVersion());
-        }
-
-        // Stop Job Nodes being saved with invalid crons.
-        if (JobType.CRON.equals(entity.getJobType())) {
-            if (entity.getSchedule() != null) {
-                // This will throw a runtime exception if the expression is
-                // invalid.
-                SimpleCron.compile(entity.getSchedule());
-            }
-        }
-        if (JobType.FREQUENCY.equals(entity.getJobType())) {
-            if (entity.getSchedule() != null) {
-                // This will throw a runtime exception if the expression is
-                // invalid.
-                ModelStringUtil.parseDurationString(entity.getSchedule());
-            }
-        }
-
-        return super.save(entity);
-    }
-
-    private List<JobNode> findAllJobs(final Node node) {
-        // See if the job exists in the database.
-        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-        criteria.getFetchSet().add(Job.ENTITY_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getNodeIdSet().add(node);
-        return find(criteria);
-
-    }
-
-    @Override
-    @StroomStartup
-    public void startup() {
+    public void start() {
         entityManagerSupport.transaction(entityManager1 -> {
             LOGGER.info("startup()");
             // Lock the cluster so only 1 node at a time can call the
@@ -146,46 +107,47 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
             // TODO: The form below isn't very clear. Split into job mapping and creation.
             for (final ScheduledJobs scheduledJobs : scheduledJobsSet) {
-               for(ScheduledJob scheduledJob : scheduledJobs.getJobs()){
-                   validJobNames.add(scheduledJob.getName());
+                for (ScheduledJob scheduledJob : scheduledJobs.getJobs()) {
+                    validJobNames.add(scheduledJob.getName());
 
-                   Job job = new Job();
-                   job.setName(scheduledJob.getName());
-                   job.setEnabled(scheduledJob.isEnabled());
-                   job = getOrCreateJob(job);
+                    Job job = new Job();
+                    job.setName(scheduledJob.getName());
+                    job.setEnabled(scheduledJob.isEnabled());
+                    job = getOrCreateJob(job);
 
-                   final JobNode newJobNode = new JobNode();
-                   newJobNode.setJob(job);
-                   newJobNode.setNode(node);
-                   newJobNode.setEnabled(scheduledJob.isEnabled());
+                    final JobNode newJobNode = new JobNode();
+                    newJobNode.setJob(job);
+                    newJobNode.setNode(node);
+                    newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                   switch(scheduledJob.getSchedule().getScheduleType()){
-                       case CRON:
-                           newJobNode.setJobType(JobType.CRON);
+                    switch (scheduledJob.getSchedule().getScheduleType()) {
+                        case CRON:
+                            newJobNode.setJobType(JobType.CRON);
                             break;
-                       case PERIODIC:
-                           newJobNode.setJobType(JobType.FREQUENCY);
-                           break;
-                       default: throw new RuntimeException("Unknown ScheduleType!");
-                   }
-                   newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+                        case PERIODIC:
+                            newJobNode.setJobType(JobType.FREQUENCY);
+                            break;
+                        default:
+                            throw new RuntimeException("Unknown ScheduleType!");
+                    }
+                    newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
 
-                   // Add the job node to the DB if it isn't there already.
-                   JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
-                   if (existingJobNode == null) {
-                       LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                               newJobNode.getNode().getName());
-                       save(newJobNode);
-                       existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                    // Add the job node to the DB if it isn't there already.
+                    JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
+                    if (existingJobNode == null) {
+                        LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                                newJobNode.getNode().getName());
+                        save(newJobNode);
+                        existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
-                   } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
-                       // If the job type has changed then update the job node.
-                       existingJobNode.setJobType(newJobNode.getJobType());
-                       existingJobNode.setSchedule(newJobNode.getSchedule());
-                       existingJobNode = save(existingJobNode);
-                       existingJobMap.put(scheduledJob.getName(), existingJobNode);
-                   }
-               }
+                    } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                        // If the job type has changed then update the job node.
+                        existingJobNode.setJobType(newJobNode.getJobType());
+                        existingJobNode.setSchedule(newJobNode.getSchedule());
+                        existingJobNode = save(existingJobNode);
+                        existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                    }
+                }
             }
 
             // Distributed Jobs done a different way
@@ -231,6 +193,44 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                 LOGGER.info("Removed {} orhan jobs", deleteCount);
             }
         });
+    }
+
+    @Override
+    public JobNode save(final JobNode entity) {
+        // We always want to update a job instance even if we have a stale
+        // version.
+        if (entity.isPersistent()) {
+            final JobNode tmp = load(entity);
+            entity.setVersion(tmp.getVersion());
+        }
+
+        // Stop Job Nodes being saved with invalid crons.
+        if (JobType.CRON.equals(entity.getJobType())) {
+            if (entity.getSchedule() != null) {
+                // This will throw a runtime exception if the expression is
+                // invalid.
+                SimpleCron.compile(entity.getSchedule());
+            }
+        }
+        if (JobType.FREQUENCY.equals(entity.getJobType())) {
+            if (entity.getSchedule() != null) {
+                // This will throw a runtime exception if the expression is
+                // invalid.
+                ModelStringUtil.parseDurationString(entity.getSchedule());
+            }
+        }
+
+        return super.save(entity);
+    }
+
+    private List<JobNode> findAllJobs(final Node node) {
+        // See if the job exists in the database.
+        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
+        criteria.getFetchSet().add(Job.ENTITY_TYPE);
+        criteria.getFetchSet().add(Node.ENTITY_TYPE);
+        criteria.getNodeIdSet().add(node);
+        return find(criteria);
+
     }
 
     private Job getOrCreateJob(final Job job) {

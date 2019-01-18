@@ -25,7 +25,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataRow;
 import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaValueServiceImpl implements MetaValueService {
+class MetaValueServiceImpl implements LifecycleAware, MetaValueService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaValueServiceImpl.class);
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
@@ -90,12 +90,10 @@ class MetaValueServiceImpl implements MetaValueService {
         });
     }
 
-    // TODO : @66 Add a shutdown hook in here to ensure attribute values are flushed on shutdown
-    @StroomShutdown
-    public void shutdown() {
+    @Override
+    public void stop() {
         flush();
     }
-
 
     // TODO : @66 MAKE SURE THIS GETS CALLED
     @Override

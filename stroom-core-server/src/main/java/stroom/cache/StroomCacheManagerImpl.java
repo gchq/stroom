@@ -23,8 +23,8 @@ import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.PageRequest;
+import stroom.util.cache.CacheHolder;
 import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheManager.CacheHolder;
 import stroom.util.cache.CacheUtil;
 import stroom.util.shared.ModelStringUtil;
 
@@ -37,13 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
+class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
 
     private final CacheManager cacheManager;
 
     @Inject
-    public StroomCacheManagerImpl(final CacheManager cacheManager) {
+    StroomCacheManagerImpl(final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 
@@ -91,7 +91,6 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
 
             if (include) {
                 final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
-
 
                 if (cacheHolder != null) {
                     final Map<String, String> map = new HashMap<>();

@@ -6,14 +6,14 @@ import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Optional;
 
 @Singleton
-class KafkaProducerFactoryImpl implements KafkaProducerFactory {
+class KafkaProducerFactoryImpl implements LifecycleAware, KafkaProducerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
     private static final String VERSION = "0.10.0.1";
@@ -40,9 +40,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory {
         return Optional.empty();
     }
 
-
-    @StroomShutdown
-    public void shutdown() {
+    @Override
+    public void stop() {
         LOGGER.info("Shutting Down Stroom Kafka Producer Factory Service");
 //        super.shutdown();
     }

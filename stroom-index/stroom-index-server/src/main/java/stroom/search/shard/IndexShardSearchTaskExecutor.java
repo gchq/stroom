@@ -17,19 +17,18 @@
 package stroom.search.shard;
 
 import stroom.search.taskqueue.TaskExecutor;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexShardSearchTaskExecutor extends TaskExecutor {
+public class IndexShardSearchTaskExecutor extends TaskExecutor implements LifecycleAware {
     IndexShardSearchTaskExecutor() {
         super("Stroom Search Index Shard Task Executor");
     }
 
-    @StroomShutdown
     @Override
-    public void shutdown() {
+    public void stop() {
         super.shutdown();
     }
 }

@@ -22,7 +22,6 @@ import org.slf4j.MarkerFactory;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleTask;
-import stroom.lifecycle.StroomBeanFunction;
 import stroom.task.api.TaskManager;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.ScheduledJobs;
@@ -75,9 +74,9 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
 
         for (final ScheduledJob scheduledJob : scheduledJobs) {
             try {
-                final StroomBeanFunction function = create(scheduledJob);
+                final ScheduledJobFunction function = create(scheduledJob);
                 if (function != null) {
-                    taskManager.execAsync(new LifecycleTask(function));
+                    taskManager.execAsync(new LifecycleTask(scheduledJob.getName(), function::exec, new AtomicBoolean()));
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -85,8 +84,8 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
-    private StroomBeanFunction create(final ScheduledJob scheduledJob) {
-        StroomBeanFunction function = null;
+    private ScheduledJobFunction create(final ScheduledJob scheduledJob) {
+        ScheduledJobFunction function = null;
 
         final AtomicBoolean running = getRunningState(scheduledJob);
 
@@ -124,7 +123,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                         function = new JobNodeTrackedFunction(scheduledJob, running,
                                 jobNodeTracker);
                     } else {
-                        function = new StroomBeanFunction(scheduledJob, running);
+                        function = new ScheduledJobFunction(scheduledJob, running);
                     }
                 } else {
                     LOGGER.trace("Not returning runnable for method: {} - {} - {}", scheduledJob.getName(), enabled, scheduler);
@@ -169,7 +168,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         return running;
     }
 
-    private static class JobNodeTrackedFunction extends StroomBeanFunction {
+    private static class JobNodeTrackedFunction extends ScheduledJobFunction {
         private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackedFunction.class);
 
         private final JobNodeTracker jobNodeTracker;

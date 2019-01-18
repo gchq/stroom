@@ -17,19 +17,18 @@
 package stroom.search.extraction;
 
 import stroom.search.taskqueue.TaskExecutor;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ExtractionTaskExecutor extends TaskExecutor {
+public class ExtractionTaskExecutor extends TaskExecutor implements LifecycleAware {
     ExtractionTaskExecutor() {
         super("Extraction Task Executor");
     }
 
-    @StroomShutdown
     @Override
-    public void shutdown() {
+    public void stop() {
         super.shutdown();
     }
 }

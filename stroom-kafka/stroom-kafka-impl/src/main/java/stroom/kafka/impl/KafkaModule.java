@@ -21,6 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.util.HasHealthCheck;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class KafkaModule extends AbstractModule {
     @Override
@@ -30,5 +31,7 @@ public class KafkaModule extends AbstractModule {
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(KafkaConfigStoreImpl.class);
+
+        LifecycleAwareBinder.create(binder()).bind(KafkaProducerFactoryImpl.class);
     }
 }

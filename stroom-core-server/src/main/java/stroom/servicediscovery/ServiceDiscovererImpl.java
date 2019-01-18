@@ -8,7 +8,7 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,7 +23,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Singleton
-public class ServiceDiscovererImpl implements ServiceDiscoverer {
+public class ServiceDiscovererImpl implements LifecycleAware, ServiceDiscoverer {
     private final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscovererImpl.class);
 
     /*
@@ -81,8 +81,8 @@ public class ServiceDiscovererImpl implements ServiceDiscoverer {
         return provider;
     }
 
-    @StroomShutdown
-    public void shutdown() {
+    @Override
+    public void stop() {
         serviceProviders.forEach((key, value) -> {
             try {
                 value.close();

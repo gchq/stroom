@@ -21,14 +21,14 @@ import com.google.common.cache.CacheBuilder;
 import stroom.entity.shared.Clearable;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
-import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ClusterResultCollectorCache implements Clearable {
+public class ClusterResultCollectorCache implements LifecycleAware, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000000;
 
     private final Cache<CollectorId, ClusterResultCollector> cache;
@@ -45,8 +45,8 @@ public class ClusterResultCollectorCache implements Clearable {
         cacheManager.registerCache("Cluster Result Collector Cache", cacheBuilder, cache);
     }
 
-    @StroomShutdown
-    public void shutdown() {
+    @Override
+    public void stop() {
         shutdown = true;
     }
 

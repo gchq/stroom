@@ -21,7 +21,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
+class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
     private final MockStroomBeanNoDeps stroomBeanNoDeps;
 
     @Inject
@@ -30,7 +30,6 @@ public class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
     }
 
     @Override
-    @StroomStartup(priority = 99)
     public void start() {
         assertThat(stroomBeanNoDeps.isRunning()).isTrue();
 
@@ -38,8 +37,12 @@ public class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
     }
 
     @Override
-    @StroomShutdown(priority = 99)
     public void stop() {
         super.stop();
+    }
+
+    @Override
+    public int priority() {
+        return 99;
     }
 }

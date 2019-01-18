@@ -61,7 +61,6 @@ dependencies {
     implementation libs.hikari
     implementation libs.commons_fileupload
     implementation libs.guice4
-    implementation libs.fast_classpath_scanner
 
     runtimeOnly libs.jackson_annotations
     runtimeOnly libs.jackson_core

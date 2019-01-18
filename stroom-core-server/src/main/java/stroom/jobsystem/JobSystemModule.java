@@ -28,6 +28,7 @@ import stroom.jobsystem.shared.JobManager;
 import stroom.jobsystem.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.task.api.job.ScheduledJobsBinder;
+import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class JobSystemModule extends AbstractModule {
     @Override
@@ -60,5 +61,9 @@ public class JobSystemModule extends AbstractModule {
         findServiceBinder.addBinding().to(JobNodeServiceImpl.class);
 
         ScheduledJobsBinder.create(binder()).bind(JobSystemJobs.class);
+
+        LifecycleAwareBinder.create(binder())
+                .bind(JobServiceImpl.class)
+                .bind(JobNodeServiceImpl.class);
     }
 }

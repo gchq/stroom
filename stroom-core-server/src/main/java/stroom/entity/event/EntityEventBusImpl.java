@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.EntityAction;
 import stroom.task.api.TaskManager;
-import stroom.util.lifecycle.StroomStartup;
+import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class EntityEventBusImpl implements EntityEventBus {
+class EntityEventBusImpl implements LifecycleAware, EntityEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
     private final Map<String, Map<EntityAction, List<Handler>>> handlers = new HashMap<>();
     private volatile boolean initialised;
@@ -49,8 +49,8 @@ class EntityEventBusImpl implements EntityEventBus {
         this.taskManager = taskManager;
     }
 
-    @StroomStartup
-    public void init() {
+    @Override
+    public void start() {
         started = true;
     }
 
