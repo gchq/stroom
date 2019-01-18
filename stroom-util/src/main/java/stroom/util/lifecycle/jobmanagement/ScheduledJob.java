@@ -52,7 +52,7 @@ public class ScheduledJob {
 
     public static final class ScheduledJobBuilder {
         // Mandatory
-        private String description;
+        private String name;
         private Consumer method;
         private Schedule schedule;
 
@@ -60,7 +60,7 @@ public class ScheduledJob {
         private boolean enabled = true;
         private boolean advanced = true;
         private boolean managed = true;
-        private String name = "";
+        private String description = "";
 
         private ScheduledJobBuilder() {
         }
@@ -106,7 +106,7 @@ public class ScheduledJob {
 
         public ScheduledJob build() {
             Objects.requireNonNull(schedule);
-            Objects.requireNonNull(description);
+            Objects.requireNonNull(name);
             Objects.requireNonNull(method);
             return new ScheduledJob(schedule, name, description, method, enabled, advanced, managed);
         }
