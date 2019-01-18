@@ -19,10 +19,7 @@ package stroom.test;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import stroom.persist.PersistService;
-import stroom.task.TaskManager;
-import stroom.util.io.FileUtil;
-
-import java.io.IOException;
+import stroom.task.api.TaskManager;
 
 /**
  * Script to create some base data for testing.

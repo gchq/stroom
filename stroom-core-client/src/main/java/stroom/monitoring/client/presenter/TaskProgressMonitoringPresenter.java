@@ -189,8 +189,8 @@ public class TaskProgressMonitoringPresenter extends ContentTabPresenter<DataGri
                 new TextCell(), FindTaskProgressCriteria.FIELD_NODE, false) {
             @Override
             public String getValue(final TaskProgress value) {
-                if (value.getNode() != null) {
-                    return value.getNode().getName();
+                if (value.getNodeName() != null) {
+                    return value.getNodeName();
                 }
                 return "?";
             }

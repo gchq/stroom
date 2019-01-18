@@ -22,7 +22,7 @@ import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.security.Security;
 import stroom.task.StroomThreadGroup;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 import stroom.util.thread.CustomThreadFactory;

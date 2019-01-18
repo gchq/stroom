@@ -15,7 +15,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-config:stroom-config-global-api')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi

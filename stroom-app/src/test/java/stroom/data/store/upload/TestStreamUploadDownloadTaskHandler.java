@@ -35,7 +35,7 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.util.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;

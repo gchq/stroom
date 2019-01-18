@@ -25,7 +25,7 @@ import stroom.cluster.api.ServiceName;
 import stroom.node.shared.Node;
 import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;

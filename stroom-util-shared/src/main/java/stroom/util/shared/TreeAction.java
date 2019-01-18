@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.util.shared;
 
-import stroom.task.shared.Action;
-import stroom.entity.shared.DataSourceFields;
+import java.util.Set;
 
-public class FetchFieldsAction extends Action<DataSourceFields> {
-    private static final long serialVersionUID = -8385292644923223558L;
+public interface TreeAction<R> {
+    void setRowExpanded(R row, boolean expanded);
 
-    public FetchFieldsAction() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    boolean isRowExpanded(R row);
 
-    @Override
-    public String getTaskName() {
-        return "Fetch Stream Fields";
-    }
+    Set<R> getExpandedRows();
 }

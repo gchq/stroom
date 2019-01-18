@@ -14,31 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.datasource.shared;
 
 import stroom.task.shared.Action;
-import stroom.entity.shared.DataSourceFields;
-import stroom.docref.DocRef;
 
-public class FetchDataSourceFieldsAction extends Action<DataSourceFields> {
-    private static final long serialVersionUID = -6668626615097471925L;
+public class FetchFieldsAction extends Action<DataSourceFields> {
+    private static final long serialVersionUID = -8385292644923223558L;
 
-    private DocRef dataSourceRef;
-
-    public FetchDataSourceFieldsAction() {
+    public FetchFieldsAction() {
         // Default constructor necessary for GWT serialisation.
-    }
-
-    public FetchDataSourceFieldsAction(final DocRef dataSourceRef) {
-        this.dataSourceRef = dataSourceRef;
-    }
-
-    public DocRef getDataSourceRef() {
-        return dataSourceRef;
     }
 
     @Override
     public String getTaskName() {
-        return "Fetch Data Source Fields";
+        return "Fetch Stream Fields";
     }
 }

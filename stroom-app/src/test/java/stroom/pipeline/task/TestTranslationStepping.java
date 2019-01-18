@@ -19,7 +19,7 @@ package stroom.pipeline.task;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.api.StreamStore;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StoreCreationTool;
 

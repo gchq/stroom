@@ -47,6 +47,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 
 class TestByteBufferPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferPool.class);
@@ -178,9 +179,9 @@ class TestByteBufferPool {
         Map<Integer, Long> counts = (Map<Integer, Long>) result.getDetails().get("Buffer capacity counts");
 
         assertThat(counts).containsExactly(
-                Assertions.entry(1, 2L),
-                Assertions.entry(10, 3L),
-                Assertions.entry(100, 1L));
+                entry(1, 2L),
+                entry(10, 3L),
+                entry(100, 1L));
     }
 
 

@@ -25,7 +25,7 @@ import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;

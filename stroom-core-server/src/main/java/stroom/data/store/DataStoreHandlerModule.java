@@ -19,7 +19,6 @@ package stroom.data.store;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.streamstore.shared.DownloadDataAction;
-import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
@@ -31,7 +30,6 @@ public class DataStoreHandlerModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(UpdateStatusAction.class, UpdateStatusHandler.class)
                 .bind(DownloadDataAction.class, DownloadDataHandler.class)
-                .bind(FetchFieldsAction.class, FetchFieldsHandler.class)
                 .bind(StreamDownloadTask.class, StreamDownloadTaskHandler.class)
                 .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
                 .bind(UploadDataAction.class, UploadDataHandler.class);

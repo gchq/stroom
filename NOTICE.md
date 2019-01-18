@@ -176,7 +176,6 @@ The table below includes licences for all Maven dependencies. Not included in th
 | org.ow2.asm                               | asm-util                                     | 5.0.3            | Custom BSD    |         |               |
 | dom4j                                     | dom4j                                        | 1.6.1            | Custom BSD    |         |               |
 | com.github.gwtd3                          | gwt-d3-js                                    | 3.4.8            | Custom BSD    |         |               |
-| org.hamcrest                              | hamcrest-core                                | 1.3              | Custom BSD    |         |               |
 | org.hsqldb                                | hsqldb                                       | 2.3.2            | Custom BSD    |         |               |
 | org.jamon                                 | jamon-runtime                                | 2.4.1            | Custom BSD    |         |               |
 | com.jcraft                                | jsch                                         | 0.1.42           | Custom BSD    |         |               |

@@ -128,6 +128,7 @@ include 'stroom-statistics:stroom-statistics-server'
 // Task execution.
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
+include 'stroom-task:stroom-task-shared'
 
 // Test project
 include 'stroom-test-common'

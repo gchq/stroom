@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.ruleset.shared'
 
 dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi

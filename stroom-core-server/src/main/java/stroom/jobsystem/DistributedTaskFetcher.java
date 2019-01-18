@@ -27,7 +27,7 @@ import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
