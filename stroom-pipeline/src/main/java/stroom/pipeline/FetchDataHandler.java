@@ -19,7 +19,7 @@ package stroom.pipeline;
 
 import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedProperties;
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;

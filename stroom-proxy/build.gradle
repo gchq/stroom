@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-impl')
     //implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
 

@@ -24,7 +24,7 @@ import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.NodeCache;
 import stroom.persist.EntityManagerSupport;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;

@@ -16,7 +16,6 @@
 
 package stroom.security;
 
-import stroom.logging.AuthorisationEventLog;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserAction;
 import stroom.security.shared.PermissionNames;

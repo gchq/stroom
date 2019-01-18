@@ -20,13 +20,12 @@ import stroom.node.shared.Node;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.TaskContext;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollectorCache;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.Set;
 
 public class ClusterSearchResultCollectorFactory {

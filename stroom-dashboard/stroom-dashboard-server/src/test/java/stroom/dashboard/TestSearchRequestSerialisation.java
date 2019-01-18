@@ -31,15 +31,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Checks serialisation by converting to and from the SearchRequest objects and comparing the results
  */
 
 class TestSearchRequestSerialisation {
-
     private static ObjectMapper getMapper(final boolean indent) {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -62,8 +60,8 @@ class TestSearchRequestSerialisation {
         String reSerialisedSearchRequest = objectMapper.writeValueAsString(deserialisedSearchRequest);
 
         // Then
-        assertThat(searchRequest, equalTo(deserialisedSearchRequest));
-        assertThat(serialisedSearchRequest, equalTo(reSerialisedSearchRequest));
+        assertThat(searchRequest).isEqualTo(deserialisedSearchRequest);
+        assertThat(serialisedSearchRequest).isEqualTo(reSerialisedSearchRequest);
     }
 
     @Test
@@ -86,8 +84,8 @@ class TestSearchRequestSerialisation {
         String reSerialisedSearchRequest = secondDeserialisation.toString();
 
         // Then
-        assertThat(searchRequest, equalTo(deserialisedSearchRequest));
-        assertThat(serialisedSearchRequest, equalTo(reSerialisedSearchRequest));
+        assertThat(searchRequest).isEqualTo(deserialisedSearchRequest);
+        assertThat(serialisedSearchRequest).isEqualTo(reSerialisedSearchRequest);
     }
 
 }

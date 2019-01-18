@@ -16,6 +16,7 @@
 
 package stroom.activity.shared;
 
+import stroom.activity.api.Activity;
 import stroom.task.shared.Action;
 import stroom.util.shared.VoidResult;
 
