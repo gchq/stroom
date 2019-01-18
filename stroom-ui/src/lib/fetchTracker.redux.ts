@@ -241,6 +241,21 @@ export const wrappedPut = (
   });
 };
 
+export const wrappedDelete = (
+  dispatch: Dispatch,
+  state: GlobalStoreState,
+  url: string,
+  successCallback: (x: any) => void,
+  options?: {
+    [s: string]: any;
+  }
+) => {
+  wrappedFetchWithBody(dispatch, state, url, successCallback, {
+    method: "delete",
+    ...options
+  });
+};
+
 export const wrappedPatch = (
   dispatch: Dispatch,
   state: GlobalStoreState,

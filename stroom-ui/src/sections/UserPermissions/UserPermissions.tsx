@@ -1,8 +1,10 @@
 import * as React from "react";
 
+import { path } from "ramda";
 import { Formik, Field, Form } from "formik";
-import { compose, lifecycle } from "recompose";
+import { compose, lifecycle, withStateHandlers } from "recompose";
 import { connect } from "react-redux";
+import ReactTable, { RowInfo } from "react-table";
 
 import { findUsers } from "./userClient";
 import { GlobalStoreState } from "../../startup/reducers";
@@ -21,7 +23,16 @@ interface ConnectDispatch {
   findUsers: typeof findUsers;
 }
 
-export interface EnhancedProps extends Props, ConnectState, ConnectDispatch {}
+interface WithStateHandlers {
+  selectedUuid?: string;
+  onSelection: (uuid: string) => void;
+}
+
+export interface EnhancedProps
+  extends Props,
+    ConnectState,
+    ConnectDispatch,
+    WithStateHandlers {}
 
 const enhance = compose<EnhancedProps, Props>(
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
@@ -38,7 +49,17 @@ const enhance = compose<EnhancedProps, Props>(
 
       findUsers(LISTING_ID);
     }
-  })
+  }),
+  withStateHandlers(
+    () => ({
+      selectedUuid: undefined
+    }),
+    {
+      onSelection: () => selectedUuid => ({
+        selectedUuid
+      })
+    }
+  )
 );
 
 interface Values {
@@ -47,7 +68,30 @@ interface Values {
   uuid: string;
 }
 
-const UserPermissions = ({ users, findUsers }: EnhancedProps) => (
+const USER_COLUMNS = [
+  {
+    id: "uuid",
+    Header: "UUID",
+    accessor: (u: User) => u.uuid
+  },
+  {
+    id: "name",
+    Header: "Name",
+    accessor: (u: User) => u.name
+  },
+  {
+    id: "isGroup",
+    Header: "Is Group",
+    accessor: (u: User) => (u.group ? "Group" : "User")
+  }
+];
+
+const UserPermissions = ({
+  users,
+  findUsers,
+  selectedUuid,
+  onSelection
+}: EnhancedProps) => (
   <div>
     <IconHeader icon="users" text="User Permissions" />
     <Formik
@@ -73,25 +117,38 @@ const UserPermissions = ({ users, findUsers }: EnhancedProps) => (
         </Field>
       </Form>
     </Formik>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>UUID</th>
-          <th>Is Group</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users &&
-          users.map(u => (
-            <tr key={u.uuid}>
-              <td>{u.name}</td>
-              <td>{u.uuid}</td>
-              <td>{u.group ? "Group" : "User"}</td>
-            </tr>
-          ))}
-      </tbody>
-    </table>
+    <ReactTable
+      data={users}
+      columns={USER_COLUMNS}
+      getTdProps={(state: any, rowInfo: RowInfo) => {
+        return {
+          onClick: (_: any, handleOriginal: () => void) => {
+            if (rowInfo !== undefined) {
+              onSelection(rowInfo.original.uuid);
+            }
+
+            if (handleOriginal) {
+              handleOriginal();
+            }
+          }
+        };
+      }}
+      getTrProps={(_: any, rowInfo: RowInfo) => {
+        // We don't want to see a hover on a row without data.
+        // If a row is selected we want to see the selected color.
+        const isSelected =
+          selectedUuid !== undefined &&
+          path(["original", "uuid"], rowInfo) === selectedUuid;
+        const hasData = path(["original", "uuid"], rowInfo) !== undefined;
+        let className;
+        if (hasData) {
+          className = isSelected ? "selected hoverable" : "hoverable";
+        }
+        return {
+          className
+        };
+      }}
+    />
   </div>
 );
 

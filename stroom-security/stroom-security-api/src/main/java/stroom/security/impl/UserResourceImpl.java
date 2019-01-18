@@ -6,6 +6,7 @@ import stroom.security.rest.UserResource;
 import stroom.security.shared.UserJooq;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,7 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public List<UserJooq> get(final String name,
+    public Response get(final String name,
                               final Boolean isGroup,
                               final String uuid) {
         final List<UserJooq> users = new ArrayList<>();
@@ -44,42 +45,71 @@ public class UserResourceImpl implements UserResource {
             }
         }
 
-        return users.stream().distinct().collect(Collectors.toList());
+        final List<UserJooq> distinct = users.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+        return Response.ok(distinct).build();
     }
 
     @Override
-    public List<UserJooq> findUsersInGroup(final String groupUuid) {
-        return userDao.findUsersInGroup(groupUuid);
+    public Response findUsersInGroup(final String groupUuid) {
+        final List<UserJooq> users = userDao.findUsersInGroup(groupUuid);
+
+        return Response.ok(users).build();
     }
 
     @Override
-    public List<UserJooq> findGroupsForUser(final String userUuid) {
-        return userDao.findGroupsForUser(userUuid);
+    public Response findGroupsForUser(final String userUuid) {
+        final List<UserJooq> groups = userDao.findGroupsForUser(userUuid);
+        return Response.ok(groups).build();
     }
 
     @Override
-    public UserJooq create(final CreateDTO createDTO) {
+    public Response create(final CreateDTO createDTO) {
+        UserJooq user;
+
         if (null != createDTO.getGroup() && createDTO.getGroup()) {
-            return userDao.createUser(createDTO.getName());
+            user = userDao.createUser(createDTO.getName());
         } else {
-            return userDao.createUserGroup(createDTO.getName());
+            user = userDao.createUserGroup(createDTO.getName());
+        }
+
+        return Response.ok(user).build();
+    }
+
+    @Override
+    public Response deleteUser(final String uuid) {
+        final Boolean ok = userDao.deleteUser(uuid);
+
+        if (ok) {
+            return Response.noContent().build();
+        } else {
+            return Response.notModified().build();
         }
     }
 
     @Override
-    public Boolean deleteUser(final String uuid) {
-        return userDao.deleteUser(uuid);
-    }
-
-    @Override
-    public Boolean addUserToGroup(final String userUuid,
+    public Response addUserToGroup(final String userUuid,
                                   final String groupUuid) {
-        return userDao.addUserToGroup(userUuid, groupUuid);
+        final Boolean ok = userDao.addUserToGroup(userUuid, groupUuid);
+
+        if (ok) {
+            return Response.noContent().build();
+        } else {
+            return Response.notModified().build();
+        }
     }
 
     @Override
-    public Boolean removeUserFromGroup(final String userUuid,
+    public Response removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
-        return userDao.removeUserFromGroup(userUuid, groupUuid);
+        final Boolean ok = userDao.removeUserFromGroup(userUuid, groupUuid);
+
+        if (ok) {
+            return Response.noContent().build();
+        } else {
+            return Response.notModified().build();
+        }
     }
 }

@@ -71,8 +71,9 @@ class TypeSafeReducer<TStatePerId extends object> {
         reducer = this.reducers.foreign[action.type];
 
         if (reducer) {
-          return mapObject<TStatePerId>(state, (stateOfId: TStatePerId) =>
-            reducer(stateOfId, action)
+          return mapObject<TStatePerId, TStatePerId>(
+            state,
+            (_: string, stateOfId: TStatePerId) => reducer(stateOfId, action)
           );
         }
       }

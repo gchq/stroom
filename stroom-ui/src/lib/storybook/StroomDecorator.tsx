@@ -41,7 +41,7 @@ const testData: TestData = {
   trackers: Array(10)
     .fill(null)
     .map(generateGenericTracker),
-  users: Array(10)
+  users: Array(20)
     .fill(null)
     .map(generateTestUser)
     .concat(

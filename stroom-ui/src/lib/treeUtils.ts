@@ -25,12 +25,12 @@
 import * as uuidv4 from "uuid/v4";
 import { Tree, TWithLineage, ItemWithUuid } from "../types";
 
-export function mapObject<OUT>(
-  input: { [id: string]: object },
-  mapper: (i: object) => OUT
+export function mapObject<IN, OUT>(
+  input: { [id: string]: IN },
+  mapper: (id: string, i: IN) => OUT
 ) {
   return Object.keys(input).reduce((previous, current) => {
-    previous[current] = mapper(input[current]);
+    previous[current] = mapper(current, input[current]);
     return previous;
   }, {});
 }

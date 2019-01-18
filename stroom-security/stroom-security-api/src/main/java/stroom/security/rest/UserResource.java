@@ -5,6 +5,7 @@ import stroom.security.shared.UserJooq;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Api(
@@ -14,32 +15,32 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface UserResource {
     @GET
-    List<UserJooq> get(@QueryParam("name") String name,
+    Response get(@QueryParam("name") String name,
                        @QueryParam("isGroup") Boolean isGroup,
                        @QueryParam("uuid") String uuid);
 
     @GET
     @Path("/usersInGroup/{groupName}")
-    List<UserJooq> findUsersInGroup(@PathParam("groupName") String groupUuid);
+    Response findUsersInGroup(@PathParam("groupName") String groupUuid);
 
     @GET
     @Path("/groupsForUser/{userUuid}")
-    List<UserJooq> findGroupsForUser(@PathParam("userUuid") String userUuid);
+    Response findGroupsForUser(@PathParam("userUuid") String userUuid);
 
     @POST
-    UserJooq create(CreateDTO createDTO);
+    Response create(CreateDTO createDTO);
 
     @DELETE
     @Path("/{uuid}")
-    Boolean deleteUser(@PathParam("uuid") String uuid);
+    Response deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")
-    Boolean addUserToGroup(@PathParam("userUuid") String userUuid,
-                           @PathParam("groupUuid") String groupUuid);
+    Response addUserToGroup(@PathParam("userUuid") String userUuid,
+                        @PathParam("groupUuid") String groupUuid);
 
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
-    Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
-                                @PathParam("groupUuid") String groupUuid);
+    Response removeUserFromGroup(@PathParam("userUuid") String userUuid,
+                             @PathParam("groupUuid") String groupUuid);
 }

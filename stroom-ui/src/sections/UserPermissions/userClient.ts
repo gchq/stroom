@@ -2,13 +2,22 @@ import { Dispatch } from "redux";
 import { GlobalStoreState } from "src/startup/reducers";
 
 import { actionCreators } from "./redux";
-import { wrappedGet } from "../../lib/fetchTracker.redux";
+import {
+  wrappedGet,
+  wrappedPost,
+  wrappedPut,
+  wrappedDelete
+} from "../../lib/fetchTracker.redux";
 import { User } from "src/types";
 
 const {
   usersReceived,
   usersInGroupReceived,
-  groupsForUserReceived
+  groupsForUserReceived,
+  userCreated,
+  userDeleted,
+  userAddedToGroup,
+  userRemovedFromGroup
 } = actionCreators;
 
 export const findUsers = (
@@ -84,5 +93,76 @@ export const findGroupsForUser = (userUuid: string) => (
         ),
     {},
     true
+  );
+};
+
+export const createUser = (name: string, isGroup: boolean) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
+  const state = getState();
+
+  var url = `${state.config.values.stroomBaseServiceUrl}/users/v1`;
+
+  // Create DTO
+  const body = JSON.stringify({
+    name,
+    isGroup
+  });
+
+  wrappedPost(
+    dispatch,
+    state,
+    url,
+    response =>
+      response.json().then((user: User) => dispatch(userCreated(user))),
+    {
+      body
+    }
+  );
+};
+
+export const deleteUser = (uuid: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
+  const state = getState();
+
+  var url = `${state.config.values.stroomBaseServiceUrl}/users/v1/${uuid}`;
+
+  wrappedDelete(dispatch, state, url, response =>
+    response.text().then(() => dispatch(userDeleted(uuid)))
+  );
+};
+
+export const addUserToGroup = (userUuid: string, groupUuid: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
+  const state = getState();
+
+  var url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/users/v1/${userUuid}/${groupUuid}`;
+
+  wrappedPut(dispatch, state, url, response =>
+    response.text().then(() => dispatch(userAddedToGroup(userUuid, groupUuid)))
+  );
+};
+
+export const removeUserFromGroup = (userUuid: string, groupUuid: string) => (
+  dispatch: Dispatch,
+  getState: () => GlobalStoreState
+) => {
+  const state = getState();
+
+  var url = `${
+    state.config.values.stroomBaseServiceUrl
+  }/users/v1/${userUuid}/${groupUuid}`;
+
+  wrappedDelete(dispatch, state, url, response =>
+    response
+      .text()
+      .then(() => dispatch(userRemovedFromGroup(userUuid, groupUuid)))
   );
 };
