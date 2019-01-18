@@ -5,7 +5,6 @@ ext.moduleName = 'stroom.util'
 
 dependencies {
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-task:stroom-task-api')
 
     implementation libs.stroomDocRef
     

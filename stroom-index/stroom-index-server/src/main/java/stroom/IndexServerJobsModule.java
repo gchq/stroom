@@ -5,7 +5,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.index.IndexJobs;
 import stroom.search.SearchJobs;
 import stroom.search.shard.ShardJobs;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJobs;
 
 public class IndexServerJobsModule extends AbstractModule {
     @Override

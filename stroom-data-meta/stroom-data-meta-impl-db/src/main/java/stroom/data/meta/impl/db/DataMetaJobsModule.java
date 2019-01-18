@@ -2,7 +2,7 @@ package stroom.data.meta.impl.db;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJobs;
 
 public class DataMetaJobsModule extends AbstractModule {
     @Override

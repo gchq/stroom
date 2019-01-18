@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.pipeline.PipelineJobs;
 import stroom.refdata.store.RefDataStoreJobs;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJobs;
 
 public class PipelineJobsModule extends AbstractModule {
     @Override

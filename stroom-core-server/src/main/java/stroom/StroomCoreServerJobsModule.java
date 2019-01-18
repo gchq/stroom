@@ -9,7 +9,7 @@ import stroom.node.NodeJobs;
 import stroom.policy.PolicyJobs;
 import stroom.resource.ResourceJobs;
 import stroom.streamtask.StreamTaskJobs;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJobs;
 import stroom.volume.VolumeJobs;
 
 public class StroomCoreServerJobsModule extends AbstractModule {
