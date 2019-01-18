@@ -16,26 +16,31 @@
 
 package stroom.task.shared;
 
-import stroom.entity.shared.FindAction;
+import stroom.entity.shared.ResultList;
 import stroom.util.shared.TreeAction;
 
 import java.util.Set;
 
-public class FindTaskProgressAction extends FindAction<FindTaskProgressCriteria, TaskProgress>
+public class FindTaskProgressAction extends Action<ResultList<TaskProgress>>
         implements TreeAction<TaskProgress> {
     private static final long serialVersionUID = -5285569438944240375L;
+
+    private FindTaskProgressCriteria criteria;
 
     public FindTaskProgressAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public FindTaskProgressAction(final FindTaskProgressCriteria criteria) {
-        super(criteria);
+        this.criteria = criteria;
     }
 
-    @Override
-    public String getTaskName() {
-        return "Find Task Progress";
+    public FindTaskProgressCriteria getCriteria() {
+        return criteria;
+    }
+
+    public void setCriteria(final FindTaskProgressCriteria criteria) {
+        this.criteria = criteria;
     }
 
     @Override
@@ -45,11 +50,16 @@ public class FindTaskProgressAction extends FindAction<FindTaskProgressCriteria,
 
     @Override
     public void setRowExpanded(final TaskProgress row, final boolean open) {
-        getCriteria().setExpanded(row, open);
+        criteria.setExpanded(row, open);
     }
 
     @Override
     public boolean isRowExpanded(final TaskProgress row) {
-        return getCriteria().isExpanded(row);
+        return criteria.isExpanded(row);
+    }
+
+    @Override
+    public String getTaskName() {
+        return "Find Task Progress";
     }
 }

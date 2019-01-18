@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.entity.shared;
+package stroom.datasource.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.docref.SharedObject;

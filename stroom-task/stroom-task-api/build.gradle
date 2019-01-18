@@ -2,9 +2,9 @@ ext.moduleName = 'stroom.task.api'
 
 dependencies {
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 
     implementation libs.guice4
     implementation libs.slf4j_api

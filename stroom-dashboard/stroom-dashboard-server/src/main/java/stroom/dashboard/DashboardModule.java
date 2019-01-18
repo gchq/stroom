@@ -21,7 +21,6 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
-import stroom.dashboard.shared.FetchDataSourceFieldsAction;
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.SearchBusPollAction;
@@ -44,7 +43,6 @@ public class DashboardModule extends AbstractModule {
         TaskHandlerBinder.create(binder())
                 .bind(DownloadQueryAction.class, DownloadQueryActionHandler.class)
                 .bind(DownloadSearchResultsAction.class, DownloadSearchResultsHandler.class)
-                .bind(FetchDataSourceFieldsAction.class, FetchExpressionFieldsHandler.class)
                 .bind(FetchTimeZonesAction.class, FetchTimeZonesHandler.class)
                 .bind(FetchVisualisationAction.class, FetchVisualisationHandler.class)
                 .bind(SearchBusPollAction.class, SearchBusPollActionHandler.class)

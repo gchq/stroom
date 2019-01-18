@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.statistics.api'
 
 dependencies {
-    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi

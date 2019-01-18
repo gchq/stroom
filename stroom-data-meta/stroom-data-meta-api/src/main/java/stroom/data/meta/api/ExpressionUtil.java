@@ -1,7 +1,6 @@
 package stroom.data.meta.api;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

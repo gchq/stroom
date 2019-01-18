@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.task.shared'
 
 dependencies {
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-util-shared')
     
     implementation libs.stroomDocRef

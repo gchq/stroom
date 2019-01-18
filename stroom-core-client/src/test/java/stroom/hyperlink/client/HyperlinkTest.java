@@ -48,7 +48,7 @@ class HyperlinkTest {
 //                testLinks.keySet().stream().collect(Collectors.toMap(r -> r, r -> Hyperlink.detect(r, namedUrls)));
 //
 //        // Then
-//        Assertions.assertThat(mappedLinks).isEqualTo(testLinks);
+//        assertThat(mappedLinks).isEqualTo(testLinks);
     }
 
     @Test
