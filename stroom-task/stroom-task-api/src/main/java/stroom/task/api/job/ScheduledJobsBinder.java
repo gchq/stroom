@@ -1,4 +1,4 @@
-package stroom.util.lifecycle.jobmanagement;
+package stroom.task.api.job;
 
 import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;

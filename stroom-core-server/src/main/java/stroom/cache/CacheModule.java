@@ -23,7 +23,7 @@ import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class CacheModule extends AbstractModule {
     @Override

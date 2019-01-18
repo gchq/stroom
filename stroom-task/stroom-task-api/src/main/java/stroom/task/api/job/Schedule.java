@@ -1,4 +1,4 @@
-package stroom.util.lifecycle.jobmanagement;
+package stroom.task.api.job;
 
 public class Schedule {
     private String schedule;

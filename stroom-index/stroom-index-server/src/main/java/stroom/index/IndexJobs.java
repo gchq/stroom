@@ -1,18 +1,18 @@
 package stroom.index;
 
-import stroom.util.lifecycle.jobmanagement.ScheduledJob;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.ScheduledJobs;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.CRON;
-import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC;
-import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
+import static stroom.task.api.job.Schedule.ScheduleType.CRON;
+import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
+import static stroom.task.api.job.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class IndexJobs implements ScheduledJobs {
+public class IndexJobs implements ScheduledJobs {
     private IndexShardManager indexShardManager;
     private IndexShardWriterCache indexShardWriterCache;
 

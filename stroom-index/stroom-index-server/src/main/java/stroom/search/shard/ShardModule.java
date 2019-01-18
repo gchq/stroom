@@ -19,7 +19,6 @@ package stroom.search.shard;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 
 public class ShardModule extends AbstractModule {
     @Override
@@ -28,7 +27,5 @@ public class ShardModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(IndexShardSearcherCacheImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(ShardJobs.class);
     }
 }

@@ -2,20 +2,19 @@ package stroom.pipeline;
 
 import stroom.benchmark.BenchmarkClusterExecutor;
 import stroom.pipeline.destination.RollingDestinations;
-import stroom.task.shared.Task;
-import stroom.util.lifecycle.jobmanagement.ScheduledJob;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.ScheduledJobs;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.CRON;
-import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC;
-import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
+import static stroom.task.api.job.Schedule.ScheduleType.CRON;
+import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
+import static stroom.task.api.job.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class PipelineJobs implements ScheduledJobs {
+public class PipelineJobs implements ScheduledJobs {
     private RollingDestinations rollingDestinations;
     private BenchmarkClusterExecutor benchmarkClusterExecutor;
 
@@ -38,7 +37,7 @@ class PipelineJobs implements ScheduledJobs {
                         .name("XX Benchmark System XX")
                         .description("Job to generate data in the system in order to benchmark it's performance (do not run in live!!)")
                         .schedule(CRON, "* * *")
-                        .method((task) -> this.benchmarkClusterExecutor.exec((Task) task))
+                        .method((task) -> this.benchmarkClusterExecutor.exec(task))
                         .build()
         );
     }

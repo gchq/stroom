@@ -27,7 +27,7 @@ import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobManager;
 import stroom.jobsystem.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class JobSystemModule extends AbstractModule {
     @Override

@@ -27,7 +27,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -42,8 +42,6 @@ public class SQLStatisticsModule extends AbstractModule {
     protected void configure() {
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
-
-        ScheduledJobsBinder.create(binder()).bind(SQLStatisticsJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(SQLStatisticFlushTask.class, SQLStatisticFlushTaskHandler.class);

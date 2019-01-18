@@ -38,8 +38,8 @@ import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.util.lifecycle.StroomStartup;
-import stroom.util.lifecycle.jobmanagement.ScheduledJob;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.ScheduledJobs;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 

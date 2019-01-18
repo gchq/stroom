@@ -1,15 +1,14 @@
 package stroom.data.store.impl.fs;
 
-import stroom.task.shared.Task;
-import stroom.util.lifecycle.jobmanagement.ScheduledJob;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.ScheduledJobs;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.CRON;
-import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
+import static stroom.task.api.job.Schedule.ScheduleType.CRON;
+import static stroom.task.api.job.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
 class FileSystemDataStoreJobs implements ScheduledJobs {
@@ -31,7 +30,7 @@ class FileSystemDataStoreJobs implements ScheduledJobs {
                         .description("Job to process a volume deleting files that are no " +
                                 "longer indexed (maybe the retention period has past or they have been deleted)")
                         .schedule(CRON, "0 0 *")
-                        .method((task) -> this.fileSystemCleanExecutor.exec((Task) task))
+                        .method((task) -> this.fileSystemCleanExecutor.exec(task))
                         .advanced(false)
                         .build(),
                 jobBuilder()

@@ -29,7 +29,7 @@ import stroom.node.NodeServiceModule;
 import stroom.node.VolumeService;
 import stroom.node.shared.VolumeEntity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class VolumeModule extends AbstractModule {
     @Override

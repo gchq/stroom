@@ -17,7 +17,7 @@
 package stroom.resource;
 
 import com.google.inject.AbstractModule;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class ResourceModule extends AbstractModule {
     @Override

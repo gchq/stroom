@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
 import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class PolicyModule extends AbstractModule {
     @Override

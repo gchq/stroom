@@ -1,4 +1,4 @@
-package stroom.util.lifecycle.jobmanagement;
+package stroom.task.api.job;
 
 import java.util.List;
 

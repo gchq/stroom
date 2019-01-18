@@ -21,7 +21,7 @@ import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override

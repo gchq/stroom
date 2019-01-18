@@ -1,17 +1,17 @@
 package stroom.search;
 
-import stroom.util.lifecycle.jobmanagement.ScheduledJob;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.ScheduledJobs;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 
-import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC;
-import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
+import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
+import static stroom.task.api.job.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class SearchJobs implements ScheduledJobs {
+public class SearchJobs implements ScheduledJobs {
     private LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager;
 
     @Inject

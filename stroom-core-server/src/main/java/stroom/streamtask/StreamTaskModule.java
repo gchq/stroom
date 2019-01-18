@@ -24,7 +24,7 @@ import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class StreamTaskModule extends AbstractModule {
     @Override

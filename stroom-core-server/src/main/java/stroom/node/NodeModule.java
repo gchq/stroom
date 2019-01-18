@@ -18,7 +18,7 @@ package stroom.node;
 
 import com.google.inject.AbstractModule;
 import stroom.node.shared.DBTableService;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
+import stroom.task.api.job.ScheduledJobsBinder;
 
 public class NodeModule extends AbstractModule {
     @Override

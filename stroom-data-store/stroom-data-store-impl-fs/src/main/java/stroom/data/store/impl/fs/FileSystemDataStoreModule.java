@@ -33,7 +33,6 @@ import stroom.node.NodeServiceModule;
 import stroom.task.TaskModule;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 import stroom.volume.VolumeModule;
 
 import javax.inject.Provider;
@@ -56,8 +55,6 @@ public class FileSystemDataStoreModule extends AbstractModule {
         bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
         bind(FileSystemTypePaths.class).to(FileSystemTypePathsImpl.class);
         bind(DataVolumeService.class).to(DataVolumeServiceImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(FileSystemDataStoreJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FileSystemCleanSubTask.class, FileSystemCleanSubTaskHandler.class);
