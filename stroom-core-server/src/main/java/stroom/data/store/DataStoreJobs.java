@@ -11,7 +11,7 @@ import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.CRON;
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class DataStoreJobs implements ScheduledJobs {
+public class DataStoreJobs implements ScheduledJobs {
 
     private StreamRetentionExecutor streamRetentionExecutor;
 

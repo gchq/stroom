@@ -29,7 +29,6 @@ import stroom.node.NodeServiceModule;
 import stroom.node.VolumeService;
 import stroom.node.shared.VolumeEntity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class VolumeModule extends AbstractModule {
     @Override
@@ -55,9 +54,6 @@ public class VolumeModule extends AbstractModule {
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(VolumeServiceImpl.class);
-
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(VolumeJobs.class);
     }
 
     @Override

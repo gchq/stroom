@@ -12,7 +12,7 @@ import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class StreamTaskJobs implements ScheduledJobs {
+public class StreamTaskJobs implements ScheduledJobs {
     private StreamTaskDeleteExecutor streamTaskDeleteExecutor;
     private StreamTaskCreator streamTaskCreator;
     private ProxyAggregationExecutor proxyAggregationExecutor;

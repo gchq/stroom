@@ -17,19 +17,14 @@
 package stroom.policy;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
 import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class PolicyModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PolicyService.class).to(PolicyServiceImpl.class);
-
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(PolicyJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FetchDataRetentionPolicyAction.class, stroom.policy.FetchDataRetentionPolicyHandler.class)

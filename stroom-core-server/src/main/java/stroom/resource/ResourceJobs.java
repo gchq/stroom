@@ -11,7 +11,7 @@ import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class ResourceJobs implements ScheduledJobs {
+public class ResourceJobs implements ScheduledJobs {
 
     private ResourceStoreImpl resourceStore;
 

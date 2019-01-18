@@ -31,7 +31,6 @@ import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -57,8 +56,6 @@ public class DashboardModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.dashboard.DashboardStoreImpl.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(DashboardJobs.class);
         EntityTypeBinder.create(binder())
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
     }

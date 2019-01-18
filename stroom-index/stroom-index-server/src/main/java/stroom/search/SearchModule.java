@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -29,9 +28,6 @@ public class SearchModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(LuceneSearchResponseCreatorManager.class);
-
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(SearchJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)

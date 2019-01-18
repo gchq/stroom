@@ -11,7 +11,7 @@ import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class SearchJobs implements ScheduledJobs {
+public class SearchJobs implements ScheduledJobs {
 
     private LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager;
 

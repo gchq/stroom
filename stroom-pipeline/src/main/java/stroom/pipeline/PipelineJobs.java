@@ -14,7 +14,7 @@ import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class PipelineJobs implements ScheduledJobs {
+public class PipelineJobs implements ScheduledJobs {
 
     private RollingDestinations rollingDestinations;
     private BenchmarkClusterExecutor benchmarkClusterExecutor;

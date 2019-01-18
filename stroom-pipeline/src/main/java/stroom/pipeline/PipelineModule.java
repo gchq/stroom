@@ -26,7 +26,6 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 import javax.xml.transform.URIResolver;
 
@@ -48,9 +47,6 @@ public class PipelineModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineStoreImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterStoreImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XsltStoreImpl.class);
-
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(PipelineJobs.class);
 
         EntityTypeBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class)

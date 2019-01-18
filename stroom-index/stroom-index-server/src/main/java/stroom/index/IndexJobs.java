@@ -1,6 +1,5 @@
 package stroom.index;
 
-import stroom.search.shard.IndexShardSearcherCache;
 import stroom.util.lifecycle.jobmanagement.ScheduledJob;
 import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
@@ -13,7 +12,7 @@ import static stroom.util.lifecycle.jobmanagement.Schedule.ScheduleType.PERIODIC
 import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuilder.jobBuilder;
 
 @Singleton
-class IndexJobs implements ScheduledJobs {
+public class IndexJobs implements ScheduledJobs {
 
     private IndexShardManager indexShardManager;
     private IndexShardWriterCache indexShardWriterCache;

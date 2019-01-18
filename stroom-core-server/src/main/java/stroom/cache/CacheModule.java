@@ -23,7 +23,6 @@ import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
 public class CacheModule extends AbstractModule {
     @Override
@@ -39,8 +38,5 @@ public class CacheModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(StroomCacheManagerImpl.class);
-
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(CacheJobs.class);
     }
 }
