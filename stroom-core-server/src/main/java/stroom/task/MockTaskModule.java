@@ -18,6 +18,7 @@ package stroom.task;
 
 import com.google.inject.AbstractModule;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 
 public class MockTaskModule extends AbstractModule {
     @Override

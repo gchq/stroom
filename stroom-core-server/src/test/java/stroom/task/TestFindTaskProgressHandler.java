@@ -80,11 +80,11 @@ class TestFindTaskProgressHandler {
         // Test sorting by node.
         criteria.setSort(FindTaskProgressCriteria.FIELD_NODE, Direction.ASCENDING, false);
         sortedList = findTaskProgressHandler.createList(totalMap, criteria);
-        testList(sortedList, (v1, v2) -> v1.getNode().getName().compareTo(v2.getNode().getName()) <= 0);
+        testList(sortedList, (v1, v2) -> v1.getNodeName().compareTo(v2.getNodeName()) <= 0);
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_NODE, Direction.DESCENDING, false);
         sortedList = findTaskProgressHandler.createList(totalMap, criteria);
-        testList(sortedList, (v1, v2) -> v1.getNode().getName().compareTo(v2.getNode().getName()) >= 0);
+        testList(sortedList, (v1, v2) -> v1.getNodeName().compareTo(v2.getNodeName()) >= 0);
     }
 
     private void testList(final List<TaskProgress> sortedList, final BiFunction<TaskProgress, TaskProgress, Boolean> compareFunction) {
@@ -138,7 +138,7 @@ class TestFindTaskProgressHandler {
             parent.setId(parentId);
             parent.setSubmitTimeMs(parentSubmitTime);
             parent.setTimeNowMs(now);
-            parent.setNode(node);
+            parent.setNodeName(node.getName());
             parent.setTaskName("parent task " + i);
             parent.setThreadName("thread");
             parent.setUserName(user);
@@ -154,7 +154,7 @@ class TestFindTaskProgressHandler {
                 child.setId(childId);
                 child.setSubmitTimeMs(parentSubmitTime + (long) (Math.random() * 100));
                 child.setTimeNowMs(now);
-                child.setNode(node);
+                child.setNodeName(node.getName());
                 child.setTaskName("child task " + i + ":" + j);
                 child.setThreadName("thread");
                 child.setUserName(user);

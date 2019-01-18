@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     implementation project(':stroom-util-shared')
 

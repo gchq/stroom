@@ -16,8 +16,8 @@
 
 package stroom.task.shared;
 
-import stroom.dispatch.shared.TreeAction;
 import stroom.entity.shared.FindAction;
+import stroom.util.shared.TreeAction;
 
 import java.util.Set;
 

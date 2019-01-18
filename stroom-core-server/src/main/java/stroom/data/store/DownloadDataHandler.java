@@ -21,7 +21,7 @@ import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.DownloadDataAction;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;

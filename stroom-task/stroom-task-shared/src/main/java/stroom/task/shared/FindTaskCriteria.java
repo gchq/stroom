@@ -16,8 +16,8 @@
 
 package stroom.task.shared;
 
-import stroom.entity.shared.HasIsConstrained;
 import stroom.docref.SharedObject;
+import stroom.entity.shared.HasIsConstrained;
 import stroom.util.shared.UserTokenUtil;
 
 import java.util.HashSet;

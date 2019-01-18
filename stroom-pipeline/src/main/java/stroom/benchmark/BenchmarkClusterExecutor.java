@@ -52,7 +52,7 @@ import stroom.streamtask.shared.ProcessorFilter;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.GenericServerTask;
 import stroom.task.api.TaskContext;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.date.DateUtil;

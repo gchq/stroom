@@ -20,6 +20,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;
 
 import javax.inject.Inject;

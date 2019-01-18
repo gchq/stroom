@@ -34,7 +34,7 @@ import stroom.servlet.SessionListListener;
 import stroom.task.api.TaskHandler;
 import stroom.task.TaskHandlerBeanRegistry;
 import stroom.task.api.TaskIdFactory;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;
 

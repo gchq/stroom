@@ -163,6 +163,7 @@ dependencies {
     testImplementation project(':stroom-statistics:stroom-statistics-server')
     testImplementation project(':stroom-statistics:stroom-statistics-shared')
     testImplementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-util-shared')

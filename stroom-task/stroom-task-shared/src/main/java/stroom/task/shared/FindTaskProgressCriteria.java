@@ -86,7 +86,7 @@ public class FindTaskProgressCriteria extends FindNamedEntityCriteria implements
                         compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
                         break;
                     case FIELD_NODE:
-                        compare = CompareUtil.compareString(o1.getNode().getName(), o2.getNode().getName());
+                        compare = CompareUtil.compareString(o1.getNodeName(), o2.getNodeName());
                         break;
                 }
 

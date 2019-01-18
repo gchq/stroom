@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.task;
+package stroom.task.api;
 
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseResultList;

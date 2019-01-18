@@ -19,7 +19,7 @@ package stroom.pipeline.task;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.node.NodeCache;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StoreCreationTool;
 

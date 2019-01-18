@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dispatch.shared;
+package stroom.util.shared;
 
 import java.util.Set;
 
