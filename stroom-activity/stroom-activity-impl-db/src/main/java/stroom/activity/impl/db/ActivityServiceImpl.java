@@ -19,7 +19,7 @@ package stroom.activity.impl.db;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import stroom.activity.impl.db.tables.records.ActivityRecord;
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceException;

@@ -3,12 +3,14 @@ apply plugin: 'com.github.johnrengelman.shadow'
 ext.moduleName = 'stroom.headless'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-impl-mock')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -17,6 +19,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-impl-mock')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

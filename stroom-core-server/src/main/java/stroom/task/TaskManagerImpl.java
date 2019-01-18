@@ -29,6 +29,7 @@ import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
@@ -480,7 +481,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         taskProgress.setTaskInfo(taskThread.getInfo());
         taskProgress.setSubmitTimeMs(taskThread.getSubmitTimeMs());
         taskProgress.setTimeNowMs(timeNowMs);
-        taskProgress.setNode(nodeCache.getDefaultNode());
+        taskProgress.setNodeName(nodeCache.getDefaultNode().getName());
         return taskProgress;
     }
 

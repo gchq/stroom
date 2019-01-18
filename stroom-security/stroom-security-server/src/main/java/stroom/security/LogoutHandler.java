@@ -16,16 +16,14 @@
 
 package stroom.security;
 
-import stroom.logging.AuthenticationEventLog;
+import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.security.shared.LogoutAction;
 import stroom.security.shared.UserRef;
-import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
-
 
 class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult> {
     private final HttpServletRequestHolder httpServletRequestHolder;

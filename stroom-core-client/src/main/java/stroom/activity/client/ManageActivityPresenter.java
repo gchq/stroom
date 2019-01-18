@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
 import stroom.activity.shared.FindActivityAction;

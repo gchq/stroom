@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

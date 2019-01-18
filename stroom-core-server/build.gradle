@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.core.server'
 
 dependencies {
-    implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-entity-shared')
@@ -17,6 +16,7 @@ dependencies {
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.eventLogging
     implementation libs.stroomDocRef

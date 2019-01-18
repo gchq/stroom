@@ -16,6 +16,7 @@
 
 package stroom.activity.shared;
 
+import stroom.activity.api.Activity;
 import stroom.task.shared.Action;
 
 public class UpdateActivityAction extends Action<Activity> {

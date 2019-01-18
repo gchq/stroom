@@ -29,12 +29,12 @@ import stroom.entity.util.BaseEntityDeProxyProcessor;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.security.SecurityContext;
 import stroom.security.util.UserTokenUtil;
-import stroom.servlet.HttpServletRequestHolder;
+import stroom.event.logging.api.HttpServletRequestHolder;
 import stroom.servlet.SessionListListener;
 import stroom.task.api.TaskHandler;
 import stroom.task.TaskHandlerBeanRegistry;
 import stroom.task.api.TaskIdFactory;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;
 

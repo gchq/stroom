@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;

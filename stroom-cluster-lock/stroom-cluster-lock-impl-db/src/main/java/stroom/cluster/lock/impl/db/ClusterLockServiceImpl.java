@@ -26,7 +26,7 @@ import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.NodeCache;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.SecurityContext;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
@@ -63,9 +63,6 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     @Override
     public void lock(final String lockName) {
-
-
-
         entityManagerSupport.transaction(entityManager -> {
             LOGGER.debug("lock({}) - >>>", lockName);
 

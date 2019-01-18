@@ -24,7 +24,7 @@ import event.logging.Query.Advanced;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedLong;

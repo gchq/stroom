@@ -16,6 +16,7 @@
 
 package stroom.activity.shared;
 
+import stroom.activity.api.Activity;
 import stroom.entity.shared.FindAction;
 
 public class FindActivityAction extends FindAction<FindActivityCriteria, Activity> {

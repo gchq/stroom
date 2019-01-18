@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.task.api.TaskManager;
 import stroom.task.cluster.ClusterTaskModule;
 import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.FindUserTaskProgressAction;

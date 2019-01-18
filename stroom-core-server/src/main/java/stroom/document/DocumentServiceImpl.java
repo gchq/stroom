@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.DocumentActionHandler;
 import stroom.entity.EntityServiceBeanRegistry;
 import stroom.entity.shared.EntityServiceException;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 
 import javax.inject.Inject;
 
