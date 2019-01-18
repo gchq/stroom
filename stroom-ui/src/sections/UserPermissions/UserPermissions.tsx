@@ -2,14 +2,24 @@ import * as React from "react";
 
 import { path } from "ramda";
 import { Formik, Field, Form } from "formik";
-import { compose, lifecycle, withStateHandlers } from "recompose";
+import {
+  compose,
+  lifecycle,
+  withStateHandlers,
+  StateHandlerMap
+} from "recompose";
 import { connect } from "react-redux";
 import ReactTable, { RowInfo } from "react-table";
 
 import { findUsers } from "./userClient";
+import withLocalStorage from "../../lib/withLocalStorage";
 import { GlobalStoreState } from "../../startup/reducers";
 import { User } from "../..//types";
 import IconHeader from "../../components/IconHeader";
+import HorizontalPanel from "../../components/HorizontalPanel";
+import PanelGroup from "react-panelgroup";
+import UsersInGroup from "./UsersInGroup";
+import GroupsForUser from "./GroupsForUser";
 
 const LISTING_ID = "user_permissions";
 
@@ -22,19 +32,36 @@ interface ConnectState {
 interface ConnectDispatch {
   findUsers: typeof findUsers;
 }
-
-interface WithStateHandlers {
-  selectedUuid?: string;
-  onSelection: (uuid: string) => void;
+interface State {
+  selectedUser?: User;
 }
-
+interface StateHandlers {
+  onSelection: (uuid?: string) => void;
+}
+interface WithLocalStorage {
+  tableHeight: number;
+  editUserHeight: number;
+  setTableHeight: (tableHeight: number) => void;
+  setEditUserHeight: (editUserHeight: number) => void;
+}
 export interface EnhancedProps
   extends Props,
     ConnectState,
     ConnectDispatch,
-    WithStateHandlers {}
+    State,
+    StateHandlers,
+    WithLocalStorage {}
+
+const withListHeight = withLocalStorage("tableHeight", "setTableHeight", 500);
+const withDetailsHeight = withLocalStorage(
+  "editUserHeight",
+  "setEditUserHeight",
+  500
+);
 
 const enhance = compose<EnhancedProps, Props>(
+  withListHeight,
+  withDetailsHeight,
   connect<ConnectState, ConnectDispatch, Props, GlobalStoreState>(
     ({ userPermissions: { users } }) => ({
       users: users[LISTING_ID]
@@ -50,13 +77,13 @@ const enhance = compose<EnhancedProps, Props>(
       findUsers(LISTING_ID);
     }
   }),
-  withStateHandlers(
+  withStateHandlers<State, StateHandlerMap<State>, ConnectState>(
     () => ({
-      selectedUuid: undefined
+      selectedUser: undefined
     }),
     {
-      onSelection: () => selectedUuid => ({
-        selectedUuid
+      onSelection: (_, { users }) => selectedUuid => ({
+        selectedUser: users.find((u: User) => u.uuid === selectedUuid)
       })
     }
   )
@@ -86,13 +113,69 @@ const USER_COLUMNS = [
   }
 ];
 
-const UserPermissions = ({
+const EditUserPanel = ({ selectedUser, onSelection }: EnhancedProps) => (
+  <HorizontalPanel
+    title={
+      selectedUser!.group
+        ? `Users in Group ${selectedUser!.name}`
+        : `Groups for User ${selectedUser!.name}`
+    }
+    onClose={() => onSelection()}
+    content={
+      selectedUser!.group ? (
+        <UsersInGroup group={selectedUser!} />
+      ) : (
+        <GroupsForUser user={selectedUser!} />
+      )
+    }
+  />
+);
+
+const UsersPermissionsTable = ({
   users,
-  findUsers,
-  selectedUuid,
+  selectedUser,
   onSelection
 }: EnhancedProps) => (
-  <div>
+  <ReactTable
+    data={users}
+    columns={USER_COLUMNS}
+    getTdProps={(state: any, rowInfo: RowInfo) => {
+      return {
+        onClick: (_: any, handleOriginal: () => void) => {
+          if (rowInfo !== undefined) {
+            if (!!selectedUser && selectedUser.uuid === rowInfo.original.uuid) {
+              onSelection();
+            } else {
+              onSelection(rowInfo.original.uuid);
+            }
+          }
+
+          if (handleOriginal) {
+            handleOriginal();
+          }
+        }
+      };
+    }}
+    getTrProps={(_: any, rowInfo: RowInfo) => {
+      // We don't want to see a hover on a row without data.
+      // If a row is selected we want to see the selected color.
+      const isSelected =
+        !!selectedUser &&
+        path(["original", "uuid"], rowInfo) === selectedUser.uuid;
+      const hasData = path(["original", "uuid"], rowInfo) !== undefined;
+      let className;
+      if (hasData) {
+        className = isSelected ? "selected hoverable" : "hoverable";
+      }
+      return {
+        className
+      };
+    }}
+  />
+);
+
+const UserPermissions = (props: EnhancedProps) => (
+  <div className="UserPermissions">
     <IconHeader icon="users" text="User Permissions" />
     <Formik
       initialValues={{
@@ -117,38 +200,36 @@ const UserPermissions = ({
         </Field>
       </Form>
     </Formik>
-    <ReactTable
-      data={users}
-      columns={USER_COLUMNS}
-      getTdProps={(state: any, rowInfo: RowInfo) => {
-        return {
-          onClick: (_: any, handleOriginal: () => void) => {
-            if (rowInfo !== undefined) {
-              onSelection(rowInfo.original.uuid);
-            }
-
-            if (handleOriginal) {
-              handleOriginal();
-            }
-          }
-        };
-      }}
-      getTrProps={(_: any, rowInfo: RowInfo) => {
-        // We don't want to see a hover on a row without data.
-        // If a row is selected we want to see the selected color.
-        const isSelected =
-          selectedUuid !== undefined &&
-          path(["original", "uuid"], rowInfo) === selectedUuid;
-        const hasData = path(["original", "uuid"], rowInfo) !== undefined;
-        let className;
-        if (hasData) {
-          className = isSelected ? "selected hoverable" : "hoverable";
-        }
-        return {
-          className
-        };
-      }}
-    />
+    <div className="UserTable__container">
+      <div className="UserTable__reactTable__container">
+        {!!props.selectedUser ? (
+          <PanelGroup
+            direction="row"
+            panelWidths={[
+              {
+                resize: "dynamic",
+                minSize: 100,
+                size: props.tableHeight
+              },
+              {
+                resize: "dynamic",
+                minSize: 100,
+                size: props.editUserHeight
+              }
+            ]}
+            onUpdate={(panelWidths: any[]) => {
+              props.setTableHeight(panelWidths[0].size);
+              props.setEditUserHeight(panelWidths[1].size);
+            }}
+          >
+            <UsersPermissionsTable {...props} />
+            <EditUserPanel {...props} />
+          </PanelGroup>
+        ) : (
+          <UsersPermissionsTable {...props} />
+        )}
+      </div>
+    </div>
   </div>
 );
 
