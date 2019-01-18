@@ -3,8 +3,6 @@ package stroom.docstore;
 import stroom.docref.DocRef;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 

@@ -1,18 +1,35 @@
 package stroom.feed;
 
-import stroom.docstore.JsonSerialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.feed.shared.FeedDoc;
 
-public class FeedSerialiser extends JsonSerialiser2<FeedDoc> {
+import javax.inject.Inject;
+import java.io.IOException;
+import java.util.Map;
+
+public class FeedSerialiser implements DocumentSerialiser2<FeedDoc> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(FeedSerialiser.class);
 //
 //    private static final String XML = "xml";
 
 //    private final ObjectMapper mapper;
+    private final Serialiser2<FeedDoc> delegate;
 
-    public FeedSerialiser() {
-        super(FeedDoc.class);
-//        mapper = getMapper(true);
+    @Inject
+    public FeedSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(FeedDoc.class);
+    }
+
+    @Override
+    public FeedDoc read(final Map<String, byte[]> data) throws IOException {
+        return delegate.read(data);
+    }
+
+    @Override
+    public Map<String, byte[]> write(final FeedDoc document) throws IOException {
+        return delegate.write(document);
     }
 
 //    @Override

@@ -2,9 +2,9 @@ package stroom.db.migration.doc.visualisation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.migration.doc.JsonSerialiser2;
+import stroom.db.migration.doc.EncodingUtil;
 import stroom.docref.DocRef;
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.util.XMLMarshallerUtil;
 

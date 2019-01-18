@@ -1,6 +1,5 @@
 package stroom.resource;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
@@ -15,7 +14,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.Security;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -33,12 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Api(
-        value = "pipeline - /v1",
-        description = "Stroom Pipeline API")
+@Api(value = "pipeline - /v1")
 @Path("/pipelines/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class PipelineResource implements HasHealthCheck {
+public class PipelineResource {
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
     private final PipelineDataValidator pipelineDataValidator;
@@ -230,10 +226,5 @@ public class PipelineResource implements HasHealthCheck {
         });
 
         return Response.ok().build();
-    }
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        return HealthCheck.Result.healthy();
     }
 }

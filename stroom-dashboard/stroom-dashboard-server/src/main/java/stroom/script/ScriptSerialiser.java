@@ -2,29 +2,35 @@ package stroom.script;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.script.shared.ScriptDoc;
+import stroom.util.string.EncodingUtil;
 
+import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Map;
 
-public class ScriptSerialiser extends JsonSerialiser2<ScriptDoc> {
+public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSerialiser.class);
 
     private static final String JS = "js";
 
-    public ScriptSerialiser() {
-        super(ScriptDoc.class);
+    private final Serialiser2<ScriptDoc> delegate;
+
+    @Inject
+    ScriptSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(ScriptDoc.class);
     }
 
     @Override
     public ScriptDoc read(final Map<String, byte[]> data) throws IOException {
-        final ScriptDoc document = super.read(data);
+        final ScriptDoc document = delegate.read(data);
 
         final String js = EncodingUtil.asString(data.get(JS));
         if (js != null) {
@@ -35,7 +41,7 @@ public class ScriptSerialiser extends JsonSerialiser2<ScriptDoc> {
 
     @Override
     public Map<String, byte[]> write(final ScriptDoc document) throws IOException {
-        final Map<String, byte[]> data = super.write(document);
+        final Map<String, byte[]> data = delegate.write(document);
 
         if (document.getData() != null) {
             data.put(JS, EncodingUtil.asBytes(document.getData()));
