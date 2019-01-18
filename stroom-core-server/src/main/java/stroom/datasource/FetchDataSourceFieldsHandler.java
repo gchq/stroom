@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.dashboard;
+package stroom.datasource;
 
-import stroom.dashboard.shared.FetchDataSourceFieldsAction;
+import stroom.datasource.shared.FetchDataSourceFieldsAction;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.entity.shared.DataSourceFields;
+import stroom.datasource.shared.DataSourceFields;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
 
-class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
+class FetchDataSourceFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final Security security;
 
     @Inject
-    FetchExpressionFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry,
+    FetchDataSourceFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry,
                                  final Security security) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.security = security;

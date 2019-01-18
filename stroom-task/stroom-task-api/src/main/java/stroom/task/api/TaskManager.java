@@ -19,7 +19,6 @@ package stroom.task.api;
 
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseResultList;
-import stroom.task.api.TaskCallback;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;

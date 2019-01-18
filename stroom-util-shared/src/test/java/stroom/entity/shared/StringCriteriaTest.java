@@ -35,9 +35,6 @@ class StringCriteriaTest {
 
         for (int i = 0; i < strings.size(); i++) {
             assertThat(criteriaList.get(i).toString()).isEqualTo(strings.get(i).toString());
-
         }
-
     }
-
 }

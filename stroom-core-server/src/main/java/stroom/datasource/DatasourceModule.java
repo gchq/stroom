@@ -17,10 +17,17 @@
 package stroom.datasource;
 
 import com.google.inject.AbstractModule;
+import stroom.datasource.shared.FetchDataSourceFieldsAction;
+import stroom.datasource.shared.FetchFieldsAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class DatasourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataSourceProviderRegistry.class).to(DataSourceProviderRegistryImpl.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(FetchFieldsAction.class, FetchFieldsHandler.class)
+                .bind(FetchDataSourceFieldsAction.class, FetchDataSourceFieldsHandler.class);
     }
 }

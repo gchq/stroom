@@ -77,6 +77,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-server')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
 
