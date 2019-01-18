@@ -19,6 +19,7 @@ package stroom.feed;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportActionHandler;
@@ -42,5 +43,9 @@ public class FeedModule extends AbstractModule {
 
         EntityTypeBinder.create(binder())
                 .bind(FeedDoc.DOCUMENT_TYPE, FeedStoreImpl.class);
+
+        // Provide object info to the logging service.
+        ObjectInfoProviderBinder.create(binder())
+                .bind(FeedDoc.class, FeedDocObjectInfoProvider.class);
     }
 }

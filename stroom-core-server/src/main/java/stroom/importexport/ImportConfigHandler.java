@@ -18,7 +18,6 @@ package stroom.importexport;
 
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.importexport.shared.ImportState;
-import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;

@@ -18,7 +18,7 @@ package stroom.servlet;
 
 import stroom.security.Security;
 import stroom.task.api.TaskIdFactory;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

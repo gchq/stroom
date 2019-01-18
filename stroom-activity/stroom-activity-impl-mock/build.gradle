@@ -1,0 +1,6 @@
+ext.moduleName = 'stroom.activity.impl.mock'
+
+dependencies {
+    implementation project(':stroom-activity:stroom-activity-api')
+    implementation libs.guice4
+}

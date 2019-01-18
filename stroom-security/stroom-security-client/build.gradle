@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.security.client'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-activity:stroom-activity-shared')
     implementation project(':stroom-core-client')
     implementation project(':stroom-core-client-widget')
@@ -10,7 +11,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-security:stroom-security-shared')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')
 
     implementation libs.gin

@@ -40,7 +40,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.lifecycle.LifecycleModule());
-        install(new stroom.logging.LoggingModule());
+        install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.node.NodeModule());
         install(new stroom.node.NodeHandlerModule());
         install(new stroom.node.NodeServiceModule());

@@ -16,7 +16,7 @@
 
 package stroom.activity.impl.db;
 
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 

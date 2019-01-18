@@ -27,7 +27,7 @@ import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.Sizes;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.TaskTerminatedException;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;

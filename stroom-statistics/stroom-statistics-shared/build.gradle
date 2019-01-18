@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-statistics:stroom-statistics-api')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
     implementation libs.jackson_annotations

@@ -21,6 +21,7 @@ rootProject.name = 'stroom'
 include 'stroom-activity:stroom-activity-api'
 include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-gen'
+include 'stroom-activity:stroom-activity-impl-mock'
 include 'stroom-activity:stroom-activity-shared'
 
 // App.
@@ -94,9 +95,6 @@ include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 
-// Integration tests.
-include 'stroom-integrationtest'
-
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'
 include 'stroom-kafka:stroom-kafka-impl'
@@ -130,6 +128,7 @@ include 'stroom-statistics:stroom-statistics-server'
 // Task execution.
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
+include 'stroom-task:stroom-task-shared'
 
 // Test project
 include 'stroom-test-common'

@@ -26,7 +26,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceFindSummaryAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

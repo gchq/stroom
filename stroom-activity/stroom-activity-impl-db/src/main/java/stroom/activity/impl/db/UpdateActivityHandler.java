@@ -16,9 +16,9 @@
 
 package stroom.activity.impl.db;
 
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
 import stroom.activity.shared.UpdateActivityAction;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

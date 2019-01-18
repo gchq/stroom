@@ -19,13 +19,12 @@ package stroom.activity.impl.db;
 import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
-import stroom.activity.shared.Activity;
-import stroom.activity.shared.FetchActivityAction;
+import stroom.activity.api.Activity;
 import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

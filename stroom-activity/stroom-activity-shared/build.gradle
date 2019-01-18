@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.activity.shared'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-util-shared')
 //    implementation project(':stroom-docstore:stroom-docstore-shared')
@@ -8,6 +9,8 @@ dependencies {
 //    implementation project(':stroom-importexport:stroom-importexport-api')
 //    implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
+    
 //
     implementation libs.stroomDocRef
 //    implementation libs.stroomQueryApi

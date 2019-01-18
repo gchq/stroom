@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.data.store.util'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-impl-mock')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data-store:stroom-data-store-api')
@@ -8,6 +9,7 @@ dependencies {
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-meta:stroom-data-meta-impl-db')
     implementation project(':stroom-entity-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-security:stroom-security-impl-mock')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

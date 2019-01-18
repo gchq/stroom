@@ -22,11 +22,11 @@ import event.logging.MultiObject;
 import event.logging.Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
+import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.SetCurrentActivityAction;
-import stroom.logging.CurrentActivity;
-import stroom.logging.PurposeUtil;
-import stroom.logging.StroomEventLoggingService;
+import stroom.event.logging.api.PurposeUtil;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
