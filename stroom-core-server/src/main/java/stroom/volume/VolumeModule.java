@@ -56,7 +56,7 @@ public class VolumeModule extends AbstractModule {
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(VolumeServiceImpl.class);
 
-        ScheduledJobsBinder.create(binder()).bind(VolumeJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(VolumeJobsManager.class);
     }
 
     @Override

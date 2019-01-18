@@ -33,6 +33,6 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
                 .bind(UploadDataAction.class, UploadDataHandler.class);
 
-        ScheduledJobsBinder.create(binder()).bind(DataStoreJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(DataStoreJobModule.class);
     }
 }

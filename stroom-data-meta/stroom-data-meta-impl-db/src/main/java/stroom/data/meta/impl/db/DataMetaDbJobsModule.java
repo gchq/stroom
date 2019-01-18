@@ -1,16 +1,17 @@
 package stroom.data.meta.impl.db;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import stroom.task.api.job.ScheduledJobsModule;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class DataMetaJobsModule extends ScheduledJobsModule {
-    private Provider<MetaValueService> metaValueServiceProvider;
+class DataMetaDbJobsModule extends ScheduledJobsModule {
+    private final Provider<MetaValueService> metaValueServiceProvider;
 
     @Inject
-    DataMetaJobsModule(final Provider<MetaValueService> metaValueServiceProvider) {
+    DataMetaDbJobsModule(final Provider<MetaValueService> metaValueServiceProvider) {
         this.metaValueServiceProvider = metaValueServiceProvider;
     }
 

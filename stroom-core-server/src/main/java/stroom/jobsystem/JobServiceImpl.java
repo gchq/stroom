@@ -31,12 +31,13 @@ import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.job.ScheduledJob;
-import stroom.task.api.job.ScheduledJobs;
+import stroom.task.shared.Task;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,22 +45,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 @Singleton
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
-    private final Set<ScheduledJobs> scheduledJobsSet;
+    private final Map<ScheduledJob, Provider<Consumer<Task>>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
                    final Security security,
                    final UiConfig uiConfig,
-                   final Set<ScheduledJobs> scheduledJobsSet,
+                   final Map<ScheduledJob, Provider<Consumer<Task>>> scheduledJobsMap,
                    final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security, uiConfig);
-        this.scheduledJobsSet = scheduledJobsSet;
+        this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
@@ -89,14 +91,11 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
         LOGGER.info("startup()");
 
         final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();
-        scheduledJobsSet.forEach(scheduledJobs -> {
-            final List<ScheduledJob> list = scheduledJobs.getJobs();
-            list.forEach(scheduledJob -> {
+        scheduledJobsMap.keySet().forEach(scheduledJob -> {
                 queryAppender.getJobDescriptionMap().put(scheduledJob.getName(), scheduledJob.getDescription());
                 if (scheduledJob.isAdvanced()) {
                     queryAppender.getJobAdvancedSet().add(scheduledJob.getName());
                 }
-            });
         });
 
         // Distributed Jobs done a different way

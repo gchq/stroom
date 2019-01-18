@@ -26,6 +26,6 @@ public class NodeModule extends AbstractModule {
         bind(DBTableService.class).to(DBTableServiceImpl.class);
         bind(RemoteStatusService.class).to(RemoteStatusServiceImpl.class);
 
-        ScheduledJobsBinder.create(binder()).bind(NodeJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(NodeJobsModule.class);
     }
 }

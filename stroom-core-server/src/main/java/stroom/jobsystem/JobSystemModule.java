@@ -27,11 +27,12 @@ import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobManager;
 import stroom.jobsystem.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.task.api.job.ScheduledJobsBinder;
 
 public class JobSystemModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new JobSystemJobsModule());
+
         bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
         bind(ClusterLockServiceTransactionHelper.class).to(ClusterLockServiceTransactionHelperImpl.class);
         bind(JobNodeService.class).to(JobNodeServiceImpl.class);
@@ -58,7 +59,5 @@ public class JobSystemModule extends AbstractModule {
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(JobServiceImpl.class);
         findServiceBinder.addBinding().to(JobNodeServiceImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(JobSystemJobs.class);
     }
 }

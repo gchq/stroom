@@ -49,6 +49,6 @@ public class StreamTaskModule extends AbstractModule {
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
 
-        ScheduledJobsBinder.create(binder()).bind(StreamTaskJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(StreamTaskJobsModule.class);
     }
 }
