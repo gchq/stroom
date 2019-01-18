@@ -18,6 +18,7 @@ package stroom.pipeline.factory;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.docstore.Serialiser2FactoryImpl;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.shared.PipelineDataMerger;
@@ -34,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineFactory extends AbstractProcessIntegrationTest {
     private final MockPipelineElementRegistryFactory elementRegistryFactory = new MockPipelineElementRegistryFactory();
-    private final PipelineSerialiser pipelineSerialiser = new PipelineSerialiser();
+    private final PipelineSerialiser pipelineSerialiser = new PipelineSerialiser(new Serialiser2FactoryImpl());
 
     @Test
     void testSingle() {

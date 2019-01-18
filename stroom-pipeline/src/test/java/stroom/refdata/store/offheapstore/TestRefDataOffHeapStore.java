@@ -17,22 +17,31 @@
 
 package stroom.refdata.store.offheapstore;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.refdata.store.AbstractRefDataOffHeapStoreTest;
+import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataProcessingInfo;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreConfig;
+import stroom.refdata.store.RefDataStoreFactory;
+import stroom.refdata.store.RefDataStoreModule;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
+import stroom.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.store.offheapstore.databases.MapUidReverseDb;
@@ -43,6 +52,8 @@ import stroom.util.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -68,7 +79,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
+class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
@@ -78,9 +89,43 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    @Override
-    protected void setDbMaxSizeProperty() {
+    @Inject
+    private RefDataStoreFactory refDataStoreFactory;
+
+    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
+    private Injector injector;
+    private RefDataStore refDataStore;
+
+    void setDbMaxSizeProperty() {
         setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(500));
+    }
+
+    void setDbMaxSizeProperty(final long sizeInBytes) {
+        refDataStoreConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+    }
+
+    @BeforeEach
+    public void setup() throws IOException {
+        super.setup();
+
+        LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
+
+        refDataStoreConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+
+        setDbMaxSizeProperty();
+
+        injector = Guice.createInjector(
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
+                        install(new RefDataStoreModule());
+                        install(new PipelineScopeModule());
+                    }
+                });
+
+        injector.injectMembers(this);
+        refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
     @Test
@@ -1143,5 +1188,13 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     private interface MapNamFunc {
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
+    }
+
+    protected RefDataStoreConfig getRefDataStoreConfig() {
+        return refDataStoreConfig;
+    }
+
+    protected void setPurgeAgeProperty(final String purgeAge) {
+        refDataStoreConfig.setPurgeAge(purgeAge);
     }
 }

@@ -3,8 +3,8 @@ package stroom.db.migration.doc.dashboard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+import stroom.db.migration.doc.EncodingUtil;
+import stroom.db.migration.doc.JsonSerialiser2;
 import stroom.entity.util.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;

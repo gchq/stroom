@@ -1,7 +1,9 @@
+// TODO should probably be stroom.docstore.impl
 ext.moduleName = 'stroom.docstore.server'
 
 dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -9,6 +11,7 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.guice4
+    implementation libs.guice_assistedinject
     implementation libs.jackson_annotations
     implementation libs.jackson_databind
     implementation libs.javax_inject
@@ -18,6 +21,8 @@ dependencies {
     
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

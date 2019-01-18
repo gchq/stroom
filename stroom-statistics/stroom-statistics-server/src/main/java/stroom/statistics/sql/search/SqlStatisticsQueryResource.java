@@ -17,8 +17,6 @@
 package stroom.statistics.sql.search;
 
 import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -30,7 +28,6 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.statistics.sql.StatisticsQueryService;
-import stroom.util.HasHealthCheck;
 import stroom.util.json.JsonUtil;
 
 import javax.inject.Inject;
@@ -40,12 +37,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(
-        value = "sqlstatistics query - /v2",
-        description = "Stroom SQL Statistics Query API")
+@Api(value = "sqlstatistics query - /v2")
 @Path("/sqlstatistics/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class SqlStatisticsQueryResource implements HasHealthCheck {
+public class SqlStatisticsQueryResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);
 
     private final StatisticsQueryService statisticsQueryService;
@@ -103,10 +98,5 @@ public class SqlStatisticsQueryResource implements HasHealthCheck {
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
         }
         return statisticsQueryService.destroy(queryKey);
-    }
-
-    @Override
-    public Result getHealth() {
-        return HealthCheck.Result.healthy();
     }
 }

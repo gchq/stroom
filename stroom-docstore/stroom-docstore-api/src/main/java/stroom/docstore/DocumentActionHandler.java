@@ -17,6 +17,7 @@
 
 package stroom.docstore;
 
+
 import stroom.docref.DocRef;
 
 public interface DocumentActionHandler<D> {

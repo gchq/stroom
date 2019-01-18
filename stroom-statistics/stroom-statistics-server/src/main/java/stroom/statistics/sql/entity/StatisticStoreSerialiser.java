@@ -2,32 +2,38 @@ package stroom.statistics.sql.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.JsonSerialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
 
+import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Map;
 
-public class StatisticStoreSerialiser extends JsonSerialiser2<StatisticStoreDoc> {
+public class StatisticStoreSerialiser implements DocumentSerialiser2<StatisticStoreDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticStoreSerialiser.class);
 
-    public StatisticStoreSerialiser() {
-        super(StatisticStoreDoc.class);
+    private final Serialiser2<StatisticStoreDoc> delegate;
+
+    @Inject
+    public StatisticStoreSerialiser(final Serialiser2Factory serialiser2Factory) {
+        delegate = serialiser2Factory.createSerialiser(StatisticStoreDoc.class);
     }
 
     @Override
     public StatisticStoreDoc read(final Map<String, byte[]> data) throws IOException {
-        final StatisticStoreDoc document = super.read(data);
+        final StatisticStoreDoc document = delegate.read(data);
         return document;
     }
 
     @Override
     public Map<String, byte[]> write(final StatisticStoreDoc document) throws IOException {
-        final Map<String, byte[]> data = super.write(document);
+        final Map<String, byte[]> data = delegate.write(document);
         return data;
     }
 

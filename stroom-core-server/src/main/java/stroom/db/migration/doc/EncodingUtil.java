@@ -1,4 +1,4 @@
-package stroom.docstore;
+package stroom.db.migration.doc;
 
 import java.nio.charset.Charset;
 
