@@ -1,4 +1,4 @@
-package stroom.docstore.fs;
+package stroom.docstore.impl.fs;
 
 import stroom.docstore.RWLockFactory;
 

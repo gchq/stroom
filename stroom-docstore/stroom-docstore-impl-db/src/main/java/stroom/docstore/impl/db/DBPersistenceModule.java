@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.docstore.memory;
+package stroom.docstore.impl.db;
 
 import com.google.inject.AbstractModule;
 import stroom.docstore.Persistence;
 
-public class MemoryPersistenceModule extends AbstractModule {
+public class DBPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(Persistence.class).to(MemoryPersistence.class);
+        bind(Persistence.class).to(DBPersistence.class);
     }
 }

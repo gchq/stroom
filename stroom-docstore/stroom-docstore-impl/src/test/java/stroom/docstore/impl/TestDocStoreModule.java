@@ -1,4 +1,4 @@
-package stroom.docstore;
+package stroom.docstore.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -8,6 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Persistence;
+import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.docstore.shared.Doc;
 import stroom.security.SecurityContext;
 

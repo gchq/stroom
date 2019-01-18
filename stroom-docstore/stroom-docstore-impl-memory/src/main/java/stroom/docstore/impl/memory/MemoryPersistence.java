@@ -1,4 +1,4 @@
-package stroom.docstore.memory;
+package stroom.docstore.impl.memory;
 
 import stroom.docstore.Persistence;
 import stroom.docstore.RWLockFactory;

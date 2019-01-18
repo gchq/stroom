@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.fs;
+package stroom.docstore.impl.fs;
 
 import com.google.inject.AbstractModule;
 import stroom.docstore.Persistence;

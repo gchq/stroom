@@ -1,6 +1,7 @@
-package stroom.docstore.fs;
+package stroom.docstore.impl.fs;
 
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
@@ -12,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFSPersistence {
     private static final Charset CHARSET = Charset.forName("UTF-8");
@@ -37,11 +36,11 @@ class TestFSPersistence {
         persistence.write(docRef, false, data);
 
         // Exists
-        assertThat(persistence.exists(docRef)).isTrue();
+        Assertions.assertThat(persistence.exists(docRef)).isTrue();
 
         // Read
         data = persistence.read(docRef);
-        assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid1);
+        Assertions.assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid1);
 
         // Update
         data = new HashMap<>();
@@ -50,12 +49,12 @@ class TestFSPersistence {
 
         // Read
         data = persistence.read(docRef);
-        assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid2);
+        Assertions.assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid2);
 
         // List
         final List<DocRef> refs = persistence.list(docRef.getType());
-        assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
+        Assertions.assertThat(refs.size()).isEqualTo(1);
+        Assertions.assertThat(refs.get(0)).isEqualTo(docRef);
 
         // Delete
         persistence.delete(docRef);

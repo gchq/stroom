@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.docstore.fs;
+package stroom.docstore.impl.fs;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

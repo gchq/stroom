@@ -1,5 +1,11 @@
 ext.moduleName = 'stroom.docstore.impl.memory'
 
 dependencies {
+    implementation project(':stroom-docstore:stroom-docstore-api')
+
+    implementation libs.stroomDocRef
+
+    implementation libs.guice4
+    implementation libs.slf4j_api
 
 }

@@ -1,5 +1,9 @@
-package stroom.docstore;
+package stroom.docstore.impl;
 
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Persistence;
+import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.docstore.shared.Doc;
 import stroom.security.SecurityContext;
 

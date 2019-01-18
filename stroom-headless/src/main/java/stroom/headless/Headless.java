@@ -21,7 +21,7 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-import stroom.docstore.fs.FSPersistenceConfig;
+import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.entity.util.XMLUtil;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;

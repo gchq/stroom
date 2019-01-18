@@ -15,11 +15,14 @@
  *
  */
 
-package stroom.docstore;
+package stroom.docstore.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Persistence;
+import stroom.docstore.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;

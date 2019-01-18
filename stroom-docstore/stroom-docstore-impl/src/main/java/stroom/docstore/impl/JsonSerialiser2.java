@@ -1,9 +1,10 @@
-package stroom.docstore;
+package stroom.docstore.impl;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import stroom.docstore.Serialiser2;
 import stroom.util.string.EncodingUtil;
 
 import java.io.IOException;

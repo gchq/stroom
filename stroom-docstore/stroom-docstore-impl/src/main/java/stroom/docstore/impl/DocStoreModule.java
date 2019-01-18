@@ -1,6 +1,9 @@
-package stroom.docstore;
+package stroom.docstore.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.docstore.Persistence;
+import stroom.docstore.Serialiser2Factory;
+import stroom.docstore.StoreFactory;
 import stroom.security.SecurityContext;
 
 public class DocStoreModule extends AbstractModule {

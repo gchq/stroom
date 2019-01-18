@@ -16,7 +16,7 @@
  *
  */
 
-package stroom.docstore.db;
+package stroom.docstore.impl.db;
 
 import stroom.docref.DocRef;
 

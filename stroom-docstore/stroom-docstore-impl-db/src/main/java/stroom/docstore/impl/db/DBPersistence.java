@@ -1,4 +1,4 @@
-package stroom.docstore.db;
+package stroom.docstore.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
