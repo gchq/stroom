@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 public class JobSystemJobs implements ScheduledJobs {
-
     private ClusterLockClusterHandler clusterLockClusterHandler;
     private ClusterLockService clusterLockService;
     private DistributedTaskFetcher distributedTaskFetcher;

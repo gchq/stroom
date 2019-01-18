@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class SQLStatisticSearchJobs implements ScheduledJobs {
-
     private SqlStatisticsSearchResponseCreatorManager sqlStatisticsSearchResponseCreatorManager;
 
     @Inject

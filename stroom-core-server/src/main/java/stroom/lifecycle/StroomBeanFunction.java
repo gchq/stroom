@@ -10,22 +10,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StroomBeanFunction {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomBeanMethodExecutable.class);
 
-    private final StroomBeanStore stroomBeanStore;
-    private final String message;
     private final AtomicBoolean running;
     private ScheduledJob scheduledJob;
 
-    public StroomBeanFunction(final ScheduledJob scheduledJob, final StroomBeanStore stroomBeanStore,
-                              final String message) {
-        this(scheduledJob, stroomBeanStore, message, new AtomicBoolean());
+    public StroomBeanFunction(final ScheduledJob scheduledJob) {
+        this(scheduledJob, new AtomicBoolean());
         this.scheduledJob = scheduledJob;
     }
 
-    public StroomBeanFunction(final ScheduledJob scheduledJob, final StroomBeanStore stroomBeanStore,
-                              final String message, final AtomicBoolean running) {
+    public StroomBeanFunction(final ScheduledJob scheduledJob,  final AtomicBoolean running) {
         this.scheduledJob = scheduledJob;
-        this.stroomBeanStore = stroomBeanStore;
-        this.message = message;
         this.running = running;
     }
 

@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 public class PolicyJobs implements ScheduledJobs {
-
     private DataRetentionExecutor dataRetentionExecutor;
 
     @Inject

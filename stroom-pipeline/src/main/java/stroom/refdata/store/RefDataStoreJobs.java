@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 public class RefDataStoreJobs implements ScheduledJobs {
-
     private RefDataStoreFactory refDataStoreFactory;
 
     @Inject

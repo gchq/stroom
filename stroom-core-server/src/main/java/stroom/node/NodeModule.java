@@ -17,9 +17,8 @@
 package stroom.node;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.node.shared.DBTableService;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 
 public class NodeModule extends AbstractModule {
     @Override
@@ -27,7 +26,6 @@ public class NodeModule extends AbstractModule {
         bind(DBTableService.class).to(DBTableServiceImpl.class);
         bind(RemoteStatusService.class).to(RemoteStatusServiceImpl.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(NodeJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(NodeJobs.class);
     }
 }

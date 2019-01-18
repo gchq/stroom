@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class ResourceJobs implements ScheduledJobs {
-
     private ResourceStoreImpl resourceStore;
 
     @Inject

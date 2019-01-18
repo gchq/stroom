@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 public class NodeJobs implements ScheduledJobs {
-
     private HeapHistogramStatisticsExecutor heapHistogramStatisticsExecutor;
     private NodeStatusExecutor nodeStatusExecutor;
 

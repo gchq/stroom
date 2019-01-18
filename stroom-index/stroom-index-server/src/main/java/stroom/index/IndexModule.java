@@ -31,7 +31,7 @@ import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.HasHealthCheck;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -77,7 +77,6 @@ public class IndexModule extends AbstractModule {
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
         hasHealthCheckBinder.addBinding().to(StroomIndexQueryResource.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(IndexJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(IndexJobs.class);
     }
 }

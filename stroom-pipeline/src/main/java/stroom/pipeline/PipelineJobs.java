@@ -2,6 +2,7 @@ package stroom.pipeline;
 
 import stroom.benchmark.BenchmarkClusterExecutor;
 import stroom.pipeline.destination.RollingDestinations;
+import stroom.task.shared.Task;
 import stroom.util.lifecycle.jobmanagement.ScheduledJob;
 import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
 
@@ -15,7 +16,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class PipelineJobs implements ScheduledJobs {
-
     private RollingDestinations rollingDestinations;
     private BenchmarkClusterExecutor benchmarkClusterExecutor;
 
@@ -38,7 +38,7 @@ class PipelineJobs implements ScheduledJobs {
                         .name("XX Benchmark System XX")
                         .description("Job to generate data in the system in order to benchmark it's performance (do not run in live!!)")
                         .schedule(CRON, "* * *")
-                        .method((task) -> this.benchmarkClusterExecutor.exec(task))
+                        .method((task) -> this.benchmarkClusterExecutor.exec((Task) task))
                         .build()
         );
     }

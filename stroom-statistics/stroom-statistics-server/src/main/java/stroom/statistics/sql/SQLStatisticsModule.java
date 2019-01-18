@@ -18,7 +18,6 @@ package stroom.statistics.sql;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -28,7 +27,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -44,8 +43,7 @@ public class SQLStatisticsModule extends AbstractModule {
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(SQLStatisticsJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(SQLStatisticsJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(SQLStatisticFlushTask.class, SQLStatisticFlushTaskHandler.class);

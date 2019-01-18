@@ -13,7 +13,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 public class SQLStatisticsJobs implements ScheduledJobs {
-
     private SQLStatisticEventStore sqlStatisticEventStore;
     private SQLStatisticCache sqlStatisticCache;
     private SQLStatisticAggregationManager sqlStatisticAggregationManager;

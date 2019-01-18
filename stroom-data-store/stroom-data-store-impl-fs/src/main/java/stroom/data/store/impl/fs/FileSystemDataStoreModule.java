@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -34,7 +33,7 @@ import stroom.node.NodeServiceModule;
 import stroom.task.TaskModule;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 import stroom.volume.VolumeModule;
 
 import javax.inject.Provider;
@@ -58,8 +57,7 @@ public class FileSystemDataStoreModule extends AbstractModule {
         bind(FileSystemTypePaths.class).to(FileSystemTypePathsImpl.class);
         bind(DataVolumeService.class).to(DataVolumeServiceImpl.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(FileSystemDataStoreJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(FileSystemDataStoreJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FileSystemCleanSubTask.class, FileSystemCleanSubTaskHandler.class);

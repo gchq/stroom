@@ -16,7 +16,7 @@ import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -40,8 +40,8 @@ public class DataMetaDbModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(Cleanup.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(DataMetaDbJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(DataMetaDbJobs.class);
+
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Data.class, DataObjectInfoProvider.class);

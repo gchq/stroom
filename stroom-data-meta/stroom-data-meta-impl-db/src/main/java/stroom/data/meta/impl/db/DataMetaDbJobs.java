@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class DataMetaDbJobs implements ScheduledJobs {
-
     private MetaValueService metaValueService;
 
     @Inject

@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class CacheJobs implements ScheduledJobs {
-
     private StroomCacheManager stroomCacheManager;
 
     @Inject

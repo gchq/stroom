@@ -13,7 +13,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class VolumeJobs implements ScheduledJobs {
-
     private VolumeService volumeService;
 
     @Inject

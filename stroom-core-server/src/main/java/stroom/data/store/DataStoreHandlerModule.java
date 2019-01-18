@@ -17,12 +17,11 @@
 package stroom.data.store;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamstore.shared.UploadDataAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.jobmanagement.ScheduledJobs;
+import stroom.util.lifecycle.jobmanagement.ScheduledJobsBinder;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
@@ -34,7 +33,6 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
                 .bind(UploadDataAction.class, UploadDataHandler.class);
 
-        final Multibinder<ScheduledJobs> jobs = Multibinder.newSetBinder(binder(), ScheduledJobs.class);
-        jobs.addBinding().to(DataStoreJobs.class);
+        ScheduledJobsBinder.create(binder()).bind(DataStoreJobs.class);
     }
 }

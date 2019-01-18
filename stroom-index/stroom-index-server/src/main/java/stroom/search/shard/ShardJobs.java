@@ -12,7 +12,6 @@ import static stroom.util.lifecycle.jobmanagement.ScheduledJob.ScheduledJobBuild
 
 @Singleton
 class ShardJobs implements ScheduledJobs {
-
     private IndexShardSearcherCache indexShardSearcherCache;
 
     @Inject
