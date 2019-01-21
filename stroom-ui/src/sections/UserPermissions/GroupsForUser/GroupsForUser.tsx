@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { connect } from "react-redux";
-import { compose } from "recompose";
+import { compose, lifecycle } from "recompose";
 import { User } from "../../../types";
 
 import {
@@ -37,15 +37,34 @@ const enhance = compose<EnhancedProps, Props>(
       addUserToGroup,
       removeUserFromGroup
     }
-  )
+  ),
+  lifecycle<Props & ConnectState & ConnectDispatch, {}>({
+    componentDidMount() {
+      const {
+        user: { uuid },
+        findGroupsForUser
+      } = this.props;
+
+      findGroupsForUser(uuid);
+    },
+    componentWillUpdate(nextProps) {
+      const { user, findGroupsForUser } = this.props;
+
+      if (!user || user.uuid !== nextProps.user.uuid) {
+        findGroupsForUser(nextProps.user.uuid);
+      }
+    }
+  })
 );
 
 const GroupsForUser = ({ groups }: EnhancedProps) => (
   <div>
-    Groups for user
-    {groups.map(g => (
-      <div>{g.name}</div>
-    ))}
+    <h2>Groups for user</h2>
+    <ul>
+      {groups.map(g => (
+        <li key={g.uuid}>{g.name}</li>
+      ))}
+    </ul>
   </div>
 );
 

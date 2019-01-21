@@ -7,7 +7,11 @@ import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import StoryRouter from "storybook-react-router";
 
-import { setupTestServer, TestData } from "../../lib/storybook/PollyDecorator";
+import {
+  setupTestServer,
+  TestData,
+  UserGroupMembership
+} from "../../lib/storybook/PollyDecorator";
 
 import FontAwesomeProvider from "../../startup/FontAwesomeProvider";
 import KeyIsDown from "../../lib/KeyIsDown";
@@ -25,10 +29,30 @@ import { dataList, dataSource } from "../../sections/DataViewer/test";
 import {
   generateTestUser,
   generateTestGroup
-  //generateTestGroup
 } from "../../sections/UserPermissions/test";
 
-const testData: TestData = {
+let groups = Array(5)
+  .fill(1)
+  .map(generateTestGroup);
+let users = Array(30)
+  .fill(1)
+  .map(generateTestUser);
+let userGroupMemberships: Array<UserGroupMembership> = [];
+let userIndex = 0;
+groups.forEach(group => {
+  for (let x = 0; x < 10; x++) {
+    var user = users[userIndex];
+    userGroupMemberships.push({
+      userUuid: user.uuid,
+      groupUuid: group.uuid
+    });
+
+    userIndex++;
+    userIndex %= users.length;
+  }
+});
+
+export const testData: TestData = {
   documentTree: fromSetupSampleData,
   docRefTypes: testDocRefsTypes,
   elements,
@@ -41,14 +65,10 @@ const testData: TestData = {
   trackers: Array(10)
     .fill(null)
     .map(generateGenericTracker),
-  users: Array(20)
-    .fill(null)
-    .map(generateTestUser)
-    .concat(
-      Array(5)
-        .fill(1)
-        .map(generateTestGroup)
-    )
+  usersAndGroups: {
+    users: users.concat(groups),
+    userGroupMemberships
+  }
 };
 import createStore from "../../startup/store";
 

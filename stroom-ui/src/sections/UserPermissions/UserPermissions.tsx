@@ -184,7 +184,7 @@ const UserPermissions = (props: EnhancedProps) => (
       }}
       onSubmit={() => {}}
       validate={({ name, isGroup, uuid }: Values) =>
-        findUsers(LISTING_ID, name, isGroup, uuid)
+        props.findUsers(LISTING_ID, name, isGroup, uuid)
       }
     >
       <Form>

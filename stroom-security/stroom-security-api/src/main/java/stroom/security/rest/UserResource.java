@@ -20,8 +20,8 @@ public interface UserResource {
                        @QueryParam("uuid") String uuid);
 
     @GET
-    @Path("/usersInGroup/{groupName}")
-    Response findUsersInGroup(@PathParam("groupName") String groupUuid);
+    @Path("/usersInGroup/{groupUuid}")
+    Response findUsersInGroup(@PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("/groupsForUser/{userUuid}")

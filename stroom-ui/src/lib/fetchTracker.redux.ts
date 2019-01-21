@@ -98,8 +98,8 @@ export const wrappedGet = (
   const currentState = state.fetch[url];
   let needToFetch = false;
 
-  // console.group('Requesting ', url);
-  // console.log('Current State of URL', { url, currentState });
+  // console.group("Requesting ", url);
+  // console.log("Current State of URL", { url, currentState });
 
   if (!forceGet) {
     switch (currentState) {

@@ -19,10 +19,19 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import UserPermissions from ".";
-import StroomDecorator from "../../lib/storybook/StroomDecorator";
+import StroomDecorator, { testData } from "../../lib/storybook/StroomDecorator";
 
 import "../../styles/main.css";
+import { User } from "src/types";
+import UsersInGroup from "./UsersInGroup";
+import GroupsForUser from "./GroupsForUser";
+
+// Pick a group
+let aUser: User = testData.usersAndGroups.users.filter(u => !u.group).pop()!;
+let aGroup: User = testData.usersAndGroups.users.filter(u => u.group).pop()!;
 
 storiesOf("Sections/User Permissions", module)
   .addDecorator(StroomDecorator)
-  .add("basic", () => <UserPermissions />);
+  .add("User Permissions", () => <UserPermissions />)
+  .add("Groups For User", () => <GroupsForUser user={aUser} />)
+  .add("Users In Group", () => <UsersInGroup group={aGroup} />);
