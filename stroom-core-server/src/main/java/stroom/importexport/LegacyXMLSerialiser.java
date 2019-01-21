@@ -19,7 +19,7 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docstore.EncodingUtil;
+import stroom.util.string.EncodingUtil;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.Entity;

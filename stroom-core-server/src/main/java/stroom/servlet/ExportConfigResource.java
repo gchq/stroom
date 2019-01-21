@@ -22,9 +22,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
-@Api(
-        value = "export - /v1",
-        description = "Export API")
+@Api(value = "export - /v1")
 @Path("/export/v1")
 public class ExportConfigResource {
     private final transient ImportExportService importExportService;

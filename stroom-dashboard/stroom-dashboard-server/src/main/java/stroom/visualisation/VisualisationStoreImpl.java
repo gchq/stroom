@@ -20,6 +20,7 @@ package stroom.visualisation;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -47,15 +48,14 @@ class VisualisationStoreImpl implements VisualisationStore {
     private final VisualisationSerialiser serialiser;
 
     @Inject
-    VisualisationStoreImpl(final Store<VisualisationDoc> store, final SecurityContext securityContext, final Persistence persistence) {
-        this.store = store;
+    VisualisationStoreImpl(final StoreFactory storeFactory,
+                           final SecurityContext securityContext,
+                           final Persistence persistence,
+                           final VisualisationSerialiser serialiser) {
+        this.store = storeFactory.createStore(serialiser, VisualisationDoc.DOCUMENT_TYPE, VisualisationDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new VisualisationSerialiser();
-
-        store.setType(VisualisationDoc.DOCUMENT_TYPE, VisualisationDoc.class);
-        store.setSerialiser(serialiser);
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////

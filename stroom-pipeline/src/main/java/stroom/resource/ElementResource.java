@@ -17,9 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Api(
-        value = "elements - /v1",
-        description = "Stroom Element API")
+@Api(value = "elements - /v1")
 @Path("/elements/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class ElementResource {

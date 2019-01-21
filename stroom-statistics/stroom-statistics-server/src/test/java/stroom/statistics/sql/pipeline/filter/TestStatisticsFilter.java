@@ -22,8 +22,9 @@ import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
-import stroom.docstore.Store;
-import stroom.docstore.memory.MemoryPersistence;
+import stroom.docstore.impl.Serialiser2FactoryImpl;
+import stroom.docstore.impl.StoreFactoryImpl;
+import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
@@ -38,6 +39,7 @@ import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.Statistics;
+import stroom.statistics.sql.entity.StatisticStoreSerialiser;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.entity.StatisticStoreStoreImpl;
 import stroom.util.date.DateUtil;
@@ -451,6 +453,11 @@ class TestStatisticsFilter implements Statistics {
     private StatisticStoreStore getStore() {
         final Persistence persistence = new MemoryPersistence();
         final SecurityContext securityContext = new MockSecurityContext();
-        return new StatisticStoreStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
+
+        return new StatisticStoreStoreImpl(
+                new StoreFactoryImpl(securityContext, persistence),
+                securityContext,
+                persistence,
+                new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }
 }

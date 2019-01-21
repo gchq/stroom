@@ -16,12 +16,13 @@
 
 package stroom.pipeline;
 
+import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.docref.DocRef;
 
 public final class PipelineTestUtil {
-    private static final PipelineSerialiser SERIALISER = new PipelineSerialiser();
+    private static final PipelineSerialiser SERIALISER = new PipelineSerialiser(new Serialiser2FactoryImpl());
 
     private PipelineTestUtil() {
     }

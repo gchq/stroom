@@ -17,16 +17,14 @@
 package stroom.ruleset;
 
 import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import stroom.docref.DocRef;
 import stroom.importexport.DocRefs;
 import stroom.importexport.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -39,12 +37,10 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-@Api(
-        value = "ruleset - /v2",
-        description = "Ruleset API")
+@Api(value = "ruleset - /v2")
 @Path("/ruleset/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class RuleSetResource2 implements HasHealthCheck {
+public class RuleSetResource2 {
     private final RuleSetService ruleSetService;
 
     @Inject
@@ -87,10 +83,5 @@ public class RuleSetResource2 implements HasHealthCheck {
     public DocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = ruleSetService.exportDocument(docRef, true, new ArrayList<>());
         return new DocumentData(docRef, map);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

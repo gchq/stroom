@@ -23,7 +23,6 @@ import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
-import stroom.util.HasHealthCheck;
 
 public class RulesetModule extends AbstractModule {
     @Override
@@ -40,8 +39,5 @@ public class RulesetModule extends AbstractModule {
         EntityTypeBinder.create(binder())
                 .bind(RuleSet.DOCUMENT_TYPE, RuleSetServiceImpl.class);
 
-        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
-        hasHealthCheckBinder.addBinding().to(RuleSetResource.class);
-        hasHealthCheckBinder.addBinding().to(RuleSetResource2.class);
     }
 }

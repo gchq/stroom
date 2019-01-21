@@ -1,37 +1,40 @@
 package stroom.dashboard;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.string.EncodingUtil;
 
+import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
 
-public class DashboardSerialiser extends JsonSerialiser2<DashboardDoc> {
+public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardSerialiser.class);
 
     private static final String XML = "xml";
     private static final String JSON = "json";
 
-    private final ObjectMapper mapper;
+    private final Serialiser2<DashboardDoc> delegate;
+    private final Serialiser2<DashboardConfig> dashboardConfigSerialiser;
 
-    public DashboardSerialiser() {
-        super(DashboardDoc.class);
-        mapper = getMapper(true);
+    @Inject
+    public DashboardSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(DashboardDoc.class);
+        this.dashboardConfigSerialiser = serialiser2Factory.createSerialiser(DashboardConfig.class);
     }
 
     @Override
     public DashboardDoc read(final Map<String, byte[]> data) throws IOException {
-        final DashboardDoc document = super.read(data);
+        final DashboardDoc document = delegate.read(data);
 
         // Deal with old XML format data.
         final String xml = EncodingUtil.asString(data.get(XML));
@@ -39,10 +42,10 @@ public class DashboardSerialiser extends JsonSerialiser2<DashboardDoc> {
             document.setDashboardConfig(getDashboardConfigFromLegacyXML(xml));
         }
 
-        final String json = EncodingUtil.asString(data.get(JSON));
-        if (json != null) {
+        final byte[] jsonData = data.get(JSON);
+        if (jsonData != null) {
             try {
-                final DashboardConfig dashboardConfig = mapper.readValue(new StringReader(json), DashboardConfig.class);
+                final DashboardConfig dashboardConfig = dashboardConfigSerialiser.read(jsonData);
                 document.setDashboardConfig(dashboardConfig);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
@@ -54,12 +57,12 @@ public class DashboardSerialiser extends JsonSerialiser2<DashboardDoc> {
 
     @Override
     public Map<String, byte[]> write(final DashboardDoc document) throws IOException {
-        final Map<String, byte[]> data = super.write(document);
+        final Map<String, byte[]> data = delegate.write(document);
 
         DashboardConfig dashboardConfig = document.getDashboardConfig();
         if (dashboardConfig != null) {
             final StringWriter stringWriter = new StringWriter();
-            mapper.writeValue(stringWriter, dashboardConfig);
+            dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
             data.put(JSON, EncodingUtil.asBytes(stringWriter.toString()));
         }
         return data;
