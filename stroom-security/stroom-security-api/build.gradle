@@ -3,4 +3,5 @@ ext.moduleName = 'stroom.security.api'
 dependencies {
     compile libs.stroomDocRef
     compile libs.javax_inject
+    compile libs.ws_rs_api
 }

@@ -23,9 +23,6 @@ class ScheduledJobFunction {
 
     public void exec(final Task<?> task) {
         try {
-            //TODO: debug logging
-//            LOGGER.debug(message + " " + methodReference.getClazz().getName() + "." + methodReference.getMethod().getName());
-
             consumer.accept(task);
         } catch (final RuntimeException e) {
             LOGGER.error("Error calling {}", scheduledJob.getName(), e);

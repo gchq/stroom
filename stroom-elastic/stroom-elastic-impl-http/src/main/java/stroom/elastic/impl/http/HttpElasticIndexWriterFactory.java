@@ -3,14 +3,12 @@ package stroom.elastic.impl.http;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.elastic.impl.ElasticIndexConfigCache;
-import stroom.elastic.impl.ElasticIndexConfigDoc;
 import stroom.elastic.api.ElasticIndexWriter;
 import stroom.elastic.api.ElasticIndexWriterFactory;
+import stroom.elastic.impl.ElasticIndexConfigCache;
+import stroom.elastic.impl.ElasticIndexConfigDoc;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.security.Security;
-import stroom.security.UserService;
-import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -32,7 +30,7 @@ class HttpElasticIndexWriterFactory implements ElasticIndexWriterFactory {
 
     @Override
     public Optional<ElasticIndexWriter> create(final DocRef elasticConfigRef) {
-        return security.asUserResult(UserTokenUtil.create(UserService.STROOM_SERVICE_USER_NAME, null), () -> {
+        return security.asProcessingUserResult(() -> {
             // Get the index and index fields from the cache.
             final ElasticIndexConfigDoc elasticIndexConfigDoc = elasticIndexCache.get(elasticConfigRef);
             if (elasticIndexConfigDoc == null) {

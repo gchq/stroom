@@ -1,6 +1,18 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
+import org.mockito.stubbing.Answer;
+import stroom.security.UserRefFactory;
+import stroom.security.UserService;
+import stroom.security.shared.UserJooq;
+import stroom.security.shared.UserRef;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MockServiceModule extends AbstractModule {
     @Override
@@ -30,7 +42,6 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.resource.MockResourceModule());
-        install(new stroom.security.MockSecurityModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
         install(new stroom.streamtask.MockStreamTaskModule());
@@ -42,5 +53,35 @@ public class MockServiceModule extends AbstractModule {
 //        install(new stroom.entity.MockEntityModule());
 //        install(new stroom.properties.impl.mock.MockPropertyModule());
 //        install(new stroom.servlet.MockServletModule());
+
+        final UserService mockUserService = mock(UserService.class);
+        when(mockUserService.loadByUuid(any())).then((Answer<UserJooq>) invocation -> {
+            final String uuid = invocation.getArgument(0);
+            final List<UserJooq> list = mockUserService.find(null);
+            for (final UserJooq e : list) {
+                if (e.getUuid() != null && e.getUuid().equals(uuid)) {
+                    return e;
+                }
+            }
+            return null;
+        });
+        when(mockUserService.createUser(any())).then((Answer<UserRef>) invocation -> {
+            final String name = invocation.getArgument(0);
+            final UserJooq user = new UserJooq.Builder()
+                    .uuid(UUID.randomUUID().toString())
+                    .name(name)
+                    .build();
+            return UserRefFactory.create(mockUserService.save(user));
+        });
+        when(mockUserService.createUserGroup(any())).then((Answer<UserRef>) invocation -> {
+            final String name = invocation.getArgument(0);
+            final UserJooq user = new UserJooq.Builder()
+                    .uuid(UUID.randomUUID().toString())
+                    .name(name)
+                    .isGroup(true)
+                    .build();
+            return UserRefFactory.create(mockUserService.save(user));
+        });
+        bind(UserService.class).toInstance(mockUserService);
     }
 }

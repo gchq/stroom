@@ -42,7 +42,8 @@ import {
   ElementPropertiesByElementIdType,
   Dictionary,
   DataSourceType,
-  StreamTaskType
+  StreamTaskType,
+  User
 } from "../../types";
 import { StreamAttributeMapResult } from "../../sections/DataViewer/types";
 import { DocRefTypeList } from "../../components/DocRefTypes/redux";
@@ -61,7 +62,7 @@ Polly.register(FetchAdapter);
 const testConfig: Config = {
   authenticationServiceUrl: "/authService/authentication/v1",
   authorisationServiceUrl: "/api/authorisation/v1",
-  stroomBaseServiceUrl: "/api",
+  stroomBaseServiceUrl: "http://localhost:9001/api",
   authUsersUiUrl:
     "auth/users/because/they/are/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests",
   authTokensUiUrl:
@@ -69,6 +70,11 @@ const testConfig: Config = {
   advertisedUrl: "/",
   appClientId: "stroom-ui"
 };
+
+export interface UserGroupMembership {
+  userUuid: string;
+  groupUuid: string;
+}
 
 export interface TestData {
   docRefTypes: DocRefTypeList;
@@ -87,6 +93,10 @@ export interface TestData {
   trackers: Array<StreamTaskType>;
   dataList: StreamAttributeMapResult;
   dataSource: DataSourceType;
+  usersAndGroups: {
+    users: Array<User>;
+    userGroupMemberships: Array<UserGroupMembership>;
+  };
 }
 
 // The server is created as a singular thing for the whole app
@@ -115,7 +125,48 @@ server.get("/config.json").intercept((req: HttpRequest, res: HttpResponse) => {
   res.json(testConfig);
 });
 
-// Explorer Resource
+// User Resource
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/users/v1`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    const { name, uuid, isGroup } = req.query;
+    let filtered = testCache
+      .data!.usersAndGroups.users.filter(u => !name || u.name.includes(name))
+      .filter(u => !uuid || u.uuid === uuid)
+      .filter(u => !isGroup || Boolean(u.group).toString() === isGroup);
+    res.json(filtered);
+  });
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/users/v1/usersInGroup/:groupUuid`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    let users = testCache
+      .data!.usersAndGroups.userGroupMemberships.filter(
+        ugm => ugm.groupUuid === req.params.groupUuid
+      )
+      .map(ugm => ugm.userUuid)
+      .map(userUuid =>
+        testCache
+          .data!.usersAndGroups.users.filter(user => !user.group)
+          .find(user => user.uuid === userUuid)
+      );
+
+    res.json(users);
+  });
+server
+  .get(`${testConfig.stroomBaseServiceUrl}/users/v1/groupsForUser/:userUuid`)
+  .intercept((req: HttpRequest, res: HttpResponse) => {
+    let users = testCache
+      .data!.usersAndGroups.userGroupMemberships.filter(
+        ugm => ugm.userUuid === req.params.userUuid
+      )
+      .map(ugm => ugm.groupUuid)
+      .map(groupUuid =>
+        testCache
+          .data!.usersAndGroups.users.filter(user => user.group)
+          .find(user => user.uuid === groupUuid)
+      );
+    res.json(users);
+  });
 // // Get Explorer Tree
 server
   .get(`${testConfig.stroomBaseServiceUrl}/explorer/v1/all`)
@@ -427,7 +478,8 @@ export const setupTestServer = (testData: TestData) =>
           dictionaries: { ...testData.dictionaries },
           trackers: [...testData.trackers],
           dataList: { ...testData.dataList },
-          dataSource: { ...testData.dataSource }
+          dataSource: { ...testData.dataSource },
+          usersAndGroups: { ...testData.usersAndGroups }
         };
       }
     }),

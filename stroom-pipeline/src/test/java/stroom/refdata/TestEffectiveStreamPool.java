@@ -23,7 +23,7 @@ import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
 import stroom.data.meta.impl.mock.MockDataMetaService;
-import stroom.security.SecurityImpl;
+import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.cache.CacheManager;

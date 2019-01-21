@@ -1,6 +1,6 @@
 declare module "react-panelgroup" {
   export interface Props {
-    direction: "column";
+    direction: "column" | "row";
     className?: string;
     panelWidths?: any;
     onUpdate?: (panelWidths: any) => void;

@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
-import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeUserAction;
@@ -47,9 +46,6 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
 
         // Provide object info to the logging service.
-        ObjectInfoProviderBinder.create(binder())
-                .bind(User.class, UserObjectInfoProvider.class);
-
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(DocumentPermissionsCache.class);
         clearableBinder.addBinding().to(UserAppPermissionsCache.class);
@@ -70,7 +66,6 @@ public class SecurityModule extends AbstractModule {
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(DocumentPermissionsCache.class);
-        entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
 
         final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
