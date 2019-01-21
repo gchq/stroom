@@ -38,7 +38,7 @@ class SecurityContextImpl implements SecurityContext {
     private static final String INTERNAL = "INTERNAL";
     private static final String SYSTEM = "system";
     private static final String USER = "user";
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
+    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef("User", "0", INTERNAL, false, true);
 
     private final DocumentPermissionsCache documentPermissionsCache;
     private final UserGroupsCache userGroupsCache;

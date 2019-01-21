@@ -19,36 +19,27 @@ package stroom.security;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import stroom.docref.DocRef;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEventBus;
-import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.EntityAction;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-@EntityEventHandler(type = User.ENTITY_TYPE, action = {EntityAction.CLEAR_CACHE})
-public class UserAppPermissionsCache implements EntityEvent.Handler, Clearable {
+// TODO watch for changes somehow, it used to use the generic entity event handler stuff
+public class UserAppPermissionsCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
-    private final Provider<EntityEventBus> eventBusProvider;
     private final LoadingCache<UserRef, UserAppPermissions> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
     UserAppPermissionsCache(final CacheManager cacheManager,
-                            final UserAppPermissionService userAppPermissionService,
-                            final Provider<EntityEventBus> eventBusProvider) {
-        this.eventBusProvider = eventBusProvider;
+                            final UserAppPermissionService userAppPermissionService) {
         final CacheLoader<UserRef, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
@@ -63,26 +54,10 @@ public class UserAppPermissionsCache implements EntityEvent.Handler, Clearable {
 
     void remove(final UserRef userRef) {
         cache.invalidate(userRef);
-        final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, userRef, EntityAction.CLEAR_CACHE);
     }
 
     @Override
     public void clear() {
         CacheUtil.clear(cache);
-    }
-
-    @Override
-    public void onChange(final EntityEvent event) {
-        final DocRef docRef = event.getDocRef();
-        if (docRef != null) {
-            if (docRef instanceof UserRef) {
-                UserRef userRef = (UserRef) docRef;
-                cache.invalidate(userRef);
-            } else {
-                final UserRef userRef = new UserRef(docRef.getType(), docRef.getUuid(), docRef.getName(), false, false);
-                cache.invalidate(userRef);
-            }
-        }
     }
 }

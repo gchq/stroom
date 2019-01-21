@@ -28,6 +28,7 @@ import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -178,7 +179,7 @@ class TestDocumentPermissionsServiceImpl {
     private UserRef createUser(final String name) {
         UserRef userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
+        final UserJooq user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
@@ -186,7 +187,7 @@ class TestDocumentPermissionsServiceImpl {
     private UserRef createUserGroup(final String name) {
         UserRef userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
+        final UserJooq user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
