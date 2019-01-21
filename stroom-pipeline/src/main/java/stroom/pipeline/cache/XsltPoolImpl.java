@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache;
+package stroom.pipeline.cache;
 
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;

@@ -1,6 +1,7 @@
 package stroom.datafeed;
 
 import com.google.inject.AbstractModule;
+import stroom.cache.CacheModule;
 import stroom.data.meta.impl.mock.MockDataMetaModule;
 import stroom.data.store.impl.fs.MockStreamStoreModule;
 import stroom.dictionary.DictionaryModule;
@@ -14,6 +15,7 @@ import stroom.streamtask.statistic.MockMetaDataStatisticModule;
 public class TestBaseModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new CacheModule());
         install(new PipelineScopeModule());
         install(new DataFeedModule());
         install(new MockSecurityContextModule());

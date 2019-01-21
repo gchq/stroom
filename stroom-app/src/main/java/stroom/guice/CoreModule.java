@@ -6,6 +6,7 @@ import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
+import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
@@ -14,7 +15,8 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.cache.CacheModule());
-        install(new stroom.cache.PipelineCacheModule());
+        install(new stroom.cache.CacheHandlerModule());
+        install(new PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
         install(new stroom.dashboard.logging.LoggingModule());
         install(new stroom.datafeed.DataFeedModule());

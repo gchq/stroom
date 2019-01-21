@@ -19,8 +19,8 @@ package stroom.pipeline.parser;
 
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.cache.ParserFactoryPool;
-import stroom.cache.StoredParserFactory;
+import stroom.pipeline.cache.ParserFactoryPool;
+import stroom.pipeline.cache.StoredParserFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;

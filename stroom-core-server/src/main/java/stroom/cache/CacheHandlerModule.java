@@ -27,9 +27,23 @@ import stroom.task.api.job.ScheduledJobsBinder;
 import stroom.util.cache.CacheManager;
 import stroom.util.lifecycle.LifecycleAwareBinder;
 
-public class CacheModule extends AbstractModule {
+public class CacheHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(CacheManager.class).to(CacheManagerImpl.class);
+        bind(StroomCacheManager.class).to(StroomCacheManagerImpl.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(CacheClearAction.class, CacheClearHandler.class)
+                .bind(CacheClearClusterTask.class, CacheClearClusterHandler.class)
+                .bind(FetchCacheNodeRowAction.class, FetchCacheNodeRowHandler.class)
+                .bind(FetchCacheNodeRowClusterTask.class, FetchCacheNodeRowClusterHandler.class)
+                .bind(FetchCacheRowAction.class, FetchCacheRowHandler.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(StroomCacheManagerImpl.class);
+
+        ScheduledJobsBinder.create(binder()).bind(CacheJobs.class);
+
+        LifecycleAwareBinder.create(binder()).bind(CacheManagerImpl.class);
     }
 }

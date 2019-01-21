@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache;
+package stroom.pipeline.cache;
 
 import org.xml.sax.ErrorHandler;
 import stroom.pipeline.errorhandler.ProcessException;

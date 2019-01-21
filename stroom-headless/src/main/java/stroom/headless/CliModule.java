@@ -22,6 +22,7 @@ import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.LocalNodeProvider;
 import stroom.node.shared.Node;
+import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -41,7 +42,7 @@ public class CliModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.mock.MockActivityModule());
 //        install(new stroom.cache.CacheModule());
-        install(new stroom.cache.PipelineCacheModule());
+        install(new PipelineCacheModule());
 //        install(new ClusterModule());
         install(new stroom.dictionary.DictionaryModule());
 //        install(new stroom.dictionary.DictionaryHandlerModule());

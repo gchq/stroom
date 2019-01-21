@@ -54,15 +54,6 @@ public interface JobManager {
     Boolean setNodeEnabled(Node node, boolean enabled);
 
     /**
-     * AKA start on load. The cluster maybe enabled but it will do nothing
-     * unless it is started.
-     *
-     * @return True if the cluster is enabled.
-     * @throws RuntimeException Could be thrown.
-     */
-    Boolean isClusterRunning();
-
-    /**
      * Set all jobs to be enabled across the cluster.
      *
      * @return True if successful.

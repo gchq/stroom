@@ -18,8 +18,8 @@
 package stroom.xml.converter;
 
 import stroom.cache.MockSchemaPool;
-import stroom.cache.SchemaLoaderImpl;
-import stroom.cache.SchemaPool;
+import stroom.pipeline.cache.SchemaLoaderImpl;
+import stroom.pipeline.cache.SchemaPool;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.docstore.memory.MemoryPersistence;
@@ -27,19 +27,13 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
-import stroom.docref.DocRef;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.SecurityContext;
-import stroom.util.io.StreamUtil;
-import stroom.util.test.FileSystemTestUtil;
 import stroom.xml.converter.ds3.DS3ParserFactory;
 import stroom.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.XmlSchemaStore;
 import stroom.xmlschema.XmlSchemaStoreImpl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XmlSchemaDoc;
-
-import java.nio.file.Path;
 
 public class SchemaFilterFactory {
     private final SecurityContext securityContext = new MockSecurityContext();

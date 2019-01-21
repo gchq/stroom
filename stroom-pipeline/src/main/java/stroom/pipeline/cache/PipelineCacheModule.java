@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache;
+package stroom.pipeline.cache;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;

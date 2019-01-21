@@ -16,6 +16,10 @@
 
 package stroom.cache;
 
+import stroom.pipeline.cache.SchemaKey;
+import stroom.pipeline.cache.SchemaLoaderImpl;
+import stroom.pipeline.cache.SchemaPool;
+import stroom.pipeline.cache.StoredSchema;
 import stroom.pool.PoolItem;
 import stroom.pool.PoolKey;
 

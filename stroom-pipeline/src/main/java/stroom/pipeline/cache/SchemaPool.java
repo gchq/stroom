@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.cache;
+package stroom.pipeline.cache;
 
-import stroom.pipeline.LocationFactory;
-import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pool.Pool;
-import stroom.pool.PoolItem;
 
-import java.util.List;
-
-public interface XsltPool extends Pool<XsltDoc, StoredXsltExecutable> {
-    PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(
-            XsltDoc k, ErrorReceiver errorReceiver, LocationFactory locationFactory,
-            List<PipelineReference> pipelineReferences, boolean usePool);
+public interface SchemaPool extends Pool<SchemaKey, StoredSchema> {
 }

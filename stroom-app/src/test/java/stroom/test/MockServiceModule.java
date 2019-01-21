@@ -1,13 +1,15 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
+import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 
 public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.data.meta.impl.mock.MockDataMetaModule());
-        install(new stroom.cache.PipelineCacheModule());
+        install(new stroom.cache.CacheModule());
+        install(new PipelineCacheModule());
         install(new stroom.feed.MockFeedModule());
         install(new stroom.dictionary.MockDictionaryModule());
         install(new stroom.docstore.memory.MemoryPersistenceModule());
