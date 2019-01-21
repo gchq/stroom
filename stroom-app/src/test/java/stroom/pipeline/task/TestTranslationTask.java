@@ -22,7 +22,7 @@ import stroom.data.meta.api.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamProcessorTaskExecutor;
+import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTest;
 import stroom.test.ComparisonHelper;

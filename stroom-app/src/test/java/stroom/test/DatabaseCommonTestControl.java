@@ -27,7 +27,7 @@ import stroom.node.NodeCreator;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
-import stroom.streamtask.StreamTaskCreator;
+import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

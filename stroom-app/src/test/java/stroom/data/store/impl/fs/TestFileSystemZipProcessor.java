@@ -27,7 +27,7 @@ import stroom.feed.FeedDocCache;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamTargetStroomStreamHandler;
+import stroom.processor.impl.db.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;

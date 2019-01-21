@@ -1,10 +1,14 @@
 ext.moduleName = 'stroom.processor.api'
 
 dependencies {
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-processor:stroom-processor-shared')
-    compile project(':stroom-util-shared')
+    // Stroom modules
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-processor:stroom-processor-shared')
+    implementation project(':stroom-util-shared')
 
-    compile libs.jackson_annotations
-    compile libs.javax_inject
+    // 3rd party libs
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
 }

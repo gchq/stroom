@@ -9,6 +9,7 @@ import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.processor.impl.db.ProcessorDbModule;
+import stroom.processor.impl.db.StreamTaskModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -84,7 +85,7 @@ public class CoreModule extends AbstractModule {
         install(new DataMetaDbModule());
         install(new stroom.data.store.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
-        install(new stroom.streamtask.StreamTaskModule());
+        install(new StreamTaskModule());
         install(new stroom.task.TaskModule());
         install(new stroom.task.cluster.ClusterTaskModule());
         install(new stroom.ui.config.server.UiConfigModule());

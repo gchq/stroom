@@ -21,13 +21,13 @@ import stroom.processor.impl.db.tables.ProcessorFilter;
 import stroom.processor.shared.task.CreateProcessorAction;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamtask.StreamProcessorFilterService;
+import stroom.processor.StreamProcessorFilterService;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
 
-class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, ProcessorFilter> {
+public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, ProcessorFilter> {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final Security security;
 

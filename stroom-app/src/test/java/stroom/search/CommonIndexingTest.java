@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.index.IndexShardManager;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.pipeline.task.PipelineStreamProcessor;
-import stroom.streamtask.StreamProcessorTaskExecutor;
+import stroom.processor.StreamProcessorTaskExecutor;
 import stroom.test.CommonTranslationTest;
 import stroom.test.StoreCreationTool;
 import stroom.test.StroomPipelineTestFileUtil;

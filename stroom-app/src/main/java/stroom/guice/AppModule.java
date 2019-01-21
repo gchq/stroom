@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
+import stroom.processor.impl.db.statistic.MetaDataStatisticModule;
 import stroom.startup.Config;
 
 public class AppModule extends AbstractModule {
@@ -28,7 +29,7 @@ public class AppModule extends AbstractModule {
 //        install(new stroom.node.NodeTestConfigModule());
         install(new stroom.security.SecurityContextModule());
         install(new stroom.statistics.internal.InternalStatisticsModule());
-        install(new stroom.streamtask.statistic.MetaDataStatisticModule());
+        install(new MetaDataStatisticModule());
 
         install(new stroom.statistics.sql.search.SQLStatisticSearchModule());
         install(new stroom.dispatch.DispatchModule());

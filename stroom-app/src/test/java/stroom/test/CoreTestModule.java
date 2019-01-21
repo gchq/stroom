@@ -7,6 +7,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.YamlUtil;
 import stroom.guice.CoreModule;
+import stroom.processor.impl.db.statistic.MockMetaDataStatisticModule;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class CoreTestModule extends AbstractModule {
         install(new stroom.node.NodeTestConfigModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
-        install(new stroom.streamtask.statistic.MockMetaDataStatisticModule());
+        install(new MockMetaDataStatisticModule());
         install(new stroom.test.DatabaseTestControlModule());
     }
 }

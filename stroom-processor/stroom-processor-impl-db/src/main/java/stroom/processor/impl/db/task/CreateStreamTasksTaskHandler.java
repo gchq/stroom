@@ -16,6 +16,8 @@
 
 package stroom.processor.impl.db.task;
 
+import stroom.processor.impl.db.CreateStreamTasksTask;
+import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
@@ -24,7 +26,7 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 
 
-class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
+public class CreateStreamTasksTaskHandler extends AbstractTaskHandler<CreateStreamTasksTask, VoidResult> {
     private final StreamTaskCreator streamTaskCreator;
     private final TaskContext taskContext;
     private final Security security;

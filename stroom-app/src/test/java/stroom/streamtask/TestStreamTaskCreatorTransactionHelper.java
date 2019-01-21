@@ -29,6 +29,8 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.persist.ConnectionProvider;
+import stroom.processor.impl.db.StreamTaskCreatorImpl;
+import stroom.processor.impl.db.StreamTaskDeleteExecutor;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

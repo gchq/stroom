@@ -23,6 +23,8 @@ import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
+import stroom.processor.StreamProcessorFilterService;
+import stroom.processor.StreamProcessorService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;

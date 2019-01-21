@@ -22,6 +22,7 @@ import stroom.data.meta.api.MetaDataSource;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.process.ProcessorConfig;
+import stroom.processor.impl.db.StreamTaskCreator;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;

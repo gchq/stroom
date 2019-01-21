@@ -26,6 +26,7 @@ import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
+import stroom.processor.impl.db.StreamTargetStroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.shared.StreamTypeNames;

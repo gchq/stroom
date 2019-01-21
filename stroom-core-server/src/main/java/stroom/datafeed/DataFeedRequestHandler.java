@@ -30,7 +30,7 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
-import stroom.streamtask.statistic.MetaDataStatistic;
+import stroom.processor.statistic.MetaDataStatistic;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;

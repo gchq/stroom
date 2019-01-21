@@ -1,6 +1,7 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
+import stroom.processor.impl.db.MockStreamTaskModule;
 
 public class MockServiceModule extends AbstractModule {
     @Override
@@ -32,7 +33,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.security.MockSecurityModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
-        install(new stroom.streamtask.MockStreamTaskModule());
+        install(new MockStreamTaskModule());
         install(new stroom.task.MockTaskModule());
         install(new stroom.test.MockTestControlModule());
         install(new stroom.volume.MockVolumeModule());

@@ -75,7 +75,7 @@ public class CliModule extends AbstractModule {
 //        install(new DataStoreHandlerModule());
         install(new DocStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
-//        install(new stroom.streamtask.StreamTaskModule());
+//        install(new stroom.processor.impl.db.StreamTaskModule());
 //        install(new stroom.task.TaskModule());
 //        install(new stroom.task.cluster.ClusterTaskModule());
 //        install(new stroom.volume.VolumeModule());

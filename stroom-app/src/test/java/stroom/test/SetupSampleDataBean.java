@@ -44,7 +44,7 @@ import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamtask.StreamProcessorFilterService;
+import stroom.processor.StreamProcessorFilterService;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;

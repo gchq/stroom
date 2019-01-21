@@ -10,7 +10,7 @@ import stroom.feed.FeedModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.streamtask.statistic.MockMetaDataStatisticModule;
+import stroom.processor.impl.db.statistic.MockMetaDataStatisticModule;
 
 public class TestBaseModule extends AbstractModule {
     @Override

@@ -23,6 +23,8 @@ import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.entity.shared.Period;
 import stroom.node.shared.Node;
+import stroom.processor.impl.db.StreamTaskCreator;
+import stroom.processor.impl.db.StreamTaskService;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.processor.shared.Processor;

@@ -21,6 +21,7 @@ package stroom.streamtask;
 import org.junit.jupiter.api.Test;
 import stroom.entity.StroomEntityManager;
 import stroom.node.NodeCache;
+import stroom.processor.impl.db.StreamTaskService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 

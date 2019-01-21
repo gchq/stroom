@@ -23,11 +23,19 @@ import stroom.data.meta.api.Data;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.node.NodeCache;
-import stroom.security.Security;
+import stroom.processor.StreamProcessorFilterService;
+import stroom.processor.StreamProcessorService;
+import stroom.processor.StreamProcessorTaskExecutor;
+import stroom.processor.impl.db.CachedStreamProcessorFilterService;
+import stroom.processor.impl.db.CachedStreamProcessorService;
+import stroom.processor.impl.db.StreamProcessorTask;
+import stroom.processor.impl.db.StreamTaskHelper;
+import stroom.processor.impl.db.TaskType;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTask;
-import stroom.streamtask.shared.TaskStatus;
+import stroom.processor.shared.TaskStatus;
+import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
@@ -40,7 +48,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
+public class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
     private static final Set<String> FETCH_SET = new HashSet<>(
             Arrays.asList(Processor.ENTITY_TYPE, ProcessorFilter.ENTITY_TYPE));
@@ -90,7 +98,8 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     Processor destStreamProcessor = null;
                     ProcessorFilter destStreamProcessorFilter = null;
                     if (streamTask.getStreamProcessorFilter() != null) {
-                        destStreamProcessorFilter = streamProcessorFilterService.load(streamTask.getStreamProcessorFilter(),
+                        destStreamProcessorFilter = streamProcessorFilterService.load(
+                                streamTask.getStreamProcessorFilter(),
                                 FETCH_SET);
                         if (destStreamProcessorFilter != null) {
                             destStreamProcessor = streamProcessorService

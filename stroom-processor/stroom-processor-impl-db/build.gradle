@@ -1,19 +1,31 @@
 ext.moduleName = 'stroom.processor.impl.db'
 
 dependencies {
-    compile project(':stroom-config:stroom-config-common')
-    compile project(':stroom-core-server')
-    compile project(':stroom-entity-shared')
-    compile project(':stroom-processor:stroom-processor-api')
-    compile project(':stroom-processor:stroom-processor-impl-db-gen')
-    compile project(':stroom-processor:stroom-processor-shared')
-    compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-docstore:stroom-docstore-api')
-    compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-util-shared')
+    // Stroom modules
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-server')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-processor:stroom-processor-api')
+    implementation project(':stroom-processor:stroom-processor-impl-db-gen')
+    implementation project(':stroom-processor:stroom-processor-shared')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
+    // Stroom external bintray libs
     implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
 
+    // 3rd party libs
     implementation libs.flyway_core
     implementation libs.guice4
     implementation libs.hikari
@@ -21,8 +33,8 @@ dependencies {
     implementation libs.jooq
     implementation libs.slf4j_api
 
-    runtimeOnly libs.mysql_connector_java
+    testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
 
-    testCompile libs.assertj_core
-    testCompile libs.junit_jupiter_api
+    runtimeOnly libs.mysql_connector_java
 }

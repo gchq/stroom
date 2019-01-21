@@ -51,7 +51,6 @@ public interface StreamStore {
      * Open a new stream (i.e. new file) based on some meta data
      * </p>
      *
-     * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
     StreamTarget openExistingStreamTarget(Data stream) throws StreamException;
@@ -112,7 +111,7 @@ public interface StreamStore {
     /**
      * Gets the meta data that was stored in the stream store against the supplied stream id.
      *
-     * @param streamId
+     * @param stream
      * @return
      */
     AttributeMap getStoredMeta(Data stream);

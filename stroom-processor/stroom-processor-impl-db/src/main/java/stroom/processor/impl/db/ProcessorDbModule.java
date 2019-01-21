@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.process.ProcessorConfig;
+import stroom.processor.impl.db.dao.ProcessorDao;
+import stroom.processor.impl.db.dao.ProcessorDaoImpl;
 import stroom.util.db.DbUtil;
 
 import javax.inject.Provider;
@@ -24,6 +26,8 @@ public class ProcessorDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ProcessorServiceImpl.class).asEagerSingleton();
+
+        bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
 
 //        bind(FeedService.class).to(FeedServiceImpl.class);
 
