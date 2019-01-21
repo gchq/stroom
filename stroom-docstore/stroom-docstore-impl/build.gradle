@@ -10,14 +10,17 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
+    // stroom libs
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+
+    // 3rd party libs
     implementation libs.guice4
     implementation libs.guice_assistedinject
     implementation libs.jackson_annotations
     implementation libs.jackson_databind
     implementation libs.javax_inject
     implementation libs.slf4j_api
-    implementation libs.stroomDocRef
-    implementation libs.stroomQueryApi
     
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

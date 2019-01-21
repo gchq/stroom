@@ -7,7 +7,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
 import stroom.docstore.Persistence;
-import stroom.docstore.fs.FSPersistence;
+import stroom.docstore.impl.fs.FSPersistence;
 import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.handler.ProxyRequestHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
