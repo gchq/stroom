@@ -19,10 +19,10 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.shared.FindJobNodeCriteria;
-import stroom.jobsystem.shared.Job;
-import stroom.jobsystem.shared.JobNode;
-import stroom.jobsystem.shared.JobNode.JobType;
+import stroom.job.shared.FindJobNodeCriteria;
+import stroom.job.shared.Job;
+import stroom.job.shared.JobNode;
+import stroom.job.shared.JobNode.JobType;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.util.scheduler.FrequencyScheduler;

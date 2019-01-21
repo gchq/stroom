@@ -16,8 +16,8 @@
 
 package stroom.jobsystem;
 
-import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.jobsystem.shared.ScheduledTimes;
+import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.ScheduledTimes;
 
 interface ScheduleService {
     /**

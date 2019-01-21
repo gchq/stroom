@@ -16,8 +16,8 @@
 
 package stroom.jobsystem;
 
-import stroom.jobsystem.shared.JobNode;
-import stroom.jobsystem.shared.JobNodeInfo;
+import stroom.job.shared.JobNode;
+import stroom.job.shared.JobNodeInfo;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.SharedMap;
 

@@ -19,8 +19,8 @@ package stroom.jobsystem;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.jobsystem.shared.Job;
-import stroom.jobsystem.shared.JobNode;
+import stroom.job.shared.Job;
+import stroom.job.shared.JobNode;
 import stroom.node.NodeCache;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;

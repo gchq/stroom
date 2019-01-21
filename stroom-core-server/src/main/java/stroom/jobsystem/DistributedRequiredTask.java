@@ -16,7 +16,7 @@
 
 package stroom.jobsystem;
 
-import stroom.jobsystem.shared.JobNode;
+import stroom.job.shared.JobNode;
 
 import java.io.Serializable;
 

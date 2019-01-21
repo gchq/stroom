@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.shared;
+package stroom.job.shared;
 
-import stroom.docref.SharedObject;
+import stroom.task.shared.Action;
+import stroom.entity.shared.ResultList;
 
-public class ScheduledTimes implements SharedObject {
-    private static final long serialVersionUID = 3064047113379759479L;
-    private String lastExecutedTime;
-    private String nextScheduledTime;
+public class FetchJobDataAction extends Action<ResultList<JobNodeRow>> {
+    private static final long serialVersionUID = -6808045615241590297L;
 
-    public ScheduledTimes() {
+    private Job job;
+
+    public FetchJobDataAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ScheduledTimes(final String lastExecutedTime, final String nextScheduledTime) {
-        this.lastExecutedTime = lastExecutedTime;
-        this.nextScheduledTime = nextScheduledTime;
+    @Override
+    public String getTaskName() {
+        return "Fetch job data";
     }
 
-    public String getLastExecutedTime() {
-        return lastExecutedTime;
+    public Job getJob() {
+        return job;
     }
 
-    public String getNextScheduledTime() {
-        return nextScheduledTime;
+    public void setJob(Job job) {
+        this.job = job;
     }
+
 }

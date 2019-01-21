@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.HqlBuilder;
-import stroom.jobsystem.shared.ClusterLock;
+import stroom.job.shared.ClusterLock;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

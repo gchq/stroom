@@ -14,31 +14,37 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.shared;
+package stroom.job.shared;
 
-import stroom.jobsystem.shared.JobNode.JobType;
+import stroom.util.shared.Expander;
 import stroom.docref.SharedObject;
+import stroom.util.shared.TreeRow;
 
-public class TaskType implements SharedObject {
-    private static final long serialVersionUID = -520024408007948736L;
+public class RootRow implements SharedObject, TreeRow {
+    private static final long serialVersionUID = -2511849708703770119L;
 
-    private JobType jobType;
-    private String schedule;
+    private Expander expander;
 
-    public TaskType() {
+    public RootRow() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public TaskType(final JobType jobType, final String schedule) {
-        this.jobType = jobType;
-        this.schedule = schedule;
+    public RootRow(final Expander expander) {
+        this.expander = expander;
     }
 
-    public JobType getJobType() {
-        return jobType;
+    @Override
+    public Expander getExpander() {
+        return expander;
     }
 
-    public String getSchedule() {
-        return schedule;
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return !(obj == null || !(obj instanceof RootRow));
     }
 }

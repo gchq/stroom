@@ -17,11 +17,11 @@
 
 package stroom.jobsystem;
 
-import stroom.jobsystem.shared.FindJobCriteria;
-import stroom.jobsystem.shared.FindJobNodeCriteria;
-import stroom.jobsystem.shared.Job;
-import stroom.jobsystem.shared.JobManager;
-import stroom.jobsystem.shared.JobNode;
+import stroom.job.shared.FindJobCriteria;
+import stroom.job.shared.FindJobNodeCriteria;
+import stroom.job.shared.Job;
+import stroom.job.shared.JobManager;
+import stroom.job.shared.JobNode;
 import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.shared.Node;
 

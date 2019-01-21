@@ -22,7 +22,7 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import stroom.jobsystem.shared.JobNode.JobType;
+import stroom.job.shared.JobNode.JobType;
 
 public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
     private String button = null;

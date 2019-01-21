@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.shared;
+package stroom.job.shared;
 
-import stroom.task.shared.Action;
-import stroom.entity.shared.ResultList;
+import stroom.entity.shared.EntityRow;
+import stroom.util.shared.Expander;
+import stroom.util.shared.TreeRow;
 
-public class FetchJobDataAction extends Action<ResultList<JobNodeRow>> {
-    private static final long serialVersionUID = -6808045615241590297L;
+public class JobRow extends EntityRow<Job> implements TreeRow {
+    private static final long serialVersionUID = -2511849708703770119L;
 
-    private Job job;
+    private Expander expander;
 
-    public FetchJobDataAction() {
+    public JobRow() {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public JobRow(final Expander expander, final Job job) {
+        super(job);
+        this.expander = expander;
+    }
+
     @Override
-    public String getTaskName() {
-        return "Fetch job data";
+    public Expander getExpander() {
+        return expander;
     }
-
-    public Job getJob() {
-        return job;
-    }
-
-    public void setJob(Job job) {
-        this.job = job;
-    }
-
 }

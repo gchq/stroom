@@ -19,8 +19,8 @@ package stroom.jobsystem;
 
 import stroom.entity.FindService;
 import stroom.entity.NamedEntityService;
-import stroom.jobsystem.shared.FindJobCriteria;
-import stroom.jobsystem.shared.Job;
+import stroom.job.shared.FindJobCriteria;
+import stroom.job.shared.Job;
 
 public interface JobService extends NamedEntityService<Job>, FindService<Job, FindJobCriteria> {
     void startup();

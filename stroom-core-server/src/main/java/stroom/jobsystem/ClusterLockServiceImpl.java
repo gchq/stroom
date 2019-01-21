@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
-import stroom.jobsystem.shared.ClusterLock;
+import stroom.job.shared.ClusterLock;
 import stroom.node.NodeCache;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.api.TaskManager;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.shared;
+package stroom.job.shared;
 
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.SQLNameConstants;

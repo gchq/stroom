@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.shared;
+package stroom.job.shared;
 
 import stroom.task.shared.Action;
-import stroom.jobsystem.shared.JobNode.JobType;
+import stroom.job.shared.JobNode.JobType;
 
 public class GetScheduledTimesAction extends Action<ScheduledTimes> {
     private static final long serialVersionUID = -5419140463010782005L;

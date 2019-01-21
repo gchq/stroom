@@ -16,8 +16,8 @@
 
 package stroom.jobsystem;
 
-import stroom.jobsystem.shared.GetScheduledTimesAction;
-import stroom.jobsystem.shared.ScheduledTimes;
+import stroom.job.shared.GetScheduledTimesAction;
+import stroom.job.shared.ScheduledTimes;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 

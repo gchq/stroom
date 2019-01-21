@@ -16,8 +16,8 @@
 
 package stroom.jobsystem;
 
-import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.jobsystem.shared.ScheduledTimes;
+import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.ScheduledTimes;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;

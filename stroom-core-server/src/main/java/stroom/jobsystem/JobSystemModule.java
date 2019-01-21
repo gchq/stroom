@@ -22,11 +22,11 @@ import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.job.api.ScheduledJobsModule;
-import stroom.jobsystem.shared.FetchJobDataAction;
-import stroom.jobsystem.shared.GetScheduledTimesAction;
-import stroom.jobsystem.shared.Job;
-import stroom.jobsystem.shared.JobManager;
-import stroom.jobsystem.shared.JobNode;
+import stroom.job.shared.FetchJobDataAction;
+import stroom.job.shared.GetScheduledTimesAction;
+import stroom.job.shared.Job;
+import stroom.job.shared.JobManager;
+import stroom.job.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
 
 public class JobSystemModule extends AbstractModule {

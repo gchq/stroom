@@ -17,8 +17,8 @@
 package stroom.jobsystem;
 
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
-import stroom.jobsystem.shared.JobNode;
-import stroom.jobsystem.shared.JobNodeInfo;
+import stroom.job.shared.JobNode;
+import stroom.job.shared.JobNodeInfo;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.scheduler.Scheduler;

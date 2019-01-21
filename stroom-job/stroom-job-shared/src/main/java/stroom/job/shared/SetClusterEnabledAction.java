@@ -14,28 +14,33 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.shared;
+package stroom.job.shared;
 
-import stroom.entity.shared.EntityRow;
-import stroom.util.shared.Expander;
-import stroom.util.shared.TreeRow;
+import stroom.task.shared.Action;
+import stroom.util.shared.SharedBoolean;
 
-public class JobRow extends EntityRow<Job> implements TreeRow {
-    private static final long serialVersionUID = -2511849708703770119L;
+public class SetClusterEnabledAction extends Action<SharedBoolean> {
+    private static final long serialVersionUID = -6228856208209223590L;
 
-    private Expander expander;
+    private boolean enabled;
 
-    public JobRow() {
-        // Default constructor necessary for GWT serialisation.
+    public SetClusterEnabledAction(boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public JobRow(final Expander expander, final Job job) {
-        super(job);
-        this.expander = expander;
+    public SetClusterEnabledAction() {
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override
-    public Expander getExpander() {
-        return expander;
+    public String getTaskName() {
+        return "Cluster Enabled";
     }
 }

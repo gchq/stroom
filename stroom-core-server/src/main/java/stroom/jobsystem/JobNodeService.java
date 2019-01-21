@@ -19,8 +19,8 @@ package stroom.jobsystem;
 
 import stroom.entity.BaseEntityService;
 import stroom.entity.FindService;
-import stroom.jobsystem.shared.FindJobNodeCriteria;
-import stroom.jobsystem.shared.JobNode;
+import stroom.job.shared.FindJobNodeCriteria;
+import stroom.job.shared.JobNode;
 
 public interface JobNodeService extends BaseEntityService<JobNode>, FindService<JobNode, FindJobNodeCriteria> {
     void startup();
