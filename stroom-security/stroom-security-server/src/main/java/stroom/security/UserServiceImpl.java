@@ -16,10 +16,6 @@
 
 package stroom.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.entity.QueryAppender;
-import stroom.entity.StroomEntityManager;
 import stroom.security.dao.UserDao;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
@@ -28,15 +24,12 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.Transient;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Singleton
 class UserServiceImpl implements UserService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
-
     private final Security security;
 
     private final AuthenticationConfig securityConfig;
@@ -49,10 +42,6 @@ class UserServiceImpl implements UserService {
         this.security = security;
         this.securityConfig = securityConfig;
         this.userDao = userDao;
-    }
-
-    private QueryAppender<User, FindUserCriteria> createQueryAppender(final StroomEntityManager entityManager) {
-        return new QueryAppender<>(entityManager);
     }
 
     @Override
@@ -72,11 +61,8 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> find(final FindUserCriteria criteria) {
-        return userDao.find(criteria.getGroup(), criteria.getName().getString())
-                .stream()
-                .map(this::fromJooq)
-                .collect(Collectors.toList());
+    public List<UserJooq> find(final FindUserCriteria criteria) {
+        return userDao.find(criteria.getGroup(), criteria.getName().getString());
     }
 
     @Override
@@ -108,29 +94,18 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User loadByUuid(final String uuid) {
-        return Optional.of(userDao.getByUuid(uuid))
-                .map(this::fromJooq)
-                .orElse(null);
+    public UserJooq loadByUuid(final String uuid) {
+        return userDao.getByUuid(uuid);
     }
 
     @Override
-    public User save(User user) {
+    public UserJooq save(UserJooq user) {
         // TODO
         return null;
     }
 
-    private User fromJooq(final UserJooq userJooq) {
-        final User user = new User();
-        user.setId(userJooq.getId());
-        user.setUuid(userJooq.getUuid());
-        user.setName(userJooq.getName());
-        user.setGroup(userJooq.isGroup());
-        return user;
-    }
-
     @Override
-    public Boolean delete(User user) {
+    public Boolean delete(UserJooq user) {
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
                 () -> userDao.deleteUser(user.getUuid()));
     }
@@ -149,8 +124,6 @@ class UserServiceImpl implements UserService {
         });
     }
 
-
-    @Transient
     @Override
     public String getNamePattern() {
         return securityConfig.getUserNamePattern();

@@ -67,6 +67,7 @@ import stroom.script.ScriptServlet;
 import stroom.security.AuthorisationResource;
 import stroom.security.SecurityFilter;
 import stroom.security.SessionResource;
+import stroom.security.impl.UserResourceImpl;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servlet.CacheControlFilter;
 import stroom.servlet.DashboardServlet;
@@ -295,6 +296,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, UserResourceImpl.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, XsltResource.class);

@@ -25,10 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.UserAppPermissions;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -106,7 +106,7 @@ class TestAppPermissionServiceImpl {
         for (final String permission : permissions) {
             try {
                 userAppPermissionService.addPermission(user, permission);
-            } catch (final PersistenceException e) {
+            } catch (final Exception e) {
                 LOGGER.info(e.getMessage());
             }
         }
@@ -174,7 +174,7 @@ class TestAppPermissionServiceImpl {
     private UserRef createUser(final String name) {
         final UserRef userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
+        final UserJooq user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
@@ -182,7 +182,7 @@ class TestAppPermissionServiceImpl {
     private UserRef createUserGroup(final String name) {
         final UserRef userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
+        final UserJooq user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }

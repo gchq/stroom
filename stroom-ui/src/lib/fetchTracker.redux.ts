@@ -98,8 +98,8 @@ export const wrappedGet = (
   const currentState = state.fetch[url];
   let needToFetch = false;
 
-  // console.group('Requesting ', url);
-  // console.log('Current State of URL', { url, currentState });
+  // console.group("Requesting ", url);
+  // console.log("Current State of URL", { url, currentState });
 
   if (!forceGet) {
     switch (currentState) {
@@ -237,6 +237,21 @@ export const wrappedPut = (
 ) => {
   wrappedFetchWithBody(dispatch, state, url, successCallback, {
     method: "put",
+    ...options
+  });
+};
+
+export const wrappedDelete = (
+  dispatch: Dispatch,
+  state: GlobalStoreState,
+  url: string,
+  successCallback: (x: any) => void,
+  options?: {
+    [s: string]: any;
+  }
+) => {
+  wrappedFetchWithBody(dispatch, state, url, successCallback, {
+    method: "delete",
     ...options
   });
 };

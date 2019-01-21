@@ -1,43 +1,7 @@
 ext.moduleName = 'stroom.security.impl.mock'
 
 dependencies {
-//    implementation project(':stroom-entity-shared')
-//    implementation project(':stroom-core-shared')
-//    implementation project(':stroom-core-server')
     implementation project(':stroom-security:stroom-security-api')
-//    implementation project(':stroom-security:stroom-security-shared')
-//    implementation project(':stroom-util')
-//    implementation project(':stroom-util-shared')
-//    implementation project(':stroom-explorer:stroom-explorer-api')
-//
-//    implementation libs.stroomAuthApi
-//    implementation libs.stroomDocRef
-//    implementation libs.eventLogging
-//    implementation libs.commons_lang
-//    implementation libs.guava
-//    implementation libs.hibernate_jpa_api
-//    implementation libs.jackson_annotations
-//    implementation libs.javax_inject
-//    implementation libs.javax_servlet_api
-//    implementation libs.slf4j_api
-//    implementation libs.jose4j
-//    implementation libs.ws_rs_api
-//    implementation libs.swagger_annotations
-//    implementation libs.ws_rs_api
+    
     implementation libs.guice4
-//
-//    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
-//    testImplementation project(':stroom-test-common')
-//
-//    testImplementation libs.junit_jupiter_api
-//
-//    // The following logging libs are needed when running junits outside dropwizard
-//    testRuntimeOnly libs.javax_activation
-//    testRuntimeOnly libs.jaxb_runtime
-//    testRuntimeOnly libs.jcl_over_slf4j
-//    testRuntimeOnly libs.jul_to_slf4j
-//    testRuntimeOnly libs.junit_jupiter_engine
-//    testRuntimeOnly libs.log4j_over_slf4j
-//    testRuntimeOnly libs.logback_classic
-//    testRuntimeOnly libs.logback_core
 }

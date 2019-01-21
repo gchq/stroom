@@ -7,7 +7,8 @@ import { actionCreators as appSearchActionCreators } from "../AppSearchBar/redux
 import {
   wrappedGet,
   wrappedPut,
-  wrappedPost
+  wrappedPost,
+  wrappedDelete
 } from "../../lib/fetchTracker.redux";
 import { findByUuids, findItem } from "../../lib/treeUtils";
 import { DocRefType, DocRefTree, DocRefInfoType } from "../../types";
@@ -242,7 +243,7 @@ export const deleteDocuments = (uuids: Array<string>) => (
   const state = getState();
   const url = `${state.config.values.stroomBaseServiceUrl}/explorer/v1/delete`;
   const docRefs = findByUuids(state.folderExplorer.documentTree, uuids);
-  wrappedPost(
+  wrappedDelete(
     dispatch,
     state,
     url,
@@ -253,7 +254,6 @@ export const deleteDocuments = (uuids: Array<string>) => (
           dispatch(docRefsDeleted(docRefs, updatedTree))
         ),
     {
-      method: "delete",
       body: JSON.stringify(docRefs.map(stripDocRef))
     }
   );

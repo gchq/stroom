@@ -16,8 +16,6 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.security.Security;
-import stroom.security.UserService;
-import stroom.security.util.UserTokenUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -104,7 +102,7 @@ public class ElasticIndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Index has not been set");
             }
 
-            security.asUser(UserTokenUtil.create(UserService.STROOM_SERVICE_USER_NAME, null), () -> {
+            security.asProcessingUser(() -> {
                 // Get the index and index fields from the cache.
                 indexConfig = elasticIndexCache.get(indexRef);
                 if (indexConfig == null) {

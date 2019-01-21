@@ -19,11 +19,13 @@ package stroom.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
+import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.PersistenceException;
+import java.util.List;
 
 @Singleton
 class AuthenticationServiceImpl implements AuthenticationService {
@@ -68,7 +70,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 // We need to elevate the user because no one is currently logged in.
                 try {
                     userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
-                } catch (final PersistenceException e) {
+                } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
                         LOGGER.warn(msg);
@@ -93,10 +95,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
             userRef = userService.getUserByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
-                if (UserService.ADMIN_USER_NAME.equals(username)) {
-                    userRef = createOrRefreshUser(UserService.ADMIN_USER_NAME);
-                } else if (UserService.STROOM_SERVICE_USER_NAME.equals(username)) {
-                    userRef = createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
+                if (List.of(UserJooq.ADMIN_USER_NAME, UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN).contains(username)) {
+                    userRef = createOrRefreshUser(UserJooq.ADMIN_USER_NAME);
                 }
             }
 
