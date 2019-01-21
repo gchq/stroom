@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Disabled;
 
 //@SelectClasses({
 //        TestDashboardStoreImpl.class,
-//        stroom.docstore.db.TestDBPersistence.class,
+//        stroom.docstore.impl.db.TestDBPersistence.class,
 //        stroom.explorer.TestExplorerTree.class,
 //        stroom.importexport.TestImportExportDashboards.class,
 //        stroom.importexport.TestImportExportSerializer.class,

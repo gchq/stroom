@@ -20,14 +20,11 @@ import com.google.inject.AbstractModule;
 import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
 import stroom.ruleset.shared.SaveDataRetentionPolicyAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.task.api.job.ScheduledJobsBinder;
 
 public class PolicyModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PolicyService.class).to(PolicyServiceImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(PolicyJobs.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FetchDataRetentionPolicyAction.class, stroom.policy.FetchDataRetentionPolicyHandler.class)

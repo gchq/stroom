@@ -18,14 +18,11 @@ package stroom.node;
 
 import com.google.inject.AbstractModule;
 import stroom.node.shared.DBTableService;
-import stroom.task.api.job.ScheduledJobsBinder;
 
 public class NodeModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DBTableService.class).to(DBTableServiceImpl.class);
         bind(RemoteStatusService.class).to(RemoteStatusServiceImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(NodeJobs.class);
     }
 }

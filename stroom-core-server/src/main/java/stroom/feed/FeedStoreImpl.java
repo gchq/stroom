@@ -20,6 +20,7 @@ package stroom.feed;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.FeedDoc;
@@ -49,19 +50,16 @@ public class FeedStoreImpl implements FeedStore {
     private final FeedSerialiser serialiser;
 
     @Inject
-    public FeedStoreImpl(final Store<FeedDoc> store,
+    public FeedStoreImpl(final StoreFactory storeFactory,
                          final SecurityContext securityContext,
                          final Persistence persistence,
-                         final FeedNameValidator feedNameValidator) {
-        this.store = store;
+                         final FeedNameValidator feedNameValidator,
+                         final FeedSerialiser serialiser) {
+        this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
         this.feedNameValidator = feedNameValidator;
-
-        serialiser = new FeedSerialiser();
-
-        store.setType(FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
-        store.setSerialiser(serialiser);
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////

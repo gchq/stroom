@@ -21,8 +21,9 @@ import stroom.cache.MockSchemaPool;
 import stroom.pipeline.cache.SchemaLoaderImpl;
 import stroom.pipeline.cache.SchemaPool;
 import stroom.docstore.Persistence;
-import stroom.docstore.Store;
-import stroom.docstore.memory.MemoryPersistence;
+import stroom.docstore.impl.Serialiser2FactoryImpl;
+import stroom.docstore.impl.StoreFactoryImpl;
+import stroom.docstore.impl.memory.MemoryPersistence;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
@@ -31,6 +32,7 @@ import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.SecurityContext;
 import stroom.xml.converter.ds3.DS3ParserFactory;
 import stroom.xmlschema.XmlSchemaCache;
+import stroom.xmlschema.XmlSchemaSerialiser;
 import stroom.xmlschema.XmlSchemaStore;
 import stroom.xmlschema.XmlSchemaStoreImpl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -38,7 +40,9 @@ import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 public class SchemaFilterFactory {
     private final SecurityContext securityContext = new MockSecurityContext();
     private final Persistence persistence = new MemoryPersistence();
-    private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
+    private final XmlSchemaSerialiser serialiser = new XmlSchemaSerialiser(new Serialiser2FactoryImpl());
+    private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(
+            new StoreFactoryImpl(securityContext, persistence), securityContext, persistence, serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 

@@ -17,15 +17,12 @@
 package stroom.resource;
 
 import com.google.inject.AbstractModule;
-import stroom.task.api.job.ScheduledJobsBinder;
 import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class ResourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ResourceStore.class).to(ResourceStoreImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(ResourceJobs.class);
 
         LifecycleAwareBinder.create(binder()).bind(ResourceStoreImpl.class);
     }

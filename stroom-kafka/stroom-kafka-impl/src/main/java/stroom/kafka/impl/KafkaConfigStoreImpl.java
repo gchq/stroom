@@ -18,8 +18,10 @@
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.Serialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -37,16 +39,13 @@ import java.util.Set;
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
     private final Store<KafkaConfigDoc> store;
-    private final Serialiser2<KafkaConfigDoc> serialiser;
+    private final DocumentSerialiser2<KafkaConfigDoc> serialiser;
 
     @Inject
-    KafkaConfigStoreImpl(final Store<KafkaConfigDoc> store) {
-        this.store = store;
-
-        serialiser = new KafkaConfigSerialiser();
-
-        store.setType(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigDoc.class);
-        store.setSerialiser(serialiser);
+    KafkaConfigStoreImpl(final StoreFactory storeFactory,
+                         final Serialiser2Factory serialiser2Factory) {
+        serialiser = serialiser2Factory.createSerialiser(KafkaConfigDoc.class);
+        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////

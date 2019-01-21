@@ -23,8 +23,6 @@ import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.entity.shared.Clearable;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.task.api.job.ScheduledJobsBinder;
-import stroom.util.cache.CacheManager;
 import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class CacheHandlerModule extends AbstractModule {
@@ -41,8 +39,6 @@ public class CacheHandlerModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(StroomCacheManagerImpl.class);
-
-        ScheduledJobsBinder.create(binder()).bind(CacheJobs.class);
 
         LifecycleAwareBinder.create(binder()).bind(CacheManagerImpl.class);
     }

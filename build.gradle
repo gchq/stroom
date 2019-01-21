@@ -103,7 +103,7 @@ ext.versions = [
         lucene            : '5.5.3',
         rxjava            : '2.1.10',
         slf4j             : '1.7.25', //in line with dropwizard 1.3.3
-        swagger           : '1.5.16',
+        swagger           : '1.5.21',
         unirest           : '1.4.9',
         zzDUMMYzz         : 'makes sorting easier'
 ]
@@ -339,20 +339,21 @@ subprojects {
 
     test {
         useJUnitPlatform()
-    }
 
-    // This means the reports from our integration tests won't over-write the reports from our unit tests.
-    tasks.withType(Test) {
         reports.html.destination = file("${reporting.baseDir}/${name}")
         
-        afterSuite { desc, result ->
-            if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+        afterSuite { descriptor, result ->
+            //println "Executed suite ${descriptor.name} ${descriptor.className} with result: ${result.resultType}"
+
+            if (descriptor != null 
+                    && descriptor.className != null 
+                    && result.resultType.toString() == "FAILURE") {
 
                 //test class failed so add its project info and test report file to a global list for
                 //processing at the end of the build
-                def reportFileName = "${reports.junitXml.destination}/TEST-${desc.className}.xml"
+                def reportFileName = "${reports.junitXml.destination}/TEST-${descriptor.className}.xml"
                 def reportFile = file(reportFileName)
-                def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+                def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
                 failedTestReportFiles.add(pair)
             }
         }

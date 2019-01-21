@@ -24,16 +24,16 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.lifecycle.LifecycleTask;
 import stroom.task.api.TaskManager;
 import stroom.task.api.job.ScheduledJob;
-import stroom.task.api.job.ScheduledJobs;
+import stroom.task.api.job.TaskConsumer;
 import stroom.task.shared.Task;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,36 +43,22 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private final ConcurrentHashMap<ScheduledJob, AtomicBoolean> runningMapOfScheduledJobs = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<ScheduledJob, Scheduler> schedulerMapOfScheduledJobs = new ConcurrentHashMap<>();
 
-    private final Set<ScheduledJobs> scheduledJobsSet;
+    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final TaskManager taskManager;
 
-    private volatile Set<ScheduledJob> scheduledJobs;
-
     @Inject
-    ScheduledTaskExecutorImpl(final Set<ScheduledJobs> scheduledJobsSet,
+    ScheduledTaskExecutorImpl(final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                               final JobNodeTrackerCache jobNodeTrackerCache,
                               final TaskManager taskManager) {
-        this.scheduledJobsSet = scheduledJobsSet;
+        this.scheduledJobsMap = scheduledJobsMap;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.taskManager = taskManager;
     }
 
     @Override
     public void execute() {
-        if (scheduledJobs == null) {
-            synchronized (this) {
-                if(scheduledJobs == null) {
-                    final Set<ScheduledJob> set = new HashSet<>();
-                    for (final ScheduledJobs scheduledJobs : scheduledJobsSet) {
-                        set.addAll(scheduledJobs.getJobs());
-                    }
-                    scheduledJobs = set;
-                }
-            }
-        }
-
-        for (final ScheduledJob scheduledJob : scheduledJobs) {
+        for (final ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
             try {
                 final ScheduledJobFunction function = create(scheduledJob);
                 if (function != null) {
@@ -120,10 +106,12 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                     //TODO log trace
 //                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
                     if (jobNodeTracker != null) {
-                        function = new JobNodeTrackedFunction(scheduledJob, running,
+                        final Provider<TaskConsumer> consumerProvider = scheduledJobsMap.get(scheduledJob);
+                        function = new JobNodeTrackedFunction(scheduledJob, consumerProvider.get(), running,
                                 jobNodeTracker);
                     } else {
-                        function = new ScheduledJobFunction(scheduledJob, running);
+                        final Provider<TaskConsumer> consumerProvider = scheduledJobsMap.get(scheduledJob);
+                        function = new ScheduledJobFunction(scheduledJob, consumerProvider.get(), running);
                     }
                 } else {
                     LOGGER.trace("Not returning runnable for method: {} - {} - {}", scheduledJob.getName(), enabled, scheduler);
@@ -174,9 +162,10 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         private final JobNodeTracker jobNodeTracker;
 
         JobNodeTrackedFunction(final ScheduledJob scheduledJob,
+                               final TaskConsumer consumer,
                                final AtomicBoolean running,
                                final JobNodeTracker jobNodeTracker) {
-            super(scheduledJob, running);
+            super(scheduledJob, consumer, running);
             this.jobNodeTracker = jobNodeTracker;
         }
 

@@ -16,9 +16,7 @@ import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 
-@Api(
-        value = "authorisation - /v1",
-        description = "Stroom Authorisation API")
+@Api(value = "authorisation - /v1")
 @Path("/authorisation/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthorisationResource {

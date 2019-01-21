@@ -17,14 +17,12 @@
 package stroom.index;
 
 import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheck.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
-import stroom.index.shared.IndexDoc;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -34,7 +32,6 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.IndexDataSourceFieldUtil;
 import stroom.search.LuceneSearchResponseCreatorManager;
 import stroom.security.Security;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -43,12 +40,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(
-        value = "stroom-index query - /v2",
-        description = "Stroom Index Query API")
+@Api(value = "stroom-index query - /v2")
 @Path("/stroom-index/v2")
 @Produces(MediaType.APPLICATION_JSON)
-public class StroomIndexQueryResource implements HasHealthCheck {
+public class StroomIndexQueryResource {
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
     private final Security security;
@@ -108,10 +103,5 @@ public class StroomIndexQueryResource implements HasHealthCheck {
     public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
-    }
-
-    @Override
-    public Result getHealth() {
-        return HealthCheck.Result.healthy();
     }
 }

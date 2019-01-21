@@ -19,9 +19,9 @@ package stroom.pipeline;
 
 import stroom.db.migration.doc.pipeline.OldPipelineEntity;
 import stroom.docref.DocRef;
-import stroom.docstore.EncodingUtil;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -32,6 +32,7 @@ import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
+import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -50,17 +51,14 @@ public class PipelineStoreImpl implements PipelineStore {
     private final PipelineSerialiser serialiser;
 
     @Inject
-    public PipelineStoreImpl(final Store<PipelineDoc> store,
+    public PipelineStoreImpl(final StoreFactory storeFactory,
                              final SecurityContext securityContext,
-                             final Persistence persistence) {
-        this.store = store;
+                             final Persistence persistence,
+                             final PipelineSerialiser serialiser) {
+        this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new PipelineSerialiser();
-
-        store.setType(PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
-        store.setSerialiser(serialiser);
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////

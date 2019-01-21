@@ -58,7 +58,9 @@ dependencies {
     implementation project(':stroom-dashboard:stroom-dashboard-server')
     implementation project(':stroom-data-meta:stroom-data-meta-impl-db')
     implementation project(':stroom-data-store:stroom-data-store-impl-fs')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-elastic:stroom-elastic-impl')
     implementation project(':stroom-elastic:stroom-elastic-impl-http')
     implementation project(':stroom-entity-shared')
@@ -76,6 +78,8 @@ dependencies {
     implementation project(':stroom-ruleset:stroom-ruleset-shared')
     implementation project(':stroom-security:stroom-security-server')
     implementation project(':stroom-statistics:stroom-statistics-server')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -114,18 +118,6 @@ dependencies {
     runtimeOnly libs.javax_el
     runtimeOnly libs.javax_el_api
 
-
-
-
-
-
-
-
-
-
-
-
-
     testImplementation project(':stroom-app')
     // Use default DB config.
     testImplementation project(':stroom-activity:stroom-activity-api')
@@ -133,8 +125,6 @@ dependencies {
     testImplementation project(':stroom-config:stroom-config-app')
     testImplementation project(':stroom-core-server')
     testImplementation project(':stroom-core-shared')
-    testImplementation project(':stroom-docstore:stroom-docstore-impl')
-    testImplementation project(':stroom-docstore:stroom-docstore-shared')
     testImplementation project(':stroom-dashboard:stroom-dashboard-server')
     testImplementation project(':stroom-dashboard:stroom-dashboard-shared')
     testImplementation project(':stroom-data-meta:stroom-data-meta-api')
@@ -143,6 +133,10 @@ dependencies {
     testImplementation project(':stroom-data-store:stroom-data-store-api')
     testImplementation project(':stroom-data-store:stroom-data-store-impl-fs')
     testImplementation project(':stroom-data-store:stroom-data-store-impl-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-api')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-docstore:stroom-docstore-shared')
     testImplementation project(':stroom-elastic:stroom-elastic-impl')
     testImplementation project(':stroom-entity-shared')
     testImplementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -164,7 +158,6 @@ dependencies {
     testImplementation project(':stroom-statistics:stroom-statistics-server')
     testImplementation project(':stroom-statistics:stroom-statistics-shared')
     testImplementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-task:stroom-task-shared')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-util-shared')
@@ -176,9 +169,6 @@ dependencies {
 //    testImplementation project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.stroomQueryApi
-    testImplementation libs.stroomQueryCommon
-
     testImplementation libs.commons_io
     testImplementation libs.guice4
     testImplementation libs.hibernate_core
@@ -188,32 +178,26 @@ dependencies {
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
+    testImplementation libs.stroomQueryApi
+    testImplementation libs.stroomQueryCommon
     testImplementation libs.vavr
 
+    testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.javax_el
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.junit_jupiter_engine
+
     //the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j
     testRuntimeOnly libs.jul_to_slf4j
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.javax_activation
 
-    testImplementation libs.mockito_core
     testImplementation libs.assertj_core
-    testImplementation libs.dropwizard_testing
     testImplementation libs.dropwizard_client
-
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.javax_activation
-    testRuntimeOnly libs.jaxb_runtime
-    testRuntimeOnly libs.jcl_over_slf4j
-    testRuntimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.log4j_over_slf4j
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testImplementation libs.dropwizard_testing
+    testImplementation libs.mockito_core
 }
 
 run {
@@ -226,6 +210,13 @@ runShadow {
 //    //Ensure we have the latest kafka plugin jar available for runtime
 //    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', '../local.yml'
+}
+
+test {
+    // Tests in stroom-app are quite slow so output progress for each test to keep travis alive
+    afterTest { desc, result -> 
+        println "Executed test ${desc.className} ${desc.name} with result: ${result.resultType}"
+    }
 }
 
 // The gwtCompile tasks create files in stroom-app/src/main/resources/ui
@@ -241,6 +232,7 @@ clean {
     delete stroomDockerBuildDir
     delete proxyDockerBuildDir
 }
+
 
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
@@ -306,10 +298,17 @@ task copyFilesForProxyDockerBuild() {
 swagger {
     apiSource {
         outputFormats = ['json', 'yaml']
+        // TODO need to decide if we want all of our resource classes added to swagger and if so,
+        // they need annotating with @Api/@ApiOperation/etc.
         locations = [
                 'stroom.statistics.sql.search.SqlStatisticsQueryResource',
                 'stroom.index.StroomIndexQueryResource',
-                'stroom.security.AuthorisationResource']
+                //'stroom.dictionary.DictionaryResource',
+                //'stroom.dictionary.DictionaryResource2',
+                //'stroom.ruleset.RuleSetResource',
+                //'stroom.ruleset.RuleSetResource2',
+                'stroom.security.AuthorisationResource'
+        ]
         schemes = ['http', 'https']
         host = 'localhost:8080'
         basePath = '/api'
@@ -391,7 +390,9 @@ task buildDistribution(type: Zip) {
 }
 
 
-tasks.generateSwaggerDocumentation.dependsOn jar
+// Ensure all projects have built their jars so swagger can see them
+tasks.generateSwaggerDocumentation.dependsOn rootProject.getTasksByName('jar', true)
+
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
 tasks.build.dependsOn copyFilesForProxyDockerBuild

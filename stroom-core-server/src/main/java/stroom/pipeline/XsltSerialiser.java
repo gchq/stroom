@@ -1,29 +1,35 @@
 package stroom.pipeline;
 
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+import stroom.docstore.DocumentSerialiser2;
+import stroom.docstore.Serialiser2;
+import stroom.docstore.Serialiser2Factory;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.string.EncodingUtil;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
 
-public class XsltSerialiser extends JsonSerialiser2<XsltDoc> {
+public class XsltSerialiser implements DocumentSerialiser2<XsltDoc> {
     private static final String XSL = "xsl";
 
-    public XsltSerialiser() {
-        super(XsltDoc.class);
+    private final Serialiser2<XsltDoc> delegate;
+
+    @Inject
+    XsltSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(XsltDoc.class);
     }
 
     @Override
     public XsltDoc read(final Map<String, byte[]> data) throws IOException {
-        final XsltDoc document = super.read(data);
+        final XsltDoc document = delegate.read(data);
         document.setData(EncodingUtil.asString(data.get(XSL)));
         return document;
     }
 
     @Override
     public Map<String, byte[]> write(final XsltDoc document) throws IOException {
-        final Map<String, byte[]> data = super.write(document);
+        final Map<String, byte[]> data = delegate.write(document);
         if (document.getData() != null) {
             data.put(XSL, EncodingUtil.asBytes(document.getData()));
         }

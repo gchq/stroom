@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
+import stroom.docstore.impl.DocStoreModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.cache.PipelineCacheModule;
@@ -23,7 +24,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.datasource.DatasourceModule());
         install(new stroom.dictionary.DictionaryModule());
         install(new stroom.dictionary.DictionaryHandlerModule());
-        install(new stroom.docstore.db.DBPersistenceModule());
+        install(new DocStoreModule());
+        install(new stroom.docstore.impl.db.DBPersistenceModule());
         install(new stroom.document.DocumentModule());
         install(new stroom.elastic.impl.ElasticModule());
         install(new stroom.elastic.impl.http.HttpElasticModule());
