@@ -1,20 +1,17 @@
 package stroom.task.api.job;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provider;
 import com.google.inject.multibindings.MapBinder;
-import stroom.task.shared.Task;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 
-public abstract class ScheduledJobsModule extends AbstractModule {
-    private MapBinder<ScheduledJob, Consumer> mapBinder;
+public class ScheduledJobsModule extends AbstractModule {
+    private MapBinder<ScheduledJob, TaskConsumer> mapBinder;
 
     @Override
     protected void configure() {
         super.configure();
-        mapBinder = MapBinder.newMapBinder(binder(), ScheduledJob.class, Consumer.class);
+        mapBinder = MapBinder.newMapBinder(binder(), ScheduledJob.class, TaskConsumer.class);
     }
 
     public Builder bindJob() {
@@ -22,7 +19,7 @@ public abstract class ScheduledJobsModule extends AbstractModule {
     }
 
     public static final class Builder {
-        private final MapBinder<ScheduledJob, Consumer> mapBinder;
+        private final MapBinder<ScheduledJob, TaskConsumer> mapBinder;
 
         // Mandatory
         private String name;
@@ -34,7 +31,7 @@ public abstract class ScheduledJobsModule extends AbstractModule {
         private boolean managed = true;
         private String description = "";
 
-        Builder(final MapBinder<ScheduledJob, Consumer> mapBinder) {
+        Builder(final MapBinder<ScheduledJob, TaskConsumer> mapBinder) {
             this.mapBinder = mapBinder;
         }
 
@@ -68,11 +65,11 @@ public abstract class ScheduledJobsModule extends AbstractModule {
             return this;
         }
 
-        public void to(final Provider<Consumer<Task>> provider) {
+        public <T extends TaskConsumer> void to(final Class<T> consumerClass) {
             Objects.requireNonNull(schedule);
             Objects.requireNonNull(name);
             final ScheduledJob scheduledJob = new ScheduledJob(schedule, name, description, enabled, advanced, managed);
-            mapBinder.addBinding(scheduledJob).toProvider(provider);
+            mapBinder.addBinding(scheduledJob).to(consumerClass);
         }
     }
 }

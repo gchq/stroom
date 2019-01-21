@@ -1,27 +1,25 @@
 package stroom;
 
 import com.google.inject.AbstractModule;
-import stroom.cache.CacheJobs;
+import stroom.cache.CacheJobsModule;
 import stroom.data.store.DataStoreJobModule;
 import stroom.jobsystem.JobSystemJobsModule;
-import stroom.node.NodeJobs;
+import stroom.node.NodeJobsModule;
 import stroom.policy.PolicyJobsModule;
-import stroom.resource.ResourceJobs;
-import stroom.streamtask.StreamTaskJobs;
-import stroom.task.api.job.ScheduledJobsBinder;
-import stroom.volume.VolumeJobs;
+import stroom.resource.ResourceJobsModule;
+import stroom.streamtask.StreamTaskJobsModule;
+import stroom.volume.VolumeJobsModule;
 
 public class StroomCoreServerJobsModule extends AbstractModule {
     @Override
     protected void configure() {
-        ScheduledJobsBinder.create(binder())
-                .bind(DataStoreJobModule.class)
-                .bind(StreamTaskJobs.class)
-                .bind(JobSystemJobsModule.class)
-                .bind(PolicyJobsModule.class)
-                .bind(CacheJobs.class)
-                .bind(ResourceJobs.class)
-                .bind(VolumeJobs.class)
-                .bind(NodeJobs.class);
+        install(new DataStoreJobModule());
+        install(new PolicyJobsModule());
+        install(new StreamTaskJobsModule());
+        install(new JobSystemJobsModule());
+        install(new CacheJobsModule());
+        install(new ResourceJobsModule());
+        install(new VolumeJobsModule());
+        install(new NodeJobsModule());
     }
 }

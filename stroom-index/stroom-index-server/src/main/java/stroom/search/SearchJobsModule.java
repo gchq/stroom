@@ -1,20 +1,13 @@
 package stroom.search;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class SearchJobsModule extends ScheduledJobsModule {
-    private final Provider<LuceneSearchResponseCreatorManager> luceneSearchResponseCreatorManagerProvider;
-
-    @Inject
-    SearchJobsModule(final Provider<LuceneSearchResponseCreatorManager> luceneSearchResponseCreatorManagerProvider) {
-        this.luceneSearchResponseCreatorManagerProvider = luceneSearchResponseCreatorManagerProvider;
-    }
-
+public class SearchJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -22,6 +15,13 @@ class SearchJobsModule extends ScheduledJobsModule {
                 .name("Evict expired elements")
                 .managed(false)
                 .schedule(PERIODIC, "10s")
-                .to(() -> (task) -> luceneSearchResponseCreatorManagerProvider.get().evictExpiredElements());
+                .to(EvictExpiredElements.class);
+    }
+
+    private static class EvictExpiredElements extends TaskConsumer {
+        @Inject
+        EvictExpiredElements(final LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager) {
+            super(task -> luceneSearchResponseCreatorManager.evictExpiredElements());
+        }
     }
 }

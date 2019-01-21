@@ -1,20 +1,13 @@
 package stroom.data.meta.impl.db;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class DataMetaDbJobsModule extends ScheduledJobsModule {
-    private final Provider<MetaValueService> metaValueServiceProvider;
-
-    @Inject
-    DataMetaDbJobsModule(final Provider<MetaValueService> metaValueServiceProvider) {
-        this.metaValueServiceProvider = metaValueServiceProvider;
-    }
-
+public class DataMetaDbJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -22,11 +15,25 @@ class DataMetaDbJobsModule extends ScheduledJobsModule {
                 .name("Flush DataMetaDb")
                 .managed(false)
                 .schedule(PERIODIC, "10s")
-                .to(() -> (task) -> metaValueServiceProvider.get().flush());
+                .to(FlushDataMetaDb.class);
         bindJob()
                 .name("Data Attributes Retention")
                 .description("Delete attributes older than system property stroom.meta.deleteAge")
                 .schedule(PERIODIC, "1d")
-                .to(() -> (task) -> metaValueServiceProvider.get().deleteOldValues());
+                .to(DataAttributesRetention.class);
+    }
+
+    private static class FlushDataMetaDb extends TaskConsumer {
+        @Inject
+        FlushDataMetaDb(final MetaValueService metaValueService) {
+            super(task -> metaValueService.flush());
+        }
+    }
+
+    private static class DataAttributesRetention extends TaskConsumer {
+        @Inject
+        DataAttributesRetention(final MetaValueService metaValueService) {
+            super(task -> metaValueService.deleteOldValues());
+        }
     }
 }

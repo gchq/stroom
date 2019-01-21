@@ -1,20 +1,13 @@
 package stroom.cache;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class CacheJobsModule extends ScheduledJobsModule {
-    private final Provider<StroomCacheManager> stroomCacheManagerProvider;
-
-    @Inject
-    CacheJobsModule(final Provider<StroomCacheManager> stroomCacheManagerProvider) {
-        this.stroomCacheManagerProvider = stroomCacheManagerProvider;
-    }
-
+public class CacheJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -23,6 +16,13 @@ class CacheJobsModule extends ScheduledJobsModule {
                 .description("Evicts expired cache entries")
                 .managed(false)
                 .schedule(PERIODIC, "1m")
-                .to(() -> (task) -> stroomCacheManagerProvider.get().evictExpiredElements());
+                .to(EvictExpiredElements.class);
+    }
+
+    private static class EvictExpiredElements extends TaskConsumer {
+        @Inject
+        EvictExpiredElements(final StroomCacheManager stroomCacheManager) {
+            super(task -> stroomCacheManager.evictExpiredElements());
+        }
     }
 }

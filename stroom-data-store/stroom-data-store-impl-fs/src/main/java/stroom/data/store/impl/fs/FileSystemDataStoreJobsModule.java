@@ -1,23 +1,13 @@
 package stroom.data.store.impl.fs;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 
-class FileSystemDataStoreJobsManager extends ScheduledJobsModule {
-    private final Provider<FileSystemCleanExecutor> fileSystemCleanExecutorProvider;
-    private final Provider<StreamDeleteExecutor> streamDeleteExecutorProvider;
-
-    @Inject
-    FileSystemDataStoreJobsManager(final Provider<FileSystemCleanExecutor> fileSystemCleanExecutorProvider,
-                                   final Provider<StreamDeleteExecutor> streamDeleteExecutorProvider) {
-        this.fileSystemCleanExecutorProvider = fileSystemCleanExecutorProvider;
-        this.streamDeleteExecutorProvider = streamDeleteExecutorProvider;
-    }
-
+public class FileSystemDataStoreJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -27,12 +17,26 @@ class FileSystemDataStoreJobsManager extends ScheduledJobsModule {
                         "longer indexed (maybe the retention period has past or they have been deleted)")
                 .schedule(CRON, "0 0 *")
                 .advanced(false)
-                .to(() -> (task) -> fileSystemCleanExecutorProvider.get().exec(task));
+                .to(FileSystemClean.class);
         bindJob()
                 .name("Stream Delete")
                 .description("Physically delete streams that have been logically deleted " +
                         "based on age of delete (stroom.data.store.deletePurgeAge)")
                 .schedule(CRON, "0 0 *")
-                .to(() -> (task) -> streamDeleteExecutorProvider.get().exec());
+                .to(StreamDelete.class);
+    }
+
+    private static class FileSystemClean extends TaskConsumer {
+        @Inject
+        FileSystemClean(final FileSystemCleanExecutor fileSystemCleanExecutor) {
+            super(fileSystemCleanExecutor::exec);
+        }
+    }
+
+    private static class StreamDelete extends TaskConsumer {
+        @Inject
+        StreamDelete(final StreamDeleteExecutor streamDeleteExecutor) {
+            super(task -> streamDeleteExecutor.exec());
+        }
     }
 }

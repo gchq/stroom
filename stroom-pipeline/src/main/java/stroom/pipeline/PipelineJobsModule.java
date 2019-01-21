@@ -3,24 +3,14 @@ package stroom.pipeline;
 import stroom.benchmark.BenchmarkClusterExecutor;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class PipelineJobsModule extends ScheduledJobsModule {
-    private final Provider<RollingDestinations> rollingDestinationsProvider;
-    private final Provider<BenchmarkClusterExecutor> benchmarkClusterExecutorProvider;
-
-    @Inject
-    PipelineJobsModule(final Provider<RollingDestinations> rollingDestinationsProvider,
-                       final Provider<BenchmarkClusterExecutor> benchmarkClusterExecutorProvider) {
-        this.rollingDestinationsProvider = rollingDestinationsProvider;
-        this.benchmarkClusterExecutorProvider = benchmarkClusterExecutorProvider;
-    }
-
+public class PipelineJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -28,11 +18,25 @@ class PipelineJobsModule extends ScheduledJobsModule {
                 .name("Pipeline Destination Roll")
                 .description("Roll any destinations based on their roll settings")
                 .schedule(PERIODIC, "1m")
-                .to(() -> (task) -> rollingDestinationsProvider.get().roll());
+                .to(PipelineDestinationRoll.class);
         bindJob()
                 .name("XX Benchmark System XX")
                 .description("Job to generate data in the system in order to benchmark it's performance (do not run in live!!)")
                 .schedule(CRON, "* * *")
-                .to(() -> (task) -> benchmarkClusterExecutorProvider.get().exec(task));
+                .to(BenchmarkSystem.class);
+    }
+
+    private static class PipelineDestinationRoll extends TaskConsumer {
+        @Inject
+        PipelineDestinationRoll(final RollingDestinations rollingDestinations) {
+            super(task -> rollingDestinations.roll());
+        }
+    }
+
+    private static class BenchmarkSystem extends TaskConsumer {
+        @Inject
+        BenchmarkSystem(final BenchmarkClusterExecutor benchmarkClusterExecutor) {
+            super(benchmarkClusterExecutor::exec);
+        }
     }
 }

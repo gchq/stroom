@@ -1,20 +1,13 @@
 package stroom.resource;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class ResourceJobsModule extends ScheduledJobsModule {
-    private final Provider<ResourceStoreImpl> resourceStoreProvider;
-
-    @Inject
-    ResourceJobsModule(final Provider<ResourceStoreImpl> resourceStoreProvider) {
-        this.resourceStoreProvider = resourceStoreProvider;
-    }
-
+public class ResourceJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -23,6 +16,13 @@ class ResourceJobsModule extends ScheduledJobsModule {
                 .description("Deletes the resource store temporary file.")
                 .managed(false)
                 .schedule(PERIODIC, "1h")
-                .to(() -> (task) -> resourceStoreProvider.get().execute());
+                .to(DeleteTempFile.class);
+    }
+
+    private static class DeleteTempFile extends TaskConsumer {
+        @Inject
+        DeleteTempFile(final ResourceStoreImpl resourceStore) {
+            super(task -> resourceStore.execute());
+        }
     }
 }

@@ -37,13 +37,14 @@ import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.util.lifecycle.StroomStartup;
 import stroom.task.api.job.ScheduledJob;
-import stroom.task.api.job.ScheduledJobs;
+import stroom.task.api.job.TaskConsumer;
+import stroom.util.lifecycle.StroomStartup;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,7 +65,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private final ClusterLockService clusterLockService;
     private final NodeCache nodeCache;
     private final JobService jobService;
-    private final Set<ScheduledJobs> scheduledJobsSet;
+    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     @Inject
@@ -74,7 +75,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final ClusterLockService clusterLockService,
                        final NodeCache nodeCache,
                        final JobService jobService,
-                       final Set<ScheduledJobs> scheduledJobsSet,
+                       final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                        final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security);
         this.entityManager = entityManager;
@@ -82,7 +83,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         this.clusterLockService = clusterLockService;
         this.nodeCache = nodeCache;
         this.jobService = jobService;
-        this.scheduledJobsSet = scheduledJobsSet;
+        this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
@@ -145,47 +146,46 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
             final Set<String> validJobNames = new HashSet<>();
 
             // TODO: The form below isn't very clear. Split into job mapping and creation.
-            for (final ScheduledJobs scheduledJobs : scheduledJobsSet) {
-               for(ScheduledJob scheduledJob : scheduledJobs.getJobs()){
-                   validJobNames.add(scheduledJob.getName());
+            for (ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
+                validJobNames.add(scheduledJob.getName());
 
-                   Job job = new Job();
-                   job.setName(scheduledJob.getName());
-                   job.setEnabled(scheduledJob.isEnabled());
-                   job = getOrCreateJob(job);
+                Job job = new Job();
+                job.setName(scheduledJob.getName());
+                job.setEnabled(scheduledJob.isEnabled());
+                job = getOrCreateJob(job);
 
-                   final JobNode newJobNode = new JobNode();
-                   newJobNode.setJob(job);
-                   newJobNode.setNode(node);
-                   newJobNode.setEnabled(scheduledJob.isEnabled());
+                final JobNode newJobNode = new JobNode();
+                newJobNode.setJob(job);
+                newJobNode.setNode(node);
+                newJobNode.setEnabled(scheduledJob.isEnabled());
 
-                   switch(scheduledJob.getSchedule().getScheduleType()){
-                       case CRON:
-                           newJobNode.setJobType(JobType.CRON);
-                            break;
-                       case PERIODIC:
-                           newJobNode.setJobType(JobType.FREQUENCY);
-                           break;
-                       default: throw new RuntimeException("Unknown ScheduleType!");
-                   }
-                   newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
+                switch (scheduledJob.getSchedule().getScheduleType()) {
+                    case CRON:
+                        newJobNode.setJobType(JobType.CRON);
+                        break;
+                    case PERIODIC:
+                        newJobNode.setJobType(JobType.FREQUENCY);
+                        break;
+                    default:
+                        throw new RuntimeException("Unknown ScheduleType!");
+                }
+                newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
 
-                   // Add the job node to the DB if it isn't there already.
-                   JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
-                   if (existingJobNode == null) {
-                       LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                               newJobNode.getNode().getName());
-                       save(newJobNode);
-                       existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
+                // Add the job node to the DB if it isn't there already.
+                JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
+                if (existingJobNode == null) {
+                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
+                            newJobNode.getNode().getName());
+                    save(newJobNode);
+                    existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
-                   } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
-                       // If the job type has changed then update the job node.
-                       existingJobNode.setJobType(newJobNode.getJobType());
-                       existingJobNode.setSchedule(newJobNode.getSchedule());
-                       existingJobNode = save(existingJobNode);
-                       existingJobMap.put(scheduledJob.getName(), existingJobNode);
-                   }
-               }
+                } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                    // If the job type has changed then update the job node.
+                    existingJobNode.setJobType(newJobNode.getJobType());
+                    existingJobNode.setSchedule(newJobNode.getSchedule());
+                    existingJobNode = save(existingJobNode);
+                    existingJobMap.put(scheduledJob.getName(), existingJobNode);
+                }
             }
 
             // Distributed Jobs done a different way
@@ -228,7 +228,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
             final Long deleteCount = entityManager.executeNativeUpdate(sql);
             if (deleteCount != null && deleteCount > 0) {
-                LOGGER.info("Removed {} orhan jobs", deleteCount);
+                LOGGER.info("Removed {} orphan jobs", deleteCount);
             }
         });
     }

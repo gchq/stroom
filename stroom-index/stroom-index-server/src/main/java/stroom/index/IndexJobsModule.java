@@ -1,24 +1,14 @@
 package stroom.index;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class IndexJobsModule extends ScheduledJobsModule {
-    private final Provider<IndexShardManager> indexShardManagerProvider;
-    private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
-
-    @Inject
-    IndexJobsModule(final Provider<IndexShardManager> indexShardManagerProvider,
-                    final Provider<IndexShardWriterCache> indexShardWriterCacheProvider) {
-        this.indexShardManagerProvider = indexShardManagerProvider;
-        this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
-    }
-
+public class IndexJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -26,21 +16,50 @@ class IndexJobsModule extends ScheduledJobsModule {
                 .name("Index Shard Delete")
                 .description("Job to delete index shards from disk that have been marked as deleted")
                 .schedule(CRON, "0 0 *")
-                .to(() -> (task) -> indexShardManagerProvider.get().deleteFromDisk());
+                .to(IndexShardDelete.class);
         bindJob()
                 .name("Index Shard Retention")
                 .description("Job to set index shards to have a status of deleted that have past their retention period")
                 .schedule(PERIODIC, "10m")
-                .to(() -> (task) -> indexShardManagerProvider.get().checkRetention());
+                .to(IndexShardRetention.class);
         bindJob()
                 .name("Index Writer Cache Sweep")
                 .description("Job to remove old index shard writers from the cache")
                 .schedule(PERIODIC, "10m")
-                .to(() -> (task) -> indexShardWriterCacheProvider.get().sweep());
+                .to(IndexWriterCacheSweep.class);
         bindJob()
                 .name("Index Writer Flush")
                 .description("Job to flush index shard data to disk")
                 .schedule(PERIODIC, "10m")
-                .to(() -> (task) -> indexShardWriterCacheProvider.get().flushAll());
+                .to(IndexWriterFlush.class);
+    }
+
+
+    private static class IndexShardDelete extends TaskConsumer {
+        @Inject
+        IndexShardDelete(final IndexShardManager indexShardManager) {
+            super(task -> indexShardManager.deleteFromDisk());
+        }
+    }
+
+    private static class IndexShardRetention extends TaskConsumer {
+        @Inject
+        IndexShardRetention(final IndexShardManager indexShardManager) {
+            super(task -> indexShardManager.checkRetention());
+        }
+    }
+
+    private static class IndexWriterCacheSweep extends TaskConsumer {
+        @Inject
+        IndexWriterCacheSweep(final IndexShardWriterCache indexShardWriterCache) {
+            super(task -> indexShardWriterCache.sweep());
+        }
+    }
+
+    private static class IndexWriterFlush extends TaskConsumer {
+        @Inject
+        IndexWriterFlush(final IndexShardWriterCache indexShardWriterCache) {
+            super(task -> indexShardWriterCache.flushAll());
+        }
     }
 }

@@ -1,20 +1,13 @@
 package stroom.statistics.sql.search;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class SQLStatisticSearchJobsModule extends ScheduledJobsModule {
-    private final Provider<SqlStatisticsSearchResponseCreatorManager> sqlStatisticsSearchResponseCreatorManagerProvider;
-
-    @Inject
-    SQLStatisticSearchJobsModule(final Provider<SqlStatisticsSearchResponseCreatorManager> sqlStatisticsSearchResponseCreatorManagerProvider) {
-        this.sqlStatisticsSearchResponseCreatorManagerProvider = sqlStatisticsSearchResponseCreatorManagerProvider;
-    }
-
+public class SQLStatisticSearchJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -22,6 +15,13 @@ class SQLStatisticSearchJobsModule extends ScheduledJobsModule {
                 .name("Evict expired elements")
                 .schedule(PERIODIC, "10s")
                 .managed(false)
-                .to(() -> (task) -> sqlStatisticsSearchResponseCreatorManagerProvider.get().evictExpiredElements());
+                .to(EvictExpiredElements.class);
+    }
+
+    private static class EvictExpiredElements extends TaskConsumer {
+        @Inject
+        EvictExpiredElements(final SqlStatisticsSearchResponseCreatorManager sqlStatisticsSearchResponseCreatorManager) {
+            super(task -> sqlStatisticsSearchResponseCreatorManager.evictExpiredElements());
+        }
     }
 }

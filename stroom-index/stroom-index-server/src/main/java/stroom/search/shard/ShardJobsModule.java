@@ -1,20 +1,13 @@
 package stroom.search.shard;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class ShardJobsModule extends ScheduledJobsModule {
-    private final Provider<IndexShardSearcherCache> indexShardSearcherCacheProvider;
-
-    @Inject
-    ShardJobsModule(final Provider<IndexShardSearcherCache> indexShardSearcherCacheProvider) {
-        this.indexShardSearcherCacheProvider = indexShardSearcherCacheProvider;
-    }
-
+public class ShardJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -22,6 +15,13 @@ class ShardJobsModule extends ScheduledJobsModule {
                 .name("Index Searcher Cache Refresh")
                 .description("Job to refresh index shard searchers in the cache")
                 .schedule(PERIODIC, "10m")
-                .to(() -> (task) -> indexShardSearcherCacheProvider.get().refresh());
+                .to(IndexSearcherCacheRefresh.class);
+    }
+
+    private static class IndexSearcherCacheRefresh extends TaskConsumer {
+        @Inject
+        IndexSearcherCacheRefresh(final IndexShardSearcherCache indexShardSearcherCache) {
+            super(task -> indexShardSearcherCache.refresh());
+        }
     }
 }

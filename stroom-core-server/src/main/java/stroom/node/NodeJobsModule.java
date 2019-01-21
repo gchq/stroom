@@ -1,23 +1,13 @@
 package stroom.node;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 
-class NodeJobsModule extends ScheduledJobsModule {
-    private final Provider<HeapHistogramStatisticsExecutor> heapHistogramStatisticsExecutorProvider;
-    private final Provider<NodeStatusExecutor> nodeStatusExecutorProvider;
-
-    @Inject
-    NodeJobsModule(final Provider<HeapHistogramStatisticsExecutor> heapHistogramStatisticsExecutorProvider,
-                   final Provider<NodeStatusExecutor> nodeStatusExecutorProvider) {
-        this.heapHistogramStatisticsExecutorProvider = heapHistogramStatisticsExecutorProvider;
-        this.nodeStatusExecutorProvider = nodeStatusExecutorProvider;
-    }
-
+public class NodeJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -28,12 +18,26 @@ class NodeJobsModule extends ScheduledJobsModule {
                         "consequences!")
                 .schedule(CRON, "0 * *")
                 .enabled(false)
-                .to(() -> (task) -> heapHistogramStatisticsExecutorProvider.get().exec());
+                .to(JavaHeapHistogramStatistics.class);
         bindJob()
                 .name("Node Status")
                 .description("Job to record status of node (CPU and Memory usage)")
                 .schedule(CRON, "* * *")
                 .advanced(false)
-                .to(() -> (task) -> nodeStatusExecutorProvider.get().exec());
+                .to(NodeStatus.class);
+    }
+
+    private static class JavaHeapHistogramStatistics extends TaskConsumer {
+        @Inject
+        JavaHeapHistogramStatistics(final HeapHistogramStatisticsExecutor heapHistogramStatisticsExecutor) {
+            super(task -> heapHistogramStatisticsExecutor.exec());
+        }
+    }
+
+    private static class NodeStatus extends TaskConsumer {
+        @Inject
+        NodeStatus(final NodeStatusExecutor nodeStatusExecutor) {
+            super(task -> nodeStatusExecutor.exec());
+        }
     }
 }

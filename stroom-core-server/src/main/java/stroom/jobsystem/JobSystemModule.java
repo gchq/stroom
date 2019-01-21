@@ -27,11 +27,13 @@ import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobManager;
 import stroom.jobsystem.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.task.api.job.ScheduledJobsModule;
 
 public class JobSystemModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new JobSystemJobsModule());
+        // Ensure the scheduled jobs binder is present even if we don't bind actual jobs.
+        install(new ScheduledJobsModule());
 
         bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
         bind(ClusterLockServiceTransactionHelper.class).to(ClusterLockServiceTransactionHelperImpl.class);

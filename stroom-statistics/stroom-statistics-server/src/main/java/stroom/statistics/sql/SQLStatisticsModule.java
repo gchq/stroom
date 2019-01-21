@@ -27,7 +27,6 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
-import stroom.task.api.job.ScheduledJobsBinder;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;

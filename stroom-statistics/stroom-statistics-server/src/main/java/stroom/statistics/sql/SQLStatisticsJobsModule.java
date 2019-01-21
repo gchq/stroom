@@ -1,27 +1,14 @@
 package stroom.statistics.sql;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
 
-class SQLStatisticsJobsModule extends ScheduledJobsModule {
-    private final Provider<SQLStatisticEventStore> sqlStatisticEventStoreProvider;
-    private final Provider<SQLStatisticCache> sqlStatisticCacheProvider;
-    private final Provider<SQLStatisticAggregationManager> sqlStatisticAggregationManagerProvider;
-
-    @Inject
-    SQLStatisticsJobsModule(final Provider<SQLStatisticEventStore> sqlStatisticEventStoreProvider,
-                            final Provider<SQLStatisticCache> sqlStatisticCacheProvider,
-                            final Provider<SQLStatisticAggregationManager> sqlStatisticAggregationManagerProvider) {
-        this.sqlStatisticEventStoreProvider = sqlStatisticEventStoreProvider;
-        this.sqlStatisticCacheProvider = sqlStatisticCacheProvider;
-        this.sqlStatisticAggregationManagerProvider = sqlStatisticAggregationManagerProvider;
-    }
-
+public class SQLStatisticsJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -30,16 +17,37 @@ class SQLStatisticsJobsModule extends ScheduledJobsModule {
                 .description("Evict from SQL Statistics event store object pool")
                 .managed(false)
                 .schedule(PERIODIC, "1m")
-                .to(() -> (task) -> sqlStatisticEventStoreProvider.get().evict());
+                .to(EvictFromObjectPool.class);
         bindJob()
                 .name("SQL Stats In Memory Flush")
                 .description("SQL Stats In Memory Flush (Cache to DB)")
                 .schedule(CRON, "0,10,20,30,40,50 * *")
-                .to(() -> (task) -> sqlStatisticCacheProvider.get().execute());
+                .to(SQLStatsFlush.class);
         bindJob()
                 .name("SQL Stats Database Aggregation")
                 .description("Run SQL stats database aggregation")
                 .schedule(CRON, "5,15,25,35,45,55 * *")
-                .to(() -> (task) -> sqlStatisticAggregationManagerProvider.get().aggregate());
+                .to(SQLStatsAggregation.class);
+    }
+
+    private static class EvictFromObjectPool extends TaskConsumer {
+        @Inject
+        EvictFromObjectPool(final SQLStatisticEventStore sqlStatisticEventStore) {
+            super(task -> sqlStatisticEventStore.evict());
+        }
+    }
+
+    private static class SQLStatsFlush extends TaskConsumer {
+        @Inject
+        SQLStatsFlush(final SQLStatisticCache sqlStatisticCache) {
+            super(task -> sqlStatisticCache.execute());
+        }
+    }
+
+    private static class SQLStatsAggregation extends TaskConsumer {
+        @Inject
+        SQLStatsAggregation(final SQLStatisticAggregationManager sqlStatisticAggregationManager) {
+            super(task -> sqlStatisticAggregationManager.aggregate());
+        }
     }
 }

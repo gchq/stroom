@@ -1,20 +1,13 @@
 package stroom.refdata.store;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 
 public class RefDataStoreJobsModule extends ScheduledJobsModule {
-    private final Provider<RefDataStoreFactory> refDataStoreFactoryProvider;
-
-    @Inject
-    RefDataStoreJobsModule(final Provider<RefDataStoreFactory> refDataStoreFactoryProvider) {
-        this.refDataStoreFactoryProvider = refDataStoreFactoryProvider;
-    }
-
     @Override
     protected void configure() {
         super.configure();
@@ -22,6 +15,13 @@ public class RefDataStoreJobsModule extends ScheduledJobsModule {
                 .name("Ref Data Off-heap Store Purge")
                 .description("Purge old reference data from the off heap store as configured")
                 .schedule(CRON, "0 2 *")
-                .to(() -> (task) -> refDataStoreFactoryProvider.get().purgeOldData());
+                .to(RefDataPurge.class);
+    }
+
+    private static class RefDataPurge extends TaskConsumer {
+        @Inject
+        RefDataPurge(final RefDataStoreFactory refDataStoreFactory) {
+            super(task -> refDataStoreFactory.purgeOldData());
+        }
     }
 }

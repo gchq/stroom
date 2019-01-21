@@ -31,7 +31,7 @@ import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.job.ScheduledJob;
-import stroom.task.shared.Task;
+import stroom.task.api.job.TaskConsumer;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.shared.CompareUtil;
@@ -45,20 +45,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 @Singleton
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
-    private final Map<ScheduledJob, Provider<Consumer<Task>>> scheduledJobsMap;
+    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
                    final Security security,
                    final UiConfig uiConfig,
-                   final Map<ScheduledJob, Provider<Consumer<Task>>> scheduledJobsMap,
+                   final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                    final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security, uiConfig);
         this.scheduledJobsMap = scheduledJobsMap;

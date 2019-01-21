@@ -1,20 +1,13 @@
 package stroom.dashboard;
 
 import stroom.task.api.job.ScheduledJobsModule;
+import stroom.task.api.job.TaskConsumer;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.task.api.job.Schedule.ScheduleType.CRON;
 
-class DashboardJobsModule extends ScheduledJobsModule {
-    private final Provider<QueryHistoryCleanExecutor> queryHistoryCleanExecutorProvider;
-
-    @Inject
-    DashboardJobsModule(final Provider<QueryHistoryCleanExecutor> queryHistoryCleanExecutorProvider) {
-        this.queryHistoryCleanExecutorProvider = queryHistoryCleanExecutorProvider;
-    }
-
+public class DashboardJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
@@ -23,6 +16,13 @@ class DashboardJobsModule extends ScheduledJobsModule {
                 .description("Job to clean up old query history items")
                 .schedule(CRON, "0 0 *")
                 .advanced(false)
-                .to(() -> (task) -> queryHistoryCleanExecutorProvider.get().exec());
+                .to(QueryHistoryClean.class);
+    }
+
+    private static class QueryHistoryClean extends TaskConsumer {
+        @Inject
+        QueryHistoryClean(final QueryHistoryCleanExecutor queryHistoryCleanExecutor) {
+            super(task -> queryHistoryCleanExecutor.exec());
+        }
     }
 }
