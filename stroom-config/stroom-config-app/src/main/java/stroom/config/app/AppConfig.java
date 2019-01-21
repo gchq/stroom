@@ -11,6 +11,7 @@ import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
 import stroom.index.IndexConfig;
+import stroom.index.impl.db.IndexDbConfig;
 import stroom.lifecycle.LifecycleConfig;
 import stroom.node.NodeConfig;
 import stroom.persist.CoreConfig;
@@ -45,6 +46,7 @@ public class AppConfig implements IsConfig {
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
     private IndexConfig indexConfig;
+    private IndexDbConfig indexDbConfig;
     private LifecycleConfig lifecycleConfig;
     private NodeConfig nodeConfig;
     private PipelineConfig pipelineConfig;
@@ -74,6 +76,7 @@ public class AppConfig implements IsConfig {
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
         this.indexConfig = new IndexConfig();
+        this.indexDbConfig = new IndexDbConfig();
         this.lifecycleConfig = new LifecycleConfig();
         this.pipelineConfig = new PipelineConfig();
         this.nodeConfig = new NodeConfig();
@@ -104,6 +107,7 @@ public class AppConfig implements IsConfig {
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
               final IndexConfig indexConfig,
+              final IndexDbConfig indexDbConfig,
               final LifecycleConfig lifecycleConfig,
               final PipelineConfig pipelineConfig,
               final NodeConfig nodeConfig,
@@ -131,6 +135,7 @@ public class AppConfig implements IsConfig {
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.indexConfig = indexConfig;
+        this.indexDbConfig = indexDbConfig;
         this.lifecycleConfig = lifecycleConfig;
         this.pipelineConfig = pipelineConfig;
         this.nodeConfig = nodeConfig;
@@ -248,6 +253,15 @@ public class AppConfig implements IsConfig {
 
     public void setIndexConfig(final IndexConfig indexConfig) {
         this.indexConfig = indexConfig;
+    }
+
+    @JsonProperty("indexDb")
+    public IndexDbConfig getIndexDbConfig() {
+        return indexDbConfig;
+    }
+
+    public void setIndexDbConfig(final IndexDbConfig indexDbConfig) {
+        this.indexDbConfig = indexDbConfig;
     }
 
     @JsonProperty("lifecycle")

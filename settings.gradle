@@ -97,6 +97,8 @@ include 'stroom-importexport:stroom-importexport-impl'
 include 'stroom-index:stroom-index-shared'
 include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
+include 'stroom-index:stroom-index-api'
+include 'stroom-index:stroom-index-impl-db'
 
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'
