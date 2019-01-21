@@ -1,11 +1,11 @@
 package stroom.refdata.store;
 
-import stroom.task.api.job.ScheduledJobsModule;
-import stroom.task.api.job.TaskConsumer;
+import stroom.job.api.ScheduledJobsModule;
+import stroom.job.api.TaskConsumer;
 
 import javax.inject.Inject;
 
-import static stroom.task.api.job.Schedule.ScheduleType.CRON;
+import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class RefDataStoreJobsModule extends ScheduledJobsModule {
     @Override

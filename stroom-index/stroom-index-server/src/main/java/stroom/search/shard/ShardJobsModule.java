@@ -1,11 +1,11 @@
 package stroom.search.shard;
 
-import stroom.task.api.job.ScheduledJobsModule;
-import stroom.task.api.job.TaskConsumer;
+import stroom.job.api.ScheduledJobsModule;
+import stroom.job.api.TaskConsumer;
 
 import javax.inject.Inject;
 
-import static stroom.task.api.job.Schedule.ScheduleType.PERIODIC;
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ShardJobsModule extends ScheduledJobsModule {
     @Override

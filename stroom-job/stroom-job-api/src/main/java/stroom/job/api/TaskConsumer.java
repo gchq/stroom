@@ -1,4 +1,4 @@
-package stroom.task.api.job;
+package stroom.job.api;
 
 import stroom.task.shared.Task;
 

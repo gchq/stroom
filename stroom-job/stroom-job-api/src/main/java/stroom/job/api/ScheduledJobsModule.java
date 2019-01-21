@@ -1,4 +1,4 @@
-package stroom.task.api.job;
+package stroom.job.api;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;

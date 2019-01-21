@@ -2,8 +2,8 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.api.job.ScheduledJob;
-import stroom.task.api.job.TaskConsumer;
+import stroom.job.api.ScheduledJob;
+import stroom.job.api.TaskConsumer;
 import stroom.task.shared.Task;
 
 import java.util.concurrent.atomic.AtomicBoolean;
