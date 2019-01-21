@@ -50,13 +50,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Store<D extends Doc> implements DocumentActionHandler<D> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
+public class StoreImpl<D extends Doc> implements Store<D> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StoreImpl.class);
 
     private final SecurityContext securityContext;
     private final Persistence persistence;
 
-    private Serialiser2<D> serialiser;
+    private DocumentSerialiser2<D> serialiser;
     private String type;
     private Class<D> clazz;
 
@@ -65,16 +65,14 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 //    private volatile long lastUpdate;
 
     @Inject
-    public Store(final Persistence persistence, final SecurityContext securityContext) {
+    public StoreImpl(final Persistence persistence,
+                     final SecurityContext securityContext,
+                     final DocumentSerialiser2<D> serialiser,
+                     final String type,
+                     final Class<D> clazz) {
         this.persistence = persistence;
         this.securityContext = securityContext;
-    }
-
-    public void setSerialiser(final Serialiser2<D> serialiser) {
         this.serialiser = serialiser;
-    }
-
-    public void setType(final String type, final Class<D> clazz) {
         this.type = type;
         this.clazz = clazz;
     }
@@ -83,6 +81,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    @Override
     public final DocRef createDocument(final String name) {
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
@@ -98,6 +97,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return createDocRef(created);
     }
 
+    @Override
     public final DocRef copyDocument(final String originalUuid,
                                      final String copyUuid,
                                      final Map<String, String> otherCopiesByOriginalUuid) {
@@ -118,6 +118,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return createDocRef(created);
     }
 
+    @Override
     public final DocRef moveDocument(final String uuid) {
         final D document = read(uuid);
 
@@ -131,6 +132,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return createDocRef(document);
     }
 
+    @Override
     public DocRef renameDocument(final String uuid, final String name) {
         final D document = read(uuid);
 
@@ -144,6 +146,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return createDocRef(document);
     }
 
+    @Override
     public final void deleteDocument(final String uuid) {
         // Check that the user has permission to delete this item.
         if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.DELETE)) {
@@ -156,6 +159,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         });
     }
 
+    @Override
     public DocRefInfo info(final String uuid) {
         final D document = read(uuid);
         return new DocRefInfo.Builder()
@@ -199,6 +203,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     ////////////////////////////////////////////////////////////////////////
 
 
+    @Override
     public Set<DocRef> listDocuments() {
         final List<DocRef> list = list();
         return list.stream()
@@ -206,6 +211,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 .collect(Collectors.toSet());
     }
 
+    @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<DocRef> list = list();
         return list.stream()
@@ -226,6 +232,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
+    @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         final String uuid = docRef.getUuid();
         try {
@@ -269,6 +276,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return docRef;
     }
 
+    @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
@@ -469,6 +477,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         return document;
     }
 
+    @Override
     public List<DocRef> list() {
         return createDocRefList();
 
@@ -488,6 +497,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 //        return cached;
     }
 
+    @Override
     public List<DocRef> findByName(final String name) {
         if (name == null) {
             return Collections.emptyList();
@@ -515,4 +525,5 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 .sorted()
                 .collect(Collectors.toList());
     }
+
 }

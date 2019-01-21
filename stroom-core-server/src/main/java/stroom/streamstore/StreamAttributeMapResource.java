@@ -18,7 +18,6 @@
 
 package stroom.streamstore;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -36,7 +35,6 @@ import stroom.entity.shared.Sort;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.util.HasHealthCheck;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -53,12 +51,10 @@ import java.util.List;
 import static stroom.datasource.api.v2.DataSourceField.DataSourceFieldType.FIELD;
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
-@Api(
-        value = "stream attribute map - /v1",
-        description = "Stream Attribute Map API")
+@Api(value = "stream attribute map - /v1")
 @Path("/streamattributemap/v1")
 @Produces(MediaType.APPLICATION_JSON)
-public class StreamAttributeMapResource implements HasHealthCheck {
+public class StreamAttributeMapResource {
 
     private DataMetaService dataMetaService;
     private Security security;
@@ -175,11 +171,5 @@ public class StreamAttributeMapResource implements HasHealthCheck {
             }
             return Response.ok(results.getFirst()).build();
         });
-    }
-
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        return null;
     }
 }

@@ -2,8 +2,8 @@ package stroom.db.migration.doc.script;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.migration.doc.EncodingUtil;
 import stroom.db.migration.doc.JsonSerialiser2;
-import stroom.docstore.EncodingUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.util.XMLMarshallerUtil;
 

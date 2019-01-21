@@ -1,7 +1,8 @@
 package stroom.db.migration.doc.textconverter;
 
-import stroom.docstore.EncodingUtil;
-import stroom.docstore.JsonSerialiser2;
+
+import stroom.db.migration.doc.JsonSerialiser2;
+import stroom.db.migration.doc.EncodingUtil;
 
 import java.io.IOException;
 import java.util.Map;

@@ -20,8 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.statistics.sql.StatisticsQueryService;
-import stroom.util.HasHealthCheck;
-import stroom.task.api.job.ScheduledJobsBinder;
 
 public class SQLStatisticSearchModule extends AbstractModule {
     @Override
@@ -32,7 +30,5 @@ public class SQLStatisticSearchModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(SqlStatisticsSearchResponseCreatorManager.class);
 
-        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
-        hasHealthCheckBinder.addBinding().to(SqlStatisticsQueryResource.class);
     }
 }

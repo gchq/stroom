@@ -20,6 +20,7 @@ package stroom.statistics.stroomstats.entity;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -48,15 +49,14 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     private final StroomStatsStoreSerialiser serialiser;
 
     @Inject
-    StroomStatsStoreStoreImpl(final Store<StroomStatsStoreDoc> store, final SecurityContext securityContext, final Persistence persistence) {
-        this.store = store;
+    StroomStatsStoreStoreImpl(final StoreFactory storeFactory,
+                              final SecurityContext securityContext,
+                              final Persistence persistence,
+                              final StroomStatsStoreSerialiser serialiser) {
+        this.store = storeFactory.createStore(serialiser, StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new StroomStatsStoreSerialiser();
-
-        store.setType(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreDoc.class);
-        store.setSerialiser(serialiser);
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
