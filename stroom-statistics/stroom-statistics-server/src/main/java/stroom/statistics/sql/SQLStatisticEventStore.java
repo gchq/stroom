@@ -34,7 +34,6 @@ import stroom.statistics.sql.entity.StatisticStoreValidator;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -200,7 +199,6 @@ public class SQLStatisticEventStore implements Statistics {
         return config;
     }
 
-    @StroomFrequencySchedule("1m")
     public void evict() {
         LOGGER.debug("evict");
         try {

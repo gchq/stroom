@@ -19,12 +19,10 @@ package stroom.statistics.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;
 import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -153,8 +151,6 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
         flush(true);
     }
 
-    @StroomSimpleCronSchedule(cron = "0,10,20,30,40,50 * *")
-    @JobTrackedSchedule(jobName = "SQL Stats In Memory Flush", description = "SQL Stats In Memory Flush (Cache to DB)")
     public void execute() {
         // Kick off a flush
         flush(false);

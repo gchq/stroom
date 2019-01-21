@@ -17,7 +17,6 @@
 
 package stroom.jobsystem;
 
-
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,6 @@ import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.FindJobNodeCriteria;
 import stroom.jobsystem.shared.Job;
@@ -39,15 +37,14 @@ import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.MethodReference;
-import stroom.util.lifecycle.StroomFrequencySchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.TaskConsumer;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,9 +65,8 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private final ClusterLockService clusterLockService;
     private final NodeCache nodeCache;
     private final JobService jobService;
-    private final StroomBeanStore stroomBeanStore;
+    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
-
 
     @Inject
     JobNodeServiceImpl(final StroomEntityManager entityManager,
@@ -79,7 +75,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final ClusterLockService clusterLockService,
                        final NodeCache nodeCache,
                        final JobService jobService,
-                       final StroomBeanStore stroomBeanStore,
+                       final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                        final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security);
         this.entityManager = entityManager;
@@ -87,7 +83,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         this.clusterLockService = clusterLockService;
         this.nodeCache = nodeCache;
         this.jobService = jobService;
-        this.stroomBeanStore = stroomBeanStore;
+        this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
@@ -149,41 +145,34 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
             final Set<String> validJobNames = new HashSet<>();
 
-            for (final MethodReference methodReference : stroomBeanStore.getAnnotatedMethods(JobTrackedSchedule.class)) {
-                final JobTrackedSchedule jobScheduleDescriptor = methodReference.getMethod()
-                        .getAnnotation(JobTrackedSchedule.class);
-                final StroomSimpleCronSchedule stroomSimpleCronSchedule = methodReference.getMethod()
-                        .getAnnotation(StroomSimpleCronSchedule.class);
-                final StroomFrequencySchedule stroomFrequencySchedule = methodReference.getMethod()
-                        .getAnnotation(StroomFrequencySchedule.class);
+            // TODO: The form below isn't very clear. Split into job mapping and creation.
+            for (ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
+                validJobNames.add(scheduledJob.getName());
 
-                validJobNames.add(jobScheduleDescriptor.jobName());
-
-                if (stroomFrequencySchedule == null && stroomSimpleCronSchedule == null) {
-                    LOGGER.error("Invalid annotations on {}", methodReference);
-                    continue;
-                }
-
-                // Get the actual job.
                 Job job = new Job();
-                job.setName(jobScheduleDescriptor.jobName());
-                job.setEnabled(jobScheduleDescriptor.enabled());
+                job.setName(scheduledJob.getName());
+                job.setEnabled(scheduledJob.isEnabled());
                 job = getOrCreateJob(job);
 
                 final JobNode newJobNode = new JobNode();
                 newJobNode.setJob(job);
                 newJobNode.setNode(node);
-                newJobNode.setEnabled(jobScheduleDescriptor.enabled());
-                if (stroomSimpleCronSchedule != null) {
-                    newJobNode.setJobType(JobType.CRON);
-                    newJobNode.setSchedule(stroomSimpleCronSchedule.cron());
-                } else if (stroomFrequencySchedule != null) {
-                    newJobNode.setJobType(JobType.FREQUENCY);
-                    newJobNode.setSchedule(stroomFrequencySchedule.value());
+                newJobNode.setEnabled(scheduledJob.isEnabled());
+
+                switch (scheduledJob.getSchedule().getScheduleType()) {
+                    case CRON:
+                        newJobNode.setJobType(JobType.CRON);
+                        break;
+                    case PERIODIC:
+                        newJobNode.setJobType(JobType.FREQUENCY);
+                        break;
+                    default:
+                        throw new RuntimeException("Unknown ScheduleType!");
                 }
+                newJobNode.setSchedule(scheduledJob.getSchedule().getSchedule());
 
                 // Add the job node to the DB if it isn't there already.
-                JobNode existingJobNode = existingJobMap.get(jobScheduleDescriptor.jobName());
+                JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
                 if (existingJobNode == null) {
                     LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
                             newJobNode.getNode().getName());
@@ -195,7 +184,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                     existingJobNode.setJobType(newJobNode.getJobType());
                     existingJobNode.setSchedule(newJobNode.getSchedule());
                     existingJobNode = save(existingJobNode);
-                    existingJobMap.put(jobScheduleDescriptor.jobName(), existingJobNode);
+                    existingJobMap.put(scheduledJob.getName(), existingJobNode);
                 }
             }
 
@@ -239,7 +228,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
             final Long deleteCount = entityManager.executeNativeUpdate(sql);
             if (deleteCount != null && deleteCount > 0) {
-                LOGGER.info("Removed {} orhan jobs", deleteCount);
+                LOGGER.info("Removed {} orphan jobs", deleteCount);
             }
         });
     }

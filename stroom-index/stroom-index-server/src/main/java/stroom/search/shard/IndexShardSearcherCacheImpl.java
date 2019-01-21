@@ -26,14 +26,12 @@ import stroom.index.IndexShardService;
 import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.search.SearchException;
 import stroom.task.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.ThreadPoolImpl;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -225,8 +223,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     /**
      * This is called by the lifecycle service and remove writers that are past their TTL, TTI or LRU items that exceed the capacity.
      */
-    @StroomFrequencySchedule("10m")
-    @JobTrackedSchedule(jobName = "Index Searcher Cache Refresh", description = "Job to refresh index shard searchers in the cache")
+    @Override
     public void refresh() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 

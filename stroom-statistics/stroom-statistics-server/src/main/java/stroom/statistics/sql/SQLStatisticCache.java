@@ -20,4 +20,6 @@ public interface SQLStatisticCache {
     void add(SQLStatisticAggregateMap aggregateMap);
 
     void flush();
+
+    void execute();
 }
