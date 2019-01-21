@@ -12,4 +12,6 @@ dependencies {
     testImplementation libs.junit_jupiter_api
     testImplementation libs.assertj_core
 
+    testRuntimeOnly libs.junit_jupiter_engine
+
 }
