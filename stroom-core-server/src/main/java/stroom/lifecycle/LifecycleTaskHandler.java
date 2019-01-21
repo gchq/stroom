@@ -42,7 +42,6 @@ class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult
             try {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.debug("exec() - >>> {}", task.getTaskName());
-                // TODO: clean up gh-1063
                 if(task.getExecutable() != null) {
                     task.getExecutable().exec(task);
                 }

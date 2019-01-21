@@ -21,7 +21,6 @@ import stroom.util.shared.HashCodeBuilder;
 
 import java.lang.reflect.Method;
 
-// TODO: clean up gh-1063
 public class MethodReference {
     private Class<?> clazz;
     private final Method method;

@@ -31,7 +31,6 @@ public class LifecycleTask extends ServerTask<VoidResult> {
         this.function = function;
     }
 
-    // TODO: clean up gh-1063
     public StroomBeanMethodExecutable getExecutable() {
         return executable;
     }
