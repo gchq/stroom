@@ -20,35 +20,13 @@ import stroom.entity.shared.HasUuid;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.SQLNameConstants;
 
-import javax.persistence.*;
-
 /**
  * <p>
  * Used to represent a user or machine in the Stroom server.
  * </p>
  */
-@Entity
-@Table(name = "USR", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME, User.GROUP}))
 public class User extends NamedEntity implements HasUuid {
-    public static final String TABLE_NAME = SQLNameConstants.USER;
-    //    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String PASS_HASH = SQLNameConstants.PASSWORD + SEP + SQLNameConstants.HASH;
-    public static final String PASS_EXPIRY_MS = SQLNameConstants.PASSWORD + SEP + SQLNameConstants.EXPIRY
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String LOGIN_EXPIRY = SQLNameConstants.LOGIN + SEP + SQLNameConstants.EXPIRY;
-    public static final String LAST_LOGIN_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.LOGIN
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String LOGIN_VALID_MS = SQLNameConstants.LOGIN + SEP + SQLNameConstants.VALID
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String CURRENT_LOGIN_FAILURES = SQLNameConstants.CURRENT + SEP + SQLNameConstants.LOGIN + SEP
-            + SQLNameConstants.FAILURE;
-    public static final String TOTAL_LOGIN_FAILURES = SQLNameConstants.TOTAL + SEP + SQLNameConstants.LOGIN + SEP
-            + SQLNameConstants.FAILURE;
-    //    public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS
-//            + SQLNameConstants.MS_SUFFIX;
-    public static final String GROUP = SQLNameConstants.GROUP;
     public static final String ENTITY_TYPE = "User";
-    public static final String UUID = SQLNameConstants.UUID;
     private static final long serialVersionUID = -2415531358356094596L;
     private String uuid;
 
@@ -93,7 +71,6 @@ public class User extends NamedEntity implements HasUuid {
 //    @GeneratedValue(generator = "uuid2")
 //    @GenericGenerator(name = "uuid2", strategy = "uuid2")
     @Override
-    @Column(name = UUID, unique = true, nullable = false)
     public String getUuid() {
         return uuid;
     }
@@ -105,7 +82,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = PASS_HASH)
     public String getPasswordHash() {
         return passwordHash;
     }
@@ -120,7 +96,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = PASS_EXPIRY_MS, columnDefinition = BIGINT_UNSIGNED)
     public Long getPasswordExpiryMs() {
         return passwordExpiryMs;
     }
@@ -132,7 +107,6 @@ public class User extends NamedEntity implements HasUuid {
         this.passwordExpiryMs = passwordExpiryMs;
     }
 
-    @Column(name = LOGIN_EXPIRY)
     public boolean isLoginExpiry() {
         return loginExpiry;
     }
@@ -144,7 +118,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = LAST_LOGIN_MS, columnDefinition = BIGINT_UNSIGNED)
     public Long getLastLoginMs() {
         return lastLoginMs;
     }
@@ -159,7 +132,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = LOGIN_VALID_MS, columnDefinition = BIGINT_UNSIGNED)
     public Long getLoginValidMs() {
         return loginValidMs;
     }
@@ -171,7 +143,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = SQLNameConstants.STATUS, nullable = false)
     public byte getPstatus() {
         return pstatus;
     }
@@ -183,7 +154,6 @@ public class User extends NamedEntity implements HasUuid {
         this.pstatus = pstatus;
     }
 
-    @Column(name = GROUP, nullable = false)
     public boolean isGroup() {
         return group;
     }
@@ -195,7 +165,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Transient
     public UserStatus getStatus() {
         return UserStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pstatus);
     }
@@ -239,7 +208,6 @@ public class User extends NamedEntity implements HasUuid {
      *
      * @return
      */
-    @Transient
     public boolean isStatusEnabled() {
         return UserStatus.ENABLED.equals(getStatus());
     }
@@ -259,7 +227,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = CURRENT_LOGIN_FAILURES, columnDefinition = SMALLINT_UNSIGNED, nullable = false)
     public int getCurrentLoginFailures() {
         return currentLoginFailures;
     }
@@ -274,7 +241,6 @@ public class User extends NamedEntity implements HasUuid {
     /**
      * @return getter
      */
-    @Column(name = TOTAL_LOGIN_FAILURES, columnDefinition = SMALLINT_UNSIGNED, nullable = false)
     public int getTotalLoginFailures() {
         return totalLoginFailures;
     }
@@ -286,7 +252,6 @@ public class User extends NamedEntity implements HasUuid {
         this.totalLoginFailures = totalLoginFailures;
     }
 
-    @Transient
     @Override
     public final String getType() {
         return ENTITY_TYPE;

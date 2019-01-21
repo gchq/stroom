@@ -21,10 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.exception.AuthenticationException;
-import stroom.security.shared.*;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissions;
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserAppPermissions;
+import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
-import javax.persistence.RollbackException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -316,8 +319,6 @@ class SecurityContextImpl implements SecurityContext {
                     // Make the current user the owner of the new document.
                     try {
                         documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
-                    } catch (final RollbackException e) {
-                        LOGGER.debug(e.getMessage(), e);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
@@ -352,8 +353,6 @@ class SecurityContextImpl implements SecurityContext {
                             if (permissions.contains(allowedPermission)) {
                                 try {
                                     documentPermissionService.addPermission(userRef, destDocRef, allowedPermission);
-                                } catch (final RollbackException e) {
-                                    LOGGER.debug(e.getMessage(), e);
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }

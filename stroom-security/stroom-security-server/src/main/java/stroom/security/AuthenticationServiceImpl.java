@@ -23,7 +23,6 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.PersistenceException;
 
 @Singleton
 class AuthenticationServiceImpl implements AuthenticationService {
@@ -68,7 +67,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 // We need to elevate the user because no one is currently logged in.
                 try {
                     userRef = security.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
-                } catch (final PersistenceException e) {
+                } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
                         LOGGER.warn(msg);

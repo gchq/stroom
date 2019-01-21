@@ -28,7 +28,6 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.persistence.Transient;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -149,8 +148,6 @@ class UserServiceImpl implements UserService {
         });
     }
 
-
-    @Transient
     @Override
     public String getNamePattern() {
         return securityConfig.getUserNamePattern();
