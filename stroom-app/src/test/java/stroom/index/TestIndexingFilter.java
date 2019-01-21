@@ -75,7 +75,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
     @BeforeEach
     @AfterEach
     void clear() {
-        indexShardWriterCache.stop();
+        indexShardWriterCache.shutdown();
     }
 
     @Test

@@ -21,7 +21,7 @@ public class CacheJobsModule extends ScheduledJobsModule {
 
     private static class EvictExpiredElements extends TaskConsumer {
         @Inject
-        EvictExpiredElements(final StroomCacheManager stroomCacheManager) {
+        EvictExpiredElements(final CacheManagerService stroomCacheManager) {
             super(task -> stroomCacheManager.evictExpiredElements());
         }
     }

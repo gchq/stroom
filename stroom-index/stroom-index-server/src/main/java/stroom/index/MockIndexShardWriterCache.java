@@ -94,7 +94,7 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
 //    }
 
     @Override
-    public void stop() {
+    public void shutdown() {
         openWritersByShardId.values().parallelStream().forEach(this::close);
     }
 

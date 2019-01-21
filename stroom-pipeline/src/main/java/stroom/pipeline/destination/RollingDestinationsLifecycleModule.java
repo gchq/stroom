@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.lifecycle;
+package stroom.pipeline.destination;
 
-import com.google.inject.AbstractModule;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.util.lifecycle.AbstractLifecycleModule;
+import stroom.util.lifecycle.RunnableWrapper;
 
-public class LifecycleModule extends AbstractModule {
+import javax.inject.Inject;
+
+public class RollingDestinationsLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
-        bind(LifecycleService.class).to(LifecycleServiceImpl.class);
+        bindShutdown().to(RollingDestinationsForceRoll.class);
+    }
 
-        TaskHandlerBinder.create(binder())
-                .bind(LifecycleTask.class, LifecycleTaskHandler.class);
+    private static class RollingDestinationsForceRoll extends RunnableWrapper {
+        @Inject
+        RollingDestinationsForceRoll(final RollingDestinations rollingDestinations) {
+            super(rollingDestinations::forceRoll);
+        }
     }
 }

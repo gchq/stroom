@@ -22,7 +22,6 @@ import com.zaxxer.hikari.HikariConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -36,8 +35,6 @@ public class DataSourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataSource.class).toProvider(DataSourceProvider.class);
-
-        LifecycleAwareBinder.create(binder()).bind(PersistLifecycle.class);
     }
 
     @Provides

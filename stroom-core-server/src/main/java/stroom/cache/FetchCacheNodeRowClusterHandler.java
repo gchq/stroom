@@ -30,11 +30,11 @@ import javax.inject.Inject;
 class FetchCacheNodeRowClusterHandler extends AbstractTaskHandler<FetchCacheNodeRowClusterTask, ResultList<CacheInfo>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchCacheNodeRowClusterHandler.class);
 
-    private final StroomCacheManager stroomCacheManager;
+    private final CacheManagerService stroomCacheManager;
     private final Security security;
 
     @Inject
-    FetchCacheNodeRowClusterHandler(final StroomCacheManager stroomCacheManager,
+    FetchCacheNodeRowClusterHandler(final CacheManagerService stroomCacheManager,
                                     final Security security) {
         this.stroomCacheManager = stroomCacheManager;
         this.security = security;

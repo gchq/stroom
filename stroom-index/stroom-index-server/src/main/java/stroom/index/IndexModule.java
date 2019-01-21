@@ -30,7 +30,6 @@ import stroom.index.shared.FetchIndexVolumesAction;
 import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -72,7 +71,5 @@ public class IndexModule extends AbstractModule {
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
         findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
-
-        LifecycleAwareBinder.create(binder()).bind(IndexShardWriterCacheImpl.class);
     }
 }

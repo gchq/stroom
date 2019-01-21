@@ -39,7 +39,6 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.TaskConsumer;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
@@ -53,7 +52,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements LifecycleAware, JobNodeService {
+class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
     private static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
             + JobNode.TABLE_NAME + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND."
             + JobNode.ID + " IS NULL;";
@@ -88,7 +87,7 @@ class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCri
     }
 
     @Override
-    public void start() {
+    public void startup() {
         entityManagerSupport.transaction(entityManager1 -> {
             LOGGER.info("startup()");
             // Lock the cluster so only 1 node at a time can call the

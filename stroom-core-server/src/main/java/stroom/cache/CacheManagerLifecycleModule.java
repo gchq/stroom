@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.cache;
 
-import stroom.cache.shared.CacheInfo;
-import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.FindClearService;
-import stroom.entity.FindService;
-import stroom.entity.shared.Clearable;
+import stroom.util.lifecycle.AbstractLifecycleModule;
+import stroom.util.lifecycle.RunnableWrapper;
 
-/**
- * This class maintains several caches used throughout the application.
- */
-public interface StroomCacheManager
-        extends Clearable, FindClearService<FindCacheInfoCriteria>, FindService<CacheInfo, FindCacheInfoCriteria> {
+import javax.inject.Inject;
 
-    void evictExpiredElements();
+public class CacheManagerLifecycleModule extends AbstractLifecycleModule {
+    @Override
+    protected void configure() {
+        bindShutdown().to(CacheManagerClose.class);
+    }
+
+    private static class CacheManagerClose extends RunnableWrapper {
+        @Inject
+        CacheManagerClose(final CacheManagerImpl cacheManager) {
+            super(cacheManager::close);
+        }
+    }
 }

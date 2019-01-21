@@ -29,7 +29,6 @@ import stroom.task.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -57,7 +56,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Singleton
-public class IndexShardWriterCacheImpl implements LifecycleAware, IndexShardWriterCache {
+public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 
     private final NodeCache nodeCache;
@@ -419,8 +418,7 @@ public class IndexShardWriterCacheImpl implements LifecycleAware, IndexShardWrit
         });
     }
 
-    @Override
-    public synchronized void start() {
+    synchronized void startup() {
         LOGGER.info(() -> "Index shard writer cache startup");
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -439,7 +437,7 @@ public class IndexShardWriterCacheImpl implements LifecycleAware, IndexShardWrit
     }
 
     @Override
-    public synchronized void stop() {
+    public synchronized void shutdown() {
         LOGGER.info(() -> "Index shard writer cache shutdown");
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 

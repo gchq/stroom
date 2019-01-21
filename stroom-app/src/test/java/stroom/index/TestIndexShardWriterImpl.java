@@ -55,7 +55,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Override
     public void onBefore() {
-        indexShardWriterCache.stop();
+        indexShardWriterCache.shutdown();
     }
 
     @Test
@@ -114,7 +114,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         // Close writer1 by removing the writer from the cache.
         indexShardWriterCache.close(writer1);
         // Close indexes again.
-        indexShardWriterCache.stop();
+        indexShardWriterCache.shutdown();
         // Make sure that writer1 was closed.
         assertThat(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId())).isFalse();
 
@@ -123,7 +123,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         assertThat(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId())).isTrue();
 
         // Close indexes again.
-        indexShardWriterCache.stop();
+        indexShardWriterCache.shutdown();
 
         // Make sure that writer1 was closed.
         assertThat(compareStatus(IndexShardStatus.OPEN, writer1.getIndexShardId())).isFalse();

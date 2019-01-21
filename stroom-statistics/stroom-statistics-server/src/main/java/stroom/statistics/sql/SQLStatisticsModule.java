@@ -27,7 +27,6 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -45,8 +44,6 @@ public class SQLStatisticsModule extends AbstractModule {
 
         TaskHandlerBinder.create(binder())
                 .bind(SQLStatisticFlushTask.class, SQLStatisticFlushTaskHandler.class);
-
-        LifecycleAwareBinder.create(binder()).bind(SQLStatisticCacheImpl.class);
     }
 
     @Provides

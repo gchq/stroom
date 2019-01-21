@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.lifecycle;
+package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +25,14 @@ import stroom.util.shared.VoidResult;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class LifecycleTask extends ServerTask<VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTask.class);
+public class ScheduledTask extends ServerTask<VoidResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTask.class);
 
     private final String taskName;
     private final Consumer<Task> method;
     private final AtomicBoolean running;
 
-    public LifecycleTask(final String taskName,
+    public ScheduledTask(final String taskName,
                          final Consumer<Task> method,
                          final AtomicBoolean running) {
         this.taskName = taskName;

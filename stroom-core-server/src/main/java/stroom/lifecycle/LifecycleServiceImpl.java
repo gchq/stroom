@@ -20,55 +20,82 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.ScheduledTaskExecutor;
 import stroom.security.Security;
+import stroom.task.ExecutorProvider;
 import stroom.task.StroomThreadGroup;
-import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
+import stroom.util.lifecycle.ShutdownTask;
+import stroom.util.lifecycle.StartupTask;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.VoidResult;
 import stroom.util.thread.CustomThreadFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Singleton
-public class LifecycleServiceImpl implements LifecycleService {
+class LifecycleServiceImpl implements LifecycleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleServiceImpl.class);
     private static final String STROOM_LIFECYCLE_THREAD_POOL = "Stroom Lifecycle#";
 
     private static final int ONE_SECOND = 1000;
 
+    private final Deque<Provider<Runnable>> startPending;
+    private final Deque<Provider<Runnable>> stopPending;
     private final TaskManager taskManager;
-    private final LifecycleTasks lifecycleTasks;
     private final ScheduledTaskExecutor scheduledTaskExecutor;
     private final Security security;
-    private final AtomicInteger startingBeanCount = new AtomicInteger();
-    private final AtomicInteger stoppingBeanCount = new AtomicInteger();
     // The scheduled executor that executes executable beans.
     private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
     private final AtomicBoolean startingUp = new AtomicBoolean();
     private final AtomicBoolean running = new AtomicBoolean();
     private final AtomicBoolean enabled = new AtomicBoolean();
     private final long executionInterval;
+    private final Executor executor;
+
+    private volatile CountDownLatch startRemaining;
+    private volatile CountDownLatch stopRemaining;
 
     @Inject
-    public LifecycleServiceImpl(final TaskManager taskManager,
-                                final LifecycleTasks lifecycleTasks,
+    LifecycleServiceImpl(final TaskManager taskManager,
+                                final Map<StartupTask, Provider<Runnable>> startupTaskMap,
+                                final Map<ShutdownTask, Provider<Runnable>> shutdownTaskMap,
                                 final ScheduledTaskExecutor scheduledTaskExecutor,
                                 final Security security,
-                                final LifecycleConfig lifecycleConfig) {
+                                final LifecycleConfig lifecycleConfig,
+                                final ExecutorProvider executorProvider) {
         this.taskManager = taskManager;
-        this.lifecycleTasks = lifecycleTasks;
         this.scheduledTaskExecutor = scheduledTaskExecutor;
         this.security = security;
         this.enabled.set(lifecycleConfig.isEnabled());
         this.executionInterval = lifecycleConfig.getExecutionIntervalMs();
+
+        this.executor = executorProvider.getExecutor();
+
+        startPending = startupTaskMap.entrySet()
+                .stream()
+                .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
+                .map(Entry::getValue)
+                .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
+        stopPending = shutdownTaskMap.entrySet()
+                .stream()
+                .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
+                .map(Entry::getValue)
+                .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
     }
 
     /**
@@ -105,14 +132,12 @@ public class LifecycleServiceImpl implements LifecycleService {
         LOGGER.info("Starting Stroom Lifecycle service");
         try {
             startingUp.set(true);
-
             taskManager.startup();
-
+            startRemaining = new CountDownLatch(startPending.size());
             startNext();
+
             // Wait for startup to complete.
-            while (startingBeanCount.get() > 0) {
-                Thread.sleep(500);
-            }
+            startRemaining.await();
 
             // Create the runnable object that will perform execution on all
             // scheduled services.
@@ -135,13 +160,11 @@ public class LifecycleServiceImpl implements LifecycleService {
                 }
             };
 
-            // Create the thread pool that we will use to startup, shutdown and
-            // execute lifecycle beans asynchronously.
+            // Create the thread pool that we will use to startup, shutdown and execute lifecycle beans asynchronously.
             final CustomThreadFactory threadFactory = new CustomThreadFactory(STROOM_LIFECYCLE_THREAD_POOL,
                     StroomThreadGroup.instance(), Thread.MIN_PRIORITY + 1);
 
-            // Create the executor service that will execute scheduled
-            // services.
+            // Create the executor service that will execute scheduled services.
             final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
             scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
             this.scheduledExecutorService.set(scheduledExecutorService);
@@ -157,16 +180,15 @@ public class LifecycleServiceImpl implements LifecycleService {
     }
 
     private void startNext() {
-        final LifecycleTask lifecycleTask = lifecycleTasks.getStart();
-        if (lifecycleTask != null) {
-            startingBeanCount.getAndIncrement();
-            taskManager.execAsync(lifecycleTask, new TaskCallbackAdaptor<>() {
-                @Override
-                public void onSuccess(final VoidResult result) {
-                    startNext();
-                    startingBeanCount.getAndDecrement();
-                }
-            });
+        final Provider<Runnable> runnableProvider = startPending.pollFirst();
+        if (runnableProvider != null) {
+            final Runnable runnable = runnableProvider.get();
+            CompletableFuture
+                    .runAsync(runnable, executor)
+                    .thenRun(() -> {
+                        startNext();
+                        startRemaining.countDown();
+                    });
         }
     }
 
@@ -193,13 +215,13 @@ public class LifecycleServiceImpl implements LifecycleService {
                 }
             }
 
+            stopRemaining = new CountDownLatch(stopPending.size());
             stopNext();
 
             try {
                 // Wait for stop to complete.
-                while (stoppingBeanCount.get() > 0) {
-                    Thread.sleep(500);
-                }
+                stopRemaining.await();
+
             } catch (final InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
 
@@ -218,16 +240,15 @@ public class LifecycleServiceImpl implements LifecycleService {
     }
 
     private void stopNext() {
-        final LifecycleTask lifecycleTask = lifecycleTasks.getStop();
-        if (lifecycleTask != null) {
-            stoppingBeanCount.getAndIncrement();
-            taskManager.execAsync(lifecycleTask, new TaskCallbackAdaptor<>() {
-                @Override
-                public void onSuccess(final VoidResult result) {
-                    stopNext();
-                    stoppingBeanCount.getAndDecrement();
-                }
-            });
+        final Provider<Runnable> runnableProvider = stopPending.pollLast();
+        if (runnableProvider != null) {
+            final Runnable runnable = runnableProvider.get();
+            CompletableFuture
+                    .runAsync(runnable, executor)
+                    .thenRun(() -> {
+                        stopNext();
+                        stopRemaining.countDown();
+                    });
         }
     }
 

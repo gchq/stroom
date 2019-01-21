@@ -17,17 +17,14 @@
 package stroom.util.lifecycle;
 
 class MockStroomBeanNoDeps extends MockStroomBeanLifeCycleBean {
-    @Override
     public void start() {
         super.start();
     }
 
-    @Override
     public void stop() {
         super.stop();
     }
 
-    @Override
     public int priority() {
         return 100;
     }

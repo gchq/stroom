@@ -58,6 +58,6 @@ class TestJobNodeService extends AbstractCoreIntegrationTest {
 
     @Test
     void testStartup() {
-        jobNodeService.start();
+        jobNodeService.startup();
     }
 }

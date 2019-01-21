@@ -29,19 +29,16 @@ class MockStroomBeanSomeDeps extends MockStroomBeanLifeCycleBean {
         this.stroomBeanNoDeps = stroomBeanNoDeps;
     }
 
-    @Override
     public void start() {
         assertThat(stroomBeanNoDeps.isRunning()).isTrue();
 
         super.start();
     }
 
-    @Override
     public void stop() {
         super.stop();
     }
 
-    @Override
     public int priority() {
         return 99;
     }

@@ -19,11 +19,10 @@ package stroom.util.lifecycle;
 
 import static org.assertj.core.api.Assertions.fail;
 
-class MockStroomBeanLifeCycleBean implements LifecycleAware {
+class MockStroomBeanLifeCycleBean {
     private boolean running = false;
     private boolean hasRun = false;
 
-    @Override
     public void start() {
         if (running) {
             fail("Called start twice");
@@ -35,7 +34,6 @@ class MockStroomBeanLifeCycleBean implements LifecycleAware {
         running = true;
     }
 
-    @Override
     public void stop() {
         if (!running) {
             fail("Stopped called and not running");

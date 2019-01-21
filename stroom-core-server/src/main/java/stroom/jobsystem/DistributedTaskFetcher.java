@@ -33,7 +33,6 @@ import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.shared.Task;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -56,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * threads for transforming multiple XML files.
  */
 @Singleton
-public class DistributedTaskFetcher implements LifecycleAware {
+public class DistributedTaskFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
     // Wait time for master to return tasks (5 minutes)
@@ -87,8 +86,7 @@ public class DistributedTaskFetcher implements LifecycleAware {
      * Tells tasks to stop and waits for all tasks to stop before cleaning up
      * the executors.
      */
-    @Override
-    public void stop() {
+    public void shutdown() {
         try {
             stopping.set(true);
 
@@ -108,11 +106,6 @@ public class DistributedTaskFetcher implements LifecycleAware {
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
         }
-    }
-
-    @Override
-    public int priority() {
-        return 999;
     }
 
     /**

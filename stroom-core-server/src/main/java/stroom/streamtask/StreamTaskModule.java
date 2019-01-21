@@ -24,7 +24,6 @@ import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class StreamTaskModule extends AbstractModule {
     @Override
@@ -48,7 +47,5 @@ public class StreamTaskModule extends AbstractModule {
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(StreamTaskServiceImpl.class);
-
-        LifecycleAwareBinder.create(binder()).bind(StreamTaskCreatorImpl.class);
     }
 }

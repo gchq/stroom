@@ -4,7 +4,6 @@ import stroom.benchmark.BenchmarkClusterExecutor;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.task.api.job.ScheduledJobsModule;
 import stroom.task.api.job.TaskConsumer;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 import javax.inject.Inject;
 

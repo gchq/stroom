@@ -23,11 +23,9 @@ import stroom.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 import javax.xml.transform.URIResolver;
 
@@ -59,7 +57,5 @@ public class PipelineModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(Doc.class, DocObjectInfoProvider.class)
                 .bind(PipelineDoc.class, PipelineDocObjectInfoProvider.class);
-
-        LifecycleAwareBinder.create(binder()).bind(RollingDestinations.class);
     }
 }

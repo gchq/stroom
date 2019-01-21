@@ -19,7 +19,6 @@ package stroom.importexport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -36,7 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
-public class ContentPackImport implements LifecycleAware {
+public class ContentPackImport {
     static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
@@ -55,8 +54,7 @@ public class ContentPackImport implements LifecycleAware {
 
     //Startup with very low priority to ensure it starts after everything else
     //in particular
-    @Override
-    public void start() {
+    public void startup() {
         final boolean isEnabled = config.isEnabled();
 
         if (isEnabled) {
@@ -64,11 +62,6 @@ public class ContentPackImport implements LifecycleAware {
         } else {
             LOGGER.info("Content pack import currently disabled via property");
         }
-    }
-
-    @Override
-    public int priority() {
-        return -1000;
     }
 
     private void doImport() {

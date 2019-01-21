@@ -54,7 +54,6 @@ import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 
@@ -164,7 +163,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     }
 
     @Override
-    public void start() {
+    public void startup() {
         // It shouldn't be possible to create tasks during startup.
         createTasksLock.lock();
         try {
@@ -179,7 +178,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     }
 
     @Override
-    public void stop() {
+    public void shutdown() {
         // It shouldn't be possible to create tasks during shutdown.
         createTasksLock.lock();
         try {

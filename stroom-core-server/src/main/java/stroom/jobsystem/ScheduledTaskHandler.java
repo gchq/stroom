@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.lifecycle;
+package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,18 +26,18 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 
 
-class LifecycleTaskHandler extends AbstractTaskHandler<LifecycleTask, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleTaskHandler.class);
+class ScheduledTaskHandler extends AbstractTaskHandler<ScheduledTask, VoidResult> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskHandler.class);
 
     private final Security security;
 
     @Inject
-    LifecycleTaskHandler(final Security security) {
+    ScheduledTaskHandler(final Security security) {
         this.security = security;
     }
 
     @Override
-    public VoidResult exec(final LifecycleTask task) {
+    public VoidResult exec(final ScheduledTask task) {
         return security.secureResult(() -> {
             try {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();

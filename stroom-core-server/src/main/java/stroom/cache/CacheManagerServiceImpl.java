@@ -37,13 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomCacheManagerImpl.class);
+class CacheManagerServiceImpl implements CacheManagerService, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
 
     private final CacheManager cacheManager;
 
     @Inject
-    StroomCacheManagerImpl(final CacheManager cacheManager) {
+    CacheManagerServiceImpl(final CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
 

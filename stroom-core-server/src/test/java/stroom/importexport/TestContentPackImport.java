@@ -94,7 +94,7 @@ class TestContentPackImport {
 
         FileUtil.touch(testPack1);
 
-        contentPackImport.start();
+        contentPackImport.startup();
 
         Mockito.verifyZeroInteractions(importExportService);
         assertThat(Files.exists(testPack1)).isTrue();
@@ -104,7 +104,7 @@ class TestContentPackImport {
     void testStartup_enabledNoFiles() {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
-        contentPackImport.start();
+        contentPackImport.startup();
         Mockito.verifyZeroInteractions(importExportService);
     }
 
@@ -117,7 +117,7 @@ class TestContentPackImport {
         FileUtil.touch(testPack2);
         FileUtil.touch(testPack3);
 
-        contentPackImport.start();
+        contentPackImport.startup();
         Mockito.verify(importExportService, Mockito.times(1))
                 .performImportWithoutConfirmation(testPack1);
         Mockito.verify(importExportService, Mockito.times(1))
@@ -144,7 +144,7 @@ class TestContentPackImport {
 
         FileUtil.touch(testPack1);
 
-        contentPackImport.start();
+        contentPackImport.startup();
 
         //File should have moved into the failed dir
         assertThat(Files.exists(testPack1)).isFalse();

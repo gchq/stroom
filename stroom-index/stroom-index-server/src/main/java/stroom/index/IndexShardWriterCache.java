@@ -36,5 +36,5 @@ public interface IndexShardWriterCache {
 
     void delete(long indexShardId);
 
-    void stop();
+    void shutdown();
 }

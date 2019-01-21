@@ -23,7 +23,6 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.event.EntityEvent;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.lifecycle.LifecycleAwareBinder;
 
 public class ClusterModule extends AbstractModule {
     @Override
@@ -40,8 +39,6 @@ public class ClusterModule extends AbstractModule {
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);
-
-        LifecycleAwareBinder.create(binder()).bind(ClusterNodeManagerImpl.class);
     }
 
     @Override

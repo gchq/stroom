@@ -30,7 +30,6 @@ import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -46,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
-public class ClusterNodeManagerImpl implements LifecycleAware, ClusterNodeManager, EntityEvent.Handler {
+public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterNodeManagerImpl.class);
 
     private static final int ONE_SECOND = 1000;
@@ -74,8 +73,7 @@ public class ClusterNodeManagerImpl implements LifecycleAware, ClusterNodeManage
         this.clientProperties = clientProperties;
     }
 
-    @Override
-    public void start() {
+    public void init() {
         // Run initial query of cluster state.
         updateClusterStateAsync(REQUERY_DELAY, false);
     }

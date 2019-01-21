@@ -33,7 +33,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.TaskConsumer;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
@@ -47,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements LifecycleAware, JobService {
+class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
@@ -64,8 +63,7 @@ class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implem
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
-    @Override
-    public void start() {
+    public void startup() {
         LOGGER.info("startup()");
 
         final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();

@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
-import stroom.lifecycle.LifecycleTask;
 import stroom.task.api.TaskManager;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.TaskConsumer;
@@ -62,7 +61,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
             try {
                 final ScheduledJobFunction function = create(scheduledJob);
                 if (function != null) {
-                    taskManager.execAsync(new LifecycleTask(scheduledJob.getName(), function::exec, new AtomicBoolean()));
+                    taskManager.execAsync(new ScheduledTask(scheduledJob.getName(), function::exec, new AtomicBoolean()));
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);

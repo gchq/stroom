@@ -17,7 +17,6 @@
 package stroom.resource;
 
 import stroom.util.io.FileUtil;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Singleton;
@@ -34,7 +33,7 @@ import java.util.Set;
  * it.
  */
 @Singleton
-public class ResourceStoreImpl implements LifecycleAware, ResourceStore {
+public class ResourceStoreImpl implements ResourceStore {
     private Set<ResourceKey> currentFiles = new HashSet<>();
     private Set<ResourceKey> oldFiles = new HashSet<>();
     private long sequence;
@@ -52,16 +51,13 @@ public class ResourceStoreImpl implements LifecycleAware, ResourceStore {
         return tempDir;
     }
 
-    @Override
-    public void start() {
+    void startup() {
         FileUtil.deleteContents(getTempFile());
     }
 
-    @Override
-    public void stop() {
+    void shutdown() {
         FileUtil.deleteContents(getTempFile());
     }
-
 
     @Override
     public synchronized ResourceKey createTempFile(final String name) {

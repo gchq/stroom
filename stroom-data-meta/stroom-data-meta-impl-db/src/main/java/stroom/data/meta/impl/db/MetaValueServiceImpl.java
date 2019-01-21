@@ -25,7 +25,6 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataRow;
 import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
-import stroom.util.lifecycle.LifecycleAware;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
 import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaValueServiceImpl implements LifecycleAware, MetaValueService {
+class MetaValueServiceImpl implements MetaValueService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaValueServiceImpl.class);
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
@@ -90,12 +89,6 @@ class MetaValueServiceImpl implements LifecycleAware, MetaValueService {
         });
     }
 
-    @Override
-    public void stop() {
-        flush();
-    }
-
-    // TODO : @66 MAKE SURE THIS GETS CALLED
     @Override
     public void flush() {
         boolean ranOutOfItems = false;
@@ -230,7 +223,6 @@ class MetaValueServiceImpl implements LifecycleAware, MetaValueService {
         }
     }
 
-    // TODO : @66 MAKE SURE THIS GETS CALLED
     @Override
     public void deleteOldValues() {
         // TODO : @66 ACQUIRE A CLUSTER LOCK BEFORE PERFORMING A BATCH DELETE TO REDUCE DB CONTENTION AND TO LET A SINGLE NODE DO THE JOB.

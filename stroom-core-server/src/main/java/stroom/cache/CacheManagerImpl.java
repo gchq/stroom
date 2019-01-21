@@ -21,20 +21,14 @@ import com.google.common.cache.CacheBuilder;
 import stroom.util.cache.CacheHolder;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
-import stroom.util.lifecycle.LifecycleAware;
 
 import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class CacheManagerImpl implements CacheManager, LifecycleAware {
+public class CacheManagerImpl implements CacheManager {
     private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
-
-    @Override
-    public void stop() {
-        close();
-    }
 
     @Override
     public synchronized void close() {
