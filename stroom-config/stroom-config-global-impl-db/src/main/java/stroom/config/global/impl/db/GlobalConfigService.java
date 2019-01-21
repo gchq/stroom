@@ -27,4 +27,6 @@ public interface GlobalConfigService {
     ConfigProperty load(ConfigProperty configProperty);
 
     ConfigProperty save(ConfigProperty configProperty);
+
+    void updateConfigObjects();
 }

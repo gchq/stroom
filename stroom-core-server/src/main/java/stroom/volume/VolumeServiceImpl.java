@@ -47,8 +47,6 @@ import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticKey;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.io.FileUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -305,8 +303,6 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
         return state;
     }
 
-    @StroomFrequencySchedule("5m")
-    @JobTrackedSchedule(jobName = "Volume Status", advanced = false, description = "Update the usage status of volumes owned by the node")
     @Override
     public void flush() {
         refresh();

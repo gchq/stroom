@@ -34,4 +34,6 @@ public interface StreamTaskCreator {
     void startup();
 
     void shutdown();
+
+    void writeQueueStatistics();
 }

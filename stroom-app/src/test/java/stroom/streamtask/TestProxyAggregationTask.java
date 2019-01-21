@@ -81,7 +81,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                            final long maxStreamSize) {
         final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedDocCache, metaDataStatistic, maxAggregation, maxStreamSize, bufferFactory);
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskContext, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
-        proxyAggregationExecutor.exec(new DummyTask());
+        proxyAggregationExecutor.exec();
     }
 
     private void aggregate(final String proxyDir,

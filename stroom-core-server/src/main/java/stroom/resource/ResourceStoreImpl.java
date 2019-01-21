@@ -18,7 +18,6 @@ package stroom.resource;
 
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
 
@@ -98,7 +97,6 @@ public class ResourceStoreImpl implements ResourceStore {
         FileUtil.deleteContents(getTempFile());
     }
 
-    @StroomFrequencySchedule("1h")
     public void execute() {
         flipStore();
     }

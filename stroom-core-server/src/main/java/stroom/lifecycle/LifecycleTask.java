@@ -20,18 +20,32 @@ import stroom.util.shared.VoidResult;
 import stroom.task.api.ServerTask;
 
 public class LifecycleTask extends ServerTask<VoidResult> {
-    private final StroomBeanMethodExecutable executable;
+    private StroomBeanMethodExecutable executable;
+    private StroomBeanFunction function;
 
     public LifecycleTask(final StroomBeanMethodExecutable executable) {
         this.executable = executable;
+    }
+
+    public LifecycleTask(final StroomBeanFunction function) {
+        this.function = function;
     }
 
     public StroomBeanMethodExecutable getExecutable() {
         return executable;
     }
 
+    public StroomBeanFunction getFunction() {
+        return function;
+    }
+
     @Override
     public String getTaskName() {
-        return executable.toString();
+        if(executable != null){
+            return executable.toString();
+        }else {
+            return function.toString();
+        }
     }
+
 }
