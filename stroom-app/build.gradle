@@ -172,6 +172,8 @@ dependencies {
     testImplementation libs.commons_io
     testImplementation libs.fast_classpath_scanner
     testImplementation libs.guice4
+    testImplementation libs.hibernate_core
+    testImplementation libs.hibernate_jpa_api
     testImplementation libs.hikari
     testImplementation libs.junit_jupiter_api
     testImplementation libs.lucene_core

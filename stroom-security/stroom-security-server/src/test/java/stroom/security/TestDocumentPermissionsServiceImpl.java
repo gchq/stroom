@@ -32,7 +32,6 @@ import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;
 
-import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -111,7 +110,7 @@ class TestDocumentPermissionsServiceImpl {
         for (final String permission : permissions) {
             try {
                 documentPermissionService.addPermission(user, docRef, permission);
-            } catch (final PersistenceException e) {
+            } catch (final Exception e) {
                 LOGGER.info(e.getMessage());
             }
         }
