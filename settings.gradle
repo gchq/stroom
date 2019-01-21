@@ -137,6 +137,7 @@ include 'stroom-task:stroom-task-shared'
 include 'stroom-job:stroom-job-api'
 include 'stroom-job:stroom-job-impl'
 include 'stroom-job:stroom-job-impl-db'
+include 'stroom-job:stroom-job-shared'
 
 // Test project
 include 'stroom-test-common'

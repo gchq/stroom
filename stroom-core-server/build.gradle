@@ -22,6 +22,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-job:stroom-job-shared')
 
     implementation libs.eventLogging
     implementation libs.stroomDocRef
