@@ -22,7 +22,17 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.impl.db.ExplorerDbModule;
-import stroom.task.api.TaskHandler;
+import stroom.explorer.shared.ExplorerServiceCopyAction;
+import stroom.explorer.shared.ExplorerServiceCreateAction;
+import stroom.explorer.shared.ExplorerServiceDeleteAction;
+import stroom.explorer.shared.ExplorerServiceInfoAction;
+import stroom.explorer.shared.ExplorerServiceMoveAction;
+import stroom.explorer.shared.ExplorerServiceRenameAction;
+import stroom.explorer.shared.FetchDocRefsAction;
+import stroom.explorer.shared.FetchDocumentTypesAction;
+import stroom.explorer.shared.FetchExplorerNodeAction;
+import stroom.explorer.shared.FetchExplorerPermissionsAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ExplorerModule extends AbstractModule {
     @Override
@@ -33,20 +43,20 @@ public class ExplorerModule extends AbstractModule {
         bind(ExplorerService.class).to(ExplorerServiceImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.ExplorerServiceCopyHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.ExplorerServiceCreateHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.ExplorerServiceDeleteHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.ExplorerServiceInfoHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.ExplorerServiceMoveHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.ExplorerServiceRenameHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.FetchDocRefsHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.FetchDocumentTypesHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.FetchExplorerNodeHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.explorer.FetchExplorerPermissionsHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(ExplorerServiceCopyAction.class, ExplorerServiceCopyHandler.class)
+                .bind(ExplorerServiceCreateAction.class, ExplorerServiceCreateHandler.class)
+                .bind(ExplorerServiceDeleteAction.class, ExplorerServiceDeleteHandler.class)
+                .bind(ExplorerServiceInfoAction.class, ExplorerServiceInfoHandler.class)
+                .bind(ExplorerServiceMoveAction.class, ExplorerServiceMoveHandler.class)
+                .bind(ExplorerServiceRenameAction.class, ExplorerServiceRenameHandler.class)
+                .bind(FetchDocRefsAction.class, FetchDocRefsHandler.class)
+                .bind(FetchDocumentTypesAction.class, FetchDocumentTypesHandler.class)
+                .bind(FetchExplorerNodeAction.class, FetchExplorerNodeHandler.class)
+                .bind(FetchExplorerPermissionsAction.class, FetchExplorerPermissionsHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.explorer.FolderExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.explorer.SystemExplorerActionHandler.class);
+        explorerActionHandlerBinder.addBinding().to(FolderExplorerActionHandler.class);
+        explorerActionHandlerBinder.addBinding().to(SystemExplorerActionHandler.class);
     }
 }

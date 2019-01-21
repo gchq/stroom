@@ -16,18 +16,17 @@
 
 package stroom.pipeline;
 
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = PipelineStepAction.class)
+
 class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
     private final StreamEventLog streamEventLog;

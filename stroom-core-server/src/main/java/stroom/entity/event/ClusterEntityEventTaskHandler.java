@@ -20,12 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = ClusterEntityEventTask.class)
+
 class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterEntityEventTaskHandler.class);
 

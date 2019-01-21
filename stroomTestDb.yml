@@ -1,0 +1,15 @@
+version: '2.1'
+
+services: 
+
+  stroom-query-test-db:
+    image:  "mysql:5.6.41"
+    container_name: stroom-test-db
+    ports:
+        # Expose mysql on 14450
+      - "14450:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=test
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=test

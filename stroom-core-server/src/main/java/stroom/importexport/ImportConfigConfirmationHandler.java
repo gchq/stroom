@@ -22,12 +22,11 @@ import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = ImportConfigConfirmationAction.class)
+
 class ImportConfigConfirmationHandler
         extends AbstractTaskHandler<ImportConfigConfirmationAction, SharedList<ImportState>> {
     private final ImportExportService importExportService;

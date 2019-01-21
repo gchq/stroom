@@ -17,8 +17,6 @@
 package stroom.dashboard.logging;
 
 import com.google.inject.AbstractModule;
-import stroom.dictionary.DictionaryStore;
-import stroom.logging.StroomEventLoggingService;
 
 public class LoggingModule extends AbstractModule {
     @Override

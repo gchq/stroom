@@ -20,12 +20,11 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.security.Security;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedInteger;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = UpdateStatusAction.class)
+
 class UpdateStatusHandler extends AbstractTaskHandler<UpdateStatusAction, SharedInteger> {
     private final DataMetaService streamMetaService;
     private final Security security;

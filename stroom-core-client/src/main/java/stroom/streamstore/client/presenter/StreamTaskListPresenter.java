@@ -25,17 +25,18 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.meta.api.DataStatus;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.data.meta.api.DataStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -50,6 +51,8 @@ import java.util.ArrayList;
 
 public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
     private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> dataProvider;
+
+    private FindStreamTaskCriteria criteria;
 
     @Inject
     public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
@@ -205,21 +208,22 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
     }
 
     private void setFeedCriteria(final String feedName) {
-        final FindStreamTaskCriteria criteria = initCriteria(feedName, null);
-        dataProvider.setCriteria(criteria);
+        criteria = initCriteria(feedName, null);
+        dataProvider.setAction(new EntityServiceFindAction<>(criteria));
     }
 
     public FindStreamTaskCriteria getCriteria() {
-        return dataProvider.getCriteria();
+        return criteria;
     }
 
     private void setPipelineCriteria(final DocRef pipelineRef) {
-        final FindStreamTaskCriteria criteria = initCriteria(null, pipelineRef);
-        dataProvider.setCriteria(criteria);
+        criteria = initCriteria(null, pipelineRef);
+        dataProvider.setAction(new EntityServiceFindAction<>(criteria));
     }
 
     private void setNullCriteria() {
-        dataProvider.setCriteria(initCriteria(null, null));
+        criteria = initCriteria(null, null);
+        dataProvider.setAction(new EntityServiceFindAction<>(criteria));
     }
 
     public void clear() {

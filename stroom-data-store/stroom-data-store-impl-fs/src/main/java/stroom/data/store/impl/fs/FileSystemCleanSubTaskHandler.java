@@ -18,13 +18,12 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.Security;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
-import stroom.task.api.AbstractTaskHandler;
+import stroom.security.Security;
 import stroom.task.TaskCallbackAdaptor;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 
@@ -33,7 +32,7 @@ import javax.inject.Inject;
 /**
  * Task to clean the stream store.
  */
-@TaskHandlerBean(task = FileSystemCleanSubTask.class)
+
 class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanSubTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanSubTaskHandler.class);
 

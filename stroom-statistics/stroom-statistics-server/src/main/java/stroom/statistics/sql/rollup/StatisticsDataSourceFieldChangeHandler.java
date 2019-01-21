@@ -21,12 +21,11 @@ import stroom.statistics.shared.StatisticsDataSourceFieldChangeAction;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@TaskHandlerBean(task = StatisticsDataSourceFieldChangeAction.class)
+
 class StatisticsDataSourceFieldChangeHandler
         extends AbstractTaskHandler<StatisticsDataSourceFieldChangeAction, StatisticsDataSourceData> {
     @Override

@@ -5,6 +5,7 @@ dependencies {
     implementation libs.stroomQueryApi
 
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util-shared')
 
     implementation libs.hibernate_jpa_api
@@ -15,9 +16,9 @@ dependencies {
     
     runtimeOnly libs.jackson_annotations
     runtimeOnly libs.jsinterop_annotations
-
+    
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

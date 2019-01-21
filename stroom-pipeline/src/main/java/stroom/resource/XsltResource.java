@@ -3,19 +3,20 @@ package stroom.resource;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.pipeline.XsltStore;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.security.Security;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(
-        value = "xslt - /v1",
-        description = "Stroom XSLT API")
+@Api(value = "xslt - /v1")
 @Path("/xslt/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class XsltResource {

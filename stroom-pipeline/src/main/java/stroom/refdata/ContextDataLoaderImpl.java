@@ -20,7 +20,7 @@ import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
 import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefStreamDefinition;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 
 import javax.inject.Inject;
 import java.io.InputStream;

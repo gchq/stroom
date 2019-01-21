@@ -24,16 +24,15 @@ import event.logging.Query.Advanced;
 import stroom.docref.SharedObject;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
-import stroom.logging.DocumentEventLog;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedLong;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@TaskHandlerBean(task = EntityServiceFindDeleteAction.class)
+
 class EntityServiceFindDeleteHandler
         extends AbstractTaskHandler<EntityServiceFindDeleteAction<BaseCriteria, SharedObject>, SharedLong> {
     private final EntityServiceBeanRegistry beanRegistry;

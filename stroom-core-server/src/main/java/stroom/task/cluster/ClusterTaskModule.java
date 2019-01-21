@@ -18,22 +18,24 @@ package stroom.task.cluster;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
+import stroom.cluster.impl.ClusterServiceBinder;
 import stroom.entity.shared.Clearable;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClusterDispatchAsync.class).to(ClusterDispatchAsyncImpl.class);
-        bind(Object.class).annotatedWith(Names.named(ClusterDispatchAsyncImpl.BEAN_NAME)).to(ClusterDispatchAsyncImpl.class);
-        bind(Object.class).annotatedWith(Names.named(ClusterWorkerImpl.BEAN_NAME)).to(ClusterWorkerImpl.class);
+
+        ClusterServiceBinder.create(binder())
+                .bind(ClusterDispatchAsyncImpl.SERVICE_NAME, ClusterDispatchAsyncImpl.class)
+                .bind(ClusterWorkerImpl.SERVICE_NAME, ClusterWorkerImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(ClusterResultCollectorCache.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.task.cluster.TerminateTaskClusterHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(TerminateTaskClusterTask.class, TerminateTaskClusterHandler.class);
     }
 
     @Override

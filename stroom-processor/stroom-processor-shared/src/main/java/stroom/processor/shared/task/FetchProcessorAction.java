@@ -16,7 +16,7 @@
 
 package stroom.processor.shared.task;
 
-import stroom.dispatch.shared.TreeAction;
+import stroom.util.shared.TreeAction;
 import stroom.task.shared.Action;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;

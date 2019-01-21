@@ -21,7 +21,6 @@ package stroom.dashboard;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -29,42 +28,42 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
-import stroom.visualisation.VisualisationStore;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestSearchRequestMapper {
-    @Mock
-    private VisualisationStore visualisationStore;
+//    @Mock
+//    private VisualisationStore visualisationStore;
 
     @InjectMocks
     private SearchRequestMapper searchRequestMapper;
 
     private static void verify_Search_to_Query_mapping(Search search, Query query) {
-        assertThat(search.getDataSourceRef(), equalTo(query.getDataSource()));
-        assertThat(search.getExpression(), equalTo(query.getExpression()));
-        assertThat(search.getParamMap().size(), equalTo(query.getParams().size()));
-        assertThat(search.getParamMap().get("param1"), equalTo(query.getParams().get(0).getValue())); // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
+        assertThat(search.getDataSourceRef()).isEqualTo(query.getDataSource());
+        assertThat(search.getExpression()).isEqualTo(query.getExpression());
+        assertThat(search.getParamMap().size()).isEqualTo(query.getParams().size());
+        assertThat(search.getParamMap().get("param1")).isEqualTo(query.getParams().get(0).getValue());
+        // 'param1' is the key from SearchRequestTestData.dashboardSearchRequest()
     }
 
     private static void verify_ComponentResultRequest_to_ResultRequest_mappings(
             Map<String, ComponentResultRequest> componentResultRequestMap,
             List<ResultRequest> resultRequests) {
 
-        assertThat(componentResultRequestMap.size(), equalTo(resultRequests.size()));
-        assertThat("componentSettingsMapKey", equalTo(resultRequests.get(0).getComponentId()));
-        assertThat(componentResultRequestMap.get("componentSettingsMapKey").getFetch(), equalTo(resultRequests.get(0).getFetch()));
+        assertThat(componentResultRequestMap.size()).isEqualTo(resultRequests.size());
+        assertThat("componentSettingsMapKey").isEqualTo(resultRequests.get(0).getComponentId());
+        assertThat(componentResultRequestMap.get("componentSettingsMapKey").getFetch()).isEqualTo(resultRequests.get(0).getFetch());
 
         TableResultRequest tableResultRequest = ((TableResultRequest) componentResultRequestMap.get("componentSettingsMapKey"));
         ResultRequest resultRequest = resultRequests.get(0);
-        assertThat(tableResultRequest.getRequestedRange().getOffset().toString(), equalTo(resultRequest.getRequestedRange().getOffset().toString()));
-        assertThat(tableResultRequest.getRequestedRange().getLength().toString(), equalTo(resultRequest.getRequestedRange().getLength().toString()));
-        assertThat(tableResultRequest.getOpenGroups(), equalTo(resultRequest.getOpenGroups())); // No test data for this at the moment
+        assertThat(tableResultRequest.getRequestedRange().getOffset().toString()).isEqualTo(resultRequest.getRequestedRange().getOffset().toString());
+        assertThat(tableResultRequest.getRequestedRange().getLength().toString()).isEqualTo(resultRequest.getRequestedRange().getLength().toString());
+        assertThat(tableResultRequest.getOpenGroups()).isEqualTo(resultRequest.getOpenGroups());
+        // No test data for this at the moment
         //TODO many more properties to check
     }
 

@@ -20,18 +20,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceRemote;
+import stroom.cluster.api.ServiceName;
+import stroom.docref.SharedObject;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
-import stroom.docref.SharedObject;
+import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 public class ClusterWorkerImpl implements ClusterWorker {
-    public static final String BEAN_NAME = "clusterWorker";
+    public static final ServiceName SERVICE_NAME = new ServiceName("clusterWorker");
     static final String EXEC_ASYNC_METHOD = "execAsync";
     static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class, CollectorId.class};
 
@@ -46,7 +47,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
     @Inject
     public ClusterWorkerImpl(final TaskManager taskManager,
                              final NodeCache nodeCache,
-                             @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
+                             final ClusterCallServiceRemote clusterCallService) {
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;
         this.clusterCallService = clusterCallService;
@@ -134,7 +135,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     // Trace attempt to send result.
                     LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode.getName(), tryCount);
                     // Send result.
-                    ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.BEAN_NAME,
+                    ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.SERVICE_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{task, targetNode,
                                     sourceTaskId, collectorId, result, t, Boolean.valueOf(success)});

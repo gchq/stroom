@@ -20,9 +20,10 @@ package stroom.xmlschema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -52,18 +53,17 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     private final Store<XmlSchemaDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser2<XmlSchemaDoc> serialiser;
+    private final DocumentSerialiser2<XmlSchemaDoc> serialiser;
 
     @Inject
-    public XmlSchemaStoreImpl(final Store<XmlSchemaDoc> store, final SecurityContext securityContext, final Persistence persistence) {
-        this.store = store;
+    public XmlSchemaStoreImpl(final StoreFactory storeFactory,
+                              final SecurityContext securityContext,
+                              final Persistence persistence,
+                              final XmlSchemaSerialiser serialiser) {
+        this.serialiser = serialiser;
+        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new XmlSchemaSerialiser();
-
-        store.setType(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
-        store.setSerialiser(serialiser);
     }
 
     ////////////////////////////////////////////////////////////////////////

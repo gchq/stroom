@@ -4,16 +4,22 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-data-store:stroom-data-store-api')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-entity-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -79,10 +85,9 @@ dependencies {
     testImplementation project(':stroom-test-common')
     
     testImplementation libs.assertj_core
+    testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
-
-    testCompileOnly libs.junit_jupiter_api
     
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

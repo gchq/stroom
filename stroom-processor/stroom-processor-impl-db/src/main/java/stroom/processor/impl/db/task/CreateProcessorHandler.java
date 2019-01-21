@@ -17,14 +17,16 @@
 
 package stroom.processor.impl.db.task;
 
+import stroom.processor.impl.db.tables.ProcessorFilter;
+import stroom.processor.shared.task.CreateProcessorAction;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.task.api.TaskHandlerBean;
+import stroom.streamtask.StreamProcessorFilterService;
+import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = CreateProcessorAction.class)
+
 class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorAction, ProcessorFilter> {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final Security security;

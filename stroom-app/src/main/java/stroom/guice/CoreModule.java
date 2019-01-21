@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
+import stroom.docstore.impl.DocStoreModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.scope.PipelineScopeModule;
@@ -13,7 +14,7 @@ import stroom.statistics.sql.SQLStatisticsModule;
 public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new stroom.activity.server.ActivityModule());
+        install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.cache.CacheModule());
         install(new stroom.cache.PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
@@ -22,7 +23,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.datasource.DatasourceModule());
         install(new stroom.dictionary.DictionaryModule());
         install(new stroom.dictionary.DictionaryHandlerModule());
-        install(new stroom.docstore.db.DBPersistenceModule());
+        install(new DocStoreModule());
+        install(new stroom.docstore.impl.db.DBPersistenceModule());
         install(new stroom.document.DocumentModule());
         install(new stroom.elastic.impl.ElasticModule());
         install(new stroom.elastic.impl.http.HttpElasticModule());
@@ -41,7 +43,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.lifecycle.LifecycleModule());
-        install(new stroom.logging.LoggingModule());
+        install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.node.NodeModule());
         install(new stroom.node.NodeHandlerModule());
         install(new stroom.node.NodeServiceModule());

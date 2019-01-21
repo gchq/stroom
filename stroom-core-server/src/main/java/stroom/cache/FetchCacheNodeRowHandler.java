@@ -22,15 +22,13 @@ import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheNodeRow;
 import stroom.cache.shared.FetchCacheNodeRowAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.node.shared.Node;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
@@ -40,7 +38,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-@TaskHandlerBean(task = FetchCacheNodeRowAction.class)
+
 class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowAction, ResultList<CacheNodeRow>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchCacheNodeRowHandler.class);
 
@@ -61,8 +59,8 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
 
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(action.getCacheName(), null));
-            final FindServiceClusterTask<FindCacheInfoCriteria, CacheInfo> task = new FindServiceClusterTask<>(
-                    action.getUserToken(), "Find cache info", StroomCacheManager.class, criteria);
+            final FetchCacheNodeRowClusterTask task = new FetchCacheNodeRowClusterTask(
+                    action.getUserToken(), "Find cache info", criteria);
             final DefaultClusterResultCollector<ResultList<CacheInfo>> collector = dispatchHelper.execAsync(task,
                     TargetType.ACTIVE);
 

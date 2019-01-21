@@ -18,7 +18,6 @@ package stroom.task;
 
 import com.google.common.base.Functions;
 import stroom.docref.SharedObject;
-import stroom.entity.cluster.FindServiceClusterTask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
@@ -61,8 +60,8 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
             // Don't page limit the first query
             criteria.setPageRequest(new PageRequest());
 
-            final FindServiceClusterTask<FindTaskProgressCriteria, TaskProgress> clusterTask = new FindServiceClusterTask<>(
-                    action.getUserToken(), action.getTaskName(), TaskManager.class, criteria);
+            final FindTaskProgressClusterTask clusterTask = new FindTaskProgressClusterTask(
+                    action.getUserToken(), action.getTaskName(), criteria);
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 

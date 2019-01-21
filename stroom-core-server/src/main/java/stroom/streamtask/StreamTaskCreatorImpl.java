@@ -52,7 +52,7 @@ import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;

@@ -19,7 +19,6 @@ package stroom.pipeline.factory;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.pipeline.filter.XsltFilter;
 
 public class PipelineFactoryModule extends AbstractModule {
     @Override

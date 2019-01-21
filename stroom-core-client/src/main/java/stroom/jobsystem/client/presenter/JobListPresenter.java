@@ -35,12 +35,13 @@ import stroom.entity.client.SaveQueue;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityRow;
+import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -147,7 +148,8 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
         final FindJobCriteria findJobCriteria = new FindJobCriteria();
         findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
         findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
-        this.dataProvider.setCriteria(findJobCriteria);
+        final EntityServiceFindAction<FindJobCriteria, Job> action = new EntityServiceFindAction<>(findJobCriteria);
+        this.dataProvider.setAction(action);
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {

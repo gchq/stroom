@@ -17,7 +17,7 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.slf4j_api
 
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

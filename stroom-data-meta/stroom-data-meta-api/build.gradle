@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.data.meta.api'
 
 dependencies {
-    implementation project(':stroom-entity-shared') // TODO : @66 TRY AND BREAK OUT SHARED CLASSES
     implementation project(':stroom-util-shared')
     
     implementation libs.stroomDocRef

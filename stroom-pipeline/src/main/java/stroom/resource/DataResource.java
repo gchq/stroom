@@ -21,7 +21,7 @@ package stroom.resource;
 import io.swagger.annotations.Api;
 import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedProperties;
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.DataFetcher;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -48,9 +48,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Api(
-        value = "data - /v1",
-        description = "Stroom Data API")
+@Api(value = "data - /v1")
 @Path("/data/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class DataResource {

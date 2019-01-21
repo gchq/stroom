@@ -3,8 +3,7 @@ package stroom.util.shared;
 
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class EqualsBuilderTest {
 
@@ -13,8 +12,8 @@ class EqualsBuilderTest {
         int[] array1 = {1, 2, 3};
         int[] array2 = {1, 2, 3};
         int[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -22,8 +21,8 @@ class EqualsBuilderTest {
         long[] array1 = {1, 2, 3};
         long[] array2 = {1, 2, 3};
         long[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -31,8 +30,8 @@ class EqualsBuilderTest {
         short[] array1 = {1, 2, 3};
         short[] array2 = {1, 2, 3};
         short[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -40,8 +39,8 @@ class EqualsBuilderTest {
         char[] array1 = {1, 2, 3};
         char[] array2 = {1, 2, 3};
         char[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -49,8 +48,8 @@ class EqualsBuilderTest {
         byte[] array1 = {1, 2, 3};
         byte[] array2 = {1, 2, 3};
         byte[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -58,8 +57,8 @@ class EqualsBuilderTest {
         double[] array1 = {1, 2, 3};
         double[] array2 = {1, 2, 3};
         double[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -67,8 +66,8 @@ class EqualsBuilderTest {
         float[] array1 = {1, 2, 3};
         float[] array2 = {1, 2, 3};
         float[] array3 = {1, 2, 99};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 
     @Test
@@ -76,7 +75,7 @@ class EqualsBuilderTest {
         boolean[] array1 = {true, false, true};
         boolean[] array2 = {true, false, true};
         boolean[] array3 = {true, false, false};
-        assertThat(new EqualsBuilder().append(array1, array2).isEquals(), equalTo(true));
-        assertThat(new EqualsBuilder().append(array1, array3).isEquals(), equalTo(false));
+        assertThat(new EqualsBuilder().append(array1, array2).isEquals()).isTrue();
+        assertThat(new EqualsBuilder().append(array1, array3).isEquals()).isFalse();
     }
 }

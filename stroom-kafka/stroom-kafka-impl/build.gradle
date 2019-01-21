@@ -4,7 +4,8 @@ ext.moduleName = 'stroom.kafka.client.impl'
 
 dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    //implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
@@ -25,7 +26,7 @@ dependencies {
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
 
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

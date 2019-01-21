@@ -1,8 +1,10 @@
 package stroom.config.global.impl.db;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.config.global.api.FetchGlobalConfigAction;
+import stroom.config.global.api.LoadGlobalConfigAction;
+import stroom.config.global.api.SaveGlobalConfigAction;
+import stroom.task.api.TaskHandlerBinder;
 
 public class GlobalConfigModule extends AbstractModule {
     @Override
@@ -10,10 +12,10 @@ public class GlobalConfigModule extends AbstractModule {
         bind(ConfigMapper.class).toProvider(ConfigMapper.ConfigMapperFactory.class);
         bind(ConfigInitialiser.class).asEagerSingleton();
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(FetchGlobalConfigHandler.class);
-        taskHandlerBinder.addBinding().to(LoadGlobalConfigHandler.class);
-        taskHandlerBinder.addBinding().to(SaveGlobalConfigHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(FetchGlobalConfigAction.class, FetchGlobalConfigHandler.class)
+                .bind(LoadGlobalConfigAction.class, LoadGlobalConfigHandler.class)
+                .bind(SaveGlobalConfigAction.class, SaveGlobalConfigHandler.class);
     }
 
     @Override

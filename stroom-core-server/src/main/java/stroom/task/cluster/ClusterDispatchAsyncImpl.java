@@ -20,10 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceRemote;
+import stroom.cluster.api.ServiceName;
 import stroom.node.shared.Node;
 import stroom.task.CurrentTaskState;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskManager;
+import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;
@@ -33,7 +35,6 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Entry to point to distribute cluster tasks in system.
  */
 public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
-    static final String BEAN_NAME = "clusterDispatchAsync";
+    static final ServiceName SERVICE_NAME = new ServiceName("clusterDispatchAsync");
     static final String RECEIVE_RESULT_METHOD = "receiveResult";
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
     static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class,
@@ -56,7 +57,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     @Inject
     ClusterDispatchAsyncImpl(final TaskManager taskManager,
                              final ClusterResultCollectorCache collectorCache,
-                             @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService) {
+                             final ClusterCallServiceRemote clusterCallService) {
         this.taskManager = taskManager;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;
@@ -126,7 +127,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             // asynchronously.
             clusterCallTask.setRunnable(() -> {
                 try {
-                    clusterCallService.call(sourceNode, targetNode, ClusterWorkerImpl.BEAN_NAME,
+                    clusterCallService.call(sourceNode, targetNode, ClusterWorkerImpl.SERVICE_NAME,
                             ClusterWorkerImpl.EXEC_ASYNC_METHOD, ClusterWorkerImpl.EXEC_ASYNC_METHOD_ARGS,
                             new Object[]{clusterTask, sourceNode, sourceTaskId, collectorId});
                 } catch (final RuntimeException e) {

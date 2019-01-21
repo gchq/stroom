@@ -17,11 +17,11 @@
 package stroom.task.api;
 
 import stroom.security.util.UserTokenUtil;
-import stroom.util.shared.ModelStringUtil;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
+import stroom.util.shared.ModelStringUtil;
 
 public abstract class ServerTask<R> implements Task<R> {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);

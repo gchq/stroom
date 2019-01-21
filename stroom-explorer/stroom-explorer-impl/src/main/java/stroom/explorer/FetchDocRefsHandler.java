@@ -18,21 +18,20 @@ package stroom.explorer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.explorer.shared.SharedDocRef;
+import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchDocRefsAction;
-import stroom.docref.DocRef;
+import stroom.explorer.shared.SharedDocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedSet;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = FetchDocRefsAction.class)
+
 class FetchDocRefsHandler
         extends AbstractTaskHandler<FetchDocRefsAction, SharedSet<SharedDocRef>> {
     private final Logger LOGGER = LoggerFactory.getLogger(FetchDocRefsHandler.class);

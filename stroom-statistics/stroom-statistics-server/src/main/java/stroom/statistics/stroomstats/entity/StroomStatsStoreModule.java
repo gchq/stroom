@@ -17,8 +17,8 @@
 package stroom.statistics.stroomstats.entity;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.stats.shared.StroomStatsStoreDoc;
@@ -34,8 +34,8 @@ public class StroomStatsStoreModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(StroomStatsStoreStoreImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(StroomStatsStoreDoc.DOCUMENT_TYPE).to(StroomStatsStoreStoreImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreStoreImpl.class);
 
 //        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(StroomStatsStoreStoreImpl.class);

@@ -2,17 +2,12 @@ package stroom.security;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import stroom.logging.AuthenticationEventLog;
 import stroom.security.shared.UserRef;
 import stroom.servlet.SessionListListener;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -21,9 +16,7 @@ import javax.ws.rs.core.Response;
  * needs to ask all relying parties to log out. This is the back-channel resource that allows this to
  * happen.
  */
-@Api(
-        value = "session - /v1",
-        description = "Stroom Session API")
+@Api(value = "session - /v1")
 @Path("/session/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class SessionResource {

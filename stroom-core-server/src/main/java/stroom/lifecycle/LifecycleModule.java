@@ -17,15 +17,14 @@
 package stroom.lifecycle;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBinder;
 
 public class LifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(LifecycleService.class).to(LifecycleServiceImpl.class);
 
-        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.lifecycle.LifecycleTaskHandler.class);
+        TaskHandlerBinder.create(binder())
+                .bind(LifecycleTask.class, LifecycleTaskHandler.class);
     }
 }

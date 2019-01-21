@@ -1,9 +1,8 @@
 ext.moduleName = 'stroom.config.global.api'
 
 dependencies {
-    //implementation project(':stroom-util-shared')
-    implementation project(':stroom-entity-shared')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
 }

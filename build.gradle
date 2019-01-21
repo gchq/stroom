@@ -97,13 +97,13 @@ ext.versions = [
         jackson           : '2.9.5', //in line with dropwizard 1.3.3
         jersey            : '2.25.1',
         jetty             : '9.4.10.v20180503', //in line with dropwizard 1.3.3
+        junit_jupiter     : '5.3.2',
         jooq              : '3.11.9',
-        junit_jupiter     : '5.2.0',
         logback           : '1.2.3', //in line with dropwizard 1.3.3
         lucene            : '5.5.3',
         rxjava            : '2.1.10',
         slf4j             : '1.7.25', //in line with dropwizard 1.3.3
-        swagger           : '1.5.16',
+        swagger           : '1.5.21',
         unirest           : '1.4.9',
         zzDUMMYzz         : 'makes sorting easier'
 ]
@@ -165,7 +165,6 @@ ext.libs = [
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
-        hamcrest_core                  : "org.hamcrest:hamcrest-core:1.3",
         hbase                          : "org.apache.hbase:hbase-common:1.2.1", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
         hibernate_core                 : "org.hibernate:hibernate-core:$versions.hibernate" /* LATEST 5.2.13.Final */,
@@ -232,6 +231,8 @@ ext.libs = [
         slf4j_api                      : "org.slf4j:slf4j-api:$versions.slf4j",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
+        test_containers                : "org.testcontainers:testcontainers:1.8.0",
+        test_containers_mysql          : "org.testcontainers:mysql:1.8.0",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         validation_api                 : "javax.validation:validation-api:1.0.0.GA", //GWT 2.8.0 throws errors on gwtCompile if validation-api 1.1.0.Final is used
         vavr                           : "io.vavr:vavr:0.9.0",
@@ -295,18 +296,6 @@ subprojects {
     sourceCompatibility = JavaVersion.VERSION_1_10
     targetCompatibility = JavaVersion.VERSION_1_10
 
-    sourceSets {
-        // This lets us use different directories for our integration tests.
-        integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integrationTest/java')
-            }
-            resources.srcDir file('src/integrationTest/resources')
-        }
-    }
-
     configurations {
 
         // ensure deps don't bring any logging implementations with them as this will
@@ -340,10 +329,6 @@ subprojects {
                 ]
             }
         }
-
-        // This means our integration tests get all the dependencies from our tests and we don't need to specify them twice.
-        integrationTestImplementation.extendsFrom testImplementation
-        integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
     }
 
     repositories {
@@ -355,20 +340,21 @@ subprojects {
 
     test {
         useJUnitPlatform()
-    }
 
-    // This means the reports from our integration tests won't over-write the reports from our unit tests.
-    tasks.withType(Test) {
         reports.html.destination = file("${reporting.baseDir}/${name}")
         
-        afterSuite { desc, result ->
-            if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
+        afterSuite { descriptor, result ->
+            //println "Executed suite ${descriptor.name} ${descriptor.className} with result: ${result.resultType}"
+
+            if (descriptor != null 
+                    && descriptor.className != null 
+                    && result.resultType.toString() == "FAILURE") {
 
                 //test class failed so add its project info and test report file to a global list for
                 //processing at the end of the build
-                def reportFileName = "${reports.junitXml.destination}/TEST-${desc.className}.xml"
+                def reportFileName = "${reports.junitXml.destination}/TEST-${descriptor.className}.xml"
                 def reportFile = file(reportFileName)
-                def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
+                def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
                 failedTestReportFiles.add(pair)
             }
         }
@@ -381,46 +367,14 @@ subprojects {
         }
     }
 
-    // This task lets us run the actual integration tests.
-    task integrationTest(type: Test) {
-        useJUnitPlatform()
-        
-        testClassesDirs = sourceSets.integrationTest.output.classesDirs
-        classpath = sourceSets.integrationTest.runtimeClasspath
-
-        // Integration tests are quite slow so output progress for each test to keep travis alive
-        afterTest { desc, result ->
-            println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
-        }
-
-        //afterSuite { desc, result -> 
-        //if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
-        ////test class failed so add its project info and test report file to a global list for
-        ////processing at the end of the build
-
-        //def reportFileName = "${project.name}/build/test-results/integrationTest/TEST-${desc.className}.xml"
-        //def reportFile = file(reportFileName)
-        //def pair = new Tuple2("${project.name} ${desc.name}", reportFile)
-        //failedTestReportFiles.add(pair)
-        //}
-        //}
-
-        //Use full logging for test exceptions so we can see where the failure occurred 
-        //testLogging {
-        //events "failed"
-        //exceptionFormat = 'full'
-        //showStackTraces = true
-        //}
-    }
-
     clean {
         // clear out the 'out' dirs used by intelliJ
         delete "out"
     }
 
-    // These lines pull the integration test task into our build process.
-    tasks.check.dependsOn integrationTest
-    tasks.integrationTest.mustRunAfter test
+//    // These lines pull the integration test task into our build process.
+//    tasks.check.dependsOn integrationTest
+//    tasks.integrationTest.mustRunAfter test
 
 //    afterEvaluate {
 //        repositories {
@@ -602,17 +556,6 @@ configure(projectsToBePublished) {
 //    artifacts.archives packageTests
 //}
 
-// NOT SURE IF WE NEED THIS NOW
-//configure(subprojects.findAll {it.name != 'stroom-app' && it.name != 'stroom-integrationtest'}) {
-//    //swagger has to generate the spec from code so all modules except for stroom-app (which is the module the
-//    //swagger task is in) and stroom-integrationtest (which depends on stroom-app) must be compiled to jars first
-//    //so stroom-app can access their code
-//    //However, generateSwaggerDocumentation must run before stroom-app:jar as its artefacts (the json/yaml spec files)
-//    // need to go into that jar
-//    tasks.getByPath(':stroom-core-module:generateSwaggerDocumentation').mustRunAfter jar
-//}
-
-
 task clearContentPackImportDir(type: Delete) {
     //ensure the import directory exists
     new File(contentPackImportDir).mkdirs()
@@ -670,7 +613,7 @@ task copyContentPacksToImportDir(type: Copy) {
 
 task setupSampleData() {
     dependsOn copyContentPacksToImportDir
-    dependsOn ':stroom-integrationtest:setupSampleDataApplication'
+    dependsOn ':stroom-app:setupSampleDataApplication'
 }
 
 gradle.buildFinished {

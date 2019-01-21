@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import stroom.activity.client.ActivityChangedEvent.Handler;
-import stroom.activity.shared.Activity;
+import stroom.activity.api.Activity;
 
 public class ActivityChangedEvent extends GwtEvent<Handler> {
     public interface Handler extends EventHandler {

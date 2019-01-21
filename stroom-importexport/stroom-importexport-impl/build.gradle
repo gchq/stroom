@@ -14,11 +14,10 @@ dependencies {
     //implementation libs.jaxb_api
 
     //implementation libs.slf4j_api
+    testImplementation libs.junit_jupiter_api
 
-    integrationTestCompileOnly libs.junit_jupiter_api
-
-    integrationTestRuntimeOnly libs.mysql_connector_java
-    integrationTestRuntimeOnly libs.jaxb_runtime
-    integrationTestRuntimeOnly libs.javax_activation
-    integrationTestRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.mysql_connector_java
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
+    testRuntimeOnly libs.junit_jupiter_engine
 }

@@ -2,6 +2,7 @@ package stroom.config.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.activity.impl.db.ActivityConfig;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
@@ -19,6 +20,7 @@ import stroom.process.ProcessorConfig;
 import stroom.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
+import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
 import stroom.servlet.ExportConfig;
 import stroom.statistics.StatisticsConfig;
@@ -32,7 +34,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig implements IsConfig {
-
+    private ActivityConfig activityConfig;
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ContentPackImportConfig contentPackImportConfig;
@@ -54,12 +56,14 @@ public class AppConfig implements IsConfig {
     private RefDataStoreConfig refDataStoreConfig;
     private SearchConfig searchConfig;
     private SecurityConfig securityConfig;
+    private SecurityDbConfig securityDbConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
     private StatisticsConfig statisticsConfig;
     private UiConfig uiConfig;
     private VolumeConfig volumeConfig;
 
     public AppConfig() {
+        this.activityConfig = new ActivityConfig();
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
         this.contentPackImportConfig = new ContentPackImportConfig();
@@ -81,6 +85,7 @@ public class AppConfig implements IsConfig {
         this.refDataStoreConfig = new RefDataStoreConfig();
         this.searchConfig = new SearchConfig();
         this.securityConfig = new SecurityConfig();
+        this.securityDbConfig = new SecurityDbConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
         this.uiConfig = new UiConfig();
@@ -88,7 +93,8 @@ public class AppConfig implements IsConfig {
     }
 
     @Inject
-    AppConfig(final BenchmarkClusterConfig benchmarkClusterConfig,
+    AppConfig(final ActivityConfig activityConfig,
+              final BenchmarkClusterConfig benchmarkClusterConfig,
               final ClusterConfig clusterConfig,
               final ContentPackImportConfig contentPackImportConfig,
               final CoreConfig coreConfig,
@@ -109,10 +115,12 @@ public class AppConfig implements IsConfig {
               final RefDataStoreConfig refDataStoreConfig,
               final SearchConfig searchConfig,
               final SecurityConfig securityConfig,
+              final SecurityDbConfig securityDbConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
               final UiConfig uiConfig,
               final VolumeConfig volumeConfig) {
+        this.activityConfig = activityConfig;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
         this.clusterConfig = clusterConfig;
         this.contentPackImportConfig = contentPackImportConfig;
@@ -134,10 +142,20 @@ public class AppConfig implements IsConfig {
         this.refDataStoreConfig = refDataStoreConfig;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
+        this.securityDbConfig = securityDbConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
         this.uiConfig = uiConfig;
         this.volumeConfig = volumeConfig;
+    }
+
+    @JsonProperty("activity")
+    public ActivityConfig getActivityConfig() {
+        return activityConfig;
+    }
+
+    public void setActivityConfig(final ActivityConfig activityConfig) {
+        this.activityConfig = activityConfig;
     }
 
     @JsonProperty("benchmark")
@@ -330,6 +348,15 @@ public class AppConfig implements IsConfig {
 
     public void setSecurityConfig(final SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
+    }
+
+    @JsonProperty("securityDb")
+    public SecurityDbConfig getSecurityDbConfig() {
+        return securityDbConfig;
+    }
+
+    public void setSecurityDbConfig(final SecurityDbConfig securityDbConfig) {
+        this.securityDbConfig = securityDbConfig;
     }
 
     @JsonProperty("serviceDiscovery")

@@ -30,11 +30,10 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.GenericServerTask;
+import stroom.task.api.TaskManager;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBean;
-import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsync;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
@@ -56,7 +55,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = AsyncSearchTask.class)
+
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 

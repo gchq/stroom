@@ -16,6 +16,7 @@
 
 package stroom.security;
 
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 
 public final class UserRefFactory {
@@ -33,5 +34,17 @@ public final class UserRefFactory {
         final String name = user.getName();
 
         return new UserRef(type, uuid, name, user.isGroup(), UserStatus.ENABLED.equals(user.getStatus()));
+    }
+
+    public static UserRef create(final UserJooq user) {
+        if (user == null) {
+            return null;
+        }
+
+        final String type = User.ENTITY_TYPE;
+        final String uuid = user.getUuid();
+        final String name = user.getName();
+
+        return new UserRef(type, uuid, name, user.isGroup(), true);
     }
 }

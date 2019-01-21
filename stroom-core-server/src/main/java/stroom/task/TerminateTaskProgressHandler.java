@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
@@ -29,7 +28,7 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = TerminateTaskProgressAction.class)
+
 class TerminateTaskProgressHandler extends AbstractTaskHandler<TerminateTaskProgressAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskProgressHandler.class);
 

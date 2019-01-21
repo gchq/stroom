@@ -1,10 +1,10 @@
 ext.moduleName = 'stroom.statistics.shared'
 
 dependencies {
-    implementation project(':stroom-entity-shared')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-statistics:stroom-statistics-api')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
     implementation libs.jackson_annotations
@@ -12,7 +12,7 @@ dependencies {
     implementation libs.jaxb_api
 
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

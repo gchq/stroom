@@ -17,15 +17,15 @@
 package stroom.cluster.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
-import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterCallServiceLocal;
+import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 
 public class MockClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceLocal")).to(ClusterCallServiceLocal.class);
-        bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceRemote")).to(ClusterCallServiceRemote.class);
+        bind(ClusterCallServiceLocal.class).to(ClusterCallServiceLocalImpl.class);
+        bind(ClusterCallServiceRemote.class).to(ClusterCallServiceRemoteImpl.class);
         bind(ClusterNodeManager.class).to(MockClusterNodeManager.class);
     }
 }

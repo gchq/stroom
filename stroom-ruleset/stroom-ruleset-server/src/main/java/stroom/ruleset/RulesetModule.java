@@ -17,13 +17,12 @@
 package stroom.ruleset;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.datafeed.AttributeMapFilterFactory;
+import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
-import stroom.util.HasHealthCheck;
 
 public class RulesetModule extends AbstractModule {
     @Override
@@ -37,31 +36,8 @@ public class RulesetModule extends AbstractModule {
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(RuleSet.DOCUMENT_TYPE).to(stroom.ruleset.RuleSetServiceImpl.class);
+        EntityTypeBinder.create(binder())
+                .bind(RuleSet.DOCUMENT_TYPE, RuleSetServiceImpl.class);
 
-        final Multibinder<HasHealthCheck> hasHealthCheckBinder = Multibinder.newSetBinder(binder(), HasHealthCheck.class);
-        hasHealthCheckBinder.addBinding().to(RuleSetResource.class);
-        hasHealthCheckBinder.addBinding().to(RuleSetResource2.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
     }
-
-//    @Bean
-//    public AttributeMapFilterFactory attributeMapFilterFactory(final RuleSetService ruleSetService,
-//                                                     final DictionaryStore dictionaryStore) {
-//        return new AttributeMapFilterFactoryImpl(ruleSetService, dictionaryStore);
-//    }
-//
-//    @Bean
-//    public RuleSetResource ruleSetResource(final RuleSetService ruleSetService) {
-//        return new RuleSetResource(ruleSetService);
-//    }
-
-//    @Bean
-//    @Singleton
-//    public RuleSetService ruleSetService(final Store<RuleSet> store) {
-//        return new RuleSetServiceImpl(store);
-//    }
 }

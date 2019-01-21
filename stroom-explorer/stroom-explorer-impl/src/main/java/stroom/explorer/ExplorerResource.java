@@ -18,9 +18,7 @@ import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Api(
-        value = "explorer - /v1",
-        description = "Stroom Explorer API")
+@Api(value = "explorer - /v1")
 @Path("/explorer/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

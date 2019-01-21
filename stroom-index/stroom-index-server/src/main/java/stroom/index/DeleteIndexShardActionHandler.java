@@ -16,19 +16,17 @@
 
 package stroom.index;
 
-import stroom.entity.cluster.FindDeleteServiceClusterTask;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = DeleteIndexShardAction.class)
+
 class DeleteIndexShardActionHandler extends AbstractTaskHandler<DeleteIndexShardAction, VoidResult> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final Security security;
@@ -43,8 +41,9 @@ class DeleteIndexShardActionHandler extends AbstractTaskHandler<DeleteIndexShard
     @Override
     public VoidResult exec(final DeleteIndexShardAction action) {
         return security.secureResult(() -> {
-            final FindDeleteServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindDeleteServiceClusterTask<>(
-                    action.getUserToken(), action.getTaskName(), IndexShardManager.class,
+            final DeleteIndexShardClusterTask<FindIndexShardCriteria> clusterTask = new DeleteIndexShardClusterTask<>(
+                    action.getUserToken(),
+                    action.getTaskName(),
                     action.getCriteria());
             dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
             return new VoidResult();

@@ -24,6 +24,7 @@ import stroom.db.migration.doc.pipeline.PipelineDoc;
 import stroom.dictionary.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.ResultList;
@@ -37,8 +38,23 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.security.Security;
+import stroom.security.SecurityContext;
+import stroom.security.shared.PermissionNames;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamtask.shared.FetchProcessorAction;
+import stroom.streamtask.shared.FindStreamProcessorCriteria;
+import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterRow;
+import stroom.streamtask.shared.ProcessorRow;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Expander;
 
 import javax.inject.Inject;
@@ -47,7 +63,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = FetchProcessorAction.class)
+
 class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, ResultList<SharedObject>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FetchProcessorHandler.class);
 

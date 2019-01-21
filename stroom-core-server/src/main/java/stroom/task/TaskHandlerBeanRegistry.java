@@ -16,74 +16,59 @@
 
 package stroom.task;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.task.api.TaskHandler;
-import stroom.task.api.TaskHandlerBean;
+import stroom.task.api.TaskType;
 import stroom.task.shared.Task;
-import stroom.lifecycle.StroomBeanStore;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Singleton
 public class TaskHandlerBeanRegistry {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandlerBeanRegistry.class);
-    private volatile Map<Class<?>, Class<TaskHandler>> taskHandlerMap;
-
-    private final StroomBeanStore beanStore;
+    private final Map<TaskType, Provider<TaskHandler>> taskHandlerMap;
 
     @Inject
-    TaskHandlerBeanRegistry(final StroomBeanStore beanStore) {
-        this.beanStore = beanStore;
+    TaskHandlerBeanRegistry(final Map<TaskType, Provider<TaskHandler>> taskHandlerMap) {
+        this.taskHandlerMap = taskHandlerMap;
     }
-
-    //    @Inject
-//    TaskHandlerBeanRegistry(final Collection<Provider<TaskHandler>> taskHandlerProviders) {
-//        taskHandlerProviders.forEach(taskHandlerProvider -> {
-//            final TaskHandler taskHandler = taskHandlerProvider.get();
-//            if (taskHandler != null) {
-//                final TaskHandlerBean taskHandlerBean = taskHandler.getClass().getAnnotation(TaskHandlerBean.class);
-//                if (taskHandlerBean != null) {
-//                    final Class<?> task = taskHandlerBean.task();
-//                    taskHandlerMap.put(task, taskHandlerProvider);
-//                }
-//            }
-//        });
-//    }
 
     @SuppressWarnings("unchecked")
     public <R, H extends TaskHandler<Task<R>, R>> H findHandler(final Task<R> task) {
-        if (taskHandlerMap == null) {
-            synchronized (this) {
-                if (taskHandlerMap == null) {
-                    final Map<Class<?>, Class<TaskHandler>> map = new HashMap<>();
-
-                    final Set<TaskHandler> taskHandlers = beanStore.getInstancesOfType(TaskHandler.class);
-                    taskHandlers.forEach(taskHandler -> {
-                        final Class<TaskHandler> taskHandlerClazz = (Class<TaskHandler>) taskHandler.getClass();
-                        final TaskHandlerBean taskHandlerBean = taskHandlerClazz.getAnnotation(TaskHandlerBean.class);
-                        if (taskHandlerBean != null) {
-                            final Class<?> taskClazz = taskHandlerBean.task();
-                            map.put(taskClazz, taskHandlerClazz);
-                        }
-                    });
-
-                    taskHandlerMap = Collections.unmodifiableMap(map);
-                }
-            }
-        }
-
-        final Class<TaskHandler> taskHandlerClazz = taskHandlerMap.get(task.getClass());
-        if (taskHandlerClazz == null) {
+        final Provider<TaskHandler> taskHandlerProvider = taskHandlerMap.get(new TaskType(task.getClass()));
+        if (taskHandlerProvider == null) {
             throw new RuntimeException("No handler for " + task.getClass().getName());
         }
+        return (H) taskHandlerProvider.get();
 
-        return (H) beanStore.getInstance(taskHandlerClazz);
+
+//        if (taskHandlerMap == null) {
+//            synchronized (this) {
+//                if (taskHandlerMap == null) {
+//                    final Map<Class<?>, Class<TaskHandler>> map = new HashMap<>();
+//
+//                    final Set<TaskHandler> taskHandlers = beanStore.getInstancesOfType(TaskHandler.class);
+//                    taskHandlers.forEach(taskHandler -> {
+//                        final Class<TaskHandler> taskHandlerClazz = (Class<TaskHandler>) taskHandler.getClass();
+//                        final TaskHandlerBean taskHandlerBean = taskHandlerClazz.getAnnotation(TaskHandlerBean.class);
+//                        if (taskHandlerBean != null) {
+//                            final Class<?> taskClazz = taskHandlerBean.task();
+//                            map.put(taskClazz, taskHandlerClazz);
+//                        }
+//                    });
+//
+//                    taskHandlerMap = Collections.unmodifiableMap(map);
+//                }
+//            }
+//        }
+//
+//        final Class<TaskHandler> taskHandlerClazz = taskHandlerMap.get(task.getClass());
+//        if (taskHandlerClazz == null) {
+//            throw new RuntimeException("No handler for " + task.getClass().getName());
+//        }
+//
+//        return (H) beanStore.getInstance(taskHandlerClazz);
     }
 
 //    private <T> Collection<Provider<T>> getProviders(Class<T> type) {

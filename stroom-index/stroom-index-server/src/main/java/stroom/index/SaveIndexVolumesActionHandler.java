@@ -19,12 +19,11 @@ package stroom.index;
 import stroom.index.shared.SaveIndexVolumesAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = SaveIndexVolumesAction.class)
+
 class SaveIndexVolumesActionHandler extends AbstractTaskHandler<SaveIndexVolumesAction, VoidResult> {
     private final Security security;
     private final IndexVolumeService indexVolumeService;

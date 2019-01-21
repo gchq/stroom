@@ -56,7 +56,6 @@ import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.task.shared.ThreadPool;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -80,7 +79,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-@TaskHandlerBean(task = ClusterSearchTask.class)
+
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 

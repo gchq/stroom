@@ -19,11 +19,11 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.docref.DocRef;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.DocumentPermissionNames;
@@ -31,7 +31,6 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.UserPermission;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@TaskHandlerBean(task = ChangeDocumentPermissionsAction.class)
 class ChangeDocumentPermissionsHandler
         extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);

@@ -21,13 +21,12 @@ import stroom.entity.shared.ResultList;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.StroomStatsRollUpBitMaskPermGenerationAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@TaskHandlerBean(task = StroomStatsRollUpBitMaskPermGenerationAction.class)
+
 class StroomStatsRollUpBitMaskPermGenerationHandler
         extends AbstractTaskHandler<StroomStatsRollUpBitMaskPermGenerationAction, ResultList<CustomRollUpMask>> {
     @Override

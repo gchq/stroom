@@ -20,8 +20,8 @@ package stroom.dashboard;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
-import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
+import stroom.docstore.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -45,18 +45,17 @@ class DashboardStoreImpl implements DashboardStore {
     private final Store<DashboardDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
-    private final Serialiser2<DashboardDoc> serialiser;
+    private final DashboardSerialiser serialiser;
 
     @Inject
-    DashboardStoreImpl(final Store<DashboardDoc> store, final SecurityContext securityContext, final Persistence persistence) {
-        this.store = store;
+    DashboardStoreImpl(final StoreFactory storeFactory,
+                       final SecurityContext securityContext,
+                       final Persistence persistence,
+                       final DashboardSerialiser serialiser) {
+        this.store = storeFactory.createStore(serialiser, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.class);
         this.securityContext = securityContext;
         this.persistence = persistence;
-
-        serialiser = new DashboardSerialiser();
-
-        store.setType(DashboardDoc.DOCUMENT_TYPE, DashboardDoc.class);
-        store.setSerialiser(serialiser);
+        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////

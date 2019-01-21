@@ -143,7 +143,6 @@ public class StroomCacheManagerImpl implements StroomCacheManager, Clearable {
         }
     }
 
-    @Override
     @StroomFrequencySchedule("1m")
     public void evictExpiredElements() {
         cacheManager.getCaches().forEach((k, v) -> {

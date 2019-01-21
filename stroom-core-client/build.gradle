@@ -1,6 +1,8 @@
 ext.moduleName = 'stroom.core.client'
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-api')
+    implementation project(':stroom-activity:stroom-activity-shared')
     implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-core-shared')
@@ -13,7 +15,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-config:stroom-config-global-api')
-    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
@@ -26,11 +28,11 @@ dependencies {
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev
-
+    
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

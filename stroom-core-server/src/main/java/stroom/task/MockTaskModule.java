@@ -18,6 +18,7 @@ package stroom.task;
 
 import com.google.inject.AbstractModule;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskManager;
 
 public class MockTaskModule extends AbstractModule {
     @Override
@@ -26,71 +27,10 @@ public class MockTaskModule extends AbstractModule {
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
 //
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(FindTaskProgressHandler.class);
-//        taskHandlerBinder.addBinding().to(FindUserTaskProgressHandler.class);
-//        taskHandlerBinder.addBinding().to(GenericServerTaskHandler.class);
-//        taskHandlerBinder.addBinding().to(TerminateTaskProgressHandler.class);
+//        TaskHandlerBinder.create(binder())
+//        .bind(FindTaskProgressHandler.class);
+//        .bind(FindUserTaskProgressHandler.class);
+//        .bind(GenericServerTaskHandler.class);
+//        .bind(TerminateTaskProgressHandler.class);
     }
-    //    @Bean
-//    public ExecutorProvider executorProvider(final TaskManager taskManager,
-//                                             final SecurityContext securityContext) {
-//        return new ExecutorProviderImpl(taskManager, securityContext);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FindTaskProgressHandler findTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new FindTaskProgressHandler(dispatchHelper);
-//    }
-//
-//    @Bean
-//    @Scope(StroomScope.TASK)
-//    public FindUserTaskProgressHandler findUserTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-//                                                                   final Provider<HttpServletRequestHolder> httpServletRequestHolderProvider) {
-//        HttpServletRequestHolder httpServletRequestHolder = null;
-//        try {
-//            httpServletRequestHolder = httpServletRequestHolderProvider.get();
-//        } catch (final RuntimeException e) {
-//            // Ignore
-//        }
-//
-//        return new FindUserTaskProgressHandler(dispatchHelper, httpServletRequestHolder);
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public GenericServerTaskHandler genericServerTaskHandler(final TaskContext taskContext) {
-//        return new GenericServerTaskHandler(taskContext);
-//    }
-//
-//    @Bean
-//    public TaskContext taskContext() {
-//        return new TaskContextImpl();
-//    }
-//
-//    @Bean
-//    public TaskHandlerBeanRegistry taskHandlerBeanRegistry(final StroomBeanStore beanStore) {
-//        return new TaskHandlerBeanRegistry(beanStore);
-//    }
-//
-//    @Bean("taskManager")
-//    public TaskManager taskManager(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
-//                                   final NodeCache nodeCache,
-//                                   final StroomBeanStore beanStore,
-//                                   final SecurityContext securityContext) {
-//        return new TaskManagerImpl(taskHandlerBeanRegistry, nodeCache, beanStore, securityContext);
-//    }
-//
-//    @Bean("taskContext")
-//    @Scope(value = StroomScope.TASK)
-//    public TaskMonitorImpl taskContext() {
-//        return new SimpleTaskContext();
-//    }
-//
-//    @Bean
-//    @Scope(value = StroomScope.TASK)
-//    public TerminateTaskProgressHandler terminateTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
-//        return new TerminateTaskProgressHandler(dispatchHelper);
-//    }
 }

@@ -17,14 +17,12 @@
 package stroom.data.store;
 
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.logging.StreamEventLog;
 import stroom.resource.ResourceStore;
-import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.DownloadDataAction;
+import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
-import stroom.task.TaskManager;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -32,7 +30,7 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-@TaskHandlerBean(task = DownloadDataAction.class)
+
 class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, ResourceGeneration> {
     private final ResourceStore resourceStore;
     private final TaskManager taskManager;

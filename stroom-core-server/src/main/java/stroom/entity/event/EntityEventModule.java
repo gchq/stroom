@@ -24,14 +24,6 @@ public class EntityEventModule extends AbstractModule {
         bind(EntityEventBus.class).to(EntityEventBusImpl.class);
     }
 
-//
-// TODO: @66 DON'T THINK THIS IS NEEDED ANYMORE SO DELETE IT
-//    @Bean
-//    public GenericEntityMarshaller genericEntityMarshaller() {
-//        return new GenericEntityMarshallerImpl();
-//    }
-//
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

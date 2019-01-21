@@ -5,7 +5,8 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    //implementation project(':stroom-docstore:stroom-docstore-impl') // TODO to be removed
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
@@ -14,6 +15,7 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -44,7 +46,7 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

@@ -18,7 +18,6 @@ package stroom.feed;
 
 import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 
@@ -26,7 +25,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-@TaskHandlerBean(task = FetchSupportedEncodingsAction.class)
+
 class FetchSupportedEncodingsActionHandler
         extends AbstractTaskHandler<FetchSupportedEncodingsAction, SharedList<SharedString>> {
     private static final SharedList<SharedString> SUPPORTED_ENCODINGS;

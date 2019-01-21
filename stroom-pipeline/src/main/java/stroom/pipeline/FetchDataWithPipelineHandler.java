@@ -20,11 +20,11 @@ package stroom.pipeline;
 import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
-import stroom.pipeline.scope.PipelineScopeRunnable;
-import stroom.logging.StreamEventLog;
+import stroom.data.store.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.state.FeedHolder;
@@ -34,12 +34,11 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@TaskHandlerBean(task = FetchDataWithPipelineAction.class)
+
 class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipelineAction, AbstractFetchDataResult> {
     private final Security security;
     private final DataFetcher dataFetcher;
