@@ -30,8 +30,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
@@ -108,8 +106,6 @@ class FileSystemCleanExecutor {
         taskContext.info(args);
     }
 
-    @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "File System Clean", advanced = false, description = "Job to process a volume deleting files that are no longer indexed (maybe the retention period has past or they have been deleted)")
     public void exec(final Task<?> task) {
         final long nodeId = nodeCache.getDefaultNode().getId();
         clean(task, nodeId);

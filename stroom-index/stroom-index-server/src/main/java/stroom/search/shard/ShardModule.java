@@ -18,7 +18,6 @@ package stroom.search.shard;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.cache.StroomCacheManagerImpl;
 import stroom.entity.shared.Clearable;
 
 public class ShardModule extends AbstractModule {

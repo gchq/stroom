@@ -154,7 +154,7 @@ class TestQueryServiceImpl extends AbstractCoreIntegrationTest {
         }
 
         // Clean the history.
-        queryHistoryCleanExecutor.clean(null, false);
+        queryHistoryCleanExecutor.clean(false);
 
         list = queryService.find(criteria);
         assertThat(list.size()).isEqualTo(100);

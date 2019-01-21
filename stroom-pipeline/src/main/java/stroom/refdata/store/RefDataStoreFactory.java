@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.store.onheapstore.RefDataOnHeapStore;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,10 +46,6 @@ public class RefDataStoreFactory {
         return new RefDataOnHeapStore();
     }
 
-    @StroomSimpleCronSchedule(cron = "0 2 *") // 02:00 every day
-    @JobTrackedSchedule(
-            jobName = "Ref Data Off-heap Store Purge",
-            description = "Purge old reference data from the off heap store as configured")
     public void purgeOldData() {
         this.offHeapRefDataStore.purgeOldData();
         // nothing to purge in the heap stores as they are transient objects

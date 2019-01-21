@@ -25,7 +25,6 @@ import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.NodeCache;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.api.TaskManager;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
 
@@ -135,7 +134,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         LOGGER.debug("releaseLock({}) - <<< {}", lockName, success);
     }
 
-    @StroomFrequencySchedule("1m")
+    @Override
     public void keepAlive() {
         LOGGER.debug("keepAlive() - >>>");
 

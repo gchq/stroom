@@ -27,8 +27,6 @@ import stroom.config.global.api.ConfigProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -152,9 +150,6 @@ class GlobalConfigServiceImpl implements GlobalConfigService {
     /**
      * Refresh in background
      */
-    @SuppressWarnings("unused") // Called by scheduler
-    @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Property Cache Reload", description = "Reload properties in the cluster")
     public void updateConfigObjects() {
         updateConfigObjectsFromDB();
     }

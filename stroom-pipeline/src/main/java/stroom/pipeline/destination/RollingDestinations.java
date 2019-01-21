@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
@@ -141,8 +139,6 @@ public class RollingDestinations {
         });
     }
 
-    @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Pipeline Destination Roll", description = "Roll any destinations based on their roll settings")
     public void roll() {
         rollAll(false);
     }

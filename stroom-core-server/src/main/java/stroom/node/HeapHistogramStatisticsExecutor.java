@@ -6,10 +6,8 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.statistics.internal.InternalStatisticKey;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -51,15 +49,6 @@ public class HeapHistogramStatisticsExecutor {
         this.nodeCache = nodeCache;
     }
 
-
-    //hourly and disabled by default
-    @StroomSimpleCronSchedule(cron = "0 * *")
-    @JobTrackedSchedule(
-            jobName = "Java Heap Histogram Statistics",
-            description = "Generate Java heap map histogram ('jmap -histo:live') and record statistic events " +
-                    "for the entries. CAUTION: this will pause the JVM, only enable this if you understand the " +
-                    "consequences!",
-            enabled = false)
     public void exec() {
         try {
             Instant startTme = Instant.now();
