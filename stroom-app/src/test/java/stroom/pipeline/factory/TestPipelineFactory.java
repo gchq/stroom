@@ -18,7 +18,7 @@ package stroom.pipeline.factory;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.docstore.Serialiser2FactoryImpl;
+import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.shared.PipelineDataMerger;

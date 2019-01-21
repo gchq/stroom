@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import stroom.docstore.Serialiser2FactoryImpl;
+import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.docref.DocRef;

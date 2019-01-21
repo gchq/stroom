@@ -18,6 +18,7 @@ package stroom.headless;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.docstore.impl.DocStoreModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.LocalNodeProvider;
@@ -45,7 +46,7 @@ public class CliModule extends AbstractModule {
 //        install(new ClusterModule());
         install(new stroom.dictionary.DictionaryModule());
 //        install(new stroom.dictionary.DictionaryHandlerModule());
-//        install(new stroom.docstore.fs.FSPersistenceModule());
+//        install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.EntityModule());
 //        install(new stroom.entity.cluster.EntityClusterModule());
@@ -72,8 +73,8 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
-        install(new stroom.docstore.DocStoreModule());
-        install(new stroom.docstore.fs.FSPersistenceModule());
+        install(new DocStoreModule());
+        install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
 //        install(new stroom.task.TaskModule());
 //        install(new stroom.task.cluster.ClusterTaskModule());

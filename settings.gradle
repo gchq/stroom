@@ -29,28 +29,31 @@ include 'stroom-app'
 include 'stroom-app-gwt'
 
 // Config
-include 'stroom-config:stroom-config-common'
 include 'stroom-config:stroom-config-app'
+include 'stroom-config:stroom-config-common'
 include 'stroom-config:stroom-config-global-api'
 include 'stroom-config:stroom-config-global-impl-db'
 include 'stroom-config:stroom-config-global-impl-db-gen'
 
 // Core
-include 'stroom-core-shared'
-include 'stroom-core-server'
-include 'stroom-core-client-widget'
 include 'stroom-core-client'
+include 'stroom-core-client-widget'
+include 'stroom-core-server'
+include 'stroom-core-shared'
 
 // Dashboard
-include 'stroom-dashboard:stroom-dashboard-shared'
+include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-server'
-include 'stroom-dashboard-gwt'
+include 'stroom-dashboard:stroom-dashboard-shared'
 
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
-include 'stroom-docstore:stroom-docstore-shared'
 include 'stroom-docstore:stroom-docstore-impl'
+include 'stroom-docstore:stroom-docstore-impl-db'
+include 'stroom-docstore:stroom-docstore-impl-fs'
+include 'stroom-docstore:stroom-docstore-impl-memory'
+include 'stroom-docstore:stroom-docstore-shared'
 
 // Data meta projects
 include 'stroom-data-meta:stroom-data-meta-api'
@@ -66,9 +69,9 @@ include 'stroom-data-store:stroom-data-store-impl-mock'
 include 'stroom-data-store:stroom-data-store-util'
 
 // Elastic
-include 'stroom-elastic:stroom-elastic-impl-http'
-include 'stroom-elastic:stroom-elastic-impl'
 include 'stroom-elastic:stroom-elastic-api'
+include 'stroom-elastic:stroom-elastic-impl'
+include 'stroom-elastic:stroom-elastic-impl-http'
 
 // Entity // TODO : @66 Remove
 include 'stroom-entity-shared'

@@ -29,6 +29,5 @@ public class SQLStatisticSearchModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(SqlStatisticsSearchResponseCreatorManager.class);
-
     }
 }
