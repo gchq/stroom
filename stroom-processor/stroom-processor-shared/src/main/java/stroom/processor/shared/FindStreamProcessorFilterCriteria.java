@@ -18,7 +18,6 @@ package stroom.processor.shared;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.docref.DocRef;
@@ -31,7 +30,7 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
      */
     private Range<Integer> priorityRange = null;
     private Period lastPollPeriod = null;
-    private EntityIdSet<Processor> streamProcessorIdSet = null;
+    private CriteriaSet<Integer> processorIdSet = null;
     private CriteriaSet<DocRef> pipelineSet = null;
     private Boolean streamProcessorEnabled = null;
     private Boolean streamProcessorFilterEnabled = null;
@@ -47,8 +46,8 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         obtainPipelineSet().add(pipeline);
     }
 
-    public FindStreamProcessorFilterCriteria(final Processor streamProcessor) {
-        obtainStreamProcessorIdSet().add(streamProcessor);
+    public FindStreamProcessorFilterCriteria(final Processor processor) {
+        obtainStreamProcessorIdSet().add(processor.getId());
     }
 
     public Range<Integer> getPriorityRange() {
@@ -96,19 +95,19 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return pipelineSet;
     }
 
-    public EntityIdSet<Processor> getStreamProcessorIdSet() {
-        return streamProcessorIdSet;
+    public CriteriaSet<Integer> getProcessorIdSet() {
+        return processorIdSet;
     }
 
-    public void setStreamProcessorIdSet(EntityIdSet<Processor> streamProcessorIdSet) {
-        this.streamProcessorIdSet = streamProcessorIdSet;
+    public void setProcessorIdSet(CriteriaSet<Integer> processorIdSet) {
+        this.processorIdSet = processorIdSet;
     }
 
-    public EntityIdSet<Processor> obtainStreamProcessorIdSet() {
-        if (streamProcessorIdSet == null) {
-            streamProcessorIdSet = new EntityIdSet<>();
+    public CriteriaSet<Integer> obtainStreamProcessorIdSet() {
+        if (processorIdSet == null) {
+            processorIdSet = new CriteriaSet<>();
         }
-        return streamProcessorIdSet;
+        return processorIdSet;
     }
 
     public Boolean getStreamProcessorEnabled() {

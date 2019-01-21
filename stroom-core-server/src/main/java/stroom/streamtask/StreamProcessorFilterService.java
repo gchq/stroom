@@ -22,8 +22,8 @@ import stroom.entity.FindService;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
 
 public interface StreamProcessorFilterService
         extends BaseEntityService<ProcessorFilter>, FindService<ProcessorFilter, FindStreamProcessorFilterCriteria> {

@@ -14,38 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared;
 
-import stroom.entity.shared.BaseEntitySmall;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.docref.SharedObject;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.persistence.Column;
-import javax.persistence.Transient;
+import java.util.Objects;
 
-@Deprecated // use JOOQ
-//@Entity(name = "PROCESSOR_FILTER_TRACKER")
-public class ProcessorFilterTracker extends BaseEntitySmall {
-    public static final String TABLE_NAME = "PROCESSOR_FILTER_TRACKER";
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String MIN_STREAM_CREATE_MS = SQLNameConstants.MIN + SEP + SQLNameConstants.STREAM + SEP
-            + SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
-    public static final String MAX_STREAM_CREATE_MS = SQLNameConstants.MAX + SEP + SQLNameConstants.STREAM + SEP
-            + SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
-    public static final String STREAM_CREATE_MS = SQLNameConstants.STREAM + SEP + SQLNameConstants.CREATE
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String MIN_STREAM_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.STREAM + SEP + ID;
-    public static final String MIN_EVENT_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.EVENT + SEP + ID;
-    public static final String LAST_POLL_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.POLL
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String LAST_POLL_TASK_COUNT = SQLNameConstants.LAST + SEP + SQLNameConstants.POLL + SEP
-            + SQLNameConstants.TASK + SQLNameConstants.COUNT_SUFFIX;
-    public static final String STATUS = SQLNameConstants.STATUS;
-    public static final String STREAM_COUNT = SQLNameConstants.STREAM + SEP + SQLNameConstants.COUNT;
-    public static final String EVENT_COUNT = SQLNameConstants.EVENT + SEP + SQLNameConstants.COUNT;
+
+public class ProcessorFilterTracker implements SharedObject {
     public static final String ENTITY_TYPE = "StreamProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
     private static final long serialVersionUID = -2478788451478923825L;
+
+    // standard id and OCC fields
+    private Integer id;
+    private Integer version;
+
     // These numbers are inclusive use getStreamRange to get a nice Stroom style
     private long minStreamId;
     private long minEventId;
@@ -77,13 +62,22 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         // Default constructor necessary for GWT serialisation.
     }
 
-    @Override
-    @Transient
-    public String getType() {
-        return ENTITY_TYPE;
+    public Integer getId() {
+        return id;
     }
 
-    @Column(name = MIN_STREAM_ID, nullable = false)
+    public void setId(final Integer id) {
+        this.id = id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Integer version) {
+        this.version = version;
+    }
+
     public long getMinStreamId() {
         return minStreamId;
     }
@@ -92,7 +86,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.minStreamId = minStreamId;
     }
 
-    @Column(name = MIN_EVENT_ID, nullable = false)
     public long getMinEventId() {
         return minEventId;
     }
@@ -101,7 +94,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.minEventId = minEventId;
     }
 
-    @Column(name = MAX_STREAM_CREATE_MS)
     public Long getMaxStreamCreateMs() {
         return maxStreamCreateMs;
     }
@@ -110,7 +102,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.maxStreamCreateMs = maxStreamCreateMs;
     }
 
-    @Column(name = MIN_STREAM_CREATE_MS)
     public Long getMinStreamCreateMs() {
         return minStreamCreateMs;
     }
@@ -123,7 +114,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
      * For UI use only to see current progress. Not used to influence task
      * creation.
      */
-    @Column(name = STREAM_CREATE_MS)
     public Long getStreamCreateMs() {
         return streamCreateMs;
     }
@@ -136,7 +126,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.streamCreateMs = streamCreateMs;
     }
 
-    @Column(name = LAST_POLL_MS)
     public Long getLastPollMs() {
         return lastPollMs;
     }
@@ -145,7 +134,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.lastPollMs = lastPollMs;
     }
 
-    @Column(name = LAST_POLL_TASK_COUNT)
     public Integer getLastPollTaskCount() {
         return lastPollTaskCount;
     }
@@ -154,7 +142,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.lastPollTaskCount = lastPollTaskCount;
     }
 
-    @Column(name = STATUS)
     public String getStatus() {
         return status;
     }
@@ -163,7 +150,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.status = status;
     }
 
-    @Column(name = STREAM_COUNT)
     public Long getStreamCount() {
         return streamCount;
     }
@@ -172,7 +158,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
         this.streamCount = streamCount;
     }
 
-    @Column(name = EVENT_COUNT)
     public Long getEventCount() {
         return eventCount;
     }
@@ -185,7 +170,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
      * For UI use only to see current progress. Not used to influence task
      * creation.
      */
-    @Transient
     public Integer getTrackerStreamCreatePercentage() {
         return getTrackerStreamCreatePercentage(System.currentTimeMillis());
     }
@@ -224,7 +208,6 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
      * For UI use only to see current progress. Not used to influence task
      * creation.
      */
-    @Transient
     public String getLastPollAge() {
         if (lastPollMs != null) {
             final long ageMs = System.currentTimeMillis() - lastPollMs;
@@ -235,5 +218,49 @@ public class ProcessorFilterTracker extends BaseEntitySmall {
             }
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "ProcessorFilterTracker{" +
+                "id=" + id +
+                ", version=" + version +
+                ", minStreamId=" + minStreamId +
+                ", minEventId=" + minEventId +
+                ", minStreamCreateMs=" + minStreamCreateMs +
+                ", maxStreamCreateMs=" + maxStreamCreateMs +
+                ", streamCreateMs=" + streamCreateMs +
+                ", lastPollMs=" + lastPollMs +
+                ", lastPollTaskCount=" + lastPollTaskCount +
+                ", complete=" + complete +
+                ", status='" + status + '\'' +
+                ", streamCount=" + streamCount +
+                ", eventCount=" + eventCount +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ProcessorFilterTracker that = (ProcessorFilterTracker) o;
+        return minStreamId == that.minStreamId &&
+                minEventId == that.minEventId &&
+                complete == that.complete &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(minStreamCreateMs, that.minStreamCreateMs) &&
+                Objects.equals(maxStreamCreateMs, that.maxStreamCreateMs) &&
+                Objects.equals(streamCreateMs, that.streamCreateMs) &&
+                Objects.equals(lastPollMs, that.lastPollMs) &&
+                Objects.equals(lastPollTaskCount, that.lastPollTaskCount) &&
+                Objects.equals(status, that.status) &&
+                Objects.equals(streamCount, that.streamCount) &&
+                Objects.equals(eventCount, that.eventCount);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, minStreamId, minEventId, minStreamCreateMs, maxStreamCreateMs, streamCreateMs, lastPollMs, lastPollTaskCount, complete, status, streamCount, eventCount);
     }
 }

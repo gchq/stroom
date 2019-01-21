@@ -30,8 +30,8 @@ import stroom.security.SecurityContext;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;

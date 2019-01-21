@@ -17,9 +17,9 @@
 package stroom.streamtask;
 
 import stroom.data.store.api.StreamSource;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTask;
 
 public interface StreamProcessorTaskExecutor {
     void exec(Processor streamProcessor, ProcessorFilter streamProcessorFilter, ProcessorFilterTask streamTask,

@@ -17,7 +17,7 @@
 package stroom.streamtask;
 
 import stroom.jobsystem.DistributedTask;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTask;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
 import stroom.util.shared.VoidResult;

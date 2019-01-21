@@ -22,7 +22,7 @@ import stroom.data.meta.api.MetaDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;

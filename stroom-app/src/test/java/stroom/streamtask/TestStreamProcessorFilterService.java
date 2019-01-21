@@ -29,8 +29,8 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;
 

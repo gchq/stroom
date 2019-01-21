@@ -26,7 +26,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.shared.Processor;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

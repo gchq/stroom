@@ -14,27 +14,49 @@
  * limitations under the License.
  */
 
-package stroom.streamtask.shared;
+package stroom.processor.shared;
 
-import stroom.entity.shared.EntityRow;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeRow;
 
-public class ProcessorFilterRow extends EntityRow<ProcessorFilter> implements TreeRow {
+import java.util.Objects;
+
+public class ProcessorFilterRow implements TreeRow {
     private static final long serialVersionUID = 3306590492924959915L;
 
     private static final Expander EXPANDER = new Expander(1, false, true);
+    private ProcessorFilter processorFilter;
 
     public ProcessorFilterRow() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ProcessorFilterRow(final ProcessorFilter streamProcessorFilter) {
-        super(streamProcessorFilter);
+    public ProcessorFilterRow(final ProcessorFilter processorFilter) {
+        this.processorFilter = processorFilter;
     }
 
     @Override
     public Expander getExpander() {
         return EXPANDER;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ProcessorFilterRow that = (ProcessorFilterRow) o;
+        return Objects.equals(processorFilter, that.processorFilter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(processorFilter);
+    }
+
+    @Override
+    public String toString() {
+        return "ProcessorFilterRow{" +
+                "processorFilter=" + processorFilter +
+                '}';
     }
 }

@@ -21,7 +21,7 @@ import stroom.entity.MockEntityService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.shared.Processor;
 
 import javax.inject.Singleton;
 

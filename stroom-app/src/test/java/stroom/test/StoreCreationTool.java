@@ -54,7 +54,7 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.shared.Processor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 

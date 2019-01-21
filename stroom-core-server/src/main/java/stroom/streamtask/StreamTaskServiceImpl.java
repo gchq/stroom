@@ -33,9 +33,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTask;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

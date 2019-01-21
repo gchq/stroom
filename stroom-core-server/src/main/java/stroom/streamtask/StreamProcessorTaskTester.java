@@ -19,9 +19,9 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.StreamSource;
-import stroom.streamtask.shared.Processor;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTask;
 
 public class StreamProcessorTaskTester implements StreamProcessorTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskTester.class);

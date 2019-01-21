@@ -17,7 +17,7 @@
 package stroom.streamtask;
 
 import stroom.node.shared.Node;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTask;
 import stroom.task.api.TaskContext;
 
 import java.util.List;

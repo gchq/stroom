@@ -18,7 +18,7 @@ package stroom.processor.shared.task;
 
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.task.shared.Action;
 
 public class CreateProcessorAction extends Action<ProcessorFilter> {

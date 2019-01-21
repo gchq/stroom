@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-processor:stroom-processor-impl-db-gen')
     compile project(':stroom-processor:stroom-processor-shared')
     compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
 

@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 
 import javax.inject.Inject;

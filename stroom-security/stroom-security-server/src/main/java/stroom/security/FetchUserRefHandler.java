@@ -26,7 +26,6 @@ import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

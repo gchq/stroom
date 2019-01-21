@@ -18,8 +18,8 @@ package stroom.streamtask.testshared;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.ArrayList;

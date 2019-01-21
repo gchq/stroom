@@ -16,7 +16,7 @@
 
 package stroom.streamtask;
 
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTask;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;

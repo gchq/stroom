@@ -30,7 +30,7 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Severity;

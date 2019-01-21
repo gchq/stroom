@@ -25,8 +25,8 @@ import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.api.TaskContext;
 

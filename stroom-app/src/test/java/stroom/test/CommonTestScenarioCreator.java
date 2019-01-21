@@ -42,7 +42,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.shared.Processor;
+import stroom.processor.shared.Processor;
 
 import javax.inject.Inject;
 import java.util.HashSet;

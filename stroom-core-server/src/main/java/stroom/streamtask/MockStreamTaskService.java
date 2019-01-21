@@ -21,7 +21,7 @@ import stroom.entity.MockEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.processor.shared.ProcessorFilterTask;
 
 import javax.inject.Singleton;
 
