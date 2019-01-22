@@ -89,28 +89,17 @@ CREATE TABLE IF NOT EXISTS `volume` (
   `updated_at` bigint(20) DEFAULT NULL,
   `path` varchar(255) NOT NULL,
   `index_status` tinyint(4) NOT NULL,
-  `stream_status` tinyint(4) NOT NULL,
   `volume_type` tinyint(4) NOT NULL,
   `bytes_limit` bigint(20) DEFAULT NULL,
-  `fk_node_id` int(11) NOT NULL,
-  `fk_volume_state_id` int(11) NOT NULL,
-  PRIMARY KEY (`ID`),
-  UNIQUE KEY `fk_node_id` (`fk_node_id`,`PATH`),
-  KEY `volume_state_fk_volume_state_id` (`fk_volume_state_id`),
-  CONSTRAINT `volume_fk_node_id` FOREIGN KEY (`fk_node_id`) REFERENCES `node` (`id`),
-  CONSTRAINT `volume_state_fk_volume_state_id` FOREIGN KEY (`fk_volume_state_id`) REFERENCES `volume_state` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=621 DEFAULT CHARSET=latin1;
-
-CREATE TABLE IF NOT EXISTS `volume_state` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `version` tinyint(4) NOT NULL,
   `bytes_used` bigint(20) DEFAULT NULL,
   `bytes_free` bigint(20) DEFAULT NULL,
   `bytes_total` bigint(20) DEFAULT NULL,
   `status_ms` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=621 DEFAULT CHARSET=latin1;
-
+  `fk_node_id` int(11) NOT NULL,
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `fk_node_id` (`fk_node_id`,`PATH`),
+  CONSTRAINT `volume_fk_node_id` FOREIGN KEY (`fk_node_id`) REFERENCES `node` (`id`),
+  ) ENGINE=InnoDB AUTO_INCREMENT=621 DEFAULT CHARSET=latin1;
 
 --
 -- Copy data into the explorer table
@@ -139,15 +128,9 @@ BEGIN
     END IF;
 
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'VOL' > 0) THEN
-        INSERT INTO volume (id, ver, created_by, created_at, updated_by, updated_at, path, index_status, stream_status, volume_type, bytes_limit, fk_node_id, fk_volume_state_id)
-        SELECT ID, VER, CRT_USER, CRT_MS, UPD_USER, UPD_MS, PATH, IDX_STAT, STRM_STAT, VOL_TP, BYTES_LMT, FK_ND_ID, FK_VOL_STATE_ID
-        FROM VOL;
-    END IF;
-
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'VOL' > 0) THEN
-        INSERT INTO volume_state (id, ver, bytes_used, bytes_free, bytes_total, status_ms)
-        SELECT ID, VER, BYTES_USED, BYTES_FREE, BYTES_TOTL, STAT_MS
-        FROM VOL;
+        INSERT INTO volume (id, ver, created_by, created_at, updated_by, updated_at, path, stream_status, volume_type, bytes_limit, bytes_used, bytes_free, bytes_total, status_ms, fk_node_id)
+        SELECT V.ID, V.VER, V.CRT_USER, V.CRT_MS, V.UPD_USER, V.UPD_MS, V.PATH, V.IDX_STAT, V.VOL_TP, V.BYTES_LMT, V.FK_ND_ID, S.BYTES_USED, S.BYTES_FREE, S.BYTES_TOTAL, S.STAT_MS
+        FROM VOL V INNER JOIN VOL_STATE S ON (V.FK_VOL_STATE_ID = S.ID);
     END IF;
 
 END//

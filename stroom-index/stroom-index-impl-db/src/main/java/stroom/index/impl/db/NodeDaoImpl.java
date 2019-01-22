@@ -1,6 +1,5 @@
 package stroom.index.impl.db;
 
-import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Table;
 import org.slf4j.Logger;
@@ -9,7 +8,6 @@ import stroom.index.dao.NodeDao;
 
 import javax.inject.Inject;
 
-import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.table;
 
 public class NodeDaoImpl implements NodeDao {
