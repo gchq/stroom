@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.SharedBoolean;
 
@@ -195,7 +194,6 @@ class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTa
      * Every 10 minutes try and unlock/remove any locks that we hold that have
      * not been refreshed by their owner for 10 minutes.
      */
-    @StroomFrequencySchedule("10m")
     public void unlockOldLocks() {
         final long oldTime = System.currentTimeMillis() - TEN_MINUTES;
         for (final Lock lock : lockMap.values()) {

@@ -22,6 +22,7 @@ import stroom.entity.EntityTypeBinder;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+// TODO: What's this doing in main? I think it should be in test in stroom-app.
 public class MockXmlSchemaModule extends AbstractModule {
     @Override
     protected void configure() {

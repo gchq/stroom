@@ -10,7 +10,11 @@ import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
@@ -114,32 +118,5 @@ public class AuthorisationResource {
         boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
         // The user here will be the one logged in by the JWT.
         return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
-    }
-
-    /**
-     * Updates the user's status
-     */
-    @POST
-    @Path("setUserStatus")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response setUserStatus(@QueryParam("id") String userId, @QueryParam("status") String status) {
-        try{
-            UserStatus newUserStatus = STATUS_MAPPINGS.get(status);
-            UserRef existingUser = userService.getUserByName(userId);
-            if(existingUser != null){
-                User user = userService.loadByUuid(existingUser.getUuid());
-                user.updateStatus(newUserStatus);
-                userService.save(user);
-                return Response.ok().build();
-            }
-            else {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-        }
-        catch(Exception e){
-            LOGGER.error("Unable to change user's status: {}", e.getMessage());
-            return Response.serverError().build();
-        }
     }
 }

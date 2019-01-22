@@ -18,16 +18,17 @@ export const search = (
 ) => (dispatch: Dispatch, getState: () => GlobalStoreState) => {
   const state = getState();
 
-  let url = `${
-    state.config.values.stroomBaseServiceUrl
-  }/streamattributemap/v1/?`;
-  url += `pageSize=${pageSize}`;
-  url += `&pageOffset=${pageOffset}`;
+  var url = new URL(
+    `${state.config.values.stroomBaseServiceUrl}/streamattributemap/v1`
+  );
+  if (!!pageSize) url.searchParams.append("pageSize", pageSize.toString());
+  if (!!pageOffset)
+    url.searchParams.append("pageOffset", pageOffset.toString());
 
   wrappedGet(
     dispatch,
     state,
-    url,
+    url.href,
     response => {
       response.json().then((data: StreamAttributeMapResult) => {
         if (addResults) {

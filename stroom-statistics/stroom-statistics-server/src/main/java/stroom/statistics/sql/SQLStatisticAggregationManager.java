@@ -22,8 +22,6 @@ import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.jobsystem.ClusterLockService;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -58,8 +56,6 @@ public class SQLStatisticAggregationManager {
         this.batchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
     }
 
-    @StroomSimpleCronSchedule(cron = "5,15,25,35,45,55 * *")
-    @JobTrackedSchedule(jobName = "SQL Stats Database Aggregation", description = "Run SQL stats database aggregation")
     public void aggregate() {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("SQL Statistic Aggregation - start");

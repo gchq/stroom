@@ -23,6 +23,7 @@ public class AppModule extends AbstractModule {
         install(new AppConfigModule(configuration.getAppConfig()));
 
         install(new CoreModule());
+        install(new JobsModule());
 
         install(new ClusterModule());
 //        install(new stroom.node.NodeTestConfigModule());

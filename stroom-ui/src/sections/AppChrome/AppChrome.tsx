@@ -230,6 +230,15 @@ const enhance = compose<EnhancedProps, Props>(
               isActive: location && location.pathname.includes("/s/me")
             },
             {
+              key: "admin-user-permissions",
+              title: "User Permissions",
+              onClick: () => history.push(`${pathPrefix}/userPermissions`),
+              icon: "users",
+              style: "nav",
+              isActive:
+                location && location.pathname.includes("/s/userPermissions")
+            },
+            {
               key: "admin-users",
               title: "Users",
               onClick: () => history.push(`${pathPrefix}/users`),

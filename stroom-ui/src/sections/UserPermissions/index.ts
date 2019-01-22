@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.util.lifecycle;
+import UserPermissions from "./UserPermissions";
+import UserTable from "./UsersTable";
+import { actionCreators, reducer, StoreState } from "./redux";
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+export { UserPermissions, UserTable, actionCreators, reducer, StoreState };
 
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface StroomFrequencySchedule {
-    String value();
-}
+export default UserPermissions;

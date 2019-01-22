@@ -19,17 +19,15 @@ package stroom.security;
 
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.UserJooq;
 import stroom.security.shared.UserRef;
 
 import java.util.List;
 
 public interface UserService extends ProvidesNamePattern {
-    String ADMIN_USER_NAME = "admin";
-    String STROOM_SERVICE_USER_NAME = "stroomServiceUser";
-
     UserRef getUserByName(String name);
 
-    List<User> find(FindUserCriteria criteria);
+    List<UserJooq> find(FindUserCriteria criteria);
 
     List<UserRef> findUsersInGroup(UserRef userGroup);
 
@@ -39,11 +37,11 @@ public interface UserService extends ProvidesNamePattern {
 
     UserRef createUserGroup(String name);
 
-    User loadByUuid(String uuid);
+    UserJooq loadByUuid(String uuid);
 
-    User save(User user);
+    UserJooq save(UserJooq user);
 
-    Boolean delete(User user);
+    Boolean delete(UserJooq user);
 
     void addUserToGroup(final UserRef user, final UserRef userGroup);
 
