@@ -3,6 +3,7 @@ package stroom.security;
 import com.google.inject.AbstractModule;
 import org.mockito.Mockito;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.cache.CacheModule;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.entity.event.EntityEventBus;
@@ -24,6 +25,7 @@ class TestModule extends AbstractModule {
     @Override
     protected void configure() {
         // We want the 'real' security DB Module
+        install(new CacheModule());
         install(new SecurityDbModule());
 
         if (null != dbContainer) {
