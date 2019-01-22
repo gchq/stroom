@@ -17,9 +17,9 @@
 package stroom.monitoring.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.jobsystem.client.presenter.JobPresenter;
-import stroom.jobsystem.client.presenter.JobPresenter.JobView;
-import stroom.jobsystem.client.view.JobViewImpl;
+import stroom.job.client.presenter.JobPresenter;
+import stroom.job.client.presenter.JobPresenter.JobView;
+import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
