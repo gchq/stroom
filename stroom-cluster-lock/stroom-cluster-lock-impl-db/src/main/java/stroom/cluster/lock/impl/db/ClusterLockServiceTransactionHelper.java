@@ -1,4 +1,4 @@
-package stroom.jobsystem;
+package stroom.cluster.lock.impl.db;
 
 import stroom.entity.shared.Clearable;
 

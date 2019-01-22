@@ -28,6 +28,11 @@ include 'stroom-activity:stroom-activity-shared'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
+// Cluster lock
+include 'stroom-cluster-lock:stroom-cluster-lock-api'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
+include 'stroom-cluster-lock:stroom-cluster-lock-impl-db-gen'
+
 // Config
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
@@ -102,6 +107,11 @@ include 'stroom-index:stroom-index-client'
 include 'stroom-kafka:stroom-kafka-shared'
 include 'stroom-kafka:stroom-kafka-impl'
 include 'stroom-kafka:stroom-kafka-pipeline'
+
+// Node
+include 'stroom-node:stroom-node-api'
+include 'stroom-node:stroom-node-impl-db'
+include 'stroom-node:stroom-node-impl-db-gen'
 
 // Pipeline
 include 'stroom-pipeline'

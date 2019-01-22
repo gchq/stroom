@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.cluster.lock.impl.db;
 
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.SharedBoolean;

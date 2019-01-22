@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
 import stroom.job.shared.ClusterLock;
 import stroom.node.NodeCache;
 import stroom.persist.EntityManagerSupport;
+import stroom.security.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
@@ -39,8 +41,8 @@ class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
-    private final StroomEntityManager stroomEntityManager;
-    private final EntityManagerSupport entityManagerSupport;
+    private final SecurityContext securityContext;
+    private final ConnectionProvider connectionProvider;
     private final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
     private final TaskManager taskManager;
     private final NodeCache nodeCache;

@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.cluster.lock.impl.db;
 
-enum ClusterLockStyle {
-    Try, Release, KeepAlive
+import stroom.util.shared.SharedBoolean;
+import stroom.task.api.ServerTask;
+
+public class ClusterLockTask extends ServerTask<SharedBoolean> {
+    private final ClusterLockKey key;
+    private final ClusterLockStyle lockStyle;
+
+    public ClusterLockTask(final ClusterLockKey key, final ClusterLockStyle lockStyle) {
+        this.key = key;
+        this.lockStyle = lockStyle;
+    }
+
+    public ClusterLockKey getKey() {
+        return key;
+    }
+
+    public ClusterLockStyle getLockStyle() {
+        return lockStyle;
+    }
 }

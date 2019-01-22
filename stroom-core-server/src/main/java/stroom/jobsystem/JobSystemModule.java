@@ -27,6 +27,11 @@ import stroom.job.shared.GetScheduledTimesAction;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobManager;
 import stroom.job.shared.JobNode;
+import stroom.jobsystem.shared.FetchJobDataAction;
+import stroom.jobsystem.shared.GetScheduledTimesAction;
+import stroom.jobsystem.shared.Job;
+import stroom.jobsystem.shared.JobManager;
+import stroom.jobsystem.shared.JobNode;
 import stroom.task.api.TaskHandlerBinder;
 
 public class JobSystemModule extends AbstractModule {
@@ -43,12 +48,7 @@ public class JobSystemModule extends AbstractModule {
         bind(ScheduledTaskExecutor.class).to(ScheduledTaskExecutorImpl.class);
         bind(JobManager.class).to(JobManagerImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(ClusterLockServiceTransactionHelperImpl.class);
-
         TaskHandlerBinder.create(binder())
-                .bind(ClusterLockClusterTask.class, stroom.jobsystem.ClusterLockClusterHandler.class)
-                .bind(ClusterLockTask.class, stroom.jobsystem.ClusterLockHandler.class)
                 .bind(DistributedTaskRequestClusterTask.class, stroom.jobsystem.DistributedTaskRequestClusterHandler.class)
                 .bind(FetchJobDataAction.class, stroom.jobsystem.FetchJobDataHandler.class)
                 .bind(GetScheduledTimesAction.class, stroom.jobsystem.GetScheduledTimesHandler.class)
