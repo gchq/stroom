@@ -17,6 +17,14 @@
 
 package stroom.job.api;
 
+import stroom.entity.shared.BaseResultList;
+import stroom.job.shared.FindJobCriteria;
+import stroom.job.shared.Job;
+
 public interface JobService {
     void startup();
+
+    Job save(Job job);
+
+    BaseResultList<Job> find(FindJobCriteria criteria);
 }
