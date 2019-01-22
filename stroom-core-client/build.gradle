@@ -3,23 +3,24 @@ ext.moduleName = 'stroom.core.client'
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-activity:stroom-activity-shared')
-    implementation project(':stroom-security:stroom-security-client-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-core-shared')
+    implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-client-widget')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-entity-shared')
-    implementation project(':stroom-ruleset:stroom-ruleset-shared')
-    implementation project(':stroom-util-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-docstore:stroom-docstore-shared')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
-    implementation project(':stroom-config:stroom-config-global-api')
-    implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-job:stroom-job-shared')
+    implementation project(':stroom-ruleset:stroom-ruleset-shared')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-client-api')
+    implementation project(':stroom-task:stroom-task-shared')
+    implementation project(':stroom-util-shared')
 
     implementation libs.stroomDocRef
     implementation libs.stroomQueryApi
+    
     implementation libs.gin
     implementation libs.guice3
     implementation libs.gwt_user

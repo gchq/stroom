@@ -7,7 +7,7 @@ import stroom.data.meta.impl.db.DataMetaDbLifecycleModule;
 import stroom.entity.event.EntityEventLifecycleModule;
 import stroom.importexport.ImportExportLifecycleModule;
 import stroom.index.IndexLifecycleModule;
-import stroom.jobsystem.JobSystemLifecycleModule;
+import stroom.job.JobSystemLifecycleModule;
 import stroom.kafka.impl.KafkaLifecycleModule;
 import stroom.persist.EntityManagerLifecycleModule;
 import stroom.pipeline.destination.RollingDestinationsLifecycleModule;

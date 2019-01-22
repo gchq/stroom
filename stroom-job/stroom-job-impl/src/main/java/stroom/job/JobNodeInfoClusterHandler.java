@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
-import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.security.Security;
@@ -44,7 +43,7 @@ class JobNodeInfoClusterHandler
     public stroom.util.shared.SharedMap<JobNode, JobNodeInfo> exec(final JobNodeInfoClusterTask task) {
         return security.secureResult(() -> {
             final SharedMap<JobNode, JobNodeInfo> result = new SharedMap<>();
-            final Trackers trackers = jobNodeTrackerCache.getTrackers();
+            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
             if (trackers != null) {
                 final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
                 if (trackerList != null) {

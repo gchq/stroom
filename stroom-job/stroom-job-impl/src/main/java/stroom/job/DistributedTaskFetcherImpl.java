@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFetcher;
-import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -147,7 +146,7 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
                                 final boolean forceFetch = elapsed > ONE_MINUTE;
 
                                 // Get the trackers.
-                                final Trackers trackers = jobNodeTrackerCache.getTrackers();
+                                final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
 
                                 // Get this node.
                                 final Node node = jobNodeTrackerCache.getNode();
@@ -267,7 +266,7 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
             final long now = System.currentTimeMillis();
 
             // Execute all of the returned tasks.
-            final Trackers trackers = jobNodeTrackerCache.getTrackers();
+            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
             for (final Entry<JobNode, List<DistributedTask<?>>> entry : response.getTaskMap().entrySet()) {
                 // Get the latest local tracker.
                 final JobNode jobNode = entry.getKey();
@@ -315,7 +314,7 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
     /**
      * Creates an array of runnable jobs sorted into priority order.
      */
-    private DistributedRequiredTask[] getDistributedRequiredTasks(final Trackers trackers) {
+    private DistributedRequiredTask[] getDistributedRequiredTasks(final JobNodeTrackerCache.Trackers trackers) {
         final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
 
         // Create a shortlist of runnable jobs.

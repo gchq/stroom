@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import stroom.job.api.JobNodeService;
 import stroom.job.api.JobService;

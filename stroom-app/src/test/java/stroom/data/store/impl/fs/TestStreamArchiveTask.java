@@ -29,7 +29,7 @@ import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.jobsystem.MockTask;
+import stroom.job.MockTask;
 import stroom.node.NodeCache;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;

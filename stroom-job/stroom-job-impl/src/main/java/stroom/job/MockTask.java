@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import stroom.job.api.DistributedTask;
 import stroom.util.shared.VoidResult;

@@ -10,7 +10,7 @@ import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
-import stroom.jobsystem.JobSystemConfig;
+import stroom.job.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.HeapHistogramConfig;
 import stroom.node.NodeConfig;

@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
-import stroom.job.shared.JobNode;
-import stroom.job.shared.JobNodeInfo;
-import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.SharedMap;
+import stroom.task.shared.Task;
 
-public class JobNodeInfoClusterTask extends ClusterTask<SharedMap<JobNode, JobNodeInfo>> {
-    private static final long serialVersionUID = 3242415690833883484L;
+import java.util.Queue;
 
-    public JobNodeInfoClusterTask(final String userToken) {
-        super(userToken, "JobNodeInfoClusterTask");
-    }
+public interface TaskDestructionHandler {
+    void onDestroy(Queue<Task<?>> queue);
 }

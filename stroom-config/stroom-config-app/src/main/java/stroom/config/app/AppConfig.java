@@ -11,7 +11,7 @@ import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
 import stroom.index.IndexConfig;
-import stroom.jobsystem.JobSystemConfig;
+import stroom.job.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.NodeConfig;
 import stroom.persist.CoreConfig;

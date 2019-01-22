@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;

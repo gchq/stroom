@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
@@ -44,11 +44,11 @@ public class JobSystemModule extends AbstractModule {
         bind(JobManager.class).to(JobManagerImpl.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(DistributedTaskRequestClusterTask.class, stroom.jobsystem.DistributedTaskRequestClusterHandler.class)
-                .bind(FetchJobDataAction.class, stroom.jobsystem.FetchJobDataHandler.class)
-                .bind(GetScheduledTimesAction.class, stroom.jobsystem.GetScheduledTimesHandler.class)
-                .bind(JobNodeInfoClusterTask.class, stroom.jobsystem.JobNodeInfoClusterHandler.class)
-                .bind(ScheduledTask.class, stroom.jobsystem.ScheduledTaskHandler.class);
+                .bind(DistributedTaskRequestClusterTask.class, DistributedTaskRequestClusterHandler.class)
+                .bind(FetchJobDataAction.class, FetchJobDataHandler.class)
+                .bind(GetScheduledTimesAction.class, GetScheduledTimesHandler.class)
+                .bind(JobNodeInfoClusterTask.class, JobNodeInfoClusterHandler.class)
+                .bind(ScheduledTask.class, ScheduledTaskHandler.class);
 
         EntityTypeBinder.create(binder())
                 .bind(Job.ENTITY_TYPE, JobServiceImpl.class)

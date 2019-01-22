@@ -6,6 +6,7 @@ import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.entity.event.EntityClusterTaskModule;
+import stroom.job.JobSystemModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;
@@ -40,7 +41,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.importexport.ImportExportHandlerModule());
         install(new stroom.index.IndexModule());
         install(new stroom.index.IndexElementModule());
-        install(new stroom.jobsystem.JobSystemModule());
+        install(new JobSystemModule());
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.event.logging.impl.EventLoggingModule());

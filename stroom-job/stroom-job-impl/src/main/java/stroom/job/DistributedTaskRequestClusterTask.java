@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import stroom.node.shared.Node;
 import stroom.task.cluster.ClusterTask;

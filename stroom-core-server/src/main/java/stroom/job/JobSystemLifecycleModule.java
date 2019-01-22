@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import stroom.job.api.DistributedTaskFetcher;
 import stroom.job.api.JobNodeService;

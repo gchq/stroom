@@ -1,4 +1,4 @@
-package stroom.jobsystem;
+package stroom.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;

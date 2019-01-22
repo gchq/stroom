@@ -1,4 +1,4 @@
-package stroom.jobsystem;
+package stroom.job;
 
 import stroom.cluster.lock.api.ClusterLockClusterHandler;
 import stroom.cluster.lock.api.ClusterLockService;

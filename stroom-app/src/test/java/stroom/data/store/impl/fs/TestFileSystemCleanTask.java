@@ -26,7 +26,7 @@ import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
-import stroom.jobsystem.MockTask;
+import stroom.job.MockTask;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;

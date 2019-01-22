@@ -7,7 +7,7 @@ import stroom.dashboard.DashboardJobsModule;
 import stroom.data.meta.impl.db.DataMetaDbJobsModule;
 import stroom.data.store.impl.fs.FileSystemDataStoreJobsModule;
 import stroom.index.IndexJobsModule;
-import stroom.jobsystem.JobSystemJobsModule;
+import stroom.job.JobSystemJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.refdata.store.RefDataStoreJobsModule;
 import stroom.search.SearchJobsModule;

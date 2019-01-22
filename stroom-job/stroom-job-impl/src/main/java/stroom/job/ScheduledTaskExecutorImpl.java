@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,6 @@ import stroom.job.api.ScheduledJob;
 import stroom.job.api.ScheduledTaskExecutor;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.JobNode;
-import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.security.Security;
 import stroom.task.StroomThreadGroup;
 import stroom.task.api.TaskManager;
@@ -156,7 +155,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
                 Scheduler scheduler = null;
                 JobNodeTracker jobNodeTracker;
 
-                final Trackers trackers = jobNodeTrackerCache.getTrackers();
+                final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
                jobNodeTracker = trackers.getTrackerForJobName(scheduledJob.getName());
 
                if(scheduledJob.isManaged()) {
