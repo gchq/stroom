@@ -33,6 +33,6 @@ public final class UserRefFactory {
         final String uuid = user.getUuid();
         final String name = user.getName();
 
-        return new UserRef(type, uuid, name, user.isGroup(), true);
+        return new UserRef(type, uuid, name, user.getIsGroup(), true);
     }
 }

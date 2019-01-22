@@ -100,14 +100,22 @@ class UserServiceImpl implements UserService {
 
     @Override
     public User save(User user) {
-        // TODO
-        return null;
+        if (null != user.getUuid()) {
+            return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
+                    () -> userDao.getByUuid(user.getUuid()));
+        } else {
+            return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
+                    () -> user.getIsGroup() ?
+                            userDao.createUser(user.getName()) :
+                            userDao.createUserGroup(user.getName()));
+        }
     }
 
     @Override
     public Boolean delete(User user) {
-        return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
+        security.secure(PermissionNames.MANAGE_USERS_PERMISSION,
                 () -> userDao.deleteUser(user.getUuid()));
+        return true;
     }
 
     @Override
