@@ -28,4 +28,6 @@ public interface ClusterLockService {
     void releaseLock(final String lockName);
 
     void lock(final String lockName);
+
+    void keepAlive();
 }

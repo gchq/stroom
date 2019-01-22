@@ -18,9 +18,7 @@ package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 
@@ -43,8 +41,6 @@ public class NodeStatusExecutor {
      *
      * @return A task.
      */
-    @StroomSimpleCronSchedule(cron = "* * *")
-    @JobTrackedSchedule(jobName = "Node Status", advanced = false, description = "Job to record status of node (CPU and Memory usage)")
     public void exec() {
         LOGGER.debug("Updating the status for this node.");
         internalStatisticsReceiver.putEvents(nodeStatusServiceUtil.buildNodeStatus());

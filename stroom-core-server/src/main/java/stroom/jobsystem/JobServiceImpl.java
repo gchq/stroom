@@ -26,18 +26,18 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.FieldMap;
-import stroom.lifecycle.StroomBeanStore;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.job.ScheduledJob;
+import stroom.task.api.job.TaskConsumer;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,17 +50,17 @@ import java.util.Set;
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
-    private final StroomBeanStore stroomBeanStore;
+    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
                    final Security security,
                    final UiConfig uiConfig,
-                   final StroomBeanStore stroomBeanStore,
+                   final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                    final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security, uiConfig);
-        this.stroomBeanStore = stroomBeanStore;
+        this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
@@ -90,14 +90,13 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
         LOGGER.info("startup()");
 
         final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();
-        for (final MethodReference methodReference : stroomBeanStore.getAnnotatedMethods(JobTrackedSchedule.class)) {
-            final JobTrackedSchedule jobScheduleDescriptor = methodReference.getMethod()
-                    .getAnnotation(JobTrackedSchedule.class);
-            queryAppender.getJobDescriptionMap().put(jobScheduleDescriptor.jobName(), jobScheduleDescriptor.description());
-            if (jobScheduleDescriptor.advanced()) {
-                queryAppender.getJobAdvancedSet().add(jobScheduleDescriptor.jobName());
-            }
-        }
+        scheduledJobsMap.keySet().forEach(scheduledJob -> {
+                queryAppender.getJobDescriptionMap().put(scheduledJob.getName(), scheduledJob.getDescription());
+                if (scheduledJob.isAdvanced()) {
+                    queryAppender.getJobAdvancedSet().add(scheduledJob.getName());
+                }
+        });
+
         // Distributed Jobs done a different way
         distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
             final DistributedTaskFactoryBean distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryBean.class);

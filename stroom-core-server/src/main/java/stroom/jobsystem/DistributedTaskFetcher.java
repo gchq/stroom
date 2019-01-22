@@ -33,7 +33,6 @@ import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.shared.Task;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.shared.VoidResult;
 
@@ -112,10 +111,8 @@ public class DistributedTaskFetcher {
     }
 
     /**
-     * Every 10 seconds the Stroom lifecycle service will try and fetch new tasks
-     * for execution.
+     * The Stroom lifecycle service will try and fetch new tasks for execution.
      */
-    @StroomFrequencySchedule("10s")
     public void execute() {
         fetch();
     }

@@ -32,8 +32,6 @@ import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -65,8 +63,6 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
         this.stroomEntityManager = stroomEntityManager;
     }
 
-    @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Stream Task Retention", description = "Physically delete stream tasks that have been logically deleted or complete based on age (stroom.process.deletePurgeAge)")
     public void exec() {
         final AtomicLong nextDeleteMs = streamTaskCreator.getNextDeleteMs();
 

@@ -6,6 +6,7 @@ import java.util.Objects;
  * TODO: Rename this first opportunity, for now it's to distinguish it from the hibernate based user.
  */
 public class UserJooq {
+    public static final String ADMIN_USER_NAME = "admin";
 
     // Value of a long to represent an undefined id.
     private static final long UNDEFINED_ID = -1;

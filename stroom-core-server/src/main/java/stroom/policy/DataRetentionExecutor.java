@@ -34,8 +34,6 @@ import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -97,8 +95,6 @@ public class DataRetentionExecutor {
         this.policyConfig = policyConfig;
     }
 
-    @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Data Retention", description = "Delete data that exceeds the retention period specified by data retention policy")
     public void exec() {
         if (running.compareAndSet(false, true)) {
             try {

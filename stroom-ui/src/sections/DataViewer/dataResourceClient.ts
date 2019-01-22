@@ -19,14 +19,18 @@ export const getDataForSelectedRow = (dataViewerId: string) => (
       ? state.dataViewers[dataViewerId]!.streamAttributeMaps![selectedRow].data
           .id
       : undefined;
-  const params = `streamId=${streamId}&streamsOffset=0&streamsLength=1&pageOffset=0&pageSize=100`;
 
-  const url = `${state.config.values.stroomBaseServiceUrl}/data/v1/?${params}`;
+  var url = new URL(`${state.config.values.stroomBaseServiceUrl}/data/v1/`);
+  if (!!streamId) url.searchParams.append("streamId", streamId.toString());
+  url.searchParams.append("streamsOffset", "0");
+  url.searchParams.append("streamsLength", "1");
+  url.searchParams.append("pageOffset", "0");
+  url.searchParams.append("pageSize", "100");
 
   wrappedGet(
     dispatch,
     state,
-    url,
+    url.href,
     response => {
       response.json().then((data: AbstractFetchDataResult) => {
         dispatch(actionCreators.updateDataForSelectedRow(dataViewerId, data));

@@ -7,6 +7,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.entity.event.EntityEventBus;
 import stroom.explorer.api.ExplorerService;
+import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.security.impl.db.SecurityDbModule;
 

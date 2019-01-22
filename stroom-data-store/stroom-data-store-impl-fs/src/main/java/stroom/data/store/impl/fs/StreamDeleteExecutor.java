@@ -30,8 +30,6 @@ import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -54,8 +52,6 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
         this.streamMetaService = streamMetaService;
     }
 
-    @StroomSimpleCronSchedule(cron = "0 0 *")
-    @JobTrackedSchedule(jobName = "Stream Delete", description = "Physically delete streams that have been logically deleted based on age of delete (stroom.data.store.deletePurgeAge)")
     public void exec() {
         lockAndDelete();
     }

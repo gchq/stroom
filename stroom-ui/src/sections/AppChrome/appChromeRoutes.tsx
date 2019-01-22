@@ -14,7 +14,8 @@ import ErrorPage from "../../components/ErrorPage";
 
 import { Config } from "../../startup/config";
 import { GlobalStoreState } from "../../startup/reducers";
-import { RouteComponentProps } from "react-router";
+import { RouteComponentProps, RouteProps } from "react-router";
+import UserPermissions from "../UserPermissions";
 
 const renderWelcome = () => (
   <AppChrome activeMenuItem="Welcome" content={<Welcome />} />
@@ -90,6 +91,16 @@ export default [
   },
   {
     exact: true,
+    path: "/s/userPermissions",
+    render: () => (
+      <AppChrome
+        activeMenuItem="User Permissions"
+        content={<UserPermissions />}
+      />
+    )
+  },
+  {
+    exact: true,
     path: "/s/users",
     render: () => <AppChrome activeMenuItem="Users" content={<UsersIFrame />} />
   },
@@ -120,4 +131,4 @@ export default [
       <AppChrome activeMenuItem="Welcome" content={<PathNotFound />} />
     )
   }
-];
+] as Array<RouteProps>;

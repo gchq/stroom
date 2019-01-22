@@ -27,4 +27,6 @@ interface MetaValueService extends Flushable {
     void addAttributes(Data data, AttributeMap attributes);
 
     List<DataRow> decorateDataWithAttributes(List<Data> list);
+
+    void deleteOldValues();
 }

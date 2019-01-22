@@ -24,24 +24,12 @@ public final class UserRefFactory {
         // Factory class.
     }
 
-    public static UserRef create(final User user) {
-        if (user == null) {
-            return null;
-        }
-
-        final String type = user.getType();
-        final String uuid = user.getUuid();
-        final String name = user.getName();
-
-        return new UserRef(type, uuid, name, user.isGroup(), UserStatus.ENABLED.equals(user.getStatus()));
-    }
-
     public static UserRef create(final UserJooq user) {
         if (user == null) {
             return null;
         }
 
-        final String type = User.ENTITY_TYPE;
+        final String type = "User";
         final String uuid = user.getUuid();
         final String name = user.getName();
 
