@@ -21,9 +21,9 @@ public interface UserDao {
 
     User createUserGroup(String name);
 
-    Boolean deleteUser(String uuid);
+    void deleteUser(String uuid);
 
-    Boolean addUserToGroup(String userUuid, String groupUuid);
+    void addUserToGroup(String userUuid, String groupUuid);
 
-    Boolean removeUserFromGroup(String userUuid, String groupUuid);
+    void removeUserFromGroup(String userUuid, String groupUuid);
 }

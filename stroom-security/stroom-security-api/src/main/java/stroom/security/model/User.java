@@ -26,7 +26,7 @@ public class User {
      * Is this user a user group or a regular user? TODO : At some point split
      * out logon and credential details into another entity.
      */
-    private boolean group;
+    private boolean isGroup;
 
     public long getId() {
         return id;
@@ -52,12 +52,12 @@ public class User {
         this.uuid = uuid;
     }
 
-    public boolean isGroup() {
-        return group;
+    public boolean getIsGroup() {
+        return isGroup;
     }
 
-    public void setGroup(boolean group) {
-        this.group = group;
+    public void setIsGroup(boolean isGroup) {
+        this.isGroup = isGroup;
     }
 
     @Override
@@ -66,14 +66,14 @@ public class User {
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
         return id == user.id &&
-                group == user.group &&
+                isGroup == user.isGroup &&
                 Objects.equals(name, user.name) &&
                 Objects.equals(uuid, user.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, uuid, group);
+        return Objects.hash(id, name, uuid, isGroup);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class User {
         sb.append("id=").append(id);
         sb.append(", name='").append(name).append('\'');
         sb.append(", uuid='").append(uuid).append('\'');
-        sb.append(", group=").append(group);
+        sb.append(", isGroup=").append(isGroup);
         sb.append('}');
         return sb.toString();
     }
@@ -114,7 +114,7 @@ public class User {
         }
 
         public Builder isGroup(final Boolean value) {
-            instance.setGroup(value);
+            instance.setIsGroup(value);
             return this;
         }
 

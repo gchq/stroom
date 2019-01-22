@@ -80,36 +80,24 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Response deleteUser(final String uuid) {
-        final Boolean ok = userDao.deleteUser(uuid);
+        userDao.deleteUser(uuid);
 
-        if (ok) {
-            return Response.noContent().build();
-        } else {
-            return Response.notModified().build();
-        }
+        return Response.noContent().build();
     }
 
     @Override
     public Response addUserToGroup(final String userUuid,
                                   final String groupUuid) {
-        final Boolean ok = userDao.addUserToGroup(userUuid, groupUuid);
+        userDao.addUserToGroup(userUuid, groupUuid);
 
-        if (ok) {
-            return Response.noContent().build();
-        } else {
-            return Response.notModified().build();
-        }
+        return Response.noContent().build();
     }
 
     @Override
     public Response removeUserFromGroup(final String userUuid,
                                        final String groupUuid) {
-        final Boolean ok = userDao.removeUserFromGroup(userUuid, groupUuid);
+        userDao.removeUserFromGroup(userUuid, groupUuid);
 
-        if (ok) {
-            return Response.noContent().build();
-        } else {
-            return Response.notModified().build();
-        }
+        return Response.noContent().build();
     }
 }

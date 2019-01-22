@@ -53,13 +53,13 @@ public class UserDaoImplTest {
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
-        assertThat(userCreated.isGroup()).isFalse();
+        assertThat(userCreated.getIsGroup()).isFalse();
 
         Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
             assertThat(u).isNotNull();
             assertThat(u.getUuid()).isEqualTo(userCreated.getUuid());
             assertThat(u.getName()).isEqualTo(userName);
-            assertThat(u.isGroup()).isFalse();
+            assertThat(u.getIsGroup()).isFalse();
         });
     }
 
@@ -77,13 +77,13 @@ public class UserDaoImplTest {
 
         // Then
         assertThat(userCreated.getUuid()).isNotNull();
-        assertThat(userCreated.isGroup()).isTrue();
+        assertThat(userCreated.getIsGroup()).isTrue();
 
         Stream.of(foundByUuid, foundByName, foundById).forEach(u -> {
             assertThat(u).isNotNull();
             assertThat(u.getUuid()).isEqualTo(userCreated.getUuid());
             assertThat(u.getName()).isEqualTo(userName);
-            assertThat(u.isGroup()).isTrue();
+            assertThat(u.getIsGroup()).isTrue();
         });
     }
 
@@ -95,13 +95,12 @@ public class UserDaoImplTest {
         // When
         final User userCreated = userDao.createUser(userName);
         final User userFoundBeforeDelete = userDao.getById(userCreated.getId());
-        final Boolean deleteSuccess = userDao.deleteUser(userCreated.getUuid());
+        userDao.deleteUser(userCreated.getUuid());
         final User userFoundAfterDelete = userDao.getById(userCreated.getId());
 
         // Then
         assertThat(userCreated).isNotNull();
         assertThat(userFoundBeforeDelete).isNotNull();
-        assertThat(deleteSuccess).isTrue();
         assertThat(userFoundAfterDelete).isNull();
     }
 
