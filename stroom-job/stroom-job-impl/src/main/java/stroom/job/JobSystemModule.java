@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
+import stroom.job.api.DistributedTaskFetcher;
 import stroom.job.api.JobNodeService;
 import stroom.job.api.JobService;
 import stroom.job.api.ScheduledJobsModule;
@@ -42,6 +43,7 @@ public class JobSystemModule extends AbstractModule {
         bind(ScheduleService.class).to(ScheduleServiceImpl.class);
         bind(ScheduledTaskExecutor.class).to(ScheduledTaskExecutorImpl.class);
         bind(JobManager.class).to(JobManagerImpl.class);
+        bind(DistributedTaskFetcher.class).to(DistributedTaskFetcherImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(DistributedTaskRequestClusterTask.class, DistributedTaskRequestClusterHandler.class)
