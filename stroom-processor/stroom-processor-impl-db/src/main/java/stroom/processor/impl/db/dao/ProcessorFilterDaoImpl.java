@@ -41,13 +41,13 @@ public class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public int delete(final int id) {
-        return JooqUtil.deleteById(connectionProvider, PROCESSOR_FILTER, PROCESSOR_FILTER.ID, id);
+        return JooqUtil.deleteById(connectionProvider, PROCESSOR_FILTER, id);
     }
 
     @Override
     public ProcessorFilter fetch(final int id) {
         // TODO FK relationship
-        return JooqUtil.fetchById(connectionProvider, PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, id);
+        return JooqUtil.fetchById(connectionProvider, PROCESSOR_FILTER, ProcessorFilter.class, id)
     }
 
     @Override

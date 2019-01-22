@@ -1,12 +1,14 @@
 package stroom.entity;
 
+import java.util.Optional;
+
 public interface BasicCrudDao<T> {
 
     T create();
 
-    T update(T record);
+    T update(final T record);
 
-    int delete(int id);
+    int delete(final int id);
 
-    T fetch(int id);
+    Optional<T> fetch(final int id);
 }
