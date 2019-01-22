@@ -25,7 +25,6 @@ import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.NodeCache;
-import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -96,7 +95,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
-        final String node = nodeCache.getThisNodeName();
+        final String nodeName = nodeCache.getThisNodeName();
 
         // Create a coprocessor settings map.
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
@@ -109,7 +108,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 userToken,
                 searchName,
                 query,
-                node,
+                nodeName,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,
                 coprocessorSettingsMap.getMap(),
                 searchRequest.getDateTimeLocale(),
@@ -128,7 +127,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Create the search result collector.
         final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                 asyncSearchTask,
-                node,
+                nodeName,
                 highlights,
                 resultHandler,
                 defaultMaxResultsSizes,

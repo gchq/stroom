@@ -58,7 +58,7 @@ class TestHessian {
                 .expression(expression)
                 .build();
 
-        final String node = "node";
+        final String nodeName = "node";
 
         final List<IndexField> indexFields = createIndexFields();
         final IndexField[] fields = indexFields.toArray(new IndexField[0]);
@@ -88,7 +88,7 @@ class TestHessian {
                 "test",
                 "test",
                 query,
-                node,
+                nodeName,
                 500,
                 coprocessorMap,
                 "locale",
@@ -100,7 +100,7 @@ class TestHessian {
                 "test",
                 query,
                 Arrays.asList(1L, 2L, 3L),
-                node,
+                nodeName,
                 fields,
                 1000,
                 coprocessorMap,

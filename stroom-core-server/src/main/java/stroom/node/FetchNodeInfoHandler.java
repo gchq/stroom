@@ -64,7 +64,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
                     .execAsync(new NodeInfoClusterTask(action.getUserToken()), 5, TimeUnit.SECONDS, TargetType.ENABLED);
 
             final ClusterState clusterState = clusterNodeManager.getQuickClusterState();
-            final String masterNode = clusterState.getMasterNode();
+            final String masterNodeName = clusterState.getMasterNodeName();
             final List<Node> allNodes = nodeService.find(nodeService.createCriteria());
 
             allNodes.sort((o1, o2) -> {
@@ -98,7 +98,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
                     result.setError("No response");
                 }
 
-                result.setMaster(node.getName().equals(masterNode));
+                result.setMaster(node.getName().equals(masterNodeName));
                 result.setEntity(node);
                 responseList.add(result);
             }

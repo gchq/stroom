@@ -148,7 +148,7 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
                                 final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
 
                                 // Get this node.
-                                final String node = jobNodeTrackerCache.getNode().getName();
+                                final String nodeName = jobNodeTrackerCache.getNode().getName();
 
                                 // Create an array of runnable jobs sorted into priority order.
                                 final DistributedRequiredTask[] requiredTasks = getDistributedRequiredTasks(trackers);
@@ -161,13 +161,13 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
 
                                 // If there are some tasks we need to get then get them.
                                 if (count > 0 || forceFetch) {
-                                    final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask(genericServerTask, "DistributedTaskRequestClusterTask", node,
+                                    final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask(genericServerTask, "DistributedTaskRequestClusterTask", nodeName,
                                             requiredTasks);
 
                                     if (LOGGER.isDebugEnabled()) {
-                                        LOGGER.debug("Task request: node=\"" + request.getNode() + "\"");
+                                        LOGGER.debug("Task request: node=\"" + request.getNodeName() + "\"");
                                         if (LOGGER.isTraceEnabled()) {
-                                            final String trace = "\nTask request: node=\"" + request.getNode() + "\"\n"
+                                            final String trace = "\nTask request: node=\"" + request.getNodeName() + "\"\n"
                                                     + request.toString();
                                             LOGGER.trace(trace);
                                         }
@@ -253,9 +253,9 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
                               final DistributedTaskRequestResult response) {
         try {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task response: node=\"" + request.getNode() + "\"");
+                LOGGER.debug("Task response: node=\"" + request.getNodeName() + "\"");
                 if (LOGGER.isTraceEnabled()) {
-                    final String trace = "\nTask response: node=\"" + request.getNode() + "\"\n"
+                    final String trace = "\nTask response: node=\"" + request.getNodeName() + "\"\n"
                             + response.toString();
                     LOGGER.trace(trace);
                 }

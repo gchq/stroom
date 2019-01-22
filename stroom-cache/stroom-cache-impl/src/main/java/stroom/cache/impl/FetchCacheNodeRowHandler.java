@@ -72,21 +72,21 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
                 return o1.compareToIgnoreCase(o2);
             });
 
-            for (final String node : nodes) {
-                final ClusterCallEntry<ResultList<CacheInfo>> response = collector.getResponse(node);
+            for (final String nodeName : nodes) {
+                final ClusterCallEntry<ResultList<CacheInfo>> response = collector.getResponse(nodeName);
 
                 if (response == null) {
-                    LOGGER.debug("No response from node: {}", node);
+                    LOGGER.debug("No response from node: {}", nodeName);
                 } else if (response.getError() != null) {
-                    LOGGER.debug("Error from node: {} - {}", node, response.getError().getMessage());
+                    LOGGER.debug("Error from node: {} - {}", nodeName, response.getError().getMessage());
                     LOGGER.debug(response.getError().getMessage(), response.getError());
                 } else {
                     final ResultList<CacheInfo> result = response.getResult();
                     if (result == null) {
-                        LOGGER.debug("No response object received from node: {}", node);
+                        LOGGER.debug("No response object received from node: {}", nodeName);
                     } else {
                         for (final CacheInfo value : result) {
-                            values.add(new CacheNodeRow(node, value));
+                            values.add(new CacheNodeRow(nodeName, value));
                         }
                     }
                 }

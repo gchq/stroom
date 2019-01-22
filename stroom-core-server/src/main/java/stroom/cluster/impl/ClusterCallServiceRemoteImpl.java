@@ -87,15 +87,15 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
         return proxyFactory;
     }
 
-    private ClusterCallService createHessianProxy(final String node) throws MalformedURLException {
-        final String nodeServiceUrl = nodeCache.getClusterUrl(node);
+    private ClusterCallService createHessianProxy(final String nodeName) throws MalformedURLException {
+        final String nodeServiceUrl = nodeCache.getClusterUrl(nodeName);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("createHessianProxy() - " + node + " - " + nodeServiceUrl);
+            LOGGER.debug("createHessianProxy() - " + nodeName + " - " + nodeServiceUrl);
         }
 
         if (nodeServiceUrl == null || nodeServiceUrl.trim().length() == 0) {
-            throw new MalformedURLException("No cluster call URL has been set for node: " + node);
+            throw new MalformedURLException("No cluster call URL has been set for node: " + nodeName);
         }
 
         return (ClusterCallService) getProxyFactory().create(ClusterCallService.class, nodeServiceUrl);
@@ -114,8 +114,8 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
         // Make a local call ?
         boolean local = false;
         if (clusterCallUseLocal) {
-            final String thisNode = nodeCache.getThisNodeName();
-            if (thisNode.equals(targetNode)) {
+            final String thisNodeName = nodeCache.getThisNodeName();
+            if (thisNodeName.equals(targetNode)) {
                 local = true;
             }
         }

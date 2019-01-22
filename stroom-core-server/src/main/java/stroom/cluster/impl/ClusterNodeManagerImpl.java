@@ -158,10 +158,10 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
 
                 } else {
                     final List<String> nodes = asList(clusterState.getAllNodes());
-                    for (final String node : nodes) {
+                    for (final String nodeName : nodes) {
                         builder.append("\n\t");
-                        builder.append(node);
-                        if (node.equals(clusterState.getMasterNode())) {
+                        builder.append(nodeName);
+                        if (nodeName.equals(clusterState.getMasterNodeName())) {
                             builder.append("(MASTER)");
                         }
                     }
@@ -199,20 +199,20 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         // Take a copy of our working variables;
         final List<String> allNodeList = asList(clusterState.getAllNodes());
         final List<String> activeNodeList = asList(clusterState.getEnabledActiveNodes());
-        final String thisNode = nodeCache.getThisNodeName();
-        final String masterNode = clusterState.getMasterNode();
+        final String thisNodeName = nodeCache.getThisNodeName();
+        final String masterNodeName = clusterState.getMasterNodeName();
         final String discoverTime = DateUtil.createNormalDateTimeString(clusterState.getUpdateTime());
 
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
                 clientProperties.getBuildDate(),
                 clientProperties.getBuildVersion(),
                 clientProperties.getUpDate(),
-                thisNode,
-                nodeCache.getClusterUrl(thisNode));
+                thisNodeName,
+                nodeCache.getClusterUrl(thisNodeName));
 
-        if (allNodeList != null && activeNodeList != null && masterNode != null) {
-            for (final String node : allNodeList) {
-                clusterNodeInfo.addItem(node, activeNodeList.contains(node), masterNode.equals(node));
+        if (allNodeList != null && activeNodeList != null && masterNodeName != null) {
+            for (final String nodeName : allNodeList) {
+                clusterNodeInfo.addItem(nodeName, activeNodeList.contains(nodeName), masterNodeName.equals(nodeName));
             }
         }
 
@@ -223,8 +223,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     public Long ping(final String sourceNode) {
         try {
             // Update the cluster state if the node trying to ping us is not us.
-            final String thisNode = nodeCache.getThisNodeName();
-            if (!thisNode.equals(sourceNode)) {
+            final String thisNodeName = nodeCache.getThisNodeName();
+            if (!thisNodeName.equals(sourceNode)) {
                 // Try and get the cluster state and make sure we know about the
                 // node trying to ping us. If we can't get the cluster state or
                 // the current state doesn't know the source node is active then

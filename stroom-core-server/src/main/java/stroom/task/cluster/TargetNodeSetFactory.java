@@ -43,8 +43,8 @@ public class TargetNodeSetFactory {
 
     public Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
-        if (clusterState.getMasterNode() != null) {
-            return Collections.singleton(clusterState.getMasterNode());
+        if (clusterState.getMasterNodeName() != null) {
+            return Collections.singleton(clusterState.getMasterNodeName());
         } else {
             throw new NodeNotFoundException("No master node can be found");
         }

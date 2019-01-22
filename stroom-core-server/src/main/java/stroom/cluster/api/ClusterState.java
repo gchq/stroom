@@ -23,7 +23,7 @@ public class ClusterState {
     private transient Set<String> allNodes = Collections.emptySet();
     private transient Set<String> enabledActiveNodes = Collections.emptySet();
     private transient Set<String> enabledNodes = Collections.emptySet();
-    private transient String masterNode;
+    private transient String masterNodeName;
     private transient long updateTime;
 
     public Set<String> getAllNodes() {
@@ -50,12 +50,12 @@ public class ClusterState {
         this.enabledNodes = Collections.unmodifiableSet(enabledNodes);
     }
 
-    public String getMasterNode() {
-        return masterNode;
+    public String getMasterNodeName() {
+        return masterNodeName;
     }
 
-    public void setMasterNode(String masterNode) {
-        this.masterNode = masterNode;
+    public void setMasterNodeName(String masterNodeName) {
+        this.masterNodeName = masterNodeName;
     }
 
     public long getUpdateTime() {

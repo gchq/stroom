@@ -56,10 +56,10 @@ class ClusterCallServiceLocalImpl implements ClusterCallServiceLocal {
         return security.insecureResult(() -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final String thisNode = nodeCache.getThisNodeName();
-            if (!targetNode.equals(thisNode)) {
+            final String thisNodeName = nodeCache.getThisNodeName();
+            if (!targetNode.equals(thisNodeName)) {
                 throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
-                        + targetNode + " when we are " + thisNode);
+                        + targetNode + " when we are " + thisNodeName);
             }
 
             try {

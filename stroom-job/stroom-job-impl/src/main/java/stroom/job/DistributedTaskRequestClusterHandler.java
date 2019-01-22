@@ -49,12 +49,12 @@ class DistributedTaskRequestClusterHandler
     @Override
     public void exec(final DistributedTaskRequestClusterTask request,
                      final TaskCallback<DistributedTaskRequestResult> callback) {
-        final String node = request.getNode();
+        final String nodeName = request.getNodeName();
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Task request: node=\"" + node + "\"");
+            LOGGER.debug("Task request: node=\"" + nodeName + "\"");
             if (LOGGER.isTraceEnabled()) {
-                final String trace = "\nTask request: node=\"" + node + "\"\n" + request.toString();
+                final String trace = "\nTask request: node=\"" + nodeName + "\"\n" + request.toString();
                 LOGGER.trace(trace);
             }
         }
@@ -83,11 +83,11 @@ class DistributedTaskRequestClusterHandler
                         LOGGER.trace("Getting tasks for {}", jobName);
                         final DistributedTaskFactory<DistributedTask<?>, ?> factory = getDistributedTaskFactory(
                                 jobName);
-                        final List<DistributedTask<?>> fetched = factory.fetch(node, requiredTaskCount);
+                        final List<DistributedTask<?>> fetched = factory.fetch(nodeName, requiredTaskCount);
                         tasksToReturn.put(jobNode, fetched);
                         totalTasks += fetched.size();
 
-                        taskStatusTraceLog.sendToWorkerNode(DistributedTaskRequestClusterHandler.class, fetched, node,
+                        taskStatusTraceLog.sendToWorkerNode(DistributedTaskRequestClusterHandler.class, fetched, nodeName,
                                 jobName);
                     }
                 }
@@ -97,29 +97,29 @@ class DistributedTaskRequestClusterHandler
             final DistributedTaskRequestResult response = new DistributedTaskRequestResult(totalTasks, tasksToReturn);
 
             if (LOGGER.isTraceEnabled()) {
-                final String trace = "Task response: node=\"" + node + "\"\n" + response.toString();
+                final String trace = "Task response: node=\"" + nodeName + "\"\n" + response.toString();
                 LOGGER.trace(trace);
             } else if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task response: node=\"" + node + "\"");
+                LOGGER.debug("Task response: node=\"" + nodeName + "\"");
             }
 
             try {
                 callback.onSuccess(response);
             } catch (final RuntimeException e) {
                 // If we couldn't return the tasks for any reason then abandon them.
-                abandonTasks(node, tasksToReturn);
+                abandonTasks(nodeName, tasksToReturn);
             }
         } catch (final Throwable e) {
             LOGGER.error(e.getMessage(), e);
             try {
                 callback.onFailure(e);
             } catch (final Throwable e2) {
-                abandonTasks(node, tasksToReturn);
+                abandonTasks(nodeName, tasksToReturn);
             }
         }
     }
 
-    private void abandonTasks(final String node, final Map<JobNode, List<DistributedTask<?>>> tasksToReturn) {
+    private void abandonTasks(final String nodeName, final Map<JobNode, List<DistributedTask<?>>> tasksToReturn) {
         try {
             LOGGER.error("Abandoning tasks that we failed to call back with");
             // Failed to call back
@@ -129,11 +129,11 @@ class DistributedTaskRequestClusterHandler
                     final List<DistributedTask<?>> tasks = entry.getValue();
                     final String jobName = jobNode.getJob().getName();
 
-                    taskStatusTraceLog.errorSendingToWorkerNode(DistributedTaskRequestClusterHandler.class, tasks, node,
+                    taskStatusTraceLog.errorSendingToWorkerNode(DistributedTaskRequestClusterHandler.class, tasks, nodeName,
                             jobName);
 
                     final DistributedTaskFactory<DistributedTask<?>, ?> factory = getDistributedTaskFactory(jobName);
-                    factory.abandon(node, tasks);
+                    factory.abandon(nodeName, tasks);
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }

@@ -71,7 +71,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             final Query query = task.getQuery();
 
             // Get the current node.
-            final String node = nodeCache.getThisNodeName();
+            final String nodeName = nodeCache.getThisNodeName();
 
             final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
                     task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());
@@ -81,7 +81,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             // Create an asynchronous search task.
             final String searchName = "Event Search";
             final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task, task.getUserToken(), searchName,
-                    query, node, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
+                    query, nodeName, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
             // Create a collector to store search results.
             final Sizes storeSize = getStoreSizes();

@@ -96,8 +96,8 @@ class DefaultClusterResultCollectorImpl<R extends SharedObject> implements Defau
     }
 
     @Override
-    public void onSuccess(final String node, final R r) {
-        responseMap.put(node, new ClusterCallEntry<>(r, null, System.currentTimeMillis() - startTimeMs));
+    public void onSuccess(final String nodeName, final R r) {
+        responseMap.put(nodeName, new ClusterCallEntry<>(r, null, System.currentTimeMillis() - startTimeMs));
         lock.lock();
         try {
             condition.signalAll();
@@ -107,8 +107,8 @@ class DefaultClusterResultCollectorImpl<R extends SharedObject> implements Defau
     }
 
     @Override
-    public void onFailure(final String node, final Throwable throwable) {
-        responseMap.put(node, new ClusterCallEntry<>(null, throwable, System.currentTimeMillis() - startTimeMs));
+    public void onFailure(final String nodeName, final Throwable throwable) {
+        responseMap.put(nodeName, new ClusterCallEntry<>(null, throwable, System.currentTimeMillis() - startTimeMs));
         lock.lock();
         try {
             condition.signalAll();
@@ -138,8 +138,8 @@ class DefaultClusterResultCollectorImpl<R extends SharedObject> implements Defau
     }
 
     @Override
-    public ClusterCallEntry<R> getResponse(final String node) {
-        return responseMap.get(node);
+    public ClusterCallEntry<R> getResponse(final String nodeName) {
+        return responseMap.get(nodeName);
     }
 
     @Override

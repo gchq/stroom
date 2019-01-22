@@ -23,18 +23,18 @@ class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskReque
     private static final long serialVersionUID = 8371445065601694269L;
 
     private final Task<?> parentTask;
-    private final String node;
+    private final String nodeName;
     private final DistributedRequiredTask[] requiredTasks;
 
-    DistributedTaskRequestClusterTask(final Task<?> parentTask, final String taskName, final String node, final DistributedRequiredTask[] requiredTasks) {
+    DistributedTaskRequestClusterTask(final Task<?> parentTask, final String taskName, final String nodeName, final DistributedRequiredTask[] requiredTasks) {
         super(parentTask.getUserToken(), taskName);
         this.parentTask = parentTask;
-        this.node = node;
+        this.nodeName = nodeName;
         this.requiredTasks = requiredTasks;
     }
 
-    public String getNode() {
-        return node;
+    public String getNodeName() {
+        return nodeName;
     }
 
     DistributedRequiredTask[] getRequiredTasks() {

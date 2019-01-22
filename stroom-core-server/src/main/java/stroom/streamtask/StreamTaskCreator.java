@@ -22,9 +22,9 @@ import stroom.task.api.TaskContext;
 import java.util.List;
 
 public interface StreamTaskCreator {
-    List<ProcessorFilterTask> assignStreamTasks(String node, int count);
+    List<ProcessorFilterTask> assignStreamTasks(String nodeName, int count);
 
-    void abandonStreamTasks(String node, List<ProcessorFilterTask> tasks);
+    void abandonStreamTasks(String nodeName, List<ProcessorFilterTask> tasks);
 
     void createTasks(final TaskContext taskContext);
 

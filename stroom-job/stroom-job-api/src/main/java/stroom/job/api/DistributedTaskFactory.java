@@ -28,10 +28,10 @@ public interface DistributedTaskFactory<T extends DistributedTask<R>, R extends 
     /**
      * Gets a list of tasks if available up to the number requested.
      */
-    List<T> fetch(String node, int count);
+    List<T> fetch(String nodeName, int count);
 
     /**
      * Return tasks back that could not be returned to a worker
      */
-    void abandon(String node, List<T> tasks);
+    void abandon(String nodeName, List<T> tasks);
 }

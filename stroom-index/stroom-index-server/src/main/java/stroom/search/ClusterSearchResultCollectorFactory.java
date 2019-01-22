@@ -45,7 +45,7 @@ public class ClusterSearchResultCollectorFactory {
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
-                                               final String node,
+                                               final String nodeName,
                                                final Set<String> highlights,
                                                final ResultHandler resultHandler,
                                                final Sizes defaultMaxResultsSizes,
@@ -55,7 +55,7 @@ public class ClusterSearchResultCollectorFactory {
                 taskContext,
                 task,
                 dispatchHelper,
-                node,
+                nodeName,
                 highlights,
                 clusterResultCollectorCache,
                 resultHandler,

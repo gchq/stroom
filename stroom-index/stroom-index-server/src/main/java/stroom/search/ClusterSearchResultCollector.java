@@ -66,7 +66,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final TaskContext taskContext;
     private final AsyncSearchTask task;
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final String node;
+    private final String nodeName;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final Sizes defaultMaxResultsSizes;
@@ -77,7 +77,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final TaskContext taskContext,
                                  final AsyncSearchTask task,
                                  final ClusterDispatchAsyncHelper dispatchHelper,
-                                 final String node,
+                                 final String nodeName,
                                  final Set<String> highlights,
                                  final ClusterResultCollectorCache clusterResultCollectorCache,
                                  final ResultHandler resultHandler,
@@ -88,7 +88,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.taskContext = taskContext;
         this.task = task;
         this.dispatchHelper = dispatchHelper;
-        this.node = node;
+        this.nodeName = nodeName;
         this.highlights = highlights;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.resultHandler = resultHandler;
@@ -115,7 +115,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 // as they may be terminated before we even try to execute them.
                 if (!(t instanceof TaskTerminatedException)) {
                     LOGGER.error(t.getMessage(), t);
-                    getErrorSet(node).add(t.getMessage());
+                    getErrorSet(nodeName).add(t.getMessage());
                     completionState.complete();
                     throw new RuntimeException(t.getMessage(), t);
                 }
@@ -176,7 +176,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     }
 
     @Override
-    public void onSuccess(final String node, final NodeResult result) {
+    public void onSuccess(final String nodeName, final NodeResult result) {
         try {
             final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
             final List<String> errors = result.getErrors();
@@ -186,23 +186,23 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
             }
 
             if (errors != null) {
-                getErrorSet(node).addAll(errors);
+                getErrorSet(nodeName).addAll(errors);
             }
 
             if (result.isComplete()) {
-                nodeComplete(node);
+                nodeComplete(nodeName);
             } else {
-                final AtomicLong atomicLong = remainingNodes.get(node);
+                final AtomicLong atomicLong = remainingNodes.get(nodeName);
                 if (atomicLong == null) {
-                    LOGGER.error("Received an unexpected node result from " + node);
+                    LOGGER.error("Received an unexpected node result from " + nodeName);
                 } else {
                     atomicLong.set(System.currentTimeMillis());
                 }
             }
 
         } catch (final RuntimeException e) {
-            nodeComplete(node);
-            getErrorSet(node).add(e.getMessage());
+            nodeComplete(nodeName);
+            getErrorSet(nodeName).add(e.getMessage());
 
         } finally {
             if (remainingNodeCount.compareAndSet(0, 0)) {
@@ -228,10 +228,10 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
 
     @Override
-    public void onFailure(final String node, final Throwable throwable) {
+    public void onFailure(final String nodeName, final Throwable throwable) {
         try {
-            nodeComplete(node);
-            getErrorSet(node).add(throwable.getMessage());
+            nodeComplete(nodeName);
+            getErrorSet(nodeName).add(throwable.getMessage());
         } finally {
             if (remainingNodeCount.compareAndSet(0, 0)) {
                 completionState.complete();
@@ -239,8 +239,8 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         }
     }
 
-    private void nodeComplete(final String node) {
-        if (remainingNodes.remove(node) != null) {
+    private void nodeComplete(final String nodeName) {
+        if (remainingNodes.remove(nodeName) != null) {
             remainingNodeCount.decrementAndGet();
         }
     }
@@ -250,11 +250,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         complete();
     }
 
-    public Set<String> getErrorSet(final String node) {
-        Set<String> errorSet = errors.get(node);
+    public Set<String> getErrorSet(final String nodeName) {
+        Set<String> errorSet = errors.get(nodeName);
         if (errorSet == null) {
             errorSet = new HashSet<>();
-            final Set<String> existing = errors.putIfAbsent(node, errorSet);
+            final Set<String> existing = errors.putIfAbsent(nodeName, errorSet);
             if (existing != null) {
                 errorSet = existing;
             }
@@ -270,11 +270,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
         final List<String> err = new ArrayList<>();
         for (final Entry<String, Set<String>> entry : errors.entrySet()) {
-            final String node = entry.getKey();
+            final String nodeName = entry.getKey();
             final Set<String> errors = entry.getValue();
 
             if (errors.size() > 0) {
-                err.add("Node: " + node);
+                err.add("Node: " + nodeName);
 
                 for (final String error : errors) {
                     err.add("\t" + error);

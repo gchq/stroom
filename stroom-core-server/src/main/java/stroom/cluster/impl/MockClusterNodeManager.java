@@ -35,13 +35,13 @@ public class MockClusterNodeManager implements ClusterNodeManager {
 
     @Override
     public ClusterState getClusterState() {
-        final String node = nodeCache.getThisNodeName();
-        final Set<String> nodes = Collections.singleton(node);
+        final String nodeName = nodeCache.getThisNodeName();
+        final Set<String> nodeNames = Collections.singleton(nodeName);
         final ClusterState clusterState = new ClusterState();
-        clusterState.setAllNodes(nodes);
-        clusterState.setEnabledNodes(nodes);
-        clusterState.setEnabledActiveNodes(nodes);
-        clusterState.setMasterNode(node);
+        clusterState.setAllNodes(nodeNames);
+        clusterState.setEnabledNodes(nodeNames);
+        clusterState.setEnabledActiveNodes(nodeNames);
+        clusterState.setMasterNodeName(nodeName);
         return clusterState;
     }
 

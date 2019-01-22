@@ -177,7 +177,7 @@ class StreamTaskCreatorTransactionHelper {
      *                        processor filter.
      * @param streams         The map of streams and optional event ranges to create stream
      *                        tasks for.
-     * @param thisNode        This node, the node that will own the created tasks.
+     * @param thisNodeName        This node, the node that will own the created tasks.
      * @param reachedLimit    For search based stream task creation this indicates if we
      *                        have reached the limit of stream tasks created for a single
      *                        search. This limit is imposed to stop search based task
@@ -190,10 +190,10 @@ class StreamTaskCreatorTransactionHelper {
                                        final ProcessorFilterTracker tracker,
                                        final long streamQueryTime,
                                        final Map<Data, InclusiveRanges> streams,
-                                       final String thisNode,
+                                       final String thisNodeName,
                                        final Long maxMetaId,
                                        final boolean reachedLimit) {
-        final Node node = nodeCache.getNode(thisNode);
+        final Node node = nodeCache.getNode(thisNodeName);
 
         return entityManagerSupport.transactionResult(em -> {
             List<ProcessorFilterTask> availableTaskList = Collections.emptyList();

@@ -50,8 +50,8 @@ class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult
                     action.getTaskName(),
                     criteria);
 
-            if (action.getNode() != null) {
-                dispatchHelper.execAsync(clusterTask, action.getNode());
+            if (action.getNodeName() != null) {
+                dispatchHelper.execAsync(clusterTask, action.getNodeName());
             } else {
                 dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
             }

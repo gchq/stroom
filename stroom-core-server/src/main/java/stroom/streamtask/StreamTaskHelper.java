@@ -46,17 +46,17 @@ class StreamTaskHelper {
         this.nodeCache = nodeCache;
     }
 
-    ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask streamTask, final String node, final TaskStatus status,
+    ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask streamTask, final String nodeName, final TaskStatus status,
                                          final Long startTime, final Long endTime) {
         return entityManagerSupport.transactionResult(em -> {
-            LOGGER.debug("changeTaskStatus() - Changing task status of {} to node={}, status={}", streamTask, node, status);
+            LOGGER.debug("changeTaskStatus() - Changing task status of {} to node={}, status={}", streamTask, nodeName, status);
             final long now = System.currentTimeMillis();
 
             ProcessorFilterTask result = null;
 
             try {
                 try {
-                    modify(streamTask, node, status, now, startTime, endTime);
+                    modify(streamTask, nodeName, status, now, startTime, endTime);
                     result = streamTaskService.save(streamTask);
                 } catch (final EntityNotFoundException e) {
                     LOGGER.warn("changeTaskStatus() - Task cannot be found {}", streamTask);
@@ -83,7 +83,7 @@ class StreamTaskHelper {
                                 LOGGER.warn("changeTaskStatus() - Task has been deleted {}", streamTask);
                             } else {
                                 LOGGER.warn("changeTaskStatus() - Loaded stream task {}", loaded);
-                                modify(loaded, node, status, now, startTime, endTime);
+                                modify(loaded, nodeName, status, now, startTime, endTime);
                                 result = streamTaskService.save(loaded);
                             }
                         } catch (final EntityNotFoundException e2) {

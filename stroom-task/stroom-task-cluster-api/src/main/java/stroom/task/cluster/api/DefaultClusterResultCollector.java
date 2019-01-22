@@ -24,7 +24,7 @@ import java.util.Set;
 public interface DefaultClusterResultCollector<R extends SharedObject> extends ClusterResultCollector<R> {
     Set<String> getTargetNodes();
 
-    ClusterCallEntry<R> getResponse(String node);
+    ClusterCallEntry<R> getResponse(String nodeName);
 
     Map<String, ClusterCallEntry<R>> getResponseMap();
 

@@ -49,40 +49,40 @@ public class TaskStatusTraceLog {
         }
     }
 
-    void assignTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String node) {
+    void assignTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String nodeName) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master assigned ");
             sb.append(streamTasks.size());
             sb.append(" stream tasks to worker ");
-            sb.append(node);
+            sb.append(nodeName);
             appendStreamTaskList(sb, streamTasks);
             appendClass(sb, clazz);
             LOGGER.trace(sb.toString());
         }
     }
 
-    void abandonTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String node) {
+    void abandonTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String nodeName) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master abandoned ");
             sb.append(streamTasks.size());
             sb.append(" stream tasks for worker ");
-            sb.append(node);
+            sb.append(nodeName);
             appendStreamTaskList(sb, streamTasks);
             appendClass(sb, clazz);
             LOGGER.trace(sb.toString());
         }
     }
 
-    public void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String node,
+    public void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String nodeName,
                                  final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master sending ");
             sb.append(tasks.size());
             sb.append(" tasks to worker ");
-            sb.append(node);
+            sb.append(nodeName);
             sb.append(" for job '");
             sb.append(jobName);
             sb.append("'");
@@ -92,14 +92,14 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String node,
+    public void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String nodeName,
                                          final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master failed to send ");
             sb.append(tasks.size());
             sb.append(" tasks to worker ");
-            sb.append(node);
+            sb.append(nodeName);
             sb.append(" for job '");
             sb.append(jobName);
             sb.append("'");

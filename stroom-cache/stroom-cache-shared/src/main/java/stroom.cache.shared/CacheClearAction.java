@@ -23,23 +23,23 @@ public class CacheClearAction extends Action<VoidResult> {
     private static final long serialVersionUID = 6319893515607847166L;
 
     private String cacheName;
-    private String node;
+    private String nodeName;
 
     public CacheClearAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CacheClearAction(final String cacheName, final String node) {
+    public CacheClearAction(final String cacheName, final String nodeName) {
         this.cacheName = cacheName;
-        this.node = node;
+        this.nodeName = nodeName;
     }
 
     public String getCacheName() {
         return cacheName;
     }
 
-    public String getNode() {
-        return node;
+    public String getNodeName() {
+        return nodeName;
     }
 
     @Override

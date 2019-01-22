@@ -128,19 +128,19 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                             resultCollector.getErrorSet(indexShard.getNode().getName()).add(
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
                         } else {
-                            final String node = indexShard.getNode().getName();
-                            shardMap.computeIfAbsent(node, k -> new ArrayList<>()).add(indexShard.getId());
+                            final String nodeName = indexShard.getNode().getName();
+                            shardMap.computeIfAbsent(nodeName, k -> new ArrayList<>()).add(indexShard.getId());
                         }
                     }
 
                     // Start remote cluster search execution.
                     final Map<String, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
                             .filter(entry -> {
-                                final String node = entry.getKey();
-                                if (targetNodes.contains(node)) {
+                                final String nodeName = entry.getKey();
+                                if (targetNodes.contains(nodeName)) {
                                     return true;
                                 } else {
-                                    resultCollector.getErrorSet(node)
+                                    resultCollector.getErrorSet(nodeName)
                                             .add("Node is not enabled or active. Some search results may be missing.");
                                     return false;
                                 }
