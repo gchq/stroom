@@ -49,19 +49,12 @@ public class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public int delete(final int id) {
-        return JooqUtil.contextResult(connectionProvider, context ->
-                context
-                        .deleteFrom(PROCESSOR)
-                        .where(PROCESSOR.ID.eq(id))
-                        .execute());
+        return JooqUtil.deleteById(connectionProvider, PROCESSOR, PROCESSOR.ID, id);
     }
 
     @Override
     public Processor fetch(final int id) {
-        return JooqUtil.contextResult(connectionProvider, context ->
-                context
-                        .fetchOne(PROCESSOR, PROCESSOR.ID.eq(id))
-                        .into(Processor.class));
+        return JooqUtil.fetchById(connectionProvider, PROCESSOR, PROCESSOR.ID, Processor.class, id);
     }
 
     @Override

@@ -6,6 +6,8 @@ import org.jooq.SQLDialect;
 import org.jooq.SelectForUpdateStep;
 import org.jooq.SelectLimitAfterOffsetStep;
 import org.jooq.SelectLimitStep;
+import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -86,5 +88,29 @@ public final class JooqUtil {
         }
 
         return result;
+    }
+
+    public static <R extends Record> int deleteById(final DataSource connectionProvider,
+                                                    final Table<R> table,
+                                                    final TableField<R, Integer> field,
+                                                    final int id) {
+
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context
+                        .deleteFrom(table)
+                        .where(field.eq(id))
+                        .execute());
+    }
+
+    public static <R extends Record, T> T fetchById(final DataSource connectionProvider,
+                                                    final Table<R> table,
+                                                    final TableField<R, Integer> field,
+                                                    final Class<T> type,
+                                                    final int id) {
+
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context
+                        .fetchOne(table, field.eq(id))
+                        .into(type));
     }
 }
