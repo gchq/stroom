@@ -1,9 +1,9 @@
-package stroom.util.lifecycle;
+package stroom.lifecycle.api;
 
-public class StartupTask {
+public class ShutdownTask {
     private final int priority;
 
-    StartupTask(final int priority) {
+    ShutdownTask(final int priority) {
         this.priority = priority;
     }
 

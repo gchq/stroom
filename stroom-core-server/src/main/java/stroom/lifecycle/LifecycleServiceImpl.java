@@ -23,8 +23,8 @@ import stroom.security.Security;
 import stroom.task.ExecutorProvider;
 import stroom.task.StroomThreadGroup;
 import stroom.task.api.TaskManager;
-import stroom.util.lifecycle.ShutdownTask;
-import stroom.util.lifecycle.StartupTask;
+import stroom.lifecycle.api.ShutdownTask;
+import stroom.lifecycle.api.StartupTask;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.thread.CustomThreadFactory;
 

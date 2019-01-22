@@ -16,8 +16,8 @@
 
 package stroom.pipeline.destination;
 
-import stroom.util.lifecycle.AbstractLifecycleModule;
-import stroom.util.lifecycle.RunnableWrapper;
+import stroom.lifecycle.api.AbstractLifecycleModule;
+import stroom.lifecycle.api.RunnableWrapper;
 
 import javax.inject.Inject;
 

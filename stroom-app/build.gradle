@@ -71,6 +71,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-server')
     implementation project(':stroom-kafka:stroom-kafka-impl')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy')

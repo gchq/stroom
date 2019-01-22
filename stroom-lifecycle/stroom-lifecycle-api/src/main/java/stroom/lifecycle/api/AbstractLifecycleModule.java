@@ -1,4 +1,4 @@
-package stroom.util.lifecycle;
+package stroom.lifecycle.api;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;

@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-data-meta:stroom-data-meta-impl-db-gen')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     implementation project(':stroom-util-shared')

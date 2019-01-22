@@ -103,6 +103,10 @@ include 'stroom-kafka:stroom-kafka-shared'
 include 'stroom-kafka:stroom-kafka-impl'
 include 'stroom-kafka:stroom-kafka-pipeline'
 
+// Lifecycle
+include 'stroom-lifecycle:stroom-lifecycle-api'
+include 'stroom-lifecycle:stroom-lifecycle-impl'
+
 // Pipeline
 include 'stroom-pipeline'
 

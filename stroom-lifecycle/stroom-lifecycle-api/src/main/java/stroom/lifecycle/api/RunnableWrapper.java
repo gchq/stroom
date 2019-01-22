@@ -1,4 +1,4 @@
-package stroom.util.lifecycle;
+package stroom.lifecycle.api;
 
 public abstract class RunnableWrapper implements Runnable {
     private final Runnable runnable;
