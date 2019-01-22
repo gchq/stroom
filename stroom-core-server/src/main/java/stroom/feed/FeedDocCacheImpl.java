@@ -23,8 +23,8 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.Clearable;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.Security;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -18,7 +18,6 @@ package stroom.streamtask;
 
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryBean;
-import stroom.node.shared.Node;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.util.shared.VoidResult;
 
@@ -37,13 +36,13 @@ public class StreamProcessorTaskFactory implements DistributedTaskFactory<Stream
     }
 
     @Override
-    public List<StreamProcessorTask> fetch(final Node node, final int count) {
+    public List<StreamProcessorTask> fetch(final String node, final int count) {
         final List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(node, count);
         return wrap(streamTasks);
     }
 
     @Override
-    public void abandon(final Node node, final List<StreamProcessorTask> tasks) {
+    public void abandon(final String node, final List<StreamProcessorTask> tasks) {
         final List<ProcessorFilterTask> streamTasks = unwrap(tasks);
         streamTaskCreator.abandonStreamTasks(node, streamTasks);
     }

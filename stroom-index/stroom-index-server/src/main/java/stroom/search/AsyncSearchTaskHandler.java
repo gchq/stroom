@@ -27,7 +27,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
 import stroom.task.GenericServerTask;
@@ -35,12 +34,12 @@ import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.task.cluster.ClusterDispatchAsync;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.NodeNotFoundException;
 import stroom.task.cluster.NullClusterStateException;
 import stroom.task.cluster.TargetNodeSetFactory;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.api.TargetType;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.util.shared.VoidResult;
 
@@ -93,12 +92,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!Thread.currentThread().isInterrupted()) {
-                final Node sourceNode = targetNodeSetFactory.getSourceNode();
+                final String sourceNode = targetNodeSetFactory.getSourceNode();
 
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
-                    final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
                     taskContext.info(task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
@@ -120,25 +119,24 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Order by partition name and key.
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
-                    findIndexShardCriteria.getFetchSet().add(Node.ENTITY_TYPE);
                     final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.
-                    final Map<Node, List<Long>> shardMap = new HashMap<>();
+                    final Map<String, List<Long>> shardMap = new HashMap<>();
                     for (final IndexShard indexShard : indexShards) {
                         if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
-                            resultCollector.getErrorSet(indexShard.getNode()).add(
+                            resultCollector.getErrorSet(indexShard.getNode().getName()).add(
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
                         } else {
-                            final Node node = indexShard.getNode();
+                            final String node = indexShard.getNode().getName();
                             shardMap.computeIfAbsent(node, k -> new ArrayList<>()).add(indexShard.getId());
                         }
                     }
 
                     // Start remote cluster search execution.
-                    final Map<Node, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
+                    final Map<String, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
                             .filter(entry -> {
-                                final Node node = entry.getKey();
+                                final String node = entry.getKey();
                                 if (targetNodes.contains(node)) {
                                     return true;
                                 } else {

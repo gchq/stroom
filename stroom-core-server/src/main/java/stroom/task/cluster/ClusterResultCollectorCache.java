@@ -19,8 +19,10 @@ package stroom.task.cluster;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import stroom.entity.shared.Clearable;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.task.cluster.api.ClusterResultCollector;
+import stroom.task.cluster.api.CollectorId;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

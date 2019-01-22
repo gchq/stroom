@@ -5,7 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import stroom.query.common.v2.AbstractInMemorySearchResponseCreatorCacheFactory;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
-import stroom.util.cache.CacheManager;
+import stroom.cache.api.CacheManager;
 
 import javax.inject.Inject;
 import java.time.Duration;

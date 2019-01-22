@@ -26,7 +26,6 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.feed.StroomHessianProxyFactory;
 import stroom.node.NodeCache;
-import stroom.node.shared.Node;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -52,7 +51,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
     private final Map<ServiceName, Provider<Object>> serviceMap;
     private final boolean clusterCallUseLocal;
     private final Long clusterCallReadTimeout;
-    private final Map<Node, ClusterCallService> proxyMap = new HashMap<>();
+    private final Map<String, ClusterCallService> proxyMap = new HashMap<>();
 
     private HessianProxyFactory proxyFactory = null;
     private boolean ignoreSSLHostnameVerifier;
@@ -88,22 +87,22 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
         return proxyFactory;
     }
 
-    private ClusterCallService createHessianProxy(final Node node) throws MalformedURLException {
-        final String nodeServiceUrl = node.getClusterURL();
+    private ClusterCallService createHessianProxy(final String node) throws MalformedURLException {
+        final String nodeServiceUrl = nodeCache.getClusterUrl(node);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("createHessianProxy() - " + node.getName() + " - " + nodeServiceUrl);
+            LOGGER.debug("createHessianProxy() - " + node + " - " + nodeServiceUrl);
         }
 
         if (nodeServiceUrl == null || nodeServiceUrl.trim().length() == 0) {
-            throw new MalformedURLException("No cluster call URL has been set for node: " + node.getName());
+            throw new MalformedURLException("No cluster call URL has been set for node: " + node);
         }
 
         return (ClusterCallService) getProxyFactory().create(ClusterCallService.class, nodeServiceUrl);
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final ServiceName serviceName, final String methodName,
+    public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName,
                        final java.lang.Class<?>[] parameterTypes, final Object[] args) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Object result;
@@ -115,8 +114,8 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
         // Make a local call ?
         boolean local = false;
         if (clusterCallUseLocal) {
-            final Node thisNode = nodeCache.getDefaultNode();
-            if (thisNode.equalsEntity(targetNode)) {
+            final String thisNode = nodeCache.getThisNodeName();
+            if (thisNode.equals(targetNode)) {
                 local = true;
             }
         }
@@ -146,7 +145,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
                 result = api.call(sourceNode, targetNode, serviceName, methodName, parameterTypes, args);
             } catch (final HessianRuntimeException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    LOGGER.error("Unable to connect to '" + targetNode.getClusterURL() + "' " + e.getCause().getMessage());
+                    LOGGER.error("Unable to connect to '" + nodeCache.getClusterUrl(targetNode) + "' " + e.getCause().getMessage());
                 } else {
                     LOGGER.error(e.getMessage(), e);
                 }

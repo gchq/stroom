@@ -24,7 +24,7 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.cache.CacheManager;
+import stroom.cache.api.CacheManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

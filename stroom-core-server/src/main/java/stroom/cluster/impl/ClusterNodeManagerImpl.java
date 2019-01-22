@@ -35,7 +35,6 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -115,7 +114,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final UpdateClusterStateTask task = new UpdateClusterStateTask(clusterState, taskDelay, true);
 
         pendingUpdate.set(false);
-        taskManager.execAsync(task, new TaskCallbackAdaptor<VoidResult>() {
+        taskManager.execAsync(task, new TaskCallbackAdaptor<>() {
             @Override
             public void onSuccess(final VoidResult result) {
                 try {
@@ -158,11 +157,11 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     builder.append(" NULL");
 
                 } else {
-                    final List<Node> nodes = asList(clusterState.getAllNodes());
-                    for (final Node node : nodes) {
+                    final List<String> nodes = asList(clusterState.getAllNodes());
+                    for (final String node : nodes) {
                         builder.append("\n\t");
-                        builder.append(node.getName());
-                        if (node.equalsEntity(clusterState.getMasterNode())) {
+                        builder.append(node);
+                        if (node.equals(clusterState.getMasterNode())) {
                             builder.append("(MASTER)");
                         }
                     }
@@ -198,21 +197,21 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final ClusterState clusterState = getQuickClusterState();
 
         // Take a copy of our working variables;
-        final List<Node> allNodeList = asList(clusterState.getAllNodes());
-        final List<Node> activeNodeList = asList(clusterState.getEnabledActiveNodes());
-        final Node thisNode = nodeCache.getDefaultNode();
-        final Node masterNode = clusterState.getMasterNode();
+        final List<String> allNodeList = asList(clusterState.getAllNodes());
+        final List<String> activeNodeList = asList(clusterState.getEnabledActiveNodes());
+        final String thisNode = nodeCache.getThisNodeName();
+        final String masterNode = clusterState.getMasterNode();
         final String discoverTime = DateUtil.createNormalDateTimeString(clusterState.getUpdateTime());
 
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
                 clientProperties.getBuildDate(),
                 clientProperties.getBuildVersion(),
                 clientProperties.getUpDate(),
-                thisNode.getName(),
-                thisNode.getClusterURL());
+                thisNode,
+                nodeCache.getClusterUrl(thisNode));
 
         if (allNodeList != null && activeNodeList != null && masterNode != null) {
-            for (final Node node : allNodeList) {
+            for (final String node : allNodeList) {
                 clusterNodeInfo.addItem(node, activeNodeList.contains(node), masterNode.equals(node));
             }
         }
@@ -221,17 +220,17 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     }
 
     @Override
-    public Long ping(final Node sourceNode) {
+    public Long ping(final String sourceNode) {
         try {
             // Update the cluster state if the node trying to ping us is not us.
-            final Node thisNode = nodeCache.getDefaultNode();
+            final String thisNode = nodeCache.getThisNodeName();
             if (!thisNode.equals(sourceNode)) {
                 // Try and get the cluster state and make sure we know about the
                 // node trying to ping us. If we can't get the cluster state or
                 // the current state doesn't know the source node is active then
                 // update the cluster state.
                 if (clusterState.getUpdateTime() != 0) {
-                    final Set<Node> enabledActiveNodes = clusterState.getEnabledActiveNodes();
+                    final Set<String> enabledActiveNodes = clusterState.getEnabledActiveNodes();
                     if (!enabledActiveNodes.contains(sourceNode)) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug(
@@ -259,11 +258,11 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         updateClusterStateAsync(REQUERY_DELAY, true);
     }
 
-    private List<Node> asList(Set<Node> set) {
-        final List<Node> list = new ArrayList<>(set);
-        Collections.sort(list, (o1, o2) -> {
-            if (o1.getName() != null && o2.getName() != null) {
-                return o1.getName().compareTo(o2.getName());
+    private List<String> asList(Set<String> set) {
+        final List<String> list = new ArrayList<>(set);
+        list.sort((o1, o2) -> {
+            if (o1 != null && o2 != null) {
+                return o1.compareTo(o2);
             }
             return 0;
         });

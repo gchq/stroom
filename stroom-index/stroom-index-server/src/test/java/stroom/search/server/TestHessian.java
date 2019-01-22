@@ -10,8 +10,6 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
 import stroom.mapreduce.v2.UnsafePairQueue;
-import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 import stroom.query.api.v2.DateTimeFormat;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -60,8 +58,7 @@ class TestHessian {
                 .expression(expression)
                 .build();
 
-        final Rack rack = Rack.create("rack");
-        final Node node = Node.create(rack, "node");
+        final String node = "node";
 
         final List<IndexField> indexFields = createIndexFields();
         final IndexField[] fields = indexFields.toArray(new IndexField[0]);
@@ -129,7 +126,7 @@ class TestHessian {
         final Map<CoprocessorKey, Payload> payloadMap = new HashMap<>();
         payloadMap.put(coprocessorKey, tablePayload);
 
-        final NodeResult nodeResult = new NodeResult(payloadMap, Arrays.asList("test"), true);
+        final NodeResult nodeResult = new NodeResult(payloadMap, Collections.singletonList("test"), true);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Hessian2Output out = new Hessian2Output(baos);

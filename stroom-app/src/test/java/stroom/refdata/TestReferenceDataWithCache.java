@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.CacheManagerImpl;
+import stroom.cache.impl.CacheManagerImpl;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.pipeline.PipelineStore;
@@ -36,7 +36,7 @@ import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.cache.CacheManager;
+import stroom.cache.api.CacheManager;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

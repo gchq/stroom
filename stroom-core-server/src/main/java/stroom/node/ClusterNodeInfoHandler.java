@@ -23,7 +23,6 @@ import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
-import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 
@@ -50,8 +49,8 @@ class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, 
     @Override
     public ClusterNodeInfo exec(final ClusterNodeInfoAction action) {
         return security.secureResult(() -> {
-            final Node sourceNode = nodeCache.getDefaultNode();
-            final Node targetNode = nodeService.loadById(action.getNodeId());
+            final String sourceNode = nodeCache.getThisNodeName();
+            final String targetNode = action.getNodeName();
 
             try {
                 return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.SERVICE_NAME,

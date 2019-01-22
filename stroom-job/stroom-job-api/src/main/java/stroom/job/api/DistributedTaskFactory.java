@@ -16,7 +16,6 @@
 
 package stroom.job.api;
 
-import stroom.node.shared.Node;
 import stroom.docref.SharedObject;
 
 import java.util.List;
@@ -29,10 +28,10 @@ public interface DistributedTaskFactory<T extends DistributedTask<R>, R extends 
     /**
      * Gets a list of tasks if available up to the number requested.
      */
-    List<T> fetch(Node node, int count);
+    List<T> fetch(String node, int count);
 
     /**
      * Return tasks back that could not be returned to a worker
      */
-    void abandon(Node node, List<T> tasks);
+    void abandon(String node, List<T> tasks);
 }

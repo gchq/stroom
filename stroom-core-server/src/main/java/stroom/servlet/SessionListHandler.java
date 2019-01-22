@@ -18,14 +18,13 @@ package stroom.servlet;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.ClusterCallEntry;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.DefaultClusterResultCollector;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.task.cluster.api.ClusterCallEntry;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.api.DefaultClusterResultCollector;
+import stroom.task.cluster.api.TargetType;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -53,11 +52,11 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
 
             final ArrayList<SessionDetails> rtnList = new ArrayList<>();
 
-            for (final Entry<Node, ClusterCallEntry<ResultList<SessionDetails>>> call : collector.getResponseMap()
+            for (final Entry<String, ClusterCallEntry<ResultList<SessionDetails>>> call : collector.getResponseMap()
                     .entrySet()) {
                 if (call.getValue().getResult() != null) {
                     for (final SessionDetails sessionDetails : call.getValue().getResult()) {
-                        sessionDetails.setNodeName(call.getKey().getName());
+                        sessionDetails.setNodeName(call.getKey());
                         rtnList.add(sessionDetails);
                     }
                 }

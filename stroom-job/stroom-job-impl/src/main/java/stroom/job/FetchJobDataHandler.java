@@ -31,10 +31,10 @@ import stroom.job.shared.JobNodeRow;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.ClusterCallEntry;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.DefaultClusterResultCollector;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.task.cluster.api.ClusterCallEntry;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.api.DefaultClusterResultCollector;
+import stroom.task.cluster.api.TargetType;
 import stroom.util.shared.SharedMap;
 
 import javax.inject.Inject;
@@ -86,7 +86,7 @@ class FetchJobDataHandler extends AbstractTaskHandler<FetchJobDataAction, Result
             for (final JobNode jobNode : jobNodes) {
                 JobNodeInfo jobNodeInfo = null;
 
-                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNode());
+                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNode().getName());
 
                 if (response == null) {
                     LOGGER.debug("No response for: {}", jobNode);

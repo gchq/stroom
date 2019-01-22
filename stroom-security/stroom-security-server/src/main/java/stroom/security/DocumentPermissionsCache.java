@@ -26,8 +26,8 @@ import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.security.shared.DocumentPermissions;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

@@ -24,17 +24,18 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.docref.SharedObject;
 import stroom.node.NodeCache;
-import stroom.node.shared.Node;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
+import stroom.task.cluster.api.ClusterTask;
+import stroom.task.cluster.api.CollectorId;
 import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
 
 public class ClusterWorkerImpl implements ClusterWorker {
-    public static final ServiceName SERVICE_NAME = new ServiceName("clusterWorker");
+    static final ServiceName SERVICE_NAME = new ServiceName("clusterWorker");
     static final String EXEC_ASYNC_METHOD = "execAsync";
-    static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, Node.class, TaskId.class, CollectorId.class};
+    static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, String.class, TaskId.class, CollectorId.class};
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
     private static final String EXEC_ASYNC = "execAsync";
@@ -70,21 +71,21 @@ public class ClusterWorkerImpl implements ClusterWorker {
      * @param collectorId  The id of the collector to send results back to.
      */
     @Override
-    public <R extends SharedObject> void execAsync(final ClusterTask<R> task, final Node sourceNode,
+    public <R extends SharedObject> void execAsync(final ClusterTask<R> task, final String sourceNode,
                                                    final TaskId sourceTaskId, final CollectorId collectorId) {
         DebugTrace.debugTraceIn(task, EXEC_ASYNC, true);
         try {
             // Trace the source of this task if trace is enabled.
-            LOGGER.trace("Executing task '{}' for node '{}'", task.getTaskName(), sourceNode.getName());
+            LOGGER.trace("Executing task '{}' for node '{}'", task.getTaskName(), sourceNode);
 
-            final Node targetNode = nodeCache.getDefaultNode();
+            final String targetNode = nodeCache.getThisNodeName();
 
             // Assign the id for this worker node prior to execution.
             task.assignId(sourceTaskId);
 
             // Execute this task asynchronously so we don't hold on to the HTTP
             // connection.
-            taskManager.execAsync(task, new TaskCallbackAdaptor<R>() {
+            taskManager.execAsync(task, new TaskCallbackAdaptor<>() {
                 @Override
                 public void onSuccess(final R result) {
                     // Send the successful result back to the source node.
@@ -119,8 +120,8 @@ public class ClusterWorkerImpl implements ClusterWorker {
      *                     in the result of task failure.
      * @param success      Whether or not the task executed successfully.
      */
-    private <R extends SharedObject> void sendResult(final ClusterTask<R> task, final Node sourceNode,
-                                                     final Node targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
+    private <R extends SharedObject> void sendResult(final ClusterTask<R> task, final String sourceNode,
+                                                     final String targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
                                                      final Throwable t, final boolean success) {
         int tryCount = 1;
         boolean done = false;
@@ -133,12 +134,12 @@ public class ClusterWorkerImpl implements ClusterWorker {
             while (!done && tryCount <= 10) {
                 try {
                     // Trace attempt to send result.
-                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode.getName(), tryCount);
+                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode, tryCount);
                     // Send result.
                     ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.SERVICE_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{task, targetNode,
-                                    sourceTaskId, collectorId, result, t, Boolean.valueOf(success)});
+                                    sourceTaskId, collectorId, result, t, success});
                     done = true;
                 } catch (final RuntimeException e) {
                     lastException = e;
@@ -165,28 +166,24 @@ public class ClusterWorkerImpl implements ClusterWorker {
 
         // If the source node could not be contacted then throw an exception.
         if (!done) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Unable to send result for task '");
-            sb.append(task.getTaskName());
-            sb.append("' back to source node '");
-            sb.append(sourceNode.getName());
-            sb.append("' after ");
-            sb.append(tryCount);
-            sb.append(" attempts");
-            final String message = sb.toString();
+            final String message = "Unable to send result for task '" +
+                    task.getTaskName() +
+                    "' back to source node '" +
+                    sourceNode +
+                    "' after " +
+                    tryCount +
+                    " attempts";
             LOGGER.error(message, lastException);
         }
 
         // If the source node rejected the result then throw an exception. This
         // normally happens because the task has terminated on the source node.
         if (!Boolean.TRUE.equals(ok)) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Unable to send result for task '");
-            sb.append(task.getTaskName());
-            sb.append("' back to source node '");
-            sb.append(sourceNode.getName());
-            sb.append("' because source node rejected result");
-            final String message = sb.toString();
+            final String message = "Unable to send result for task '" +
+                    task.getTaskName() +
+                    "' back to source node '" +
+                    sourceNode +
+                    "' because source node rejected result";
             LOGGER.info(message);
 
             // We must throw an exception here so that any code that is trying

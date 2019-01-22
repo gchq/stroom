@@ -16,16 +16,15 @@
 
 package stroom.streamtask;
 
-import stroom.node.shared.Node;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.api.TaskContext;
 
 import java.util.List;
 
 public interface StreamTaskCreator {
-    List<ProcessorFilterTask> assignStreamTasks(Node node, int count);
+    List<ProcessorFilterTask> assignStreamTasks(String node, int count);
 
-    void abandonStreamTasks(Node node, List<ProcessorFilterTask> tasks);
+    void abandonStreamTasks(String node, List<ProcessorFilterTask> tasks);
 
     void createTasks(final TaskContext taskContext);
 

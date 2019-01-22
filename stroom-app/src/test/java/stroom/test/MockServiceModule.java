@@ -2,6 +2,7 @@ package stroom.test;
 
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
+import stroom.cache.impl.CacheModule;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
 import stroom.security.shared.UserJooq;
@@ -18,7 +19,7 @@ public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.mock.MockActivityModule());
-        install(new stroom.cache.CacheModule());
+        install(new CacheModule());
         install(new stroom.data.meta.impl.mock.MockDataMetaModule());
         install(new stroom.data.store.impl.fs.MockStreamStoreModule());
         install(new stroom.dictionary.MockDictionaryModule());

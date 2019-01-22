@@ -21,7 +21,7 @@ import stroom.entity.event.EntityEventHandler;
 import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
 import stroom.security.Security;
-import stroom.util.cache.CacheManager;
+import stroom.cache.api.CacheManager;
 import stroom.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 

@@ -20,7 +20,6 @@ import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.node.NodeCache;
 import stroom.node.shared.ClusterNodeInfo;
-import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -36,8 +35,8 @@ public class MockClusterNodeManager implements ClusterNodeManager {
 
     @Override
     public ClusterState getClusterState() {
-        final Node node = nodeCache.getDefaultNode();
-        final Set<Node> nodes = Collections.singleton(node);
+        final String node = nodeCache.getThisNodeName();
+        final Set<String> nodes = Collections.singleton(node);
         final ClusterState clusterState = new ClusterState();
         clusterState.setAllNodes(nodes);
         clusterState.setEnabledNodes(nodes);
@@ -57,7 +56,7 @@ public class MockClusterNodeManager implements ClusterNodeManager {
     }
 
     @Override
-    public Long ping(final Node sourceNode) {
+    public Long ping(final String sourceNode) {
         return System.currentTimeMillis();
     }
 }

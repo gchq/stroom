@@ -16,25 +16,24 @@
 
 package stroom.job;
 
-import stroom.node.shared.Node;
-import stroom.task.cluster.ClusterTask;
+import stroom.task.cluster.api.ClusterTask;
 import stroom.task.shared.Task;
 
 class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskRequestResult> {
     private static final long serialVersionUID = 8371445065601694269L;
 
     private final Task<?> parentTask;
-    private final Node node;
+    private final String node;
     private final DistributedRequiredTask[] requiredTasks;
 
-    DistributedTaskRequestClusterTask(final Task<?> parentTask, final String taskName, final Node node, final DistributedRequiredTask[] requiredTasks) {
+    DistributedTaskRequestClusterTask(final Task<?> parentTask, final String taskName, final String node, final DistributedRequiredTask[] requiredTasks) {
         super(parentTask.getUserToken(), taskName);
         this.parentTask = parentTask;
         this.node = node;
         this.requiredTasks = requiredTasks;
     }
 
-    public Node getNode() {
+    public String getNode() {
         return node;
     }
 

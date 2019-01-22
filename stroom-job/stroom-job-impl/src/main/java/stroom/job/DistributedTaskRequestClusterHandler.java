@@ -49,12 +49,12 @@ class DistributedTaskRequestClusterHandler
     @Override
     public void exec(final DistributedTaskRequestClusterTask request,
                      final TaskCallback<DistributedTaskRequestResult> callback) {
-        final Node node = request.getNode();
+        final String node = request.getNode();
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Task request: node=\"" + node.getName() + "\"");
+            LOGGER.debug("Task request: node=\"" + node + "\"");
             if (LOGGER.isTraceEnabled()) {
-                final String trace = "\nTask request: node=\"" + node.getName() + "\"\n" + request.toString();
+                final String trace = "\nTask request: node=\"" + node + "\"\n" + request.toString();
                 LOGGER.trace(trace);
             }
         }
@@ -97,10 +97,10 @@ class DistributedTaskRequestClusterHandler
             final DistributedTaskRequestResult response = new DistributedTaskRequestResult(totalTasks, tasksToReturn);
 
             if (LOGGER.isTraceEnabled()) {
-                final String trace = "Task response: node=\"" + node.getName() + "\"\n" + response.toString();
+                final String trace = "Task response: node=\"" + node + "\"\n" + response.toString();
                 LOGGER.trace(trace);
             } else if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task response: node=\"" + node.getName() + "\"");
+                LOGGER.debug("Task response: node=\"" + node + "\"");
             }
 
             try {
@@ -119,7 +119,7 @@ class DistributedTaskRequestClusterHandler
         }
     }
 
-    private void abandonTasks(final Node node, final Map<JobNode, List<DistributedTask<?>>> tasksToReturn) {
+    private void abandonTasks(final String node, final Map<JobNode, List<DistributedTask<?>>> tasksToReturn) {
         try {
             LOGGER.error("Abandoning tasks that we failed to call back with");
             // Failed to call back

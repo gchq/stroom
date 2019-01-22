@@ -19,6 +19,7 @@ package stroom.headless;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.cache.impl.CacheModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.LocalNodeProvider;
@@ -42,7 +43,7 @@ public class CliModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.mock.MockActivityModule());
-        install(new stroom.cache.CacheModule());
+        install(new CacheModule());
         install(new PipelineCacheModule());
 //        install(new ClusterModule());
         install(new stroom.dictionary.DictionaryModule());

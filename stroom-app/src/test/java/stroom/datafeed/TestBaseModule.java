@@ -1,7 +1,7 @@
 package stroom.datafeed;
 
 import com.google.inject.AbstractModule;
-import stroom.cache.CacheModule;
+import stroom.cache.impl.CacheModule;
 import stroom.data.meta.impl.mock.MockDataMetaModule;
 import stroom.data.store.impl.fs.MockStreamStoreModule;
 import stroom.dictionary.DictionaryModule;

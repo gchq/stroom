@@ -27,10 +27,10 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeInfoResult;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.ClusterCallEntry;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.DefaultClusterResultCollector;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.task.cluster.api.ClusterCallEntry;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.api.DefaultClusterResultCollector;
+import stroom.task.cluster.api.TargetType;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
                     .execAsync(new NodeInfoClusterTask(action.getUserToken()), 5, TimeUnit.SECONDS, TargetType.ENABLED);
 
             final ClusterState clusterState = clusterNodeManager.getQuickClusterState();
-            final Node masterNode = clusterState.getMasterNode();
+            final String masterNode = clusterState.getMasterNode();
             final List<Node> allNodes = nodeService.find(nodeService.createCriteria());
 
             allNodes.sort((o1, o2) -> {
@@ -76,7 +76,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
 
             final ArrayList<NodeInfoResult> responseList = new ArrayList<>();
             for (final Node node : allNodes) {
-                final ClusterCallEntry<NodeInfoResult> response = collector.getResponse(node);
+                final ClusterCallEntry<NodeInfoResult> response = collector.getResponse(node.getName());
                 // Get or create result.
                 NodeInfoResult result = null;
                 if (response != null) {
@@ -98,7 +98,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
                     result.setError("No response");
                 }
 
-                result.setMaster(node.equals(masterNode));
+                result.setMaster(node.getName().equals(masterNode));
                 result.setEntity(node);
                 responseList.add(result);
             }

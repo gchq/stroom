@@ -190,9 +190,11 @@ class StreamTaskCreatorTransactionHelper {
                                        final ProcessorFilterTracker tracker,
                                        final long streamQueryTime,
                                        final Map<Data, InclusiveRanges> streams,
-                                       final Node thisNode,
+                                       final String thisNode,
                                        final Long maxMetaId,
                                        final boolean reachedLimit) {
+        final Node node = nodeCache.getNode(thisNode);
+
         return entityManagerSupport.transactionResult(em -> {
             List<ProcessorFilterTask> availableTaskList = Collections.emptyList();
             int availableTasksCreated = 0;
@@ -259,7 +261,7 @@ class StreamTaskCreatorTransactionHelper {
                         if (DataStatus.UNLOCKED.equals(stream.getStatus())) {
                             // If the stream is unlocked then take ownership of the
                             // task, i.e. set the node to this node.
-                            rowArgs.add(thisNode.getId()); //fk_node_id
+                            rowArgs.add(node.getId()); //fk_node_id
                             availableTasksCreated++;
                         } else {
                             // If the stream is locked then don't take ownership of
@@ -299,7 +301,7 @@ class StreamTaskCreatorTransactionHelper {
 
                     // Select them back
                     final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
-                    findStreamTaskCriteria.obtainNodeIdSet().add(thisNode.getId());
+                    findStreamTaskCriteria.obtainNodeIdSet().add(node.getId());
                     findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
                     findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
                     findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());

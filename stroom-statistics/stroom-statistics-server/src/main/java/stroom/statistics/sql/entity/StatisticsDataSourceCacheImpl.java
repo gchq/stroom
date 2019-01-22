@@ -33,8 +33,8 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.statistics.shared.StatisticStoreDoc;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

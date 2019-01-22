@@ -120,7 +120,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
 
                     } else {
                         // Change the task status.... and save
-                        streamTask = streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getDefaultNode(),
+                        streamTask = streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getThisNodeName(),
                                 TaskStatus.PROCESSING, startTime, null);
                         // Avoid having to do another fetch
                         streamTask.setStreamProcessorFilter(destStreamProcessorFilter);
@@ -157,10 +157,10 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 }
 
                 if (complete) {
-                    streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getDefaultNode(), TaskStatus.COMPLETE,
+                    streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getThisNodeName(), TaskStatus.COMPLETE,
                             startTime, System.currentTimeMillis());
                 } else {
-                    streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getDefaultNode(), TaskStatus.FAILED, startTime,
+                    streamTaskHelper.changeTaskStatus(streamTask, nodeCache.getThisNodeName(), TaskStatus.FAILED, startTime,
                             System.currentTimeMillis());
                 }
             }

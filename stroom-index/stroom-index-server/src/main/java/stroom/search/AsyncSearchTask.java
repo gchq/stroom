@@ -32,7 +32,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
 
     private final String searchName;
     private final Query query;
-    private final Node targetNode;
+    private final String targetNode;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
@@ -44,7 +44,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
                            final String userToken,
                            final String searchName,
                            final Query query,
-                           final Node targetNode,
+                           final String targetNode,
                            final int resultSendFrequency,
                            final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                            final String dateTimeLocale,
@@ -67,7 +67,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
         return query;
     }
 
-    public Node getTargetNode() {
+    public String getTargetNode() {
         return targetNode;
     }
 

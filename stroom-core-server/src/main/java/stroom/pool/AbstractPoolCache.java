@@ -23,8 +23,8 @@ import com.google.common.cache.RemovalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

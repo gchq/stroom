@@ -17,11 +17,12 @@
 package stroom.data.store.util;
 
 import com.google.inject.AbstractModule;
+import stroom.cache.impl.CacheModule;
 
 public class ToolModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new stroom.cache.CacheModule());
+        install(new CacheModule());
         install(new stroom.activity.impl.mock.MockActivityModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.data.meta.impl.db.DataMetaDbModule());

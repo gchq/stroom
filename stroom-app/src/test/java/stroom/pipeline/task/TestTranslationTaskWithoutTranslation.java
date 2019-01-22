@@ -115,14 +115,14 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
         }
         return results;
     }

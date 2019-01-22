@@ -16,9 +16,9 @@
 
 package stroom.job;
 
+import stroom.docref.SharedObject;
 import stroom.job.api.DistributedTask;
 import stroom.job.shared.JobNode;
-import stroom.docref.SharedObject;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class DistributedTaskRequestResult implements SharedObject {
     private final int totalTasks;
     private final Map<JobNode, List<DistributedTask<?>>> taskMap;
 
-    public DistributedTaskRequestResult(final int totalTasks, final Map<JobNode, List<DistributedTask<?>>> taskMap) {
+    DistributedTaskRequestResult(final int totalTasks, final Map<JobNode, List<DistributedTask<?>>> taskMap) {
         this.totalTasks = totalTasks;
         this.taskMap = taskMap;
     }
@@ -39,7 +39,7 @@ public class DistributedTaskRequestResult implements SharedObject {
         return totalTasks;
     }
 
-    public Map<JobNode, List<DistributedTask<?>>> getTaskMap() {
+    Map<JobNode, List<DistributedTask<?>>> getTaskMap() {
         return taskMap;
     }
 

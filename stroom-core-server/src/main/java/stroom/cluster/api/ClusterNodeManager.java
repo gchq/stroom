@@ -17,7 +17,6 @@
 package stroom.cluster.api;
 
 import stroom.node.shared.ClusterNodeInfo;
-import stroom.node.shared.Node;
 
 /**
  * Component that remembers the node list and who is the current master node
@@ -50,5 +49,5 @@ public interface ClusterNodeManager {
 
     ClusterNodeInfo getClusterNodeInfo();
 
-    Long ping(Node sourceNode);
+    Long ping(String sourceNode);
 }

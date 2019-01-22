@@ -20,6 +20,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -34,15 +35,18 @@ class StreamTaskHelper {
 
     private final StreamTaskService streamTaskService;
     private final EntityManagerSupport entityManagerSupport;
+    private final NodeCache nodeCache;
 
     @Inject
     StreamTaskHelper(final StreamTaskService streamTaskService,
-                     final EntityManagerSupport entityManagerSupport) {
+                     final EntityManagerSupport entityManagerSupport,
+                     final NodeCache nodeCache) {
         this.streamTaskService = streamTaskService;
         this.entityManagerSupport = entityManagerSupport;
+        this.nodeCache = nodeCache;
     }
 
-    ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask streamTask, final Node node, final TaskStatus status,
+    ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask streamTask, final String node, final TaskStatus status,
                                          final Long startTime, final Long endTime) {
         return entityManagerSupport.transactionResult(em -> {
             LOGGER.debug("changeTaskStatus() - Changing task status of {} to node={}, status={}", streamTask, node, status);
@@ -107,8 +111,10 @@ class StreamTaskHelper {
         });
     }
 
-    private void modify(final ProcessorFilterTask streamTask, final Node node, final TaskStatus status, final Long statusMs,
+    private void modify(final ProcessorFilterTask streamTask, final String nodeName, final TaskStatus status, final Long statusMs,
                         final Long startTimeMs, final Long endTimeMs) {
+        final Node node = nodeCache.getNode(nodeName);
+
         streamTask.setNode(node);
         streamTask.setStatus(status);
         streamTask.setStatusMs(statusMs);

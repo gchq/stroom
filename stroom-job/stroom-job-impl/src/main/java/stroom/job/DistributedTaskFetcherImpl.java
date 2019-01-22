@@ -24,15 +24,14 @@ import stroom.job.api.DistributedTaskFetcher;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
-import stroom.task.cluster.ClusterCallEntry;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.DefaultClusterResultCollector;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.task.cluster.api.ClusterCallEntry;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.api.DefaultClusterResultCollector;
+import stroom.task.cluster.api.TargetType;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
@@ -149,7 +148,7 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
                                 final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
 
                                 // Get this node.
-                                final Node node = jobNodeTrackerCache.getNode();
+                                final String node = jobNodeTrackerCache.getNode().getName();
 
                                 // Create an array of runnable jobs sorted into priority order.
                                 final DistributedRequiredTask[] requiredTasks = getDistributedRequiredTasks(trackers);
@@ -166,9 +165,9 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
                                             requiredTasks);
 
                                     if (LOGGER.isDebugEnabled()) {
-                                        LOGGER.debug("Task request: node=\"" + request.getNode().getName() + "\"");
+                                        LOGGER.debug("Task request: node=\"" + request.getNode() + "\"");
                                         if (LOGGER.isTraceEnabled()) {
-                                            final String trace = "\nTask request: node=\"" + request.getNode().getName() + "\"\n"
+                                            final String trace = "\nTask request: node=\"" + request.getNode() + "\"\n"
                                                     + request.toString();
                                             LOGGER.trace(trace);
                                         }
@@ -254,9 +253,9 @@ public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
                               final DistributedTaskRequestResult response) {
         try {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task response: node=\"" + request.getNode().getName() + "\"");
+                LOGGER.debug("Task response: node=\"" + request.getNode() + "\"");
                 if (LOGGER.isTraceEnabled()) {
-                    final String trace = "\nTask response: node=\"" + request.getNode().getName() + "\"\n"
+                    final String trace = "\nTask response: node=\"" + request.getNode() + "\"\n"
                             + response.toString();
                     LOGGER.trace(trace);
                 }

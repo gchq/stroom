@@ -1,7 +1,7 @@
 package stroom.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.cache.CacheManagerLifecycleModule;
+import stroom.cache.impl.CacheManagerLifecycleModule;
 import stroom.cluster.impl.ClusterLifecycleModule;
 import stroom.data.meta.impl.db.DataMetaDbLifecycleModule;
 import stroom.entity.event.EntityEventLifecycleModule;

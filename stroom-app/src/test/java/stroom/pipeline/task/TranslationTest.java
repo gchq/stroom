@@ -60,8 +60,8 @@ import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService;
@@ -361,13 +361,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<StreamProcessorTask> getTasks() {
         List<StreamProcessorTask> streamProcessorTasks = Collections.emptyList();
 
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             streamProcessorTasks = new ArrayList<>(streamTasks.size());
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 streamProcessorTasks.add(new StreamProcessorTask(streamTask));
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
         }
 
         return streamProcessorTasks;

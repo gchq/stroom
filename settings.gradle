@@ -28,6 +28,11 @@ include 'stroom-activity:stroom-activity-shared'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
+// Cache
+include 'stroom-cache:stroom-cache-api'
+include 'stroom-cache:stroom-cache-impl'
+include 'stroom-cache:stroom-cache-shared'
+
 // Cluster lock
 include 'stroom-cluster-lock:stroom-cluster-lock-api'
 include 'stroom-cluster-lock:stroom-cluster-lock-impl-db'
@@ -120,7 +125,7 @@ include 'stroom-lifecycle:stroom-lifecycle-impl'
 // Pipeline
 include 'stroom-pipeline'
 
-// Proxy project.
+// Proxy project
 include 'stroom-proxy'
 
 // Ruleset
@@ -142,12 +147,15 @@ include 'stroom-statistics:stroom-statistics-shared'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-server'
 
-// Task execution.
+// Task execution
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
 include 'stroom-task:stroom-task-shared'
 
-// Scheduled jobs§
+// Cluster task execution
+include 'stroom-task:stroom-task-cluster-api'
+
+// Scheduled jobs
 include 'stroom-job:stroom-job-api'
 include 'stroom-job:stroom-job-impl'
 include 'stroom-job:stroom-job-impl-db'

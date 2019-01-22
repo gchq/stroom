@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.dashboard.server'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-shared')

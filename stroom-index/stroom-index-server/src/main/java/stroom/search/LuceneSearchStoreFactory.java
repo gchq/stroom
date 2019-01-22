@@ -96,7 +96,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
-        final Node node = nodeCache.getDefaultNode();
+        final String node = nodeCache.getThisNodeName();
 
         // Create a coprocessor settings map.
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);

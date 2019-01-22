@@ -20,6 +20,7 @@ import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.task.cluster.api.TargetType;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -36,11 +37,11 @@ public class TargetNodeSetFactory {
         this.clusterNodeManager = clusterNodeManager;
     }
 
-    public Node getSourceNode() {
-        return nodeCache.getDefaultNode();
+    public String getSourceNode() {
+        return nodeCache.getThisNodeName();
     }
 
-    public Set<Node> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
+    public Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         if (clusterState.getMasterNode() != null) {
             return Collections.singleton(clusterState.getMasterNode());
@@ -49,37 +50,37 @@ public class TargetNodeSetFactory {
         }
     }
 
-    public Set<Node> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
+    public Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
-        final Set<Node> nodes = clusterState.getEnabledActiveNodes();
+        final Set<String> nodes = clusterState.getEnabledActiveNodes();
         if (nodes != null && nodes.size() > 0) {
-            return Collections.unmodifiableSet(new HashSet<>(nodes));
+            return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled and active nodes can be found");
         }
     }
 
-    public Set<Node> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
+    public Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
-        final Set<Node> nodes = clusterState.getEnabledNodes();
+        final Set<String> nodes = clusterState.getEnabledNodes();
         if (nodes != null && nodes.size() > 0) {
-            return Collections.unmodifiableSet(new HashSet<>(nodes));
+            return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled nodes can be found");
         }
     }
 
-    public Set<Node> getAllNodeSet() throws NullClusterStateException, NodeNotFoundException {
+    public Set<String> getAllNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
-        final Set<Node> nodes = clusterState.getAllNodes();
+        final Set<String> nodes = clusterState.getAllNodes();
         if (nodes != null && nodes.size() > 0) {
-            return Collections.unmodifiableSet(new HashSet<>(nodes));
+            return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No nodes can be found");
         }
     }
 
-    public Set<Node> getTargetNodesByType(final TargetType targetType)
+    public Set<String> getTargetNodesByType(final TargetType targetType)
             throws NullClusterStateException, NodeNotFoundException {
         switch (targetType) {
             case MASTER:
@@ -99,9 +100,5 @@ public class TargetNodeSetFactory {
             throw new NullClusterStateException();
         }
         return clusterState;
-    }
-
-    public enum TargetType {
-        MASTER, ACTIVE, ENABLED
     }
 }

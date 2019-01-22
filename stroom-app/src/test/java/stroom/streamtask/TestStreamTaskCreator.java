@@ -20,7 +20,6 @@ package stroom.streamtask;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.node.NodeCache;
-import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -92,7 +91,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
     @Test
     void testMultiFeedInitialCreate() {
-        final Node node = nodeCache.getDefaultNode();
+        final String nodeName = nodeCache.getThisNodeName();
 
         streamTaskCreator.shutdown();
         streamTaskCreator.startup();
@@ -138,13 +137,13 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         // assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
 
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(1000);
-        List<ProcessorFilterTask> tasks = streamTaskCreator.assignStreamTasks(node, 1000);
+        List<ProcessorFilterTask> tasks = streamTaskCreator.assignStreamTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         streamTaskCreator.createTasks(new SimpleTaskContext());
 //        assertThat(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(commonTestControl.countEntity(ProcessorFilterTask.TABLE_NAME)).isEqualTo(2000);
-        tasks = streamTaskCreator.assignStreamTasks(node, 1000);
+        tasks = streamTaskCreator.assignStreamTasks(nodeName, 1000);
         assertThat(tasks.size()).isEqualTo(1000);
 
         processConfig.setQueueSize(initialQueueSize);

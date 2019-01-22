@@ -6,6 +6,8 @@ import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.entity.event.EntityClusterTaskModule;
+import stroom.cache.impl.CacheHandlerModule;
+import stroom.cache.impl.CacheModule;
 import stroom.job.JobSystemModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.cache.PipelineCacheModule;
@@ -16,8 +18,8 @@ public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
-        install(new stroom.cache.CacheModule());
-        install(new stroom.cache.CacheHandlerModule());
+        install(new CacheModule());
+        install(new CacheHandlerModule());
         install(new PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
         install(new stroom.dashboard.logging.LoggingModule());

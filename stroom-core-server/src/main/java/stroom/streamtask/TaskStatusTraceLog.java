@@ -19,7 +19,6 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
-import stroom.node.shared.Node;
 import stroom.streamtask.shared.ProcessorFilterTask;
 
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.List;
 public class TaskStatusTraceLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
-    public void createdTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
+    void createdTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master created ");
@@ -38,7 +37,7 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void addUnownedTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
+    void addUnownedTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master adding ");
@@ -50,40 +49,40 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void assignTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final Node node) {
+    void assignTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String node) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master assigned ");
             sb.append(streamTasks.size());
             sb.append(" stream tasks to worker ");
-            sb.append(node.getId());
+            sb.append(node);
             appendStreamTaskList(sb, streamTasks);
             appendClass(sb, clazz);
             LOGGER.trace(sb.toString());
         }
     }
 
-    public void abandonTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final Node node) {
+    void abandonTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final String node) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master abandoned ");
             sb.append(streamTasks.size());
             sb.append(" stream tasks for worker ");
-            sb.append(node.getId());
+            sb.append(node);
             appendStreamTaskList(sb, streamTasks);
             appendClass(sb, clazz);
             LOGGER.trace(sb.toString());
         }
     }
 
-    public void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final Node node,
+    public void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String node,
                                  final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master sending ");
             sb.append(tasks.size());
             sb.append(" tasks to worker ");
-            sb.append(node.getId());
+            sb.append(node);
             sb.append(" for job '");
             sb.append(jobName);
             sb.append("'");
@@ -93,14 +92,14 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final Node node,
+    public void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String node,
                                          final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master failed to send ");
             sb.append(tasks.size());
             sb.append(" tasks to worker ");
-            sb.append(node.getId());
+            sb.append(node);
             sb.append(" for job '");
             sb.append(jobName);
             sb.append("'");

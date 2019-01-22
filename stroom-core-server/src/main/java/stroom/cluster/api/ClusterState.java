@@ -16,47 +16,45 @@
 
 package stroom.cluster.api;
 
-import stroom.node.shared.Node;
-
 import java.util.Collections;
 import java.util.Set;
 
 public class ClusterState {
-    private transient Set<Node> allNodes = Collections.emptySet();
-    private transient Set<Node> enabledActiveNodes = Collections.emptySet();
-    private transient Set<Node> enabledNodes = Collections.emptySet();
-    private transient Node masterNode;
+    private transient Set<String> allNodes = Collections.emptySet();
+    private transient Set<String> enabledActiveNodes = Collections.emptySet();
+    private transient Set<String> enabledNodes = Collections.emptySet();
+    private transient String masterNode;
     private transient long updateTime;
 
-    public Set<Node> getAllNodes() {
+    public Set<String> getAllNodes() {
         return allNodes;
     }
 
-    public void setAllNodes(final Set<Node> allNodes) {
+    public void setAllNodes(final Set<String> allNodes) {
         this.allNodes = Collections.unmodifiableSet(allNodes);
     }
 
-    public Set<Node> getEnabledActiveNodes() {
+    public Set<String> getEnabledActiveNodes() {
         return enabledActiveNodes;
     }
 
-    public void setEnabledActiveNodes(final Set<Node> enabledActiveNodes) {
+    public void setEnabledActiveNodes(final Set<String> enabledActiveNodes) {
         this.enabledActiveNodes = Collections.unmodifiableSet(enabledActiveNodes);
     }
 
-    public Set<Node> getEnabledNodes() {
+    public Set<String> getEnabledNodes() {
         return enabledNodes;
     }
 
-    public void setEnabledNodes(final Set<Node> enabledNodes) {
+    public void setEnabledNodes(final Set<String> enabledNodes) {
         this.enabledNodes = Collections.unmodifiableSet(enabledNodes);
     }
 
-    public Node getMasterNode() {
+    public String getMasterNode() {
         return masterNode;
     }
 
-    public void setMasterNode(Node masterNode) {
+    public void setMasterNode(String masterNode) {
         this.masterNode = masterNode;
     }
 

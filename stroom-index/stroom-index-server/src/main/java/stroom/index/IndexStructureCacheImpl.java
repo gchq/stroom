@@ -25,8 +25,8 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.docref.DocRef;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

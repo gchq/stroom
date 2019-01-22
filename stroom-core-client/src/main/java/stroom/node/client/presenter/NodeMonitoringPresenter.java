@@ -107,7 +107,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         final InfoColumn<NodeInfoResult> infoColumn = new InfoColumn<NodeInfoResult>() {
             @Override
             protected void showInfo(final NodeInfoResult row, final int x, final int y) {
-                dispatcher.exec(new ClusterNodeInfoAction(row.getEntity().getId()))
+                dispatcher.exec(new ClusterNodeInfoAction(row.getEntity().getName()))
                         .onSuccess(result -> {
                             final StringBuilder html = new StringBuilder();
                             TooltipUtil.addHeading(html, "Node Details");
@@ -131,7 +131,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                                 TooltipUtil.addBreak(html);
                                 TooltipUtil.addHeading(html, "Node List");
                                 for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                                    html.append(info.getNode().getName());
+                                    html.append(info.getNode());
                                     if (!info.isActive()) {
                                         html.append(" (Unknown)");
                                     }

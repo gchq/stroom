@@ -22,7 +22,6 @@ import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.entity.shared.EntityServiceException;
 import stroom.node.NodeCache;
-import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.util.logging.LogExecutionTime;
 
@@ -53,14 +52,14 @@ class ClusterCallServiceLocalImpl implements ClusterCallServiceLocal {
     }
 
     @Override
-    public Object call(final Node sourceNode, final Node targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         return security.insecureResult(() -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final Node thisNode = nodeCache.getDefaultNode();
+            final String thisNode = nodeCache.getThisNodeName();
             if (!targetNode.equals(thisNode)) {
                 throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
-                        + targetNode.getName() + " when we are " + thisNode.getName());
+                        + targetNode + " when we are " + thisNode);
             }
 
             try {

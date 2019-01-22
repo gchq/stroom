@@ -28,8 +28,8 @@ import stroom.security.Security;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
-import stroom.util.cache.CacheManager;
-import stroom.util.cache.CacheUtil;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

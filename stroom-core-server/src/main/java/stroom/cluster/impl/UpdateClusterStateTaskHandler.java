@@ -32,9 +32,11 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterStateTask, VoidResult> {
@@ -86,26 +88,26 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private void updateState(final UpdateClusterStateTask task) {
         final ClusterState clusterState = task.getClusterState();
 
-        Node thisNode = nodeCache.getDefaultNode();
+        String thisNode = nodeCache.getThisNodeName();
 
         // Get nodes and ensure uniqueness.
-        final Set<Node> uniqueNodes = new HashSet<>();
+         Set<String> uniqueNodes = Collections.emptySet();
         final List<Node> nodes = nodeService.find(new FindNodeCriteria());
         if (nodes != null) {
-            uniqueNodes.addAll(nodes);
+            uniqueNodes = nodes.stream().map(Node::getName).collect(Collectors.toSet());
         }
         clusterState.setAllNodes(uniqueNodes);
 
         // Get a list of enabled nodes and ensure we have the latest version of
         // the local node, i.e. not cached.
-        final Set<Node> enabledNodes = new HashSet<>();
-        for (final Node node : clusterState.getAllNodes()) {
-            if (node.isEnabled()) {
+        final Set<String> enabledNodes = new HashSet<>();
+        for (final String node : clusterState.getAllNodes()) {
+            if (nodeCache.isEnabled(node)) {
                 enabledNodes.add(node);
             }
 
             // Make sure we have the most up to date copy of this node.
-            if (node.equalsEntity(thisNode)) {
+            if (node.equals(thisNode)) {
                 thisNode = node;
             }
         }
@@ -118,10 +120,11 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
 
             // Determine which node should be the master.
             int maxPriority = -1;
-            Node masterNode = null;
-            for (final Node node : enabledNodes) {
-                if (node.getPriority() > maxPriority) {
-                    maxPriority = node.getPriority();
+            String masterNode = null;
+            for (final String node : enabledNodes) {
+                final int priority = nodeCache.getPriority(node);
+                if (priority> maxPriority) {
+                    maxPriority = priority;
                     masterNode = node;
                 }
             }
@@ -132,14 +135,14 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
         clusterState.setUpdateTime(System.currentTimeMillis());
     }
 
-    private void updateActiveNodes(final UpdateClusterStateTask updateClusterStateTask, final Node thisNode, final Set<Node> enabledNodes) {
+    private void updateActiveNodes(final UpdateClusterStateTask updateClusterStateTask, final String thisNode, final Set<String> enabledNodes) {
         final ClusterState clusterState = updateClusterStateTask.getClusterState();
 
         // Only retain active nodes that are currently enabled.
         retainEnabledActiveNodes(clusterState, enabledNodes);
 
         // Now m
-        for (final Node node : enabledNodes) {
+        for (final String node : enabledNodes) {
             if (node.equals(thisNode)) {
                 addEnabledActiveNode(clusterState, node);
             } else {
@@ -153,12 +156,12 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
                         // clusterCallServiceRemote will call getThisNode but
                         // that's OK as we have worked it out above.
                         clusterCallServiceRemote.call(thisNode, node, ClusterNodeManager.SERVICE_NAME,
-                                ClusterNodeManager.PING_METHOD, new Class<?>[]{Node.class},
+                                ClusterNodeManager.PING_METHOD, new Class<?>[]{String.class},
                                 new Object[]{thisNode});
                         addEnabledActiveNode(clusterState, node);
 
                     } catch (final RuntimeException e) {
-                        LOGGER.warn("discover() - unable to contact {} - {}", node.getName(), e.getMessage());
+                        LOGGER.warn("discover() - unable to contact {} - {}", node, e.getMessage());
                         removeEnabledActiveNode(clusterState, node);
                     }
                 });
@@ -167,9 +170,9 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
         }
     }
 
-    private synchronized void retainEnabledActiveNodes(final ClusterState clusterState, final Set<Node> enabledNodes) {
-        final Set<Node> enabledActiveNodes = new HashSet<>();
-        for (final Node node : enabledNodes) {
+    private synchronized void retainEnabledActiveNodes(final ClusterState clusterState, final Set<String> enabledNodes) {
+        final Set<String> enabledActiveNodes = new HashSet<>();
+        for (final String node : enabledNodes) {
             if (clusterState.getEnabledActiveNodes().contains(node)) {
                 enabledActiveNodes.add(node);
             }
@@ -177,14 +180,14 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
         clusterState.setEnabledActiveNodes(enabledActiveNodes);
     }
 
-    private synchronized void addEnabledActiveNode(final ClusterState clusterState, final Node node) {
-        final Set<Node> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
+    private synchronized void addEnabledActiveNode(final ClusterState clusterState, final String node) {
+        final Set<String> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
         enabledActiveNodes.add(node);
         clusterState.setEnabledActiveNodes(enabledActiveNodes);
     }
 
-    private synchronized void removeEnabledActiveNode(final ClusterState clusterState, final Node node) {
-        final Set<Node> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
+    private synchronized void removeEnabledActiveNode(final ClusterState clusterState, final String node) {
+        final Set<String> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
         enabledActiveNodes.remove(node);
         clusterState.setEnabledActiveNodes(enabledActiveNodes);
     }

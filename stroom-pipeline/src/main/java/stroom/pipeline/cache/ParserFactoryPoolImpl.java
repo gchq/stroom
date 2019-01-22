@@ -31,7 +31,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pool.AbstractDocPool;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.util.cache.CacheManager;
+import stroom.cache.api.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.xml.converter.ParserFactory;

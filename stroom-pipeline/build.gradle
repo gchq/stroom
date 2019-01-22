@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.pipeline'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-data-meta:stroom-data-meta-api')
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-core-server')
@@ -17,6 +18,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-task:stroom-task-cluster-api')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-job:stroom-job-shared')
@@ -53,6 +55,7 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
+    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')

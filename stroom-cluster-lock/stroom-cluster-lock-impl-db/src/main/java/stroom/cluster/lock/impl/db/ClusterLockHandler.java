@@ -18,14 +18,12 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.lock.api.ClusterLockClusterTask;
-import stroom.cluster.lock.api.ClusterLockTask;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.ClusterCallEntry;
-import stroom.task.cluster.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.DefaultClusterResultCollector;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
+import stroom.task.cluster.api.ClusterCallEntry;
+import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
+import stroom.task.cluster.api.DefaultClusterResultCollector;
+import stroom.task.cluster.api.TargetType;
 import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;

@@ -18,10 +18,7 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.lock.api.ClusterLockKey;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.cluster.lock.api.ClusterLockStyle;
-import stroom.cluster.lock.api.ClusterLockTask;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;

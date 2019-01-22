@@ -37,7 +37,8 @@ public class NodeHandlerModule extends AbstractModule {
                 .bind(FetchNodeInfoAction.class, FetchNodeInfoHandler.class)
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class)
                 .bind(FlushVolumeStatusAction.class, FlushVolumeStatusHandler.class)
-                .bind(NodeInfoClusterTask.class, NodeInfoClusterHandler.class);
+                .bind(NodeInfoClusterTask.class, NodeInfoClusterHandler.class)
+                .bind(FlushVolumeClusterTask.class, FlushVolumeClusterHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(NodeCache.class);

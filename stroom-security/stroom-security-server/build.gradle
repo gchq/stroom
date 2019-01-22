@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.security.server'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-entity-shared')
@@ -33,6 +34,7 @@ dependencies {
     implementation libs.ws_rs_api
 
 //    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
