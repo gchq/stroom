@@ -1,5 +1,7 @@
 package stroom.entity;
 
+import java.util.Optional;
+
 public interface BasicCrudDao<T> {
 
     T create();
@@ -8,5 +10,5 @@ public interface BasicCrudDao<T> {
 
     int delete(int id);
 
-    T fetch(int id);
+    Optional<T> fetch(int id);
 }

@@ -6,7 +6,6 @@ import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,9 +39,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory {
         return Optional.empty();
     }
 
-
-    @StroomShutdown
-    public void shutdown() {
+    void shutdown() {
         LOGGER.info("Shutting Down Stroom Kafka Producer Factory Service");
 //        super.shutdown();
     }

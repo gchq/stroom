@@ -34,7 +34,6 @@ import stroom.job.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.lifecycle.StroomStartup;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;
@@ -48,7 +47,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
+class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
@@ -63,6 +62,25 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
         super(entityManager, security, uiConfig);
         this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
+    }
+
+    public void startup() {
+        LOGGER.info("startup()");
+
+        final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();
+        scheduledJobsMap.keySet().forEach(scheduledJob -> {
+                queryAppender.getJobDescriptionMap().put(scheduledJob.getName(), scheduledJob.getDescription());
+                if (scheduledJob.isAdvanced()) {
+                    queryAppender.getJobAdvancedSet().add(scheduledJob.getName());
+                }
+        });
+
+        // Distributed Jobs done a different way
+        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+            final DistributedTaskFactoryBean distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
+            queryAppender.getJobDescriptionMap().put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
+
+        });
     }
 
     @Override
@@ -83,27 +101,6 @@ public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria>
     @Override
     public FindJobCriteria createCriteria() {
         return new FindJobCriteria();
-    }
-
-    @StroomStartup
-    @Override
-    public void startup() {
-        LOGGER.info("startup()");
-
-        final JobQueryAppender queryAppender = (JobQueryAppender) getQueryAppender();
-        scheduledJobsMap.keySet().forEach(scheduledJob -> {
-                queryAppender.getJobDescriptionMap().put(scheduledJob.getName(), scheduledJob.getDescription());
-                if (scheduledJob.isAdvanced()) {
-                    queryAppender.getJobAdvancedSet().add(scheduledJob.getName());
-                }
-        });
-
-        // Distributed Jobs done a different way
-        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
-            final DistributedTaskFactoryBean distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryBean.class);
-            queryAppender.getJobDescriptionMap().put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
-
-        });
     }
 
     @Override

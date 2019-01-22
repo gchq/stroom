@@ -25,7 +25,6 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataRow;
 import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
-import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -90,14 +89,6 @@ class MetaValueServiceImpl implements MetaValueService {
         });
     }
 
-    // TODO : @66 Add a shutdown hook in here to ensure attribute values are flushed on shutdown
-    @StroomShutdown
-    public void shutdown() {
-        flush();
-    }
-
-
-    // TODO : @66 MAKE SURE THIS GETS CALLED
     @Override
     public void flush() {
         boolean ranOutOfItems = false;
@@ -232,7 +223,6 @@ class MetaValueServiceImpl implements MetaValueService {
         }
     }
 
-    // TODO : @66 MAKE SURE THIS GETS CALLED
     @Override
     public void deleteOldValues() {
         // TODO : @66 ACQUIRE A CLUSTER LOCK BEFORE PERFORMING A BATCH DELETE TO REDUCE DB CONTENTION AND TO LET A SINGLE NODE DO THE JOB.

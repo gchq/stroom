@@ -71,6 +71,5 @@ public class IndexModule extends AbstractModule {
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
 //        findServiceBinder.addBinding().to(stroom.index.IndexStoreImpl.class);
         findServiceBinder.addBinding().to(stroom.index.IndexShardServiceImpl.class);
-
     }
 }

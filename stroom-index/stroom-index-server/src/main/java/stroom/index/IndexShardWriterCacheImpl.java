@@ -25,12 +25,10 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
-import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.lifecycle.StroomStartup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -420,8 +418,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         });
     }
 
-    @StroomStartup
-    public synchronized void startup() {
+    synchronized void startup() {
         LOGGER.info(() -> "Index shard writer cache startup");
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -439,25 +436,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         LOGGER.info(() -> "Index shard writer cache startup completed in " + logExecutionTime);
     }
 
-    private void clean(final IndexShard indexShard) {
-        try {
-            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
-            indexShardService.save(indexShard);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-
-        try {
-            LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
-            final Path dir = IndexShardUtil.getIndexPath(indexShard);
-            LockFactoryFactory.clean(dir);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-    }
-
-    @StroomShutdown
+    @Override
     public synchronized void shutdown() {
         LOGGER.info(() -> "Index shard writer cache shutdown");
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -492,6 +471,24 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         }
 
         LOGGER.info(() -> "Index shard writer cache shutdown completed in " + logExecutionTime);
+    }
+
+    private void clean(final IndexShard indexShard) {
+        try {
+            LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
+            indexShard.setStatus(IndexShardStatus.CLOSED);
+            indexShardService.save(indexShard);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        try {
+            LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
+            final Path dir = IndexShardUtil.getIndexPath(indexShard);
+            LockFactoryFactory.clean(dir);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     private Settings getSettings() {

@@ -17,8 +17,4 @@
 package stroom.job.api;
 
 public interface ScheduledTaskExecutor {
-    /**
-     * Execute all scheduled tasks.
-     */
-    void execute();
 }

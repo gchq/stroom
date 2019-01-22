@@ -31,6 +31,8 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cache.CacheManagerImpl;
+import stroom.cache.CacheModule;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.Persistence;
@@ -144,7 +146,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
 //                        bind(Persistence.class).toInstance(inMemoryPersistence);
 //                        bind(SecurityContext.class).toInstance(securityContextMock);
                         bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
-
+                        install(new CacheModule());
                         install(new FeedModule());
                         install(new PipelineModule());
                         install(new RefDataStoreModule());
@@ -192,7 +194,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
             streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
             streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
 
-            try (CacheManager cacheManager = new CacheManager()) {
+            try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null) {
                     @Override
@@ -406,7 +408,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(new EffectiveStream(0, 0L));
-            try (CacheManager cacheManager = new CacheManager()) {
+            try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
@@ -479,7 +481,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(new EffectiveStream(0, 0L));
-            try (CacheManager cacheManager = new CacheManager()) {
+            try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {

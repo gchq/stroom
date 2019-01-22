@@ -151,7 +151,6 @@ ext.libs = [
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks:$versions.dropwizard_metrics",
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets:$versions.dropwizard",
         dropwizard_testing             : "io.dropwizard:dropwizard-testing:$versions.dropwizard",
-        fast_classpath_scanner         : "io.github.lukehutch:fast-classpath-scanner:2.9.4",
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
         flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
         gin                            : "com.google.gwt.inject:gin:2.1.2",

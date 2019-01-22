@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
     implementation project(':stroom-kafka:stroom-kafka-shared')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')

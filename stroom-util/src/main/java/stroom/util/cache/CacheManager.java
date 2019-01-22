@@ -18,60 +18,15 @@ package stroom.util.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import stroom.util.lifecycle.StroomShutdown;
 
-import javax.inject.Singleton;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-@Singleton
-public class CacheManager implements AutoCloseable {
-    private final Map<String, CacheHolder> caches = new ConcurrentHashMap<>();
+public interface CacheManager extends AutoCloseable {
+    void registerCache(String alias, CacheBuilder cacheBuilder, Cache cache);
 
-    @StroomShutdown
-    public void stop() {
-        close();
-    }
+    void replaceCache(String alias, CacheBuilder cacheBuilder, Cache cache);
 
-    @Override
-    public synchronized void close() {
-        caches.forEach((k, v) -> CacheUtil.clear(v.getCache()));
-    }
+    Map<String, CacheHolder> getCaches();
 
-    public void registerCache(final String alias, final CacheBuilder cacheBuilder, final Cache cache) {
-        if (caches.containsKey(alias)) {
-            throw new RuntimeException("A cache called '" + alias + "' already exists");
-        }
-
-        replaceCache(alias, cacheBuilder, cache);
-    }
-
-    public void replaceCache(final String alias, final CacheBuilder cacheBuilder, final Cache cache) {
-        final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
-        if (existing != null) {
-            CacheUtil.clear(existing.getCache());
-        }
-    }
-
-    public Map<String, CacheHolder> getCaches() {
-        return caches;
-    }
-
-    public static class CacheHolder {
-        private final CacheBuilder cacheBuilder;
-        private final Cache cache;
-
-        CacheHolder(final CacheBuilder cacheBuilder, final Cache cache) {
-            this.cacheBuilder = cacheBuilder;
-            this.cache = cache;
-        }
-
-        public CacheBuilder getCacheBuilder() {
-            return cacheBuilder;
-        }
-
-        public Cache getCache() {
-            return cache;
-        }
-    }
+    void close();
 }

@@ -31,7 +31,7 @@ import stroom.index.IndexShardWriterCache;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.search.SearchException;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

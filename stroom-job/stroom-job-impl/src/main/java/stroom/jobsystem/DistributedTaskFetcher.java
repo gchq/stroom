@@ -34,7 +34,6 @@ import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.shared.Task;
-import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -88,7 +87,6 @@ public class DistributedTaskFetcher {
      * Tells tasks to stop and waits for all tasks to stop before cleaning up
      * the executors.
      */
-    @StroomShutdown(priority = 999)
     public void shutdown() {
         try {
             stopping.set(true);

@@ -29,11 +29,11 @@ import javax.inject.Inject;
 class CacheClearClusterHandler extends AbstractTaskHandler<CacheClearClusterTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheClearClusterHandler.class);
 
-    private final StroomCacheManager stroomCacheManager;
+    private final CacheManagerService stroomCacheManager;
     private final Security security;
 
     @Inject
-    CacheClearClusterHandler(final StroomCacheManager stroomCacheManager,
+    CacheClearClusterHandler(final CacheManagerService stroomCacheManager,
                              final Security security) {
         this.stroomCacheManager = stroomCacheManager;
         this.security = security;

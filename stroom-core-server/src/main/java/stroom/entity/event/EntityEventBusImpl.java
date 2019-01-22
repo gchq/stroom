@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.EntityAction;
 import stroom.task.api.TaskManager;
-import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -49,8 +48,7 @@ class EntityEventBusImpl implements EntityEventBus {
         this.taskManager = taskManager;
     }
 
-    @StroomStartup
-    public void init() {
+    void init() {
         started = true;
     }
 

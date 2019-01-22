@@ -113,6 +113,10 @@ include 'stroom-node:stroom-node-api'
 include 'stroom-node:stroom-node-impl-db'
 include 'stroom-node:stroom-node-impl-db-gen'
 
+// Lifecycle
+include 'stroom-lifecycle:stroom-lifecycle-api'
+include 'stroom-lifecycle:stroom-lifecycle-impl'
+
 // Pipeline
 include 'stroom-pipeline'
 

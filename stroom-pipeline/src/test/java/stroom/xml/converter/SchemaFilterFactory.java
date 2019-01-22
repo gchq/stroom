@@ -18,8 +18,8 @@
 package stroom.xml.converter;
 
 import stroom.cache.MockSchemaPool;
-import stroom.cache.SchemaLoaderImpl;
-import stroom.cache.SchemaPool;
+import stroom.pipeline.cache.SchemaLoaderImpl;
+import stroom.pipeline.cache.SchemaPool;
 import stroom.docstore.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -28,8 +28,8 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
-import stroom.security.SecurityContext;
 import stroom.security.impl.mock.MockSecurityContext;
+import stroom.security.SecurityContext;
 import stroom.xml.converter.ds3.DS3ParserFactory;
 import stroom.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.XmlSchemaSerialiser;

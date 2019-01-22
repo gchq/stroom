@@ -7,6 +7,7 @@ import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
+import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
@@ -15,7 +16,8 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.cache.CacheModule());
-        install(new stroom.cache.PipelineCacheModule());
+        install(new stroom.cache.CacheHandlerModule());
+        install(new PipelineCacheModule());
         install(new stroom.dashboard.DashboardModule());
         install(new stroom.dashboard.logging.LoggingModule());
         install(new stroom.datafeed.DataFeedModule());
@@ -41,7 +43,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.jobsystem.JobSystemModule());
         install(new stroom.kafka.impl.KafkaModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
-        install(new stroom.lifecycle.LifecycleModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.node.NodeModule());
         install(new stroom.node.NodeHandlerModule());

@@ -10,7 +10,8 @@ import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.importexport.ContentPackImportConfig;
-import stroom.lifecycle.LifecycleConfig;
+import stroom.jobsystem.JobSystemConfig;
+import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.HeapHistogramConfig;
 import stroom.node.NodeConfig;
 import stroom.node.StatusConfig;
@@ -75,6 +76,7 @@ public class AppConfigModule extends AbstractModule {
         bind(HeapHistogramConfig.class).toInstance(appConfig.getNodeConfig().getStatusConfig().getHeapHistogramConfig());
         bind(IndexShardSearchConfig.class).toInstance(appConfig.getSearchConfig().getShardConfig());
         bind(InternalStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getInternalStatisticsConfig());
+        bind(JobSystemConfig.class).toInstance(appConfig.getJobSystemConfig());
         bind(LifecycleConfig.class).toInstance(appConfig.getLifecycleConfig());
         bind(NodeConfig.class).toInstance(appConfig.getNodeConfig());
         bind(PipelineConfig.class).toInstance(appConfig.getPipelineConfig());

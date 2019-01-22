@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cache.CacheManagerImpl;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.pipeline.PipelineStore;
@@ -108,7 +109,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             streamSet.add(EFFECTIVE_STREAM_2);
             streamSet.add(EFFECTIVE_STREAM_3);
 
-            try (final CacheManager cacheManager = new CacheManager()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
@@ -216,7 +217,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(effectiveStream);
 
-            try (final CacheManager cacheManager = new CacheManager()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {

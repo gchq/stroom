@@ -18,7 +18,7 @@ public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.mock.MockActivityModule());
-        install(new stroom.cache.PipelineCacheModule());
+        install(new stroom.cache.CacheModule());
         install(new stroom.data.meta.impl.mock.MockDataMetaModule());
         install(new stroom.data.store.impl.fs.MockStreamStoreModule());
         install(new stroom.dictionary.MockDictionaryModule());
@@ -32,6 +32,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.node.MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
         install(new stroom.pipeline.PipelineModule());
+        install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());
         install(new stroom.pipeline.factory.DataStorePipelineElementModule());
         install(new stroom.pipeline.factory.PipelineFactoryModule());

@@ -18,7 +18,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.StroomCacheManager;
+import stroom.cache.CacheManagerService;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.index.IndexShardManager;
@@ -53,7 +53,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
     private final NodeCreator nodeConfig;
     private final StreamTaskCreator streamTaskCreator;
-    private final StroomCacheManager stroomCacheManager;
+    private final CacheManagerService stroomCacheManager;
     private final Set<Clearable> clearables;
 
     @Inject
@@ -65,7 +65,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final NodeCreator nodeConfig,
                               final StreamTaskCreator streamTaskCreator,
-                              final StroomCacheManager stroomCacheManager,
+                              final CacheManagerService stroomCacheManager,
                               final Set<Clearable> clearables) {
         this.entityManager = entityManager;
         this.volumeService = volumeService;

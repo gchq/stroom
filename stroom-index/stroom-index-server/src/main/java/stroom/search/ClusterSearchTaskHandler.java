@@ -50,7 +50,7 @@ import stroom.search.shard.IndexShardSearchTaskExecutor;
 import stroom.search.shard.IndexShardSearchTaskHandler;
 import stroom.search.shard.IndexShardSearchTaskProducer;
 import stroom.security.Security;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.TaskTerminatedException;
 import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskCallback;

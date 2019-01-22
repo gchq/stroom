@@ -18,8 +18,6 @@ package stroom.resource;
 
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
-import stroom.util.lifecycle.StroomShutdown;
-import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -53,8 +51,11 @@ public class ResourceStoreImpl implements ResourceStore {
         return tempDir;
     }
 
-    @StroomStartup
-    public void startup() {
+    void startup() {
+        FileUtil.deleteContents(getTempFile());
+    }
+
+    void shutdown() {
         FileUtil.deleteContents(getTempFile());
     }
 
@@ -90,11 +91,6 @@ public class ResourceStoreImpl implements ResourceStore {
             return null;
         }
         return Paths.get(resourceKey.getKey());
-    }
-
-    @StroomShutdown
-    public void shutdown() {
-        FileUtil.deleteContents(getTempFile());
     }
 
     public void execute() {

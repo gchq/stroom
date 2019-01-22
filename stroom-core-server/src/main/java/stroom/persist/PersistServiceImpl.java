@@ -114,9 +114,6 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 
     private PersistenceUnitInfoImpl persistenceUnitInfo(final String name, final DataSource dataSource) {
 //        final List<String> entityClassNames = new ArrayList<>();
-//        new FastClasspathScanner(PACKAGE)
-//                .matchClassesWithAnnotation(Entity.class, classWithAnnotation -> entityClassNames.add(classWithAnnotation.getName()))
-//                .scan();
 
         final List<String> entityClassNames = Arrays.asList(
                 "stroom.activity.shared.Activity",

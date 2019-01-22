@@ -31,9 +31,9 @@ public interface StreamTaskCreator {
 
     int getStreamTaskQueueSize();
 
+    void writeQueueStatistics();
+
     void startup();
 
     void shutdown();
-
-    void writeQueueStatistics();
 }

@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -36,11 +37,9 @@ dependencies {
     implementation libs.curator_client
     implementation libs.curator_framework
     implementation libs.curator_x_discovery
-    implementation libs.curator_x_discovery
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.fast_classpath_scanner
     implementation libs.flyway_core
     implementation libs.guava
     implementation libs.guice4
@@ -51,7 +50,6 @@ dependencies {
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jackson_core
-    implementation libs.jackson_databind
     implementation libs.jackson_databind
     implementation libs.javassist
     implementation libs.javax_inject

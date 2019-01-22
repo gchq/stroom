@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -143,7 +142,6 @@ public class RollingDestinations {
         rollAll(false);
     }
 
-    @StroomShutdown
     public void forceRoll() {
         rollAll(true);
     }

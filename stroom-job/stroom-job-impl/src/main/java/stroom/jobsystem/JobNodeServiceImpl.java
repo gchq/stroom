@@ -40,7 +40,6 @@ import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.util.lifecycle.StroomStartup;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
@@ -54,7 +53,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
+class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJobNodeCriteria> implements JobNodeService {
     private static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
             + JobNode.TABLE_NAME + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND."
             + JobNode.ID + " IS NULL;";
@@ -89,45 +88,6 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     }
 
     @Override
-    public JobNode save(final JobNode entity) {
-        // We always want to update a job instance even if we have a stale
-        // version.
-        if (entity.isPersistent()) {
-            final JobNode tmp = load(entity);
-            entity.setVersion(tmp.getVersion());
-        }
-
-        // Stop Job Nodes being saved with invalid crons.
-        if (JobType.CRON.equals(entity.getJobType())) {
-            if (entity.getSchedule() != null) {
-                // This will throw a runtime exception if the expression is
-                // invalid.
-                SimpleCron.compile(entity.getSchedule());
-            }
-        }
-        if (JobType.FREQUENCY.equals(entity.getJobType())) {
-            if (entity.getSchedule() != null) {
-                // This will throw a runtime exception if the expression is
-                // invalid.
-                ModelStringUtil.parseDurationString(entity.getSchedule());
-            }
-        }
-
-        return super.save(entity);
-    }
-
-    private List<JobNode> findAllJobs(final Node node) {
-        // See if the job exists in the database.
-        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-        criteria.getFetchSet().add(Job.ENTITY_TYPE);
-        criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getNodeIdSet().add(node);
-        return find(criteria);
-
-    }
-
-    @Override
-    @StroomStartup
     public void startup() {
         entityManagerSupport.transaction(entityManager1 -> {
             LOGGER.info("startup()");
@@ -232,6 +192,44 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                 LOGGER.info("Removed {} orphan jobs", deleteCount);
             }
         });
+    }
+
+    @Override
+    public JobNode save(final JobNode entity) {
+        // We always want to update a job instance even if we have a stale
+        // version.
+        if (entity.isPersistent()) {
+            final JobNode tmp = load(entity);
+            entity.setVersion(tmp.getVersion());
+        }
+
+        // Stop Job Nodes being saved with invalid crons.
+        if (JobType.CRON.equals(entity.getJobType())) {
+            if (entity.getSchedule() != null) {
+                // This will throw a runtime exception if the expression is
+                // invalid.
+                SimpleCron.compile(entity.getSchedule());
+            }
+        }
+        if (JobType.FREQUENCY.equals(entity.getJobType())) {
+            if (entity.getSchedule() != null) {
+                // This will throw a runtime exception if the expression is
+                // invalid.
+                ModelStringUtil.parseDurationString(entity.getSchedule());
+            }
+        }
+
+        return super.save(entity);
+    }
+
+    private List<JobNode> findAllJobs(final Node node) {
+        // See if the job exists in the database.
+        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
+        criteria.getFetchSet().add(Job.ENTITY_TYPE);
+        criteria.getFetchSet().add(Node.ENTITY_TYPE);
+        criteria.getNodeIdSet().add(node);
+        return find(criteria);
+
     }
 
     private Job getOrCreateJob(final Job job) {

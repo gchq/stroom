@@ -22,7 +22,6 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobManager;
 import stroom.job.shared.JobNode;
-import stroom.lifecycle.LifecycleServiceImpl;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;
@@ -36,15 +35,12 @@ import java.util.List;
 public class JobManagerImpl implements JobManager {
     private final JobService jobService;
     private final JobNodeService jobNodeService;
-    private final LifecycleServiceImpl lifecycleService;
 
     @Inject
     public JobManagerImpl(final JobService jobService,
-                          final JobNodeService jobNodeService,
-                          final LifecycleServiceImpl lifecycleService) {
+                          final JobNodeService jobNodeService) {
         this.jobService = jobService;
         this.jobNodeService = jobNodeService;
-        this.lifecycleService = lifecycleService;
     }
 
     /**
@@ -163,10 +159,5 @@ public class JobManagerImpl implements JobManager {
             jobNode.setEnabled(enabled);
             jobNodeService.save(jobNode);
         }
-    }
-
-    @Override
-    public Boolean isClusterRunning() {
-        return lifecycleService.isRunning();
     }
 }

@@ -21,7 +21,6 @@ import com.google.common.cache.CacheBuilder;
 import stroom.entity.shared.Clearable;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
-import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,8 +44,7 @@ public class ClusterResultCollectorCache implements Clearable {
         cacheManager.registerCache("Cluster Result Collector Cache", cacheBuilder, cache);
     }
 
-    @StroomShutdown
-    public void shutdown() {
+    void shutdown() {
         shutdown = true;
     }
 

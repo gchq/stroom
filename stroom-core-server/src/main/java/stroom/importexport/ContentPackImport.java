@@ -19,7 +19,6 @@ package stroom.importexport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
-import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -55,7 +54,6 @@ public class ContentPackImport {
 
     //Startup with very low priority to ensure it starts after everything else
     //in particular
-    @StroomStartup(priority = -1000)
     public void startup() {
         final boolean isEnabled = config.isEnabled();
 

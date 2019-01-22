@@ -18,6 +18,7 @@ package stroom.refdata;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.cache.CacheManagerImpl;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
@@ -75,7 +76,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             }
         };
 
-        try (CacheManager cacheManager = new CacheManager()) {
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
                     mockStreamStore,
                     new EffectiveStreamInternPool(),
@@ -125,7 +126,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
 
         final InnerStreamMetaService mockStore = new InnerStreamMetaService();
 
-        try (CacheManager cacheManager = new CacheManager()) {
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                     cacheManager, mockStore, new EffectiveStreamInternPool(), new SecurityImpl(new MockSecurityContext()), 100, TimeUnit.MILLISECONDS);
 
