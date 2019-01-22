@@ -161,18 +161,6 @@ public class UserDaoImplTest {
                 .isTrue());
     }
 
-//    List<User> findUsersInGroup(String groupUuid);
-//
-//    List<User> findGroupsForUser(String userUuid);
-//
-//    User createUser(String name);
-//
-//    User createUserGroup(String name);
-//
-//    Boolean addUserToGroup(String userUuid, String groupUuid);
-//
-//    Boolean removeUserFromGroup(String userUuid, String groupUuid);
-
     @AfterAll
     public static void afterAll() {
         LOGGER.info(() -> "After All - Stop Database");
