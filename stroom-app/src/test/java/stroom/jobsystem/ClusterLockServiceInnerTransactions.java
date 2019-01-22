@@ -16,6 +16,7 @@
 
 package stroom.jobsystem;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.persist.EntityManagerSupport;
 
 import javax.inject.Inject;

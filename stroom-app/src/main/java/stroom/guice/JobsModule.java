@@ -7,6 +7,7 @@ import stroom.dashboard.DashboardJobsModule;
 import stroom.data.meta.impl.db.DataMetaDbJobsModule;
 import stroom.data.store.impl.fs.FileSystemDataStoreJobsModule;
 import stroom.index.IndexJobsModule;
+import stroom.jobsystem.JobSystemJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.refdata.store.RefDataStoreJobsModule;
 import stroom.search.SearchJobsModule;
@@ -29,5 +30,6 @@ public class JobsModule extends AbstractModule {
         install(new SQLStatisticsJobsModule());
         install(new SQLStatisticSearchJobsModule());
         install(new DataMetaDbJobsModule());
+        install(new JobSystemJobsModule());
     }
 }

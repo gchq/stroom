@@ -19,6 +19,7 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
@@ -28,7 +29,6 @@ import stroom.entity.shared.Period;
 import stroom.entity.util.PeriodUtil;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.jobsystem.ClusterLockService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.activity.api.Activity;
 import stroom.activity.api.Activity.Prop;
+import stroom.activity.api.ActivityService;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Security;

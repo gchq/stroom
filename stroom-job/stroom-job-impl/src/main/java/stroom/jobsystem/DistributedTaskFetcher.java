@@ -19,6 +19,7 @@ package stroom.jobsystem;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.job.api.DistributedTask;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;

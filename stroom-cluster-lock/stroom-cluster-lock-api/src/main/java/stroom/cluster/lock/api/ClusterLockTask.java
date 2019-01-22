@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.cluster.lock.api;
 
-import stroom.node.shared.Node;
-import stroom.docref.SharedObject;
+import stroom.util.shared.SharedBoolean;
+import stroom.task.api.ServerTask;
 
-import java.util.List;
+public class ClusterLockTask extends ServerTask<SharedBoolean> {
+    private final ClusterLockKey key;
+    private final ClusterLockStyle lockStyle;
 
-/**
- * This interface is to be used by all classes that will create tasks for the
- * job system.
- */
-public interface DistributedTaskFactory<T extends DistributedTask<R>, R extends SharedObject> {
-    /**
-     * Gets a list of tasks if available up to the number requested.
-     */
-    List<T> fetch(Node node, int count);
+    public ClusterLockTask(final ClusterLockKey key, final ClusterLockStyle lockStyle) {
+        this.key = key;
+        this.lockStyle = lockStyle;
+    }
 
-    /**
-     * Return tasks back that could not be returned to a worker
-     */
-    void abandon(Node node, List<T> tasks);
+    public ClusterLockKey getKey() {
+        return key;
+    }
+
+    public ClusterLockStyle getLockStyle() {
+        return lockStyle;
+    }
 }

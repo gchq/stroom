@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job.api;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import stroom.node.shared.Node;
+import stroom.docref.SharedObject;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface DistributedTaskFactoryBean {
-    String jobName();
+import java.util.List;
 
-    String description();
+/**
+ * This interface is to be used by all classes that will create tasks for the
+ * job system.
+ */
+public interface DistributedTaskFactory<T extends DistributedTask<R>, R extends SharedObject> {
+    /**
+     * Gets a list of tasks if available up to the number requested.
+     */
+    List<T> fetch(Node node, int count);
+
+    /**
+     * Return tasks back that could not be returned to a worker
+     */
+    void abandon(Node node, List<T> tasks);
 }

@@ -20,6 +20,7 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.activity.api.Activity;
+import stroom.activity.api.ActivityService;
 import stroom.activity.shared.FindActivityAction;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;

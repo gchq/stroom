@@ -20,6 +20,7 @@ package stroom.jobsystem;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;

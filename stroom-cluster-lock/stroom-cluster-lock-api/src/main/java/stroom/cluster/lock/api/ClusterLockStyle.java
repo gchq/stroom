@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.cluster.lock.impl.db;
+package stroom.cluster.lock.api;
 
-enum ClusterLockStyle {
+public enum ClusterLockStyle {
     Try, Release, KeepAlive
 }

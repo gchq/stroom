@@ -19,12 +19,12 @@ package stroom.policy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.DataRetentionAgeUtil;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.Period;
 import stroom.entity.util.XMLMarshallerUtil;
-import stroom.jobsystem.ClusterLockService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;

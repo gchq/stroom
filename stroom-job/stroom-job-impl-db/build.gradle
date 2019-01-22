@@ -2,4 +2,13 @@ ext.moduleName = 'stroom.job.impl.db'
 
 dependencies {
 
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-util')
+    
+    implementation libs.hikari
+    implementation libs.javax_inject
+    implementation libs.guice4
+    implementation libs.flyway_core
+    implementation libs.jackson_annotations
 }

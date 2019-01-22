@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cluster.lock.impl.db;
+package stroom.cluster.lock.api;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
+public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);

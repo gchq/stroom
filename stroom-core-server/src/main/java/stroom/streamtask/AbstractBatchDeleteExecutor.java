@@ -18,7 +18,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.ClusterLockService;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;

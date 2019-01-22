@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.activity.impl.db;
+package stroom.activity.api;
 
-import stroom.activity.api.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 

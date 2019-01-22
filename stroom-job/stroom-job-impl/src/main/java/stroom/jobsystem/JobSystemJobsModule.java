@@ -1,5 +1,7 @@
 package stroom.jobsystem;
 
+import stroom.cluster.lock.api.ClusterLockClusterHandler;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;
 

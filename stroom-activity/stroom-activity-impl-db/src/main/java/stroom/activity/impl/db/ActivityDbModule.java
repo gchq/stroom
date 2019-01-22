@@ -7,6 +7,7 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;

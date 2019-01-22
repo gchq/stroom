@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job.api;
 
-public interface ScheduledTaskExecutor {
-    /**
-     * Execute all scheduled tasks.
-     */
-    void execute();
+import stroom.task.shared.Task;
+
+import java.io.Serializable;
+
+public interface DistributedTask<R> extends Task<R>, Serializable {
+    String getTraceString();
 }

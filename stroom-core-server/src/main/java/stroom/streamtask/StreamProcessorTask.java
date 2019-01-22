@@ -16,7 +16,7 @@
 
 package stroom.streamtask;
 
-import stroom.jobsystem.DistributedTask;
+import stroom.job.api.DistributedTask;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;

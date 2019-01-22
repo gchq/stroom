@@ -18,7 +18,7 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.ScheduledTaskExecutor;
+import stroom.job.api.ScheduledTaskExecutor;
 import stroom.security.Security;
 import stroom.task.StroomThreadGroup;
 import stroom.task.TaskCallbackAdaptor;

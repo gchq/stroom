@@ -14,30 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job.api;
 
-import stroom.util.shared.VoidResult;
-import stroom.task.api.ServerTask;
-
-/**
- * Mock Class.
- */
-public class MockTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
-    private static final long serialVersionUID = 8842861773930805737L;
-
-    private final String taskName;
-
-    public MockTask(final String taskName) {
-        this.taskName = taskName;
-    }
-
-    @Override
-    public String getTaskName() {
-        return taskName;
-    }
-
-    @Override
-    public String getTraceString() {
-        return taskName;
-    }
+public interface ScheduledTaskExecutor {
+    /**
+     * Execute all scheduled tasks.
+     */
+    void execute();
 }

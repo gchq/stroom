@@ -18,6 +18,8 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockClusterTask;
+import stroom.cluster.lock.api.ClusterLockTask;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.cluster.ClusterCallEntry;

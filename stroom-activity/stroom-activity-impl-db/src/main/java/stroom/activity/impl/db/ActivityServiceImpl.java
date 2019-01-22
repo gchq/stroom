@@ -18,6 +18,7 @@ package stroom.activity.impl.db;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
+import stroom.activity.api.ActivityService;
 import stroom.activity.impl.db.tables.records.ActivityRecord;
 import stroom.activity.api.Activity;
 import stroom.activity.shared.FindActivityCriteria;

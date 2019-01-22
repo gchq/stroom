@@ -28,7 +28,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.util.SqlBuilder;
-import stroom.jobsystem.ClusterLockService;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.persist.CoreConfig;

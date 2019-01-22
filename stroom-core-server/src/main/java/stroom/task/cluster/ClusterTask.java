@@ -25,7 +25,7 @@ import stroom.task.shared.ThreadPool;
 import stroom.task.api.TaskIdFactory;
 
 import java.io.Serializable;
-
+//TODO: gh-1072 This is duplicated in stroom-task-api!
 public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Serializable {
     private static final long serialVersionUID = 4730274660149532350L;
 

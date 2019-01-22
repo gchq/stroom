@@ -18,8 +18,8 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.jobsystem.ClusterLockService;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;

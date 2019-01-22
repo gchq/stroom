@@ -18,6 +18,8 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.job.api.DistributedTask;
+import stroom.job.api.DistributedTaskFactory;
 import stroom.job.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.streamtask.TaskStatusTraceLog;

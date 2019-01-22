@@ -16,8 +16,8 @@
 
 package stroom.streamtask;
 
-import stroom.jobsystem.DistributedTaskFactory;
-import stroom.jobsystem.DistributedTaskFactoryBean;
+import stroom.job.api.DistributedTaskFactory;
+import stroom.job.api.DistributedTaskFactoryBean;
 import stroom.node.shared.Node;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.util.shared.VoidResult;

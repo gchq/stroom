@@ -26,6 +26,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.FieldMap;
+import stroom.job.api.DistributedTaskFactoryBean;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.FindJobCriteria;

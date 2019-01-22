@@ -14,25 +14,31 @@
  * limitations under the License.
  */
 
-package stroom.cluster.lock.impl.db;
+package stroom.jobsystem;
 
-import stroom.util.shared.SharedBoolean;
+import stroom.job.api.DistributedTask;
+import stroom.util.shared.VoidResult;
 import stroom.task.api.ServerTask;
 
-public class ClusterLockTask extends ServerTask<SharedBoolean> {
-    private final ClusterLockKey key;
-    private final ClusterLockStyle lockStyle;
+/**
+ * Mock Class.
+ */
+public class MockTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
+    private static final long serialVersionUID = 8842861773930805737L;
 
-    public ClusterLockTask(final ClusterLockKey key, final ClusterLockStyle lockStyle) {
-        this.key = key;
-        this.lockStyle = lockStyle;
+    private final String taskName;
+
+    public MockTask(final String taskName) {
+        this.taskName = taskName;
     }
 
-    public ClusterLockKey getKey() {
-        return key;
+    @Override
+    public String getTaskName() {
+        return taskName;
     }
 
-    public ClusterLockStyle getLockStyle() {
-        return lockStyle;
+    @Override
+    public String getTraceString() {
+        return taskName;
     }
 }

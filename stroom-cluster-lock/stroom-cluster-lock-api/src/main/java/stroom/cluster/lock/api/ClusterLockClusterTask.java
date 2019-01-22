@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.cluster.lock.impl.db;
+package stroom.cluster.lock.api;
 
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.SharedBoolean;
 import stroom.task.shared.Task;
+import stroom.util.shared.SharedBoolean;
 
 public class ClusterLockClusterTask extends ClusterTask<SharedBoolean> {
     private static final long serialVersionUID = -2025366263627949409L;

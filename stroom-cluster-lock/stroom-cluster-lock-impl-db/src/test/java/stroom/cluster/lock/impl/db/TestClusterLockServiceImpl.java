@@ -24,9 +24,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.cluster.lock.shared.Activity;
-import stroom.cluster.lock.shared.cluster.lock.Prop;
-import stroom.cluster.lock.shared.FindActivityCriteria;
+import stroom.activity.api.Activity;
+import stroom.activity.api.ActivityService;
+import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
@@ -48,9 +48,10 @@ class TestClusterLockServiceImpl {
         Mockito.when(securityContext.getUserId()).thenReturn("testUser");
         Mockito.when(securityContext.isLoggedIn()).thenReturn(true);
 
-        final ConnectionProvider connectionProvider = new ClusterLockDbModule().getConnectionProvider(ActivityConfig::new);
+//        final ConnectionProvider connectionProvider = new ClusterLockDbModule().getConnectionProvider(ActivityConfig::new);
 
-        activityService = new ClusterLockServiceImpl2(securityContext, connectionProvider);
+        //TODO: gh-1072 - reinstate this service?
+//        activityService = new ClusterLockServiceImpl2(securityContext, connectionProvider);
     }
 
     @Test
@@ -110,8 +111,8 @@ class TestClusterLockServiceImpl {
         assertThat(list5.size()).isEqualTo(0);
     }
 
-    private Prop createProp(final String name) {
-        final Prop prop = new Prop();
+    private Activity.Prop createProp(final String name) {
+        final Activity.Prop prop = new Activity.Prop();
         prop.setId(name);
         prop.setName(name);
         return prop;

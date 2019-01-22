@@ -16,6 +16,7 @@
 
 package stroom.jobsystem;
 
+import stroom.job.api.DistributedTask;
 import stroom.job.shared.JobNode;
 import stroom.docref.SharedObject;
 

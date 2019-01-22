@@ -2,6 +2,9 @@ ext.moduleName = 'stroom.job.api'
 
 dependencies {
     implementation project(':stroom-task:stroom-task-shared')
+    implementation project(":stroom-core-shared")
+    
     implementation libs.guice4
+    implementation libs.stroomDocRef
     
 }

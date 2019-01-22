@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cluster.lock.impl.db;
+package stroom.cluster.lock.api;
 
 import stroom.util.date.DateUtil;
 import stroom.util.shared.EqualsBuilder;

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.job.api.ScheduledJob;
+import stroom.job.api.ScheduledTaskExecutor;
 import stroom.job.api.TaskConsumer;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.job.shared.JobNode;
