@@ -17,33 +17,26 @@
 
 package stroom.processor.impl.db;
 
-import event.logging.BaseAdvancedQueryItem;
-import stroom.entity.CriteriaLoggingUtil;
-import stroom.entity.QueryAppender;
-import stroom.entity.StroomEntityManager;
-import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.util.HqlBuilder;
 import stroom.processor.StreamProcessorService;
+import stroom.processor.impl.db.dao.ProcessorDao;
 import stroom.processor.shared.FindStreamProcessorCriteria;
+import stroom.processor.shared.Processor;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.processor.shared.Processor;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.List;
 
-@Singleton
 public class StreamProcessorServiceImpl implements StreamProcessorService {
 
+    private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     private final Security security;
+    private final ProcessorDao processorDao;
 
     @Inject
-    StreamProcessorServiceImpl(final StroomEntityManager entityManager,
-                               final Security security) {
+    StreamProcessorServiceImpl(final Security security, final ProcessorDao processorDao) {
         this.security = security;
+        this.processorDao = processorDao;
     }
 
     @Override
@@ -53,65 +46,69 @@ public class StreamProcessorServiceImpl implements StreamProcessorService {
 
     @Override
     public Processor create() {
-        return null;
+        return security.secureResult(PERMISSION, processorDao::create);
     }
 
     @Override
     public Processor update(final Processor processor) {
-        return null;
+        return security.secureResult(PERMISSION, () ->
+                processorDao.update(processor));
     }
 
     @Override
     public int delete(final int id) {
-        return 0;
+        return security.secureResult(PERMISSION, () ->
+                processorDao.delete(id));
     }
 
     @Override
     public Processor fetch(final int id) {
-        return null;
+        return security.secureResult(() ->
+                processorDao.fetch(id));
     }
 
     @Override
     public BaseResultList<Processor> find(final FindStreamProcessorCriteria criteria) {
-        return null;
+        return security.secureResult(() ->
+                processorDao.find(criteria));
     }
 
-    @Override
-    public Class<Processor> getEntityClass() {
-        return Processor.class;
-    }
+//    @Override
+//    public Class<Processor> getEntityClass() {
+//        return Processor.class;
+//    }
 
-    @Override
-    public FindStreamProcessorCriteria createCriteria() {
-        return new FindStreamProcessorCriteria();
-    }
-
-    @Override
-    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamProcessorCriteria criteria) {
-        CriteriaLoggingUtil.appendCriteriaSet(items, "pipelineSet", criteria.getPipelineSet());
-        super.appendCriteria(items, criteria);
-    }
-
-    @Override
-    public StreamProcessorQueryAppender createQueryAppender(final StroomEntityManager entityManager) {
-        return new StreamProcessorQueryAppender(entityManager);
-    }
-
-    @Override
-    protected String permission() {
-        return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
-    }
-
-    private static class StreamProcessorQueryAppender extends QueryAppender<Processor, FindStreamProcessorCriteria> {
-        StreamProcessorQueryAppender(StroomEntityManager entityManager) {
-            super(entityManager);
-        }
-
-        @Override
-        protected void appendBasicCriteria(final HqlBuilder sql, final String entityName,
-                                           final FindStreamProcessorCriteria criteria) {
-            super.appendBasicCriteria(sql, entityName, criteria);
-            sql.appendDocRefSetQuery(entityName + ".pipelineUuid", criteria.getPipelineSet());
-        }
-    }
+//    @Override
+//    public FindStreamProcessorCriteria createCriteria() {
+//        return new FindStreamProcessorCriteria();
+//    }
+//
+//    @Override
+//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamProcessorCriteria criteria) {
+//        CriteriaLoggingUtil.appendCriteriaSet(items, "pipelineSet", criteria.getPipelineSet());
+//        super.appendCriteria(items, criteria);
+//    }
+//
+//    @Override
+//    public StreamProcessorQueryAppender createQueryAppender(final StroomEntityManager entityManager) {
+//        return new StreamProcessorQueryAppender(entityManager);
+//    }
+//
+//    @Override
+//    protected String permission() {
+//        return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+//    }
+//
+//    private static class StreamProcessorQueryAppender extends QueryAppender<Processor, FindStreamProcessorCriteria> {
+//        StreamProcessorQueryAppender(StroomEntityManager entityManager) {
+//            super(entityManager);
+//        }
+//
+//        @Override
+//        protected void appendBasicCriteria(final HqlBuilder sql, final String entityName,
+//                                           final FindStreamProcessorCriteria criteria) {
+//            super.appendBasicCriteria(sql, entityName, criteria);
+//            sql.appendDocRefSetQuery(entityName + ".pipelineUuid", criteria.getPipelineSet());
+//        }
+//    }
 }

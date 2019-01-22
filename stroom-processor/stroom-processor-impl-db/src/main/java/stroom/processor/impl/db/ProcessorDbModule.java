@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
-import stroom.process.ProcessorConfig;
+import stroom.processor.ProcessorConfig;
+import stroom.processor.StreamProcessorService;
 import stroom.processor.impl.db.dao.ProcessorDao;
 import stroom.processor.impl.db.dao.ProcessorDaoImpl;
 import stroom.util.db.DbUtil;
@@ -25,8 +26,8 @@ public class ProcessorDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ProcessorServiceImpl.class).asEagerSingleton();
 
+        bind(StreamProcessorService.class).to(StreamProcessorServiceImpl.class);
         bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
 
 //        bind(FeedService.class).to(FeedServiceImpl.class);
@@ -67,11 +68,13 @@ public class ProcessorDbModule extends AbstractModule {
     }
 
     private Flyway flyway(final DataSource dataSource) {
-        final Flyway flyway = new Flyway();
-        flyway.setDataSource(dataSource);
-        flyway.setLocations(FLYWAY_LOCATIONS);
-        flyway.setTable(FLYWAY_TABLE);
-        flyway.setBaselineOnMigrate(true);
+        final Flyway flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .locations(FLYWAY_LOCATIONS)
+                .table(FLYWAY_TABLE)
+                .baselineOnMigrate(true)
+                .load();
+
         LOGGER.info("Applying Flyway migrations to stroom-data-meta in {} from {}", FLYWAY_TABLE, FLYWAY_LOCATIONS);
         try {
             flyway.migrate();
