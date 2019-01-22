@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.jobsystem.shared.JobNode;
+import stroom.security.Security;
+import stroom.task.StroomThreadGroup;
 import stroom.task.api.TaskManager;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.TaskConsumer;
@@ -28,35 +30,107 @@ import stroom.task.shared.Task;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
+import stroom.util.thread.CustomThreadFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskExecutorImpl.class);
+
+    private static final String STROOM_JOB_THREAD_POOL = "Stroom Job#";
+
     private final ConcurrentHashMap<ScheduledJob, AtomicBoolean> runningMapOfScheduledJobs = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<ScheduledJob, Scheduler> schedulerMapOfScheduledJobs = new ConcurrentHashMap<>();
 
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final TaskManager taskManager;
+    private final Security security;
+
+    private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
+    private final boolean enabled;
+    private final long executionInterval;
 
     @Inject
     ScheduledTaskExecutorImpl(final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                               final JobNodeTrackerCache jobNodeTrackerCache,
-                              final TaskManager taskManager) {
+                              final TaskManager taskManager,
+                              final JobSystemConfig jobSystemConfig,
+                              final Security security) {
         this.scheduledJobsMap = scheduledJobsMap;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.taskManager = taskManager;
+        this.security = security;
+        this.enabled = jobSystemConfig.isEnabled();
+        this.executionInterval = jobSystemConfig.getExecutionIntervalMs();
     }
 
-    @Override
-    public void execute() {
+    void startup() {
+        if (enabled) {
+            LOGGER.info("Starting Stroom Job service");
+            // Create the runnable object that will perform execution on all
+            // scheduled services.
+            final ReentrantLock lock = new ReentrantLock();
+
+            final Runnable runnable = () -> {
+                if (lock.tryLock()) {
+                    try {
+                        security.asProcessingUser(() -> {
+                            Thread.currentThread().setName("Stroom Job - ScheduledExecutor");
+                            execute();
+                        });
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    } finally {
+                        lock.unlock();
+                    }
+                } else {
+                    LOGGER.warn("Still trying to execute tasks");
+                }
+            };
+
+            // Create the thread pool that we will use to startup, shutdown and execute lifecycle beans asynchronously.
+            final CustomThreadFactory threadFactory = new CustomThreadFactory(STROOM_JOB_THREAD_POOL,
+                    StroomThreadGroup.instance(), Thread.MIN_PRIORITY + 1);
+
+            // Create the executor service that will execute scheduled services.
+            final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactory);
+            scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, executionInterval, TimeUnit.MILLISECONDS);
+            this.scheduledExecutorService.set(scheduledExecutorService);
+        }
+    }
+
+    void shutdown() {
+        if (enabled) {
+            LOGGER.info("Stopping Stroom Job service");
+            final ScheduledExecutorService scheduledExecutorService = this.scheduledExecutorService.get();
+            if (scheduledExecutorService != null) {
+                // Stop the scheduled executor.
+                scheduledExecutorService.shutdown();
+                try {
+                    scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
+                } catch (final InterruptedException e) {
+                    LOGGER.error("Waiting termination interrupted!", e);
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    }
+
+    private void execute() {
         for (final ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
             try {
                 final ScheduledJobFunction function = create(scheduledJob);

@@ -32,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.CacheManagerImpl;
+import stroom.cache.CacheModule;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.Persistence;
@@ -145,7 +146,7 @@ class TestReferenceData extends AbstractLmdbDbTest {
 //                        bind(Persistence.class).toInstance(inMemoryPersistence);
 //                        bind(SecurityContext.class).toInstance(securityContextMock);
                         bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
-
+                        install(new CacheModule());
                         install(new FeedModule());
                         install(new PipelineModule());
                         install(new RefDataStoreModule());

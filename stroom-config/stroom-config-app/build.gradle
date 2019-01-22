@@ -9,6 +9,7 @@ dependencies {
     implementation project(':stroom-data-store:stroom-data-store-impl-fs')
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
     implementation project(':stroom-index:stroom-index-server')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-security:stroom-security-server')
     implementation project(':stroom-security:stroom-security-impl-db')
     implementation project(':stroom-statistics:stroom-statistics-server')

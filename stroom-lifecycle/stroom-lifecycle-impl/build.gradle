@@ -1,9 +1,11 @@
 ext.moduleName = 'stroom.lifecycle.impl'
 
 dependencies {
-    implementation libs.guice4
+
 ////    implementation project(':stroom-entity-shared')
-//    implementation project(':stroom-util-shared')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
 ////    implementation project(':stroom-docstore:stroom-docstore-shared')
 ////    implementation project(':stroom-explorer:stroom-explorer-api')
 ////    implementation project(':stroom-importexport:stroom-importexport-api')
@@ -15,7 +17,10 @@ dependencies {
 ////
 ////    implementation libs.gwt_servlet
 ////    implementation libs.hibernate_jpa_api
-////    implementation libs.jackson_annotations
+    implementation libs.dropwizard_lifecycle
+    implementation libs.guice4
+    implementation libs.jackson_annotations
+    implementation libs.slf4j_api
 ////
 ////    implementation libs.jaxb_api
 ////    implementation libs.javax_inject;

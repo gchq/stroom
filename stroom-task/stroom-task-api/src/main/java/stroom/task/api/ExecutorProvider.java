@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.lifecycle;
+package stroom.task.api;
 
-import com.google.inject.AbstractModule;
+import stroom.task.shared.ThreadPool;
 
-public class LifecycleServiceModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(LifecycleService.class).to(LifecycleServiceImpl.class);
-    }
+import java.util.concurrent.Executor;
+
+public interface ExecutorProvider {
+    Executor getExecutor();
+
+    Executor getExecutor(ThreadPool threadPool);
 }

@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
-import stroom.lifecycle.LifecycleServiceModule;
+import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.startup.Config;
 
 public class AppModule extends AbstractModule {

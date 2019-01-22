@@ -47,7 +47,7 @@ import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
-import stroom.lifecycle.LifecycleService;
+import stroom.lifecycle.impl.LifecycleService;
 import stroom.persist.PersistLifecycle;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;

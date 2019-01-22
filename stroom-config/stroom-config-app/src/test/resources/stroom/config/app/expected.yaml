@@ -96,9 +96,11 @@ index:
       minItems: 0
       coreItems: 50
       maxItems: 100
-lifecycle:
+job:
   enabled: true
   executionInterval: "10s"
+lifecycle:
+  enabled: true
 node:
   node: "tba"
   rack: "tba"

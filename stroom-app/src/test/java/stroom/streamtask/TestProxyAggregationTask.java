@@ -33,7 +33,7 @@ import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;

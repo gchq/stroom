@@ -17,8 +17,4 @@
 package stroom.jobsystem;
 
 public interface ScheduledTaskExecutor {
-    /**
-     * Execute all scheduled tasks.
-     */
-    void execute();
 }

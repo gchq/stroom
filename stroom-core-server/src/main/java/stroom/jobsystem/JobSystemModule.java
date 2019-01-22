@@ -52,7 +52,8 @@ public class JobSystemModule extends AbstractModule {
                 .bind(DistributedTaskRequestClusterTask.class, stroom.jobsystem.DistributedTaskRequestClusterHandler.class)
                 .bind(FetchJobDataAction.class, stroom.jobsystem.FetchJobDataHandler.class)
                 .bind(GetScheduledTimesAction.class, stroom.jobsystem.GetScheduledTimesHandler.class)
-                .bind(JobNodeInfoClusterTask.class, stroom.jobsystem.JobNodeInfoClusterHandler.class);
+                .bind(JobNodeInfoClusterTask.class, stroom.jobsystem.JobNodeInfoClusterHandler.class)
+                .bind(ScheduledTask.class, stroom.jobsystem.ScheduledTaskHandler.class);
 
         EntityTypeBinder.create(binder())
                 .bind(Job.ENTITY_TYPE, JobServiceImpl.class)

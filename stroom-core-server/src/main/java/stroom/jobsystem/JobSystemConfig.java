@@ -1,18 +1,18 @@
-package stroom.lifecycle;
+package stroom.jobsystem;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.IsConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class LifecycleConfig implements IsConfig {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleConfig.class);
+public class JobSystemConfig implements IsConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);
 
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
@@ -50,7 +50,7 @@ public class LifecycleConfig implements IsConfig {
                 ms = DEFAULT_INTERVAL;
             }
         } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.lifecycle.executionInterval' value '" + executionInterval
+            LOGGER.error("Unable to parse property 'stroom.job.executionInterval' value '" + executionInterval
                     + "', using default of '10s' instead", e);
             ms = DEFAULT_INTERVAL;
         }
@@ -59,7 +59,7 @@ public class LifecycleConfig implements IsConfig {
 
     @Override
     public String toString() {
-        return "LifecycleConfig{" +
+        return "JobSystemConfig{" +
                 "enabled=" + enabled +
                 ", executionInterval='" + executionInterval + '\'' +
                 '}';

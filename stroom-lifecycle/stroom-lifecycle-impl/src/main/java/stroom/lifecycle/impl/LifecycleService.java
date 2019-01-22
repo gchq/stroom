@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.task;
+package stroom.lifecycle.impl;
 
-import stroom.task.shared.ThreadPool;
+import io.dropwizard.lifecycle.Managed;
 
-import java.util.concurrent.Executor;
-
-public interface ExecutorProvider {
-    Executor getExecutor();
-
-    Executor getExecutor(ThreadPool threadPool);
+public interface LifecycleService extends Managed {
 }

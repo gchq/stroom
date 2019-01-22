@@ -28,6 +28,10 @@ public class JobSystemLifecycleModule extends AbstractLifecycleModule {
         bindStartup().to(JobServiceStartup.class);
         bindStartup().to(JobNodeServiceStartup.class);
         bindShutdown().priority(999).to(DistributedTaskFetcherShutdown.class);
+
+        // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
+        bindStartup().priority(Integer.MIN_VALUE).to(ScheduledTaskExecutorStartup.class);
+        bindShutdown().priority(Integer.MIN_VALUE).to(ScheduledTaskExecutorShutdown.class);
     }
 
     private static class JobServiceStartup extends RunnableWrapper {
@@ -48,6 +52,20 @@ public class JobSystemLifecycleModule extends AbstractLifecycleModule {
         @Inject
         DistributedTaskFetcherShutdown(final DistributedTaskFetcher distributedTaskFetcher) {
             super(distributedTaskFetcher::shutdown);
+        }
+    }
+
+    private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
+        @Inject
+        ScheduledTaskExecutorStartup(final ScheduledTaskExecutorImpl scheduledTaskExecutor) {
+            super(scheduledTaskExecutor::startup);
+        }
+    }
+
+    private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {
+        @Inject
+        ScheduledTaskExecutorShutdown(final ScheduledTaskExecutorImpl scheduledTaskExecutor) {
+            super(scheduledTaskExecutor::shutdown);
         }
     }
 }

@@ -14,27 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.util.thread;
+package stroom.lifecycle.impl;
 
-public class Link<T> {
-    private final T object;
-    private final Link<T> parent;
+import com.google.inject.AbstractModule;
 
-    public Link(final T object) {
-        this.object = object;
-        this.parent = null;
-    }
-
-    public Link(final T object, final Link<T> parent) {
-        this.object = object;
-        this.parent = parent;
-    }
-
-    public T getObject() {
-        return object;
-    }
-
-    public Link<T> getParent() {
-        return parent;
+public class LifecycleServiceModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        bind(LifecycleService.class).to(LifecycleServiceImpl.class);
     }
 }

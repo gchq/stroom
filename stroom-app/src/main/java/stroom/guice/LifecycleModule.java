@@ -17,27 +17,29 @@ import stroom.servicediscovery.ServiceDiscoveryLifecycleModule;
 import stroom.statistics.internal.InternalStatisticsLifecycleModule;
 import stroom.statistics.sql.SQLStatisticsLifecycleModule;
 import stroom.streamtask.StreamTaskLifecycleModule;
+import stroom.task.TaskManagerLifecycleModule;
 import stroom.task.cluster.ClusterTaskLifecycleModule;
 
 public class LifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new DataMetaDbLifecycleModule());
-        install(new StreamTaskLifecycleModule());
-        install(new ServiceDiscoveryLifecycleModule());
-        install(new JobSystemLifecycleModule());
-        install(new ImportExportLifecycleModule());
-        install(new EntityManagerLifecycleModule());
-        install(new ClusterLifecycleModule());
         install(new CacheManagerLifecycleModule());
+        install(new ClusterLifecycleModule());
+        install(new ClusterTaskLifecycleModule());
+        install(new DataMetaDbLifecycleModule());
+        install(new EntityEventLifecycleModule());
+        install(new EntityManagerLifecycleModule());
+        install(new ImportExportLifecycleModule());
+        install(new IndexLifecycleModule());
+        install(new InternalStatisticsLifecycleModule());
+        install(new JobSystemLifecycleModule());
+        install(new KafkaLifecycleModule());
         install(new ResourceLifecycleModule());
         install(new RollingDestinationsLifecycleModule());
-        install(new SQLStatisticsLifecycleModule());
-        install(new InternalStatisticsLifecycleModule());
-        install(new KafkaLifecycleModule());
-        install(new IndexLifecycleModule());
         install(new SearchLifecycleModule());
-        install(new ClusterTaskLifecycleModule());
-        install(new EntityEventLifecycleModule());
+        install(new ServiceDiscoveryLifecycleModule());
+        install(new SQLStatisticsLifecycleModule());
+        install(new StreamTaskLifecycleModule());
+        install(new TaskManagerLifecycleModule());
     }
 }

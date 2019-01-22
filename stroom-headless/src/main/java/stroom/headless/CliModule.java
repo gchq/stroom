@@ -28,7 +28,7 @@ import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.task.ExecutorProvider;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBinder;
