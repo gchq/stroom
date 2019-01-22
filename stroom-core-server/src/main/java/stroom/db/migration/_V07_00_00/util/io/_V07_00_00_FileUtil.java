@@ -19,8 +19,6 @@ package stroom.db.migration._V07_00_00.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.io.AbstractFileVisitor;
-import stroom.util.io.FileUtilException;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -137,13 +135,13 @@ public final class _V07_00_00_FileUtil {
     public static void deleteFile(final Path file) {
         if (Files.exists(file)) {
             if (Files.isDirectory(file)) {
-                throw new FileUtilException("Path is directory not file \"" + _V07_00_00_FileUtil.getCanonicalPath(file) + "\"");
+                throw new _V07_00_00_FileUtilException("Path is directory not file \"" + _V07_00_00_FileUtil.getCanonicalPath(file) + "\"");
             }
 
             try {
                 Files.deleteIfExists(file);
             } catch (final IOException e) {
-                throw new FileUtilException("Unable to delete \"" + _V07_00_00_FileUtil.getCanonicalPath(file) + "\"");
+                throw new _V07_00_00_FileUtilException("Unable to delete \"" + _V07_00_00_FileUtil.getCanonicalPath(file) + "\"");
             }
         }
     }
@@ -167,7 +165,7 @@ public final class _V07_00_00_FileUtil {
 
     private static void recursiveDelete(final Path path, final AtomicBoolean success) {
         try {
-            Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+            Files.walkFileTree(path, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new _V07_00_00_AbstractFileVisitor() {
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                     delete(file, success);
@@ -241,7 +239,7 @@ public final class _V07_00_00_FileUtil {
             try {
                 Files.createDirectories(dir);
             } catch (final IOException e) {
-                throw new FileUtilException("Unable to make directory: " + _V07_00_00_FileUtil.getCanonicalPath(dir));
+                throw new _V07_00_00_FileUtilException("Unable to make directory: " + _V07_00_00_FileUtil.getCanonicalPath(dir));
             }
         }
     }
@@ -250,7 +248,7 @@ public final class _V07_00_00_FileUtil {
         try {
             Files.move(src, dest);
         } catch (final IOException e) {
-            throw new FileUtilException(
+            throw new _V07_00_00_FileUtilException(
                     "Unable to rename file \"" + _V07_00_00_FileUtil.getCanonicalPath(src) + "\" to \"" + _V07_00_00_FileUtil.getCanonicalPath(dest) + "\"");
         }
     }

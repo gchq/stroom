@@ -17,7 +17,7 @@
 package stroom.db.migration._V07_00_00.doc.dashboard;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
+import stroom.db.migration._V07_00_00.docref._V07_00_00_SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonPropertyOrder({"type", "id", "name", "settings"})
 @XmlRootElement(name = "component")
 @XmlType(name = "ComponentConfig", propOrder = {"type", "id", "name", "settings"})
-public class _V07_00_00_ComponentConfig implements SharedObject {
+public class _V07_00_00_ComponentConfig implements _V07_00_00_SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "type")

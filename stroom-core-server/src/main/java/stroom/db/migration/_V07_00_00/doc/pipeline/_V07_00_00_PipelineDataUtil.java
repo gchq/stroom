@@ -16,10 +16,6 @@
 
 package stroom.db.migration._V07_00_00.doc.pipeline;
 
-//import stroom.docref.DocRef;
-//import stroom.entity.shared.BaseEntity;
-//import stroom.entity.shared.DocRefUtil;
-
 import stroom.db.migration._V07_00_00.docref._V07_00_00_DocRef;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_BaseEntity;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_DocRefUtil;

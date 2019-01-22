@@ -28,11 +28,6 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-//import stroom.docref.DocRef;
-//import stroom.entity.shared.ExternalFile;
-//import stroom.entity.shared.SQLNameConstants;
-//import stroom.pipeline.shared.data.PipelineData;
-
 /**
  * This entity is used to persist pipeline configuration.
  */

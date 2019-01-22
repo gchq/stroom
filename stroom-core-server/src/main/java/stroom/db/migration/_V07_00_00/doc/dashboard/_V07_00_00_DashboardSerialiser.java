@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.migration._V07_00_00.doc._V07_00_00_EncodingUtil;
 import stroom.db.migration._V07_00_00.doc._V07_00_00_JsonSerialiser2;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.db.migration._V07_00_00.entity.util._V07_00_00_XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -67,7 +67,7 @@ public class _V07_00_00_DashboardSerialiser extends _V07_00_00_JsonSerialiser2<_
         if (xml != null) {
             try {
                 final JAXBContext jaxbContext = JAXBContext.newInstance(_V07_00_00_DashboardConfig.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, _V07_00_00_DashboardConfig.class, xml);
+                return _V07_00_00_XMLMarshallerUtil.unmarshal(jaxbContext, _V07_00_00_DashboardConfig.class, xml);
             } catch (final JAXBException | RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
             }

@@ -21,7 +21,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import stroom.db.migration._V07_00_00.docref._V07_00_00_DocRef;
 import stroom.db.migration._V07_00_00.docref._V07_00_00_HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

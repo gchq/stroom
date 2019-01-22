@@ -16,10 +16,6 @@
 
 package stroom.db.migration._V07_00_00.doc.pipeline;
 
-//import stroom.docref.HasDisplayValue;
-//import stroom.docref.SharedObject;
-//import stroom.util.shared.HasType;
-
 import stroom.db.migration._V07_00_00.docref._V07_00_00_HasDisplayValue;
 import stroom.db.migration._V07_00_00.docref._V07_00_00_SharedObject;
 import stroom.db.migration._V07_00_00.util.shared._V07_00_00_HasType;

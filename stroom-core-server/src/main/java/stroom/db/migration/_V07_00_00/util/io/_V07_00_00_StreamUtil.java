@@ -16,8 +16,6 @@
 
 package stroom.db.migration._V07_00_00.util.io;
 
-import stroom.util.io.ByteSlice;
-import stroom.util.io.FileUtil;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -50,7 +48,7 @@ public final class _V07_00_00_StreamUtil {
     public static final String DEFAULT_CHARSET_NAME = "UTF-8";
     public static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
-    private static final ByteSlice ZERO_BYTES = new ByteSlice(new byte[0]);
+    private static final _V07_00_00_ByteSlice ZERO_BYTES = new _V07_00_00_ByteSlice(new byte[0]);
 
     private _V07_00_00_StreamUtil() {
         // NA Utility
@@ -144,7 +142,7 @@ public final class _V07_00_00_StreamUtil {
     public static void stringToFile(final String string, final Path file, final Charset charset) {
         try {
             if (Files.isRegularFile(file)) {
-                FileUtil.deleteFile(file);
+                _V07_00_00_FileUtil.deleteFile(file);
             }
             Files.createDirectories(file.getParent());
             Files.write(file, string.getBytes(charset));
@@ -218,7 +216,7 @@ public final class _V07_00_00_StreamUtil {
     public static void streamToFile(final InputStream inputStream, final Path file) {
         try {
             if (Files.isRegularFile(file)) {
-                FileUtil.deleteFile(file);
+                _V07_00_00_FileUtil.deleteFile(file);
             }
             Files.createDirectories(file.getParent());
 
@@ -398,11 +396,11 @@ public final class _V07_00_00_StreamUtil {
         }
     }
 
-    public static ByteSlice getByteSlice(final String string) {
+    public static _V07_00_00_ByteSlice getByteSlice(final String string) {
         if (string == null) {
             return ZERO_BYTES;
         }
-        return new ByteSlice(string.getBytes(DEFAULT_CHARSET));
+        return new _V07_00_00_ByteSlice(string.getBytes(DEFAULT_CHARSET));
     }
 
     /**

@@ -19,8 +19,6 @@ package stroom.db.migration._V07_00_00.doc.pipeline;
 import stroom.db.migration._V07_00_00.doc.textconverter._V07_00_00_OldTextConverter;
 import stroom.db.migration._V07_00_00.entity.shared._V07_00_00_BaseEntity;
 import stroom.db.migration._V07_00_00.pipeline.shared._V07_00_00_ExtensionProvider;
-//import stroom.entity.shared.BaseEntity;
-//import stroom.pipeline.shared.ExtensionProvider;
 
 public class _V07_00_00_OldTextConverterExtensionProvider extends _V07_00_00_ExtensionProvider {
     public _V07_00_00_OldTextConverterExtensionProvider() {

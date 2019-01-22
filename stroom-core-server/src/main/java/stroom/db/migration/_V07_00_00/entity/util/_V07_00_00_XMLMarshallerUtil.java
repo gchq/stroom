@@ -17,7 +17,7 @@
 package stroom.db.migration._V07_00_00.entity.util;
 
 import javassist.Modifier;
-import stroom.util.io.StreamUtil;
+import stroom.db.migration._V07_00_00.util.io._V07_00_00_StreamUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -127,7 +127,7 @@ public final class _V07_00_00_XMLMarshallerUtil {
             transformerHandler.setResult(new StreamResult(out));
             marshaller.marshal(obj, transformerHandler);
 
-            return out.toString(StreamUtil.DEFAULT_CHARSET_NAME);
+            return out.toString(_V07_00_00_StreamUtil.DEFAULT_CHARSET_NAME);
         } catch (final IOException | JAXBException | TransformerConfigurationException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -148,7 +148,7 @@ public final class _V07_00_00_XMLMarshallerUtil {
                     }
 
                     final JAXBElement<T> jaxbElement = unmarshaller.unmarshal(
-                            new StreamSource(new ByteArrayInputStream(trimmed.getBytes(StreamUtil.DEFAULT_CHARSET))),
+                            new StreamSource(new ByteArrayInputStream(trimmed.getBytes(_V07_00_00_StreamUtil.DEFAULT_CHARSET))),
                             clazz);
                     return jaxbElement.getValue();
                 } catch (final JAXBException e) {

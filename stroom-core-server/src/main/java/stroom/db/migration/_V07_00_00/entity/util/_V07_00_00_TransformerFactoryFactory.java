@@ -22,7 +22,6 @@ import net.sf.saxon.lib.SerializerFactory;
 import net.sf.saxon.serialize.Emitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.MyXmlEmitter;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.TransformerConfigurationException;
@@ -87,7 +86,7 @@ public final class _V07_00_00_TransformerFactoryFactory {
 
         @Override
         protected Emitter newXMLEmitter(final Properties properties) {
-            return new MyXmlEmitter();
+            return new _V07_00_00_MyXmlEmitter();
         }
     }
 }

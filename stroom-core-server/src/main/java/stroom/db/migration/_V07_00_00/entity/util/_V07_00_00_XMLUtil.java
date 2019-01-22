@@ -21,9 +21,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
-import stroom.entity.util.TransformerFactoryFactory;
-import stroom.util.io.StreamUtil;
-import stroom.util.xml.SAXParserFactoryFactory;
+import stroom.db.migration._V07_00_00.util.io._V07_00_00_StreamUtil;
+import stroom.db.migration._V07_00_00.util.xml._V07_00_00_SAXParserFactoryFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -55,7 +54,7 @@ public final class _V07_00_00_XMLUtil {
     private static final String VERSION = "1.1";
 
     static {
-        PARSER_FACTORY = SAXParserFactoryFactory.newInstance();
+        PARSER_FACTORY = _V07_00_00_SAXParserFactoryFactory.newInstance();
     }
 
     private _V07_00_00_XMLUtil() {
@@ -99,8 +98,8 @@ public final class _V07_00_00_XMLUtil {
     }
 
     public static void prettyPrintXML(final InputStream inputStream, final OutputStream outputStream) {
-        final Reader reader = new InputStreamReader(inputStream, StreamUtil.DEFAULT_CHARSET);
-        final Writer writer = new OutputStreamWriter(outputStream, StreamUtil.DEFAULT_CHARSET);
+        final Reader reader = new InputStreamReader(inputStream, _V07_00_00_StreamUtil.DEFAULT_CHARSET);
+        final Writer writer = new OutputStreamWriter(outputStream, _V07_00_00_StreamUtil.DEFAULT_CHARSET);
 
         prettyPrintXML(reader, writer);
     }
@@ -128,7 +127,7 @@ public final class _V07_00_00_XMLUtil {
 
     public static TransformerHandler createTransformerHandler(final ErrorListener errorListener,
                                                               final boolean indentOutput) throws TransformerConfigurationException {
-        final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
+        final SAXTransformerFactory stf = (SAXTransformerFactory) _V07_00_00_TransformerFactoryFactory.newInstance();
         if (errorListener != null) {
             stf.setErrorListener(errorListener);
         }

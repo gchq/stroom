@@ -13,10 +13,6 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Map;
 
-//import stroom.docref.DocRef;
-//import stroom.entity.shared.DocRefs;
-//import stroom.entity.util.XMLMarshallerUtil;
-
 public class _V07_00_00_VisualisationSerialiser extends _V07_00_00_JsonSerialiser2<_V07_00_00_VisualisationDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(_V07_00_00_VisualisationSerialiser.class);
 
