@@ -22,7 +22,7 @@ import event.logging.Query.Advanced;
 import stroom.activity.api.Activity;
 import stroom.activity.api.ActivityService;
 import stroom.activity.shared.FindActivityAction;
-import stroom.activity.shared.FindActivityCriteria;
+import stroom.activity.api.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.event.logging.api.DocumentEventLog;

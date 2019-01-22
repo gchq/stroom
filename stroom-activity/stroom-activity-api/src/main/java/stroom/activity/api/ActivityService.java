@@ -16,7 +16,6 @@
 
 package stroom.activity.api;
 
-import stroom.activity.shared.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 
 public interface ActivityService {

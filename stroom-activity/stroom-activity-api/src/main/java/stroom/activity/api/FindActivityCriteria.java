@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.activity.shared;
+package stroom.activity.api;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.StringCriteria;

@@ -7,7 +7,6 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(":stroom-core-shared")
     implementation project(":stroom-entity-shared")
-    implementation project(":stroom-core-server")
 
     implementation libs.guice4
     implementation libs.stroomDocRef

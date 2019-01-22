@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.activity.api'
 dependencies {
 //    implementation project(':stroom-entity-shared')
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-activity:stroom-activity-shared')
+//    implementation project(':stroom-activity:stroom-activity-shared')
 //    implementation project(':stroom-docstore:stroom-docstore-shared')
 //    implementation project(':stroom-explorer:stroom-explorer-api')
 //    implementation project(':stroom-importexport:stroom-importexport-api')
