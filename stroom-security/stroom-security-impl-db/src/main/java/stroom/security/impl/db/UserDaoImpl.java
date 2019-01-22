@@ -52,7 +52,8 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public List<UserJooq> find(Boolean isGroup, String name) {
+    public List<UserJooq> find(final Boolean isGroup,
+                               final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             return DSL.using(connection, SQLDialect.MYSQL)
                     .select()

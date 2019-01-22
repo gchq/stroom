@@ -15,16 +15,14 @@
  */
 
 import * as React from "react";
-import { Route, RouteComponentProps } from "react-router-dom";
+import { Route, RouteProps } from "react-router-dom";
 import { compose, withProps } from "recompose";
 import { connect } from "react-redux";
 import { GlobalStoreState } from "../reducers";
 
 import AuthenticationRequest from "./AuthenticationRequest";
 
-export interface Props {
-  render: (p: RouteComponentProps<any>) => any;
-}
+export interface Props extends RouteProps {}
 
 interface ConnectState {
   idToken?: string;
@@ -89,7 +87,7 @@ const PrivateRoute = ({
     {...rest}
     render={props =>
       isLoggedIn ? (
-        render({ ...props })
+        render && render({ ...props })
       ) : (
         <AuthenticationRequest
           referrer={props.match.url}
