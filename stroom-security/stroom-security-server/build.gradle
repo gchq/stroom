@@ -34,6 +34,7 @@ dependencies {
     implementation libs.ws_rs_api
 
 //    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    testImplementation project(':stroom-cache:stroom-cache-api')
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
 

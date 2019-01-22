@@ -55,6 +55,7 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
+    testImplementation project(':stroom-cache:stroom-cache-api')
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
