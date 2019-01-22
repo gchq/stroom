@@ -27,7 +27,6 @@ public class DocPermissionDaoImplTest {
 
     private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
 
-    private static Injector injector;
     private static UserDao userDao;
     private static DocumentPermissionDao documentPermissionDao;
 
@@ -35,22 +34,12 @@ public class DocPermissionDaoImplTest {
     private static final String PERMISSION_USE = "USE";
     private static final String PERMISSION_UPDATE = "UPDATE";
 
-//    DocumentPermissionJooq getPermissionsForDocument(DocRef document);
-//
-//    void addPermission(String userUuid, DocRef document, String permission);
-//
-//    void removePermission(String userUuid, DocRef document, String permission);
-//
-//    void clearDocumentPermissions(DocRef document);
-//
-//    void clearUserPermissions(String userUuid);
-
     @BeforeAll
     public static void beforeAll() {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
-        injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
+        Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
         documentPermissionDao = injector.getInstance(DocumentPermissionDao.class);

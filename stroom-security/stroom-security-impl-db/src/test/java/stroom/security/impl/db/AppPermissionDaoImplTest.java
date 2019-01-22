@@ -24,7 +24,6 @@ public class AppPermissionDaoImplTest {
 
     private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
 
-    private static Injector injector;
     private static UserDao userDao;
     private static AppPermissionDao appPermissionDao;
 
@@ -36,7 +35,7 @@ public class AppPermissionDaoImplTest {
         LOGGER.info(() -> "Before All - Start Database");
         Optional.ofNullable(dbContainer).ifPresent(MySQLContainer::start);
 
-        injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
+        Injector injector = Guice.createInjector(new SecurityDbModule(), new TestModule(dbContainer));
 
         userDao = injector.getInstance(UserDao.class);
         appPermissionDao = injector.getInstance(AppPermissionDao.class);

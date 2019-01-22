@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.security.impl.db'
 dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-impl-db-gen')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
