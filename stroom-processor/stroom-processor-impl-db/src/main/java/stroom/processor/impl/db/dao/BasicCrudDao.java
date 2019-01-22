@@ -1,6 +1,6 @@
 package stroom.processor.impl.db.dao;
 
-public interface BasicCRUDDao<T> {
+public interface BasicCrudDao<T> {
 
     T create();
 
