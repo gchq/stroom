@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.client.presenter;
+package stroom.job.client.presenter;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -34,7 +34,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntitySaveTask;
 import stroom.entity.client.SaveQueue;
-import stroom.jobsystem.client.JobTypeCell;
+import stroom.job.client.JobTypeCell;
 import stroom.job.shared.FetchJobDataAction;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;

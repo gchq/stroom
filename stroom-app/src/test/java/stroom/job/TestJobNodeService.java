@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 
 import org.junit.jupiter.api.Test;

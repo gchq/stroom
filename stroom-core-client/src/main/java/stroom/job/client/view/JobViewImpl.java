@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.client.view;
+package stroom.job.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.jobsystem.client.presenter.JobPresenter;
-import stroom.jobsystem.client.presenter.JobPresenter.JobView;
+import stroom.job.client.presenter.JobPresenter;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
-public class JobViewImpl extends ViewImpl implements JobView {
+public class JobViewImpl extends ViewImpl implements JobPresenter.JobView {
     private final Widget widget;
     @UiField
     ResizeSimplePanel jobList;

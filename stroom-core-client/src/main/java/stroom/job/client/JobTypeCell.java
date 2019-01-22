@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.client;
+package stroom.job.client;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.SelectionCell;

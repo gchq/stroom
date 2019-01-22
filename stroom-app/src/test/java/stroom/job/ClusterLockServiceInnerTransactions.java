@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem;
+package stroom.job;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.persist.EntityManagerSupport;

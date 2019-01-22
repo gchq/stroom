@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.client.presenter;
+package stroom.job.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

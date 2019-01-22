@@ -50,66 +50,66 @@ class TestClusterLockServiceImpl {
 
 //        final ConnectionProvider connectionProvider = new ClusterLockDbModule().getConnectionProvider(ActivityConfig::new);
 
-        //TODO: gh-1072 - reinstate this service?
+        //TODO: gh-1072 - reinstate this service and test?
 //        activityService = new ClusterLockServiceImpl2(securityContext, connectionProvider);
     }
 
-    @Test
-    void test() {
-        // Delete all existing.
-        BaseResultList<Activity> list = activityService.find(new FindActivityCriteria());
-        list.forEach(activity -> activityService.delete(activity.getId()));
-
-        // Create 1
-        Activity activity1 = activityService.create();
-        activity1.getDetails().add(createProp("foo"), "bar");
-        activity1.getDetails().add(createProp("this"), "that");
-        activity1 = activityService.update(activity1);
-
-        // Update 1
-        activity1.getDetails().add(createProp("foo"), "bar");
-        activity1.getDetails().add(createProp("this"), "that");
-        Activity updatedActivity1 = activityService.update(activity1);
-
-        final Activity oldActivity = activity1;
-        assertThatThrownBy(() -> {
-            // Ensure that we aren't allowed to update the old version.
-            // Update 1
-            activityService.update(oldActivity);
-        }).isInstanceOf(DataChangedException.class);
-
-        // Find one
-        list = activityService.find(new FindActivityCriteria());
-        assertThat(list.size()).isEqualTo(1);
-
-        // Save 2
-        Activity activity2 = activityService.create();
-        activity2.getDetails().add(createProp("lorem"), "ipsum");
-        activity2 = activityService.update(activity2);
-
-        // Find both
-        final BaseResultList<Activity> list1 = activityService.find(new FindActivityCriteria());
-        assertThat(list1.size()).isEqualTo(2);
-
-        // Find each
-        final BaseResultList<Activity> list2 = activityService.find(FindActivityCriteria.create("bar"));
-        assertThat(list2.size()).isEqualTo(1);
-        assertThat(list2.get(0).getId()).isEqualTo(activity1.getId());
-
-        final BaseResultList<Activity> list3 = activityService.find(FindActivityCriteria.create("ipsum"));
-        assertThat(list3.size()).isEqualTo(1);
-        assertThat(list3.get(0).getId()).isEqualTo(activity2.getId());
-
-        // Delete one
-        activityService.delete(activity1.getId());
-        final BaseResultList<Activity> list4 = activityService.find(new FindActivityCriteria());
-        assertThat(list4.size()).isEqualTo(1);
-
-        // Delete the other
-        activityService.delete(activity2.getId());
-        final BaseResultList<Activity> list5 = activityService.find(new FindActivityCriteria());
-        assertThat(list5.size()).isEqualTo(0);
-    }
+//    @Test
+//    void test() {
+//        // Delete all existing.
+//        BaseResultList<Activity> list = activityService.find(new FindActivityCriteria());
+//        list.forEach(activity -> activityService.delete(activity.getId()));
+//
+//        // Create 1
+//        Activity activity1 = activityService.create();
+//        activity1.getDetails().add(createProp("foo"), "bar");
+//        activity1.getDetails().add(createProp("this"), "that");
+//        activity1 = activityService.update(activity1);
+//
+//        // Update 1
+//        activity1.getDetails().add(createProp("foo"), "bar");
+//        activity1.getDetails().add(createProp("this"), "that");
+//        Activity updatedActivity1 = activityService.update(activity1);
+//
+//        final Activity oldActivity = activity1;
+//        assertThatThrownBy(() -> {
+//            // Ensure that we aren't allowed to update the old version.
+//            // Update 1
+//            activityService.update(oldActivity);
+//        }).isInstanceOf(DataChangedException.class);
+//
+//        // Find one
+//        list = activityService.find(new FindActivityCriteria());
+//        assertThat(list.size()).isEqualTo(1);
+//
+//        // Save 2
+//        Activity activity2 = activityService.create();
+//        activity2.getDetails().add(createProp("lorem"), "ipsum");
+//        activity2 = activityService.update(activity2);
+//
+//        // Find both
+//        final BaseResultList<Activity> list1 = activityService.find(new FindActivityCriteria());
+//        assertThat(list1.size()).isEqualTo(2);
+//
+//        // Find each
+//        final BaseResultList<Activity> list2 = activityService.find(FindActivityCriteria.create("bar"));
+//        assertThat(list2.size()).isEqualTo(1);
+//        assertThat(list2.get(0).getId()).isEqualTo(activity1.getId());
+//
+//        final BaseResultList<Activity> list3 = activityService.find(FindActivityCriteria.create("ipsum"));
+//        assertThat(list3.size()).isEqualTo(1);
+//        assertThat(list3.get(0).getId()).isEqualTo(activity2.getId());
+//
+//        // Delete one
+//        activityService.delete(activity1.getId());
+//        final BaseResultList<Activity> list4 = activityService.find(new FindActivityCriteria());
+//        assertThat(list4.size()).isEqualTo(1);
+//
+//        // Delete the other
+//        activityService.delete(activity2.getId());
+//        final BaseResultList<Activity> list5 = activityService.find(new FindActivityCriteria());
+//        assertThat(list5.size()).isEqualTo(0);
+//    }
 
     private Activity.Prop createProp(final String name) {
         final Activity.Prop prop = new Activity.Prop();

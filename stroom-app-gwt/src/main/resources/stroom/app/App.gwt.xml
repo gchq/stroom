@@ -105,7 +105,7 @@
     <inherits name="stroom.feed.Feed" />
     <inherits name="stroom.help.Help" />
     <inherits name="stroom.importexport.ImportExport" />
-    <inherits name="stroom.jobsystem.JobSystem" />
+    <inherits name="stroom.job.Job" />
     <inherits name="stroom.monitoring.Monitoring" />
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />
