@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 public class ToolModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new stroom.cache.CacheModule());
         install(new stroom.activity.impl.mock.MockActivityModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.data.meta.impl.db.DataMetaDbModule());
