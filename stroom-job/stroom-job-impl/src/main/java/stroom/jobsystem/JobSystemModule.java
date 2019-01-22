@@ -20,6 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.FindService;
+import stroom.job.api.JobNodeService;
+import stroom.job.api.JobService;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.ScheduledTaskExecutor;
 import stroom.job.shared.FetchJobDataAction;

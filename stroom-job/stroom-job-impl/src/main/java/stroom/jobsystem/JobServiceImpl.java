@@ -27,6 +27,7 @@ import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.FieldMap;
 import stroom.job.api.DistributedTaskFactoryBean;
+import stroom.job.api.JobService;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
 import stroom.job.shared.FindJobCriteria;
@@ -47,7 +48,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
+public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;

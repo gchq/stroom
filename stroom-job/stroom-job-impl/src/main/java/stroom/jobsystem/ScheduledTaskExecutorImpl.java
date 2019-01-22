@@ -77,7 +77,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         this.executionInterval = jobSystemConfig.getExecutionIntervalMs();
     }
 
-    void startup() {
+    public void startup() {
         if (enabled) {
             LOGGER.info("Starting Stroom Job service");
             // Create the runnable object that will perform execution on all
@@ -112,7 +112,7 @@ public class ScheduledTaskExecutorImpl implements ScheduledTaskExecutor {
         }
     }
 
-    void shutdown() {
+    public void shutdown() {
         if (enabled) {
             LOGGER.info("Stopping Stroom Job service");
             final ScheduledExecutorService scheduledExecutorService = this.scheduledExecutorService.get();

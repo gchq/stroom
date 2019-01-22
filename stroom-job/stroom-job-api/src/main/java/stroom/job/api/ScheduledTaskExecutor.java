@@ -17,4 +17,6 @@
 package stroom.job.api;
 
 public interface ScheduledTaskExecutor {
+    void startup();
+    void shutdown();
 }

@@ -20,6 +20,7 @@ import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.job.api.DistributedTask;
+import stroom.job.api.DistributedTaskFetcher;
 import stroom.jobsystem.JobNodeTrackerCache.Trackers;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
@@ -56,8 +57,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * threads for transforming multiple XML files.
  */
 @Singleton
-public class DistributedTaskFetcher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
+public class DistributedTaskFetcherImpl implements DistributedTaskFetcher {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcherImpl.class);
     private static final long ONE_MINUTE = 60 * 1000;
     // Wait time for master to return tasks (5 minutes)
     private static final long WAIT_TIME = 5;
@@ -75,9 +76,9 @@ public class DistributedTaskFetcher {
     private long lastFetch;
 
     @Inject
-    DistributedTaskFetcher(final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider,
-                           final TaskManager taskManager,
-                           final JobNodeTrackerCache jobNodeTrackerCache) {
+    DistributedTaskFetcherImpl(final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider,
+                               final TaskManager taskManager,
+                               final JobNodeTrackerCache jobNodeTrackerCache) {
         this.clusterDispatchAsyncHelperProvider = clusterDispatchAsyncHelperProvider;
         this.taskManager = taskManager;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
@@ -87,6 +88,7 @@ public class DistributedTaskFetcher {
      * Tells tasks to stop and waits for all tasks to stop before cleaning up
      * the executors.
      */
+    @Override
     public void shutdown() {
         try {
             stopping.set(true);
@@ -112,6 +114,7 @@ public class DistributedTaskFetcher {
     /**
      * The Stroom lifecycle service will try and fetch new tasks for execution.
      */
+    @Override
     public void execute() {
         fetch();
     }
@@ -121,6 +124,7 @@ public class DistributedTaskFetcher {
      * If we are it will make sure we immediately try and fetch tasks again
      * after the previous fetch.
      */
+    @Override
     public void fetch() {
         try {
             if (!stopped.get()) {
@@ -272,7 +276,7 @@ public class DistributedTaskFetcher {
                 // Get the returned tasks.
                 final List<DistributedTask<?>> tasks = entry.getValue();
 
-                taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobNode.getJob().getName());
+                taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcherImpl.class, tasks, jobNode.getJob().getName());
 
                 // Try and get more tasks.
                 tasks.stream().filter(task -> !stopping.get()).forEach(task -> {

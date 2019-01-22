@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
+import stroom.job.api.JobNodeService;
 import stroom.job.shared.FetchJobDataAction;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;

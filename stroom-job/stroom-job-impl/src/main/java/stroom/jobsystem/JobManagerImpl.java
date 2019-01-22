@@ -17,6 +17,8 @@
 
 package stroom.jobsystem;
 
+import stroom.job.api.JobNodeService;
+import stroom.job.api.JobService;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
