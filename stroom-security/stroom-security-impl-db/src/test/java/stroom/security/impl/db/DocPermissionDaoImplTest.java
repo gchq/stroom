@@ -25,7 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class DocPermissionDaoImplTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImplTest.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+    private static MySQLContainer dbContainer = new MySQLContainer()
+            .withDatabaseName(Stroom.STROOM.getName());//= null;//
 
     private static UserDao userDao;
     private static DocumentPermissionDao documentPermissionDao;

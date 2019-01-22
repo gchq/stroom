@@ -1,19 +1,15 @@
 package stroom.security.impl.db;
 
-import org.jooq.DSLContext;
 import org.jooq.Record;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import stroom.security.dao.AppPermissionDao;
-import static stroom.security.impl.db.tables.AppPermission.APP_PERMISSION;
-import static stroom.security.impl.db.tables.StroomUser.STROOM_USER;
-
 import stroom.security.impl.db.tables.records.AppPermissionRecord;
 import stroom.util.jooq.JooqUtil;
 
 import javax.inject.Inject;
-import java.sql.Connection;
 import java.util.Set;
+
+import static stroom.security.impl.db.tables.AppPermission.APP_PERMISSION;
+import static stroom.security.impl.db.tables.StroomUser.STROOM_USER;
 
 public class AppPermissionDaoImpl implements AppPermissionDao {
 
@@ -36,7 +32,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
     @Override
     public void addPermission(final String userUuid, final String permission) {
         JooqUtil.context(connectionProvider, context -> {
-            final Record user = context.select().from(STROOM_USER).where(STROOM_USER.UUID.eq(userUuid)).fetchOne();
+            final Record user = context.fetchOne(STROOM_USER, STROOM_USER.UUID.eq(userUuid));
             if (null == user) {
                 throw new SecurityException(String.format("Could not find user: %s", userUuid));
             }
