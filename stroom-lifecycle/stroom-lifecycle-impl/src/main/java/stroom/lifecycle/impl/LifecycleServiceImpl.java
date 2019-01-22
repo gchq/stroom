@@ -125,9 +125,10 @@ class LifecycleServiceImpl implements LifecycleService {
             }
 
         } else {
-            final Provider<Runnable> runnableProvider = startPending.pollFirst();
+            final Provider<Runnable> runnableProvider = startPending.pollLast();
             if (runnableProvider != null) {
                 final Runnable runnable = runnableProvider.get();
+                LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName());
                 CompletableFuture
                         .runAsync(runnable)
                         .whenComplete((r, t) -> {
@@ -169,9 +170,10 @@ class LifecycleServiceImpl implements LifecycleService {
     }
 
     private void stopNext() {
-        final Provider<Runnable> runnableProvider = stopPending.pollLast();
+        final Provider<Runnable> runnableProvider = stopPending.pollFirst();
         if (runnableProvider != null) {
             final Runnable runnable = runnableProvider.get();
+            LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName());
             CompletableFuture
                     .runAsync(runnable)
                     .whenComplete((r, t) -> {
