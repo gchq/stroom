@@ -24,10 +24,11 @@ import javax.inject.Inject;
 public class EntityEventLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().to(EntityEventBusInit.class);
     }
 
-    private class EntityEventBusInit extends RunnableWrapper {
+    private static class EntityEventBusInit extends RunnableWrapper {
         @Inject
         EntityEventBusInit(final EntityEventBusImpl entityEventBus) {
             super(entityEventBus::init);

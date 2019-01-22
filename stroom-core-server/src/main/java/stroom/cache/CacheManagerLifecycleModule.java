@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class CacheManagerLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindShutdown().to(CacheManagerClose.class);
     }
 

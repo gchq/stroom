@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class ClusterLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().to(ClusterNodeManagerInit.class);
     }
 

@@ -3,6 +3,8 @@ package stroom.util.lifecycle;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 
+import java.util.Objects;
+
 public abstract class AbstractLifecycleModule extends AbstractModule {
     private MapBinder<StartupTask, Runnable> startupTaskMapBinder;
     private MapBinder<ShutdownTask, Runnable> shutdownTaskMapBinder;
@@ -15,10 +17,12 @@ public abstract class AbstractLifecycleModule extends AbstractModule {
     }
 
     public StartupBuilder bindStartup() {
+        Objects.requireNonNull(startupTaskMapBinder, "super.configure() has not been called");
         return new StartupBuilder(startupTaskMapBinder);
     }
 
     public ShutdownBuilder bindShutdown() {
+        Objects.requireNonNull(shutdownTaskMapBinder, "super.configure() has not been called");
         return new ShutdownBuilder(shutdownTaskMapBinder);
     }
 

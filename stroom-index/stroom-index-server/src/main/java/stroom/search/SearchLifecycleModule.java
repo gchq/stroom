@@ -26,6 +26,7 @@ import javax.inject.Inject;
 public class SearchLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindShutdown().to(IndexShardSearchTaskExecutorShutdown.class);
         bindShutdown().to(ExtractionTaskExecutorShutdown.class);
     }

@@ -8,18 +8,19 @@ import javax.inject.Inject;
 public class ServiceDiscoveryLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindShutdown().to(ServiceDiscovererShutdown.class);
         bindShutdown().to(ServiceDiscoveryManagerShutdown.class);
     }
 
-    private class ServiceDiscovererShutdown extends RunnableWrapper {
+    private static class ServiceDiscovererShutdown extends RunnableWrapper {
         @Inject
         ServiceDiscovererShutdown(final ServiceDiscovererImpl serviceDiscoverer) {
             super(serviceDiscoverer::shutdown);
         }
     }
 
-    private class ServiceDiscoveryManagerShutdown extends RunnableWrapper {
+    private static class ServiceDiscoveryManagerShutdown extends RunnableWrapper {
         @Inject
         ServiceDiscoveryManagerShutdown(final ServiceDiscoveryManager serviceDiscoveryManager) {
             super(serviceDiscoveryManager::shutdown);

@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class EntityManagerLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().priority(1000).to(PersistLifecycleStartup.class);
         bindShutdown().priority(1000).to(PersistLifecycleShutdown.class);
     }

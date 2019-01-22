@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class ResourceLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().to(ResourceStoreStartup.class);
         bindShutdown().to(ResourceStoreShutdown.class);
     }

@@ -24,26 +24,27 @@ import javax.inject.Inject;
 public class JobSystemLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().to(JobServiceStartup.class);
         bindStartup().to(JobNodeServiceStartup.class);
         bindShutdown().priority(999).to(DistributedTaskFetcherShutdown.class);
     }
 
-    private class JobServiceStartup extends RunnableWrapper {
+    private static class JobServiceStartup extends RunnableWrapper {
         @Inject
         JobServiceStartup(final JobServiceImpl jobService) {
             super(jobService::startup);
         }
     }
 
-    private class JobNodeServiceStartup extends RunnableWrapper {
+    private static class JobNodeServiceStartup extends RunnableWrapper {
         @Inject
         JobNodeServiceStartup(final JobNodeServiceImpl jobNodeService) {
             super(jobNodeService::startup);
         }
     }
 
-    private class DistributedTaskFetcherShutdown extends RunnableWrapper {
+    private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
         @Inject
         DistributedTaskFetcherShutdown(final DistributedTaskFetcher distributedTaskFetcher) {
             super(distributedTaskFetcher::shutdown);

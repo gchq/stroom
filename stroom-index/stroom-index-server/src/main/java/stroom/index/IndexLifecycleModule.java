@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class IndexLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().to(IndexShardWriterCacheStartup.class);
         bindShutdown().to(IndexShardWriterCacheShutdown.class);
     }

@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class InternalStatisticsLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().priority(100).to(InternalStatisticsReceiverInit.class);
     }
 

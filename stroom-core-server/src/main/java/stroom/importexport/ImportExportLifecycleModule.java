@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class ImportExportLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindStartup().priority(-1000).to(ContentPackImportStartup.class);
     }
 

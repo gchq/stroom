@@ -24,6 +24,7 @@ import javax.inject.Inject;
 public class RollingDestinationsLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
+        super.configure();
         bindShutdown().to(RollingDestinationsForceRoll.class);
     }
 
