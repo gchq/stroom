@@ -1,4 +1,4 @@
-package stroom.security.shared;
+package stroom.security.model;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.PermissionException;
+import stroom.security.model.PermissionException;
 import stroom.security.util.UserTokenUtil;
 
 import javax.inject.Inject;

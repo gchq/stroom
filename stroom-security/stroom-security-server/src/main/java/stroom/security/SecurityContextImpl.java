@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.exception.AuthenticationException;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 

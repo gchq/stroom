@@ -10,7 +10,7 @@ import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.dao.AppPermissionDao;
 import stroom.security.dao.UserDao;
-import stroom.security.shared.UserJooq;
+import stroom.security.model.User;
 
 import java.util.Optional;
 import java.util.Set;
@@ -55,7 +55,7 @@ public class AppPermissionDaoImplTest {
     public void testPermissionStory() {
         final String userName = String.format("SomePerson_%s", UUID.randomUUID());
 
-        final UserJooq user = userDao.createUser(userName);
+        final User user = userDao.createUser(userName);
         appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_1);
         appPermissionDao.addPermission(user.getUuid(), PERMISSION_NAME_2);
 

@@ -29,7 +29,7 @@ import stroom.entity.util.FieldMap;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.TaskConsumer;
 import stroom.ui.config.shared.UiConfig;

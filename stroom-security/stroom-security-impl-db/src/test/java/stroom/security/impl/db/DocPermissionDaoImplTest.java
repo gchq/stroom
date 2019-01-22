@@ -11,8 +11,8 @@ import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
-import stroom.security.shared.DocumentPermissionJooq;
-import stroom.security.shared.UserJooq;
+import stroom.security.model.DocumentPermissionJooq;
+import stroom.security.model.User;
 
 import java.util.Optional;
 import java.util.Set;
@@ -74,9 +74,9 @@ public class DocPermissionDaoImplTest {
         final DocRef docRef1 = createTestDocRef();
         final DocRef docRef2 = createTestDocRef();
 
-        final UserJooq user1 = userDao.createUser(userName1);
-        final UserJooq user2 = userDao.createUser(userName2);
-        final UserJooq user3 = userDao.createUser(userName3);
+        final User user1 = userDao.createUser(userName1);
+        final User user2 = userDao.createUser(userName2);
+        final User user3 = userDao.createUser(userName3);
 
         // Create permissions for multiple documents to check that document selection is working correctly
         Stream.of(docRef1, docRef2).forEach(d -> {

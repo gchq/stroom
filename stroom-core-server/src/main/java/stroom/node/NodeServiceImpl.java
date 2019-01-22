@@ -25,7 +25,7 @@ import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;

@@ -33,7 +33,7 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
 import stroom.docref.DocRef;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;

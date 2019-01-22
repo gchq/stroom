@@ -20,7 +20,7 @@ import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.SharedList;
 

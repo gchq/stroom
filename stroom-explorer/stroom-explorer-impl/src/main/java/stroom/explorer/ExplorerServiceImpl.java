@@ -33,7 +33,7 @@ import stroom.explorer.shared.HasNodeState;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

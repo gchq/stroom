@@ -18,8 +18,8 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserJooq;
+import stroom.security.model.PermissionNames;
+import stroom.security.model.User;
 import stroom.security.shared.UserRef;
 import stroom.security.util.UserTokenUtil;
 
@@ -95,8 +95,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
             userRef = userService.getUserByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
-                if (List.of(UserJooq.ADMIN_USER_NAME, UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN).contains(username)) {
-                    userRef = createOrRefreshUser(UserJooq.ADMIN_USER_NAME);
+                if (List.of(User.ADMIN_USER_NAME, UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN).contains(username)) {
+                    userRef = createOrRefreshUser(User.ADMIN_USER_NAME);
                 }
             }
 

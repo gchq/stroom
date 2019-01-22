@@ -8,7 +8,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.dao.UserDao;
-import stroom.security.shared.UserJooq;
+import stroom.security.model.User;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -42,8 +42,8 @@ public class UserDaoImpl implements UserDao {
         this.connectionProvider = connectionProvider;
     }
 
-    private static UserJooq mapFromRecord(final Record record) {
-        return new UserJooq.Builder()
+    private static User mapFromRecord(final Record record) {
+        return new User.Builder()
                 .id(record.get(FIELD_ID))
                 .uuid(record.get(FIELD_UUID))
                 .name(record.get(FIELD_NAME))
@@ -52,8 +52,8 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public List<UserJooq> find(final Boolean isGroup,
-                               final String name) {
+    public List<User> find(final Boolean isGroup,
+                           final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             return DSL.using(connection, SQLDialect.MYSQL)
                     .select()
@@ -68,7 +68,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public UserJooq getById(final long id) {
+    public User getById(final long id) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final Record record = DSL.using(connection, SQLDialect.MYSQL)
                     .select()
@@ -85,7 +85,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public UserJooq getByUuid(final String uuid) {
+    public User getByUuid(final String uuid) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final Record record = DSL.using(connection, SQLDialect.MYSQL)
                     .select()
@@ -102,7 +102,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public UserJooq getUserByName(final String name) {
+    public User getUserByName(final String name) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final Record record = DSL.using(connection, SQLDialect.MYSQL)
                     .select()
@@ -119,7 +119,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public List<UserJooq> findUsersInGroup(final String groupUuid) {
+    public List<User> findUsersInGroup(final String groupUuid) {
         try (final Connection connection = connectionProvider.getConnection()) {
             return DSL.using(connection, SQLDialect.MYSQL)
                     .select()
@@ -136,7 +136,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public List<UserJooq> findGroupsForUser(final String userUuid) {
+    public List<User> findGroupsForUser(final String userUuid) {
         try (final Connection connection = connectionProvider.getConnection()) {
             return DSL.using(connection, SQLDialect.MYSQL)
                 .select()
@@ -153,7 +153,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public UserJooq createUser(final String name) {
+    public User createUser(final String name) {
         final String userUuid = UUID.randomUUID().toString();
 
         try (final Connection connection = connectionProvider.getConnection()) {
@@ -176,7 +176,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public UserJooq createUserGroup(final String name) {
+    public User createUserGroup(final String name) {
         final String userUuid = UUID.randomUUID().toString();
 
         try (final Connection connection = connectionProvider.getConnection()) {

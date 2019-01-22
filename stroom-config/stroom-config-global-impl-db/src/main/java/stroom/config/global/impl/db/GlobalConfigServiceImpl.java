@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.global.api.ConfigProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

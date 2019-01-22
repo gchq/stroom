@@ -38,8 +38,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.DocumentPermissionNames;
+import stroom.security.model.PermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

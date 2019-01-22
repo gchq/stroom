@@ -16,7 +16,7 @@
 
 package stroom.security;
 
-import stroom.security.shared.UserJooq;
+import stroom.security.model.User;
 import stroom.security.shared.UserRef;
 
 public final class UserRefFactory {
@@ -24,7 +24,7 @@ public final class UserRefFactory {
         // Factory class.
     }
 
-    public static UserRef create(final UserJooq user) {
+    public static UserRef create(final User user) {
         if (user == null) {
             return null;
         }

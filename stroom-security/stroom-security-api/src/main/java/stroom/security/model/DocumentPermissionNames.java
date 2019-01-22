@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.shared;
+package stroom.security.model;
 
 import java.util.HashMap;
 import java.util.Map;

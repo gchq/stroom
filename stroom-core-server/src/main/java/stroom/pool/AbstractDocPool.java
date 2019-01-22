@@ -21,7 +21,7 @@ import stroom.security.DocumentPermissionCache;
 import stroom.entity.shared.PermissionException;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 
 public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCache<K, V> implements Pool<K, V> {

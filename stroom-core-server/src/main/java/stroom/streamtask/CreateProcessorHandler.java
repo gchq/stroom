@@ -18,7 +18,7 @@
 package stroom.streamtask;
 
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.task.api.AbstractTaskHandler;

@@ -19,7 +19,7 @@ package stroom.importexport;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;

@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserJooq;
+import stroom.security.model.User;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -174,7 +174,7 @@ class TestAppPermissionServiceImpl {
     private UserRef createUser(final String name) {
         final UserRef userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final UserJooq user = userService.loadByUuid(userRef.getUuid());
+        final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }
@@ -182,7 +182,7 @@ class TestAppPermissionServiceImpl {
     private UserRef createUserGroup(final String name) {
         final UserRef userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final UserJooq user = userService.loadByUuid(userRef.getUuid());
+        final User user = userService.loadByUuid(userRef.getUuid());
         assertThat(user).isNotNull();
         return UserRefFactory.create(user);
     }

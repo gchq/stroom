@@ -36,7 +36,7 @@ import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.StringValue;
 import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

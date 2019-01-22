@@ -12,7 +12,7 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.PageRequest;
 import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.util.concurrent.AtomicSequence;
 
 import javax.inject.Inject;

@@ -27,7 +27,7 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamtask.shared.Processor;

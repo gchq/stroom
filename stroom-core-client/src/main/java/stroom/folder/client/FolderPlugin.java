@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.SharedDocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.docref.DocRef;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
 
 public class FolderPlugin extends DocumentPlugin<SharedDocRef> {

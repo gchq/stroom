@@ -18,8 +18,8 @@ package stroom.security;
 
 import stroom.security.dao.UserDao;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.PermissionNames;
-import stroom.security.shared.UserJooq;
+import stroom.security.model.PermissionNames;
+import stroom.security.model.User;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;
@@ -47,7 +47,7 @@ class UserServiceImpl implements UserService {
     @Override
     public UserRef getUserByName(final String name) {
         if (name != null && name.trim().length() > 0) {
-            final UserJooq user = userDao.getUserByName(name);
+            final User user = userDao.getUserByName(name);
             if (user != null) {
                 // Make sure this is the user that was requested.
                 if (!user.getName().equals(name)) {
@@ -61,7 +61,7 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserJooq> find(final FindUserCriteria criteria) {
+    public List<User> find(final FindUserCriteria criteria) {
         return userDao.find(criteria.getGroup(), criteria.getName().getString());
     }
 
@@ -94,18 +94,18 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserJooq loadByUuid(final String uuid) {
+    public User loadByUuid(final String uuid) {
         return userDao.getByUuid(uuid);
     }
 
     @Override
-    public UserJooq save(UserJooq user) {
+    public User save(User user) {
         // TODO
         return null;
     }
 
     @Override
-    public Boolean delete(UserJooq user) {
+    public Boolean delete(User user) {
         return security.secureResult(PermissionNames.MANAGE_USERS_PERMISSION,
                 () -> userDao.deleteUser(user.getUuid()));
     }

@@ -53,7 +53,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamstore.shared.UpdateStatusAction;

@@ -34,7 +34,7 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;

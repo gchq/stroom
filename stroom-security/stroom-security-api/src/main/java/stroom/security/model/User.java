@@ -1,11 +1,11 @@
-package stroom.security.shared;
+package stroom.security.model;
 
 import java.util.Objects;
 
 /**
  * TODO: Rename this first opportunity, for now it's to distinguish it from the hibernate based user.
  */
-public class UserJooq {
+public class User {
     public static final String ADMIN_USER_NAME = "admin";
 
     // Value of a long to represent an undefined id.
@@ -64,7 +64,7 @@ public class UserJooq {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UserJooq user = (UserJooq) o;
+        User user = (User) o;
         return id == user.id &&
                 group == user.group &&
                 Objects.equals(name, user.name) &&
@@ -88,14 +88,14 @@ public class UserJooq {
     }
 
     public static class Builder {
-        private final UserJooq instance;
+        private final User instance;
 
-        public Builder(final UserJooq instance) {
+        public Builder(final User instance) {
             this.instance = instance;
         }
 
         public Builder() {
-            this(new UserJooq());
+            this(new User());
         }
 
         public Builder id(final long value) {
@@ -118,7 +118,7 @@ public class UserJooq {
             return this;
         }
 
-        public UserJooq build() {
+        public User build() {
             return this.instance;
         }
     }

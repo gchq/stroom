@@ -28,7 +28,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.RequestLogoutEvent;
 import stroom.security.shared.CheckDocumentPermissionAction;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.security.shared.UserAndPermissions;
 import stroom.security.shared.UserRef;
 

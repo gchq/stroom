@@ -7,7 +7,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.*;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 import stroom.explorer.shared.HasNodeState;
 
 import javax.inject.Inject;

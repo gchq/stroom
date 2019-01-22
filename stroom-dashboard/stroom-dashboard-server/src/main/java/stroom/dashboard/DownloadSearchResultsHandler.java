@@ -35,7 +35,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
-import stroom.security.shared.PermissionNames;
+import stroom.security.model.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;

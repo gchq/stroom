@@ -46,7 +46,7 @@ import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.security.client.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
-import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.model.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
