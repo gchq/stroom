@@ -17,7 +17,6 @@
 
 package stroom.pipeline;
 
-import stroom.db.migration.doc.pipeline.OldPipelineEntity;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
@@ -26,6 +25,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.pipeline.legacy.OldPipelineEntity;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.DocRefInfo;
