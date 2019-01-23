@@ -31,8 +31,6 @@ dependencies {
 //
 //    testImplementation project(':stroom-security:stroom-security-impl-mock')
     testImplementation project(':stroom-activity:stroom-activity-api')
-    //TODO: gh-1072 - shouldn't be refering to impl-db
-    testImplementation project(':stroom-activity:stroom-activity-impl-db')
 
     testImplementation libs.assertj_core
 //    testImplementation libs.commons_io
