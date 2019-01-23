@@ -67,6 +67,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // 20 min timeout
@@ -88,7 +89,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final NodeService nodeService;
     private final TaskContext taskContext;
     private final TaskManager taskManager;
-    private final Set<Node> nodeSet = new HashSet<>();
+    private final Set<String> nodeNameSet = new HashSet<>();
     private final Statistics statistics;
     private final BenchmarkClusterConfig benchmarkClusterConfig;
 
@@ -137,7 +138,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
         LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
 
-        nodeSet.addAll(nodeService.find(new FindNodeCriteria()));
+        nodeNameSet.addAll(nodeService.find(new FindNodeCriteria()).stream().map(Node::getName).collect(Collectors.toSet()));
 
         // // Remove all old benchmark data.
         // removeOldData(folder, null);
@@ -464,7 +465,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
         final List<StatisticEvent> statisticEventList = new ArrayList<>();
 
-        for (final Node node : nodeSet) {
+        for (final String nodeName : nodeNameSet) {
             long nodeWritten = 0;
             long nodeError = 0;
             final Period nodePeriod = new Period();
@@ -480,12 +481,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 //            }
 
             statisticEventList.add(StatisticEvent.createValue(nowMs,
-                    ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
+                    ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", nodeName),
                             new StatisticTag("Feed", feedName), new StatisticTag("Type", EPS)),
                     (double) toEPS(nodeWritten, nodePeriod)));
 
             statisticEventList.add(StatisticEvent.createValue(nowMs,
-                    ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
+                    ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", nodeName),
                             new StatisticTag("Feed", feedName), new StatisticTag("Type", ERROR)),
                     (double) toEPS(nodeError, nodePeriod)));
 

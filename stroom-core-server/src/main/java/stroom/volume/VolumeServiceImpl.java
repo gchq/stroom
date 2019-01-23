@@ -33,7 +33,6 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.NodeInfo;
-import stroom.node.NodeInfo;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -225,7 +224,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 
         if (requiredNumber > set.size()) {
             LOGGER.warn("getVolumeSet - Failed to obtain " + requiredNumber + " volumes as required on node "
-                    + nodeInfo.getDefaultNode().getName() + " (set=" + set + ")");
+                    + nodeInfo.getThisNode().getName() + " (set=" + set + ")");
         }
 
         return set;
@@ -310,7 +309,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     }
 
     public List<VolumeEntity> refresh() {
-        final Node node = nodeInfo.getDefaultNode();
+        final Node node = nodeInfo.getThisNode();
         final List<VolumeEntity> newState = new ArrayList<>();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
@@ -523,7 +522,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                         final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
                         if (optDefaultVolumePath.isPresent()) {
                             LOGGER.info("Creating default volumes");
-                            final Node node = nodeInfo.getDefaultNode();
+                            final Node node = nodeInfo.getThisNode();
                             final Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
                             createIndexVolume(indexVolPath, node);
                             final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);

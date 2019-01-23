@@ -98,7 +98,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
             LOGGER.trace("Locking the cluster");
             clusterLockService.lock(LOCK_NAME);
 
-            final Node node = nodeInfo.getDefaultNode();
+            final Node node = nodeInfo.getThisNode();
 
             final List<JobNode> existingJobList = findAllJobs(node);
             final Map<String, JobNode> existingJobMap = new HashMap<>();

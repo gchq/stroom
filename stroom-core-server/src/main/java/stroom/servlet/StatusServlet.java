@@ -19,16 +19,14 @@ package stroom.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.NodeService;
 import stroom.node.VolumeService;
-import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.ui.config.shared.UiConfig;
 import stroom.security.Security;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -61,17 +59,14 @@ public class StatusServlet extends HttpServlet {
     private static final String AREA_VOLUME = "VOLUME";
     private static final String MSG_OK = "OK";
 
-    private final NodeService nodeService;
     private final UiConfig clientProperties;
     private final VolumeService volumeService;
     private final Security security;
 
     @Inject
-    StatusServlet(final NodeService nodeService,
-                  final UiConfig clientProperties,
+    StatusServlet(final UiConfig clientProperties,
                   final VolumeService volumeService,
                   final Security security) {
-        this.nodeService = nodeService;
         this.clientProperties = clientProperties;
         this.volumeService = volumeService;
         this.security = security;
@@ -145,8 +140,6 @@ public class StatusServlet extends HttpServlet {
             writeInfoLine(pw, AREA_BUILD, "Build date " + clientProperties.getBuildDate());
             writeInfoLine(pw, AREA_BUILD, "Up date " + clientProperties.getUpDate());
             writeInfoLine(pw, AREA_BUILD, "Node name " + clientProperties.getNodeName());
-            // This will query the database...
-            nodeService.find(new FindNodeCriteria());
             writeInfoLine(pw, AREA_DB, MSG_OK);
         } catch (final RuntimeException e) {
             writeErrorLine(pw, AREA_DB, e.getMessage());

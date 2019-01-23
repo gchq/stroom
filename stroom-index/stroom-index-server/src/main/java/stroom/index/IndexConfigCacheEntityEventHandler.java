@@ -57,7 +57,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
     private void updateIndex(final DocRef indexRef) {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
+        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexSet().add(indexRef);

@@ -35,7 +35,7 @@ class TestDefaultNodeService extends AbstractCoreIntegrationTest {
     @Test
     void testBasic() {
         // This should get lazy created
-        assertThat(nodeInfo.getDefaultNode()).isNotNull();
+        assertThat(nodeInfo.getThisNode()).isNotNull();
         assertThat(nodeService.find(new FindNodeCriteria()).size() > 0).isTrue();
     }
 }

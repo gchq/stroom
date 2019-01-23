@@ -87,7 +87,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     public StreamTarget openStreamTarget(final DataProperties streamProperties) {
         LOGGER.debug("openStreamTarget() " + streamProperties);
 
-        final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeInfo.getDefaultNode());
+        final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeInfo.getThisNode());
         if (volumeSet.isEmpty()) {
             throw new StreamException("Failed to get lock as no writeable volumes");
         }
@@ -250,7 +250,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            final Node node = nodeInfo.getDefaultNode();
+            final Node node = nodeInfo.getThisNode();
             final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
             if (streamVolume == null) {
                 final String message = "Unable to access any volume for " + stream

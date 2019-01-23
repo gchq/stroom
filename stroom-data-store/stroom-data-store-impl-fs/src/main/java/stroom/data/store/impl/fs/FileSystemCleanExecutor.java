@@ -107,7 +107,7 @@ class FileSystemCleanExecutor {
     }
 
     public void exec(final Task<?> task) {
-        final long nodeId = nodeInfo.getDefaultNode().getId();
+        final long nodeId = nodeInfo.getThisNode().getId();
         clean(task, nodeId);
     }
 

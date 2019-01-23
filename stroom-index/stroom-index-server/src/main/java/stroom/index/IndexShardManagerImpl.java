@@ -106,7 +106,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-                    criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
+                    criteria.getNodeIdSet().add(nodeInfo.getThisNode());
                     criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
                     criteria.getFetchSet().add(Node.ENTITY_TYPE);
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
@@ -255,7 +255,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
     public void checkRetention() {
         security.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-            criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
+            criteria.getNodeIdSet().add(nodeInfo.getThisNode());
             criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(Node.ENTITY_TYPE);
             final List<IndexShard> shards = indexShardService.find(criteria);

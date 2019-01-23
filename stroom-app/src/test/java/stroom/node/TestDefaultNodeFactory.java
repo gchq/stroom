@@ -30,6 +30,6 @@ class TestDefaultNodeFactory extends AbstractCoreIntegrationTest {
 
     @Test
     void test1() {
-        assertThat(nodeInfo.getDefaultNode()).isNotNull();
+        assertThat(nodeInfo.getThisNode()).isNotNull();
     }
 }

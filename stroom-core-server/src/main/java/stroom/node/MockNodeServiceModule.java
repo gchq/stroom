@@ -23,7 +23,6 @@ import stroom.entity.shared.Clearable;
 public class MockNodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(LocalNodeProvider.class).to(MockNodeService.class);
         bind(NodeService.class).to(MockNodeService.class);
         bind(NodeInfo.class).to(MockNodeInfo.class);
 

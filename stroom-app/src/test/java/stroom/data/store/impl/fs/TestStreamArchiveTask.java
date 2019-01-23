@@ -97,7 +97,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckArchive() throws IOException {
-        nodeInfo.getDefaultNode();
+        nodeInfo.getThisNode();
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());

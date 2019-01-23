@@ -40,7 +40,7 @@ public class MockNodeInfo implements NodeInfo {
     }
 
     @Override
-    public Node getDefaultNode() {
+    public Node getThisNode() {
         return get();
     }
 

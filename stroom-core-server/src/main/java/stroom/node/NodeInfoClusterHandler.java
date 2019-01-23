@@ -38,7 +38,7 @@ class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, No
     public NodeInfoResult exec(final NodeInfoClusterTask action) {
         return security.secureResult(() -> {
             final NodeInfoResult nodeInfoResult = new NodeInfoResult();
-            nodeInfoResult.setEntity(nodeInfo.getDefaultNode());
+            nodeInfoResult.setEntity(nodeInfo.getThisNode());
             nodeInfoResult.setPing(System.currentTimeMillis());
             return nodeInfoResult;
         });

@@ -109,7 +109,7 @@ public class JobNodeTrackerCache {
 
     public Node getNode() {
         if (node == null) {
-            node = nodeInfo.getDefaultNode();
+            node = nodeInfo.getThisNode();
         }
         return node;
     }

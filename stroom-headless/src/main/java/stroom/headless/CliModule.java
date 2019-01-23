@@ -18,11 +18,11 @@ package stroom.headless;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.docstore.impl.DocStoreModule;
 import stroom.cache.impl.CacheModule;
+import stroom.docstore.impl.DocStoreModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
-import stroom.node.LocalNodeProvider;
+import stroom.node.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;
@@ -114,10 +114,15 @@ public class CliModule extends AbstractModule {
     }
 
     @Provides
-    public LocalNodeProvider localNodeProvider() {
-        return new LocalNodeProvider() {
+    public NodeInfo nodeInfo() {
+        return new NodeInfo() {
             @Override
-            public Node get() {
+            public Node getThisNode() {
+                return null;
+            }
+
+            @Override
+            public String getThisNodeName() {
                 return null;
             }
         };
