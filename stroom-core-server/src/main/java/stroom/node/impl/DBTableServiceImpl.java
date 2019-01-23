@@ -1,0 +1,137 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.node.impl;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Sort;
+import stroom.entity.shared.Sort.Direction;
+import stroom.node.shared.DBTableService;
+import stroom.node.shared.DBTableStatus;
+import stroom.node.shared.FindDBTableCriteria;
+import stroom.persist.DataSourceProvider;
+import stroom.security.Security;
+import stroom.security.shared.PermissionNames;
+import stroom.util.shared.CompareUtil;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DBTableServiceImpl implements DBTableService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
+
+    private final Provider<DataSourceProvider> dataSourceProviderProvider;
+    private final Security security;
+
+    @Inject
+    DBTableServiceImpl(final Provider<DataSourceProvider> dataSourceProviderProvider,
+                       final Security security) {
+        this.dataSourceProviderProvider = dataSourceProviderProvider;
+        this.security = security;
+    }
+
+    @Override
+    public List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
+        return security.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
+            final List<DBTableStatus> rtnList = new ArrayList<>();
+
+            if (dataSourceProviderProvider != null) {
+                final DataSourceProvider dataSourceProvider = dataSourceProviderProvider.get();
+                // TODO : @66 Reinstate DB table status for all DBs
+
+//                final Object statisticsDataSource = beanStore.getInstance("statisticsDataSource");
+
+                addTableStatus(dataSourceProvider, rtnList);
+//                addTableStatus(statisticsDataSource, rtnList);
+            }
+
+            rtnList.sort((o1, o2) -> {
+                if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
+                    for (final Sort sort : criteria.getSortList()) {
+                        final String field = sort.getField();
+
+                        int compare = 0;
+                        if (DBTableStatus.FIELD_DATABASE.equals(field)) {
+                            compare = CompareUtil.compareString(o1.getDb(), o2.getDb());
+                        } else if (DBTableStatus.FIELD_TABLE.equals(field)) {
+                            compare = CompareUtil.compareString(o1.getTable(), o2.getTable());
+                        } else if (DBTableStatus.FIELD_ROW_COUNT.equals(field)) {
+                            compare = CompareUtil.compareLong(o1.getCount(), o2.getCount());
+                        } else if (DBTableStatus.FIELD_DATA_SIZE.equals(field)) {
+                            compare = CompareUtil.compareLong(o1.getDataSize(), o2.getDataSize());
+                        } else if (DBTableStatus.FIELD_INDEX_SIZE.equals(field)) {
+                            compare = CompareUtil.compareLong(o1.getIndexSize(), o2.getIndexSize());
+                        }
+                        if (Direction.DESCENDING.equals(sort.getDirection())) {
+                            compare = compare * -1;
+                        }
+
+                        if (compare != 0) {
+                            return compare;
+                        }
+                    }
+                } else {
+                    int compare = o1.getDb().compareToIgnoreCase(o2.getDb());
+                    if (compare == 0) {
+                        compare = o1.getTable().compareToIgnoreCase(o2.getTable());
+                    }
+                    return compare;
+                }
+
+                return 0;
+            });
+
+            return rtnList;
+        });
+    }
+
+
+    private void addTableStatus(final DataSourceProvider dataSourceProvider, final List<DBTableStatus> rtnList) {
+        final DataSource dataSource = dataSourceProvider.get();
+        try (final Connection connection = dataSource.getConnection()) {
+            connection.setReadOnly(true);
+
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'",
+                    ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY,
+                    ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final DBTableStatus status = new DBTableStatus();
+                        status.setDb(connection.getCatalog());
+                        status.setTable(resultSet.getString("Name"));
+                        status.setCount(resultSet.getLong("Rows"));
+                        status.setDataSize(resultSet.getLong("Data_length"));
+                        status.setIndexSize(resultSet.getLong("Index_length"));
+
+                        rtnList.add(status);
+                    }
+                }
+            }
+
+        } catch (final SQLException e) {
+            LOGGER.error("findSystemTableStatus()", e);
+        }
+    }
+}

@@ -23,7 +23,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
-import stroom.node.NodeCreator;
+import stroom.node.impl.NodeCreator;
 import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;

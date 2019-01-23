@@ -13,7 +13,7 @@ import stroom.importexport.ContentPackImportConfig;
 import stroom.index.IndexConfig;
 import stroom.job.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
-import stroom.node.NodeConfig;
+import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;

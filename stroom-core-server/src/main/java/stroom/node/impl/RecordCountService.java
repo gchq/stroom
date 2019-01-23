@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.state;
+package stroom.node.impl;
 
-import stroom.node.impl.Incrementor;
-import stroom.pipeline.scope.PipelineScoped;
-
+import javax.inject.Singleton;
 import java.util.concurrent.atomic.AtomicLong;
 
-@PipelineScoped
-public class RecordCount {
+@Singleton
+public class RecordCountService {
     private final AtomicLong readCount = new AtomicLong();
     private final AtomicLong writeCount = new AtomicLong();
-    private volatile long startMs;
 
     public Incrementor getReadIncrementor() {
         return readCount::incrementAndGet;
@@ -35,19 +32,15 @@ public class RecordCount {
         return writeCount::incrementAndGet;
     }
 
-    public long getRead() {
-        return readCount.get();
+    public long getAndResetRead() {
+        final long count = readCount.get();
+        readCount.addAndGet(-count);
+        return count;
     }
 
-    public long getWritten() {
-        return writeCount.get();
-    }
-
-    public long getDuration() {
-        return System.currentTimeMillis() - startMs;
-    }
-
-    public void setStartMs(final long startMs) {
-        this.startMs = startMs;
+    public long getAndResetWritten() {
+        final long count = writeCount.get();
+        writeCount.addAndGet(-count);
+        return count;
     }
 }

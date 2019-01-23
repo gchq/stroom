@@ -25,7 +25,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.MockNodeInfo;
+import stroom.node.impl.MockNodeInfo;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;

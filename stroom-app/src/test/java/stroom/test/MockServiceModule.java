@@ -3,6 +3,7 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
 import stroom.cache.impl.CacheModule;
+import stroom.node.impl.MockNodeServiceModule;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
 import stroom.security.shared.UserJooq;
@@ -30,7 +31,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.feed.MockFeedModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.index.MockIndexModule());
-        install(new stroom.node.MockNodeServiceModule());
+        install(new MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());

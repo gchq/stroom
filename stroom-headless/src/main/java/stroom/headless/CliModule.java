@@ -60,8 +60,8 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.jobsystem.JobSystemModule());
 //        install(new stroom.lifecycle.LifecycleModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
-//        install(new stroom.node.NodeModule());
-//        install(new stroom.node.MockNodeServiceModule());
+//        install(new stroom.node.impl.NodeModule());
+//        install(new stroom.node.impl.MockNodeServiceModule());
 //        install(new EntityManagerModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.factory.PipelineFactoryModule());
