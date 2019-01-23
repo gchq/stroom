@@ -3,7 +3,6 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.job.impl.db.gen'
 
 dependencies {
-    implementation project(':stroom-job:stroom-job-impl-db')
     implementation libs.javax_annotation
 
     implementation libs.jooq
