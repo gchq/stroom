@@ -73,7 +73,7 @@ public class ActivityServiceImpl implements ActivityService {
         AuditUtil.stamp(securityContext.getUserId(), activity);
         ActivitySerialiser.serialise(activity);
 
-        final Activity result = JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context -> {
+        final Activity result = JooqUtil.contextWithOptimisticLocking(connectionProvider, context -> {
             final ActivityRecord activityRecord = context.newRecord(ACTIVITY, activity);
             activityRecord.update();
             return activityRecord.into(Activity.class);
