@@ -25,6 +25,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+//TODO: gh-1072 delete
 /**
  * This class controls the cluster wide properties of a job.
  */
