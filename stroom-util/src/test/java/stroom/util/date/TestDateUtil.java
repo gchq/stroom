@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.util.date;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.date.DateUtil;
-import stroom.util.test.StroomUnitTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDateUtil extends StroomUnitTest {
+class TestDateUtil {
     @Test
     void testSimpleZuluTimes() {
         doTest("2008-11-18T09:47:50.548Z");

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.tools;
 
 import java.io.IOException;
 import java.io.InputStream;

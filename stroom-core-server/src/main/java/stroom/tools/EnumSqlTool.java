@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.tools;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.job.shared.JobNode.JobType;

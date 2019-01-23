@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.tools;
+
+import stroom.util.AbstractCommandLineTool;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.tools;
 
 import org.apache.commons.lang3.RandomUtils;
 import stroom.util.io.StreamUtil;

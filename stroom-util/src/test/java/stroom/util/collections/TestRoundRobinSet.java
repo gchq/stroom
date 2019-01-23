@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.util.collections;
 
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.junit.jupiter.api.Test;
 import stroom.docref.SharedObject;
-import stroom.util.test.StroomUnitTest;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
@@ -32,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests that the round robin list works correctly.
  */
 
-class TestRoundRobinSet extends StroomUnitTest {
+class TestRoundRobinSet {
     private static final int N3 = 3;
     private static final int N4 = 4;
 

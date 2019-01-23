@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.tools;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
