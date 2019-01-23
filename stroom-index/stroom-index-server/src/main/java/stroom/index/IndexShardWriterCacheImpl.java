@@ -133,7 +133,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private IndexShardWriter openExistingShard(final IndexShardKey indexShardKey) {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
+        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexSet().add(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
@@ -160,7 +160,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * Creates a new index shard writer for the specified key and opens a writer for it.
      */
     private IndexShardWriter openNewShard(final IndexShardKey indexShardKey) {
-        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getDefaultNode());
+        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNode());
         return openWriter(indexShardKey, indexShard);
     }
 
@@ -424,7 +424,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         // Make sure all open shards are marked as closed.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
+        criteria.getNodeIdSet().add(nodeInfo.getThisNode());
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);

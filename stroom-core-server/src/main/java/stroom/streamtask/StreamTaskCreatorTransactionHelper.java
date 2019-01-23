@@ -113,7 +113,7 @@ class StreamTaskCreatorTransactionHelper {
         sql.append(" = NULL WHERE ");
         sql.append(Node.FOREIGN_KEY);
         sql.append(" = ");
-        sql.arg(nodeInfo.getDefaultNode().getId());
+        sql.arg(nodeInfo.getThisNode().getId());
         final CriteriaSet<TaskStatus> criteriaSet = new CriteriaSet<>();
         criteriaSet.addAll(Arrays.asList(TaskStatus.UNPROCESSED, TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
         sql.appendPrimitiveValueSetQuery(ProcessorFilterTask.STATUS, criteriaSet);

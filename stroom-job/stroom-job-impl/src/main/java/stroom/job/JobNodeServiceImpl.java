@@ -69,6 +69,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private final JobService jobService;
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
+    private final Security security;
 
     @Inject
     JobNodeServiceImpl(final StroomEntityManager entityManager,
@@ -81,6 +82,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security);
         this.entityManager = entityManager;
+        this.security = security;
         this.entityManagerSupport = entityManagerSupport;
         this.clusterLockService = clusterLockService;
         this.nodeInfo = nodeInfo;
@@ -91,14 +93,14 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
 
     @Override
     public void startup() {
-        entityManagerSupport.transaction(entityManager1 -> {
+        security.asProcessingUser(() -> entityManagerSupport.transaction(entityManager -> {
             LOGGER.info("startup()");
             // Lock the cluster so only 1 node at a time can call the
             // following code.
             LOGGER.trace("Locking the cluster");
             clusterLockService.lock(LOCK_NAME);
 
-            final Node node = nodeInfo.getDefaultNode();
+            final Node node = nodeInfo.getThisNode();
 
             final List<JobNode> existingJobList = findAllJobs(node);
             final Map<String, JobNode> existingJobMap = new HashMap<>();
@@ -184,16 +186,16 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                     });
 
             // Force to delete
-            entityManager.flush();
+            this.entityManager.flush();
 
             final SqlBuilder sql = new SqlBuilder();
             sql.append(DELETE_ORPHAN_JOBS_MYSQL);
 
-            final Long deleteCount = entityManager.executeNativeUpdate(sql);
+            final Long deleteCount = this.entityManager.executeNativeUpdate(sql);
             if (deleteCount != null && deleteCount > 0) {
                 LOGGER.info("Removed {} orphan jobs", deleteCount);
             }
-        });
+        }));
     }
 
     @Override

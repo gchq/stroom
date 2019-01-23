@@ -23,7 +23,6 @@ public class NodeModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DBTableService.class).to(DBTableServiceImpl.class);
-        bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(RemoteStatusService.class).to(RemoteStatusServiceImpl.class);
     }
 }

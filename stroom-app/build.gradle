@@ -53,7 +53,6 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
-    implementation project(':stroom-cache:stroom-cache-shared')
     implementation project(':stroom-config:stroom-config-app')
     implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-core-server')

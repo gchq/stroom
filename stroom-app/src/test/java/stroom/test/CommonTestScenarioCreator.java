@@ -119,7 +119,7 @@ public class CommonTestScenarioCreator {
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
-        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
+        findVolumeCriteria.getNodeIdSet().add(nodeInfo.getThisNode());
         final Set<VolumeEntity> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
         indexVolumeService.setVolumesForIndex(indexRef, volumes);
 

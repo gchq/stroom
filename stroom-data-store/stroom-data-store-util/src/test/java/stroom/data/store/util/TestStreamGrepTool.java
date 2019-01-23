@@ -58,7 +58,7 @@ class TestStreamGrepTool {
 
             final StreamGrepTool streamGrepTool = new StreamGrepTool();
             streamGrepTool.setFeed(feedName);
-            streamGrepTool.setMatch("to match on");
+
             streamGrepTool.run();
 
         } catch (final RuntimeException e) {

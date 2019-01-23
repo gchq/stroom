@@ -19,7 +19,7 @@ package stroom.node;
 import stroom.node.shared.Node;
 
 public interface NodeInfo {
-    Node getDefaultNode();
+    Node getThisNode();
 
     String getThisNodeName();
 }

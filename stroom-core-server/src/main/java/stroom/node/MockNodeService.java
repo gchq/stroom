@@ -31,28 +31,19 @@ import java.util.List;
  */
 @Singleton
 public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriteria>
-        implements NodeService, LocalNodeProvider {
-    private Node node = null;
+        implements NodeService {
+    private MockNodeInfo nodeInfo = new MockNodeInfo();
 
     @Override
     public BaseResultList<Node> find(final FindNodeCriteria criteria) {
         final List<Node> nodeList = new ArrayList<>();
-        nodeList.add(get());
+        nodeList.add(nodeInfo.getThisNode());
         return new BaseResultList<>(nodeList, 0L, (long) nodeList.size(), true);
     }
 
     @Override
-    public Node get() {
-        if (node == null) {
-            node = new Node();
-            node.setName("MockNode");
-        }
-        return node;
-    }
-
-    @Override
     public String getClusterUrl(final String nodeName) {
-        final Node node = get();
+        final Node node = getNode(nodeName);
         if (node != null) {
             return node.getClusterURL();
         }
@@ -61,7 +52,7 @@ public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriter
 
     @Override
     public boolean isEnabled(final String nodeName) {
-        final Node node = get();
+        final Node node = getNode(nodeName);
         if (node != null) {
             return node.isEnabled();
         }
@@ -70,7 +61,7 @@ public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriter
 
     @Override
     public int getPriority(final String nodeName) {
-        final Node node = get();
+        final Node node = getNode(nodeName);
         if (node != null) {
             return node.getPriority();
         }
@@ -79,7 +70,11 @@ public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriter
 
     @Override
     public Node getNode(final String nodeName) {
-        return get();
+        final Node node = nodeInfo.getThisNode();
+        if (node.getName().equals(nodeName)) {
+            return node;
+        }
+        return null;
     }
 
     @Override

@@ -131,7 +131,7 @@ class TestIndexShardPoolImpl {
             }
         };
 
-//        Mockito.when(nodeInfo.getDefaultNode()).thenReturn(defaultNode);
+//        Mockito.when(nodeInfo.getThisNode()).thenReturn(defaultNode);
 
         final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
         final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);

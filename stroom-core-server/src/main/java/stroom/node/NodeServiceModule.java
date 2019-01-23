@@ -28,8 +28,8 @@ public class NodeServiceModule extends AbstractModule {
     protected void configure() {
         install(new EntityManagerModule());
 
+        bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
-        bind(LocalNodeProvider.class).to(LocalNodeProviderImpl.class);
 
         EntityTypeBinder.create(binder())
                 .bind(Node.ENTITY_TYPE, NodeServiceImpl.class);

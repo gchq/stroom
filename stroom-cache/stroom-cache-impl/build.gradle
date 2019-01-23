@@ -2,9 +2,8 @@ ext.moduleName = 'stroom.cache.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cache:stroom-cache-shared')
 //    implementation project(':stroom-config:stroom-config-common')
-//    implementation project(':stroom-core-shared')
+    implementation project(':stroom-core-shared')
 //    implementation project(':stroom-data-meta:stroom-data-meta-api')
 //    implementation project(':stroom-data-store:stroom-data-store-api')
 //    implementation project(':stroom-docstore:stroom-docstore-api')

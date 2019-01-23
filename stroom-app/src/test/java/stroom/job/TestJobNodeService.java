@@ -51,7 +51,7 @@ class TestJobNodeService extends AbstractCoreIntegrationTest {
 
         JobNode jobNode = new JobNode();
         jobNode.setJob(job);
-        jobNode.setNode(nodeInfo.getDefaultNode());
+        jobNode.setNode(nodeInfo.getThisNode());
 
         jobNode = jobNodeService.save(jobNode);
         jobNode.setEnabled(true);

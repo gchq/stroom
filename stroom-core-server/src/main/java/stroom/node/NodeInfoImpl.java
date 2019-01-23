@@ -28,38 +28,43 @@ import javax.inject.Singleton;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeInfoImpl implements NodeInfo, Clearable, EntityEvent.Handler {
-    private final LocalNodeProvider localNodeProvider;
+    private final NodeServiceTransactionHelper nodeServiceTransactionHelper;
     private final NodeConfig nodeConfig;
 
-    private volatile Node defaultNode;
+    private volatile Node thisNode;
 
     @Inject
-    public NodeInfoImpl(final LocalNodeProvider localNodeProvider,
+    public NodeInfoImpl(final NodeServiceTransactionHelper nodeServiceTransactionHelper,
                         final NodeConfig nodeConfig) {
-        this.localNodeProvider = localNodeProvider;
+        this.nodeServiceTransactionHelper = nodeServiceTransactionHelper;
         this.nodeConfig = nodeConfig;
     }
 
     @Override
     public void clear() {
-        defaultNode = null;
+        thisNode = null;
     }
 
     @Override
-    public Node getDefaultNode() {
-        if (defaultNode == null) {
+    public Node getThisNode() {
+        if (thisNode == null) {
             synchronized (this) {
-                if (defaultNode == null && localNodeProvider != null) {
-                    defaultNode = localNodeProvider.get();
+                if (thisNode == null) {
+                    thisNode = nodeServiceTransactionHelper.getNode(nodeConfig.getNodeName());
+
+                    if (thisNode == null) {
+                        // This will start a new mini transaction for the update
+                        thisNode = nodeServiceTransactionHelper.buildNode(nodeConfig.getNodeName(), nodeConfig.getRackName());
+                    }
                 }
 
-                if (defaultNode == null) {
+                if (thisNode == null) {
                     throw new RuntimeException("Default node not set");
                 }
             }
         }
 
-        return defaultNode;
+        return thisNode;
     }
 
     @Override
@@ -69,6 +74,6 @@ public class NodeInfoImpl implements NodeInfo, Clearable, EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        defaultNode = null;
+        thisNode = null;
     }
 }
