@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import java.util.List;

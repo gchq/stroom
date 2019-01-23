@@ -2,7 +2,6 @@ package stroom.volume;
 
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;
-import stroom.node.VolumeService;
 
 import javax.inject.Inject;
 

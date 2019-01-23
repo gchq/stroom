@@ -29,7 +29,7 @@ import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.NodeInfo;
-import stroom.node.VolumeService;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;

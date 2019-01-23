@@ -34,7 +34,7 @@ import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.feed.AttributeMapUtil;
 import stroom.node.NodeInfo;
-import stroom.node.VolumeService;
+import stroom.volume.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.util.io.FileUtil;

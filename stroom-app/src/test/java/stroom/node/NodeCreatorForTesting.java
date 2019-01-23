@@ -27,6 +27,7 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 import stroom.pipeline.writer.PathCreator;
+import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import java.io.IOException;

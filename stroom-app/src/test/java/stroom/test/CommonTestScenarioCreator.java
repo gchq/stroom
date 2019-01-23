@@ -32,7 +32,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.node.NodeInfo;
-import stroom.node.VolumeService;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;

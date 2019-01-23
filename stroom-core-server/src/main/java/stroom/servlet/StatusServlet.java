@@ -19,7 +19,7 @@ package stroom.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.VolumeService;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;

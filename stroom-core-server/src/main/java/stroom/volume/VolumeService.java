@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.node;
+package stroom.volume;
 
 import stroom.entity.BaseEntityService;
 import stroom.entity.FindService;

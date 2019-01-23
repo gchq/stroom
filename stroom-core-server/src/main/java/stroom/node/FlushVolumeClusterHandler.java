@@ -19,6 +19,7 @@ package stroom.node;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.VoidResult;
+import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 

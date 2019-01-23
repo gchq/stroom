@@ -24,7 +24,7 @@ import stroom.entity.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.node.NodeCreator;
-import stroom.node.VolumeService;
+import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.streamtask.StreamTaskCreator;

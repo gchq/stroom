@@ -33,7 +33,6 @@ import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
 import stroom.node.NodeInfo;
-import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;

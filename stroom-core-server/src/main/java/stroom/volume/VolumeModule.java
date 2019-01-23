@@ -26,7 +26,6 @@ import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
 import stroom.node.NodeServiceModule;
-import stroom.node.VolumeService;
 import stroom.node.shared.VolumeEntity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 
