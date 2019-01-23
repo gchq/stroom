@@ -18,7 +18,6 @@
 package stroom.node;
 
 import stroom.entity.FindService;
-import stroom.entity.NamedEntityService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 
@@ -27,7 +26,7 @@ import stroom.node.shared.Node;
  * Class to manage nodes.
  * </p>
  */
-public interface NodeService extends NamedEntityService<Node>, FindService<Node, FindNodeCriteria> {
+public interface NodeService extends FindService<Node, FindNodeCriteria> {
     String getClusterUrl(String nodeName);
 
     boolean isEnabled(String nodeName);
