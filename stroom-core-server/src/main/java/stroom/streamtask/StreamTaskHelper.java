@@ -20,7 +20,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.NodeCache;
+import stroom.node.NodeService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -35,15 +35,15 @@ class StreamTaskHelper {
 
     private final StreamTaskService streamTaskService;
     private final EntityManagerSupport entityManagerSupport;
-    private final NodeCache nodeCache;
+    private final NodeService nodeService;
 
     @Inject
     StreamTaskHelper(final StreamTaskService streamTaskService,
                      final EntityManagerSupport entityManagerSupport,
-                     final NodeCache nodeCache) {
+                     final NodeService nodeService) {
         this.streamTaskService = streamTaskService;
         this.entityManagerSupport = entityManagerSupport;
-        this.nodeCache = nodeCache;
+        this.nodeService = nodeService;
     }
 
     ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask streamTask, final String nodeName, final TaskStatus status,
@@ -113,7 +113,7 @@ class StreamTaskHelper {
 
     private void modify(final ProcessorFilterTask streamTask, final String nodeName, final TaskStatus status, final Long statusMs,
                         final Long startTimeMs, final Long endTimeMs) {
-        final Node node = nodeCache.getNode(nodeName);
+        final Node node = nodeService.getNode(nodeName);
 
         streamTask.setNode(node);
         streamTask.setStatus(status);

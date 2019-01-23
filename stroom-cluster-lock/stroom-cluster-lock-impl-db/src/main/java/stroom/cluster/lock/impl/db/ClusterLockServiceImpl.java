@@ -23,7 +23,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
 import stroom.job.shared.ClusterLock;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
@@ -42,7 +42,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     private final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
     private final TaskManager taskManager;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private StroomEntityManager stroomEntityManager;
     private EntityManagerSupport entityManagerSupport;
 
@@ -51,12 +51,12 @@ class ClusterLockServiceImpl implements ClusterLockService {
                            final EntityManagerSupport entityManagerSupport,
                            final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
                            final TaskManager taskManager,
-                           final NodeCache nodeCache) {
+                           final NodeInfo nodeInfo) {
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.clusterLockServiceTransactionHelper = clusterLockServiceTransactionHelper;
         this.taskManager = taskManager;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -97,7 +97,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         // Don't bother the master node if we already hold the lock.
         ClusterLockKey clusterLockKey = lockMap.get(lockName);
         if (clusterLockKey == null) {
-            clusterLockKey = new ClusterLockKey(lockName, nodeCache.getDefaultNode().getName(),
+            clusterLockKey = new ClusterLockKey(lockName, nodeInfo.getThisNodeName(),
                     System.currentTimeMillis());
             final SharedBoolean didLock = taskManager.exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Try));
             if (didLock != null) {
@@ -135,8 +135,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         LOGGER.debug("releaseLock({}) - <<< {}", lockName, success);
     }
 
-    @Override
-    public void keepAlive() {
+    void keepAlive() {
         LOGGER.debug("keepAlive() - >>>");
 
         for (final Entry<String, ClusterLockKey> entry : lockMap.entrySet()) {

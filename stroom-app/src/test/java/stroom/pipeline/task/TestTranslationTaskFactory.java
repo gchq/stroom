@@ -25,7 +25,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -95,7 +95,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     /**
      * Tests that valid streams are all processed and put into the processed and
@@ -135,14 +135,14 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }

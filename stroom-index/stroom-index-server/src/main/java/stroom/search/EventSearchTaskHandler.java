@@ -18,8 +18,7 @@ package stroom.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.NodeCache;
-import stroom.node.shared.Node;
+import stroom.node.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -40,19 +39,19 @@ import java.util.stream.Collectors;
 class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
 
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final Security security;
 
     @Inject
-    EventSearchTaskHandler(final NodeCache nodeCache,
+    EventSearchTaskHandler(final NodeInfo nodeInfo,
                            final SearchConfig searchConfig,
                            final UiConfig clientConfig,
                            final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
                            final Security security) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
@@ -71,7 +70,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             final Query query = task.getQuery();
 
             // Get the current node.
-            final String nodeName = nodeCache.getThisNodeName();
+            final String nodeName = nodeInfo.getThisNodeName();
 
             final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
                     task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());
@@ -90,7 +89,7 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                     asyncSearchTask,
-                    nodeCache.getThisNodeName(),
+                    nodeInfo.getThisNodeName(),
                     null,
                     resultHandler,
                     defaultMaxResultsSizes,

@@ -37,7 +37,7 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
@@ -65,7 +65,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private final StroomEntityManager entityManager;
     private final EntityManagerSupport entityManagerSupport;
     private final ClusterLockService clusterLockService;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final JobService jobService;
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
@@ -75,7 +75,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final Security security,
                        final EntityManagerSupport entityManagerSupport,
                        final ClusterLockService clusterLockService,
-                       final NodeCache nodeCache,
+                       final NodeInfo nodeInfo,
                        final JobService jobService,
                        final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                        final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
@@ -83,7 +83,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         this.entityManager = entityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.clusterLockService = clusterLockService;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.jobService = jobService;
         this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
@@ -98,7 +98,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
             LOGGER.trace("Locking the cluster");
             clusterLockService.lock(LOCK_NAME);
 
-            final Node node = nodeCache.getDefaultNode();
+            final Node node = nodeInfo.getDefaultNode();
 
             final List<JobNode> existingJobList = findAllJobs(node);
             final Map<String, JobNode> existingJobMap = new HashMap<>();

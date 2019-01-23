@@ -36,7 +36,7 @@ public class ClusterLockJobsModule extends ScheduledJobsModule {
 
     private static class KeepAlive extends TaskConsumer {
         @Inject
-        KeepAlive(final ClusterLockService clusterLockService) {
+        KeepAlive(final ClusterLockServiceImpl clusterLockService) {
             super(task -> clusterLockService.keepAlive());
         }
     }

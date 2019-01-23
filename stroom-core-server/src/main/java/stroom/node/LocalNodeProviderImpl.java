@@ -24,23 +24,23 @@ import javax.inject.Singleton;
 
 @Singleton
 public class LocalNodeProviderImpl implements LocalNodeProvider {
-    private final NodeServiceTransactionHelper nodeServiceUtil;
+    private final NodeServiceTransactionHelper nodeServiceTransactionHelper;
     private final NodeConfig nodeConfig;
 
     @Inject
-    LocalNodeProviderImpl(final NodeServiceTransactionHelper nodeServiceUtil,
+    LocalNodeProviderImpl(final NodeServiceTransactionHelper nodeServiceTransactionHelper,
                           final NodeConfig nodeConfig) {
-        this.nodeServiceUtil = nodeServiceUtil;
+        this.nodeServiceTransactionHelper = nodeServiceTransactionHelper;
         this.nodeConfig = nodeConfig;
     }
 
     @Override
     public Node get() {
-        Node node = nodeServiceUtil.getNode(nodeConfig.getNodeName());
+        Node node = nodeServiceTransactionHelper.getNode(nodeConfig.getNodeName());
 
         if (node == null) {
             // This will start a new mini transaction for the update
-            node = nodeServiceUtil.buildNode(nodeConfig.getNodeName(), nodeConfig.getRackName());
+            node = nodeServiceTransactionHelper.buildNode(nodeConfig.getNodeName(), nodeConfig.getRackName());
         }
 
         return node;

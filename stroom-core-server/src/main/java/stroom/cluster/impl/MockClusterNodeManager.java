@@ -18,7 +18,7 @@ package stroom.cluster.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 
 import javax.inject.Inject;
@@ -26,16 +26,16 @@ import java.util.Collections;
 import java.util.Set;
 
 public class MockClusterNodeManager implements ClusterNodeManager {
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
 
     @Inject
-    public MockClusterNodeManager(final NodeCache nodeCache) {
-        this.nodeCache = nodeCache;
+    public MockClusterNodeManager(final NodeInfo nodeInfo) {
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
     public ClusterState getClusterState() {
-        final String nodeName = nodeCache.getThisNodeName();
+        final String nodeName = nodeInfo.getThisNodeName();
         final Set<String> nodeNames = Collections.singleton(nodeName);
         final ClusterState clusterState = new ClusterState();
         clusterState.setAllNodes(nodeNames);

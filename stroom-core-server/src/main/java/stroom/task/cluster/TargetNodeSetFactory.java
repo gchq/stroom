@@ -18,27 +18,25 @@ package stroom.task.cluster;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.node.NodeCache;
-import stroom.node.shared.Node;
+import stroom.node.NodeInfo;
 import stroom.task.cluster.api.TargetType;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class TargetNodeSetFactory {
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final ClusterNodeManager clusterNodeManager;
 
     @Inject
-    public TargetNodeSetFactory(final NodeCache nodeCache, final ClusterNodeManager clusterNodeManager) {
-        this.nodeCache = nodeCache;
+    public TargetNodeSetFactory(final NodeInfo nodeInfo, final ClusterNodeManager clusterNodeManager) {
+        this.nodeInfo = nodeInfo;
         this.clusterNodeManager = clusterNodeManager;
     }
 
     public String getSourceNode() {
-        return nodeCache.getThisNodeName();
+        return nodeInfo.getThisNodeName();
     }
 
     public Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {

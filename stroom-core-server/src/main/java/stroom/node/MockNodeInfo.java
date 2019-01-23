@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,30 +12,40 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.node;
 
-
-import org.junit.jupiter.api.Test;
-import stroom.node.shared.FindNodeCriteria;
-import stroom.test.AbstractCoreIntegrationTest;
+import stroom.node.shared.Node;
 
 import javax.inject.Inject;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class MockNodeInfo implements NodeInfo {
+    private volatile Node defaultNode;
 
-class TestDefaultNodeService extends AbstractCoreIntegrationTest {
-    @Inject
-    private NodeInfo nodeInfo;
-    @Inject
-    private NodeService nodeService;
+    public MockNodeInfo(final Node defaultNode) {
+        this.defaultNode = defaultNode;
+    }
 
-    @Test
-    void testBasic() {
-        // This should get lazy created
-        assertThat(nodeInfo.getDefaultNode()).isNotNull();
-        assertThat(nodeService.find(new FindNodeCriteria()).size() > 0).isTrue();
+    @Inject
+    public MockNodeInfo() {
+    }
+
+    private Node get() {
+        if (defaultNode == null) {
+            defaultNode = new Node();
+            defaultNode.setName("MockNode");
+        }
+        return defaultNode;
+    }
+
+    @Override
+    public Node getDefaultNode() {
+        return get();
+    }
+
+    @Override
+    public String getThisNodeName() {
+        return get().getName();
     }
 }

@@ -38,7 +38,7 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SharedStepData;
@@ -96,7 +96,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
@@ -361,13 +361,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<StreamProcessorTask> getTasks() {
         List<StreamProcessorTask> streamProcessorTasks = Collections.emptyList();
 
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             streamProcessorTasks = new ArrayList<>(streamTasks.size());
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 streamProcessorTasks.add(new StreamProcessorTask(streamTask));
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return streamProcessorTasks;

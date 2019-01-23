@@ -30,7 +30,7 @@ import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.job.MockTask;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
@@ -72,7 +72,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
     @Inject
     private NodeService nodeService;
     //    @Inject
@@ -97,7 +97,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckArchive() throws IOException {
-        nodeCache.getDefaultNode();
+        nodeInfo.getDefaultNode();
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());

@@ -23,7 +23,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
@@ -51,7 +51,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
 
     private DocRef feedRef;
     private String feed;
@@ -65,11 +65,11 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                           final TaskContext taskContext,
                           final StreamStore streamStore,
                           final StreamHolder streamHolder,
-                          final NodeCache nodeCache) {
+                          final NodeInfo nodeInfo) {
         super(destinations, taskContext);
         this.streamStore = streamStore;
         this.streamHolder = streamHolder;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -86,7 +86,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 .parent(streamHolder.getStream())
                 .build();
 
-        final String nodeName = nodeCache.getDefaultNode().getName();
+        final String nodeName = nodeInfo.getThisNodeName();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),

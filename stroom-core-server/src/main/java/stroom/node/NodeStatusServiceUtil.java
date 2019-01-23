@@ -44,7 +44,7 @@ public class NodeStatusServiceUtil {
     private static final String INTERNAL_STAT_KEY_CPU = "cpu";
     private static final String INTERNAL_STAT_KEY_EVENTS_PER_SECOND = "eventsPerSecond";
 
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final RecordCountService recordCountService;
 
     private long time = System.currentTimeMillis();
@@ -52,9 +52,9 @@ public class NodeStatusServiceUtil {
     private CPUStats previousCPUStats;
 
     @Inject
-    public NodeStatusServiceUtil(final NodeCache nodeCache,
+    public NodeStatusServiceUtil(final NodeInfo nodeInfo,
                                  final RecordCountService recordCountService) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.recordCountService = recordCountService;
     }
 
@@ -112,7 +112,7 @@ public class NodeStatusServiceUtil {
     public List<InternalStatisticEvent> buildNodeStatus() {
         List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
-        Map<String, String> tags = ImmutableMap.of("Node", nodeCache.getDefaultNode().getName());
+        Map<String, String> tags = ImmutableMap.of("Node", nodeInfo.getThisNodeName());
 
         final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         final MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();

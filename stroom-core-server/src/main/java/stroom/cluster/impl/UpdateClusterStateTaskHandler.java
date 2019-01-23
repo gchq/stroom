@@ -21,14 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.task.GenericServerTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskManager;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -43,19 +43,19 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private static final Logger LOGGER = LoggerFactory.getLogger(UpdateClusterStateTaskHandler.class);
 
     private final NodeService nodeService;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
     private final TaskManager taskManager;
     private final Security security;
 
     @Inject
     UpdateClusterStateTaskHandler(final NodeService nodeService,
-                                  final NodeCache nodeCache,
+                                  final NodeInfo nodeInfo,
                                   final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
                                   final TaskManager taskManager,
                                   final Security security) {
         this.nodeService = nodeService;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.clusterCallServiceRemote = clusterCallServiceRemote;
         this.taskManager = taskManager;
         this.security = security;
@@ -88,7 +88,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private void updateState(final UpdateClusterStateTask task) {
         final ClusterState clusterState = task.getClusterState();
 
-        String thisNodeName = nodeCache.getThisNodeName();
+        String thisNodeName = nodeInfo.getThisNodeName();
 
         // Get nodes and ensure uniqueness.
          Set<String> uniqueNodes = Collections.emptySet();
@@ -102,7 +102,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
         // the local node, i.e. not cached.
         final Set<String> enabledNodes = new HashSet<>();
         for (final String nodeName : clusterState.getAllNodes()) {
-            if (nodeCache.isEnabled(nodeName)) {
+            if (nodeService.isEnabled(nodeName)) {
                 enabledNodes.add(nodeName);
             }
 
@@ -122,7 +122,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
             int maxPriority = -1;
             String masterNodeName = null;
             for (final String nodeName : enabledNodes) {
-                final int priority = nodeCache.getPriority(nodeName);
+                final int priority = nodeService.getPriority(nodeName);
                 if (priority> maxPriority) {
                     maxPriority = priority;
                     masterNodeName = nodeName;

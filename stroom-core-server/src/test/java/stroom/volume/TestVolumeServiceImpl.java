@@ -25,7 +25,9 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.NodeCache;
+import stroom.node.MockNodeInfo;
+import stroom.node.NodeInfo;
+import stroom.node.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
@@ -97,7 +99,7 @@ class TestVolumeServiceImpl extends StroomUnitTest {
 
         volumeConfig.setResilientReplicationCount(2);
 
-        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), volumeConfig, null);
+        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new MockNodeInfo(node1a), volumeConfig, null);
         volumeServiceImpl.volumeList = volumeList;
     }
 
@@ -207,13 +209,13 @@ class TestVolumeServiceImpl extends StroomUnitTest {
         MockVolumeService(final StroomEntityManager stroomEntityManager,
                           final Security security,
                           final EntityManagerSupport entityManagerSupport,
-                          final NodeCache nodeCache,
+                          final NodeInfo nodeInfo,
                           final VolumeConfig volumeConfig,
                           final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
             super(stroomEntityManager,
                     security,
                     entityManagerSupport,
-                    nodeCache,
+                    nodeInfo,
                     volumeConfig,
                     optionalInternalStatisticsReceiver);
         }

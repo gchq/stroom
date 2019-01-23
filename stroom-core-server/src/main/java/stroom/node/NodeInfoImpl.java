@@ -27,23 +27,17 @@ import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
-public class NodeCache implements Clearable, EntityEvent.Handler {
+public class NodeInfoImpl implements NodeInfo, Clearable, EntityEvent.Handler {
     private final LocalNodeProvider localNodeProvider;
-    private final NodeServiceTransactionHelper nodeServiceUtil;
+    private final NodeConfig nodeConfig;
 
     private volatile Node defaultNode;
 
     @Inject
-    public NodeCache(final LocalNodeProvider localNodeProvider,
-                     final NodeServiceTransactionHelper nodeServiceUtil) {
+    public NodeInfoImpl(final LocalNodeProvider localNodeProvider,
+                        final NodeConfig nodeConfig) {
         this.localNodeProvider = localNodeProvider;
-        this.nodeServiceUtil = nodeServiceUtil;
-    }
-
-    public NodeCache(final Node defaultNode) {
-        this.localNodeProvider = null;
-        this.nodeServiceUtil = null;
-        this.defaultNode = defaultNode;
+        this.nodeConfig = nodeConfig;
     }
 
     @Override
@@ -51,6 +45,7 @@ public class NodeCache implements Clearable, EntityEvent.Handler {
         defaultNode = null;
     }
 
+    @Override
     public Node getDefaultNode() {
         if (defaultNode == null) {
             synchronized (this) {
@@ -67,36 +62,9 @@ public class NodeCache implements Clearable, EntityEvent.Handler {
         return defaultNode;
     }
 
+    @Override
     public String getThisNodeName() {
-        return getDefaultNode().getName();
-    }
-
-    public String getClusterUrl(final String nodeName) {
-        final Node node = nodeServiceUtil.getNode(nodeName);
-        if (node != null) {
-            return node.getClusterURL();
-        }
-        return null;
-    }
-
-    public boolean isEnabled(final String nodeName) {
-        final Node node = nodeServiceUtil.getNode(nodeName);
-        if (node != null) {
-            return node.isEnabled();
-        }
-        return false;
-    }
-
-    public int getPriority(final String nodeName) {
-        final Node node = nodeServiceUtil.getNode(nodeName);
-        if (node != null) {
-            return node.getPriority();
-        }
-        return -1;
-    }
-
-    public Node getNode(final String nodeName) {
-        return nodeServiceUtil.getNode(nodeName);
+        return nodeConfig.getNodeName();
     }
 
     @Override

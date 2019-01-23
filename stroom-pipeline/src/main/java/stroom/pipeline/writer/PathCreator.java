@@ -17,7 +17,7 @@
 package stroom.pipeline.writer;
 
 import com.google.common.base.Strings;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
@@ -62,19 +62,19 @@ public class PathCreator {
     private final PipelineHolder pipelineHolder;
     private final StreamHolder streamHolder;
     private final SearchIdHolder searchIdHolder;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
 
     @Inject
     PathCreator(final FeedHolder feedHolder,
                 final PipelineHolder pipelineHolder,
                 final StreamHolder streamHolder,
                 final SearchIdHolder searchIdHolder,
-                final NodeCache nodeCache) {
+                final NodeInfo nodeInfo) {
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.streamHolder = streamHolder;
         this.searchIdHolder = searchIdHolder;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
     }
 
     public static String replaceTimeVars(String path) {
@@ -212,8 +212,8 @@ public class PathCreator {
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
             path = replace(path, "searchId", searchIdHolder::getSearchId);
         }
-        if (nodeCache != null) {
-            path = replace(path, "node", () -> nodeCache.getDefaultNode().getName());
+        if (nodeInfo != null) {
+            path = replace(path, "node", () -> nodeInfo.getThisNodeName());
         }
 
         return path;

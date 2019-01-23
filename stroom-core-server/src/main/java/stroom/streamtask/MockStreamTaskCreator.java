@@ -17,13 +17,13 @@
 
 package stroom.streamtask;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
-import stroom.node.NodeCache;
-import stroom.node.shared.Node;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
+import stroom.node.NodeService;
+import stroom.node.shared.Node;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -42,15 +42,15 @@ import java.util.List;
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     private final DataMetaService streamMetaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final NodeCache nodeCache;
+    private final NodeService nodeService;
 
     @Inject
     MockStreamTaskCreator(final DataMetaService streamMetaService,
                           final StreamProcessorFilterService streamProcessorFilterService,
-                          final NodeCache nodeCache) {
+                          final NodeService nodeService) {
         this.streamMetaService = streamMetaService;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.nodeCache = nodeCache;
+        this.nodeService = nodeService;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
 
     @Override
     public List<ProcessorFilterTask> assignStreamTasks(final String nodeName, final int count) {
-        final Node node = nodeCache.getNode(nodeName);
+        final Node node = nodeService.getNode(nodeName);
 
         List<ProcessorFilterTask> taskList = Collections.emptyList();
         final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();

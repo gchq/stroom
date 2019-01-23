@@ -31,17 +31,17 @@ import javax.inject.Inject;
 
 class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
     private final ClusterCallService clusterCallService;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final NodeService nodeService;
     private final Security security;
 
     @Inject
     ClusterNodeInfoHandler(final ClusterCallServiceRemote clusterCallService,
-                           final NodeCache nodeCache,
+                           final NodeInfo nodeInfo,
                            final NodeService nodeService,
                            final Security security) {
         this.clusterCallService = clusterCallService;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
         this.security = security;
     }
@@ -49,7 +49,7 @@ class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, 
     @Override
     public ClusterNodeInfo exec(final ClusterNodeInfoAction action) {
         return security.secureResult(() -> {
-            final String sourceNode = nodeCache.getThisNodeName();
+            final String sourceNode = nodeInfo.getThisNodeName();
             final String targetNode = action.getNodeName();
 
             try {

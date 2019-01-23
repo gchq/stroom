@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -46,7 +46,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     @Test
     void testBasic() {
@@ -91,7 +91,7 @@ class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
     @Test
     void testMultiFeedInitialCreate() {
-        final String nodeName = nodeCache.getThisNodeName();
+        final String nodeName = nodeInfo.getThisNodeName();
 
         streamTaskCreator.shutdown();
         streamTaskCreator.startup();

@@ -51,6 +51,38 @@ public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriter
     }
 
     @Override
+    public String getClusterUrl(final String nodeName) {
+        final Node node = get();
+        if (node != null) {
+            return node.getClusterURL();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isEnabled(final String nodeName) {
+        final Node node = get();
+        if (node != null) {
+            return node.isEnabled();
+        }
+        return false;
+    }
+
+    @Override
+    public int getPriority(final String nodeName) {
+        final Node node = get();
+        if (node != null) {
+            return node.getPriority();
+        }
+        return 0;
+    }
+
+    @Override
+    public Node getNode(final String nodeName) {
+        return get();
+    }
+
+    @Override
     public Class<Node> getEntityClass() {
         return Node.class;
     }

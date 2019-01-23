@@ -24,6 +24,8 @@ public class MockNodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(LocalNodeProvider.class).to(MockNodeService.class);
+        bind(NodeService.class).to(MockNodeService.class);
+        bind(NodeInfo.class).to(MockNodeInfo.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockNodeService.class);

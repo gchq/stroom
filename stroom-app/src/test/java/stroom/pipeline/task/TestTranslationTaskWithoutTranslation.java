@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -54,7 +54,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     @Inject
     private MockDataMetaService streamMetaService;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
@@ -115,14 +115,14 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         while (streamTasks.size() > 0) {
             for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
             }
-            streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getThisNodeName(), 100);
+            streamTasks = streamTaskCreator.assignStreamTasks(nodeInfo.getThisNodeName(), 100);
         }
         return results;
     }

@@ -23,7 +23,7 @@ import org.slf4j.MarkerFactory;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;
@@ -64,7 +64,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TaskManagerImpl.class);
 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
@@ -76,11 +76,11 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     @Inject
     TaskManagerImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
-                    final NodeCache nodeCache,
+                    final NodeInfo nodeInfo,
                     final Security security,
                     final PipelineScopeRunnable pipelineScopeRunnable) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.security = security;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
 
@@ -481,7 +481,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         taskProgress.setTaskInfo(taskThread.getInfo());
         taskProgress.setSubmitTimeMs(taskThread.getSubmitTimeMs());
         taskProgress.setTimeNowMs(timeNowMs);
-        taskProgress.setNodeName(nodeCache.getDefaultNode().getName());
+        taskProgress.setNodeName(nodeInfo.getThisNodeName());
         return taskProgress;
     }
 

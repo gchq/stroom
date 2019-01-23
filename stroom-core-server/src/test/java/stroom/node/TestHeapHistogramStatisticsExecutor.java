@@ -50,10 +50,10 @@ class TestHeapHistogramStatisticsExecutor {
             MockitoAnnotations.initMocks(this);
             final Rack rack1 = Rack.create("rack1");
             final Node node1a = Node.create(rack1, "1a");
-            final NodeCache nodeCache = new NodeCache(node1a);
+            final NodeInfo nodeInfo = new MockNodeInfo(node1a);
 
             final HeapHistogramService heapHistogramService = new HeapHistogramService(heapHistogramConfig);
-            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeCache);
+            executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeInfo);
         } catch (final RuntimeException e) {
             throw new RuntimeException("Error during test setup", e);
         }

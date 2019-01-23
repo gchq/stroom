@@ -26,10 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDefaultNodeFactory extends AbstractCoreIntegrationTest {
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     @Test
     void test1() {
-        assertThat(nodeCache.getDefaultNode()).isNotNull();
+        assertThat(nodeInfo.getDefaultNode()).isNotNull();
     }
 }

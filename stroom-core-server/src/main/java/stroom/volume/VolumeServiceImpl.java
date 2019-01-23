@@ -32,7 +32,8 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
+import stroom.node.NodeInfo;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -103,7 +104,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private final StroomEntityManager stroomEntityManager;
     private final Security security;
     private final EntityManagerSupport entityManagerSupport;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final VolumeConfig volumeConfig;
     private final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver;
     private final AtomicReference<List<VolumeEntity>> currentVolumeState = new AtomicReference<>();
@@ -115,14 +116,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
                       final Security security,
                       final EntityManagerSupport entityManagerSupport,
-                      final NodeCache nodeCache,
+                      final NodeInfo nodeInfo,
                       final VolumeConfig volumeConfig,
                       final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
         super(stroomEntityManager, security);
         this.stroomEntityManager = stroomEntityManager;
         this.security = security;
         this.entityManagerSupport = entityManagerSupport;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.volumeConfig = volumeConfig;
         this.optionalInternalStatisticsReceiver = optionalInternalStatisticsReceiver;
     }
@@ -224,7 +225,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 
         if (requiredNumber > set.size()) {
             LOGGER.warn("getVolumeSet - Failed to obtain " + requiredNumber + " volumes as required on node "
-                    + nodeCache.getDefaultNode() + " (set=" + set + ")");
+                    + nodeInfo.getDefaultNode().getName() + " (set=" + set + ")");
         }
 
         return set;
@@ -309,7 +310,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     }
 
     public List<VolumeEntity> refresh() {
-        final Node node = nodeCache.getDefaultNode();
+        final Node node = nodeInfo.getDefaultNode();
         final List<VolumeEntity> newState = new ArrayList<>();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
@@ -522,7 +523,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                         final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
                         if (optDefaultVolumePath.isPresent()) {
                             LOGGER.info("Creating default volumes");
-                            final Node node = nodeCache.getDefaultNode();
+                            final Node node = nodeInfo.getDefaultNode();
                             final Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
                             createIndexVolume(indexVolPath, node);
                             final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);

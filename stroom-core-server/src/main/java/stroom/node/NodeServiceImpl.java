@@ -51,10 +51,6 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
         this.nodeServiceUtil = nodeServiceUtil;
     }
 
-    Node getNode(final String name) {
-        return nodeServiceUtil.getNode(name);
-    }
-
     Rack getRack(final String name) {
         return nodeServiceUtil.getRack(name);
     }
@@ -77,5 +73,37 @@ public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriter
     @Override
     protected String permission() {
         return PermissionNames.MANAGE_NODES_PERMISSION;
+    }
+
+    @Override
+    public String getClusterUrl(final String nodeName) {
+        final Node node = nodeServiceUtil.getNode(nodeName);
+        if (node != null) {
+            return node.getClusterURL();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isEnabled(final String nodeName) {
+        final Node node = nodeServiceUtil.getNode(nodeName);
+        if (node != null) {
+            return node.isEnabled();
+        }
+        return false;
+    }
+
+    @Override
+    public int getPriority(final String nodeName) {
+        final Node node = nodeServiceUtil.getNode(nodeName);
+        if (node != null) {
+            return node.getPriority();
+        }
+        return -1;
+    }
+
+    @Override
+    public Node getNode(final String nodeName) {
+        return nodeServiceUtil.getNode(nodeName);
     }
 }

@@ -30,7 +30,7 @@ public class NodeHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(NodeCache.class);
+        clearableBinder.addBinding().to(NodeInfoImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)
@@ -41,6 +41,6 @@ public class NodeHandlerModule extends AbstractModule {
                 .bind(FlushVolumeClusterTask.class, FlushVolumeClusterHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(NodeCache.class);
+        entityEventHandlerBinder.addBinding().to(NodeInfoImpl.class);
     }
 }

@@ -23,7 +23,7 @@ import stroom.job.api.JobNodeService;
 import stroom.job.api.JobService;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
@@ -37,7 +37,7 @@ class TestJobNodeService extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private NodeCache nodeCache;
+    private NodeInfo nodeInfo;
 
     @Test
     void testSaveJob() {
@@ -51,7 +51,7 @@ class TestJobNodeService extends AbstractCoreIntegrationTest {
 
         JobNode jobNode = new JobNode();
         jobNode.setJob(job);
-        jobNode.setNode(nodeCache.getDefaultNode());
+        jobNode.setNode(nodeInfo.getDefaultNode());
 
         jobNode = jobNodeService.save(jobNode);
         jobNode.setEnabled(true);

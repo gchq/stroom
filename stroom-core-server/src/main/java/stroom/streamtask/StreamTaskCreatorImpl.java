@@ -26,7 +26,7 @@ import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -90,7 +90,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper;
     private final TaskManager taskManager;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final ProcessConfig processConfig;
@@ -141,7 +141,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     StreamTaskCreatorImpl(final StreamProcessorFilterService streamProcessorFilterService,
                           final StreamTaskCreatorTransactionHelper streamTaskTransactionHelper,
                           final TaskManager taskManager,
-                          final NodeCache nodeCache,
+                          final NodeInfo nodeInfo,
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
                           final ProcessConfig processConfig,
@@ -152,7 +152,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamTaskTransactionHelper = streamTaskTransactionHelper;
         this.taskManager = taskManager;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
         this.processConfig = processConfig;
@@ -411,7 +411,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         // Now fill the stream task store with tasks for each filter.
         final int halfQueueSize = totalQueueSize / 2;
 
-        final String nodeName = nodeCache.getThisNodeName();
+        final String nodeName = nodeInfo.getThisNodeName();
         if (nodeName == null) {
             throw new NullPointerException("Node is null");
         }

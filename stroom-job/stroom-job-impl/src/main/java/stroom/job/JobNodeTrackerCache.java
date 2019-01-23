@@ -24,7 +24,7 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
@@ -46,7 +46,7 @@ public class JobNodeTrackerCache {
     private final long refreshInterval = DEFAULT_REFRESH_INTERVAL;
     private final ReentrantLock refreshLock = new ReentrantLock();
 
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final JobNodeService jobNodeService;
 
     private volatile Node node;
@@ -54,9 +54,9 @@ public class JobNodeTrackerCache {
     private volatile long lastRefreshMs;
 
     @Inject
-    JobNodeTrackerCache(final NodeCache nodeCache,
+    JobNodeTrackerCache(final NodeInfo nodeInfo,
                         final JobNodeService jobNodeService) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.jobNodeService = jobNodeService;
     }
 
@@ -109,7 +109,7 @@ public class JobNodeTrackerCache {
 
     public Node getNode() {
         if (node == null) {
-            node = nodeCache.getDefaultNode();
+            node = nodeInfo.getDefaultNode();
         }
         return node;
     }

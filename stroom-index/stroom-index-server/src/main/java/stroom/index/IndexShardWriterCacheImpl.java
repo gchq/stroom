@@ -23,7 +23,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.ThreadPoolImpl;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheImpl.class);
 
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final IndexShardService indexShardService;
     private final IndexStructureCache indexStructureCache;
     private final IndexShardManager indexShardManager;
@@ -75,14 +75,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private volatile Settings settings;
 
     @Inject
-    public IndexShardWriterCacheImpl(final NodeCache nodeCache,
+    public IndexShardWriterCacheImpl(final NodeInfo nodeInfo,
                                      final IndexShardService indexShardService,
                                      final IndexConfig indexConfig,
                                      final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,
                                      final TaskContext taskContext) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
         this.indexConfig = indexConfig;
         this.indexStructureCache = indexStructureCache;
@@ -133,7 +133,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private IndexShardWriter openExistingShard(final IndexShardKey indexShardKey) {
         // Get all index shards that are owned by this node.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+        criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexSet().add(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
@@ -160,7 +160,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * Creates a new index shard writer for the specified key and opens a writer for it.
      */
     private IndexShardWriter openNewShard(final IndexShardKey indexShardKey) {
-        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeCache.getDefaultNode());
+        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getDefaultNode());
         return openWriter(indexShardKey, indexShard);
     }
 
@@ -424,7 +424,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         // Make sure all open shards are marked as closed.
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+        criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
         criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);

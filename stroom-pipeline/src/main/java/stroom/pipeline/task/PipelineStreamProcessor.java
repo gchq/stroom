@@ -33,7 +33,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;
@@ -111,7 +111,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final RecordCount recordCount;
     private final StreamCloser streamCloser;
     private final RecordErrorReceiver recordErrorReceiver;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final SupersededOutputHelper supersededOutputHelper;
@@ -142,7 +142,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             final RecordCount recordCount,
                             final StreamCloser streamCloser,
                             final RecordErrorReceiver recordErrorReceiver,
-                            final NodeCache nodeCache,
+                            final NodeInfo nodeInfo,
                             final PipelineDataCache pipelineDataCache,
                             final InternalStatisticsReceiver internalStatisticsReceiver,
                             final SupersededOutputHelper supersededOutputHelper) {
@@ -164,7 +164,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.recordCount = recordCount;
         this.streamCloser = streamCloser;
         this.recordErrorReceiver = recordErrorReceiver;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.pipelineDataCache = pipelineDataCache;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.supersededOutputHelper = supersededOutputHelper;
@@ -226,7 +226,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(stream.getId()));
             // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-//            metaData.put(MetaDataSource.NODE, nodeCache.get().getName());
+//            metaData.put(MetaDataSource.NODE, nodeInfo.get().getName());
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
@@ -308,7 +308,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     ImmutableMap.of(
                             "Feed", feedName,
                             "Pipeline", pipelineDoc.getName(),
-                            "Node", nodeCache.getDefaultNode().getName()));
+                            "Node", nodeInfo.getThisNodeName()));
 
             internalStatisticsReceiver.putEvent(event);
 

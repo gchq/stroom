@@ -23,7 +23,7 @@ import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.docref.SharedObject;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.task.cluster.api.ClusterTask;
@@ -42,15 +42,15 @@ public class ClusterWorkerImpl implements ClusterWorker {
     private static final String SEND_RESULT = "sendResult";
 
     private final TaskManager taskManager;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final ClusterCallService clusterCallService;
 
     @Inject
     public ClusterWorkerImpl(final TaskManager taskManager,
-                             final NodeCache nodeCache,
+                             final NodeInfo nodeInfo,
                              final ClusterCallServiceRemote clusterCallService) {
         this.taskManager = taskManager;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.clusterCallService = clusterCallService;
     }
 
@@ -78,7 +78,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
             // Trace the source of this task if trace is enabled.
             LOGGER.trace("Executing task '{}' for node '{}'", task.getTaskName(), sourceNode);
 
-            final String targetNode = nodeCache.getThisNodeName();
+            final String targetNode = nodeInfo.getThisNodeName();
 
             // Assign the id for this worker node prior to execution.
             task.assignId(sourceTaskId);

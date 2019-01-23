@@ -23,7 +23,8 @@ import stroom.cluster.api.ClusterState;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
+import stroom.node.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
 import stroom.task.TaskCallbackAdaptor;
@@ -59,15 +60,18 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final ClusterState clusterState = new ClusterState();
     private final AtomicBoolean updatingState = new AtomicBoolean();
     private final AtomicBoolean pendingUpdate = new AtomicBoolean();
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
+    private final NodeService nodeService;
     private final TaskManager taskManager;
     private final UiConfig clientProperties;
 
     @Inject
-    ClusterNodeManagerImpl(final NodeCache nodeCache,
+    ClusterNodeManagerImpl(final NodeInfo nodeInfo,
+                           final NodeService nodeService,
                            final TaskManager taskManager,
                            final UiConfig clientProperties) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
+        this.nodeService = nodeService;
         this.taskManager = taskManager;
         this.clientProperties = clientProperties;
     }
@@ -199,7 +203,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         // Take a copy of our working variables;
         final List<String> allNodeList = asList(clusterState.getAllNodes());
         final List<String> activeNodeList = asList(clusterState.getEnabledActiveNodes());
-        final String thisNodeName = nodeCache.getThisNodeName();
+        final String thisNodeName = nodeInfo.getThisNodeName();
         final String masterNodeName = clusterState.getMasterNodeName();
         final String discoverTime = DateUtil.createNormalDateTimeString(clusterState.getUpdateTime());
 
@@ -208,7 +212,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                 clientProperties.getBuildVersion(),
                 clientProperties.getUpDate(),
                 thisNodeName,
-                nodeCache.getClusterUrl(thisNodeName));
+                nodeService.getClusterUrl(thisNodeName));
 
         if (allNodeList != null && activeNodeList != null && masterNodeName != null) {
             for (final String nodeName : allNodeList) {
@@ -223,7 +227,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     public Long ping(final String sourceNode) {
         try {
             // Update the cluster state if the node trying to ping us is not us.
-            final String thisNodeName = nodeCache.getThisNodeName();
+            final String thisNodeName = nodeInfo.getThisNodeName();
             if (!thisNodeName.equals(sourceNode)) {
                 // Try and get the cluster state and make sure we know about the
                 // node trying to ping us. If we can't get the cluster state or

@@ -24,7 +24,7 @@ import stroom.index.IndexStore;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -55,7 +55,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     private final DictionaryStore dictionaryStore;
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
     private final Security security;
@@ -66,7 +66,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                                     final DictionaryStore dictionaryStore,
                                     final SearchConfig searchConfig,
                                     final UiConfig clientConfig,
-                                    final NodeCache nodeCache,
+                                    final NodeInfo nodeInfo,
                                     final SecurityContext securityContext,
                                     final Security security,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
@@ -74,7 +74,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         this.dictionaryStore = dictionaryStore;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.securityContext = securityContext;
         this.security = security;
@@ -95,7 +95,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
         // This is a new search so begin a new asynchronous search.
-        final String nodeName = nodeCache.getThisNodeName();
+        final String nodeName = nodeInfo.getThisNodeName();
 
         // Create a coprocessor settings map.
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);

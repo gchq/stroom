@@ -24,13 +24,13 @@ import javax.inject.Inject;
 
 
 class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, NodeInfoResult> {
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final Security security;
 
     @Inject
-    NodeInfoClusterHandler(final NodeCache nodeCache,
+    NodeInfoClusterHandler(final NodeInfo nodeInfo,
                            final Security security) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.security = security;
     }
 
@@ -38,7 +38,7 @@ class NodeInfoClusterHandler extends AbstractTaskHandler<NodeInfoClusterTask, No
     public NodeInfoResult exec(final NodeInfoClusterTask action) {
         return security.secureResult(() -> {
             final NodeInfoResult nodeInfoResult = new NodeInfoResult();
-            nodeInfoResult.setEntity(nodeCache.getDefaultNode());
+            nodeInfoResult.setEntity(nodeInfo.getDefaultNode());
             nodeInfoResult.setPing(System.currentTimeMillis());
             return nodeInfoResult;
         });

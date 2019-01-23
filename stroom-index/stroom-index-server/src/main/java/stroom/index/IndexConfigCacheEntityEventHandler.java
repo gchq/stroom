@@ -23,7 +23,7 @@ import stroom.entity.event.EntityEventHandler;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
-import stroom.node.NodeCache;
+import stroom.node.NodeInfo;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;
@@ -31,17 +31,17 @@ import java.util.List;
 
 @EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
     private final IndexStructureCacheImpl indexStructureCache;
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
 
     @Inject
-    IndexConfigCacheEntityEventHandler(final NodeCache nodeCache,
+    IndexConfigCacheEntityEventHandler(final NodeInfo nodeInfo,
                                        final IndexStructureCacheImpl indexStructureCache,
                                        final IndexShardService indexShardService,
                                        final IndexShardWriterCache indexShardWriterCache) {
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
         this.indexStructureCache = indexStructureCache;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -57,7 +57,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
     private void updateIndex(final DocRef indexRef) {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
+        criteria.getNodeIdSet().add(nodeInfo.getDefaultNode());
         criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexSet().add(indexRef);

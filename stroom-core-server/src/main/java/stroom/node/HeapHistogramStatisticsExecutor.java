@@ -37,16 +37,16 @@ public class HeapHistogramStatisticsExecutor {
 
     private final HeapHistogramService heapHistogramService;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
-    private final NodeCache nodeCache;
+    private final NodeInfo nodeInfo;
 
 
     @Inject
     HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
                                     final InternalStatisticsReceiver internalStatisticsReceiver,
-                                    final NodeCache nodeCache) {
+                                    final NodeInfo nodeInfo) {
         this.heapHistogramService = heapHistogramService;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
-        this.nodeCache = nodeCache;
+        this.nodeInfo = nodeInfo;
     }
 
     public void exec() {
@@ -67,7 +67,7 @@ public class HeapHistogramStatisticsExecutor {
         Preconditions.checkNotNull(heapHistogramService);
 
         final long statTimeMs = Instant.now().toEpochMilli();
-        final String nodeName = nodeCache.getDefaultNode().getName();
+        final String nodeName = nodeInfo.getThisNodeName();
         //immutable so can be reused for all events
         final Map.Entry<String, String> nodeTag = Maps.immutableEntry(TAG_NAME_NODE, nodeName);
 
