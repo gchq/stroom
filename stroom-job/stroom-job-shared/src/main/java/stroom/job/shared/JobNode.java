@@ -32,7 +32,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Min;
-
+//TODO: gh-1072 delete
 /**
  * This class records and manages all jobs across all nodes.
  */

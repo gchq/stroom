@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS data (
   processor_id    	int(11) DEFAULT NULL,
   PRIMARY KEY       (id),
   CONSTRAINT data_feed_id FOREIGN KEY (feed_id) REFERENCES data_feed (id),
-  CONSTRAINT data_ype_id FOREIGN KEY (type_id) REFERENCES data_type (id),
+  CONSTRAINT data_type_id FOREIGN KEY (type_id) REFERENCES data_type (id),
   CONSTRAINT data_processor_id FOREIGN KEY (processor_id) REFERENCES data_processor (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
