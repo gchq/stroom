@@ -8,7 +8,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class JobConfig implements IsConfig {
+public class JobDbConfig implements IsConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
 
@@ -28,5 +28,31 @@ public class JobConfig implements IsConfig {
 
     public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionPoolConfig = connectionPoolConfig;
+    }
+
+    public static class Builder {
+        private final JobDbConfig instance;
+
+        public Builder(final JobDbConfig instance) {
+            this.instance = instance;
+        }
+
+        public Builder() {
+            this(new JobDbConfig());
+        }
+
+        public Builder withConnectionConfig(final ConnectionConfig value) {
+            instance.setConnectionConfig(value);
+            return this;
+        }
+
+        public Builder withConnectionPoolConfig(final ConnectionPoolConfig value) {
+            instance.setConnectionPoolConfig(value);
+            return this;
+        }
+
+        public JobDbConfig build() {
+            return instance;
+        }
     }
 }
