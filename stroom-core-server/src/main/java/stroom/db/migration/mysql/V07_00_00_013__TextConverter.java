@@ -18,8 +18,10 @@ package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import stroom.db.migration._V07_00_00.doc.pipeline._V07_00_00_PipelineDoc;
-import stroom.db.migration._V07_00_00.doc.pipeline._V07_00_00_PipelineSerialiser;
+import stroom.db.migration._V07_00_00.doc.textconverter._V07_00_00_OldTextConverter;
+import stroom.db.migration._V07_00_00.doc.textconverter._V07_00_00_TextConverterDoc;
+import stroom.db.migration._V07_00_00.doc.textconverter._V07_00_00_TextConverterDoc.TextConverterType;
+import stroom.db.migration._V07_00_00.doc.textconverter._V07_00_00_TextConverterSerialiser;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,14 +29,14 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
-public class V07_00_00_013__Pipeline extends BaseJavaMigration {
+public class V07_00_00_013__TextConverter extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {
-        final _V07_00_00_PipelineSerialiser serialiser = new _V07_00_00_PipelineSerialiser();
+        final _V07_00_00_TextConverterSerialiser serialiser = new _V07_00_00_TextConverterSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, PARNT_PIPE, DAT FROM PIPE")) {
+                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, CONV_TP, DAT FROM TXT_CONV")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -44,11 +46,11 @@ public class V07_00_00_013__Pipeline extends BaseJavaMigration {
                     final String name = resultSet.getString(5);
                     final String uuid = resultSet.getString(6);
                     final String descrip = resultSet.getString(7);
-                    final String parntPipe = resultSet.getString(8);
+                    final byte convTp = resultSet.getByte(8);
                     final String dat = resultSet.getString(9);
 
-                    final _V07_00_00_PipelineDoc document = new _V07_00_00_PipelineDoc();
-                    document.setType(_V07_00_00_PipelineDoc.DOCUMENT_TYPE);
+                    final _V07_00_00_TextConverterDoc document = new _V07_00_00_TextConverterDoc();
+                    document.setType(_V07_00_00_TextConverterDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -57,8 +59,13 @@ public class V07_00_00_013__Pipeline extends BaseJavaMigration {
                     document.setCreateUser(crtUser);
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
-                    document.setParentPipeline(serialiser.getDocRefFromLegacyXML(parntPipe));
-                    document.setPipelineData(serialiser.getPipelineDataFromXml(dat));
+
+                    final _V07_00_00_OldTextConverter._V07_00_00_TextConverterType converterType = _V07_00_00_OldTextConverter._V07_00_00_TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(convTp);
+                    if (converterType != null) {
+                        document.setConverterType(TextConverterType.valueOf(converterType.name()));
+                    }
+
+                    document.setData(dat);
 
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
@@ -66,7 +73,7 @@ public class V07_00_00_013__Pipeline extends BaseJavaMigration {
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
                                 "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, _V07_00_00_PipelineDoc.DOCUMENT_TYPE);
+                            ps.setString(1, _V07_00_00_TextConverterDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);
@@ -81,7 +88,7 @@ public class V07_00_00_013__Pipeline extends BaseJavaMigration {
         }
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE PIPE TO OLD_PIPE")) {
+                "RENAME TABLE TXT_CONV TO OLD_TXT_CONV")) {
             preparedStatement.execute();
         }
     }

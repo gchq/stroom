@@ -18,8 +18,8 @@ package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import stroom.db.migration._V07_00_00.doc.xmlschema._V07_00_00_XmlSchemaDoc;
-import stroom.db.migration._V07_00_00.doc.xmlschema._V07_00_00_XmlSchemaSerialiser;
+import stroom.db.migration._V07_00_00.doc.xslt._V07_00_00_XsltDoc;
+import stroom.db.migration._V07_00_00.doc.xslt._V07_00_00_XsltSerialiser;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,14 +27,14 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
-public class V07_00_00_004__XmlSchema extends BaseJavaMigration {
+public class V07_00_00_019__Xslt extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {
-        final _V07_00_00_XmlSchemaSerialiser serialiser = new _V07_00_00_XmlSchemaSerialiser();
+        final _V07_00_00_XsltSerialiser serialiser = new _V07_00_00_XsltSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DAT, DEPRC, SCHEMA_GRP, NS, SYSTEM_ID FROM XML_SCHEMA")) {
+                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DAT FROM XSLT")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -45,13 +45,9 @@ public class V07_00_00_004__XmlSchema extends BaseJavaMigration {
                     final String uuid = resultSet.getString(6);
                     final String descrip = resultSet.getString(7);
                     final String dat = resultSet.getString(8);
-                    final boolean deprc = resultSet.getBoolean(9);
-                    final String schemaGrp = resultSet.getString(10);
-                    final String ns = resultSet.getString(11);
-                    final String systemId = resultSet.getString(12);
 
-                    final _V07_00_00_XmlSchemaDoc document = new _V07_00_00_XmlSchemaDoc();
-                    document.setType(_V07_00_00_XmlSchemaDoc.DOCUMENT_TYPE);
+                    final _V07_00_00_XsltDoc document = new _V07_00_00_XsltDoc();
+                    document.setType(_V07_00_00_XsltDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -61,10 +57,6 @@ public class V07_00_00_004__XmlSchema extends BaseJavaMigration {
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
                     document.setData(dat);
-                    document.setDeprecated(deprc);
-                    document.setSchemaGroup(schemaGrp);
-                    document.setNamespaceURI(ns);
-                    document.setSystemId(systemId);
 
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
@@ -72,7 +64,7 @@ public class V07_00_00_004__XmlSchema extends BaseJavaMigration {
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
                                 "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, _V07_00_00_XmlSchemaDoc.DOCUMENT_TYPE);
+                            ps.setString(1, _V07_00_00_XsltDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);
@@ -87,7 +79,7 @@ public class V07_00_00_004__XmlSchema extends BaseJavaMigration {
         }
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "RENAME TABLE XML_SCHEMA TO OLD_XML_SCHEMA")) {
+                "RENAME TABLE XSLT TO OLD_XSLT")) {
             preparedStatement.execute();
         }
     }
