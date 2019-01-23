@@ -17,6 +17,7 @@
 package stroom.node;
 
 import com.google.common.collect.ImmutableMap;
+import stroom.node.api.NodeInfo;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticKey;
 import stroom.util.io.StreamUtil;

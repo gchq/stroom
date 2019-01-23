@@ -19,6 +19,7 @@ package stroom.node;
 
 import stroom.entity.MockNamedEntityService;
 import stroom.entity.shared.BaseResultList;
+import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 

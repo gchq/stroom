@@ -25,8 +25,8 @@ import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.feed.StroomHessianProxyFactory;
-import stroom.node.NodeInfo;
-import stroom.node.NodeService;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;

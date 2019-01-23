@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.DataMetaService;
 import stroom.docref.DocRef;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;

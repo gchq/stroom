@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.node;
+package stroom.node.api;
 
 import stroom.entity.FindService;
 import stroom.node.shared.FindNodeCriteria;

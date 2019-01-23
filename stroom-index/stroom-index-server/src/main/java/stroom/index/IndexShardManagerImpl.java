@@ -21,7 +21,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;

@@ -23,7 +23,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
 import stroom.job.shared.ClusterLock;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;

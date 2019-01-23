@@ -23,7 +23,7 @@ import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.docref.SharedObject;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.task.cluster.api.ClusterTask;

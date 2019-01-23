@@ -26,7 +26,7 @@ import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort.Direction;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

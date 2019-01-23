@@ -25,7 +25,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;

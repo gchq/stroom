@@ -26,7 +26,7 @@ import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.node.NodeService;
+import stroom.node.api.NodeService;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
@@ -35,7 +35,6 @@ import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;

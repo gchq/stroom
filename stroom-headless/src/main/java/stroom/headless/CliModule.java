@@ -22,7 +22,7 @@ import stroom.cache.impl.CacheModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.pipeline.scope.PipelineScopeModule;

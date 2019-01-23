@@ -21,6 +21,8 @@ import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.security.Security;
@@ -32,17 +34,14 @@ import javax.inject.Inject;
 class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, ClusterNodeInfo> {
     private final ClusterCallService clusterCallService;
     private final NodeInfo nodeInfo;
-    private final NodeService nodeService;
     private final Security security;
 
     @Inject
     ClusterNodeInfoHandler(final ClusterCallServiceRemote clusterCallService,
                            final NodeInfo nodeInfo,
-                           final NodeService nodeService,
                            final Security security) {
         this.clusterCallService = clusterCallService;
         this.nodeInfo = nodeInfo;
-        this.nodeService = nodeService;
         this.security = security;
     }
 

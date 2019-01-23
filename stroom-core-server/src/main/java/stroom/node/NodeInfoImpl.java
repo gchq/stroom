@@ -20,6 +20,7 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;

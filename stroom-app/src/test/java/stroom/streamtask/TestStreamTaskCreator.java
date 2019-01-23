@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;

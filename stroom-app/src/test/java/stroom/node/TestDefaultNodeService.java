@@ -19,6 +19,8 @@ package stroom.node;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.node.api.NodeInfo;
+import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.test.AbstractCoreIntegrationTest;
 

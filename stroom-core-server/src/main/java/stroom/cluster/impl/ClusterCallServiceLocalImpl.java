@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.entity.shared.EntityServiceException;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.security.Security;
 import stroom.util.logging.LogExecutionTime;
 

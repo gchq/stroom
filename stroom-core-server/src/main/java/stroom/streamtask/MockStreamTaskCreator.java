@@ -22,7 +22,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.node.NodeService;
+import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;

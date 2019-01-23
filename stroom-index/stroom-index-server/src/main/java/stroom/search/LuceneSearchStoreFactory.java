@@ -24,7 +24,7 @@ import stroom.index.IndexStore;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;

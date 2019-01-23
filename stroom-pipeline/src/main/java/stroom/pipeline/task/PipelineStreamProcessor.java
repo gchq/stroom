@@ -33,7 +33,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;

@@ -17,7 +17,7 @@
 package stroom.pipeline.writer;
 
 import com.google.common.base.Strings;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;

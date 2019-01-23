@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Data;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.security.Security;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;

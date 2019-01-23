@@ -16,6 +16,7 @@
 
 package stroom.node;
 
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.NodeInfoResult;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;

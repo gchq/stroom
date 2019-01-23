@@ -23,7 +23,7 @@ import stroom.entity.event.EntityEventHandler;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 
 import javax.inject.Inject;

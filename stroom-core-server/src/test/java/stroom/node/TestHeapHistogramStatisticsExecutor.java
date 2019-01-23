@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.statistics.internal.InternalStatisticEvent;

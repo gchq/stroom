@@ -20,7 +20,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.NodeService;
+import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.streamtask.shared.ProcessorFilterTask;

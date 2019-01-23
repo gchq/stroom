@@ -23,7 +23,7 @@ import org.slf4j.MarkerFactory;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.SupportsCriteriaLogging;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.security.Security;
 import stroom.security.util.UserTokenUtil;

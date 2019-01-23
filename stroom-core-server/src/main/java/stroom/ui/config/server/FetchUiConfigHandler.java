@@ -16,7 +16,7 @@
 
 package stroom.ui.config.server;
 
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.FetchUiConfigAction;
 import stroom.ui.config.shared.UiConfig;

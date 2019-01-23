@@ -20,7 +20,7 @@ package stroom.streamtask;
 
 import org.junit.jupiter.api.Test;
 import stroom.entity.StroomEntityManager;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 

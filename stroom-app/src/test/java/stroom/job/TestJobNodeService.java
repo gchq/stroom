@@ -23,7 +23,7 @@ import stroom.job.api.JobNodeService;
 import stroom.job.api.JobService;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 

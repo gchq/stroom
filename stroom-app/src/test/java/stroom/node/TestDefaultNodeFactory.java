@@ -18,6 +18,7 @@ package stroom.node;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

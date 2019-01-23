@@ -37,7 +37,7 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;

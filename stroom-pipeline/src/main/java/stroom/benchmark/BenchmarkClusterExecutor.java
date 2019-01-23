@@ -30,7 +30,7 @@ import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
 import stroom.job.shared.JobManager;
-import stroom.node.NodeService;
+import stroom.node.api.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.pipeline.PipelineStore;

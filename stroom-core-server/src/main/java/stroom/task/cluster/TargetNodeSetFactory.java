@@ -18,7 +18,7 @@ package stroom.task.cluster;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.node.NodeInfo;
+import stroom.node.api.NodeInfo;
 import stroom.task.cluster.api.TargetType;
 
 import javax.inject.Inject;

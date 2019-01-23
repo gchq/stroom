@@ -9,6 +9,7 @@ dependencies {
     implementation project(':stroom-data-store:stroom-data-store-api')
     implementation project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
     implementation project(':stroom-entity-shared')
+    implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
