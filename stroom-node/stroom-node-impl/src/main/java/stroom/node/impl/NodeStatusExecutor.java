@@ -22,15 +22,15 @@ import stroom.statistics.internal.InternalStatisticsReceiver;
 
 import javax.inject.Inject;
 
-public class NodeStatusExecutor {
+class NodeStatusExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeStatusExecutor.class);
 
     private final NodeStatusServiceUtil nodeStatusServiceUtil;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
 
     @Inject
-    public NodeStatusExecutor(final NodeStatusServiceUtil nodeStatusServiceUtil,
-                              final InternalStatisticsReceiver internalStatisticsReceiver) {
+    NodeStatusExecutor(final NodeStatusServiceUtil nodeStatusServiceUtil,
+                       final InternalStatisticsReceiver internalStatisticsReceiver) {
 
         this.nodeStatusServiceUtil = nodeStatusServiceUtil;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
@@ -41,7 +41,7 @@ public class NodeStatusExecutor {
      *
      * @return A task.
      */
-    public void exec() {
+    void exec() {
         LOGGER.debug("Updating the status for this node.");
         internalStatisticsReceiver.putEvents(nodeStatusServiceUtil.buildNodeStatus());
     }

@@ -24,7 +24,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 
 import javax.inject.Inject;
-
 import java.util.List;
 
 /**
@@ -32,7 +31,7 @@ import java.util.List;
  * NodeService.
  */
 // @Transactional
-public class NodeServiceTransactionHelper {
+class NodeServiceTransactionHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceTransactionHelper.class);
 
     private final StroomEntityManager entityManager;
@@ -44,7 +43,7 @@ public class NodeServiceTransactionHelper {
 
     @SuppressWarnings("unchecked")
     // @Transactional
-    public Node getNode(final String name) {
+    Node getNode(final String name) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT r FROM ");
         sql.append(Node.class.getName());
@@ -62,7 +61,7 @@ public class NodeServiceTransactionHelper {
 
     @SuppressWarnings("unchecked")
     // @Transactional
-    public Rack getRack(final String name) {
+    Rack getRack(final String name) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT r FROM ");
         sql.append(Rack.class.getName());
@@ -83,7 +82,7 @@ public class NodeServiceTransactionHelper {
      * initial deployment time.
      */
     // @Transactional
-    public Node buildNode(final String nodeName, final String rackName) {
+    Node buildNode(final String nodeName, final String rackName) {
         Node node = getNode(nodeName);
 
         if (node == null) {

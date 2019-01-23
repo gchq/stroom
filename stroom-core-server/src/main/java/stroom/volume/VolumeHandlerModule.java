@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.impl;
+package stroom.volume;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
@@ -23,21 +23,14 @@ import stroom.entity.shared.Clearable;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;
 import stroom.node.shared.FindSystemTableStatusAction;
+import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 
-public class NodeHandlerModule extends AbstractModule {
+public class VolumeHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(NodeInfoImpl.class);
-
         TaskHandlerBinder.create(binder())
-                .bind(ClusterNodeInfoAction.class, ClusterNodeInfoHandler.class)
-                .bind(FetchNodeInfoAction.class, FetchNodeInfoHandler.class)
-                .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class)
-                .bind(NodeInfoClusterTask.class, NodeInfoClusterHandler.class);
-
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(NodeInfoImpl.class);
+                .bind(FlushVolumeStatusAction.class, FlushVolumeStatusHandler.class)
+                .bind(FlushVolumeClusterTask.class, FlushVolumeClusterHandler.class);
     }
 }

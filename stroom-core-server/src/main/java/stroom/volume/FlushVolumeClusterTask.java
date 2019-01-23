@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.impl;
+package stroom.volume;
 
 import stroom.task.cluster.api.ClusterTask;
 import stroom.util.shared.VoidResult;

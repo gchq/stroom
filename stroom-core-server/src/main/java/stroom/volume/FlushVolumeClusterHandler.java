@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,38 +12,32 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.node.impl;
+package stroom.volume;
 
-import stroom.node.shared.FlushVolumeStatusAction;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.task.cluster.api.ClusterDispatchAsyncHelper;
-import stroom.task.cluster.api.TargetType;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 
 
-class FlushVolumeStatusHandler extends AbstractTaskHandler<FlushVolumeStatusAction, VoidResult> {
-    private final ClusterDispatchAsyncHelper dispatchHelper;
+class FlushVolumeClusterHandler extends AbstractTaskHandler<FlushVolumeClusterTask, VoidResult> {
+    private final VolumeService volumeService;
     private final Security security;
 
     @Inject
-    FlushVolumeStatusHandler(final ClusterDispatchAsyncHelper dispatchHelper,
-                             final Security security) {
-        this.dispatchHelper = dispatchHelper;
+    FlushVolumeClusterHandler(final VolumeService volumeService,
+                              final Security security) {
+        this.volumeService = volumeService;
         this.security = security;
     }
 
     @Override
-    public VoidResult exec(final FlushVolumeStatusAction action) {
+    public VoidResult exec(final FlushVolumeClusterTask task) {
         return security.secureResult(() -> {
-            final FlushVolumeClusterTask clusterTask = new FlushVolumeClusterTask(action.getUserToken(), action.getTaskName());
-
-            dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
+            volumeService.flush();
             return new VoidResult();
         });
     }
