@@ -18,8 +18,8 @@
 package stroom.index;
 
 import stroom.docref.DocRef;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEventHandler;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEventHandler;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.entity.util.XMLUtil;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
@@ -31,6 +30,7 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.xml.XMLUtil;
 import stroom.xml.converter.SchemaFilterFactory;
 
 import javax.xml.transform.TransformerConfigurationException;

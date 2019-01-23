@@ -26,7 +26,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.DocumentStore;

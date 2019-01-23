@@ -134,25 +134,6 @@ public class StreamEventLog {
         });
     }
 
-    public void stepStream(final String eventId,
-                           final String feedName,
-                           final String streamTypeName,
-                           final DocRef pipelineRef,
-                           final Throwable th) {
-        try {
-            if (eventId != null) {
-                final Event event = eventLoggingService.createAction("Stepping", "Stepping Stream");
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setView(objectOutcome);
-                objectOutcome.getObjects().add(createStreamObject(eventId, feedName, streamTypeName, pipelineRef));
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
-                eventLoggingService.log(event);
-            }
-        } catch (final Exception e) {
-            LOGGER.error("Unable to step stream!", e);
-        }
-    }
-
     private Query createQuery(final FindDataCriteria findStreamCriteria) {
         if (findStreamCriteria != null) {
             final Advanced advanced = new Advanced();

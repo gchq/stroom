@@ -16,8 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import stroom.entity.shared.BaseEntity;
-
 public class ExtensionProvider {
     private final String extension;
 
@@ -25,7 +23,7 @@ public class ExtensionProvider {
         this.extension = extension;
     }
 
-    public String getExtension(final BaseEntity entity, final String propertyName) {
+    public String getExtension(final Object entity, final String propertyName) {
         return extension;
     }
 }

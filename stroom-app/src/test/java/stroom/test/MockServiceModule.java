@@ -3,7 +3,9 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
 import stroom.cache.impl.CacheModule;
+import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.node.impl.MockNodeServiceModule;
+import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
 import stroom.security.shared.UserJooq;
@@ -23,7 +25,7 @@ public class MockServiceModule extends AbstractModule {
         install(new CacheModule());
         install(new stroom.data.meta.impl.mock.MockDataMetaModule());
         install(new stroom.data.store.impl.fs.MockStreamStoreModule());
-        install(new stroom.dictionary.MockDictionaryModule());
+        install(new MockDictionaryModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.memory.MemoryPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
@@ -50,7 +52,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.task.MockTaskModule());
         install(new stroom.test.MockTestControlModule());
         install(new stroom.volume.MockVolumeModule());
-        install(new stroom.xmlschema.MockXmlSchemaModule());
+        install(new MockXmlSchemaModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.MockEntityModule());
 //        install(new stroom.properties.impl.mock.MockPropertyModule());

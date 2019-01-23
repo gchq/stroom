@@ -20,7 +20,7 @@ package stroom.ruleset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.data.meta.api.AttributeMap;
 import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;

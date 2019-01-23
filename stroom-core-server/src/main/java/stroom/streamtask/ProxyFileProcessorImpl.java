@@ -23,7 +23,7 @@ import stroom.data.store.StreamProgressMonitor;
 import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
 import stroom.feed.FeedDocCache;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;

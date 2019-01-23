@@ -38,7 +38,7 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.xmlschema.XmlSchemaStore;
+import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;

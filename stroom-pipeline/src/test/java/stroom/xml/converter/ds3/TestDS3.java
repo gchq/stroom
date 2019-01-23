@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.entity.util.XMLUtil;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.StreamLocationFactory;
@@ -40,6 +39,7 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.test.StroomUnitTest;
+import stroom.util.xml.XMLUtil;
 import stroom.xml.converter.SchemaFilterFactory;
 import stroom.xml.converter.ds3.ref.VarMap;
 

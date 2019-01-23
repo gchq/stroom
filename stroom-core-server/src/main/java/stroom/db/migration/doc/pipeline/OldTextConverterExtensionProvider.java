@@ -17,7 +17,6 @@
 package stroom.db.migration.doc.pipeline;
 
 import stroom.db.migration.doc.textconverter.OldTextConverter;
-import stroom.entity.shared.BaseEntity;
 import stroom.pipeline.shared.ExtensionProvider;
 
 public class OldTextConverterExtensionProvider extends ExtensionProvider {
@@ -26,7 +25,7 @@ public class OldTextConverterExtensionProvider extends ExtensionProvider {
     }
 
     @Override
-    public String getExtension(final BaseEntity entity, final String propertyName) {
+    public String getExtension(final Object entity, final String propertyName) {
         if (entity != null && propertyName != null && entity instanceof OldTextConverter && propertyName.equals("data")) {
             final OldTextConverter textConverter = (OldTextConverter) entity;
             if (textConverter.getConverterType() != null) {

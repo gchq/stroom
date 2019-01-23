@@ -22,7 +22,7 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.util.shared.Severity;
 

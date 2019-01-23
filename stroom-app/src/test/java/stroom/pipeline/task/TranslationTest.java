@@ -34,7 +34,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;

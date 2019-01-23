@@ -16,26 +16,25 @@
 
 package stroom.pipeline;
 
-import stroom.data.store.StreamEventLog;
 import stroom.pipeline.shared.PipelineStepAction;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
-import stroom.task.api.TaskManager;
 import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskManager;
 
 import javax.inject.Inject;
 
 
 class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, SteppingResult> {
     private final TaskManager taskManager;
-    private final StreamEventLog streamEventLog;
+    private final PipelineEventLog pipelineEventLog;
 
     @Inject
     PipelineStepActionHandler(final TaskManager taskManager,
-                              final StreamEventLog streamEventLog) {
+                              final PipelineEventLog pipelineEventLog) {
         this.taskManager = taskManager;
-        this.streamEventLog = streamEventLog;
+        this.pipelineEventLog = pipelineEventLog;
     }
 
     @Override
@@ -66,11 +65,11 @@ class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, 
             }
 
             if (stepLocation != null) {
-                streamEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), null);
+                pipelineEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), null);
             }
         } catch (final RuntimeException e) {
             if (stepLocation != null) {
-                streamEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), e);
+                pipelineEventLog.stepStream(stepLocation.getEventId(), null, action.getChildStreamType(), action.getPipeline(), e);
             }
         }
 

@@ -56,6 +56,10 @@ include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-server'
 include 'stroom-dashboard:stroom-dashboard-shared'
 
+// Dictionary
+include 'stroom-dictionary:stroom-dictionary-api'
+include 'stroom-dictionary:stroom-dictionary-impl'
+
 // Docstore
 include 'stroom-docstore:stroom-docstore-api'
 include 'stroom-docstore:stroom-docstore-impl'
@@ -101,6 +105,7 @@ include 'stroom-headless'
 // Import Export
 include 'stroom-importexport:stroom-importexport-api'
 include 'stroom-importexport:stroom-importexport-impl'
+include 'stroom-importexport:stroom-importexport-migration'
 
 // Index
 include 'stroom-index:stroom-index-shared'

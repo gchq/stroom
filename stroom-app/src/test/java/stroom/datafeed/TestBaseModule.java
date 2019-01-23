@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;
 import stroom.data.meta.impl.mock.MockDataMetaModule;
 import stroom.data.store.impl.fs.MockStreamStoreModule;
-import stroom.dictionary.DictionaryModule;
+import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.feed.FeedModule;

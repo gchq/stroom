@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
-import stroom.entity.util.XMLUtil;
+import stroom.util.xml.XMLUtil;
 import stroom.pipeline.scope.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
 import stroom.persist.CoreConfig;

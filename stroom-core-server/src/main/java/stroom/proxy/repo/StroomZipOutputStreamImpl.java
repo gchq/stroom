@@ -3,7 +3,7 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapUtil;
+import stroom.data.meta.api.AttributeMapUtil;
 import stroom.task.api.TaskContext;
 import stroom.data.store.StreamProgressMonitor;
 

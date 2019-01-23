@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.entity.util.FatalErrorListener;
-import stroom.entity.util.XMLUtil;
+import stroom.util.xml.FatalErrorListener;
 import stroom.util.xml.SAXParserFactoryFactory;
+import stroom.util.xml.XMLUtil;
 
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;

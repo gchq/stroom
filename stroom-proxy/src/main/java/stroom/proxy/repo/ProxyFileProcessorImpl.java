@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.datafeed.BufferFactory;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
 import stroom.data.store.StreamProgressMonitor;

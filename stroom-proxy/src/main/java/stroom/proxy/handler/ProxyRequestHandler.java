@@ -11,7 +11,7 @@ import stroom.datafeed.RequestHandler;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.docref.DocRef;
-import stroom.feed.AttributeMapUtil;
+import stroom.data.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
 

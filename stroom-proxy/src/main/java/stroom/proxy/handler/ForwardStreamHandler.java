@@ -3,8 +3,8 @@ package stroom.proxy.handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapUtil;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.api.AttributeMapUtil;
+import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
 

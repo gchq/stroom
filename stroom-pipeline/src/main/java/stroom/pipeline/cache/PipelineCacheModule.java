@@ -18,8 +18,8 @@ package stroom.pipeline.cache;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEvent.Handler;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
 
 public class PipelineCacheModule extends AbstractModule {

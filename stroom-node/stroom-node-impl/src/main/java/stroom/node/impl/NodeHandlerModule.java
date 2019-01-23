@@ -18,7 +18,7 @@ package stroom.node.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.event.EntityEvent;
+import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.node.shared.FetchNodeInfoAction;

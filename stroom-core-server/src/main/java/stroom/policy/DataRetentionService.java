@@ -19,7 +19,7 @@ package stroom.policy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.FindPolicyCriteria;
 import stroom.ruleset.shared.Policy;

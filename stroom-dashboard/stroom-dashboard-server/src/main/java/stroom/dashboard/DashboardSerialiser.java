@@ -7,7 +7,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Serialiser2Factory;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;

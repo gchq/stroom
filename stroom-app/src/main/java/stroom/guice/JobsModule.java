@@ -2,6 +2,7 @@ package stroom.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.StroomCoreServerJobsModule;
+import stroom.benchmark.BenchmarkJobsModule;
 import stroom.cache.impl.CacheJobsModule;
 import stroom.cluster.lock.impl.db.ClusterLockJobsModule;
 import stroom.config.global.impl.db.GlobalConfigJobsModule;
@@ -21,6 +22,7 @@ import stroom.statistics.sql.search.SQLStatisticSearchJobsModule;
 public class JobsModule extends AbstractModule {
     @Override
     protected void configure(){
+        install(new BenchmarkJobsModule());
         install(new CacheJobsModule());
         install(new ClusterLockJobsModule());
         install(new DashboardJobsModule());

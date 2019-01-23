@@ -31,10 +31,10 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.SecurityContext;
 import stroom.xml.converter.ds3.DS3ParserFactory;
-import stroom.xmlschema.XmlSchemaCache;
-import stroom.xmlschema.XmlSchemaSerialiser;
-import stroom.xmlschema.XmlSchemaStore;
-import stroom.xmlschema.XmlSchemaStoreImpl;
+import stroom.pipeline.xmlschema.XmlSchemaCache;
+import stroom.pipeline.xmlschema.XmlSchemaSerialiser;
+import stroom.pipeline.xmlschema.XmlSchemaStore;
+import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 public class SchemaFilterFactory {

@@ -25,7 +25,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
 import stroom.data.meta.api.FindDataCriteria;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.StreamTypeNames;

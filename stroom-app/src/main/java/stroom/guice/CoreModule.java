@@ -4,6 +4,8 @@ import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
+import stroom.dictionary.impl.DictionaryHandlerModule;
+import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.cache.impl.CacheHandlerModule;
@@ -28,8 +30,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.logging.LoggingModule());
         install(new stroom.datafeed.DataFeedModule());
         install(new stroom.datasource.DatasourceModule());
-        install(new stroom.dictionary.DictionaryModule());
-        install(new stroom.dictionary.DictionaryHandlerModule());
+        install(new DictionaryModule());
+        install(new DictionaryHandlerModule());
+        install(new stroom.dictionary.DictionaryTaskHandlerModule());
         install(new DocStoreModule());
         install(new stroom.docstore.impl.db.DBPersistenceModule());
         install(new stroom.document.DocumentModule());
@@ -41,6 +44,7 @@ public class CoreModule extends AbstractModule {
         install(new EntityClusterTaskModule());
         install(new stroom.explorer.ExplorerModule());
         install(new stroom.feed.FeedModule());
+        install(new stroom.feed.RemoteFeedModule());
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.importexport.ImportExportHandlerModule());
@@ -96,7 +100,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.visualisation.VisualisationModule());
         install(new stroom.volume.VolumeModule());
         install(new stroom.volume.VolumeHandlerModule());
-        install(new stroom.xmlschema.XmlSchemaModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.job.impl.db.JobDbModule());
     }

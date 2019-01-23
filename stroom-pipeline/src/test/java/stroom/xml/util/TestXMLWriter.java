@@ -23,12 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import stroom.entity.util.XMLUtil;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 import stroom.util.xml.SAXParserFactoryFactory;
+import stroom.util.xml.XMLUtil;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;

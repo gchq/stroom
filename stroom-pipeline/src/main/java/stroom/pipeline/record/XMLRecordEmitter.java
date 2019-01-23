@@ -20,8 +20,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.entity.util.TransformerFactoryFactory;
-import stroom.entity.util.XMLUtil;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
@@ -32,6 +30,8 @@ import stroom.pipeline.filter.XMLFilterAdaptor;
 import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
+import stroom.util.xml.TransformerFactoryFactory;
+import stroom.util.xml.XMLUtil;
 import stroom.xml.event.simple.StartElement;
 import stroom.xml.event.simple.StartPrefixMapping;
 

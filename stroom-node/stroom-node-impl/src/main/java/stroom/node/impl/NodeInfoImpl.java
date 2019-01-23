@@ -16,8 +16,8 @@
 
 package stroom.node.impl;
 
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEventHandler;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.node.api.NodeInfo;

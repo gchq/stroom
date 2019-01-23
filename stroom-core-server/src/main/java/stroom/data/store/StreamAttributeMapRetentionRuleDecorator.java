@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.util.date.DateUtil;
 

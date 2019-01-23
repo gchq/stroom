@@ -24,7 +24,7 @@ import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.feed.FeedDocCache;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;

@@ -27,7 +27,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.filter.LSResourceResolverImpl;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.xmlschema.XmlSchemaCache;
+import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;

@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapUtil;
+import stroom.data.meta.api.AttributeMapUtil;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;

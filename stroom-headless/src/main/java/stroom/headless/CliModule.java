@@ -19,6 +19,7 @@ package stroom.headless;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import stroom.cache.impl.CacheModule;
+import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
@@ -46,8 +47,8 @@ public class CliModule extends AbstractModule {
         install(new CacheModule());
         install(new PipelineCacheModule());
 //        install(new ClusterModule());
-        install(new stroom.dictionary.DictionaryModule());
-//        install(new stroom.dictionary.DictionaryHandlerModule());
+        install(new DictionaryModule());
+//        install(new stroom.dictionary.impl.DictionaryHandlerModule());
 //        install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.document.DocumentModule());
 //        install(new stroom.entity.EntityModule());
@@ -81,7 +82,6 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.task.TaskModule());
 //        install(new stroom.task.cluster.ClusterTaskModule());
 //        install(new stroom.volume.VolumeModule());
-        install(new stroom.xmlschema.XmlSchemaModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);

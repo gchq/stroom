@@ -16,11 +16,11 @@
 
 package stroom.pipeline.cache;
 
-import stroom.entity.event.EntityEvent;
-import stroom.entity.event.EntityEventHandler;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEventHandler;
 import stroom.security.Security;
 import stroom.cache.api.CacheManager;
-import stroom.xmlschema.XmlSchemaCache;
+import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;

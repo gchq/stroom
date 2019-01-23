@@ -29,7 +29,7 @@ import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
-import stroom.pipeline.XsltStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.factory.Pipeline;

@@ -34,8 +34,8 @@ import stroom.pipeline.cache.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.xmlschema.XmlSchemaCache;
-import stroom.xmlschema.XmlSchemaCache.SchemaSet;
+import stroom.pipeline.xmlschema.XmlSchemaCache;
+import stroom.pipeline.xmlschema.XmlSchemaCache.SchemaSet;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 

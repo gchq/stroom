@@ -26,7 +26,7 @@ import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.AttributeMapUtil;
+import stroom.data.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.StroomFileNameUtil;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;

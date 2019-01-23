@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.data.meta.api.DataMetaService;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;

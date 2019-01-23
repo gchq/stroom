@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.ruleset.server'
 
 dependencies {
     implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
