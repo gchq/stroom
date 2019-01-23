@@ -20,8 +20,6 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pool.Pool;
-import stroom.pool.PoolItem;
 
 import java.util.List;
 

@@ -20,14 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.node.impl.RecordCountService;
-import stroom.node.impl.Incrementor;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.Incrementor;
 import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.state.RecordCountService;
 
 import javax.inject.Inject;
 

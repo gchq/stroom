@@ -14,10 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.filter;
+package stroom.refdata;
 
-import stroom.pool.InternPool;
-import stroom.xml.event.EventList;
+import java.lang.ref.WeakReference;
+import java.util.WeakHashMap;
 
-public class EventListInternPool extends InternPool<EventList> {
+public class WeakPool<T> {
+    private final WeakHashMap<T, WeakReference<T>> pool = new WeakHashMap<>();
+
+    public T get(final T object) {
+        final WeakReference<T> ref = pool.get(object);
+        if (ref != null) {
+            return ref.get();
+        }
+
+        return null;
+    }
+
+    public void put(final T object) {
+        pool.put(object, new WeakReference<>(object));
+    }
+
+    public int size() {
+        return pool.size();
+    }
 }

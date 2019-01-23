@@ -28,7 +28,6 @@ import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.pool.AbstractDocPool;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.cache.api.CacheManager;

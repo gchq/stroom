@@ -31,8 +31,6 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
-import stroom.pool.AbstractDocPool;
-import stroom.pool.PoolItem;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.cache.api.CacheManager;

@@ -223,7 +223,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 
         if (requiredNumber > set.size()) {
             LOGGER.warn("getVolumeSet - Failed to obtain " + requiredNumber + " volumes as required on node "
-                    + nodeInfo.getThisNode().getName() + " (set=" + set + ")");
+                    + nodeInfo.getThisNodeName() + " (set=" + set + ")");
         }
 
         return set;

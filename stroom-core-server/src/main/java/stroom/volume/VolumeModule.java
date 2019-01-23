@@ -25,16 +25,12 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEvent.Handler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
-import stroom.node.impl.NodeServiceModule;
 import stroom.node.shared.VolumeEntity;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 
 public class VolumeModule extends AbstractModule {
     @Override
     protected void configure() {
-        // Volumes depend on nodes.
-        install(new NodeServiceModule());
-
         bind(VolumeService.class).to(VolumeServiceImpl.class);
 
         OptionalBinder.newOptionalBinder(binder(), InternalStatisticsReceiver.class);

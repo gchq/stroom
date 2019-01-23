@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.pipeline.cache;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

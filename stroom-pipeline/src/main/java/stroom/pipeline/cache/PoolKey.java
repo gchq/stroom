@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.pipeline.cache;
 
-public class InternPool<T> {
-    private final WeakPool<T> pool = new WeakPool<>();
+public class PoolKey<K> {
+    private final K key;
 
-    public synchronized T intern(final T object) {
-        T res = pool.get(object);
-        if (res == null) {
-            pool.put(object);
-            res = object;
-        }
-        return res;
+    public PoolKey(final K key) {
+        this.key = key;
     }
 
-    public int size() {
-        return pool.size();
+    public K getKey() {
+        return key;
     }
 }

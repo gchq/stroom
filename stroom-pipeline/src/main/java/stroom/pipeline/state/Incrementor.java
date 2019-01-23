@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.impl;
+package stroom.pipeline.state;
 
 public interface Incrementor {
     void increment();

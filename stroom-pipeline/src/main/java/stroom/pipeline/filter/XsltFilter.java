@@ -49,7 +49,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.writer.PathCreator;
-import stroom.pool.PoolItem;
+import stroom.pipeline.cache.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;

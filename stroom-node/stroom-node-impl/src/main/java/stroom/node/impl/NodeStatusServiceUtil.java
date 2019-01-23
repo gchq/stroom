@@ -18,6 +18,7 @@ package stroom.node.impl;
 
 import com.google.common.collect.ImmutableMap;
 import stroom.node.api.NodeInfo;
+import stroom.pipeline.state.RecordCountService;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticKey;
 import stroom.util.io.StreamUtil;
@@ -40,7 +41,7 @@ import java.util.regex.Pattern;
  * only transaction so it queries the slave node.
  */
 @Singleton
-public class NodeStatusServiceUtil {
+ class NodeStatusServiceUtil {
     private static final String INTERNAL_STAT_KEY_MEMORY = "memory";
     private static final String INTERNAL_STAT_KEY_CPU = "cpu";
     private static final String INTERNAL_STAT_KEY_EVENTS_PER_SECOND = "eventsPerSecond";
@@ -53,7 +54,7 @@ public class NodeStatusServiceUtil {
     private CPUStats previousCPUStats;
 
     @Inject
-    public NodeStatusServiceUtil(final NodeInfo nodeInfo,
+     NodeStatusServiceUtil(final NodeInfo nodeInfo,
                                  final RecordCountService recordCountService) {
         this.nodeInfo = nodeInfo;
         this.recordCountService = recordCountService;
@@ -62,7 +63,7 @@ public class NodeStatusServiceUtil {
     /**
      * Read the stats from a line.
      */
-    public CPUStats createLinuxStats(String lines) {
+     CPUStats createLinuxStats(String lines) {
         if (lines == null) {
             return null;
         }

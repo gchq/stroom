@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.pipeline.cache;
 
-public class PoolKey<K> {
-    private final K key;
+public interface Pool<K, V> {
+    PoolItem<V> borrowObject(K key, boolean usePool);
 
-    public PoolKey(final K key) {
-        this.key = key;
-    }
-
-    public K getKey() {
-        return key;
-    }
+    void returnObject(PoolItem<V> poolItem, boolean usePool);
 }

@@ -16,7 +16,5 @@
 
 package stroom.pipeline.cache;
 
-import stroom.pool.Pool;
-
 public interface SchemaPool extends Pool<SchemaKey, StoredSchema> {
 }

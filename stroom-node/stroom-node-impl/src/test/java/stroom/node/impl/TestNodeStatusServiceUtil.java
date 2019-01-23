@@ -18,7 +18,6 @@ package stroom.node.impl;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.node.impl.NodeStatusServiceUtil;
 import stroom.node.impl.NodeStatusServiceUtil.CPUStats;
 
 import static org.assertj.core.api.Assertions.assertThat;

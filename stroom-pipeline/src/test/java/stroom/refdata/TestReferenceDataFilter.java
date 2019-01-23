@@ -19,13 +19,11 @@ package stroom.refdata;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.jvnet.fastinfoset.FastInfosetException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -82,19 +80,6 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
     @Mock
     private RefDataLoader refDataLoader;
-//    @Captor
-//    private ArgumentCaptor<RefDataValue> keyValueValueCaptor;
-//    @Captor
-//    private ArgumentCaptor<RefDataValue> rangeValueValueCaptor;
-//    @Captor
-//    private ArgumentCaptor<String> keyValueKeyCaptor;
-//    @Captor
-//    private ArgumentCaptor<Range<Long>> rangeValueKeyCaptor;
-
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     void testStringKeyValues() {

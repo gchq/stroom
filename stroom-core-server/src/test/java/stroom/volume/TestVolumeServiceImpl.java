@@ -21,11 +21,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
-import stroom.node.impl.MockNodeInfo;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -51,6 +53,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_VOLUMES_PATH;
     private static final Path DEFAULT_INDEX_VOLUME_PATH;
@@ -84,10 +87,11 @@ class TestVolumeServiceImpl extends StroomUnitTest {
     private StroomEntityManager stroomEntityManager;
     @Mock
     private EntityManagerSupport entityManagerSupport;
+    @Mock
+    private NodeInfo nodeInfo;
 
     @BeforeEach
     void init() {
-        MockitoAnnotations.initMocks(this);
         deleteDefaultVolumesDir();
 
         final List<VolumeEntity> volumeList = new ArrayList<>();
@@ -98,7 +102,10 @@ class TestVolumeServiceImpl extends StroomUnitTest {
 
         volumeConfig.setResilientReplicationCount(2);
 
-        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new MockNodeInfo(node1a), volumeConfig, null);
+        Mockito.when(nodeInfo.getThisNodeName()).thenReturn("1a");
+        Mockito.when(nodeInfo.getThisNode()).thenReturn(node1a);
+
+        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, nodeInfo, volumeConfig, null);
         volumeServiceImpl.volumeList = volumeList;
     }
 

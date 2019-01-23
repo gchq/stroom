@@ -22,7 +22,6 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.node.api.NodeInfo;
-import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.ClusterNodeInfoAction;
 import stroom.security.Security;

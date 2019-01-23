@@ -2,7 +2,6 @@ package stroom;
 
 import com.google.inject.AbstractModule;
 import stroom.data.store.DataStoreJobModule;
-import stroom.node.impl.NodeJobsModule;
 import stroom.policy.PolicyJobsModule;
 import stroom.resource.ResourceJobsModule;
 import stroom.streamtask.StreamTaskJobsModule;
@@ -16,6 +15,5 @@ public class StroomCoreServerJobsModule extends AbstractModule {
         install(new StreamTaskJobsModule());
         install(new ResourceJobsModule());
         install(new VolumeJobsModule());
-        install(new NodeJobsModule());
     }
 }

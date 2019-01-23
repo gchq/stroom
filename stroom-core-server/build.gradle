@@ -33,7 +33,7 @@ dependencies {
     implementation libs.stroomQueryApi
 
     implementation libs.commons_compress
-    implementation libs.commons_exec
+//    implementation libs.commons_exec
     implementation libs.commons_fileupload
     implementation libs.commons_io
     implementation libs.commons_lang
@@ -83,6 +83,7 @@ dependencies {
     runtimeOnly libs.lucene_analyzers_common
     runtimeOnly libs.lucene_queryparser
 
+    testImplementation project(':stroom-node:stroom-node-impl-mock')
     testImplementation project(':stroom-security:stroom-security-impl-mock')
     testImplementation project(':stroom-test-common')
     

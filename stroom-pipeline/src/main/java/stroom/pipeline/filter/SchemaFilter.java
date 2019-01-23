@@ -30,7 +30,7 @@ import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.state.PipelineContext;
-import stroom.pool.PoolItem;
+import stroom.pipeline.cache.PoolItem;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;

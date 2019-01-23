@@ -29,7 +29,6 @@ import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.io.StreamCloser;
-import stroom.node.impl.NodeServiceModule;
 import stroom.task.TaskModule;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.DbUtil;
@@ -46,7 +45,6 @@ public class FileSystemDataStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new NodeServiceModule());
         install(new VolumeModule());
         install(new TaskModule());
 

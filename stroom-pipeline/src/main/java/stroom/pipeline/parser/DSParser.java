@@ -37,7 +37,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pool.PoolItem;
+import stroom.pipeline.cache.PoolItem;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;

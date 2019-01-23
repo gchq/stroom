@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.node.impl;
+package stroom.pipeline.state;
 
 import javax.inject.Singleton;
 import java.util.concurrent.atomic.AtomicLong;

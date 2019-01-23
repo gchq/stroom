@@ -1,11 +1,10 @@
 package stroom.node.impl;
 
+import stroom.job.api.Schedule.ScheduleType;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;
 
 import javax.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class NodeJobsModule extends ScheduledJobsModule {
     @Override
@@ -16,13 +15,13 @@ public class NodeJobsModule extends ScheduledJobsModule {
                 .description("Generate Java heap map histogram ('jmap -histo:live') and record statistic events " +
                         "for the entries. CAUTION: this will pause the JVM, only enable this if you understand the " +
                         "consequences!")
-                .schedule(CRON, "0 * *")
+                .schedule(ScheduleType.CRON, "0 * *")
                 .enabled(false)
                 .to(JavaHeapHistogramStatistics.class);
         bindJob()
                 .name("Node Status")
                 .description("Job to record status of node (CPU and Memory usage)")
-                .schedule(CRON, "* * *")
+                .schedule(ScheduleType.CRON, "* * *")
                 .advanced(false)
                 .to(NodeStatus.class);
     }

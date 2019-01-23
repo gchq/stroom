@@ -114,8 +114,9 @@ include 'stroom-kafka:stroom-kafka-pipeline'
 
 // Node
 include 'stroom-node:stroom-node-api'
-include 'stroom-node:stroom-node-impl-db'
-include 'stroom-node:stroom-node-impl-db-gen'
+include 'stroom-node:stroom-node-impl'
+include 'stroom-node:stroom-node-impl-mock'
+//include 'stroom-node:stroom-node-impl-db-gen'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

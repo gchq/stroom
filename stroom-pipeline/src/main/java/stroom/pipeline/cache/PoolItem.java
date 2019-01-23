@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.pipeline.cache;
 
 public class PoolItem<V> {
     private final PoolKey key;

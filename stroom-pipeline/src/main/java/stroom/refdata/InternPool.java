@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.refdata;
 
-public interface Pool<K, V> {
-    PoolItem<V> borrowObject(K key, boolean usePool);
+public class InternPool<T> {
+    private final WeakPool<T> pool = new WeakPool<>();
 
-    void returnObject(PoolItem<V> poolItem, boolean usePool);
+    public synchronized T intern(final T object) {
+        T res = pool.get(object);
+        if (res == null) {
+            pool.put(object);
+            res = object;
+        }
+        return res;
+    }
+
+    public int size() {
+        return pool.size();
+    }
 }

@@ -165,8 +165,6 @@ class TestReferenceData extends AbstractLmdbDbTest {
 //        pipelineStore = new PipelineStoreImpl(new StoreImpl<>(inMemoryPersistence, securityContextMock),
 //                securityContextMock, inMemoryPersistence, pipelineSerialiser);
 
-        MockitoAnnotations.initMocks(this);
-
         Mockito.when(mockDocumentPermissionCache.hasDocumentPermission(
                 Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(true);

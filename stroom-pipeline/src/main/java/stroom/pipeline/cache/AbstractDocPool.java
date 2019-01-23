@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pool;
+package stroom.pipeline.cache;
 
 import stroom.docstore.shared.Doc;
 import stroom.security.DocumentPermissionCache;

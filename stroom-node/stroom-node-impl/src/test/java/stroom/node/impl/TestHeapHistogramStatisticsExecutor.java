@@ -12,13 +12,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
-import stroom.node.shared.Node;
-import stroom.node.shared.Rack;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.logging.LambdaLogger;
@@ -40,6 +37,8 @@ class TestHeapHistogramStatisticsExecutor {
             event.getTags().get(HeapHistogramStatisticsExecutor.TAG_NAME_CLASS_NAME);
     @Mock
     private InternalStatisticsReceiver mockInternalStatisticsReceiver;
+    @Mock
+    private NodeInfo nodeInfo;
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
     private HeapHistogramStatisticsExecutor executor;
@@ -48,11 +47,7 @@ class TestHeapHistogramStatisticsExecutor {
     @BeforeEach
     void setup() {
         try {
-            MockitoAnnotations.initMocks(this);
-            final Rack rack1 = Rack.create("rack1");
-            final Node node1a = Node.create(rack1, "1a");
-            final NodeInfo nodeInfo = new MockNodeInfo(node1a);
-
+            Mockito.when(nodeInfo.getThisNodeName()).thenReturn("1a");
             final HeapHistogramService heapHistogramService = new HeapHistogramService(heapHistogramConfig);
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeInfo);
         } catch (final RuntimeException e) {
