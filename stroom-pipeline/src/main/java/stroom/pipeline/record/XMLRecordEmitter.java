@@ -32,8 +32,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.xml.TransformerFactoryFactory;
 import stroom.util.xml.XMLUtil;
-import stroom.xml.event.simple.StartElement;
-import stroom.xml.event.simple.StartPrefixMapping;
+import stroom.pipeline.xml.event.simple.StartElement;
+import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.OutputKeys;

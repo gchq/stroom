@@ -30,7 +30,7 @@ import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.StreamRetentionExecutor;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;

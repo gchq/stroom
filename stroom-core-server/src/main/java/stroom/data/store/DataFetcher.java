@@ -28,7 +28,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
-import stroom.feed.FeedProperties;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.pipeline.MarkerListCreator;

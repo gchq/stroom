@@ -23,7 +23,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.feed.FeedDocCache;
+import stroom.pipeline.feed.FeedDocCache;
 import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;

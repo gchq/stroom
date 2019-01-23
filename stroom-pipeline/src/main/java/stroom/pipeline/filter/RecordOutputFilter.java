@@ -24,10 +24,10 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.xml.event.Event;
-import stroom.xml.event.simple.SimpleEventList;
-import stroom.xml.event.simple.StartElement;
-import stroom.xml.event.simple.StartPrefixMapping;
+import stroom.pipeline.xml.event.Event;
+import stroom.pipeline.xml.event.simple.SimpleEventList;
+import stroom.pipeline.xml.event.simple.StartElement;
+import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
 import javax.inject.Inject;
 import java.util.List;

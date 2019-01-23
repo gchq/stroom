@@ -27,7 +27,7 @@ import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;

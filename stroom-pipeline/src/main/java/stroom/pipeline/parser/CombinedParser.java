@@ -43,8 +43,8 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.cache.PoolItem;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
-import stroom.xml.converter.ParserFactory;
-import stroom.xml.converter.json.JSONParserFactory;
+import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.pipeline.xml.converter.json.JSONParserFactory;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;

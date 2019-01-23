@@ -20,7 +20,7 @@ import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.policy.PolicyConfig;
-import stroom.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.shard.IndexShardSearchConfig;

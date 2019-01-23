@@ -21,7 +21,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
 import stroom.data.meta.api.AttributeMapUtil;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriterProxy;

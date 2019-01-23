@@ -27,7 +27,7 @@ import stroom.data.meta.api.DataStatus;
 import stroom.docref.DocRef;
 import stroom.entity.shared.Period;
 import stroom.entity.util.PeriodUtil;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

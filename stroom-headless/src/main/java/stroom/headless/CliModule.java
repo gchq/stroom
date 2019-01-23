@@ -26,6 +26,7 @@ import stroom.io.StreamCloser;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.Node;
 import stroom.pipeline.cache.PipelineCacheModule;
+import stroom.pipeline.feed.FeedModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -55,7 +56,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.entity.cluster.EntityClusterModule());
 //        install(new EntityClusterTaskModule());
         install(new stroom.explorer.MockExplorerModule());
-        install(new stroom.feed.FeedModule());
+        install(new FeedModule());
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
 //        install(new stroom.jobsystem.JobSystemModule());
@@ -72,7 +73,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.pipeline.task.PipelineStreamTaskModule());
 //        install(new stroom.policy.PolicyModule());
 //        install(new stroom.properties.impl.PropertyModule());
-//        install(new stroom.refdata.ReferenceDataModule());
+//        install(new stroom.pipeline.refdata.ReferenceDataModule());
 //        install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());

@@ -26,7 +26,6 @@ import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.xslt.migration.OldXslt;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;

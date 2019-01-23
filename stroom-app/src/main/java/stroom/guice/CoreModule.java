@@ -16,6 +16,7 @@ import stroom.node.impl.NodeModule;
 import stroom.node.impl.NodeServiceModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.cache.PipelineCacheModule;
+import stroom.pipeline.feed.FeedModule;
 import stroom.pipeline.scope.PipelineScopeModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
@@ -43,7 +44,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.entity.cluster.EntityClusterModule());
         install(new EntityClusterTaskModule());
         install(new stroom.explorer.ExplorerModule());
-        install(new stroom.feed.FeedModule());
+        install(new FeedModule());
         install(new stroom.feed.RemoteFeedModule());
         install(new PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
@@ -72,7 +73,7 @@ public class CoreModule extends AbstractModule {
         install(new GlobalConfigModule());
         install(new GlobalConfigDbModule());
         install(new stroom.query.QueryModule());
-        install(new stroom.refdata.ReferenceDataModule());
+        install(new stroom.pipeline.refdata.ReferenceDataModule());
         install(new stroom.ruleset.RulesetModule());
         install(new stroom.script.ScriptModule());
         install(new stroom.search.SearchModule());

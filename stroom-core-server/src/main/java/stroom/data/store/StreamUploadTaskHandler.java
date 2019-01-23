@@ -28,7 +28,7 @@ import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.data.meta.api.AttributeMapUtil;
-import stroom.feed.FeedDocCache;
+import stroom.pipeline.feed.FeedDocCache;
 import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;

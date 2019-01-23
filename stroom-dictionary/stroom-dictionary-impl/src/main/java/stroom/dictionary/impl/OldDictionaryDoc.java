@@ -36,6 +36,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
+/**
+ * Used for legacy migration
+ **/
 @Deprecated
 public class OldDictionaryDoc extends Doc {
     private static final long serialVersionUID = -4208920620555926044L;

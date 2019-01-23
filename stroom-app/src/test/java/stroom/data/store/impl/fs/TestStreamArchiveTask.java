@@ -27,7 +27,7 @@ import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.docref.DocRef;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.job.MockTask;
 import stroom.node.api.NodeInfo;

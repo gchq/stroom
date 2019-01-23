@@ -19,7 +19,7 @@ package stroom.data.store;
 
 import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.EntityServiceException;
-import stroom.feed.FeedProperties;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;

@@ -13,7 +13,7 @@ import stroom.index.IndexJobsModule;
 import stroom.job.JobSystemJobsModule;
 import stroom.node.impl.NodeJobsModule;
 import stroom.pipeline.PipelineJobsModule;
-import stroom.refdata.store.RefDataStoreJobsModule;
+import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
 import stroom.search.SearchJobsModule;
 import stroom.search.shard.ShardJobsModule;
 import stroom.statistics.sql.SQLStatisticsJobsModule;

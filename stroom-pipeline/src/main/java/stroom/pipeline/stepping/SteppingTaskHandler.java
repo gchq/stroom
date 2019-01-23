@@ -28,7 +28,7 @@ import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.feed.FeedProperties;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.io.StreamCloser;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;

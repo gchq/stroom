@@ -17,7 +17,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;
-import stroom.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;

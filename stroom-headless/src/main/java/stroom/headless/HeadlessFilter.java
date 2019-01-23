@@ -28,8 +28,8 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.xml.event.simple.StartElement;
-import stroom.xml.event.simple.StartPrefixMapping;
+import stroom.pipeline.xml.event.simple.StartElement;
+import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

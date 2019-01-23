@@ -31,7 +31,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.feed.FeedProperties;
+import stroom.pipeline.feed.FeedProperties;
 import stroom.io.StreamCloser;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;

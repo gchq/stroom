@@ -26,7 +26,7 @@ import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.meta.api.AttributeMapUtil;
-import stroom.feed.FeedDocCache;
+import stroom.pipeline.feed.FeedDocCache;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;

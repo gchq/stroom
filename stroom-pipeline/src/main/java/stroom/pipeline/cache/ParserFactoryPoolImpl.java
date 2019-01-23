@@ -33,8 +33,8 @@ import stroom.security.SecurityContext;
 import stroom.cache.api.CacheManager;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.xml.converter.ParserFactory;
-import stroom.xml.converter.xmlfragment.XMLFragmentParserFactory;
+import stroom.pipeline.xml.converter.ParserFactory;
+import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;

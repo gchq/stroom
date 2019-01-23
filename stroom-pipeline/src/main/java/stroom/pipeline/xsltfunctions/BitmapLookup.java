@@ -21,11 +21,11 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
-import stroom.refdata.LookupIdentifier;
-import stroom.refdata.ReferenceData;
-import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.store.RefDataValueProxy;
-import stroom.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.refdata.LookupIdentifier;
+import stroom.pipeline.refdata.ReferenceData;
+import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
