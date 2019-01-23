@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-util')
+    implementation project(':stroom-job:stroom-job-impl-db-gen')
 
     implementation libs.hibernate_core
     implementation libs.flyway_core
@@ -20,6 +21,9 @@ dependencies {
 //    testImplementation libs.commons_io
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
+
+    testImplementation libs.test_containers
+    testImplementation libs.test_containers_mysql
 
     testImplementation libs.junit_jupiter_api
 

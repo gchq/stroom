@@ -30,6 +30,7 @@ import stroom.job.api.DistributedTaskFactoryBean;
 import stroom.job.api.JobService;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
+import stroom.job.impl.db.JobDao;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.security.Security;
@@ -51,16 +52,19 @@ import java.util.Set;
 public class JobServiceImpl extends NamedEntityServiceImpl<Job, FindJobCriteria> implements JobService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobServiceImpl.class);
 
+    private JobDao jobDao;
     private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     @Inject
     JobServiceImpl(final StroomEntityManager entityManager,
+                   final JobDao jobDao,
                    final Security security,
                    final UiConfig uiConfig,
                    final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
                    final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security, uiConfig);
+        this.jobDao = jobDao;
         this.scheduledJobsMap = scheduledJobsMap;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }

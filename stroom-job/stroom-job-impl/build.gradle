@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-entity-shared')
     implementation project(":stroom-job:stroom-job-api")
     implementation project(":stroom-job:stroom-job-shared")
+    implementation project(":stroom-job:stroom-job-impl-db")
     implementation project(":stroom-cluster-lock:stroom-cluster-lock-api")
     implementation project(':stroom-node:stroom-node-api')
     implementation project(":stroom-security:stroom-security-api")

@@ -8,6 +8,7 @@ public final class Job {
     private boolean enabled = false;
     private String description;
     private boolean advanced;
+    private int version;
 
     public Job(){}
 
@@ -48,6 +49,14 @@ public final class Job {
 
     public void setAdvanced(boolean advanced) {
         this.advanced = advanced;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
     }
 
     @Override

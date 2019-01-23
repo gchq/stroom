@@ -98,5 +98,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.volume.VolumeHandlerModule());
         install(new stroom.xmlschema.XmlSchemaModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
+        install(new stroom.job.impl.db.JobDbModule());
     }
 }

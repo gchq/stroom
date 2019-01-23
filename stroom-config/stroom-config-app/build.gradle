@@ -13,6 +13,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-security:stroom-security-server')
     implementation project(':stroom-security:stroom-security-impl-db')
+    implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-statistics:stroom-statistics-server')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-pipeline')

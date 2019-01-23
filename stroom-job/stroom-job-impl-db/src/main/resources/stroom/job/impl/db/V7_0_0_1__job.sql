@@ -1,6 +1,7 @@
 --
 -- Create the job tables
 --
+USE stroom;
 
 CREATE TABLE IF NOT EXISTS job (
   id                    int(11) NOT NULL AUTO_INCREMENT,
