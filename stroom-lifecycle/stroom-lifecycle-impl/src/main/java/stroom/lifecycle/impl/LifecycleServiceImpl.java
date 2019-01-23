@@ -25,7 +25,6 @@ import stroom.util.logging.LogExecutionTime;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.security.Security;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.Map;
@@ -44,8 +43,6 @@ class LifecycleServiceImpl implements LifecycleService {
     private final Deque<Provider<Runnable>> startPending;
     private final Deque<Provider<Runnable>> stopPending;
 
-    private final Security security;
-
     // The scheduled executor that executes executable beans.
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
     private final AtomicBoolean enabled = new AtomicBoolean();
@@ -56,10 +53,8 @@ class LifecycleServiceImpl implements LifecycleService {
     @Inject
     LifecycleServiceImpl(final Map<StartupTask, Provider<Runnable>> startupTaskMap,
                          final Map<ShutdownTask, Provider<Runnable>> shutdownTaskMap,
-                         final LifecycleConfig lifecycleConfig,
-                         final Security security) {
+                         final LifecycleConfig lifecycleConfig) {
         this.enabled.set(lifecycleConfig.isEnabled());
-        this.security = security;
 
         startPending = startupTaskMap.entrySet()
                 .stream()
