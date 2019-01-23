@@ -68,8 +68,14 @@ class JobDaoImpl implements JobDao {
 
     @Override
     public Optional<Job> fetch(int id) {
-        //TODO
-        return Optional.empty();
+        try (final Connection connection = connectionProvider.getConnection();
+             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL)) {
+            Job job = context.selectFrom(JOB).where(JOB.ID.eq(id)).fetchOneInto(Job.class);
+            return Optional.ofNullable(job);
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
 }
