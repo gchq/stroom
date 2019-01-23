@@ -31,7 +31,6 @@ include 'stroom-app-gwt'
 // Cache
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'
-include 'stroom-cache:stroom-cache-shared'
 
 // Cluster lock
 include 'stroom-cluster-lock:stroom-cluster-lock-api'

@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.core.client'
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-activity:stroom-activity-shared')
-    implementation project(':stroom-cache:stroom-cache-shared')
     implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-client-widget')
     implementation project(':stroom-core-shared')
