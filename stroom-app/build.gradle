@@ -88,6 +88,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-shared')
+    implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-impl-db')
     implementation project(':stroom-util')

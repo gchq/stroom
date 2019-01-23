@@ -28,7 +28,7 @@ public class JobDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<JobDbConfig> configProvider) {
+    public ConnectionProvider getConnectionProvider(final Provider<JobDbConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
 
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
