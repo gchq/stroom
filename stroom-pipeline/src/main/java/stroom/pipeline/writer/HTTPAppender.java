@@ -2,9 +2,9 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.shared.AttributeMap;
 import stroom.data.meta.api.AttributeMapUtil;
-import stroom.data.meta.api.StroomHeaderArguments;
+import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;

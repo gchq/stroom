@@ -19,7 +19,7 @@ package stroom.data.store;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.util.xml.XMLMarshallerUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

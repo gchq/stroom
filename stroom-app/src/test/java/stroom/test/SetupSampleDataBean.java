@@ -20,7 +20,7 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.meta.impl.db.MetaKeyService;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;

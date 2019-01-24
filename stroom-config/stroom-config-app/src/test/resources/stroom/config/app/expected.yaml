@@ -115,6 +115,14 @@ pipeline:
     maxActiveDestinations: 100
   parser:
     secureProcessing: true
+  refdata:
+    localDir: "${stroom.temp}/refDataOffHeapStore"
+    maxPutsBeforeCommit: 1000
+    maxReaders: 100
+    maxStoreSize: "50G"
+    purgeAge: "30d"
+    valueBufferCapacity: 1000
+    readAheadEnabled: true
   xslt:
     maxElements: 1000000
 policy:
@@ -146,14 +154,6 @@ proxyAggregation:
 queryHistory:
   itemsRetention: 100
   daysRetention: 365
-refdata:
-  localDir: "${stroom.temp}/refDataOffHeapStore"
-  maxPutsBeforeCommit: 1000
-  maxReaders: 100
-  maxStoreSize: "50G"
-  purgeAge: "30d"
-  valueBufferCapacity: 1000
-  readAheadEnabled: true
 search:
   maxStoredDataQueueSize: 1000
   maxBooleanClauseCount: 1024

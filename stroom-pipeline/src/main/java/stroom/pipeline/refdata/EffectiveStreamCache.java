@@ -25,9 +25,9 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
-import stroom.data.meta.api.EffectiveMetaDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.shared.EffectiveMetaDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.CacheUtil;
 

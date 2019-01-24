@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.pipeline.scope.PipelineScoped;

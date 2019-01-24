@@ -17,9 +17,9 @@
 
 package stroom.streamtask;
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.FindDataCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.node.api.NodeService;

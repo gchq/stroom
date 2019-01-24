@@ -1,4 +1,4 @@
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;

@@ -86,7 +86,7 @@ public class AppConfigModule extends AbstractModule {
         bind(ProxyAggregationConfig.class).toInstance(appConfig.getProxyAggregationConfig());
         bind(QueryConfig.class).toInstance(appConfig.getUiConfig().getQueryConfig());
         bind(QueryHistoryConfig.class).toInstance(appConfig.getQueryHistoryConfig());
-        bind(RefDataStoreConfig.class).toInstance(appConfig.getRefDataStoreConfig());
+        bind(RefDataStoreConfig.class).toInstance(appConfig.getPipelineConfig().getRefDataStoreConfig());
         bind(SQLStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig());
         bind(SearchConfig.class).toInstance(appConfig.getSearchConfig());
         bind(SecurityConfig.class).toInstance(appConfig.getSecurityConfig());

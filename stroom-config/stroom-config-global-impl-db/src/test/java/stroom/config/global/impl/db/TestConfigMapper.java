@@ -88,9 +88,9 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
-        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
+        String initialValue = appConfig.getPipelineConfig().getRefDataStoreConfig().getLocalDir();
         String newValue = initialValue + "xxx";
-        appConfig.getRefDataStoreConfig().setLocalDir(newValue);
+        appConfig.getPipelineConfig().getRefDataStoreConfig().setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -111,8 +111,8 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
-        String initialValue = appConfig.getRefDataStoreConfig().getLocalDir();
-        appConfig.getRefDataStoreConfig().setLocalDir(null);
+        String initialValue = appConfig.getPipelineConfig().getRefDataStoreConfig().getLocalDir();
+        appConfig.getPipelineConfig().getRefDataStoreConfig().setLocalDir(null);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -145,7 +145,7 @@ class TestConfigMapper {
     void update_boolean() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        BooleanSupplier getter = () -> appConfig.getRefDataStoreConfig().isReadAheadEnabled();
+        BooleanSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().isReadAheadEnabled();
         boolean initialValue = getter.getAsBoolean();
         boolean newValue = !initialValue;
 
@@ -159,7 +159,7 @@ class TestConfigMapper {
     void update_int() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        IntSupplier getter = () -> appConfig.getRefDataStoreConfig().getMaxPutsBeforeCommit();
+        IntSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().getMaxPutsBeforeCommit();
         int initialValue = getter.getAsInt();
         int newValue = initialValue + 1;
 

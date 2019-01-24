@@ -28,7 +28,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

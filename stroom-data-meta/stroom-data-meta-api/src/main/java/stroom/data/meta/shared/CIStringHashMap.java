@@ -1,4 +1,4 @@
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 import java.io.Serializable;
 import java.util.Collection;

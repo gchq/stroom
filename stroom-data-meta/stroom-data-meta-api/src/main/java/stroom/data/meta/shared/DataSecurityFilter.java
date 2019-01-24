@@ -1,4 +1,4 @@
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 import stroom.query.api.v2.ExpressionOperator;
 

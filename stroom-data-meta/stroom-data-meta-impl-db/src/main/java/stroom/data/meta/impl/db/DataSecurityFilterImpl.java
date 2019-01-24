@@ -1,7 +1,7 @@
 package stroom.data.meta.impl.db;
 
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.data.meta.api.DataSecurityFilter;
+import stroom.data.meta.shared.DataSecurityFilter;
 
 import java.util.Optional;
 

@@ -16,11 +16,11 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.DataStatus;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.NestedInputStream;

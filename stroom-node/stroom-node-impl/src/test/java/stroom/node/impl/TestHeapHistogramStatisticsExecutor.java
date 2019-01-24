@@ -13,6 +13,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
@@ -31,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestHeapHistogramStatisticsExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeapHistogramStatisticsExecutor.class);
     private static Function<InternalStatisticEvent, String> STAT_TO_CLASS_NAME_MAPPER = event ->

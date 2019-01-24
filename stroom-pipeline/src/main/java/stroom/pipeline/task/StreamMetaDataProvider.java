@@ -17,8 +17,8 @@
 
 package stroom.pipeline.task;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;

@@ -1,6 +1,7 @@
 package stroom.data.meta.api;
 
 import org.junit.jupiter.api.Test;
+import stroom.data.meta.shared.AttributeMap;
 
 import java.io.IOException;
 import java.util.Arrays;

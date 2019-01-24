@@ -17,8 +17,8 @@
 package stroom.test;
 
 
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;

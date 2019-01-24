@@ -19,7 +19,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.pipeline.feed.FeedProperties;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;

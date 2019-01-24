@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 import stroom.docref.SharedObject;
 import stroom.entity.shared.Copyable;

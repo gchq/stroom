@@ -1,4 +1,4 @@
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;

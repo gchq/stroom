@@ -18,7 +18,7 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;

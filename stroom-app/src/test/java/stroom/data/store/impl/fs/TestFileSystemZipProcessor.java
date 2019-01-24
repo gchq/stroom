@@ -19,12 +19,12 @@ package stroom.data.store.impl.fs;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.shared.AttributeMap;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.pipeline.feed.FeedDocCache;
-import stroom.data.meta.api.StroomHeaderArguments;
+import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;

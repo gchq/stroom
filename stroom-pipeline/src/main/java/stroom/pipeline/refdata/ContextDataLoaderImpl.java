@@ -16,7 +16,7 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;

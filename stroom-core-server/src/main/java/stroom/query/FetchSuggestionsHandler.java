@@ -17,16 +17,15 @@
 
 package stroom.query;
 
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.entity.FindService;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.node.api.NodeService;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;

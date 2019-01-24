@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 import java.util.Arrays;
 import java.util.Collections;

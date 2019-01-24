@@ -19,9 +19,9 @@ package stroom.pipeline.refdata;
 
 import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.EffectiveMetaDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.EffectiveMetaDataCriteria;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;

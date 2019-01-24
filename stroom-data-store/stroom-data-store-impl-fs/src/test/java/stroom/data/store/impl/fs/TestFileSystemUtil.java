@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.streamstore.shared.StreamTypeNames;

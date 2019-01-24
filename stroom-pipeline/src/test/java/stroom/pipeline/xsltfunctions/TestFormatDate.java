@@ -18,7 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.pipeline.state.StreamHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;

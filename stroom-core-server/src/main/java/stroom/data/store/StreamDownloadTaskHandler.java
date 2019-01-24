@@ -18,9 +18,9 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.FindDataCriteria;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;

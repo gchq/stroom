@@ -1,6 +1,6 @@
 package stroom.proxy.handler;
 
-import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.shared.AttributeMap;
 import stroom.proxy.repo.StroomStreamHandler;
 
 import java.io.IOException;

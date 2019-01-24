@@ -1,7 +1,7 @@
 package stroom.data.meta.impl.mock;
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataStatus;
 
 class MockData implements Data {
     private long id;

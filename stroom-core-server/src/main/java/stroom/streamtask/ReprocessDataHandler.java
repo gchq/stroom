@@ -18,10 +18,10 @@
 package stroom.streamtask;
 
 import com.google.common.base.Strings;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.query.api.v2.ExpressionOperator;

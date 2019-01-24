@@ -19,12 +19,12 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;

@@ -1,4 +1,4 @@
-package stroom.data.meta.api;
+package stroom.data.meta.shared;
 
 public class DataProperties {
     private Long parentId;

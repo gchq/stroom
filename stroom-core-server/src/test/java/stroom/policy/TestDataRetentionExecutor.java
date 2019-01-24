@@ -20,7 +20,7 @@ package stroom.policy;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.shared.Period;
 import stroom.policy.DataRetentionExecutor.Progress;
 import stroom.policy.DataRetentionExecutor.Tracker;

@@ -1,14 +1,14 @@
 package stroom.data.meta.impl.mock;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.EffectiveMetaDataCriteria;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.MetaDataSource;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.EffectiveMetaDataCriteria;
+import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataRow;
+import stroom.data.meta.shared.MetaDataSource;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.DataStatus;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 

@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.shared.DataMetaService;
 import stroom.security.Security;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.task.api.AbstractTaskHandler;

@@ -18,6 +18,8 @@ package stroom.data.meta.api;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.util.date.DateUtil;
 
 import javax.servlet.http.HttpServletRequest;

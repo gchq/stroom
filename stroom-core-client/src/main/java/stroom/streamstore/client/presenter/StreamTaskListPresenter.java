@@ -25,7 +25,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.DataStatus;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;

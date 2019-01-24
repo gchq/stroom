@@ -18,7 +18,7 @@ package stroom.pipeline.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;

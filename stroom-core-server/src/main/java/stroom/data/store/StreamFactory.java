@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.data.meta.api.StroomHeaderArguments;
+import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.util.date.DateUtil;
 
 import java.util.Map;

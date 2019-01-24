@@ -19,8 +19,8 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.DataProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;

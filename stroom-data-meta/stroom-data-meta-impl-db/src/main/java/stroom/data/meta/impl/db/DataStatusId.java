@@ -16,7 +16,7 @@
 
 package stroom.data.meta.impl.db;
 
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.DataStatus;
 
 /**
  * <p>

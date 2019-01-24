@@ -18,9 +18,9 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.FindDataCriteria;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.util.io.ByteCountInputStream;
