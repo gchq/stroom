@@ -1,70 +1,56 @@
 package stroom.job.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.impl.db.stroom.tables.records.JobRecord;
 
 import javax.inject.Inject;
 import java.util.Optional;
 
 import static stroom.job.impl.db.stroom.Tables.JOB;
-import static stroom.util.jooq.JooqUtil.contextWithOptimisticLocking;
 
+/**
+ * This class is very slim because it uses the GenericDao.
+ * Why event use this class? Why not use the GenericDao directly in the service class?
+ * Some reasons:
+ * 1. Hides knowledge of Jooq classes from the service
+ * 2. Hides connection provider and GenericDao instantiation -- the service class just gets a working thing injected.
+ * 3. It allows the DAO to be easily extended.
+ *
+ * //TODO gh-1072 Maybe the interface could implement the standard methods below? Then this would be even slimmer.
+ */
 class JobDaoImpl implements JobDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobDaoImpl.class);
 
     private final ConnectionProvider connectionProvider;
+    private GenericDao<JobRecord, Job> dao;
 
     @Inject
     JobDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
+        dao = new GenericDao(JOB, JOB.ID, Job.class, connectionProvider);
     }
 
     @Override
     public Job create(final Job job) {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            JobRecord jobRecord = context.newRecord(JOB, job);
-            jobRecord.store();
-            Job createdJob = jobRecord.into(Job.class);
-            return createdJob;
-        });
+        return dao.create(job);
     }
 
     @Override
     public Job create() {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            JobRecord jobRecord = context.newRecord(JOB, new Job());
-            jobRecord.store();
-            Job createdJob = jobRecord.into(Job.class);
-            return createdJob;
-        });
+        throw new RuntimeException("Not implemented yet -- interface inappropriate for use with GenericDao");
     }
 
     @Override
     public Job update(final Job job) {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            JobRecord jobRecord = context.newRecord(JOB, job);
-            jobRecord.update();
-            return jobRecord.into(Job.class);
-        });
+        return dao.update(job);
     }
 
     @Override
     public int delete(int id) {
-        return contextWithOptimisticLocking(connectionProvider, context -> {
-            return context
-                    .deleteFrom(JOB)
-                    .where(JOB.ID.eq(id))
-                    .execute();
-        });
+        return dao.delete(id);
     }
 
     @Override
     public Optional<Job> fetch(int id) {
-        return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            Job job = context.selectFrom(JOB).where(JOB.ID.eq(id)).fetchOneInto(Job.class);
-            return Optional.ofNullable(job);
-        });
+        return dao.fetch(id);
     }
 
 }

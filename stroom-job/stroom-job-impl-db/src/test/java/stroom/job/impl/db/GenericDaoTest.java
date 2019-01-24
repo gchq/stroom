@@ -11,20 +11,27 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
+import stroom.job.impl.db.stroom.tables.records.JobRecord;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static stroom.job.impl.db.stroom.Tables.JOB;
 
-public class JobDaoImplTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobDaoImplTest.class);
+/**
+ * TODO additional testing for the GenericDao:
+ *    - Something that compares the properties of entity and records and ensures they can be mapped.
+ *      Otherwise each entity needs a test like this, which would really only be testing the mappings.
+ */
+public class GenericDaoTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoTest.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
             .withDatabaseName("stroom");
 
     private static Injector injector;
-    private static JobDao jobDao;
+    private static GenericDao<JobRecord, Job> dao;
 
     @BeforeAll
     public static void beforeAll() {
@@ -33,7 +40,8 @@ public class JobDaoImplTest {
 
         injector = Guice.createInjector(new JobDbModule(), new TestModule(dbContainer));
 
-        jobDao = injector.getInstance(JobDao.class);
+        ConnectionProvider connectionProvider = injector.getInstance(ConnectionProvider.class);
+        dao = new GenericDao(JOB, JOB.ID, Job.class, connectionProvider);
     }
 
     @Test
@@ -47,7 +55,7 @@ public class JobDaoImplTest {
         assertThat(job.getDescription()).isEqualTo("Some description");
         assertThat(job.isEnabled()).isTrue();
 
-        Job loadedJob = jobDao.fetch(job.getId()).get();
+        Job loadedJob = dao.fetch(job.getId()).get();
         assertThat(loadedJob.getId()).isEqualTo(job.getId());
         assertThat(loadedJob.getVersion()).isNotNull();
         assertThat(loadedJob.getDescription()).isEqualTo("Some description");
@@ -57,7 +65,7 @@ public class JobDaoImplTest {
 //    @Test
 //    public void quickCreation(){
 //        // Given/when
-//        Job job = jobDao.create();
+//        Job job = dao.create();
 //
 //        // Then
 //        assertThat(job.getDescription()).isNullOrEmpty();
@@ -74,13 +82,13 @@ public class JobDaoImplTest {
         job.setDescription(RandomStringUtils.randomAlphabetic(256));
 
         // When/then
-        assertThrows(DataAccessException.class, () -> jobDao.create(job));
+        assertThrows(DataAccessException.class, () -> dao.create(job));
     }
 
     @Test
     public void badFetch(){
         // Given/when
-        Optional<Job> job = jobDao.fetch(11111);
+        Optional<Job> job = dao.fetch(11111);
         // Then
         assertThat(job.isPresent()).isFalse();
     }
@@ -94,7 +102,7 @@ public class JobDaoImplTest {
         job.setEnabled(false);
 
         // When
-        Job updatedJob = jobDao.update(job);
+        Job updatedJob = dao.update(job);
 
         // Then
         assertThat(updatedJob.getId()).isEqualTo(job.getId());
@@ -103,7 +111,7 @@ public class JobDaoImplTest {
         assertThat(updatedJob.isEnabled()).isFalse();
 
         // Then
-        Job fetchedUpdatedJob = jobDao.fetch(updatedJob.getId()).get();
+        Job fetchedUpdatedJob = dao.fetch(updatedJob.getId()).get();
         assertThat(fetchedUpdatedJob.getId()).isEqualTo(job.getId());
         assertThat(fetchedUpdatedJob.getVersion()).isEqualTo(version + 1);
         assertThat(fetchedUpdatedJob.getDescription()).isEqualTo("Different description");
@@ -116,18 +124,18 @@ public class JobDaoImplTest {
         Job job = createStandardJob();
 
         // When
-        int numberOfDeletedRecords = jobDao.delete(job.getId());
+        int numberOfDeletedRecords = dao.delete(job.getId());
 
         // Then
         assertThat(numberOfDeletedRecords).isEqualTo(1);
-        Optional<Job> optionalJob = jobDao.fetch(job.getId());
+        Optional<Job> optionalJob = dao.fetch(job.getId());
         assertThat(optionalJob.isPresent()).isFalse();
     }
 
     @Test
     public void badDelete(){
         // Given/when
-        int numberOfDeletedRecords = jobDao.delete(111111);
+        int numberOfDeletedRecords = dao.delete(111111);
         // Then
         assertThat(numberOfDeletedRecords).isEqualTo(0);
     }
@@ -136,16 +144,16 @@ public class JobDaoImplTest {
     public void checkOcc(){
         // Given
         Job job = createStandardJob();
-        Job copy1 = jobDao.fetch(job.getId()).get();
-        Job copy2 = jobDao.fetch(job.getId()).get();
+        Job copy1 = dao.fetch(job.getId()).get();
+        Job copy2 = dao.fetch(job.getId()).get();
 
         copy1.setDescription("change 1");
-        jobDao.update(copy1);
+        dao.update(copy1);
 
         copy2.setDescription("change 2");
 
         // When/then
-        assertThrows(DataChangedException.class, () -> jobDao.update(copy2));
+        assertThrows(DataChangedException.class, () -> dao.update(copy2));
     }
 
     @AfterAll
@@ -158,7 +166,7 @@ public class JobDaoImplTest {
         Job job = new Job();
         job.setEnabled(true);
         job.setDescription("Some description");
-        Job createdJob = jobDao.create(job);
+        Job createdJob = dao.create(job);
         return createdJob;
     }
 }
