@@ -21,7 +21,7 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.DataProperties;
-import stroom.data.store.StreamRetentionExecutor;
+import stroom.data.store.DataRetentionExecutor;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -78,7 +78,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     //    @Inject
 //    private StreamTaskCreatorImpl streamTaskCreator;
     @Inject
-    private StreamRetentionExecutor streamRetentionExecutor;
+    private DataRetentionExecutor streamRetentionExecutor;
     @Inject
     private StreamDeleteExecutor streamDeleteExecutor;
 

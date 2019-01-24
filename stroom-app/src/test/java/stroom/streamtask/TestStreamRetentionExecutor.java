@@ -27,7 +27,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
 import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.store.StreamRetentionExecutor;
+import stroom.data.store.DataRetentionExecutor;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.feed.FeedStore;
@@ -54,7 +54,7 @@ class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private FeedStore feedStore;
     @Inject
-    private StreamRetentionExecutor streamRetentionExecutor;
+    private DataRetentionExecutor streamRetentionExecutor;
 
     @Test
     void testMultipleRuns() {

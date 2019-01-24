@@ -7,20 +7,20 @@ import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
-public class DataStoreJobModule extends ScheduledJobsModule {
+public class DataRetentionJobModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();
         bindJob()
-                .name("Stream Retention")
+                .name("Data Retention")
                 .description("Delete data that exceeds the retention period specified by feed")
                 .schedule(CRON, "0 0 *")
-                .to(StreamRetention.class);
+                .to(DataRetention.class);
     }
 
-    private static class StreamRetention extends TaskConsumer {
+    private static class DataRetention extends TaskConsumer {
         @Inject
-        StreamRetention(final StreamRetentionExecutor dataRetentionExecutor) {
+        DataRetention(final DataRetentionExecutor dataRetentionExecutor) {
             super(task -> dataRetentionExecutor.exec());
         }
     }

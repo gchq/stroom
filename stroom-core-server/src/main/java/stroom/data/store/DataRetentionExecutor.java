@@ -42,8 +42,8 @@ import java.util.List;
 /**
  * Factory for creating stream clean tasks.
  */
-public class StreamRetentionExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamRetentionExecutor.class);
+public class DataRetentionExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);
 
     private static final String LOCK_NAME = "StreamRetentionExecutor";
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
@@ -54,10 +54,10 @@ public class StreamRetentionExecutor {
     private final ClusterLockService clusterLockService;
 
     @Inject
-    StreamRetentionExecutor(final FeedStore feedStore,
-                            final DataMetaService streamMetaService,
-                            final TaskContext taskContext,
-                            final ClusterLockService clusterLockService) {
+    DataRetentionExecutor(final FeedStore feedStore,
+                          final DataMetaService streamMetaService,
+                          final TaskContext taskContext,
+                          final ClusterLockService clusterLockService) {
         this.feedStore = feedStore;
         this.streamMetaService = streamMetaService;
         this.taskContext = taskContext;
