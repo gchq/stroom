@@ -5,7 +5,7 @@ import stroom.cache.impl.CacheManagerLifecycleModule;
 import stroom.cluster.impl.ClusterLifecycleModule;
 import stroom.data.meta.impl.db.DataMetaDbLifecycleModule;
 import stroom.entity.event.EntityEventLifecycleModule;
-import stroom.importexport.ImportExportLifecycleModule;
+import stroom.importexport.impl.ImportExportLifecycleModule;
 import stroom.index.IndexLifecycleModule;
 import stroom.job.JobSystemLifecycleModule;
 import stroom.kafka.impl.KafkaLifecycleModule;

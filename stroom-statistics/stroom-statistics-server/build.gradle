@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-migration')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')
     implementation project(':stroom-kafka:stroom-kafka-shared')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')

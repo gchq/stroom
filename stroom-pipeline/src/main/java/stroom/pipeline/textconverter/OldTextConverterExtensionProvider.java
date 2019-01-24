@@ -16,7 +16,7 @@
 
 package stroom.pipeline.textconverter;
 
-import stroom.pipeline.shared.ExtensionProvider;
+import stroom.importexport.api.ExtensionProvider;
 
 /**
  * Used for legacy migration

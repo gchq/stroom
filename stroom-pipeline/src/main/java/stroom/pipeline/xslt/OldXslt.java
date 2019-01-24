@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xslt;
 
-import stroom.entity.shared.ExternalFile;
+import stroom.importexport.api.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 /**

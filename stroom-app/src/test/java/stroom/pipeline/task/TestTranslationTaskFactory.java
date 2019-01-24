@@ -24,6 +24,7 @@ import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.api.StreamStore;
+import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.xslt.XsltStore;

@@ -133,6 +133,10 @@ include 'stroom-pipeline'
 // Proxy project
 include 'stroom-proxy'
 
+// Resource store
+include 'stroom-resourcestore:stroom-resourcestore-api'
+include 'stroom-resourcestore:stroom-resourcestore-impl-db'
+
 // Ruleset
 include 'stroom-ruleset:stroom-ruleset-shared'
 include 'stroom-ruleset:stroom-ruleset-server'

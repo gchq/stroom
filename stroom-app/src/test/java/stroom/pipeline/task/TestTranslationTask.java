@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;

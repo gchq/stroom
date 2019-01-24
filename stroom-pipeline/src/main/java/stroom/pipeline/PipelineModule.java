@@ -22,7 +22,7 @@ import stroom.docstore.shared.Doc;
 import stroom.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
 import stroom.pipeline.xmlschema.XmlSchemaModule;

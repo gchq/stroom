@@ -17,14 +17,12 @@
 package stroom.pipeline.textconverter;
 
 import stroom.docref.HasDisplayValue;
-import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.api.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Lob;
 import javax.persistence.Transient;
 
 /**
@@ -35,14 +33,10 @@ public class OldTextConverter extends DocumentEntity {
     public static final String DATA = SQLNameConstants.DATA;
     public static final String ENTITY_TYPE = "TextConverter";
 
-    private static final long serialVersionUID = 4519634323788508083L;
-
     private String description;
     private String data;
     private byte pConverterType = TextConverterType.NONE.getPrimitiveValue();
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
     public String getDescription() {
         return description;
     }
@@ -51,8 +45,6 @@ public class OldTextConverter extends DocumentEntity {
         this.description = description;
     }
 
-    @Column(name = DATA, length = Integer.MAX_VALUE)
-    @Lob
     @ExternalFile(extensionProvider = OldTextConverterExtensionProvider.class)
     public String getData() {
         return data;

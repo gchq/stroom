@@ -28,7 +28,7 @@ import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.entity.EntityTypeBinder;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.task.api.TaskHandlerBinder;
 
 public class DashboardModule extends AbstractModule {

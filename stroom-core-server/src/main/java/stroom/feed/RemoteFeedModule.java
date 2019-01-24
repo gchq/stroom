@@ -17,13 +17,6 @@
 package stroom.feed;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.EntityTypeBinder;
-import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.feed.shared.FeedDoc;
-import stroom.importexport.ImportExportActionHandler;
-import stroom.task.api.TaskHandlerBinder;
 
 public class RemoteFeedModule extends AbstractModule {
     @Override

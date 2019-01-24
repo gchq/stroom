@@ -23,7 +23,7 @@ import stroom.entity.FindService;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.CloseIndexShardAction;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FetchIndexVolumesAction;

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xmlschema.migration;
 
-import stroom.entity.shared.ExternalFile;
+import stroom.importexport.api.ExternalFile;
 import stroom.importexport.migration.DocumentEntity;
 
 import javax.persistence.Transient;
@@ -24,7 +24,7 @@ import javax.persistence.Transient;
 /** Used for legacy migration **/
 @Deprecated
 public class OldXMLSchema extends DocumentEntity {
-    public static final String ENTITY_TYPE = "XMLSchema";
+    private static final String ENTITY_TYPE = "XMLSchema";
 
     private String description;
     private String namespaceURI;

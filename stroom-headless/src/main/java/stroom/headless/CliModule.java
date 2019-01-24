@@ -21,6 +21,7 @@ import com.google.inject.Provides;
 import stroom.cache.impl.CacheModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.importexport.impl.ImportExportModule;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.api.NodeInfo;
@@ -58,7 +59,7 @@ public class CliModule extends AbstractModule {
         install(new stroom.explorer.MockExplorerModule());
         install(new FeedModule());
         install(new PipelineScopeModule());
-        install(new stroom.importexport.ImportExportModule());
+        install(new ImportExportModule());
 //        install(new stroom.jobsystem.JobSystemModule());
 //        install(new stroom.lifecycle.LifecycleModule());
         install(new stroom.event.logging.impl.EventLoggingModule());

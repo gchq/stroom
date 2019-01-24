@@ -36,7 +36,7 @@ import stroom.pipeline.feed.FeedDocCache;
 import stroom.pipeline.feed.FeedStore;
 import stroom.data.meta.api.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.ImportExportSerializer;
+import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;

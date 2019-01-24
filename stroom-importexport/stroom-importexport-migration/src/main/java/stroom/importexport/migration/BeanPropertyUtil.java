@@ -16,8 +16,8 @@
 
 package stroom.importexport.migration;
 
-import stroom.entity.shared.ExternalFile;
-import stroom.pipeline.shared.ExtensionProvider;
+import stroom.importexport.api.ExtensionProvider;
+import stroom.importexport.api.ExternalFile;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.lang.reflect.InvocationTargetException;

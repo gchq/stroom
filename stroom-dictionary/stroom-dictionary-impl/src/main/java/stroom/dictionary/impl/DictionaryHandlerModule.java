@@ -21,7 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 
 public class DictionaryHandlerModule extends AbstractModule {
     @Override

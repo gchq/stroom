@@ -22,7 +22,7 @@ import stroom.entity.EntityTypeBinder;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEvent.Handler;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 public class XmlSchemaModule extends AbstractModule {

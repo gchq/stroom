@@ -16,7 +16,7 @@
 
 package stroom.importexport.migration;
 
-import stroom.pipeline.shared.ExtensionProvider;
+import stroom.importexport.api.ExtensionProvider;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;

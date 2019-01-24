@@ -2,9 +2,10 @@ ext.moduleName = 'stroom.importexport.migration'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-    //implementation project(':stroom-importexport:stroom-importexport-api')
+
 //
     implementation libs.stroomDocRef
 //    //implementation libs.stroomQueryApi

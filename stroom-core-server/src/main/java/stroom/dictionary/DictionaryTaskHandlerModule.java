@@ -17,12 +17,7 @@
 package stroom.dictionary;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
-import stroom.entity.EntityTypeBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
 import stroom.task.api.TaskHandlerBinder;
 
 public class DictionaryTaskHandlerModule extends AbstractModule {

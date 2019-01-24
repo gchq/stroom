@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.util.xml.XMLUtil;
 import stroom.pipeline.scope.PipelineScopeRunnable;
-import stroom.importexport.ImportExportService;
+import stroom.importexport.impl.ImportExportService;
 import stroom.persist.CoreConfig;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;

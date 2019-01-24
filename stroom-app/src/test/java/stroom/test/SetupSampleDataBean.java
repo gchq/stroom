@@ -28,7 +28,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.ImportExportSerializer;
+import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;

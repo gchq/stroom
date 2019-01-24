@@ -22,7 +22,7 @@ import stroom.entity.EntityTypeBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.task.api.TaskHandlerBinder;
 
 public class FeedModule extends AbstractModule {

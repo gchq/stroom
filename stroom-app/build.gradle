@@ -72,6 +72,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-server')
     implementation project(':stroom-kafka:stroom-kafka-impl')
     implementation project(':stroom-kafka:stroom-kafka-pipeline')

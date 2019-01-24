@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
 import stroom.task.api.TaskHandlerBinder;

@@ -3,7 +3,9 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
 import stroom.cache.impl.CacheModule;
+import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.MockDictionaryModule;
+import stroom.importexport.impl.ImportExportModule;
 import stroom.node.impl.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
 import stroom.security.UserRefFactory;
@@ -31,7 +33,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.explorer.MockExplorerModule());
         install(new stroom.feed.MockFeedModule());
-        install(new stroom.importexport.ImportExportModule());
+        install(new ImportExportModule());
         install(new stroom.index.MockIndexModule());
         install(new MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
@@ -41,7 +43,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.factory.DataStorePipelineElementModule());
         install(new stroom.pipeline.factory.PipelineFactoryModule());
         install(new stroom.pipeline.scope.PipelineScopeModule());
-        install(new stroom.pipeline.task.PipelineStreamTaskModule());
+        install(new PipelineStreamTaskModule());
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.refdata.ReferenceDataModule());

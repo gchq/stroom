@@ -21,7 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.entity.EntityTypeBinder;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
 
 public class RulesetModule extends AbstractModule {
