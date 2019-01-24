@@ -5,15 +5,15 @@ import org.jooq.Record;
 import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.dao.IndexDao;
+import stroom.index.dao.IndexShardDao;
 
 import javax.inject.Inject;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.table;
 
-public class IndexDaoImpl implements IndexDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexDaoImpl.class);
+public class IndexShardDaoImpl implements IndexShardDao {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private final ConnectionProvider connectionProvider;
 
@@ -22,7 +22,7 @@ public class IndexDaoImpl implements IndexDao {
     private static final Field<Long> FIELD_ID = field("id", Long.class);
 
     @Inject
-    public IndexDaoImpl(final ConnectionProvider connectionProvider) {
+    public IndexShardDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
     }
 

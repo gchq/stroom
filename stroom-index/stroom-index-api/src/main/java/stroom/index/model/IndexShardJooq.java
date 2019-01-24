@@ -1,4 +1,4 @@
 package stroom.index.model;
 
-public class IndexJooq {
+public class IndexShardJooq {
 }

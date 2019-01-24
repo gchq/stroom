@@ -99,6 +99,7 @@ include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 include 'stroom-index:stroom-index-api'
 include 'stroom-index:stroom-index-impl-db'
+include 'stroom-index:stroom-index-impl-db-gen'
 
 // Kafka
 include 'stroom-kafka:stroom-kafka-shared'

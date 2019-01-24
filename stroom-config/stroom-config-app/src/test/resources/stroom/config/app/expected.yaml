@@ -96,6 +96,16 @@ index:
       minItems: 0
       coreItems: 50
       maxItems: 100
+indexDb:
+  connection:
+    jdbcDriverClassName: "com.mysql.jdbc.Driver"
+    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+    jdbcDriverUsername: "stroomuser"
+    jdbcDriverPassword: "stroompassword1"
+  connectionPool:
+    cachePrepStmts: true
+    prepStmtCacheSize: 250
+    prepStmtCacheSqlLimit: 2048
 lifecycle:
   enabled: true
   executionInterval: "10s"
