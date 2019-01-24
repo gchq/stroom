@@ -24,7 +24,7 @@ import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.persist.ConnectionProvider;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.util.db.DbUtil;
+import stroom.db.util.DbUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
 

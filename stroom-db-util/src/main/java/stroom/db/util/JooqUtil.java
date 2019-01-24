@@ -1,4 +1,4 @@
-package stroom.util.jooq;
+package stroom.db.util;
 
 import org.jooq.DSLContext;
 import org.jooq.Field;

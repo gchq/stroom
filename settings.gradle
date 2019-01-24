@@ -56,6 +56,9 @@ include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-server'
 include 'stroom-dashboard:stroom-dashboard-shared'
 
+// DB Utilities
+include 'stroom-db-util'
+
 // Dictionary
 include 'stroom-dictionary:stroom-dictionary-api'
 include 'stroom-dictionary:stroom-dictionary-impl'

@@ -19,7 +19,6 @@ dependencies {
     implementation libs.javax_servlet_api
     implementation libs.javax_inject
     implementation libs.jaxb_api
-    implementation libs.jooq
     implementation libs.saxon_he
     implementation libs.slf4j_api
 

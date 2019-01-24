@@ -1,8 +1,9 @@
-package stroom.util.db;
+package stroom.db.util;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.config.common.ConnectionConfig;
 import stroom.util.logging.LambdaLogger;
 
 import java.sql.Connection;
@@ -24,6 +25,14 @@ public class DbUtil {
     private static final int ACCESS_DENIED_BAD_DATABASE = 1044;
 
     private DbUtil() {
+    }
+
+    public static void waitForConnection(ConnectionConfig connectionConfig) {
+        waitForConnection(
+                connectionConfig.getJdbcDriverClassName(),
+                connectionConfig.getJdbcDriverUrl(),
+                connectionConfig.getJdbcDriverUsername(),
+                connectionConfig.getJdbcDriverPassword());
     }
 
     /**

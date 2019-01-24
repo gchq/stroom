@@ -1,10 +1,11 @@
 ext.moduleName = 'stroom.job.impl.db'
 
 dependencies {
-    implementation project(':stroom-util-shared')
     implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-util')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-job:stroom-job-impl-db-gen')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
     implementation libs.hibernate_core
     implementation libs.flyway_core

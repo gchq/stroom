@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.explorer.impl.db'
 
 dependencies {
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-explorer:stroom-explorer-impl-db-gen')
     //implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
