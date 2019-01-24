@@ -30,7 +30,7 @@ public class GenericDao<RecordType extends UpdatableRecordImpl, EntityType> {
 
     public EntityType create(EntityType entity) {
         return contextWithOptimisticLocking(connectionProvider, (context) -> {
-            LOGGER.debug("Creating a {}", table);
+            LOGGER.debug("Creating a {}", table.getName());
             RecordType record = context.newRecord(table, entity);
             record.store();
             EntityType createdRecord = record.into(entityTypeClass);
