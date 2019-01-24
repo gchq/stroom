@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
 import stroom.event.logging.api.HttpServletRequestHolder;
-import stroom.servlet.ResourceMap;
+import stroom.resource.api.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -100,8 +99,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
     }
 
     @Override
-    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-            throws ServletException, IOException {
+    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
         // Get the current request.
         final HttpServletRequest originalRequest = httpServletRequestHolder.get();
         // Set this request.

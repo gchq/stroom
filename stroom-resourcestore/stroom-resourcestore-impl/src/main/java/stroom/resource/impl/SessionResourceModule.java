@@ -16,9 +16,10 @@
  *
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.resource.api.ResourceStore;
 
 public class SessionResourceModule extends AbstractModule {
     @Override

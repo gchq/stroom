@@ -18,7 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.importexport.shared.ImportConfigConfirmationAction;
 import stroom.importexport.shared.ImportState;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;

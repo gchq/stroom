@@ -8,6 +8,7 @@ import stroom.config.app.AppConfigModule;
 import stroom.config.app.YamlUtil;
 import stroom.guice.CoreModule;
 import stroom.node.impl.NodeTestConfigModule;
+import stroom.resource.impl.ResourceModule;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class CoreTestModule extends AbstractModule {
         }
 
         install(new CoreModule());
-        install(new stroom.resource.ResourceModule());
+        install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
         install(new NodeTestConfigModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());

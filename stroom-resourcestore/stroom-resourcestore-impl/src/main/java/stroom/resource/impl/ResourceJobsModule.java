@@ -1,4 +1,4 @@
-package stroom.resource;
+package stroom.resource.impl;
 
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.api.TaskConsumer;

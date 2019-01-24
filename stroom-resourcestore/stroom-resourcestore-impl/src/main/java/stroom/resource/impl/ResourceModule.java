@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
-import stroom.util.shared.ResourceKey;
+import com.google.inject.AbstractModule;
+import stroom.resource.api.ResourceStore;
 
-import java.nio.file.Path;
-
-public class MockResourceStore implements ResourceStore {
+public class ResourceModule extends AbstractModule {
     @Override
-    public ResourceKey createTempFile(String name) {
-        return null;
+    protected void configure() {
+        bind(ResourceStore.class).to(ResourceStoreImpl.class);
     }
-
-    @Override
-    public Path getTempFile(ResourceKey key) {
-        return null;
-    }
-
-    @Override
-    public void deleteTempFile(ResourceKey key) {
-    }
-
 }

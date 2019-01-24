@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
+import stroom.resource.api.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
 
@@ -70,12 +71,8 @@ public class ResourceStoreImpl implements ResourceStore {
 
     @Override
     public synchronized void deleteTempFile(final ResourceKey resourceKey) {
-        if (currentFiles.contains(resourceKey)) {
-            currentFiles.remove(resourceKey);
-        }
-        if (oldFiles.contains(resourceKey)) {
-            oldFiles.remove(resourceKey);
-        }
+        currentFiles.remove(resourceKey);
+        oldFiles.remove(resourceKey);
         final Path file = Paths.get(resourceKey.getKey());
         try {
             Files.deleteIfExists(file);
@@ -93,7 +90,7 @@ public class ResourceStoreImpl implements ResourceStore {
         return Paths.get(resourceKey.getKey());
     }
 
-    public void execute() {
+    void execute() {
         flipStore();
     }
 

@@ -135,7 +135,7 @@ include 'stroom-proxy'
 
 // Resource store
 include 'stroom-resourcestore:stroom-resourcestore-api'
-include 'stroom-resourcestore:stroom-resourcestore-impl-db'
+include 'stroom-resourcestore:stroom-resourcestore-impl'
 
 // Ruleset
 include 'stroom-ruleset:stroom-ruleset-shared'

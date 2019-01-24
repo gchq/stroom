@@ -8,6 +8,7 @@ import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.node.impl.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
+import stroom.resource.impl.MockResourceModule;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
 import stroom.security.shared.UserJooq;
@@ -47,7 +48,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.refdata.ReferenceDataModule());
-        install(new stroom.resource.MockResourceModule());
+        install(new MockResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
         install(new stroom.streamtask.MockStreamTaskModule());

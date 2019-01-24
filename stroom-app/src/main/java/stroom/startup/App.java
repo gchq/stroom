@@ -59,7 +59,7 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
-import stroom.resource.SessionResourceStoreImpl;
+import stroom.resource.impl.SessionResourceStoreImpl;
 import stroom.ruleset.RuleSetResource;
 import stroom.ruleset.RuleSetResource2;
 import stroom.ruleset.RuleSetService;

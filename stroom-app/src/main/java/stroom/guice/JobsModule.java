@@ -14,6 +14,7 @@ import stroom.job.JobSystemJobsModule;
 import stroom.node.impl.NodeJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
+import stroom.resource.impl.ResourceJobsModule;
 import stroom.search.SearchJobsModule;
 import stroom.search.shard.ShardJobsModule;
 import stroom.statistics.sql.SQLStatisticsJobsModule;
@@ -30,6 +31,7 @@ public class JobsModule extends AbstractModule {
         install(new GlobalConfigJobsModule());
         install(new RefDataStoreJobsModule());
         install(new PipelineJobsModule());
+        install(new ResourceJobsModule());
         install(new ShardJobsModule());
         install(new SearchJobsModule());
         install(new IndexJobsModule());

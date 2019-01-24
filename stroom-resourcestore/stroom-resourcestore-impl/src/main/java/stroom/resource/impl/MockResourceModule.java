@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.resource.api.ResourceStore;
 
 public class MockResourceModule extends AbstractModule {
     @Override

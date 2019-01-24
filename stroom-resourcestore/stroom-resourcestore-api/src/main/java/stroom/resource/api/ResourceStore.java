@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.api;
 
 import stroom.util.shared.ResourceKey;
 
@@ -22,7 +22,7 @@ import java.nio.file.Path;
 
 /**
  * API to a store of generated resources. This store only last 1 hour so it
- * should be used for temp files (e.g. GUI generated temp files0
+ * should be used for temp files (e.g. GUI generated temp files
  */
 public interface ResourceStore {
     /**

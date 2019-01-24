@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.resource;
-
+package stroom.resource.impl;
 
 import org.junit.jupiter.api.Test;
+import stroom.resource.impl.ResourceStoreImpl;
+import stroom.util.io.FileUtil;
 import stroom.util.shared.ResourceKey;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,11 +27,11 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestResourceStore extends StroomUnitTest {
+class TestResourceStore {
     @Test
     void testSimple() throws IOException {
         final ResourceStoreImpl resourceStore = new ResourceStoreImpl();
-        getCurrentTestDir();
+        FileUtil.getTempDir();
         resourceStore.execute();
 
         final ResourceKey key1 = resourceStore.createTempFile("TestResourceStore1.dat");

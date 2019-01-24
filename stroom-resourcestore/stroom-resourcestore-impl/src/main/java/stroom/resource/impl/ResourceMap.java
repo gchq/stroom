@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
-import com.google.inject.AbstractModule;
+import stroom.util.shared.ResourceKey;
 
-public class ResourceModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(ResourceStore.class).to(ResourceStoreImpl.class);
+import java.util.HashMap;
+
+public class ResourceMap {
+    private final HashMap<ResourceKey, ResourceKey> map = new HashMap<>();
+
+    public void put(final ResourceKey key, final ResourceKey value) {
+        map.put(key, value);
+    }
+
+    public ResourceKey get(final ResourceKey key) {
+        return map.get(key);
+    }
+
+    public ResourceKey remove(final ResourceKey key) {
+        return map.remove(key);
     }
 }
+

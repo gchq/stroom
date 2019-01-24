@@ -31,7 +31,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.ResourceKey;
 import stroom.util.test.FileSystemTestUtil;

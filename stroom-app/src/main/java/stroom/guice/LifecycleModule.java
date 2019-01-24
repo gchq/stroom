@@ -11,7 +11,7 @@ import stroom.job.JobSystemLifecycleModule;
 import stroom.kafka.impl.KafkaLifecycleModule;
 import stroom.persist.EntityManagerLifecycleModule;
 import stroom.pipeline.destination.RollingDestinationsLifecycleModule;
-import stroom.resource.ResourceLifecycleModule;
+import stroom.resource.impl.ResourceLifecycleModule;
 import stroom.search.SearchLifecycleModule;
 import stroom.servicediscovery.ServiceDiscoveryLifecycleModule;
 import stroom.statistics.internal.InternalStatisticsLifecycleModule;

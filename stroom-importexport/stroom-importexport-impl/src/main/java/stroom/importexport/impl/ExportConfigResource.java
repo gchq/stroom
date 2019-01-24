@@ -4,7 +4,7 @@ import io.swagger.annotations.Api;
 import stroom.entity.shared.DocRefs;
 import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;

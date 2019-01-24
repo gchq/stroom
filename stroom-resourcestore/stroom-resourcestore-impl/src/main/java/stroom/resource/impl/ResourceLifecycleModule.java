@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.resource;
+package stroom.resource.impl;
 
 import stroom.lifecycle.api.AbstractLifecycleModule;
 import stroom.lifecycle.api.RunnableWrapper;

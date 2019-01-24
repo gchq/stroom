@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.servlet;
+package stroom.resource.impl;
 
+import stroom.resource.api.ResourceStore;
 import stroom.util.shared.ResourceKey;
 
-import java.util.HashMap;
+import java.nio.file.Path;
 
-public class ResourceMap {
-    private final HashMap<ResourceKey, ResourceKey> map = new HashMap<>();
-
-    public void put(final ResourceKey key, final ResourceKey value) {
-        map.put(key, value);
+public class MockResourceStore implements ResourceStore {
+    @Override
+    public ResourceKey createTempFile(String name) {
+        return null;
     }
 
-    public ResourceKey get(final ResourceKey key) {
-        return map.get(key);
+    @Override
+    public Path getTempFile(ResourceKey key) {
+        return null;
     }
 
-    public ResourceKey remove(final ResourceKey key) {
-        return map.remove(key);
+    @Override
+    public void deleteTempFile(ResourceKey key) {
     }
+
 }
-

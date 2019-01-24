@@ -21,7 +21,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.entity.shared.EntityServiceException;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
