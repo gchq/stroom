@@ -3,7 +3,7 @@ package stroom.security.impl;
 import stroom.security.dao.UserDao;
 import stroom.security.rest.CreateDTO;
 import stroom.security.rest.UserResource;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;

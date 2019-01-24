@@ -25,7 +25,7 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.persist.DataSourceProvider;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.shared.CompareUtil;
 
 import javax.inject.Inject;

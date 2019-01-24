@@ -9,7 +9,7 @@ import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.dao.UserDao;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 
 import java.util.List;
 import java.util.Optional;

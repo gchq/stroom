@@ -27,7 +27,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 
 import java.util.ArrayList;

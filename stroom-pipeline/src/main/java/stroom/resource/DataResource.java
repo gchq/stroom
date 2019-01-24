@@ -34,7 +34,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 

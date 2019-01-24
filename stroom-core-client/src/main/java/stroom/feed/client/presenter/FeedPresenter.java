@@ -27,7 +27,7 @@ import stroom.entity.client.presenter.TabContentProvider;
 import stroom.feed.shared.FeedDoc;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.widget.tab.client.presenter.TabData;

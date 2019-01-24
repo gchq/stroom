@@ -5,7 +5,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.shared.CopyPermissionsFromParentAction;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.task.api.AbstractTaskHandler;
 

@@ -20,8 +20,8 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.security.shared.FetchUserRefAction;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.model.PermissionNames;
-import stroom.security.model.User;
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.task.api.AbstractTaskHandler;
 

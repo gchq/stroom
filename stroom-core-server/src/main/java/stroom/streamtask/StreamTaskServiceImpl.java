@@ -31,7 +31,7 @@ import stroom.entity.util.SqlBuilder;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;

@@ -18,8 +18,8 @@ package stroom.security;
 
 import stroom.security.dao.UserDao;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.model.PermissionNames;
-import stroom.security.model.User;
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;

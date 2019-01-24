@@ -12,7 +12,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;

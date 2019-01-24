@@ -34,7 +34,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.node.client.view.WrapperView;
 import stroom.docref.DocRef;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;

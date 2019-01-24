@@ -18,8 +18,8 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.model.PermissionNames;
-import stroom.security.model.User;
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 import stroom.security.util.UserTokenUtil;
 

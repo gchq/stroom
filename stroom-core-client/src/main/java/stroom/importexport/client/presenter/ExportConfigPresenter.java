@@ -33,7 +33,7 @@ import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ExportConfigAction;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;

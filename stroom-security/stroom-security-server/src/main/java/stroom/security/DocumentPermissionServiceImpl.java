@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.dao.UserDao;
-import stroom.security.model.DocumentPermissionJooq;
+import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissions;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import javax.inject.Inject;

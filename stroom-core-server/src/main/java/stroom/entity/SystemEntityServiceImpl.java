@@ -23,7 +23,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Entity;
 import stroom.entity.util.FieldMap;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;

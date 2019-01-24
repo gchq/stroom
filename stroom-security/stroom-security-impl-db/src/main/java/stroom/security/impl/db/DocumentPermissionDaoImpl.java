@@ -4,7 +4,7 @@ import org.jooq.Record;
 import stroom.docref.DocRef;
 import stroom.security.dao.DocumentPermissionDao;
 import stroom.security.impl.db.tables.records.DocPermissionRecord;
-import stroom.security.model.DocumentPermissionJooq;
+import stroom.security.shared.DocumentPermissionJooq;
 import stroom.util.jooq.JooqUtil;
 
 import javax.inject.Inject;

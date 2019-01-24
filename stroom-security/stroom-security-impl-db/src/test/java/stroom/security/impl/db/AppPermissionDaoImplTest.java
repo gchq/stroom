@@ -10,7 +10,7 @@ import org.junit.platform.commons.logging.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.dao.AppPermissionDao;
 import stroom.security.dao.UserDao;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 
 import java.util.Optional;
 import java.util.Set;

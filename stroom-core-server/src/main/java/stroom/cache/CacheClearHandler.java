@@ -19,7 +19,7 @@ package stroom.cache;
 import stroom.cache.shared.CacheClearAction;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;

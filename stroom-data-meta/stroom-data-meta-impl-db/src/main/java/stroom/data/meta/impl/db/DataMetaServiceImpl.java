@@ -33,8 +33,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.security.model.DocumentPermissionNames;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

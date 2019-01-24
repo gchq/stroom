@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.model;
+package stroom.security.shared;
 
 public class PermissionException extends RuntimeException {
     private static final long serialVersionUID = -7671344466028839328L;

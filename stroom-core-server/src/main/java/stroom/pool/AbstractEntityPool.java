@@ -22,7 +22,7 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.PermissionException;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 
 public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends AbstractPoolCache<VersionedEntityDecorator<K>, V> implements Pool<K, V> {

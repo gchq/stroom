@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
 import stroom.security.UserRefFactory;
 import stroom.security.UserService;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import java.util.List;

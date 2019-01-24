@@ -1,6 +1,6 @@
 package stroom.security.dao;
 
-import stroom.security.model.User;
+import stroom.security.shared.User;
 
 import java.util.List;
 

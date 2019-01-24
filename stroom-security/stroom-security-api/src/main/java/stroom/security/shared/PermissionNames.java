@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.model;
+package stroom.security.shared;
 
 /**
  * Provide string constants for the permissions.

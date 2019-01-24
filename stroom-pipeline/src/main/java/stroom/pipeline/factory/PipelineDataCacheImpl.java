@@ -28,7 +28,7 @@ import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 

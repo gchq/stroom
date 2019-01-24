@@ -17,7 +17,7 @@
 package stroom.security.impl.mock;
 
 import stroom.security.SecurityContext;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 
 public class MockSecurityContext implements SecurityContext {
     @Override

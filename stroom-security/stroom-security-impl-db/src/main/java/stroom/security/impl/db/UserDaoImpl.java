@@ -4,7 +4,7 @@ import org.jooq.impl.DSL;
 import stroom.security.dao.UserDao;
 import stroom.security.impl.db.tables.records.StroomUserGroupsRecord;
 import stroom.security.impl.db.tables.records.StroomUserRecord;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 import stroom.util.jooq.JooqUtil;
 
 import javax.inject.Inject;

@@ -36,7 +36,7 @@ import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.job.ScheduledJob;
 import stroom.task.api.job.TaskConsumer;
 import stroom.util.lifecycle.StroomStartup;

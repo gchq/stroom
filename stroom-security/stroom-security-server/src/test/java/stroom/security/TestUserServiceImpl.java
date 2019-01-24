@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import java.util.List;

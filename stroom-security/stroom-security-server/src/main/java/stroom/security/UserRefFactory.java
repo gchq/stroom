@@ -16,7 +16,7 @@
 
 package stroom.security;
 
-import stroom.security.model.User;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 public final class UserRefFactory {

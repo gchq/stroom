@@ -24,7 +24,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.GenericServerTask;
 import stroom.task.api.TaskManager;
 import stroom.util.io.FileUtil;

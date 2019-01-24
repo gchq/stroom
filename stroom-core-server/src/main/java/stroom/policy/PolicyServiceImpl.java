@@ -24,7 +24,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.ruleset.shared.FindPolicyCriteria;
 import stroom.ruleset.shared.Policy;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;

@@ -27,7 +27,7 @@ import stroom.entity.shared.ResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.node.shared.Node;
 import stroom.security.Security;
-import stroom.security.model.PermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.cluster.ClusterCallEntry;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;

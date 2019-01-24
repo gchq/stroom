@@ -33,7 +33,7 @@ import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.SecurityContext;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.ui.config.shared.UiConfig;
 
 import javax.persistence.Transient;

@@ -26,7 +26,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.docref.DocRef;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 

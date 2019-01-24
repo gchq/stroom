@@ -33,7 +33,7 @@ import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.docref.DocRef;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.EqualsUtil;

@@ -1,4 +1,4 @@
-package stroom.security.model;
+package stroom.security.shared;
 
 import java.util.Objects;
 

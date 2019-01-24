@@ -19,7 +19,7 @@ package stroom.security;
 
 import stroom.entity.shared.ProvidesNamePattern;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.model.User;
+import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
 
 import java.util.List;

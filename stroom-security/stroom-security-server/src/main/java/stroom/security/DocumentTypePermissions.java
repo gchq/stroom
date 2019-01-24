@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.security.model.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
