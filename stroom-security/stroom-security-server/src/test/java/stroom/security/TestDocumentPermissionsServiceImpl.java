@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 import stroom.docref.DocRef;
+import stroom.security.impl.db.Stroom;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -42,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDocumentPermissionsServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDocumentPermissionsServiceImpl.class);
 
-    private static MySQLContainer dbContainer = new MySQLContainer();//= null;//
+    private static MySQLContainer dbContainer = new MySQLContainer()
+            .withDatabaseName(Stroom.STROOM.getName());//= null;//
 
     private static Injector injector;
 
