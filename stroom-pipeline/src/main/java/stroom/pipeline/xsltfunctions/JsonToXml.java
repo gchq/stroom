@@ -28,7 +28,7 @@ import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import stroom.util.shared.Severity;
-import stroom.xml.converter.json.JSONParser;
+import stroom.pipeline.xml.converter.json.JSONParser;
 
 import java.io.IOException;
 import java.io.StringReader;

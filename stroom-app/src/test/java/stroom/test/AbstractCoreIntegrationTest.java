@@ -20,6 +20,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import stroom.db.util.HikariUtil;
 import stroom.persist.PersistService;
 import stroom.task.api.TaskManager;
 
@@ -27,6 +28,9 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
     private static final Injector injector;
 
     static {
+        // Let all connections know that we are in testing mode.
+        HikariUtil.setTesting(true);
+
         injector = Guice.createInjector(new CoreTestModule());
 
         // Start persistance

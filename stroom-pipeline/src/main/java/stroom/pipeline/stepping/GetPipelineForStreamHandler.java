@@ -17,10 +17,10 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.ExpressionUtil;
+import stroom.data.meta.shared.FindDataCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.SharedDocRef;

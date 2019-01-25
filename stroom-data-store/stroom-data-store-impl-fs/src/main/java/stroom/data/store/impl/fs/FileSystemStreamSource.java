@@ -18,15 +18,15 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataStatus;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.feed.AttributeMapUtil;
+import stroom.data.meta.api.AttributeMapUtil;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 

@@ -23,6 +23,7 @@ import stroom.entity.shared.DocRefs;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportState;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.shared.Message;

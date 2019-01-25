@@ -19,9 +19,9 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.WrappedSegmentOutputStream;

@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Disabled;
 //        stroom.pipeline.task.TestFullTranslationTaskAndStepping.class,
 //        stroom.pipeline.task.TestTranslationStepping.class,
 //        stroom.policy.TestDataRetentionStreamFinder.class,
-//        stroom.refdata.TestReferenceDataWithCache.class,
+//        stroom.pipeline.refdata.TestReferenceDataWithCache.class,
 //        stroom.script.TestScriptStoreImpl.class,
 //        stroom.search.TestBasicSearch.class,
 //        stroom.search.TestBasicSearch_EndToEnd.class,

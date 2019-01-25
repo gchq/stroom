@@ -19,7 +19,7 @@ package stroom.ruleset;
 
 import stroom.datafeed.AttributeMapFilter;
 import stroom.datafeed.AttributeMapFilterFactory;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;

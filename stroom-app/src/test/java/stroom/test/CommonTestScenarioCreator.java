@@ -18,14 +18,14 @@
 package stroom.test;
 
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
-import stroom.feed.StroomHeaderArguments;
+import stroom.data.meta.shared.StroomHeaderArguments;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexDoc;

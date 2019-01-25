@@ -17,7 +17,7 @@
 package stroom.pipeline.cache;
 
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.xml.converter.ParserFactory;
+import stroom.pipeline.xml.converter.ParserFactory;
 
 public class StoredParserFactory {
     private final ParserFactory parserFactory;

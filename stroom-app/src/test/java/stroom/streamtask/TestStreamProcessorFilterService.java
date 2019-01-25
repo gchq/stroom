@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;

@@ -19,7 +19,7 @@ package stroom.search;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.dictionary.DictionaryStore;
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;

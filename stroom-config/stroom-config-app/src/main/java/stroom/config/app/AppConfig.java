@@ -9,7 +9,8 @@ import stroom.dashboard.QueryHistoryConfig;
 import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
-import stroom.importexport.ContentPackImportConfig;
+import stroom.importexport.impl.ContentPackImportConfig;
+import stroom.importexport.impl.ExportConfig;
 import stroom.index.IndexConfig;
 import stroom.job.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
@@ -17,12 +18,10 @@ import stroom.node.impl.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;
-import stroom.refdata.store.RefDataStoreConfig;
 import stroom.search.SearchConfig;
 import stroom.security.SecurityConfig;
 import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;
-import stroom.servlet.ExportConfig;
 import stroom.statistics.StatisticsConfig;
 import stroom.streamtask.ProcessConfig;
 import stroom.streamtask.ProxyAggregationConfig;
@@ -55,7 +54,6 @@ public class AppConfig implements IsConfig {
     private PropertyServiceConfig propertyServiceConfig;
     private ProxyAggregationConfig proxyAggregationConfig;
     private QueryHistoryConfig queryHistoryConfig;
-    private RefDataStoreConfig refDataStoreConfig;
     private SearchConfig searchConfig;
     private SecurityConfig securityConfig;
     private SecurityDbConfig securityDbConfig;
@@ -85,7 +83,6 @@ public class AppConfig implements IsConfig {
         this.propertyServiceConfig = new PropertyServiceConfig();
         this.proxyAggregationConfig = new ProxyAggregationConfig();
         this.queryHistoryConfig = new QueryHistoryConfig();
-        this.refDataStoreConfig = new RefDataStoreConfig();
         this.searchConfig = new SearchConfig();
         this.securityConfig = new SecurityConfig();
         this.securityDbConfig = new SecurityDbConfig();
@@ -116,7 +113,6 @@ public class AppConfig implements IsConfig {
               final PropertyServiceConfig propertyServiceConfig,
               final ProxyAggregationConfig proxyAggregationConfig,
               final QueryHistoryConfig queryHistoryConfig,
-              final RefDataStoreConfig refDataStoreConfig,
               final SearchConfig searchConfig,
               final SecurityConfig securityConfig,
               final SecurityDbConfig securityDbConfig,
@@ -144,7 +140,6 @@ public class AppConfig implements IsConfig {
         this.propertyServiceConfig = propertyServiceConfig;
         this.proxyAggregationConfig = proxyAggregationConfig;
         this.queryHistoryConfig = queryHistoryConfig;
-        this.refDataStoreConfig = refDataStoreConfig;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
         this.securityDbConfig = securityDbConfig;
@@ -335,15 +330,6 @@ public class AppConfig implements IsConfig {
 
     public void setQueryHistoryConfig(final QueryHistoryConfig queryHistoryConfig) {
         this.queryHistoryConfig = queryHistoryConfig;
-    }
-
-    @JsonProperty("refdata")
-    public RefDataStoreConfig getRefDataStoreConfig() {
-        return refDataStoreConfig;
-    }
-
-    public void setRefDataStoreConfig(final RefDataStoreConfig refDataStoreConfig) {
-        this.refDataStoreConfig = refDataStoreConfig;
     }
 
     @JsonProperty("search")

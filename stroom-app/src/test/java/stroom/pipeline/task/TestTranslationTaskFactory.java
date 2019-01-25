@@ -20,13 +20,14 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.FindDataCriteria;
 import stroom.data.store.api.StreamStore;
+import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.XsltStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;

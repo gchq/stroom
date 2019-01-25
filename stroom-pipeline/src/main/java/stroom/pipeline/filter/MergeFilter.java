@@ -19,8 +19,8 @@ package stroom.pipeline.filter;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.xml.event.simple.StartElement;
-import stroom.xml.event.simple.StartPrefixMapping;
+import stroom.pipeline.xml.event.simple.StartElement;
+import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

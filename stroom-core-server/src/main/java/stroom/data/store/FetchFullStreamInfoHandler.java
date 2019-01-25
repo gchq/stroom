@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.data.store.api.StreamStore;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;

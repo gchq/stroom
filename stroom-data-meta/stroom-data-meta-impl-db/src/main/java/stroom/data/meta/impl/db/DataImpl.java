@@ -1,7 +1,7 @@
 package stroom.data.meta.impl.db;
 
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataStatus;
 
 import java.util.Objects;
 

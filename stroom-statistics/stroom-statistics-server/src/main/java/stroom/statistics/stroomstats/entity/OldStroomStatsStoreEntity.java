@@ -16,9 +16,9 @@
 
 package stroom.statistics.stroomstats.entity;
 
-import stroom.entity.shared.DocumentEntity;
-import stroom.entity.shared.ExternalFile;
 import stroom.entity.shared.SQLNameConstants;
+import stroom.importexport.api.ExternalFile;
+import stroom.importexport.migration.DocumentEntity;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.shared.CustomRollUpMask;
 import stroom.stats.shared.EventStoreTimeIntervalEnum;
@@ -27,28 +27,22 @@ import stroom.stats.shared.StatisticRollUpType;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@Entity
-@Table(name = "STROOM_STATS_STORE", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))
+/**
+ * Used for legacy migration
+ **/
+@Deprecated
 public class OldStroomStatsStoreEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "StroomStatsStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Stroom-Stats Store";
 
     // Hibernate table/column names
-    public static final String TABLE_NAME = "STROOM_STATS_STORE";
-    public static final String STATISTIC_TYPE = SQLNameConstants.STATISTIC + SEP + SQLNameConstants.TYPE;
-    public static final String PRECISION = SQLNameConstants.PRECISION;
-    public static final String ROLLUP_TYPE = SQLNameConstants.ROLLUP + SEP + SQLNameConstants.TYPE;
     public static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
     public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
@@ -73,8 +67,7 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         setPrecision(DEFAULT_PRECISION_INTERVAL);
     }
 
-    @Column(name = SQLNameConstants.DESCRIPTION)
-    @Lob
+
     public String getDescription() {
         return description;
     }
@@ -83,13 +76,11 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.description = description;
     }
 
-    @Override
     @Transient
     public String getType() {
         return ENTITY_TYPE;
     }
 
-    @Column(name = STATISTIC_TYPE, nullable = false)
     public byte getpStatisticType() {
         return pStatisticType;
     }
@@ -107,7 +98,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.pStatisticType = statisticType.getPrimitiveValue();
     }
 
-    @Column(name = ROLLUP_TYPE, nullable = false)
     public byte getpRollUpType() {
         return pRollUpType;
     }
@@ -125,7 +115,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.pRollUpType = rollUpType.getPrimitiveValue();
     }
 
-    @Column(name = PRECISION, nullable = false)
     public String getPrecision() {
         return precision;
     }
@@ -153,8 +142,6 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
         this.enabled = enabled;
     }
 
-    @Lob
-    @Column(name = SQLNameConstants.DATA, length = Integer.MAX_VALUE)
     @ExternalFile
     public String getData() {
         return data;

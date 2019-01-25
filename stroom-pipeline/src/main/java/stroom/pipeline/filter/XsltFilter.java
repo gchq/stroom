@@ -31,7 +31,7 @@ import stroom.pipeline.cache.XsltPool;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.XsltStore;
+import stroom.pipeline.xslt.XsltStore;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;

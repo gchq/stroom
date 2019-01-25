@@ -16,12 +16,12 @@
 
 package stroom.dictionary;
 
+import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DownloadDictionaryAction;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.resource.ResourceStore;
+import stroom.resource.api.ResourceStore;
 import stroom.security.Security;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
@@ -30,6 +30,7 @@ import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAc
 
             } catch (final IOException e) {
                 documentEventLog.download(dictionary, null);
-                throw EntityServiceExceptionUtil.create(e);
+                throw new UncheckedIOException(e);
             }
         });
     }

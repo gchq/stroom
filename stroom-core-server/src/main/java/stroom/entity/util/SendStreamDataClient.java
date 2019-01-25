@@ -19,13 +19,13 @@ package stroom.entity.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapUtil;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.api.AttributeMapUtil;
 import stroom.feed.shared.FeedDoc;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.meta.api.Data;
+import stroom.data.meta.shared.Data;
 import stroom.util.date.DateUtil;
 
 import javax.net.ssl.HttpsURLConnection;

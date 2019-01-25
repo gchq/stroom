@@ -22,15 +22,15 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataProperties;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.store.StreamRetentionExecutor;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataMetaService;
+import stroom.data.meta.shared.DataProperties;
+import stroom.data.meta.shared.DataStatus;
+import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.store.DataRetentionExecutor;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -54,7 +54,7 @@ class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private FeedStore feedStore;
     @Inject
-    private StreamRetentionExecutor streamRetentionExecutor;
+    private DataRetentionExecutor streamRetentionExecutor;
 
     @Test
     void testMultipleRuns() {

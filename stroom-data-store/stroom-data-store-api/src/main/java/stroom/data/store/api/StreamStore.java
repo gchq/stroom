@@ -17,9 +17,9 @@
 
 package stroom.data.store.api;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataProperties;
 
 /**
  * <p>

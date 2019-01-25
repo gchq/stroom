@@ -25,7 +25,7 @@ import stroom.docstore.Store;
 import stroom.docstore.StoreFactory;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.LegacyXMLSerialiser;
+import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRefInfo;

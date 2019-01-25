@@ -24,11 +24,11 @@ import stroom.entity.shared.Clearable;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
 import stroom.node.impl.NodeCreator;
-import stroom.volume.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.util.io.FileUtil;
+import stroom.volume.VolumeService;
 
 import javax.inject.Inject;
 import java.nio.file.Paths;

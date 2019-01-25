@@ -23,9 +23,9 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.xml.event.Event;
-import stroom.xml.event.simple.StartElement;
-import stroom.xml.event.simple.StartPrefixMapping;
+import stroom.pipeline.xml.event.Event;
+import stroom.pipeline.xml.event.simple.StartElement;
+import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
 /**
  * Splits a single XML instance into separate XML instances that contain

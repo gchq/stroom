@@ -28,7 +28,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
-import stroom.xml.converter.ds3.DS3Reader;
+import stroom.pipeline.xml.converter.ds3.DS3Reader;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

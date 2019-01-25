@@ -16,9 +16,9 @@
 
 package stroom.data.meta.impl.db;
 
-import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataRow;
+import stroom.data.meta.shared.AttributeMap;
+import stroom.data.meta.shared.Data;
+import stroom.data.meta.shared.DataRow;
 import stroom.entity.shared.Flushable;
 
 import java.util.List;

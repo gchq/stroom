@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 

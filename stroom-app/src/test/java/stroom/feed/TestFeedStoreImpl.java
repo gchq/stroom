@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.feed.FeedStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;

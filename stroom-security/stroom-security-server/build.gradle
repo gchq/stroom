@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.security.server'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-entity-shared')

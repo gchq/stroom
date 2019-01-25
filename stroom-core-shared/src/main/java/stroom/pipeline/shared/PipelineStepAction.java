@@ -18,7 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.task.shared.Action;
-import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.shared.FindDataCriteria;
 
 import java.util.HashMap;
 import java.util.Map;

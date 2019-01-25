@@ -6,7 +6,7 @@ import stroom.docstore.DocumentSerialiser2;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Serialiser2Factory;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 import stroom.script.shared.ScriptDoc;
 import stroom.util.string.EncodingUtil;
 

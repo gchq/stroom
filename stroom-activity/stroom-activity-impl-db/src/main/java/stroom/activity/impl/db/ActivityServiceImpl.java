@@ -25,8 +25,8 @@ import stroom.activity.api.FindActivityCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.EntityServiceException;
 import stroom.security.SecurityContext;
-import stroom.util.jooq.AuditUtil;
-import stroom.util.jooq.JooqUtil;
+import stroom.db.util.AuditUtil;
+import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 import java.util.List;

@@ -24,7 +24,7 @@ import stroom.pipeline.cache.StoredParserFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.TextConverterStore;
+import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -38,7 +38,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.cache.PoolItem;
-import stroom.xml.converter.ParserFactory;
+import stroom.pipeline.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
 

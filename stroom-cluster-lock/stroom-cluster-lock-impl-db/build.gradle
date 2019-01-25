@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-impl-db-gen')
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-entity-shared')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-security:stroom-security-api')

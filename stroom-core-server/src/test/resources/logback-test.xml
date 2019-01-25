@@ -14,7 +14,7 @@
 
     <logger name="event-logging" level="error" additivity="false" />
 
-    <logger name="stroom.xml.converter" level="debug" additivity="false" />
+    <logger name="stroom.pipeline.xml.converter" level="debug" additivity="false" />
 
     <root>
         <!-- stops noisy logging from 3rd party libs, whitelist packages to lower log levels as needed -->

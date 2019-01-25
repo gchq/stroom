@@ -6,7 +6,7 @@ import stroom.db.migration.doc.JsonSerialiser2;
 import stroom.db.migration.doc.EncodingUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
-import stroom.entity.util.XMLMarshallerUtil;
+import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

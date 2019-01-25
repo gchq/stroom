@@ -35,8 +35,8 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.shared.FindDataCriteria;
+import stroom.data.meta.shared.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.query.api.v2.ExpressionItem;
@@ -132,25 +132,6 @@ public class StreamEventLog {
                 LOGGER.error("Unable to view stream!", e);
             }
         });
-    }
-
-    public void stepStream(final String eventId,
-                           final String feedName,
-                           final String streamTypeName,
-                           final DocRef pipelineRef,
-                           final Throwable th) {
-        try {
-            if (eventId != null) {
-                final Event event = eventLoggingService.createAction("Stepping", "Stepping Stream");
-                final ObjectOutcome objectOutcome = new ObjectOutcome();
-                event.getEventDetail().setView(objectOutcome);
-                objectOutcome.getObjects().add(createStreamObject(eventId, feedName, streamTypeName, pipelineRef));
-                objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
-                eventLoggingService.log(event);
-            }
-        } catch (final Exception e) {
-            LOGGER.error("Unable to step stream!", e);
-        }
     }
 
     private Query createQuery(final FindDataCriteria findStreamCriteria) {

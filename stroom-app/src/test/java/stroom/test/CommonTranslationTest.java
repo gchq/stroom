@@ -19,7 +19,7 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.shared.DataMetaService;
 import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
