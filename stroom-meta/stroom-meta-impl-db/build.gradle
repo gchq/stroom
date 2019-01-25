@@ -2,8 +2,8 @@ ext.moduleName = 'stroom.meta.impl.db'
 
 dependencies {
     implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-data-meta:stroom-data-meta-impl-db-gen')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-impl-db-gen')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-db-util')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')

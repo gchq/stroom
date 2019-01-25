@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.dictionary.api'
 
 dependencies {
 //    implementation project(':stroom-cache:stroom-cache-api')
-//    implementation project(':stroom-data-meta:stroom-data-meta-api')
+//    implementation project(':stroom-meta:stroom-meta-api')
 //    implementation project(':stroom-data-store:stroom-data-store-api')
 //    implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
@@ -60,7 +60,7 @@ dependencies {
 //
 //    testImplementation project(':stroom-cache:stroom-cache-api')
 //    testImplementation project(':stroom-cache:stroom-cache-impl')
-//    testImplementation project(':stroom-data-meta:stroom-data-meta-impl-mock')
+//    testImplementation project(':stroom-meta:stroom-meta-impl-mock')
 //    testImplementation project(':stroom-docstore:stroom-docstore-impl')
 //    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
 //    testImplementation project(':stroom-security:stroom-security-impl-mock')

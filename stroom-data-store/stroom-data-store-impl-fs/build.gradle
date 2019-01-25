@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-server')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-db-util')
     implementation project(':stroom-cluster-lock:stroom-cluster-lock-api')
     implementation project(':stroom-data-store:stroom-data-store-api')

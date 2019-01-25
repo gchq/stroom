@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.data.meta.impl.mock'
 
 dependencies {
-    implementation project(':stroom-data-meta:stroom-data-meta-api')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-entity-shared')
