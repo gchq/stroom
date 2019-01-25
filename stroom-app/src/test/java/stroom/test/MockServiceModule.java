@@ -3,7 +3,7 @@ package stroom.test;
 import com.google.inject.AbstractModule;
 import org.mockito.stubbing.Answer;
 import stroom.cache.impl.CacheModule;
-import stroom.data.meta.impl.mock.MockMetaModule;
+import stroom.meta.impl.mock.MockMetaModule;
 import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.MockDictionaryModule;
 import stroom.importexport.impl.ImportExportModule;

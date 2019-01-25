@@ -21,7 +21,7 @@ package stroom.datafeed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StroomHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 

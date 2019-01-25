@@ -3,7 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.config.global.impl.db.GlobalConfigDbModule;
 import stroom.config.global.impl.db.GlobalConfigModule;
-import stroom.data.meta.impl.db.MetaDbModule;
+import stroom.meta.impl.db.MetaDbModule;
 import stroom.dataprocess.PipelineStreamTaskModule;
 import stroom.dictionary.impl.DictionaryHandlerModule;
 import stroom.dictionary.impl.DictionaryModule;

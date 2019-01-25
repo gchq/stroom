@@ -17,9 +17,9 @@
 
 package stroom.query;
 
-import stroom.data.meta.shared.MetaService;
-import stroom.data.meta.shared.Status;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.entity.FindService;
 import stroom.entity.shared.FindNamedEntityCriteria;

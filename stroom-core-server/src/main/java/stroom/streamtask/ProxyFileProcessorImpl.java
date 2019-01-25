@@ -18,12 +18,12 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
+import stroom.meta.shared.AttributeMap;
 import stroom.data.store.StreamProgressMonitor;
 import stroom.data.store.api.StreamStore;
 import stroom.datafeed.BufferFactory;
 import stroom.pipeline.feed.FeedDocCache;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;

@@ -17,7 +17,7 @@
 package stroom.ruleset;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaDataSource;
 import stroom.data.store.ExpressionMatcher;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

@@ -18,7 +18,7 @@ package stroom.data.store.util;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;
-import stroom.data.meta.impl.db.MetaDbModule;
+import stroom.meta.impl.db.MetaDbModule;
 
 public class ToolModule extends AbstractModule {
     @Override

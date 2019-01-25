@@ -17,7 +17,7 @@
 package stroom.streamstore.shared;
 
 import stroom.task.shared.Action;
-import stroom.data.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadDataAction extends Action<ResourceGeneration> {

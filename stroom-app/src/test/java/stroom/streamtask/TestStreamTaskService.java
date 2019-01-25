@@ -19,8 +19,8 @@ package stroom.streamtask;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
 import stroom.entity.shared.Period;
 import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;

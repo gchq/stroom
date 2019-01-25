@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.data.meta.shared.StroomHeaderArguments;
+import stroom.meta.shared.StroomHeaderArguments;
 import stroom.security.util.UserTokenUtil;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskIdFactory;

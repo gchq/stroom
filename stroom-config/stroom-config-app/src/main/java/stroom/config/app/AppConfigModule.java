@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
-import stroom.data.meta.impl.db.MetaServiceConfig;
+import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;

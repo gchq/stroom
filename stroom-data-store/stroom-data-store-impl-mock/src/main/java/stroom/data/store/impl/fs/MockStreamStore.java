@@ -16,12 +16,12 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaService;
-import stroom.data.meta.shared.MetaProperties;
-import stroom.data.meta.shared.Status;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.Status;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.OutputStreamProvider;
@@ -131,7 +131,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         fileData.clear();
         openOutputStream.clear();
         openInputStream.clear();
-        ((MockDataMetaService) streamMetaService).clear();
+        ((MockMetaService) streamMetaService).clear();
     }
 
     public int getStreamStoreCount() {

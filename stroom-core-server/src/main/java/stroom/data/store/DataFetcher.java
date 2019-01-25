@@ -20,7 +20,7 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Status;
+import stroom.meta.shared.Status;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;

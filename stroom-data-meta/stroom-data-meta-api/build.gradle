@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.data.meta.api'
+ext.moduleName = 'stroom.meta.api'
 
 dependencies {
     implementation project(':stroom-util')

@@ -2,8 +2,8 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaDataSource;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;

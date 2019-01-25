@@ -20,7 +20,7 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.MetaProperties;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.DataRetentionExecutor;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;

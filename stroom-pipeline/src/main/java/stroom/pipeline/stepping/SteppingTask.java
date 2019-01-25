@@ -21,7 +21,7 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.data.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.task.api.ServerTask;
 
 import java.util.Map;

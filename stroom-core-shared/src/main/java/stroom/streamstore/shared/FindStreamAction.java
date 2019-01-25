@@ -18,8 +18,8 @@ package stroom.streamstore.shared;
 
 import stroom.task.shared.Action;
 import stroom.entity.shared.ResultList;
-import stroom.data.meta.shared.FindMetaCriteria;
-import stroom.data.meta.shared.MetaRow;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaRow;
 
 public class FindStreamAction extends Action<ResultList<MetaRow>> {
     private static final long serialVersionUID = -3560107233301674555L;

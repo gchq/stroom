@@ -1,6 +1,6 @@
 apply plugin: 'nu.studer.jooq'
 
-ext.moduleName = 'stroom.data.meta.impl.db.gen'
+ext.moduleName = 'stroom.meta.impl.db.gen'
 
 dependencies {
     implementation libs.javax_annotation
@@ -48,7 +48,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         recordVersionFields = 'version'
                     }
                     target {
-                        packageName = 'stroom.data.meta.impl.db'
+                        packageName = 'stroom.meta.impl.db'
                         directory = 'src/main/java'
                     }
                 }

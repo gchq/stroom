@@ -20,9 +20,9 @@ package stroom.pipeline.task;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaService;
-import stroom.data.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.data.store.api.StreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.docref.DocRef;

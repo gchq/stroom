@@ -16,7 +16,7 @@
 
 package stroom.datasource;
 
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaDataSource;
 import stroom.datasource.shared.DataSourceFields;
 import stroom.datasource.shared.FetchFieldsAction;
 import stroom.security.Security;

@@ -17,8 +17,8 @@
 
 package stroom.pipeline.writer;
 
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaProperties;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;

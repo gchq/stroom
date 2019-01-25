@@ -1,7 +1,7 @@
 package stroom.config.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.data.meta.impl.db.MetaServiceConfig;
+import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.util.shared.IsConfig;
 

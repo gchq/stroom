@@ -19,13 +19,13 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.MetaProperties;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.MetaProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.meta.api.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.feed.FeedDocCache;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;

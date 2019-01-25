@@ -19,10 +19,10 @@ package stroom.pipeline.refdata;
 
 import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaProperties;
-import stroom.data.meta.shared.EffectiveMetaDataCriteria;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.impl.mock.MockMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.security.impl.SecurityImpl;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -192,7 +192,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         return fromMs + APPROX_TEN_DAYS;
     }
 
-    private static class InnerStreamMetaService extends MockDataMetaService {
+    private static class InnerStreamMetaService extends MockMetaService {
         private final List<Meta> streams = new ArrayList<>();
         private long callCount = 0;
 

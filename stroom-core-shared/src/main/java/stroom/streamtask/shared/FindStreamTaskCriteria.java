@@ -16,14 +16,14 @@
 
 package stroom.streamtask.shared;
 
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.Period;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.Status;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 
 /**
  * <p>

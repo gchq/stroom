@@ -17,10 +17,10 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaProperties;
-import stroom.data.meta.shared.FindMetaCriteria;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaProperties;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamTarget;
@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestMockStreamStore {
     @Test
     void testExample() throws IOException {
-        final MockDataMetaService mockStreamMetaService = new MockDataMetaService();
+        final MockMetaService mockStreamMetaService = new MockMetaService();
         final MockStreamStore mockStreamStore = new MockStreamStore(mockStreamMetaService);
 
         mockStreamStore.clear();

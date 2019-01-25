@@ -17,12 +17,12 @@
 
 package stroom.pipeline.task;
 
-import stroom.data.meta.shared.AttributeMap;
-import stroom.data.meta.shared.Meta;
+import stroom.meta.shared.AttributeMap;
+import stroom.meta.shared.Meta;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
-import stroom.data.meta.api.AttributeMapUtil;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;

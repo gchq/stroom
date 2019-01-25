@@ -18,8 +18,8 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.impl.mock.MockMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.dataprocess.PipelineStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -46,7 +46,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTask/";
 
     @Inject
-    private MockDataMetaService streamMetaService;
+    private MockMetaService streamMetaService;
     @Inject
     private MockStreamStore streamStore;
     @Inject

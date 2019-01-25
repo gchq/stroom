@@ -1,8 +1,8 @@
 package stroom.streamstore.shared;
 
-import stroom.data.meta.shared.Status;
+import stroom.meta.shared.Status;
 import stroom.task.shared.Action;
-import stroom.data.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.SharedInteger;
 
 public class UpdateStatusAction extends Action<SharedInteger> {

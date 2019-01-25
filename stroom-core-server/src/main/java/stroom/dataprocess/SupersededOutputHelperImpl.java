@@ -2,11 +2,11 @@ package stroom.dataprocess;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.MetaService;
-import stroom.data.meta.shared.Status;
-import stroom.data.meta.shared.FindMetaCriteria;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaService;
+import stroom.meta.shared.Status;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaDataSource;
 import stroom.pipeline.scope.PipelineScoped;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.query.api.v2.ExpressionOperator;

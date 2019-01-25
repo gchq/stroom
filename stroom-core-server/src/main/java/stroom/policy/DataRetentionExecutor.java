@@ -20,7 +20,7 @@ package stroom.policy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.data.meta.shared.MetaDataSource;
+import stroom.meta.shared.MetaDataSource;
 import stroom.data.store.DataRetentionAgeUtil;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.entity.shared.Period;

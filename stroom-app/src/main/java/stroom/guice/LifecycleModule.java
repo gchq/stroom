@@ -3,7 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheManagerLifecycleModule;
 import stroom.cluster.impl.ClusterLifecycleModule;
-import stroom.data.meta.impl.db.MetaDbLifecycleModule;
+import stroom.meta.impl.db.MetaDbLifecycleModule;
 import stroom.entity.event.EntityEventLifecycleModule;
 import stroom.importexport.impl.ImportExportLifecycleModule;
 import stroom.index.IndexLifecycleModule;

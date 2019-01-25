@@ -1,7 +1,7 @@
 package stroom.headless;
 
-import stroom.data.meta.shared.Meta;
-import stroom.data.meta.shared.Status;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 
 import java.util.Objects;
 
