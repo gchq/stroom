@@ -16,6 +16,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestModule extends AbstractModule {
+    static final String DATABASE_NAME = "stroom";
+
     private final MySQLContainer dbContainer;
 
     public TestModule(final MySQLContainer dbContainer) {
@@ -43,7 +45,7 @@ class TestModule extends AbstractModule {
             bind(SecurityDbConfig.class).toInstance(new SecurityDbConfig.Builder()
                     .withConnectionConfig(new ConnectionConfig.Builder()
                             .jdbcDriverClassName("com.mysql.jdbc.Driver")
-                            .jdbcUrl("jdbc:mysql://localhost:14450/stroom?useUnicode=yes&characterEncoding=UTF-8")
+                            .jdbcUrl(String.format("jdbc:mysql://localhost:14450/%s?useUnicode=yes&characterEncoding=UTF-8", DATABASE_NAME))
                             .password("stroompassword1")
                             .username("stroomuser")
                             .build())

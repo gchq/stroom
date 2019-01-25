@@ -24,9 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.security.impl.db.Stroom;
-import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.User;
+import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -41,7 +40,7 @@ class TestAppPermissionServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppPermissionServiceImpl.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(Stroom.STROOM.getName());//= null;//
+            .withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
 
     private static Injector injector;
 

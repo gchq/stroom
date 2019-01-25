@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
-import stroom.security.impl.db.Stroom;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserRef;
@@ -41,7 +40,7 @@ class TestUserServiceImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUserServiceImpl.class);
 
     private static MySQLContainer dbContainer = new MySQLContainer()
-            .withDatabaseName(Stroom.STROOM.getName());//= null;//pu
+            .withDatabaseName(TestModule.DATABASE_NAME);//= null;//pu
 
     private static Injector injector;
 
