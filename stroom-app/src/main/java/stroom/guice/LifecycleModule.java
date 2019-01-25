@@ -3,7 +3,7 @@ package stroom.guice;
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheManagerLifecycleModule;
 import stroom.cluster.impl.ClusterLifecycleModule;
-import stroom.data.meta.impl.db.DataMetaDbLifecycleModule;
+import stroom.data.meta.impl.db.MetaDbLifecycleModule;
 import stroom.entity.event.EntityEventLifecycleModule;
 import stroom.importexport.impl.ImportExportLifecycleModule;
 import stroom.index.IndexLifecycleModule;
@@ -26,7 +26,7 @@ public class LifecycleModule extends AbstractModule {
         install(new CacheManagerLifecycleModule());
         install(new ClusterLifecycleModule());
         install(new ClusterTaskLifecycleModule());
-        install(new DataMetaDbLifecycleModule());
+        install(new MetaDbLifecycleModule());
         install(new EntityEventLifecycleModule());
         install(new EntityManagerLifecycleModule());
         install(new ImportExportLifecycleModule());

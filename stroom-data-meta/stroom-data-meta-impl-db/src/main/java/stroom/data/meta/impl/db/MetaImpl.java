@@ -5,7 +5,7 @@ import stroom.data.meta.shared.Status;
 
 import java.util.Objects;
 
-class DataImpl implements Meta {
+class MetaImpl implements Meta {
     private long id;
     private String feedName;
     private String typeName;
@@ -18,7 +18,7 @@ class DataImpl implements Meta {
     private long createMs;
     private Long effectiveMs;
 
-    DataImpl() {
+    MetaImpl() {
     }
 
     @Override
@@ -80,7 +80,7 @@ class DataImpl implements Meta {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final DataImpl data = (DataImpl) o;
+        final MetaImpl data = (MetaImpl) o;
         return id == data.id;
     }
 
@@ -95,7 +95,7 @@ class DataImpl implements Meta {
     }
 
     public static class Builder {
-        private final DataImpl data = new DataImpl();
+        private final MetaImpl data = new MetaImpl();
 
         Builder() {
         }

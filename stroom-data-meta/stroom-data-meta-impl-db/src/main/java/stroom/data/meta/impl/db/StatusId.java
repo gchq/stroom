@@ -24,7 +24,7 @@ import stroom.data.meta.shared.Status;
  * and unlocked.
  * </p>
  */
-class DataStatusId {
+class StatusId {
     public static final byte UNLOCKED = 0;
     public static final byte LOCKED = 1;
     public static final byte DELETED = 99;

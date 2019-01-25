@@ -7,7 +7,7 @@ import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
-public class DataMetaDbJobsModule extends ScheduledJobsModule {
+public class MetaDbJobsModule extends ScheduledJobsModule {
     @Override
     protected void configure() {
         super.configure();

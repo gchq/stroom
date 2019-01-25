@@ -5,7 +5,7 @@ import stroom.data.meta.shared.MetaSecurityFilter;
 
 import java.util.Optional;
 
-class DataSecurityFilterImpl implements MetaSecurityFilter {
+class MetaSecurityFilterImpl implements MetaSecurityFilter {
     @Override
     public Optional<ExpressionOperator> getExpression(final String permission) {
         // TODO : @66 Add an implementation based on feed doc permissions.

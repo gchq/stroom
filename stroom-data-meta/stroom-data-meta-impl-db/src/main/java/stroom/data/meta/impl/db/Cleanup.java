@@ -7,17 +7,17 @@ import javax.inject.Inject;
 public class Cleanup implements Clearable {
     private final MetaValueServiceImpl metaValueService;
     private final MetaKeyServiceImpl metaKeyService;
-    private final DataMetaServiceImpl dataMetaService;
+    private final MetaServiceImpl dataMetaService;
     private final ProcessorServiceImpl processorService;
-    private final DataTypeServiceImpl dataTypeService;
+    private final MetaTypeServiceImpl dataTypeService;
     private final FeedServiceImpl feedService;
 
     @Inject
     Cleanup(final MetaValueServiceImpl metaValueService,
             final MetaKeyServiceImpl metaKeyService,
-            final DataMetaServiceImpl dataMetaService,
+            final MetaServiceImpl dataMetaService,
             final ProcessorServiceImpl processorService,
-            final DataTypeServiceImpl dataTypeService,
+            final MetaTypeServiceImpl dataTypeService,
             final FeedServiceImpl feedService) {
         this.metaValueService = metaValueService;
         this.metaKeyService = metaKeyService;

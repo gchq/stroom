@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaValueServiceImpl {
     @Inject
-    private DataMetaServiceImpl dataMetaService;
+    private MetaServiceImpl dataMetaService;
     @Inject
     private MetaValueServiceImpl metaValueService;
     @Inject
@@ -45,7 +45,7 @@ class TestMetaValueServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
         metaValueConfig.setAddAsync(false);
     }
 

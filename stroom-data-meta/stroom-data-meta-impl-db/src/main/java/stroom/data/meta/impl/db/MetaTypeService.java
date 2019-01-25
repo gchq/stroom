@@ -19,7 +19,7 @@ package stroom.data.meta.impl.db;
 
 import java.util.List;
 
-interface DataTypeService {
+interface MetaTypeService {
     Integer getOrCreate(String name);
 
     List<String> list();

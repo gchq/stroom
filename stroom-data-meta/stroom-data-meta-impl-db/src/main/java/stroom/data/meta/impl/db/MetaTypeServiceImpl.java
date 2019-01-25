@@ -34,15 +34,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
 
 @Singleton
-class DataTypeServiceImpl implements DataTypeService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataTypeServiceImpl.class);
+class MetaTypeServiceImpl implements MetaTypeService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaTypeServiceImpl.class);
 
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
 
     @Inject
-    DataTypeServiceImpl(final ConnectionProvider connectionProvider) {
+    MetaTypeServiceImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
     }
 

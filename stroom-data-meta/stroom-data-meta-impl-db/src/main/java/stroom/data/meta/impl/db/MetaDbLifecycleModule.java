@@ -5,7 +5,7 @@ import stroom.lifecycle.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
-public class DataMetaDbLifecycleModule extends AbstractLifecycleModule {
+public class MetaDbLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
         super.configure();

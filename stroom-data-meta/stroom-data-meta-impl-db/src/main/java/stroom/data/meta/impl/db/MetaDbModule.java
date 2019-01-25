@@ -21,32 +21,32 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-public class DataMetaDbModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataMetaDbModule.class);
+public class MetaDbModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDbModule.class);
     private static final String FLYWAY_LOCATIONS = "stroom/data/meta/impl/db";
     private static final String FLYWAY_TABLE = "data_meta_schema_history";
 
     @Override
     protected void configure() {
         bind(FeedService.class).to(FeedServiceImpl.class);
-        bind(DataTypeService.class).to(DataTypeServiceImpl.class);
+        bind(MetaTypeService.class).to(MetaTypeServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
         bind(MetaValueService.class).to(MetaValueServiceImpl.class);
-        bind(MetaService.class).to(DataMetaServiceImpl.class);
-        bind(MetaSecurityFilter.class).to(DataSecurityFilterImpl.class);
+        bind(MetaService.class).to(MetaServiceImpl.class);
+        bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(Cleanup.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
-                .bind(Meta.class, DataObjectInfoProvider.class);
+                .bind(Meta.class, MetaObjectInfoProvider.class);
     }
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<DataMetaServiceConfig> configProvider) {
+    ConnectionProvider getConnectionProvider(final Provider<MetaServiceConfig> configProvider) {
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
         final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);

@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.benchmark.BenchmarkClusterConfig;
 import stroom.cluster.ClusterConfig;
 import stroom.dashboard.QueryHistoryConfig;
-import stroom.data.meta.impl.db.DataMetaServiceConfig;
+import stroom.data.meta.impl.db.MetaServiceConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.datafeed.DataFeedConfig;
 import stroom.datasource.DataSourceUrlConfig;
@@ -66,7 +66,7 @@ public class AppConfigModule extends AbstractModule {
         bind(CoreConfig.class).toInstance(appConfig.getCoreConfig());
         bind(DataConfig.class).toInstance(appConfig.getDataConfig());
         bind(DataFeedConfig.class).toInstance(appConfig.getDataFeedConfig());
-        bind(DataMetaServiceConfig.class).toInstance(appConfig.getDataConfig().getDataMetaServiceConfig());
+        bind(MetaServiceConfig.class).toInstance(appConfig.getDataConfig().getDataMetaServiceConfig());
         bind(DataSourceUrlConfig.class).toInstance(appConfig.getDataSourceUrlConfig());
         bind(DataStoreServiceConfig.class).toInstance(appConfig.getDataConfig().getDataStoreServiceConfig());
         bind(ExplorerConfig.class).toInstance(appConfig.getExplorerConfig());

@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-public class MockDataMetaService implements MetaService, Clearable {
+public class MockMetaService implements MetaService, Clearable {
     private final Set<String> feeds = new HashSet<>();
     private final Set<String> types = new HashSet<>();
     private final Map<Long, Meta> dataMap = new HashMap<>();
@@ -48,7 +48,7 @@ public class MockDataMetaService implements MetaService, Clearable {
         feeds.add(properties.getFeedName());
         types.add(properties.getTypeName());
 
-        final MockData.Builder builder = new MockData.Builder();
+        final MockMeta.Builder builder = new MockMeta.Builder();
         builder.parentDataId(properties.getParentId());
         builder.feedName(properties.getFeedName());
         builder.typeName(properties.getTypeName());
@@ -82,7 +82,7 @@ public class MockDataMetaService implements MetaService, Clearable {
     public Meta updateStatus(final Meta data, final Status status) {
         Objects.requireNonNull(data, "Null data");
 
-        final MockData result = (MockData) dataMap.get(data.getId());
+        final MockMeta result = (MockMeta) dataMap.get(data.getId());
         if (result != null) {
             result.status = status;
             result.statusMs = System.currentTimeMillis();

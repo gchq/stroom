@@ -3,7 +3,7 @@ package stroom.data.meta.impl.mock;
 import stroom.data.meta.shared.Meta;
 import stroom.data.meta.shared.Status;
 
-class MockData implements Meta {
+class MockMeta implements Meta {
     private long id;
     private String feedName;
     private String typeName;
@@ -16,7 +16,7 @@ class MockData implements Meta {
     private long createMs;
     private Long effectiveMs;
 
-    MockData() {
+    MockMeta() {
     }
 
     @Override
@@ -75,7 +75,7 @@ class MockData implements Meta {
     }
 
     public static class Builder {
-        private final MockData data = new MockData();
+        private final MockMeta data = new MockMeta();
 
         public Builder id(final long id) {
             data.id = id;

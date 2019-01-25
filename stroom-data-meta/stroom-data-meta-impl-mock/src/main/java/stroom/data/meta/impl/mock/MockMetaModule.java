@@ -21,7 +21,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.data.meta.shared.MetaService;
 
-public class MockDataMetaModule extends AbstractModule {
+public class MockMetaModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(MetaService.class).to(MockDataMetaService.class);

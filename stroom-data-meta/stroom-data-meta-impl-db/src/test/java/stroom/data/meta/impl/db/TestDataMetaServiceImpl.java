@@ -21,11 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataMetaServiceImpl {
     @Inject
-    private DataMetaServiceImpl dataMetaService;
+    private MetaServiceImpl dataMetaService;
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
+        Guice.createInjector(new MetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test

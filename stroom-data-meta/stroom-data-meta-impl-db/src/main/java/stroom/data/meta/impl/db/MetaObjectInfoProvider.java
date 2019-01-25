@@ -23,7 +23,7 @@ import event.logging.util.EventLoggingUtil;
 import stroom.data.meta.shared.Meta;
 import stroom.event.logging.api.ObjectInfoProvider;
 
-class DataObjectInfoProvider implements ObjectInfoProvider {
+class MetaObjectInfoProvider implements ObjectInfoProvider {
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
         final Meta stream = (Meta) obj;

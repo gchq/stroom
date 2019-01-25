@@ -18,7 +18,7 @@ import stroom.data.meta.shared.Status;
 import stroom.data.meta.shared.EffectiveMetaDataCriteria;
 import stroom.data.meta.shared.FindMetaCriteria;
 import stroom.data.meta.shared.MetaDataSource;
-import stroom.data.meta.impl.db.DataImpl.Builder;
+import stroom.data.meta.impl.db.MetaImpl.Builder;
 import stroom.data.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.data.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
 import stroom.data.meta.impl.db.stroom.tables.DataFeed;
@@ -61,12 +61,12 @@ import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
 import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
 @Singleton
-class DataMetaServiceImpl implements MetaService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataMetaServiceImpl.class);
+class MetaServiceImpl implements MetaService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);
 
     private final ConnectionProvider connectionProvider;
     private final FeedService feedService;
-    private final DataTypeService dataTypeService;
+    private final MetaTypeService dataTypeService;
     private final ProcessorService processorService;
     private final MetaKeyService metaKeyService;
     private final MetaValueService metaValueService;
@@ -83,14 +83,14 @@ class DataMetaServiceImpl implements MetaService {
     private final MetaExpressionMapper metaExpressionMapper;
 
     @Inject
-    DataMetaServiceImpl(final ConnectionProvider connectionProvider,
-                        final FeedService feedService,
-                        final DataTypeService dataTypeService,
-                        final ProcessorService processorService,
-                        final MetaKeyService metaKeyService,
-                        final MetaValueService metaValueService,
-                        final MetaSecurityFilter dataSecurityFilter,
-                        final Security security) {
+    MetaServiceImpl(final ConnectionProvider connectionProvider,
+                    final FeedService feedService,
+                    final MetaTypeService dataTypeService,
+                    final ProcessorService processorService,
+                    final MetaKeyService metaKeyService,
+                    final MetaValueService metaValueService,
+                    final MetaSecurityFilter dataSecurityFilter,
+                    final Security security) {
         this.connectionProvider = connectionProvider;
         this.feedService = feedService;
         this.dataTypeService = dataTypeService;
@@ -110,7 +110,7 @@ class DataMetaServiceImpl implements MetaService {
         termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARENT_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.TASK_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.PROCESSOR_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> DataStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
+        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> StatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
         termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(data.STATUS_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(data.CREATE_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(data.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
@@ -182,7 +182,7 @@ class DataMetaServiceImpl implements MetaService {
                             dataProperties.getCreateMs(),
                             dataProperties.getEffectiveMs(),
                             dataProperties.getParentId(),
-                            DataStatusId.LOCKED,
+                            StatusId.LOCKED,
                             dataProperties.getStatusMs(),
                             dataProperties.getProcessorTaskId(),
                             feedId,
@@ -246,7 +246,7 @@ class DataMetaServiceImpl implements MetaService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .update(data)
-                    .set(data.STATUS, DataStatusId.getPrimitiveValue(status))
+                    .set(data.STATUS, StatusId.getPrimitiveValue(status))
                     .set(data.STATUS_TIME, statusTime)
                     .where(condition)
                     .execute();
@@ -296,7 +296,7 @@ class DataMetaServiceImpl implements MetaService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .update(data)
-                    .set(data.STATUS, DataStatusId.getPrimitiveValue(status))
+                    .set(data.STATUS, StatusId.getPrimitiveValue(status))
                     .set(data.STATUS_TIME, System.currentTimeMillis())
                     .where(condition)
                     .execute();
@@ -412,7 +412,7 @@ class DataMetaServiceImpl implements MetaService {
                             .parentDataId(r.component5())
                             .processTaskId(r.component6())
                             .processorId(r.component7())
-                            .status(DataStatusId.getStatus(r.component8()))
+                            .status(StatusId.getStatus(r.component8()))
                             .statusMs(r.component9())
                             .createMs(r.component10())
                             .effectiveMs(r.component11())
@@ -537,7 +537,7 @@ class DataMetaServiceImpl implements MetaService {
             return create
                     .selectCount()
                     .from(data)
-                    .where(data.STATUS.eq(DataStatusId.LOCKED))
+                    .where(data.STATUS.eq(StatusId.LOCKED))
                     .fetchOptional()
                     .map(Record1::value1)
                     .orElse(0);
@@ -655,7 +655,7 @@ class DataMetaServiceImpl implements MetaService {
             } else {
                 // Add a dummy parent data as we don't seem to be able to get the real parent.
                 // This might be because it is deleted or the user does not have access permissions.
-                final Meta data = new DataImpl.Builder()
+                final Meta data = new MetaImpl.Builder()
                         .id(child.getParentDataId())
                         .build();
                 result.add(data);

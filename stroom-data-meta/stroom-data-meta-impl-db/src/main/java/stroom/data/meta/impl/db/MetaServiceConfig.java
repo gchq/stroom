@@ -8,7 +8,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataMetaServiceConfig implements IsConfig {
+public class MetaServiceConfig implements IsConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
     private MetaValueConfig metaValueConfig;
