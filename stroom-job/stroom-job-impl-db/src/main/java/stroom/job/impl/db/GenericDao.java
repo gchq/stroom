@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
-import static stroom.util.jooq.JooqUtil.contextWithOptimisticLocking;
+import static stroom.db.util.JooqUtil.contextWithOptimisticLocking;
 
 public class GenericDao<RecordType extends UpdatableRecordImpl, EntityType> {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericDao.class);
