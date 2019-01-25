@@ -41,7 +41,7 @@ import stroom.index.impl.db.tables.records.IndexVolumeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
-    private static final long serialVersionUID = 594856825;
+    private static final long serialVersionUID = -1550995439;
 
     /**
      * The reference instance of <code>stroom.index_volume</code>
@@ -87,6 +87,11 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
     public final TableField<IndexVolumeRecord, Long> UPDATED_AT = createField("updated_at", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
+     * The column <code>stroom.index_volume.node_name</code>.
+     */
+    public final TableField<IndexVolumeRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
      * The column <code>stroom.index_volume.path</code>.
      */
     public final TableField<IndexVolumeRecord, String> PATH = createField("path", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
@@ -125,16 +130,6 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
      * The column <code>stroom.index_volume.status_ms</code>.
      */
     public final TableField<IndexVolumeRecord, Long> STATUS_MS = createField("status_ms", org.jooq.impl.SQLDataType.BIGINT, this, "");
-
-    /**
-     * The column <code>stroom.index_volume.index_uuid</code>.
-     */
-    public final TableField<IndexVolumeRecord, String> INDEX_UUID = createField("index_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>stroom.index_volume.node_name</code>.
-     */
-    public final TableField<IndexVolumeRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * Create a <code>stroom.index_volume</code> table reference

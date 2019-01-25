@@ -5,25 +5,28 @@ import org.jooq.Record;
 import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.util.JooqUtil;
 import stroom.index.dao.IndexVolumeDao;
+import stroom.index.shared.IndexVolume;
 
 import javax.inject.Inject;
+
+import java.util.Set;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.table;
 
 public class IndexVolumeDaoImpl implements IndexVolumeDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeDaoImpl.class);
 
     private final ConnectionProvider connectionProvider;
-
-    // Stroom User table
-    private static final Table<Record> TABLE_STROOM_USER = table("stroom_user");
-    private static final Field<Long> FIELD_ID = field("id", Long.class);
 
     @Inject
     public IndexVolumeDaoImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
     }
 
+    @Override
+    public Set<IndexVolume> getVolumesForIndex(String indexUuid) {
+        return null;
+    }
 }

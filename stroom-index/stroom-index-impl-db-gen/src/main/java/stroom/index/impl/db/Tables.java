@@ -8,6 +8,8 @@ import javax.annotation.Generated;
 
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
+import stroom.index.impl.db.tables.IndexVolumeGroup;
+import stroom.index.impl.db.tables.IndexVolumeGroupLink;
 
 
 /**
@@ -32,4 +34,14 @@ public class Tables {
      * The table <code>stroom.index_volume</code>.
      */
     public static final IndexVolume INDEX_VOLUME = stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
+
+    /**
+     * The table <code>stroom.index_volume_group</code>.
+     */
+    public static final IndexVolumeGroup INDEX_VOLUME_GROUP = stroom.index.impl.db.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
+
+    /**
+     * The table <code>stroom.index_volume_group_link</code>.
+     */
+    public static final IndexVolumeGroupLink INDEX_VOLUME_GROUP_LINK = stroom.index.impl.db.tables.IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK;
 }

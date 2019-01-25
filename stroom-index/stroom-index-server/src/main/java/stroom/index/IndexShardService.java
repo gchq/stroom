@@ -22,8 +22,7 @@ import stroom.entity.FindService;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.shared.Node;
 
 public interface IndexShardService extends BaseEntityService<IndexShard>, FindService<IndexShard, FindIndexShardCriteria> {
-    IndexShard createIndexShard(IndexShardKey indexShardKey, Node ownerNode);
+    IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName);
 }

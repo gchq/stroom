@@ -1,7 +1,21 @@
 ext.moduleName = 'stroom.index.api'
 
 dependencies {
-    compile libs.stroomDocRef
-    compile libs.javax_inject
-    compile libs.ws_rs_api
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-entity-shared')
+    implementation project(':stroom-docstore:stroom-docstore-shared')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-util')
+    implementation project(':stroom-task:stroom-task-shared')
+
+    implementation libs.javax_inject
+    implementation libs.stroomDocRef
+    implementation libs.stroomQueryApi
+    implementation libs.jackson_annotations
+    implementation libs.ws_rs_api
+
+    implementation libs.jaxb_api
+
+    testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.javax_activation
 }

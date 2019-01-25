@@ -13,13 +13,8 @@ import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.table;
 
 public class IndexShardDaoImpl implements IndexShardDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private final ConnectionProvider connectionProvider;
-
-    // Stroom User table
-    private static final Table<Record> TABLE_STROOM_USER = table("stroom_user");
-    private static final Field<Long> FIELD_ID = field("id", Long.class);
 
     @Inject
     public IndexShardDaoImpl(final ConnectionProvider connectionProvider) {

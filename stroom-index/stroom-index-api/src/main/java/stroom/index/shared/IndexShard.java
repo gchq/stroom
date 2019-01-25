@@ -20,18 +20,8 @@ import stroom.docref.HasDisplayValue;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,26 +30,7 @@ import java.util.Set;
 /**
  * A place where a indexUuid has been created.
  */
-@Entity
-@Table(name = "IDX_SHRD")
 public class IndexShard extends AuditedEntity {
-    public static final String TABLE_NAME = SQLNameConstants.INDEX + SEP + SQLNameConstants.SHARD;
-    public static final String OLD_INDEX_ID = "OLD_" + SQLNameConstants.INDEX + ID_SUFFIX;
-    public static final String FILE_SIZE = SQLNameConstants.FILE + SEP + SQLNameConstants.SIZE;
-    public static final String COMMIT_MS = SQLNameConstants.COMMIT + SQLNameConstants.MS_SUFFIX;
-    public static final String COMMIT_DURATION_MS = SQLNameConstants.COMMIT + SEP + SQLNameConstants.DURATION
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String COMMIT_DOCUMENT_COUNT = SQLNameConstants.COMMIT + SEP + SQLNameConstants.DOCUMENT
-            + SQLNameConstants.COUNT_SUFFIX;
-    public static final String DOCUMENT_COUNT = SQLNameConstants.DOCUMENT + SQLNameConstants.COUNT_SUFFIX;
-    public static final String PARTITION = SQLNameConstants.PARTITION;
-    public static final String PARTITION_FROM_TIME = SQLNameConstants.PARTITION + SEP + SQLNameConstants.FROM
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String PARTITION_TO_TIME = SQLNameConstants.PARTITION + SEP + SQLNameConstants.TO
-            + SQLNameConstants.MS_SUFFIX;
-    public static final String INDEX_UUID = SQLNameConstants.INDEX + SEP + SQLNameConstants.UUID;
-    public static final String INDEX_VERSION = SQLNameConstants.INDEX + SEP + SQLNameConstants.VERSION;
-    public static final String ENTITY_TYPE = "IndexShard";
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
@@ -67,23 +38,8 @@ public class IndexShard extends AuditedEntity {
 
     private static final long serialVersionUID = 3699846921846088685L;
 
-    /**
-     * A reference to the old index id required for backward compatibility.
-     */
-    private Integer oldIndexId;
+    public static final String ENTITY_TYPE = "IndexShard";
 
-    /**
-     * The indexUuid that this indexUuid shard belongs to.
-     */
-    private String indexUuid;
-    /**
-     * Volume the indexUuid is on
-     */
-    private VolumeEntity volume;
-    /**
-     * The owner of the indexUuid (the writer)
-     */
-    private Node node;
     /**
      * The time that the partition that this shard belongs to starts
      */
@@ -119,48 +75,39 @@ public class IndexShard extends AuditedEntity {
     private Long fileSize;
     private String indexVersion;
 
+    private IndexVolume volume;
+
+    private String nodeName;
+
+    private String indexUuid;
+
     public IndexShard() {
     }
 
-    @Column(name = OLD_INDEX_ID, nullable = true)
-    public Integer getOldIndexId() {
-        return oldIndexId;
+    public void setVolume(IndexVolume volume) {
+        this.volume = volume;
     }
 
-    public void setOldIndexId(final Integer oldIndexId) {
-        this.oldIndexId = oldIndexId;
+    public IndexVolume getVolume() {
+        return volume;
     }
 
-    @Column(name = INDEX_UUID, nullable = false)
+    public String getNodeName() {
+        return nodeName;
+    }
+
     public String getIndexUuid() {
         return indexUuid;
     }
 
-    public void setIndexUuid(final String index) {
-        this.indexUuid = index;
+    public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
     }
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = VolumeEntity.FOREIGN_KEY)
-    public VolumeEntity getVolume() {
-        return volume;
+    public void setIndexUuid(String indexUuid) {
+        this.indexUuid = indexUuid;
     }
 
-    public void setVolume(final VolumeEntity volume) {
-        this.volume = volume;
-    }
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = Node.FOREIGN_KEY)
-    public Node getNode() {
-        return node;
-    }
-
-    public void setNode(final Node ownerNode) {
-        this.node = ownerNode;
-    }
-
-    @Column(name = PARTITION, nullable = false)
     public String getPartition() {
         return partition;
     }
@@ -169,7 +116,6 @@ public class IndexShard extends AuditedEntity {
         this.partition = partition;
     }
 
-    @Column(name = PARTITION_FROM_TIME, columnDefinition = BIGINT_UNSIGNED)
     public Long getPartitionFromTime() {
         return partitionFromTime;
     }
@@ -178,7 +124,6 @@ public class IndexShard extends AuditedEntity {
         this.partitionFromTime = partitionFromTime;
     }
 
-    @Column(name = PARTITION_TO_TIME, columnDefinition = BIGINT_UNSIGNED)
     public Long getPartitionToTime() {
         return partitionToTime;
     }
@@ -187,7 +132,6 @@ public class IndexShard extends AuditedEntity {
         this.partitionToTime = partitionToTime;
     }
 
-    @Column(name = SQLNameConstants.STATUS, nullable = false)
     public byte getPstatus() {
         return pstatus;
     }
@@ -196,7 +140,6 @@ public class IndexShard extends AuditedEntity {
         this.pstatus = pstatus;
     }
 
-    @Transient
     public IndexShardStatus getStatus() {
         return IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(getPstatus());
     }
@@ -205,7 +148,6 @@ public class IndexShard extends AuditedEntity {
         this.pstatus = status.getPrimitiveValue();
     }
 
-    @Column(name = FILE_SIZE, columnDefinition = BIGINT_UNSIGNED)
     public Long getFileSize() {
         return fileSize;
     }
@@ -214,7 +156,6 @@ public class IndexShard extends AuditedEntity {
         this.fileSize = fileSize;
     }
 
-    @Column(name = COMMIT_MS, columnDefinition = BIGINT_UNSIGNED)
     public Long getCommitMs() {
         return commitMs;
     }
@@ -223,7 +164,6 @@ public class IndexShard extends AuditedEntity {
         this.commitMs = commitTimeMs;
     }
 
-    @Column(name = DOCUMENT_COUNT, columnDefinition = INT_UNSIGNED, nullable = false)
     public int getDocumentCount() {
         return documentCount;
     }
@@ -232,7 +172,6 @@ public class IndexShard extends AuditedEntity {
         this.documentCount = documentCount;
     }
 
-    @Column(name = COMMIT_DURATION_MS, columnDefinition = BIGINT_UNSIGNED)
     public Long getCommitDurationMs() {
         return commitDurationMs;
     }
@@ -241,7 +180,6 @@ public class IndexShard extends AuditedEntity {
         this.commitDurationMs = commitDurationMs;
     }
 
-    @Column(name = COMMIT_DOCUMENT_COUNT, columnDefinition = INT_UNSIGNED)
     public Integer getCommitDocumentCount() {
         return commitDocumentCount;
     }
@@ -250,7 +188,6 @@ public class IndexShard extends AuditedEntity {
         this.commitDocumentCount = commitDocuments;
     }
 
-    @Column(name = INDEX_VERSION)
     public String getIndexVersion() {
         return indexVersion;
     }
@@ -259,7 +196,6 @@ public class IndexShard extends AuditedEntity {
         this.indexVersion = indexVersion;
     }
 
-    @Transient
     public Long getCommitDocumentCountPs() {
         if (commitDocumentCount != null && commitDurationMs != null && commitDurationMs > 0) {
             final double seconds = commitDurationMs.doubleValue() / 1000;
@@ -270,12 +206,10 @@ public class IndexShard extends AuditedEntity {
         return null;
     }
 
-    @Transient
     public String getFileSizeString() {
         return ModelStringUtil.formatIECByteSizeString(getFileSize());
     }
 
-    @Transient
     public Integer getBytesPerDocument() {
         final Long fileSize = getFileSize();
         if (fileSize != null && documentCount > 0) {
@@ -285,15 +219,7 @@ public class IndexShard extends AuditedEntity {
     }
 
     @Override
-    protected void toString(final StringBuilder sb) {
-        super.toString(sb);
-        sb.append(", status=");
-        sb.append(getStatus());
-    }
-
-    @Transient
-    @Override
-    public final String getType() {
+    public String getType() {
         return ENTITY_TYPE;
     }
 
@@ -317,7 +243,7 @@ public class IndexShard extends AuditedEntity {
         CORRUPT("Corrupt", 100);
 
         public static final PrimitiveValueConverter<IndexShardStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-                IndexShardStatus.values());
+                values());
 
         private final String displayValue;
         private final byte primitiveValue;

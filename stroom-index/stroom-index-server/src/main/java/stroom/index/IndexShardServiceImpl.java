@@ -27,12 +27,14 @@ import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.PermissionException;
+import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.volume.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
@@ -54,7 +56,6 @@ public class IndexShardServiceImpl
     private static final String VOLUME_ERROR = "One or more volumes must been assigned to an index for a shard to be created";
 
     private final Security security;
-    private final VolumeService volumeService;
     private final IndexVolumeService indexVolumeService;
     private final IndexStructureCache indexStructureCache;
     private final SecurityContext securityContext;
@@ -62,20 +63,18 @@ public class IndexShardServiceImpl
     @Inject
     IndexShardServiceImpl(final StroomEntityManager entityManager,
                           final Security security,
-                          final VolumeService volumeService,
                           final IndexVolumeService indexVolumeService,
                           final IndexStructureCache indexStructureCache,
                           final SecurityContext securityContext) {
         super(entityManager, security);
         this.security = security;
-        this.volumeService = volumeService;
         this.indexVolumeService = indexVolumeService;
         this.indexStructureCache = indexStructureCache;
         this.securityContext = securityContext;
     }
 
     @Override
-    public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
+    public IndexShard createIndexShard(final IndexShardKey indexShardKey, final String ownerNodeName) {
         final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
         final IndexDoc index = indexStructure.getIndex();
         final Set<VolumeEntity> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
@@ -84,11 +83,11 @@ public class IndexShardServiceImpl
             throw new IndexException(VOLUME_ERROR);
         }
 
-        final Set<VolumeEntity> volumes = volumeService.getIndexVolumeSet(ownerNode, allowedVolumes);
+        final Set<IndexVolume> volumes = indexVolumeService.getIndexVolumeSet(ownerNodeName, allowedVolumes);
 
         // The first set should be a set of cache volumes unless no caches have
         // been defined or they are full.
-        VolumeEntity volume = null;
+        IndexVolume volume = null;
 
         if (volumes != null && volumes.size() > 0) {
             volume = volumes.iterator().next();
@@ -100,7 +99,7 @@ public class IndexShardServiceImpl
 
         final IndexShard indexShard = new IndexShard();
         indexShard.setIndexUuid(index.getUuid());
-        indexShard.setNode(ownerNode);
+        indexShard.setNodeName(ownerNodeName);
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
         indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
@@ -151,7 +150,7 @@ public class IndexShardServiceImpl
     @Override
     protected FieldMap createFieldMap() {
         return super.createFieldMap()
-                .add(FindIndexShardCriteria.FIELD_PARTITION, IndexShard.PARTITION, "partition");
+                .add(FindIndexShardCriteria.FIELD_PARTITION, SQLNameConstants.PARTITION, "partition");
     }
 
     @Override

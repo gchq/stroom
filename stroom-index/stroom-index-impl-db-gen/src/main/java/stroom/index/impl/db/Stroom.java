@@ -16,6 +16,8 @@ import org.jooq.impl.SchemaImpl;
 
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
+import stroom.index.impl.db.tables.IndexVolumeGroup;
+import stroom.index.impl.db.tables.IndexVolumeGroupLink;
 
 
 /**
@@ -31,7 +33,7 @@ import stroom.index.impl.db.tables.IndexVolume;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = 872917467;
+    private static final long serialVersionUID = -1440087635;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -47,6 +49,16 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.index_volume</code>.
      */
     public final IndexVolume INDEX_VOLUME = stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
+
+    /**
+     * The table <code>stroom.index_volume_group</code>.
+     */
+    public final IndexVolumeGroup INDEX_VOLUME_GROUP = stroom.index.impl.db.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
+
+    /**
+     * The table <code>stroom.index_volume_group_link</code>.
+     */
+    public final IndexVolumeGroupLink INDEX_VOLUME_GROUP_LINK = stroom.index.impl.db.tables.IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK;
 
     /**
      * No further instances allowed
@@ -74,6 +86,8 @@ public class Stroom extends SchemaImpl {
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
             IndexShard.INDEX_SHARD,
-            IndexVolume.INDEX_VOLUME);
+            IndexVolume.INDEX_VOLUME,
+            IndexVolumeGroup.INDEX_VOLUME_GROUP,
+            IndexVolumeGroupLink.INDEX_VOLUME_GROUP_LINK);
     }
 }

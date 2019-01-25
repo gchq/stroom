@@ -6,17 +6,9 @@ CREATE TABLE IF NOT EXISTS `index_volume_group` (
   `created_at` bigint(20) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` bigint(20) DEFAULT NULL,
-
-
-)
-
-CREATE TABLE IF NOT EXISTS `index_volume_link` (
-  `fk_index_volume_group_id` int(11) NOT NULL,
-  `fk_index_volume_id` int(11) NOT NULL,
-  UNIQUE KEY `index_volume_link_unique` (`fk_index_volume_group_id`,`fk_index_volume_id`)
-  CONSTRAINT `index_volume_link_fk_index_volume_group_id` FOREIGN KEY (`fk_index_volume_group_id`) REFERENCES `index_volume_group` (`id`)
-  CONSTRAINT `index_volume_link_fk_index_volume_id` FOREIGN KEY (`fk_index_volume_id`) REFERENCES `index_volume` (`id`)
-)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `index_volume_group_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=621 DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `index_volume` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -38,9 +30,20 @@ CREATE TABLE IF NOT EXISTS `index_volume` (
   UNIQUE KEY `node_name_path` (`node_name`,`path`)
 ) ENGINE=InnoDB AUTO_INCREMENT=621 DEFAULT CHARSET=latin1;
 
+CREATE TABLE IF NOT EXISTS `index_volume_group_link` (
+  `fk_index_volume_group_id` int(11) NOT NULL,
+  `fk_index_volume_id` int(11) NOT NULL,
+  UNIQUE KEY `index_volume_group_link_unique` (`fk_index_volume_group_id`,`fk_index_volume_id`),
+  CONSTRAINT `index_volume_group_link_fk_group_id` FOREIGN KEY (`fk_index_volume_group_id`) REFERENCES `index_volume_group` (`id`),
+  CONSTRAINT `index_volume_group_link_fk_volume_id` FOREIGN KEY (`fk_index_volume_id`) REFERENCES `index_volume` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=621 DEFAULT CHARSET=latin1;
+
 CREATE TABLE IF NOT EXISTS `index_shard` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `version` tinyint(4) NOT NULL,
+  `node_name` varchar(255) NOT NULL,
+  `fk_volume_id` int(11) NOT NULL,
+  `index_uuid` varchar(255) NOT NULL,
   `created_by` varchar(255) DEFAULT NULL,
   `created_at` bigint(20) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
@@ -52,7 +55,6 @@ CREATE TABLE IF NOT EXISTS `index_shard` (
   `file_size` bigint(20) DEFAULT NULL,
   `status` tinyint(4) NOT NULL,
   `partition` varchar(255) NOT NULL,
-  `fk_volume_id` int(11) NOT NULL,
   `index_version` varchar(255) DEFAULT NULL,
   `partition_from_ms` bigint(20) DEFAULT NULL,
   `partition_to_ms` bigint(20) DEFAULT NULL,

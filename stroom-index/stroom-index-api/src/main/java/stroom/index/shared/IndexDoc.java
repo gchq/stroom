@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "indexFields"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "indexFields", "volumeGroupName"})
 @JsonInclude(Include.NON_EMPTY)
 public class IndexDoc extends Doc {
     private static final long serialVersionUID = 2648729644398564919L;
@@ -45,6 +45,7 @@ public class IndexDoc extends Doc {
     private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
     private Integer retentionDayAge;
     private List<IndexField> indexFields;
+    private String volumeGroupName;
 
     public String getDescription() {
         return description;
@@ -105,6 +106,14 @@ public class IndexDoc extends Doc {
         this.indexFields = indexFields;
     }
 
+    public String getVolumeGroupName() {
+        return volumeGroupName;
+    }
+
+    public void setVolumeGroupName(String volumeGroupName) {
+        this.volumeGroupName = volumeGroupName;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -117,12 +126,13 @@ public class IndexDoc extends Doc {
                 Objects.equals(description, indexDoc.description) &&
                 partitionBy == indexDoc.partitionBy &&
                 Objects.equals(retentionDayAge, indexDoc.retentionDayAge) &&
-                Objects.equals(indexFields, indexDoc.indexFields);
+                Objects.equals(indexFields, indexDoc.indexFields) &&
+                Objects.equals(volumeGroupName, indexDoc.volumeGroupName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, maxDocsPerShard, partitionBy, partitionSize, shardsPerPartition, retentionDayAge, indexFields);
+        return Objects.hash(super.hashCode(), description, maxDocsPerShard, partitionBy, partitionSize, shardsPerPartition, retentionDayAge, indexFields, volumeGroupName);
     }
 
     public enum PartitionBy implements HasDisplayValue {
