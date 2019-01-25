@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
+import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
 
 @Singleton
 class MetaFeedServiceImpl implements MetaFeedService {
@@ -66,9 +66,9 @@ class MetaFeedServiceImpl implements MetaFeedService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .select(DATA_FEED.NAME)
-                    .from(DATA_FEED)
-                    .fetch(DATA_FEED.NAME);
+                    .select(META_FEED.NAME)
+                    .from(META_FEED)
+                    .fetch(META_FEED.NAME);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -85,10 +85,10 @@ class MetaFeedServiceImpl implements MetaFeedService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             id = create
-                    .select(DATA_FEED.ID)
-                    .from(DATA_FEED)
-                    .where(DATA_FEED.NAME.eq(name))
-                    .fetchOne(DATA_FEED.ID);
+                    .select(META_FEED.ID)
+                    .from(META_FEED)
+                    .where(META_FEED.NAME.eq(name))
+                    .fetchOne(META_FEED.ID);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -106,9 +106,9 @@ class MetaFeedServiceImpl implements MetaFeedService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Integer id = create
-                    .insertInto(DATA_FEED, DATA_FEED.NAME)
+                    .insertInto(META_FEED, META_FEED.NAME)
                     .values(name)
-                    .returning(DATA_FEED.ID)
+                    .returning(META_FEED.ID)
                     .fetchOne()
                     .getId();
             cache.put(name, id);
@@ -131,7 +131,7 @@ class MetaFeedServiceImpl implements MetaFeedService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(DATA_FEED)
+                    .delete(META_FEED)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

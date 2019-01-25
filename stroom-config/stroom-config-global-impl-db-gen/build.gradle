@@ -37,11 +37,11 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                 }
                 generator {
                     name = 'org.jooq.codegen.JavaGenerator'
-                    inputSchema = 'stroom'
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
+                        inputSchema = 'stroom'
                         // Add anything you want included in generation below
-                        includes = 'config|config_history'
+                        includes = 'config'
                         // We don't want to include flyway versioning
                         excludes = 'config_schema_history'
 

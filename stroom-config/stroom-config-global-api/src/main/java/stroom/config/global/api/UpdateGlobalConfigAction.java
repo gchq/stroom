@@ -18,25 +18,25 @@ package stroom.config.global.api;
 
 import stroom.task.shared.Action;
 
-public class FetchGlobalConfigAction extends Action<ConfigProperty> {
+public class UpdateGlobalConfigAction extends Action<ConfigProperty> {
     private static final long serialVersionUID = 6083235358421128201L;
 
-    private int configId;
+    private ConfigProperty configProperty;
 
-    public FetchGlobalConfigAction() {
+    public UpdateGlobalConfigAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchGlobalConfigAction(final int configId) {
-        this.configId = configId;
+    public UpdateGlobalConfigAction(final ConfigProperty configProperty) {
+        this.configProperty = configProperty;
     }
 
-    public int getConfigId() {
-        return configId;
+    public ConfigProperty getConfigProperty() {
+        return configProperty;
     }
 
     @Override
     public String getTaskName() {
-        return "Load Global Property";
+        return "Save Global Property";
     }
 }

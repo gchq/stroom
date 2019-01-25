@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static stroom.data.meta.impl.db.stroom.tables.MetaKey.META_KEY;
+import static stroom.meta.impl.db.tables.MetaKey.META_KEY;
 
 @Singleton
 class MetaKeyServiceImpl implements MetaKeyService {

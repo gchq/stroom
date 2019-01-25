@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
-import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
+import stroom.meta.impl.db.tables.records.MetaValRecord;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -41,7 +41,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
-import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
+import static stroom.meta.impl.db.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaValueServiceImpl implements MetaValueService {
@@ -73,7 +73,7 @@ class MetaValueServiceImpl implements MetaValueService {
                 optional.ifPresent(keyId -> {
                     MetaValRecord record = new MetaValRecord();
                     record.setCreateTime(data.getCreateMs());
-                    record.setDataId(data.getId());
+                    record.setMetaId(data.getId());
                     record.setMetaKeyId(keyId);
                     record.setVal(longValue);
 
@@ -319,12 +319,12 @@ class MetaValueServiceImpl implements MetaValueService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
                     .select(
-                            META_VAL.DATA_ID,
+                            META_VAL.META_ID,
                             META_VAL.META_KEY_ID,
                             META_VAL.VAL
                     )
                     .from(META_VAL)
-                    .where(META_VAL.DATA_ID.in(idList))
+                    .where(META_VAL.META_ID.in(idList))
                     .fetch()
                     .forEach(r -> {
                         final int keyId = r.component2();

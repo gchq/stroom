@@ -21,10 +21,10 @@ import stroom.meta.shared.MetaDataSource;
 import stroom.meta.impl.db.MetaImpl.Builder;
 import stroom.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
-import stroom.data.meta.impl.db.stroom.tables.DataFeed;
-import stroom.data.meta.impl.db.stroom.tables.DataProcessor;
-import stroom.data.meta.impl.db.stroom.tables.DataType;
-import stroom.data.meta.impl.db.stroom.tables.MetaVal;
+import stroom.meta.impl.db.tables.MetaFeed;
+import stroom.meta.impl.db.tables.MetaProcessor;
+import stroom.meta.impl.db.tables.MetaType;
+import stroom.meta.impl.db.tables.MetaVal;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
@@ -54,11 +54,11 @@ import java.util.Set;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
-import static stroom.data.meta.impl.db.stroom.tables.Data.DATA;
-import static stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
-import static stroom.data.meta.impl.db.stroom.tables.DataProcessor.DATA_PROCESSOR;
-import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
-import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
+import static stroom.meta.impl.db.tables.Meta.META;
+import static stroom.meta.impl.db.tables.MetaFeed.META_FEED;
+import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
+import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
+import static stroom.meta.impl.db.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaServiceImpl implements MetaService {
@@ -73,10 +73,10 @@ class MetaServiceImpl implements MetaService {
     private final MetaSecurityFilter dataSecurityFilter;
     private final Security security;
 
-    private final stroom.data.meta.impl.db.stroom.tables.Data data = DATA.as("d");
-    private final DataFeed dataFeed = DATA_FEED.as("f");
-    private final DataType dataType = DATA_TYPE.as("dt");
-    private final DataProcessor dataProcessor = DATA_PROCESSOR.as("dp");
+    private final stroom.meta.impl.db.tables.Meta data = META.as("d");
+    private final MetaFeed dataFeed = META_FEED.as("f");
+    private final MetaType dataType = META_TYPE.as("dt");
+    private final MetaProcessor dataProcessor = META_PROCESSOR.as("dp");
     private final MetaVal metaVal = META_VAL.as("mv");
 
     private final ExpressionMapper expressionMapper;
@@ -168,16 +168,16 @@ class MetaServiceImpl implements MetaService {
 
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final long id = create.insertInto(DATA,
-                    DATA.CREATE_TIME,
-                    DATA.EFFECTIVE_TIME,
-                    DATA.PARENT_ID,
-                    DATA.STATUS,
-                    DATA.STATUS_TIME,
-                    DATA.TASK_ID,
-                    DATA.FEED_ID,
-                    DATA.TYPE_ID,
-                    DATA.PROCESSOR_ID)
+            final long id = create.insertInto(META,
+                    META.CREATE_TIME,
+                    META.EFFECTIVE_TIME,
+                    META.PARENT_ID,
+                    META.STATUS,
+                    META.STATUS_TIME,
+                    META.TASK_ID,
+                    META.FEED_ID,
+                    META.TYPE_ID,
+                    META.PROCESSOR_ID)
                     .values(
                             dataProperties.getCreateMs(),
                             dataProperties.getEffectiveMs(),
@@ -188,7 +188,7 @@ class MetaServiceImpl implements MetaService {
                             feedId,
                             typeId,
                             processorId)
-                    .returning(DATA.ID)
+                    .returning(META.ID)
                     .fetchOne()
                     .getId();
 
@@ -352,7 +352,7 @@ class MetaServiceImpl implements MetaService {
             return null;
         }
 
-        return selectDistinct(metaVal.DATA_ID)
+        return selectDistinct(metaVal.META_ID)
                 .from(metaVal)
                 .where(condition);
     }
@@ -671,7 +671,7 @@ class MetaServiceImpl implements MetaService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(DATA)
+                    .delete(META)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

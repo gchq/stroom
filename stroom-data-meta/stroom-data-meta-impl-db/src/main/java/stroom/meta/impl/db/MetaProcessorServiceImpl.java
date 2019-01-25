@@ -22,7 +22,7 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.impl.db.stroom.tables.records.DataProcessorRecord;
+import stroom.meta.impl.db.tables.records.MetaProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -31,13 +31,13 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.data.meta.impl.db.stroom.tables.DataProcessor.DATA_PROCESSOR;
+import static stroom.meta.impl.db.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
 class MetaProcessorServiceImpl implements MetaProcessorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaProcessorServiceImpl.class);
 
-    private final Map<Integer, DataProcessorRecord> cache = new ConcurrentHashMap<>();
+    private final Map<Integer, MetaProcessorRecord> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
 
@@ -82,7 +82,7 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
 //    }
 
     private Integer get(final Integer processorId, final String pipelineUuid) {
-        DataProcessorRecord record = cache.get(processorId);
+        MetaProcessorRecord record = cache.get(processorId);
         if (record != null) {
             return record.getId();
         }
@@ -90,8 +90,8 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             record = create
-                    .selectFrom(DATA_PROCESSOR)
-                    .where(DATA_PROCESSOR.PROCESSOR_ID.eq(processorId))
+                    .selectFrom(META_PROCESSOR)
+                    .where(META_PROCESSOR.PROCESSOR_ID.eq(processorId))
                     .fetchOne();
 
         } catch (final SQLException e) {
@@ -110,10 +110,10 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
     private Integer create(final int processorId, final String pipelineUuid) {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final DataProcessorRecord record = create
-                    .insertInto(DATA_PROCESSOR, DATA_PROCESSOR.PROCESSOR_ID, DATA_PROCESSOR.PIPELINE_UUID)
+            final MetaProcessorRecord record = create
+                    .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_ID, META_PROCESSOR.PIPELINE_UUID)
                     .values(processorId, pipelineUuid)
-                    .returning(DATA_PROCESSOR.ID)
+                    .returning(META_PROCESSOR.ID)
                     .fetchOne();
             cache.put(processorId, record);
             return record.getId();
@@ -135,7 +135,7 @@ class MetaProcessorServiceImpl implements MetaProcessorService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(DATA_PROCESSOR)
+                    .delete(META_PROCESSOR)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
+import static stroom.meta.impl.db.tables.MetaType.META_TYPE;
 
 @Singleton
 class MetaTypeServiceImpl implements MetaTypeService {
@@ -66,9 +66,9 @@ class MetaTypeServiceImpl implements MetaTypeService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .select(DATA_TYPE.NAME)
-                    .from(DATA_TYPE)
-                    .fetch(DATA_TYPE.NAME);
+                    .select(META_TYPE.NAME)
+                    .from(META_TYPE)
+                    .fetch(META_TYPE.NAME);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -85,10 +85,10 @@ class MetaTypeServiceImpl implements MetaTypeService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             id = create
-                    .select(DATA_TYPE.ID)
-                    .from(DATA_TYPE)
-                    .where(DATA_TYPE.NAME.eq(name))
-                    .fetchOne(DATA_TYPE.ID);
+                    .select(META_TYPE.ID)
+                    .from(META_TYPE)
+                    .where(META_TYPE.NAME.eq(name))
+                    .fetchOne(META_TYPE.ID);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -106,9 +106,9 @@ class MetaTypeServiceImpl implements MetaTypeService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Integer id = create
-                    .insertInto(DATA_TYPE, DATA_TYPE.NAME)
+                    .insertInto(META_TYPE, META_TYPE.NAME)
                     .values(name)
-                    .returning(DATA_TYPE.ID)
+                    .returning(META_TYPE.ID)
                     .fetchOne()
                     .getId();
             cache.put(name, id);
@@ -131,7 +131,7 @@ class MetaTypeServiceImpl implements MetaTypeService {
         try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(DATA_TYPE)
+                    .delete(META_TYPE)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
