@@ -25,11 +25,11 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestFeedServiceImpl {
+class TestMetaFeedServiceImpl {
     @Inject
     private MetaServiceImpl dataMetaService;
     @Inject
-    private FeedServiceImpl feedService;
+    private MetaFeedServiceImpl feedService;
 
     @BeforeEach
     void setup() {

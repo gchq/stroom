@@ -34,15 +34,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import static stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
 
 @Singleton
-class FeedServiceImpl implements FeedService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeedServiceImpl.class);
+class MetaFeedServiceImpl implements MetaFeedService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaFeedServiceImpl.class);
 
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
     private final ConnectionProvider connectionProvider;
 
     @Inject
-    FeedServiceImpl(final ConnectionProvider connectionProvider) {
+    MetaFeedServiceImpl(final ConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider;
     }
 

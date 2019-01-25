@@ -19,7 +19,7 @@ package stroom.data.meta.impl.db;
 
 import java.util.List;
 
-interface FeedService {
+interface MetaFeedService {
     Integer getOrCreate(String name);
 
     List<String> list();

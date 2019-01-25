@@ -36,12 +36,16 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                 }
                 generator {
                     name = 'org.jooq.codegen.JavaGenerator'
+                    inputSchema = 'stroom'
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
                         // Add anything you want included in generation below
                         includes = 'data_feed|data_type|data_processor|data|meta_key|meta_val'
                         // We don't want to include flyway versioning
                         excludes = 'data_meta_schema_history'
+
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
                     }
                     target {
                         packageName = 'stroom.data.meta.impl.db'

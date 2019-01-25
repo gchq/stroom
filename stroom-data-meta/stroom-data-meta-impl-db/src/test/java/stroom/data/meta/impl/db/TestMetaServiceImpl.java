@@ -19,7 +19,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDataMetaServiceImpl {
+class TestMetaServiceImpl {
     @Inject
     private MetaServiceImpl dataMetaService;
 

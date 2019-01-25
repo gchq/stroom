@@ -28,9 +28,9 @@ public class MetaDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(FeedService.class).to(FeedServiceImpl.class);
+        bind(MetaFeedService.class).to(MetaFeedServiceImpl.class);
         bind(MetaTypeService.class).to(MetaTypeServiceImpl.class);
-        bind(ProcessorService.class).to(ProcessorServiceImpl.class);
+        bind(MetaProcessorService.class).to(MetaProcessorServiceImpl.class);
         bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
         bind(MetaValueService.class).to(MetaValueServiceImpl.class);
         bind(MetaService.class).to(MetaServiceImpl.class);

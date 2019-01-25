@@ -1,7 +1,7 @@
 --
--- Create the data_feed table
+-- Create the meta_feed table
 --
-CREATE TABLE IF NOT EXISTS data_feed (
+CREATE TABLE IF NOT EXISTS meta_feed (
   id 				    int(11) NOT NULL AUTO_INCREMENT,
   name				    varchar(255) NOT NULL,
   PRIMARY KEY           (id),
@@ -9,25 +9,26 @@ CREATE TABLE IF NOT EXISTS data_feed (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy data into the data_feed table
+-- Copy meta into the meta_feed table
 --
 DROP PROCEDURE IF EXISTS copy;
 DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'FD' > 0) THEN
-    INSERT INTO data_feed (id, name)
+    INSERT INTO meta_feed (id, name)
     SELECT ID, NAME
     FROM FD
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_feed)
+    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_feed)
     ORDER BY ID;
-  END IF;
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_FD' > 0) THEN
-    INSERT INTO data_feed (id, name)
-    SELECT ID, NAME
-    FROM OLD_FD
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_feed)
-    ORDER BY ID;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE meta_feed AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM meta_feed;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;

@@ -65,9 +65,9 @@ class MetaServiceImpl implements MetaService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaServiceImpl.class);
 
     private final ConnectionProvider connectionProvider;
-    private final FeedService feedService;
+    private final MetaFeedService feedService;
     private final MetaTypeService dataTypeService;
-    private final ProcessorService processorService;
+    private final MetaProcessorService processorService;
     private final MetaKeyService metaKeyService;
     private final MetaValueService metaValueService;
     private final MetaSecurityFilter dataSecurityFilter;
@@ -84,9 +84,9 @@ class MetaServiceImpl implements MetaService {
 
     @Inject
     MetaServiceImpl(final ConnectionProvider connectionProvider,
-                    final FeedService feedService,
+                    final MetaFeedService feedService,
                     final MetaTypeService dataTypeService,
-                    final ProcessorService processorService,
+                    final MetaProcessorService processorService,
                     final MetaKeyService metaKeyService,
                     final MetaValueService metaValueService,
                     final MetaSecurityFilter dataSecurityFilter,
@@ -110,7 +110,7 @@ class MetaServiceImpl implements MetaService {
         termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARENT_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.TASK_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.PROCESSOR_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> StatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
+        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase()))));
         termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(data.STATUS_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(data.CREATE_TIME, DateUtil::parseNormalDateTimeString));
         termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(data.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
@@ -182,7 +182,7 @@ class MetaServiceImpl implements MetaService {
                             dataProperties.getCreateMs(),
                             dataProperties.getEffectiveMs(),
                             dataProperties.getParentId(),
-                            StatusId.LOCKED,
+                            MetaStatusId.LOCKED,
                             dataProperties.getStatusMs(),
                             dataProperties.getProcessorTaskId(),
                             feedId,
@@ -246,7 +246,7 @@ class MetaServiceImpl implements MetaService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .update(data)
-                    .set(data.STATUS, StatusId.getPrimitiveValue(status))
+                    .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
                     .set(data.STATUS_TIME, statusTime)
                     .where(condition)
                     .execute();
@@ -296,7 +296,7 @@ class MetaServiceImpl implements MetaService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .update(data)
-                    .set(data.STATUS, StatusId.getPrimitiveValue(status))
+                    .set(data.STATUS, MetaStatusId.getPrimitiveValue(status))
                     .set(data.STATUS_TIME, System.currentTimeMillis())
                     .where(condition)
                     .execute();
@@ -412,7 +412,7 @@ class MetaServiceImpl implements MetaService {
                             .parentDataId(r.component5())
                             .processTaskId(r.component6())
                             .processorId(r.component7())
-                            .status(StatusId.getStatus(r.component8()))
+                            .status(MetaStatusId.getStatus(r.component8()))
                             .statusMs(r.component9())
                             .createMs(r.component10())
                             .effectiveMs(r.component11())
@@ -537,7 +537,7 @@ class MetaServiceImpl implements MetaService {
             return create
                     .selectCount()
                     .from(data)
-                    .where(data.STATUS.eq(StatusId.LOCKED))
+                    .where(data.STATUS.eq(MetaStatusId.LOCKED))
                     .fetchOptional()
                     .map(Record1::value1)
                     .orElse(0);

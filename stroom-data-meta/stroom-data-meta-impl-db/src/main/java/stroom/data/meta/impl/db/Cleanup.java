@@ -8,17 +8,17 @@ public class Cleanup implements Clearable {
     private final MetaValueServiceImpl metaValueService;
     private final MetaKeyServiceImpl metaKeyService;
     private final MetaServiceImpl dataMetaService;
-    private final ProcessorServiceImpl processorService;
+    private final MetaProcessorServiceImpl processorService;
     private final MetaTypeServiceImpl dataTypeService;
-    private final FeedServiceImpl feedService;
+    private final MetaFeedServiceImpl feedService;
 
     @Inject
     Cleanup(final MetaValueServiceImpl metaValueService,
             final MetaKeyServiceImpl metaKeyService,
             final MetaServiceImpl dataMetaService,
-            final ProcessorServiceImpl processorService,
+            final MetaProcessorServiceImpl processorService,
             final MetaTypeServiceImpl dataTypeService,
-            final FeedServiceImpl feedService) {
+            final MetaFeedServiceImpl feedService) {
         this.metaValueService = metaValueService;
         this.metaKeyService = metaKeyService;
         this.dataMetaService = dataMetaService;

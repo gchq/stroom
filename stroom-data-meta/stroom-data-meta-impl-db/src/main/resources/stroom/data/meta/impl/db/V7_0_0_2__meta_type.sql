@@ -1,7 +1,7 @@
 --
--- Create the data_type table
+-- Create the meta_type table
 --
-CREATE TABLE IF NOT EXISTS data_type (
+CREATE TABLE IF NOT EXISTS meta_type (
   id 				    int(11) NOT NULL AUTO_INCREMENT,
   name				    varchar(255) NOT NULL,
   PRIMARY KEY           (id),
@@ -9,25 +9,26 @@ CREATE TABLE IF NOT EXISTS data_type (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy data into the data_type table
+-- Copy meta into the meta_type table
 --
 DROP PROCEDURE IF EXISTS copy;
 DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
   IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_TP' > 0) THEN
-    INSERT INTO data_type (id, name)
+    INSERT INTO meta_type (id, name)
     SELECT ID, NAME
     FROM STRM_TP
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_type)
+    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_type)
     ORDER BY ID;
-  END IF;
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_STRM_TP' > 0) THEN
-    INSERT INTO data_type (id, name)
-    SELECT ID, NAME
-    FROM OLD_STRM_TP
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM data_type)
-    ORDER BY ID;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE meta_type AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM meta_type;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;

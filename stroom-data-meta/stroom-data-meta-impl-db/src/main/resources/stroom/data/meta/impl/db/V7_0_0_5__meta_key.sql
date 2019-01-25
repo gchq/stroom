@@ -22,13 +22,14 @@ BEGIN
     FROM STRM_ATR_KEY
     WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_key)
     ORDER BY ID;
-  END IF;
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'OLD_STRM_ATR_KEY' > 0) THEN
-    INSERT INTO meta_key (id, name, field_type)
-    SELECT ID, NAME, FLD_TP
-    FROM OLD_STRM_ATR_KEY
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_key)
-    ORDER BY ID;
+
+    -- Work out what to set our auto_increment start value to
+    SELECT CONCAT('ALTER TABLE meta_key AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    INTO @alter_table_sql
+    FROM meta_key;
+
+    PREPARE alter_table_stmt FROM @alter_table_sql;
+    EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;
