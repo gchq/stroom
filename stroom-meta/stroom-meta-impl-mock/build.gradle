@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.data.meta.impl.mock'
+ext.moduleName = 'stroom.meta.impl.mock'
 
 dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
