@@ -41,7 +41,7 @@ import stroom.index.impl.db.tables.records.IndexShardRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class IndexShard extends TableImpl<IndexShardRecord> {
 
-    private static final long serialVersionUID = -1954565815;
+    private static final long serialVersionUID = -17770499;
 
     /**
      * The reference instance of <code>stroom.index_shard</code>
@@ -117,16 +117,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, Byte> STATUS = createField("status", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.old_index_id</code>.
-     */
-    public final TableField<IndexShardRecord, Integer> OLD_INDEX_ID = createField("old_index_id", org.jooq.impl.SQLDataType.INTEGER, this, "");
-
-    /**
-     * The column <code>stroom.index_shard.fk_node_id</code>.
-     */
-    public final TableField<IndexShardRecord, Integer> FK_NODE_ID = createField("fk_node_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
-
-    /**
      * The column <code>stroom.index_shard.partition</code>.
      */
     public final TableField<IndexShardRecord, String> PARTITION = createField("partition", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
@@ -137,9 +127,9 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, Integer> FK_VOLUME_ID = createField("fk_volume_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.index_shard.index_vesrion</code>.
+     * The column <code>stroom.index_shard.index_version</code>.
      */
-    public final TableField<IndexShardRecord, String> INDEX_VESRION = createField("index_vesrion", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<IndexShardRecord, String> INDEX_VERSION = createField("index_version", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.index_shard.partition_from_ms</code>.
@@ -155,6 +145,11 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      * The column <code>stroom.index_shard.index_uuid</code>.
      */
     public final TableField<IndexShardRecord, String> INDEX_UUID = createField("index_uuid", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.index_shard.node_name</code>.
+     */
+    public final TableField<IndexShardRecord, String> NODE_NAME = createField("node_name", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * Create a <code>stroom.index_shard</code> table reference
@@ -202,7 +197,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.INDEX_SHARD_INDEX_SHARD_FK_INDEX_ID, Indexes.INDEX_SHARD_INDEX_SHARD_FK_NODE_ID, Indexes.INDEX_SHARD_INDEX_SHARD_FK_VOLUME_ID, Indexes.INDEX_SHARD_PRIMARY);
+        return Arrays.<Index>asList(Indexes.INDEX_SHARD_INDEX_SHARD_FK_VOLUME_ID, Indexes.INDEX_SHARD_INDEX_SHARD_INDEX_UUID, Indexes.INDEX_SHARD_INDEX_SHARD_NODE_NAME, Indexes.INDEX_SHARD_PRIMARY);
     }
 
     /**
@@ -234,11 +229,7 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
      */
     @Override
     public List<ForeignKey<IndexShardRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<IndexShardRecord, ?>>asList(Keys.INDEX_SHARD_FK_NODE_ID, Keys.INDEX_SHARD_FK_VOLUME_ID);
-    }
-
-    public Node node() {
-        return new Node(this, Keys.INDEX_SHARD_FK_NODE_ID);
+        return Arrays.<ForeignKey<IndexShardRecord, ?>>asList(Keys.INDEX_SHARD_FK_VOLUME_ID);
     }
 
     public IndexVolume indexVolume() {

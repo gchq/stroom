@@ -1,35 +1,3 @@
---
--- Create the explorer tables
---
-CREATE TABLE `rack` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `ver` tinyint(4) NOT NULL,
-  `created_by` varchar(255) DEFAULT NULL,
-  `created_at` bigint(20) DEFAULT NULL,
-  `updated_by` varchar(255) DEFAULT NULL,
-  `updated_at` bigint(20) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  PRIMARY KEY (`ID`),
-  UNIQUE KEY `NAME` (`NAME`)
-) ENGINE=InnoDB AUTO_INCREMENT=311 DEFAULT CHARSET=latin1;
-
-CREATE TABLE `node` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `ver` tinyint(4) NOT NULL,
-  `created_by` varchar(255) DEFAULT NULL,
-  `created_at` bigint(20) DEFAULT NULL,
-  `updated_by` varchar(255) DEFAULT NULL,
-  `updated_at` bigint(20) DEFAULT NULL,
-  `cluster_url` varchar(255) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `prior` smallint(6) NOT NULL,
-  `enable` bit(1) NOT NULL,
-  `fk_rack_id` int(11) NOT NULL,
-  PRIMARY KEY (`ID`),
-  UNIQUE KEY `NAME` (`NAME`),
-  KEY `node_fk_rack_id` (`fk_rack_id`),
-  CONSTRAINT `node_fk_rack_id` FOREIGN KEY (`fk_rack_id`) REFERENCES `rack` (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=311 DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `index_volume` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -86,18 +54,6 @@ DROP PROCEDURE IF EXISTS copy;
 DELIMITER //
 CREATE PROCEDURE copy ()
 BEGIN
-
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'RK' > 0) THEN
-        INSERT INTO rack (id, ver, created_by, created_at, updated_by, updated_at, name)
-        SELECT ID, VER, CRT_USER, CRT_MS, UPD_USER, UPD_MS
-        FROM RK;
-    END IF;
-
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
-        INSERT INTO node (id, ver, created_by, created_at, updated_by, updated_at, cluster_url, name, prior, enable, fk_rack_id)
-        SELECT ID, VER, CRT_USER, CRT_MS, UPD_USER, UPD_MS, CLSTR_URL, NAME, PRIOR, ENBL, FK_RK_ID
-        FROM ND;
-    END IF;
 
     IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'IDX' > 0) THEN
         INSERT INTO `index` (id, ver, created_by, created_at, updated_by, updated_at, name, description, max_doc, max_shard, partition_by, partition_size, retention_day_age, fields, uuid)

@@ -14,11 +14,8 @@ import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.index.impl.db.tables.Index;
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
-import stroom.index.impl.db.tables.Node;
-import stroom.index.impl.db.tables.Rack;
 
 
 /**
@@ -34,17 +31,12 @@ import stroom.index.impl.db.tables.Rack;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1915503346;
+    private static final long serialVersionUID = 872917467;
 
     /**
      * The reference instance of <code>stroom</code>
      */
     public static final Stroom STROOM = new Stroom();
-
-    /**
-     * The table <code>stroom.index</code>.
-     */
-    public final Index INDEX = stroom.index.impl.db.tables.Index.INDEX;
 
     /**
      * The table <code>stroom.index_shard</code>.
@@ -55,16 +47,6 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.index_volume</code>.
      */
     public final IndexVolume INDEX_VOLUME = stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
-
-    /**
-     * The table <code>stroom.node</code>.
-     */
-    public final Node NODE = stroom.index.impl.db.tables.Node.NODE;
-
-    /**
-     * The table <code>stroom.rack</code>.
-     */
-    public final Rack RACK = stroom.index.impl.db.tables.Rack.RACK;
 
     /**
      * No further instances allowed
@@ -91,10 +73,7 @@ public class Stroom extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
-            Index.INDEX,
             IndexShard.INDEX_SHARD,
-            IndexVolume.INDEX_VOLUME,
-            Node.NODE,
-            Rack.RACK);
+            IndexVolume.INDEX_VOLUME);
     }
 }

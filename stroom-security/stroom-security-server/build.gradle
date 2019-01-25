@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-shared')
+    implementation project(':stroom-security:stroom-security-impl-db')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-shared')
     implementation project(':stroom-util')
@@ -36,7 +37,6 @@ dependencies {
 //    testImplementation project(path: ':stroom-core-server', configuration: 'testArtifacts')
     testImplementation project(':stroom-cache:stroom-cache-api')
     testImplementation project(':stroom-cache:stroom-cache-impl')
-    testImplementation project(':stroom-security:stroom-security-impl-db')
     testImplementation project(':stroom-security:stroom-security-impl-db-gen')
     testImplementation project(':stroom-test-common')
 

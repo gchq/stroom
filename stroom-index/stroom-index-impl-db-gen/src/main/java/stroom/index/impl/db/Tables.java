@@ -6,11 +6,8 @@ package stroom.index.impl.db;
 
 import javax.annotation.Generated;
 
-import stroom.index.impl.db.tables.Index;
 import stroom.index.impl.db.tables.IndexShard;
 import stroom.index.impl.db.tables.IndexVolume;
-import stroom.index.impl.db.tables.Node;
-import stroom.index.impl.db.tables.Rack;
 
 
 /**
@@ -27,11 +24,6 @@ import stroom.index.impl.db.tables.Rack;
 public class Tables {
 
     /**
-     * The table <code>stroom.index</code>.
-     */
-    public static final Index INDEX = stroom.index.impl.db.tables.Index.INDEX;
-
-    /**
      * The table <code>stroom.index_shard</code>.
      */
     public static final IndexShard INDEX_SHARD = stroom.index.impl.db.tables.IndexShard.INDEX_SHARD;
@@ -40,14 +32,4 @@ public class Tables {
      * The table <code>stroom.index_volume</code>.
      */
     public static final IndexVolume INDEX_VOLUME = stroom.index.impl.db.tables.IndexVolume.INDEX_VOLUME;
-
-    /**
-     * The table <code>stroom.node</code>.
-     */
-    public static final Node NODE = stroom.index.impl.db.tables.Node.NODE;
-
-    /**
-     * The table <code>stroom.rack</code>.
-     */
-    public static final Rack RACK = stroom.index.impl.db.tables.Rack.RACK;
 }
