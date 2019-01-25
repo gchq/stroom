@@ -16,16 +16,23 @@ CREATE TABLE IF NOT EXISTS activity (
 --
 -- Copy data into the activity table
 --
-DROP PROCEDURE IF EXISTS copy;
+DROP PROCEDURE IF EXISTS copy_activity;
 DELIMITER //
-CREATE PROCEDURE copy ()
+CREATE PROCEDURE copy_activity ()
 BEGIN
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ACTIVITY' > 0) THEN
-    INSERT INTO activity (id, version, create_time_ms, create_user, update_time_ms, update_user, user_id, json)
-    SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, USER_ID, JSON
-    FROM ACTIVITY
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)
-    ORDER BY ID;
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'ACTIVITY') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO activity (id, version, create_time_ms, create_user, update_time_ms, update_user, user_id, json)'
+        ' SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, USER_ID, JSON'
+        ' FROM ACTIVITY'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
 
     -- Work out what to set our auto_increment start value to
     SELECT CONCAT('ALTER TABLE activity AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
@@ -37,5 +44,5 @@ BEGIN
   END IF;
 END//
 DELIMITER ;
-CALL copy();
-DROP PROCEDURE copy;
+CALL copy_activity();
+DROP PROCEDURE copy_activity;
